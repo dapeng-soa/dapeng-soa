@@ -1,0 +1,6762 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<service namespace="com.xinzhi.hospital.services.crm.service" name="CrmService">
+    <doc>
+
+ h-crm服务
+ </doc>
+    <meta>
+        <version>1.0.0</version>
+        <timeout>30000</timeout>
+    </meta>
+    <methods>
+        <method name="signup">
+            <doc>
+
+### 用户注册
+
+#### 业务描述
+    用户注册账户，目前暂时只提供患者端，前端需进行短信验证手机正误后再进行注册
+
+#### 接口依赖
+
+#### 边界异常说明
+    无
+
+#### 输入
+    1.crm_request.SignupRequest
+
+#### 前置检查
+    1.手机号未被使用
+    2.手机验证码确认
+
+####  权限检查
+
+####  逻辑处理
+    1.判断用户类型
+    2.密码加盐处理
+    3.新增一条t_patient记录，取得新用户userId
+    4.新增一条t_patient_ex记录
+    5.返回结果
+
+#### 数据库变更
+    1. insert into t_patient() values()
+    2. insert into t_patient_ex values()
+
+####  事务处理
+
+
+####  输出
+    1.用户id
+</doc>
+            <request name="signup_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.SignupRequest</ref>
+                        </dataType>
+                        <doc>保存用户请求</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="signup_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>INTEGER</kind>
+                        </dataType>
+                        <doc>
+
+### 用户注册
+
+#### 业务描述
+    用户注册账户，目前暂时只提供患者端，前端需进行短信验证手机正误后再进行注册
+
+#### 接口依赖
+
+#### 边界异常说明
+    无
+
+#### 输入
+    1.crm_request.SignupRequest
+
+#### 前置检查
+    1.手机号未被使用
+    2.手机验证码确认
+
+####  权限检查
+
+####  逻辑处理
+    1.判断用户类型
+    2.密码加盐处理
+    3.新增一条t_patient记录，取得新用户userId
+    4.新增一条t_patient_ex记录
+    5.返回结果
+
+#### 数据库变更
+    1. insert into t_patient() values()
+    2. insert into t_patient_ex values()
+
+####  事务处理
+
+
+####  输出
+    1.用户id
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="login">
+            <doc>
+
+### 用户登录
+#### 业务描述
+    用户登录
+
+#### 接口依赖
+    1.MessageService.confirmCode
+
+#### 边界异常说明
+#### 输入
+    1.crm_request.LoginRequest
+
+#### 前置检查
+    1.判断用户类型
+    2.检查这个用户是否是黑名单用户
+    3.验证密码
+
+#### 权限检查
+#### 逻辑处理
+    1.更改用户的最后登录日期, 登录次数, 登录设备
+    2.获取用户简单基本信息
+    3.返回结果
+
+#### 数据变更
+    1.update t_user_ex() set last_login_time = ${lastLoginTime} , login_times = login_times+1 , last_login_device = ${lastLoginDevice} .....where user_id = ${userId}
+
+#### 事务处理
+#### 输出
+    1.用户简单信息
+</doc>
+            <request name="login_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.LoginRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="login_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.LoginResponse</ref>
+                        </dataType>
+                        <doc>
+
+### 用户登录
+#### 业务描述
+    用户登录
+
+#### 接口依赖
+    1.MessageService.confirmCode
+
+#### 边界异常说明
+#### 输入
+    1.crm_request.LoginRequest
+
+#### 前置检查
+    1.判断用户类型
+    2.检查这个用户是否是黑名单用户
+    3.验证密码
+
+#### 权限检查
+#### 逻辑处理
+    1.更改用户的最后登录日期, 登录次数, 登录设备
+    2.获取用户简单基本信息
+    3.返回结果
+
+#### 数据变更
+    1.update t_user_ex() set last_login_time = ${lastLoginTime} , login_times = login_times+1 , last_login_device = ${lastLoginDevice} .....where user_id = ${userId}
+
+#### 事务处理
+#### 输出
+    1.用户简单信息
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="checkPhoneHasUsed">
+            <doc>
+
+### 校验手机号被使用情况
+#### 业务描述
+    检验手机号是否已被使用
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.phone
+
+#### 前置检查
+    1.用户类型判断
+
+#### 权限检查
+#### 逻辑处理
+    1.select count(id) where t_user where phone = ${phone}
+
+#### 数据变更
+#### 事务处理
+#### 输出
+    1.boolen
+</doc>
+            <request name="checkPhoneHasUsed_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.CheckPhoneHasUsedRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="checkPhoneHasUsed_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>BOOLEAN</kind>
+                        </dataType>
+                        <doc>
+
+### 校验手机号被使用情况
+#### 业务描述
+    检验手机号是否已被使用
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.phone
+
+#### 前置检查
+    1.用户类型判断
+
+#### 权限检查
+#### 逻辑处理
+    1.select count(id) where t_user where phone = ${phone}
+
+#### 数据变更
+#### 事务处理
+#### 输出
+    1.boolen
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="updatePassword">
+            <doc>
+
+### 密码修改
+#### 业务描述
+    用户密码修改，前端需要判断原密码正误或短信验证是否成功
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.UpdatePasswordRequest
+
+#### 前置检查
+    1.用户类型
+
+#### 权限检查
+#### 逻辑处理
+    1.新密码加密
+    2.修改密码
+    3.返回结果
+
+#### 数据变更
+    update t_user set password=${newPassword.bcrypt} where phone = ${phone}
+#### 事务处理
+#### 输出
+    void
+</doc>
+            <request name="updatePassword_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.UpdatePasswordRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="updatePassword_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc>
+
+### 密码修改
+#### 业务描述
+    用户密码修改，前端需要判断原密码正误或短信验证是否成功
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.UpdatePasswordRequest
+
+#### 前置检查
+    1.用户类型
+
+#### 权限检查
+#### 逻辑处理
+    1.新密码加密
+    2.修改密码
+    3.返回结果
+
+#### 数据变更
+    update t_user set password=${newPassword.bcrypt} where phone = ${phone}
+#### 事务处理
+#### 输出
+    void
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="getPatient">
+            <doc>
+
+### 患者资料查询
+#### 业务描述
+    患者资料查询
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.GetPatientRequest
+
+#### 前置检查
+    1.用户类型
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+
+</doc>
+            <request name="getPatient_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.GetPatientRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="getPatient_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.GetPatientResponse</ref>
+                        </dataType>
+                        <doc>
+
+### 患者资料查询
+#### 业务描述
+    患者资料查询
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.GetPatientRequest
+
+#### 前置检查
+    1.用户类型
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="updatePatient">
+            <doc>
+
+### 病人资料修改
+#### 业务描述
+    病人资料修改
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.UpdatePatientRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    void
+</doc>
+            <request name="updatePatient_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.UpdatePatientRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="updatePatient_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc>
+
+### 病人资料修改
+#### 业务描述
+    病人资料修改
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.UpdatePatientRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    void
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listPatients">
+            <doc>
+
+### 患者资料列表查询
+#### 业务描述
+    患者资料列表查询
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.ListPatientRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+
+</doc>
+            <request name="listPatients_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.ListPatientsRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listPatients_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.ListPatientsResponse</ref>
+                        </dataType>
+                        <doc>
+
+### 患者资料列表查询
+#### 业务描述
+    患者资料列表查询
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.ListPatientRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="saveDoctor">
+            <doc>
+
+### 医生用户创建
+#### 业务描述
+    医生用户创建
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.SaveDoctorRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    void
+</doc>
+            <request name="saveDoctor_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.SaveDoctorRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="saveDoctor_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>INTEGER</kind>
+                        </dataType>
+                        <doc>
+
+### 医生用户创建
+#### 业务描述
+    医生用户创建
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.SaveDoctorRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    void
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="updateDoctor">
+            <doc>
+
+### 医生资料修改
+#### 业务描述
+    医生资料修改
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.UpdateDoctorRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    void
+</doc>
+            <request name="updateDoctor_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.UpdateDoctorRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="updateDoctor_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc>
+
+### 医生资料修改
+#### 业务描述
+    医生资料修改
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.UpdateDoctorRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    void
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="getDoctor">
+            <doc>
+
+### 医生资料查询
+#### 业务描述
+    医生资料查询
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.userId
+
+#### 前置检查
+    1.用户类型
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+
+</doc>
+            <request name="getDoctor_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.GetDoctorRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="getDoctor_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.GetDoctorResponse</ref>
+                        </dataType>
+                        <doc>
+
+### 医生资料查询
+#### 业务描述
+    医生资料查询
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.userId
+
+#### 前置检查
+    1.用户类型
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listDoctors">
+            <doc>
+
+### 医生资料列表查询
+#### 业务描述
+    医生资料列表查询
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.ListDoctorsRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+
+</doc>
+            <request name="listDoctors_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.ListDoctorsRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listDoctors_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.ListDoctorsResponse</ref>
+                        </dataType>
+                        <doc>
+
+### 医生资料列表查询
+#### 业务描述
+    医生资料列表查询
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.ListDoctorsRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="saveHospital">
+            <doc>
+
+### 医院创建
+#### 业务描述
+    医院创建
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.SaveHospitalRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    void
+</doc>
+            <request name="saveHospital_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.SaveHospitalRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="saveHospital_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc>
+
+### 医院创建
+#### 业务描述
+    医院创建
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.SaveHospitalRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    void
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="updateHospital">
+            <doc>
+
+### 医院资料修改
+#### 业务描述
+    医院资料修改
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.UpdateHospitalRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    void
+</doc>
+            <request name="updateHospital_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.UpdateHospitalRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="updateHospital_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc>
+
+### 医院资料修改
+#### 业务描述
+    医院资料修改
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.UpdateHospitalRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    void
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="getHospital">
+            <doc>
+
+### 医院资料查询
+#### 业务描述
+    医院资料查询
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.hospitalId
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    1.医院资料 GetHospitalResponse
+</doc>
+            <request name="getHospital_args">
+                <fields>
+                    <field tag="1" name="hospitalId" optional="false" privacy="false">
+                        <dataType>
+                            <kind>INTEGER</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="getHospital_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.GetHospitalResponse</ref>
+                        </dataType>
+                        <doc>
+
+### 医院资料查询
+#### 业务描述
+    医院资料查询
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.hospitalId
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    1.医院资料 GetHospitalResponse
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listHospitals">
+            <doc>
+
+### 医院列表查询
+#### 业务描述
+    医院列表查询
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.ListHospitalsRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    1.医院列表 ListHospitalsResponse
+</doc>
+            <request name="listHospitals_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.ListHospitalsRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listHospitals_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.ListHospitalsResponse</ref>
+                        </dataType>
+                        <doc>
+
+### 医院列表查询
+#### 业务描述
+    医院列表查询
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.ListHospitalsRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    1.医院列表 ListHospitalsResponse
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="saveDepartment">
+            <doc>
+
+### 部门创建
+#### 业务描述
+    部门创建
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.SaveDepartmentRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    void
+</doc>
+            <request name="saveDepartment_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.SaveDepartmentRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="saveDepartment_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc>
+
+### 部门创建
+#### 业务描述
+    部门创建
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.SaveDepartmentRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    void
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="updateDepartment">
+            <doc>
+
+### 部门资料修改
+#### 业务描述
+    部门资料修改
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.UpdateDepartmentRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    void
+</doc>
+            <request name="updateDepartment_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.UpdateDepartmentRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="updateDepartment_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc>
+
+### 部门资料修改
+#### 业务描述
+    部门资料修改
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.UpdateDepartmentRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    void
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="getDepartment">
+            <doc>
+
+### 部门资料查询
+#### 业务描述
+    部门资料查询
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.departmentId
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    1.部门资料 GetDepartmentResponse
+</doc>
+            <request name="getDepartment_args">
+                <fields>
+                    <field tag="1" name="departmentId" optional="false" privacy="false">
+                        <dataType>
+                            <kind>INTEGER</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="getDepartment_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.GetDepartmentResponse</ref>
+                        </dataType>
+                        <doc>
+
+### 部门资料查询
+#### 业务描述
+    部门资料查询
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.departmentId
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    1.部门资料 GetDepartmentResponse
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listDepartments">
+            <doc>
+
+### 部门列表查询
+#### 业务描述
+    部门列表查询
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.ListDepartmentsRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    1.部门列表 ListDepartmentsResponse
+</doc>
+            <request name="listDepartments_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.ListDepartmentsRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listDepartments_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.ListDepartmentsResponse</ref>
+                        </dataType>
+                        <doc>
+
+### 部门列表查询
+#### 业务描述
+    部门列表查询
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.ListDepartmentsRequest
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    1.部门列表 ListDepartmentsResponse
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listDoctorsNameById">
+            <doc>
+
+### 根据医生id批量查询医生姓名
+#### 业务描述
+    根据医生id批量查询医生姓名
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    1.医生名字HashMap Map&lt;doctorId,doctorName&gt;
+</doc>
+            <request name="listDoctorsNameById_args">
+                <fields>
+                    <field tag="1" name="doctorIds" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>INTEGER</kind>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listDoctorsNameById_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>MAP</kind>
+                            <keyType>
+<kind>INTEGER</kind>
+                            </keyType>
+                            <valueType>
+<kind>STRING</kind>
+                            </valueType>
+                        </dataType>
+                        <doc>
+
+### 根据医生id批量查询医生姓名
+#### 业务描述
+    根据医生id批量查询医生姓名
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    1.医生名字HashMap Map&lt;doctorId,doctorName&gt;
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="getPatientEx">
+            <doc>
+
+### 患者拓展资料
+#### 业务描述
+    患者拓展资料
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1: patientId
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    1.GetPatientExResponse 拓展信息
+</doc>
+            <request name="getPatientEx_args">
+                <fields>
+                    <field tag="1" name="patientId" optional="false" privacy="false">
+                        <dataType>
+                            <kind>INTEGER</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="getPatientEx_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.GetPatientExResponse</ref>
+                        </dataType>
+                        <doc>
+
+### 患者拓展资料
+#### 业务描述
+    患者拓展资料
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1: patientId
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    1.GetPatientExResponse 拓展信息
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="updatePatientEx">
+            <doc>
+
+### 修改患者拓展资料
+#### 业务描述
+    患者拓展资料
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1: crm_request.updatePatientExRequest
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+
+</doc>
+            <request name="updatePatientEx_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.UpdatePatientExRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="updatePatientEx_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc>
+
+### 修改患者拓展资料
+#### 业务描述
+    患者拓展资料
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1: crm_request.updatePatientExRequest
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="getPatientDetail">
+            <doc>
+
+### 患者详细资料
+#### 业务描述
+    患者详细资料
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1: patientId
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    1.GetPatientDetailResponse 患者详细信息
+</doc>
+            <request name="getPatientDetail_args">
+                <fields>
+                    <field tag="1" name="patientId" optional="false" privacy="false">
+                        <dataType>
+                            <kind>INTEGER</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="getPatientDetail_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.GetPatientDetailResponse</ref>
+                        </dataType>
+                        <doc>
+
+### 患者详细资料
+#### 业务描述
+    患者详细资料
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1: patientId
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    1.GetPatientDetailResponse 患者详细信息
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="getDoctorEx">
+            <doc>
+
+### 医生拓展资料
+#### 业务描述
+    医生拓展资料
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1: doctorId
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    1.GetDoctorExResponse 拓展信息
+</doc>
+            <request name="getDoctorEx_args">
+                <fields>
+                    <field tag="1" name="doctorId" optional="false" privacy="false">
+                        <dataType>
+                            <kind>INTEGER</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="getDoctorEx_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.GetDoctorExResponse</ref>
+                        </dataType>
+                        <doc>
+
+### 医生拓展资料
+#### 业务描述
+    医生拓展资料
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1: doctorId
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    1.GetDoctorExResponse 拓展信息
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="updateDoctorEx">
+            <doc>
+
+### 修改医生拓展资料
+#### 业务描述
+    医生拓展资料
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1: crm_request.updateDoctorExRequest
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+
+</doc>
+            <request name="updateDoctorEx_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.UpdateDoctorExRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="updateDoctorEx_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc>
+
+### 修改医生拓展资料
+#### 业务描述
+    医生拓展资料
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1: crm_request.updateDoctorExRequest
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="getDoctorDetail">
+            <doc>
+
+### 医生详细资料
+#### 业务描述
+    医生详细资料
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1: doctorId
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    1.GetDoctorDetailResponse 医生详细信息
+</doc>
+            <request name="getDoctorDetail_args">
+                <fields>
+                    <field tag="1" name="doctorId" optional="false" privacy="false">
+                        <dataType>
+                            <kind>INTEGER</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="getDoctorDetail_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.GetDoctorDetailResponse</ref>
+                        </dataType>
+                        <doc>
+
+### 医生详细资料
+#### 业务描述
+    医生详细资料
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1: doctorId
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+
+#### 事务处理
+#### 输出
+    1.GetDoctorDetailResponse 医生详细信息
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="saveFeedback">
+            <doc>
+
+### 反馈提交
+#### 业务描述
+    用户反馈提交，用户需要登陆后才可以进行反馈
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.SaveFeedbackRequest
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+    1.insert into t_feedback set user_id = ${userId}, contact = ${phone}, user_type = ${UserType.getValue}, content =${request.content}...
+
+#### 事务处理
+#### 输出
+    1.void
+</doc>
+            <request name="saveFeedback_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.SaveFeedbackRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="saveFeedback_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc>
+
+### 反馈提交
+#### 业务描述
+    用户反馈提交，用户需要登陆后才可以进行反馈
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+    1.SaveFeedbackRequest
+#### 前置检查
+
+
+#### 权限检查
+#### 逻辑处理
+
+
+#### 数据变更
+    1.insert into t_feedback set user_id = ${userId}, contact = ${phone}, user_type = ${UserType.getValue}, content =${request.content}...
+
+#### 事务处理
+#### 输出
+    1.void
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="initDoctorLabelsCache">
+            <doc>
+
+    ### 初始化医生标签缓存
+    #### 业务描述
+       初始化医生标签缓存
+    #### 接口依赖
+    #### 边界异常说明
+    #### 输入
+
+    #### 前置检查
+
+    #### 权限检查
+    #### 逻辑处理
+
+    #### 数据变更
+        1.
+
+    #### 事务处理
+    #### 输出
+        1.void
+</doc>
+            <request name="initDoctorLabelsCache_args">
+                <fields/>
+            </request>
+            <response name="initDoctorLabelsCache_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc>
+
+    ### 初始化医生标签缓存
+    #### 业务描述
+       初始化医生标签缓存
+    #### 接口依赖
+    #### 边界异常说明
+    #### 输入
+
+    #### 前置检查
+
+    #### 权限检查
+    #### 逻辑处理
+
+    #### 数据变更
+        1.
+
+    #### 事务处理
+    #### 输出
+        1.void
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="initDoctorInfoCache">
+            <request name="initDoctorInfoCache_args">
+                <fields/>
+            </request>
+            <response name="initDoctorInfoCache_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listDoctorByKeyword">
+            <request name="listDoctorByKeyword_args">
+                <fields>
+                    <field tag="1" name="keyword" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRING</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listDoctorByKeyword_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRUCT</kind>
+<ref>com.xinzhi.hospital.services.crm.domain.DoctorDO</ref>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="updateDoctorLabelsCacheInner">
+            <doc>
+
+       ### 更新医生标签缓存
+       #### 业务描述
+          更新医生标签缓存(内部接口，期望后期可以使用binlog监督数据变化)
+       #### 接口依赖
+       #### 边界异常说明
+       #### 输入
+
+       #### 前置检查
+
+       #### 权限检查
+       #### 逻辑处理
+            修改医生擅长病症标签时，把redis缓存同步更新
+       #### 数据变更
+           1.
+
+       #### 事务处理
+       #### 输出
+           1.void
+</doc>
+            <request name="updateDoctorLabelsCacheInner_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.UpdateDoctorLabelsCacheRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="updateDoctorLabelsCacheInner_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc>
+
+       ### 更新医生标签缓存
+       #### 业务描述
+          更新医生标签缓存(内部接口，期望后期可以使用binlog监督数据变化)
+       #### 接口依赖
+       #### 边界异常说明
+       #### 输入
+
+       #### 前置检查
+
+       #### 权限检查
+       #### 逻辑处理
+            修改医生擅长病症标签时，把redis缓存同步更新
+       #### 数据变更
+           1.
+
+       #### 事务处理
+       #### 输出
+           1.void
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listSimpleLabels">
+            <doc>
+
+    ### 分页查询标签
+    #### 业务描述
+       分页查询标签
+    #### 接口依赖
+    #### 边界异常说明
+    #### 输入
+
+    #### 前置检查
+
+    #### 权限检查
+    #### 逻辑处理
+        1、分页查询标签
+        2、如果开始下标start比总条数大，则从0开始
+        3、如果翻页都最后而条数不足请求条数，则从头再查询一部分补足数量
+    #### 数据变更
+        1.
+
+    #### 事务处理
+    #### 输出
+        1.void
+</doc>
+            <request name="listSimpleLabels_args">
+                <fields>
+                    <field tag="1" name="pageRequest" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.services.common.domain.PageRequest</ref>
+                        </dataType>
+                        <doc> 分页请求</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listSimpleLabels_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.ListSimpleLabelsRespone</ref>
+                        </dataType>
+                        <doc>
+
+    ### 分页查询标签
+    #### 业务描述
+       分页查询标签
+    #### 接口依赖
+    #### 边界异常说明
+    #### 输入
+
+    #### 前置检查
+
+    #### 权限检查
+    #### 逻辑处理
+        1、分页查询标签
+        2、如果开始下标start比总条数大，则从0开始
+        3、如果翻页都最后而条数不足请求条数，则从头再查询一部分补足数量
+    #### 数据变更
+        1.
+
+    #### 事务处理
+    #### 输出
+        1.void
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="savePatientSymptoms">
+            <doc>
+
+       ### 保存患者症状
+       #### 业务描述
+          保存患者症状
+       #### 接口依赖
+       #### 边界异常说明
+       #### 输入
+
+       #### 前置检查
+
+       #### 权限检查
+       #### 逻辑处理
+
+       #### 数据变更
+           1.
+
+       #### 事务处理
+       #### 输出
+           1.void
+</doc>
+            <request name="savePatientSymptoms_args">
+                <fields>
+                    <field tag="1" name="symptoms" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRING</kind>
+                        </dataType>
+                        <doc> 患者症状</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="savePatientSymptoms_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc>
+
+       ### 保存患者症状
+       #### 业务描述
+          保存患者症状
+       #### 接口依赖
+       #### 边界异常说明
+       #### 输入
+
+       #### 前置检查
+
+       #### 权限检查
+       #### 逻辑处理
+
+       #### 数据变更
+           1.
+
+       #### 事务处理
+       #### 输出
+           1.void
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listPatientsOrderByLastLoginTime">
+            <doc>
+
+   ### 查询最近登陆过的用户
+   #### 业务描述
+      查询最近登陆过的用户
+   #### 接口依赖
+   #### 边界异常说明
+   #### 输入
+
+   #### 前置检查
+
+   #### 权限检查
+   #### 逻辑处理
+
+   #### 数据变更
+       1.
+
+   #### 事务处理
+   #### 输出
+       1.void
+</doc>
+            <request name="listPatientsOrderByLastLoginTime_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.ListPatientsOrderByLastLoginTimeRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listPatientsOrderByLastLoginTime_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.ListPatientsOrderByLastLoginTimeResponse</ref>
+                        </dataType>
+                        <doc>
+
+   ### 查询最近登陆过的用户
+   #### 业务描述
+      查询最近登陆过的用户
+   #### 接口依赖
+   #### 边界异常说明
+   #### 输入
+
+   #### 前置检查
+
+   #### 权限检查
+   #### 逻辑处理
+
+   #### 数据变更
+       1.
+
+   #### 事务处理
+   #### 输出
+       1.void
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="saveFocusDoctor">
+            <doc>
+
+        ### 关注（或者扫码）医生
+        #### 业务描述
+           关注（或者扫码）医生
+           1、关注如果是未关注过该医生，则添加一条关注记录，否则不做处理
+           2、如果是扫码关注则，则会额外添加一条普通的关注记录，如果存在则不做处理
+        #### 接口依赖
+        #### 边界异常说明
+        #### 输入
+
+        #### 前置检查
+
+        #### 权限检查
+        #### 逻辑处理
+
+        #### 数据变更
+            1.
+
+        #### 事务处理
+        #### 输出
+
+</doc>
+            <request name="saveFocusDoctor_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.SaveFocusDoctorRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="saveFocusDoctor_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc>
+
+        ### 关注（或者扫码）医生
+        #### 业务描述
+           关注（或者扫码）医生
+           1、关注如果是未关注过该医生，则添加一条关注记录，否则不做处理
+           2、如果是扫码关注则，则会额外添加一条普通的关注记录，如果存在则不做处理
+        #### 接口依赖
+        #### 边界异常说明
+        #### 输入
+
+        #### 前置检查
+
+        #### 权限检查
+        #### 逻辑处理
+
+        #### 数据变更
+            1.
+
+        #### 事务处理
+        #### 输出
+
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="removeFocusDoctor">
+            <doc>
+
+        ### 删除关注医生
+        #### 业务描述
+           删除关注医生(仅删除关注记录，不能删除扫码记录)
+        #### 接口依赖
+        #### 边界异常说明
+        #### 输入
+
+        #### 前置检查
+
+        #### 权限检查
+         仅允许患者进行该操作
+        #### 逻辑处理
+
+        #### 数据变更
+            1.
+
+        #### 事务处理
+        #### 输出
+
+</doc>
+            <request name="removeFocusDoctor_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.RemoveDoctorRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="removeFocusDoctor_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc>
+
+        ### 删除关注医生
+        #### 业务描述
+           删除关注医生(仅删除关注记录，不能删除扫码记录)
+        #### 接口依赖
+        #### 边界异常说明
+        #### 输入
+
+        #### 前置检查
+
+        #### 权限检查
+         仅允许患者进行该操作
+        #### 逻辑处理
+
+        #### 数据变更
+            1.
+
+        #### 事务处理
+        #### 输出
+
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listFocuses">
+            <doc>
+
+        ### 查询关注记录
+        #### 业务描述
+           查询关注记录
+        #### 接口依赖
+        #### 边界异常说明
+        #### 输入
+
+        #### 前置检查
+
+        #### 权限检查
+         仅允许患者进行该操作
+        #### 逻辑处理
+
+        #### 数据变更
+            1.
+
+        #### 事务处理
+        #### 输出
+
+</doc>
+            <request name="listFocuses_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.ListFocusesRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listFocuses_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.ListFocusesRespone</ref>
+                        </dataType>
+                        <doc>
+
+        ### 查询关注记录
+        #### 业务描述
+           查询关注记录
+        #### 接口依赖
+        #### 边界异常说明
+        #### 输入
+
+        #### 前置检查
+
+        #### 权限检查
+         仅允许患者进行该操作
+        #### 逻辑处理
+
+        #### 数据变更
+            1.
+
+        #### 事务处理
+        #### 输出
+
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listFocusPatientsForDoctor">
+            <doc>
+
+        ### 查询医生的患者列表
+        #### 业务描述
+           查询关注记录
+        #### 接口依赖
+        #### 边界异常说明
+        #### 输入
+
+        #### 前置检查
+
+        #### 权限检查
+         仅允许患者进行该操作
+        #### 逻辑处理
+
+        #### 数据变更
+            1.
+
+        #### 事务处理
+        #### 输出
+
+</doc>
+            <request name="listFocusPatientsForDoctor_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.ListFocusPatientsForDoctorRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listFocusPatientsForDoctor_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.ListFocusPatientsForDoctorRespone</ref>
+                        </dataType>
+                        <doc>
+
+        ### 查询医生的患者列表
+        #### 业务描述
+           查询关注记录
+        #### 接口依赖
+        #### 边界异常说明
+        #### 输入
+
+        #### 前置检查
+
+        #### 权限检查
+         仅允许患者进行该操作
+        #### 逻辑处理
+
+        #### 数据变更
+            1.
+
+        #### 事务处理
+        #### 输出
+
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="countPatientsForDoctor">
+            <doc>
+
+        ### 查询医生的患者列表
+        #### 业务描述
+           查询关注记录
+        #### 接口依赖
+        #### 边界异常说明
+        #### 输入
+
+        #### 前置检查
+
+        #### 权限检查
+         仅允许患者进行该操作
+        #### 逻辑处理
+
+        #### 数据变更
+            1.
+
+        #### 事务处理
+        #### 输出
+
+</doc>
+            <request name="countPatientsForDoctor_args">
+                <fields>
+                    <field tag="1" name="doctorId" optional="false" privacy="false">
+                        <dataType>
+                            <kind>INTEGER</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="countPatientsForDoctor_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.CountPatientsForDoctorResponse</ref>
+                        </dataType>
+                        <doc>
+
+        ### 查询医生的患者列表
+        #### 业务描述
+           查询关注记录
+        #### 接口依赖
+        #### 边界异常说明
+        #### 输入
+
+        #### 前置检查
+
+        #### 权限检查
+         仅允许患者进行该操作
+        #### 逻辑处理
+
+        #### 数据变更
+            1.
+
+        #### 事务处理
+        #### 输出
+
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="checkFirstRewardAble">
+            <doc>
+
+        ### 判断医生是否可以获取首单奖励
+        #### 业务描述
+         判断医生是否可以获取首单奖励，满足以下条件则可以获取奖励
+          1、患者扫描二维码关注医生，并付费购买（不包括免费服务）该医生的服务
+          2、同一个患者仅可获得1次奖励。（即，一个患者扫描多个医生并在多个医生付费购买服务时，只给第一个医生奖励
+
+        #### 接口依赖
+        #### 边界异常说明
+        #### 输入
+
+        #### 前置检查
+
+        #### 权限检查
+
+        #### 逻辑处理
+
+        #### 数据变更
+            1.
+
+        #### 事务处理
+        #### 输出
+
+</doc>
+            <request name="checkFirstRewardAble_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.CheckFirstRewardAbleRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="checkFirstRewardAble_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>BOOLEAN</kind>
+                        </dataType>
+                        <doc>
+
+        ### 判断医生是否可以获取首单奖励
+        #### 业务描述
+         判断医生是否可以获取首单奖励，满足以下条件则可以获取奖励
+          1、患者扫描二维码关注医生，并付费购买（不包括免费服务）该医生的服务
+          2、同一个患者仅可获得1次奖励。（即，一个患者扫描多个医生并在多个医生付费购买服务时，只给第一个医生奖励
+
+        #### 接口依赖
+        #### 边界异常说明
+        #### 输入
+
+        #### 前置检查
+
+        #### 权限检查
+
+        #### 逻辑处理
+
+        #### 数据变更
+            1.
+
+        #### 事务处理
+        #### 输出
+
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="updatePatientMark">
+            <doc>
+
+### 判断医生是否可以获取首单奖励
+#### 业务描述
+ 判断医生是否可以获取首单奖励，满足以下条件则可以获取奖励
+  1、患者扫描二维码关注医生，并付费购买（不包括免费服务）该医生的服务
+  2、同一个患者仅可获得1次奖励。（即，一个患者扫描多个医生并在多个医生付费购买服务时，只给第一个医生奖励
+
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+
+#### 前置检查
+
+#### 权限检查
+
+#### 逻辑处理
+
+#### 数据变更
+    1.
+
+#### 事务处理
+#### 输出
+
+</doc>
+            <request name="updatePatientMark_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.UpdatePatientMarkRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="updatePatientMark_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc>
+
+### 判断医生是否可以获取首单奖励
+#### 业务描述
+ 判断医生是否可以获取首单奖励，满足以下条件则可以获取奖励
+  1、患者扫描二维码关注医生，并付费购买（不包括免费服务）该医生的服务
+  2、同一个患者仅可获得1次奖励。（即，一个患者扫描多个医生并在多个医生付费购买服务时，只给第一个医生奖励
+
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+
+#### 前置检查
+
+#### 权限检查
+
+#### 逻辑处理
+
+#### 数据变更
+    1.
+
+#### 事务处理
+#### 输出
+
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="saveOnlineCustomer">
+            <request name="saveOnlineCustomer_args">
+                <fields>
+                    <field tag="1" name="doctorId" optional="false" privacy="false">
+                        <dataType>
+                            <kind>INTEGER</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="saveOnlineCustomer_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="removeOnlineCustomer">
+            <request name="removeOnlineCustomer_args">
+                <fields>
+                    <field tag="1" name="doctorId" optional="false" privacy="false">
+                        <dataType>
+                            <kind>INTEGER</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="removeOnlineCustomer_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="removePatientForOnlineCustomer">
+            <request name="removePatientForOnlineCustomer_args">
+                <fields>
+                    <field tag="1" name="doctorId" optional="false" privacy="false">
+                        <dataType>
+                            <kind>INTEGER</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="removePatientForOnlineCustomer_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="getOnlineCustomer">
+            <request name="getOnlineCustomer_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.GetOnlineCustomerRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="getOnlineCustomer_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.GetOnlineCustomerResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listOnlineCustomer">
+            <doc>
+
+### 在线客服列表
+#### 业务描述
+ 在线客服列表
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+#### 前置检查
+#### 权限检查
+#### 逻辑处理
+#### 数据变更
+#### 事务处理
+#### 输出
+</doc>
+            <request name="listOnlineCustomer_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.request.ListOnlineCustomerRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listOnlineCustomer_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.ListOnlineCustomerResponse</ref>
+                        </dataType>
+                        <doc>
+
+### 在线客服列表
+#### 业务描述
+ 在线客服列表
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+#### 前置检查
+#### 权限检查
+#### 逻辑处理
+#### 数据变更
+#### 事务处理
+#### 输出
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="modifyDoctorType">
+            <doc>
+
+### 修改医生类型
+#### 业务描述
+ 修改医生类型
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+#### 前置检查
+#### 权限检查
+#### 逻辑处理
+#### 数据变更
+#### 事务处理
+#### 输出
+</doc>
+            <request name="modifyDoctorType_args">
+                <fields>
+                    <field tag="1" name="doctorId" optional="false" privacy="false">
+                        <dataType>
+                            <kind>INTEGER</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                    <field tag="2" name="type" optional="false" privacy="false">
+                        <dataType>
+                            <kind>ENUM</kind>
+                            <ref>com.xinzhi.hospital.services.crm.enums.DoctorType</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="modifyDoctorType_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc>
+
+### 修改医生类型
+#### 业务描述
+ 修改医生类型
+#### 接口依赖
+#### 边界异常说明
+#### 输入
+#### 前置检查
+#### 权限检查
+#### 逻辑处理
+#### 数据变更
+#### 事务处理
+#### 输出
+</doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+    </methods>
+    <structs>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="GetPatientResponse">
+            <doc>
+
+ 患者资料获取
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ id
+</doc>
+                </field>
+                <field tag="2" name="phone" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 电话
+</doc>
+                </field>
+                <field tag="3" name="status" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.UserStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 状态
+</doc>
+                </field>
+                <field tag="4" name="name" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 姓名
+</doc>
+                </field>
+                <field tag="5" name="idcard" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 身份证
+</doc>
+                </field>
+                <field tag="6" name="headImage" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 头像
+</doc>
+                </field>
+                <field tag="7" name="gender" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.GenderEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 性别
+</doc>
+                </field>
+                <field tag="8" name="birthday" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 出生年月 格式:yyyyMMdd
+</doc>
+                </field>
+                <field tag="9" name="isReadAgreement" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 是否已同意协议
+</doc>
+                </field>
+                <field tag="10" name="symptoms" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 病症
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="ListHospitalsResponse">
+            <fields>
+                <field tag="1" name="hospitalsList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.domain.HospitalDO</ref>
+                        </valueType>
+                    </dataType>
+                </field>
+                <field tag="2" name="pageResponse" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.services.common.domain.PageResponse</ref>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.domain" name="HospitalDO">
+            <doc>
+
+ 医院资料
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+                <field tag="2" name="name" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 医院名称
+</doc>
+                </field>
+                <field tag="3" name="manager" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 主管
+</doc>
+                </field>
+                <field tag="4" name="contact" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 联系方式
+</doc>
+                </field>
+                <field tag="5" name="info" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 简介
+</doc>
+                </field>
+                <field tag="6" name="status" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.HospitalStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 医院状态
+</doc>
+                </field>
+                <field tag="7" name="level" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.HospitalLevelEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 医院等级
+</doc>
+                </field>
+                <field tag="8" name="address" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 医院地址
+</doc>
+                </field>
+                <field tag="9" name="location" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 所在省市(国标)
+</doc>
+                </field>
+                <field tag="10" name="flag" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.HospitalFlagEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 医院类型
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="ListDepartmentsResponse">
+            <fields>
+                <field tag="1" name="departmentsList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.domain.DepartmentDO</ref>
+                        </valueType>
+                    </dataType>
+                </field>
+                <field tag="2" name="pageResponse" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.services.common.domain.PageResponse</ref>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.domain" name="DoctorDO">
+            <doc>
+
+ 医生资料
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ id
+</doc>
+                </field>
+                <field tag="2" name="phone" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 电话
+</doc>
+                </field>
+                <field tag="3" name="status" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.UserStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 状态
+</doc>
+                </field>
+                <field tag="4" name="depId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 所属部门id
+</doc>
+                </field>
+                <field tag="5" name="hospitalId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 所属医院ID
+</doc>
+                </field>
+                <field tag="6" name="name" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 姓名
+</doc>
+                </field>
+                <field tag="7" name="idcard" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 身份证
+</doc>
+                </field>
+                <field tag="8" name="headImage" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 头像
+</doc>
+                </field>
+                <field tag="9" name="gender" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.GenderEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 性别
+</doc>
+                </field>
+                <field tag="10" name="info" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 个人简介
+</doc>
+                </field>
+                <field tag="11" name="jobTitle" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 职称标签
+</doc>
+                </field>
+                <field tag="12" name="level" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 等级
+</doc>
+                </field>
+                <field tag="13" name="labels" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 擅长病症
+</doc>
+                </field>
+                <field tag="14" name="departmentName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 所属部门名称
+</doc>
+                </field>
+                <field tag="15" name="hospitalName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 所属医院名称
+</doc>
+                </field>
+                <field tag="16" name="jobExperience" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 从业经历
+</doc>
+                </field>
+                <field tag="17" name="funs" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 粉丝数
+</doc>
+                </field>
+                <field tag="18" name="type" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.DoctorType</ref>
+                    </dataType>
+                    <doc>
+
+ 医生类型
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="CustomerDto">
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ id
+</doc>
+                </field>
+                <field tag="2" name="phone" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 电话
+</doc>
+                </field>
+                <field tag="3" name="status" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.UserStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 状态
+</doc>
+                </field>
+                <field tag="4" name="depId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 所属部门id
+</doc>
+                </field>
+                <field tag="5" name="hospitalId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 所属医院ID
+</doc>
+                </field>
+                <field tag="6" name="name" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 姓名
+</doc>
+                </field>
+                <field tag="8" name="headImage" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 头像
+</doc>
+                </field>
+                <field tag="9" name="gender" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.GenderEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 性别
+</doc>
+                </field>
+                <field tag="10" name="info" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 个人简介
+</doc>
+                </field>
+                <field tag="11" name="departmentName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 所属部门名称
+</doc>
+                </field>
+                <field tag="12" name="hospitalName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 所属医院名称
+</doc>
+                </field>
+                <field tag="13" name="num" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 服务人数
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="UpdatePatientExRequest">
+            <doc>
+
+ 患者拓展资料修改
+</doc>
+            <fields>
+                <field tag="1" name="patientId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 患者id
+</doc>
+                </field>
+                <field tag="2" name="lastDoctorId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 上次治疗医生
+</doc>
+                </field>
+                <field tag="3" name="registrationId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 极光注册Id
+</doc>
+                </field>
+                <field tag="4" name="addTreatMinutes" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 增加累计治疗时间(同时增加一次治疗次数)
+</doc>
+                </field>
+                <field tag="5" name="lastLoginDevice" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 登录设备
+</doc>
+                </field>
+                <field tag="6" name="lastLoginTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 登录时间
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="ListFocusesRequest">
+            <fields>
+                <field tag="1" name="pageRequest" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.services.common.domain.PageRequest</ref>
+                    </dataType>
+                    <doc>
+
+ 分页请求
+</doc>
+                </field>
+                <field tag="2" name="doctorId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 医生id
+</doc>
+                </field>
+                <field tag="3" name="patientId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 患者id
+</doc>
+                </field>
+                <field tag="4" name="focusType" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.FocusTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 关注类型（控值则为查询所有记录）
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="ListDepartmentsRequest">
+            <doc>
+
+ 部门(科室)列表获取
+</doc>
+            <fields>
+                <field tag="1" name="pageRequest" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.services.common.domain.PageRequest</ref>
+                    </dataType>
+                    <doc>
+
+ 分页请求
+</doc>
+                </field>
+                <field tag="2" name="hospitalId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 归属医院ID
+</doc>
+                </field>
+                <field tag="3" name="idList" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>INTEGER</kind>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 部门Id列表
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="SaveFeedbackRequest">
+            <doc>
+
+ 反馈提交请求
+</doc>
+            <fields>
+                <field tag="1" name="content" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 反馈内容
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="UpdateHospitalRequest">
+            <doc>
+
+ 医院资料修改
+</doc>
+            <fields>
+                <field tag="1" name="hospitalId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+                <field tag="2" name="name" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 医院名称
+</doc>
+                </field>
+                <field tag="3" name="manager" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 主管
+</doc>
+                </field>
+                <field tag="4" name="contact" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 联系方式
+</doc>
+                </field>
+                <field tag="5" name="info" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 简介
+</doc>
+                </field>
+                <field tag="6" name="status" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.HospitalStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 医院状态
+</doc>
+                </field>
+                <field tag="7" name="level" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.HospitalLevelEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 医院等级
+</doc>
+                </field>
+                <field tag="8" name="address" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 医院地址
+</doc>
+                </field>
+                <field tag="9" name="location" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 所在省市(国标)
+</doc>
+                </field>
+                <field tag="10" name="flag" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.HospitalFlagEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 医院类型
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.services.common.domain" name="PageResponse">
+            <fields>
+                <field tag="1" name="start" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 查询的开始序号（序号从零开始）
+</doc>
+                </field>
+                <field tag="2" name="limit" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 最大返回的记录数
+</doc>
+                </field>
+                <field tag="3" name="results" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 结果记录数
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="SimplePatientInfo">
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ id
+</doc>
+                </field>
+                <field tag="2" name="phone" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 电话
+</doc>
+                </field>
+                <field tag="3" name="status" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.UserStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 状态
+</doc>
+                </field>
+                <field tag="4" name="name" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 姓名
+</doc>
+                </field>
+                <field tag="5" name="idcard" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 身份证
+</doc>
+                </field>
+                <field tag="6" name="headImage" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 头像
+</doc>
+                </field>
+                <field tag="7" name="gender" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.GenderEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 性别
+</doc>
+                </field>
+                <field tag="8" name="birthday" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 出生年月 格式:yyyyMMdd
+</doc>
+                </field>
+                <field tag="9" name="isReadAgreement" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 是否已同意协议
+</doc>
+                </field>
+                <field tag="10" name="symptoms" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 病症
+</doc>
+                </field>
+                <field tag="11" name="lastLoginDevice" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 上次登录设备
+</doc>
+                </field>
+                <field tag="12" name="lastLoginTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 上次登录时间
+</doc>
+                </field>
+                <field tag="13" name="workTimes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 累计治疗次数
+</doc>
+                </field>
+                <field tag="14" name="workingMinutes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+  累计治疗时长（min）
+</doc>
+                </field>
+                <field tag="15" name="registrationId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 极光注册ID
+</doc>
+                </field>
+                <field tag="16" name="createdAt" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 注册时间
+</doc>
+                </field>
+                <field tag="17" name="newAdd" optional="true" privacy="false">
+                    <dataType>
+                        <kind>BOOLEAN</kind>
+                    </dataType>
+                    <doc>
+
+ 是否新增
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.domain" name="SaveHospitalDTO">
+            <doc>
+
+
+</doc>
+            <fields>
+                <field tag="1" name="name" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 医院名称
+</doc>
+                </field>
+                <field tag="2" name="manager" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 主管
+</doc>
+                </field>
+                <field tag="3" name="contact" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 联系方式
+</doc>
+                </field>
+                <field tag="4" name="info" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 简介
+</doc>
+                </field>
+                <field tag="5" name="level" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.HospitalLevelEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 医院等级
+</doc>
+                </field>
+                <field tag="6" name="address" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 医院地址
+</doc>
+                </field>
+                <field tag="7" name="location" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 所在省市(国标)
+</doc>
+                </field>
+                <field tag="8" name="flag" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.HospitalFlagEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 医院类型
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="UpdateDoctorRequest">
+            <doc>
+
+ 医生资料修改请求
+</doc>
+            <fields>
+                <field tag="1" name="doctorId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+                <field tag="2" name="phone" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 电话
+</doc>
+                </field>
+                <field tag="3" name="depId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 所属部门id
+</doc>
+                </field>
+                <field tag="4" name="hospitalId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 所属医院ID
+</doc>
+                </field>
+                <field tag="5" name="name" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 姓名
+</doc>
+                </field>
+                <field tag="6" name="idcard" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 身份证
+</doc>
+                </field>
+                <field tag="7" name="headImage" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 头像
+</doc>
+                </field>
+                <field tag="8" name="gender" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.GenderEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 性别
+</doc>
+                </field>
+                <field tag="9" name="info" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 个人简介
+</doc>
+                </field>
+                <field tag="10" name="status" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.UserStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 状态
+</doc>
+                </field>
+                <field tag="11" name="jobTitle" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 职称标签
+</doc>
+                </field>
+                <field tag="12" name="level" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 医生等级
+</doc>
+                </field>
+                <field tag="13" name="labels" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 擅长病症
+</doc>
+                </field>
+                <field tag="14" name="jobExperience" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 从业经历
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="ListHospitalsRequest">
+            <doc>
+
+ 医院列表获取
+</doc>
+            <fields>
+                <field tag="1" name="pageRequest" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.services.common.domain.PageRequest</ref>
+                    </dataType>
+                    <doc>
+
+ 分页请求
+</doc>
+                </field>
+                <field tag="2" name="location" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 所在省市(国标)
+</doc>
+                </field>
+                <field tag="3" name="idList" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>INTEGER</kind>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 医院Id列表
+</doc>
+                </field>
+                <field tag="4" name="hospitalName" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 医院Id列表
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="ListPatientsRequest">
+            <doc>
+
+ 患者列表获取
+</doc>
+            <fields>
+                <field tag="1" name="pageRequest" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.services.common.domain.PageRequest</ref>
+                    </dataType>
+                    <doc>
+
+ 分页请求
+</doc>
+                </field>
+                <field tag="2" name="idList" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>INTEGER</kind>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 患者id列表
+</doc>
+                </field>
+                <field tag="3" name="patientName" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 患者姓名
+</doc>
+                </field>
+                <field tag="4" name="patientPhone" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 手机号
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="ListFocusPatientsForDoctorRespone">
+            <fields>
+                <field tag="1" name="patientList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.SimplePatientInfo</ref>
+                        </valueType>
+                    </dataType>
+                </field>
+                <field tag="2" name="pageResponse" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.services.common.domain.PageResponse</ref>
+                    </dataType>
+                    <doc>分页响应包</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="ListDoctorsResponse">
+            <fields>
+                <field tag="1" name="doctorsList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.domain.DoctorDO</ref>
+                        </valueType>
+                    </dataType>
+                </field>
+                <field tag="2" name="pageResponse" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.services.common.domain.PageResponse</ref>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.domain" name="PatientExDO">
+            <doc>
+
+ 患者拓展资料
+</doc>
+            <fields>
+                <field tag="1" name="patientId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+                <field tag="2" name="loginTimes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 登录次数
+</doc>
+                </field>
+                <field tag="3" name="lastLoginDevice" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 上次登录设备
+</doc>
+                </field>
+                <field tag="4" name="lastLoginTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 上次登录时间
+</doc>
+                </field>
+                <field tag="5" name="workTimes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 累计治疗次数
+</doc>
+                </field>
+                <field tag="6" name="workingMinutes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+  累计治疗时长（min）
+</doc>
+                </field>
+                <field tag="7" name="lastDoctorId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 上次治疗医生Id
+</doc>
+                </field>
+                <field tag="8" name="registrationId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 极光注册ID
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="ListOnlineCustomerRequest">
+            <fields>
+                <field tag="1" name="doctorId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 医生id
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="SaveHospitalRequest">
+            <doc>
+
+ 创建医院请求
+</doc>
+            <fields>
+                <field tag="1" name="saveHospitalList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.domain.SaveHospitalDTO</ref>
+                        </valueType>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="GetDoctorResponse">
+            <doc>
+
+ 医生资料
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ id
+</doc>
+                </field>
+                <field tag="2" name="phone" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 电话
+</doc>
+                </field>
+                <field tag="3" name="status" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.UserStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 状态
+</doc>
+                </field>
+                <field tag="4" name="depId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 所属部门id
+</doc>
+                </field>
+                <field tag="5" name="hospitalId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 所属医院ID
+</doc>
+                </field>
+                <field tag="6" name="name" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 姓名
+</doc>
+                </field>
+                <field tag="7" name="idcard" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 身份证
+</doc>
+                </field>
+                <field tag="8" name="headImage" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 头像
+</doc>
+                </field>
+                <field tag="9" name="gender" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.GenderEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 性别
+</doc>
+                </field>
+                <field tag="10" name="info" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 个人简介
+</doc>
+                </field>
+                <field tag="11" name="jobTitle" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 职称标签
+</doc>
+                </field>
+                <field tag="12" name="level" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 等级
+</doc>
+                </field>
+                <field tag="13" name="labels" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 擅长病症
+</doc>
+                </field>
+                <field tag="14" name="departmentName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 所属部门名称
+</doc>
+                </field>
+                <field tag="15" name="hospitalName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 所属医院名称
+</doc>
+                </field>
+                <field tag="16" name="jobExperience" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 从业经历
+</doc>
+                </field>
+                <field tag="17" name="funs" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 粉丝数
+</doc>
+                </field>
+                <field tag="18" name="type" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.DoctorType</ref>
+                    </dataType>
+                    <doc>
+
+ 粉丝数
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="ListSimpleLabelsRespone">
+            <doc>标签信息</doc>
+            <fields>
+                <field tag="1" name="labels" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRING</kind>
+                        </valueType>
+                    </dataType>
+                </field>
+                <field tag="2" name="pageResponse" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.services.common.domain.PageResponse</ref>
+                    </dataType>
+                    <doc>标签分页响应包</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="UpdateDoctorLabelsCacheRequest">
+            <fields>
+                <field tag="1" name="doctorId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 医生id
+</doc>
+                </field>
+                <field tag="2" name="newLabels" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 修改后的新标签
+</doc>
+                </field>
+                <field tag="3" name="oldLabels" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 修改前的旧标签
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="GetPatientRequest">
+            <doc>
+
+ 获取患者信息请求
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ id
+</doc>
+                </field>
+                <field tag="2" name="name" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 姓名
+</doc>
+                </field>
+                <field tag="3" name="phone" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 手机号
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="GetDoctorRequest">
+            <doc>
+
+ 获取医生信息请求
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ id
+</doc>
+                </field>
+                <field tag="2" name="name" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 姓名
+</doc>
+                </field>
+                <field tag="3" name="phone" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 手机号
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="RemoveDoctorRequest">
+            <fields>
+                <field tag="1" name="doctorId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 医生id
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="ListPatientsOrderByLastLoginTimeResponse">
+            <doc>
+
+ 患者资料列表获取
+</doc>
+            <fields>
+                <field tag="1" name="patientsList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.SimplePatientInfo</ref>
+                        </valueType>
+                    </dataType>
+                </field>
+                <field tag="2" name="pageResponse" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.services.common.domain.PageResponse</ref>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="UpdateDepartmentRequest">
+            <doc>
+
+ 部门资料修改
+</doc>
+            <fields>
+                <field tag="1" name="departmentId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+                <field tag="2" name="hospitalId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 关联医院id
+</doc>
+                </field>
+                <field tag="3" name="name" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 部门名字
+</doc>
+                </field>
+                <field tag="4" name="head" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 负责人
+</doc>
+                </field>
+                <field tag="5" name="contact" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 联系方式
+</doc>
+                </field>
+                <field tag="6" name="info" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 部门简介
+</doc>
+                </field>
+                <field tag="7" name="flag" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.DepartmentFlagEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 科室类型
+</doc>
+                </field>
+                <field tag="8" name="status" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.DepartmentStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 科室状态
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.domain" name="DepartmentDO">
+            <doc>
+
+ 部门资料
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+                <field tag="2" name="hospitalId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 关联医院id
+</doc>
+                </field>
+                <field tag="3" name="name" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 部门名字
+</doc>
+                </field>
+                <field tag="4" name="head" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 负责人
+</doc>
+                </field>
+                <field tag="5" name="contact" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 联系方式
+</doc>
+                </field>
+                <field tag="6" name="info" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 部门简介
+</doc>
+                </field>
+                <field tag="7" name="flag" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.DepartmentFlagEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 科室类型
+</doc>
+                </field>
+                <field tag="8" name="status" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.DepartmentStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 科室状态
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="CountPatientsForDoctorResponse">
+            <fields>
+                <field tag="1" name="focusPatient" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+                <field tag="2" name="newAddFocusPatient" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="UpdatePatientRequest">
+            <doc>
+
+ 患者资料修改请求
+</doc>
+            <fields>
+                <field tag="1" name="patientId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+                <field tag="2" name="phone" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 电话
+</doc>
+                </field>
+                <field tag="3" name="status" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.UserStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 状态
+</doc>
+                </field>
+                <field tag="4" name="name" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 姓名
+</doc>
+                </field>
+                <field tag="5" name="idcard" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 身份证
+</doc>
+                </field>
+                <field tag="6" name="headImage" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 头像
+</doc>
+                </field>
+                <field tag="7" name="gender" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.GenderEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 性别
+</doc>
+                </field>
+                <field tag="8" name="birthday" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 出生年月 格式:yyyyMMdd
+</doc>
+                </field>
+                <field tag="9" name="isReadAgreement" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 是否已同意协议
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="ListDoctorsRequest">
+            <doc>
+
+ 医生列表获取
+</doc>
+            <fields>
+                <field tag="1" name="pageRequest" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.services.common.domain.PageRequest</ref>
+                    </dataType>
+                    <doc>
+
+ 分页请求
+</doc>
+                </field>
+                <field tag="2" name="depId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 归属部门
+</doc>
+                </field>
+                <field tag="3" name="beginTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 排班时间(起始)
+</doc>
+                </field>
+                <field tag="4" name="endTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 排班时间(截止)
+</doc>
+                </field>
+                <field tag="5" name="hospitalId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 所属医院
+</doc>
+                </field>
+                <field tag="6" name="idList" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>INTEGER</kind>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 医生Id列表
+</doc>
+                </field>
+                <field tag="7" name="name" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 姓名
+</doc>
+                </field>
+                <field tag="8" name="phone" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 手机号
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="SaveDoctorRequest">
+            <doc>
+
+ 创建医生请求
+</doc>
+            <fields>
+                <field tag="1" name="saveDoctorList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.domain.SaveDoctorDTO</ref>
+                        </valueType>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="GetPatientExResponse">
+            <doc>
+
+ 患者拓展
+</doc>
+            <fields>
+                <field tag="1" name="patientId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+                <field tag="2" name="loginTimes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 登录次数
+</doc>
+                </field>
+                <field tag="3" name="lastLoginDevice" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 上次登录设备
+</doc>
+                </field>
+                <field tag="4" name="lastLoginTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 上次登录时间
+</doc>
+                </field>
+                <field tag="5" name="workTimes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 累计治疗次数
+</doc>
+                </field>
+                <field tag="6" name="workingMinutes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+  累计治疗时长（min）
+</doc>
+                </field>
+                <field tag="7" name="lastDoctorId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 上次治疗医生Id
+</doc>
+                </field>
+                <field tag="8" name="registrationId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 极光注册ID
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="GetHospitalResponse">
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+                <field tag="2" name="name" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 医院名称
+</doc>
+                </field>
+                <field tag="3" name="manager" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 主管
+</doc>
+                </field>
+                <field tag="4" name="contact" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 联系方式
+</doc>
+                </field>
+                <field tag="5" name="info" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 简介
+</doc>
+                </field>
+                <field tag="6" name="status" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.HospitalStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 医院状态
+</doc>
+                </field>
+                <field tag="7" name="level" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.HospitalLevelEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 医院等级
+</doc>
+                </field>
+                <field tag="8" name="address" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 医院地址
+</doc>
+                </field>
+                <field tag="9" name="location" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 所在省市(国标)
+</doc>
+                </field>
+                <field tag="10" name="flag" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.HospitalFlagEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 医院类型
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="ListOnlineCustomerResponse">
+            <fields>
+                <field tag="1" name="onlineCustomerList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.CustomerDto</ref>
+                        </valueType>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="UpdateDoctorExRequest">
+            <doc>
+
+ 医生拓展资料修改
+</doc>
+            <fields>
+                <field tag="1" name="doctorId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 医生id
+</doc>
+                </field>
+                <field tag="2" name="registrationId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 极光注册Id
+</doc>
+                </field>
+                <field tag="3" name="addTreatMinutes" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 增加累计接诊时间(同时增加一次接诊次数)
+</doc>
+                </field>
+                <field tag="4" name="lastLoginDevice" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 登录设备
+</doc>
+                </field>
+                <field tag="5" name="lastLoginTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 登录时间
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="FocusItem">
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+
+</doc>
+                </field>
+                <field tag="2" name="patientId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 患者id
+</doc>
+                </field>
+                <field tag="3" name="patientInfo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.hospital.services.crm.response.SimplePatientInfo</ref>
+                    </dataType>
+                    <doc>
+
+ 患者信息
+</doc>
+                </field>
+                <field tag="4" name="doctorId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 被关注医生ID
+</doc>
+                </field>
+                <field tag="5" name="doctorInfo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.hospital.services.crm.domain.DoctorDO</ref>
+                    </dataType>
+                    <doc>
+
+ 医生信息
+</doc>
+                </field>
+                <field tag="6" name="type" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.FocusTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 类型,1:关注(focus);2:扫码(scan)
+</doc>
+                </field>
+                <field tag="7" name="createdAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+
+</doc>
+                </field>
+                <field tag="8" name="remark" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="ListPatientsResponse">
+            <doc>
+
+ 患者资料列表获取
+</doc>
+            <fields>
+                <field tag="1" name="patientsList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.SimplePatientInfo</ref>
+                        </valueType>
+                    </dataType>
+                </field>
+                <field tag="2" name="pageResponse" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.services.common.domain.PageResponse</ref>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.domain" name="DoctorExDO">
+            <doc>
+
+ 医生拓展资料
+</doc>
+            <fields>
+                <field tag="1" name="doctorId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+                <field tag="2" name="loginTimes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 登录次数
+</doc>
+                </field>
+                <field tag="3" name="lastLoginDevice" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 上次登录设备
+</doc>
+                </field>
+                <field tag="4" name="lastLoginTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 上次登录时间
+</doc>
+                </field>
+                <field tag="5" name="workTimes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 累计治疗次数
+</doc>
+                </field>
+                <field tag="6" name="workingMinutes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+  累计治疗时长（min）
+</doc>
+                </field>
+                <field tag="7" name="registrationId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 极光注册ID
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.domain" name="SaveDoctorDTO">
+            <doc>
+
+ 医生创建
+</doc>
+            <fields>
+                <field tag="1" name="phone" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 电话
+</doc>
+                </field>
+                <field tag="2" name="password" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 密码
+</doc>
+                </field>
+                <field tag="3" name="depId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 所属部门id
+</doc>
+                </field>
+                <field tag="4" name="hospitalId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 所属医院ID
+</doc>
+                </field>
+                <field tag="5" name="name" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 姓名
+</doc>
+                </field>
+                <field tag="6" name="gender" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.GenderEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 性别
+</doc>
+                </field>
+                <field tag="7" name="idcard" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 身份证
+</doc>
+                </field>
+                <field tag="8" name="headImage" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 头像
+</doc>
+                </field>
+                <field tag="9" name="info" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 个人简介
+</doc>
+                </field>
+                <field tag="10" name="jobTitle" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 职称标签
+</doc>
+                </field>
+                <field tag="11" name="level" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 医生等级
+</doc>
+                </field>
+                <field tag="12" name="labels" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 擅长病症
+</doc>
+                </field>
+                <field tag="13" name="jobExperience" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 从业经历
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.domain" name="SaveDepartmentDTO">
+            <doc>
+
+
+</doc>
+            <fields>
+                <field tag="1" name="hospitalId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 关联医院id
+</doc>
+                </field>
+                <field tag="2" name="name" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 部门名字
+</doc>
+                </field>
+                <field tag="3" name="head" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 负责人
+</doc>
+                </field>
+                <field tag="4" name="contact" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 联系方式
+</doc>
+                </field>
+                <field tag="5" name="info" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 部门简介
+</doc>
+                </field>
+                <field tag="6" name="flag" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.DepartmentFlagEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 科室类型
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="LoginRequest">
+            <doc>
+
+ 用户登录请求
+</doc>
+            <fields>
+                <field tag="1" name="userType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.UserTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 用户类型
+</doc>
+                </field>
+                <field tag="2" name="phone" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 用户手机号码
+</doc>
+                </field>
+                <field tag="3" name="password" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 密码
+</doc>
+                </field>
+                <field tag="4" name="loginDevice" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 登录设备
+</doc>
+                </field>
+                <field tag="5" name="registrationId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 极光注册ID
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="ListFocusesRespone">
+            <fields>
+                <field tag="1" name="focuses" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.response.FocusItem</ref>
+                        </valueType>
+                    </dataType>
+                </field>
+                <field tag="2" name="pageResponse" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.services.common.domain.PageResponse</ref>
+                    </dataType>
+                    <doc>分页响应包</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="UpdatePasswordRequest">
+            <doc>
+
+ 修改密码请求
+</doc>
+            <fields>
+                <field tag="1" name="userType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.UserTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 用户类型
+</doc>
+                </field>
+                <field tag="2" name="phone" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 用户手机号(账户)
+</doc>
+                </field>
+                <field tag="3" name="newPassword" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 新密码
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.services.common.domain" name="PageRequest">
+            <doc>
+
+ 分页查询请求包
+</doc>
+            <fields>
+                <field tag="1" name="start" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 查询的开始序号（序号从零开始）
+</doc>
+                </field>
+                <field tag="2" name="limit" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 返回记录数
+</doc>
+                </field>
+                <field tag="3" name="sortFields" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 排序的字段
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="ListPatientsOrderByLastLoginTimeRequest">
+            <doc>
+
+ 最近登陆患者列表获取
+</doc>
+            <fields>
+                <field tag="1" name="pageRequest" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.services.common.domain.PageRequest</ref>
+                    </dataType>
+                    <doc>
+
+ 分页请求
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="GetOnlineCustomerRequest">
+            <fields>
+                <field tag="1" name="patientId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 患者id
+</doc>
+                </field>
+                <field tag="2" name="doctorId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 客服医生Id
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="LoginResponse">
+            <doc>
+
+ 登录信息返回
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+                <field tag="2" name="status" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.UserStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 用户状态
+ </doc>
+                </field>
+                <field tag="3" name="phone" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 用户手机号
+ </doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="CheckFirstRewardAbleRequest">
+            <doc> 判断医生是否可以获取首单奖励</doc>
+            <fields>
+                <field tag="1" name="doctorId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 医生id
+</doc>
+                </field>
+                <field tag="2" name="patientId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 患者id
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="GetDepartmentResponse">
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+                <field tag="2" name="hospitalId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 关联医院id
+</doc>
+                </field>
+                <field tag="3" name="name" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 部门名字
+</doc>
+                </field>
+                <field tag="4" name="head" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 负责人
+</doc>
+                </field>
+                <field tag="5" name="contact" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 联系方式
+</doc>
+                </field>
+                <field tag="6" name="info" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 部门简介
+</doc>
+                </field>
+                <field tag="7" name="flag" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.DepartmentFlagEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 科室类型
+</doc>
+                </field>
+                <field tag="8" name="status" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.DepartmentStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 科室状态
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="GetDoctorDetailResponse">
+            <doc>
+
+ 医生详细
+</doc>
+            <fields>
+                <field tag="1" name="baseInfo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.hospital.services.crm.domain.DoctorDO</ref>
+                    </dataType>
+                </field>
+                <field tag="2" name="exInfo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.hospital.services.crm.domain.DoctorExDO</ref>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="SignupRequest">
+            <doc>
+
+  用户注册请求
+</doc>
+            <fields>
+                <field tag="1" name="userType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.UserTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 用户类型
+</doc>
+                </field>
+                <field tag="2" name="phone" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 用户手机号码
+</doc>
+                </field>
+                <field tag="3" name="password" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 密码
+</doc>
+                </field>
+                <field tag="4" name="registrationId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 极光注册ID
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="GetDoctorExResponse">
+            <doc>
+
+ 医生拓展
+</doc>
+            <fields>
+                <field tag="1" name="doctorId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+                <field tag="2" name="loginTimes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 登录次数
+</doc>
+                </field>
+                <field tag="3" name="lastLoginDevice" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 上次登录设备
+</doc>
+                </field>
+                <field tag="4" name="lastLoginTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 上次登录时间
+</doc>
+                </field>
+                <field tag="5" name="workTimes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 累计治疗次数
+</doc>
+                </field>
+                <field tag="6" name="workingMinutes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+  累计治疗时长（min）
+</doc>
+                </field>
+                <field tag="7" name="registrationId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 极光注册ID
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="SaveFocusDoctorRequest">
+            <fields>
+                <field tag="1" name="doctorId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 医生id
+</doc>
+                </field>
+                <field tag="2" name="focusType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.FocusTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 关注类型
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="GetOnlineCustomerResponse">
+            <fields>
+                <field tag="1" name="doctorId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+                <field tag="2" name="doctorName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="SaveDepartmentRequest">
+            <doc>
+
+ 创建科室请求
+</doc>
+            <fields>
+                <field tag="1" name="saveDepartmentList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.xinzhi.hospital.services.crm.domain.SaveDepartmentDTO</ref>
+                        </valueType>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.domain" name="PatientDO">
+            <doc>
+
+ 患者资料
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ id
+</doc>
+                </field>
+                <field tag="2" name="phone" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 电话
+</doc>
+                </field>
+                <field tag="3" name="status" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.UserStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 状态
+</doc>
+                </field>
+                <field tag="4" name="name" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 姓名
+</doc>
+                </field>
+                <field tag="5" name="idcard" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 身份证
+</doc>
+                </field>
+                <field tag="6" name="headImage" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 头像
+</doc>
+                </field>
+                <field tag="7" name="gender" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.GenderEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 性别
+</doc>
+                </field>
+                <field tag="8" name="birthday" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 出生年月 格式:yyyyMMdd
+</doc>
+                </field>
+                <field tag="9" name="isReadAgreement" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 是否已同意协议
+</doc>
+                </field>
+                <field tag="10" name="symptoms" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 病症
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="UpdatePatientMarkRequest">
+            <doc>修改患者标志状态值 </doc>
+            <fields>
+                <field tag="1" name="patientId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 患者id
+</doc>
+                </field>
+                <field tag="2" name="mark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.PatientMarkEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 标志位
+</doc>
+                </field>
+                <field tag="3" name="yes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BOOLEAN</kind>
+                    </dataType>
+                    <doc>
+
+ true则该标志位修改位1 否则改为0
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="CheckPhoneHasUsedRequest">
+            <doc>
+
+ 校验手机号是否已被使用请求
+</doc>
+            <fields>
+                <field tag="1" name="userType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.xinzhi.hospital.services.crm.enums.UserTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 用户类型
+</doc>
+                </field>
+                <field tag="2" name="phone" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 手机号
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.response" name="GetPatientDetailResponse">
+            <doc>
+
+ 患者详细
+</doc>
+            <fields>
+                <field tag="1" name="baseInfo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.hospital.services.crm.domain.PatientDO</ref>
+                    </dataType>
+                </field>
+                <field tag="2" name="exInfo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.hospital.services.crm.domain.PatientExDO</ref>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.xinzhi.hospital.services.crm.request" name="ListFocusPatientsForDoctorRequest">
+            <fields>
+                <field tag="1" name="pageRequest" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.xinzhi.services.common.domain.PageRequest</ref>
+                    </dataType>
+                    <doc>
+
+ 分页请求
+</doc>
+                </field>
+                <field tag="2" name="doctorId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 医生id
+</doc>
+                </field>
+            </fields>
+        </struct>
+    </structs>
+    <enums>
+        <tenum namespace="com.xinzhi.hospital.services.crm.enums" name="DepartmentFlagEnum">
+            <doc>
+
+ 科室类别
+</doc>
+            <items>
+                <item>
+                    <label>PSYCHOLOGY</label>
+                    <value>1</value>
+                    <doc>
+
+ 心理科
+</doc>
+                </item>
+                <item>
+                    <label>INTERNAL</label>
+                    <value>2</value>
+                    <doc>
+
+ 内科
+</doc>
+                </item>
+                <item>
+                    <label>SURGICAL</label>
+                    <value>3</value>
+                    <doc>
+
+ 外科
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.xinzhi.hospital.services.crm.enums" name="UserStatusEnum">
+            <doc>
+
+ 用户状态
+</doc>
+            <items>
+                <item>
+                    <label>INVALID</label>
+                    <value>0</value>
+                    <doc>
+
+ 无效
+</doc>
+                </item>
+                <item>
+                    <label>INIT</label>
+                    <value>1</value>
+                    <doc>
+
+ 新建
+</doc>
+                </item>
+                <item>
+                    <label>VALID</label>
+                    <value>2</value>
+                    <doc>
+
+ 有效
+</doc>
+                </item>
+                <item>
+                    <label>FREEZED</label>
+                    <value>3</value>
+                    <doc>
+
+ 冻结
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.xinzhi.hospital.services.crm.enums" name="PatientMarkEnum">
+            <doc>
+
+ 患者标志状态
+</doc>
+            <items>
+                <item>
+                    <label>REWAR_DOCTOR</label>
+                    <value>1</value>
+                    <doc>
+
+ 第一位，是否已经奖励首单医生
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.xinzhi.hospital.services.crm.enums" name="HospitalLevelEnum">
+            <doc>
+
+ 医院等级
+</doc>
+            <items>
+                <item>
+                    <label>ONE_A</label>
+                    <value>1</value>
+                    <doc>
+
+ 一甲
+</doc>
+                </item>
+                <item>
+                    <label>ONE_B</label>
+                    <value>2</value>
+                    <doc>
+
+ 一乙
+</doc>
+                </item>
+                <item>
+                    <label>ONE_C</label>
+                    <value>3</value>
+                    <doc>
+
+ 一丙
+</doc>
+                </item>
+                <item>
+                    <label>TWO_A</label>
+                    <value>4</value>
+                    <doc>
+
+ 二甲
+</doc>
+                </item>
+                <item>
+                    <label>TWO_B</label>
+                    <value>5</value>
+                    <doc>
+
+ 二乙
+</doc>
+                </item>
+                <item>
+                    <label>TWO_C</label>
+                    <value>6</value>
+                    <doc>
+
+ 二丙
+</doc>
+                </item>
+                <item>
+                    <label>THREE_A</label>
+                    <value>7</value>
+                    <doc>
+
+ 三甲
+</doc>
+                </item>
+                <item>
+                    <label>THREE_B</label>
+                    <value>8</value>
+                    <doc>
+
+ 三乙
+</doc>
+                </item>
+                <item>
+                    <label>THREE_C</label>
+                    <value>9</value>
+                    <doc>
+
+ 三丙
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.xinzhi.hospital.services.crm.enums" name="DoctorType">
+            <doc>
+
+ 医生类型
+</doc>
+            <items>
+                <item>
+                    <label>NORMAL_DOCTOR</label>
+                    <value>1</value>
+                    <doc>
+
+ 普通医生
+</doc>
+                </item>
+                <item>
+                    <label>CUSTOMER_DOCTOR</label>
+                    <value>2</value>
+                    <doc>
+
+ 客服医生
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.xinzhi.hospital.services.crm.enums" name="GenderEnum">
+            <doc>
+
+ 性别
+</doc>
+            <items>
+                <item>
+                    <label>FEMALE</label>
+                    <value>0</value>
+                    <doc>
+
+ 女
+</doc>
+                </item>
+                <item>
+                    <label>MALE</label>
+                    <value>1</value>
+                    <doc>
+
+ 男
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.xinzhi.hospital.services.crm.enums" name="HospitalStatusEnum">
+            <doc>
+
+ 医院状态
+</doc>
+            <items>
+                <item>
+                    <label>INVALID</label>
+                    <value>0</value>
+                    <doc>
+
+ 无效
+</doc>
+                </item>
+                <item>
+                    <label>INIT</label>
+                    <value>1</value>
+                    <doc>
+
+ 新建
+</doc>
+                </item>
+                <item>
+                    <label>VALID</label>
+                    <value>2</value>
+                    <doc>
+
+ 有效
+</doc>
+                </item>
+                <item>
+                    <label>FREEZED</label>
+                    <value>3</value>
+                    <doc>
+
+ 冻结
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.xinzhi.hospital.services.crm.enums" name="HospitalFlagEnum">
+            <doc>
+
+ 医院类型
+</doc>
+            <items>
+                <item>
+                    <label>HOSPITAL</label>
+                    <value>1</value>
+                    <doc>
+
+ 医院
+</doc>
+                </item>
+                <item>
+                    <label>ORGANIZATION</label>
+                    <value>2</value>
+                    <doc>
+
+ 机构
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.xinzhi.hospital.services.crm.enums" name="DepartmentStatusEnum">
+            <doc>
+
+ 科室状态
+</doc>
+            <items>
+                <item>
+                    <label>INVALID</label>
+                    <value>0</value>
+                    <doc>
+
+ 无效
+</doc>
+                </item>
+                <item>
+                    <label>INIT</label>
+                    <value>1</value>
+                    <doc>
+
+ 新建
+</doc>
+                </item>
+                <item>
+                    <label>VALID</label>
+                    <value>2</value>
+                    <doc>
+
+ 有效
+</doc>
+                </item>
+                <item>
+                    <label>FREEZED</label>
+                    <value>3</value>
+                    <doc>
+
+ 冻结
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.xinzhi.hospital.services.crm.enums" name="UserTypeEnum">
+            <doc>
+
+ 用户类型
+</doc>
+            <items>
+                <item>
+                    <label>DOCTOR</label>
+                    <value>1</value>
+                    <doc>
+
+ 医生
+</doc>
+                </item>
+                <item>
+                    <label>PATIENT</label>
+                    <value>2</value>
+                    <doc>
+
+ 病人
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.xinzhi.hospital.services.crm.enums" name="FocusTypeEnum">
+            <doc>
+
+ 关注类型
+</doc>
+            <items>
+                <item>
+                    <label>FOCUS</label>
+                    <value>1</value>
+                    <doc>
+
+ 关注医生
+</doc>
+                </item>
+                <item>
+                    <label>SCAN</label>
+                    <value>2</value>
+                    <doc>
+
+ 扫码关注医生
+</doc>
+                </item>
+            </items>
+        </tenum>
+    </enums>
+</service>
