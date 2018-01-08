@@ -1,0 +1,75 @@
+.bs-docs-nav {
+    background-color: #303a40;
+    border-bottom: 1px solid #303a40;
+    margin-bottom: 0;
+}
+
+.bs-docs-nav .navbar-brand, .bs-docs-nav .navbar-nav > li > a {
+    color: white;
+    font-weight: bold;
+}
+
+.bs-docs-nav .navbar-nav > .active > a, .bs-docs-nav .navbar-nav > .active > a:hover, .bs-docs-nav .navbar-nav > li > a:hover {
+    background-color: #127fb6;
+    color: white;
+}
+
+.bs-docs-nav .navbar-toggle .icon-bar {
+    background-color: white;
+}
+
+.bs-docs-nav .navbar-header .navbar-toggle {
+    border-color: #fff;
+}
+
+.bs-docs-nav .navbar-header .navbar-toggle:focus, .bs-docs-nav .navbar-header .navbar-toggle:hover {
+    background-color: #127fb6;
+    border-color: white;
+}
+
+.bs-docs-content {
+    margin-top: 51px;
+}
+
+.footer {
+    border-top: 1px solid #e5e5e5;
+    color: #777;
+    padding: 30px 0;
+}
+
+.footer a {
+    color: #777;
+}
+
+.footer-bottom {
+    font-size: 13px;
+}
+
+.m10 {
+    margin: 10px;
+}
+
+.mt5 {
+    margin-top: 5px;
+}
+
+.mb5 {
+    margin-bottom: 5px;
+}
+
+.font20 {
+    font-size: 20px
+}
+
+.font15 {
+    font-size: 15px
+}
+
+.bs-docs-content .breadcrumb {
+    margin: 5px 15px 10px;
+}
+
+
+pre {
+  padding: 0px !important;
+}
