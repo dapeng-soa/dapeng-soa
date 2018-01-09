@@ -71,7 +71,7 @@
                                     <overWriteSnapshots>false</overWriteSnapshots>
                                     <overWriteIfNewer>true</overWriteIfNewer>
                                     <includeArtifactIds>
-                                        dapeng-core
+                                        dapeng-core,slf4j-api,logback-classic,logback-core
                                     </includeArtifactIds>
                                 </configuration>
                             </execution>
