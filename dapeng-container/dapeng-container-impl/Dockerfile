@@ -1,6 +1,6 @@
 #soa-container:base
-FROM docker.oa.isuwang.com:5000/system/jdk8:2.0
-MAINTAINER ever@iplas.com.cn
+FROM openjdk:8-jre-alpine
+MAINTAINER dapengsoa@gmail.com
 
 # Setting Envirnoment
 ENV CONTAINER_HOME /dapeng-container
