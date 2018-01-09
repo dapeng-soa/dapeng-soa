@@ -6,10 +6,14 @@ import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.metadata.Method;
 import com.github.dapeng.core.metadata.Service;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import com.github.dapeng.org.apache.thrift.TException;
+import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
 
 /**
  * Created by tangliu on 2016/4/13.
@@ -18,7 +22,7 @@ public class JsonPost {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JsonPost.class);
 
-    private String host = "127.0.0.1";
+    private String host = "127.0.0.1" ;
 
     private Integer port = SoaSystemEnvProperties.SOA_CONTAINER_PORT;
 
@@ -42,47 +46,29 @@ public class JsonPost {
     public String callServiceMethod(InvocationContext invocationContext, String jsonParameter, Service service) throws Exception {
 
         if (null == jsonParameter || "".equals(jsonParameter.trim())) {
-            jsonParameter = "{}";
+            jsonParameter = "{}" ;
         }
 
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        StringWriter out = new StringWriter();
-//
-//        @SuppressWarnings("unchecked")
-//        Map<String, Map<String, Object>> params = objectMapper.readValue(jsonParameter, Map.class);
-//
-//        Map<String, Object> map = new HashMap<>();
-//        map.put("serviceName", invocationContext.getServiceName());
-//        map.put("version", invocationContext.getVersionName());
-//        map.put("methodName", invocationContext.getMethodName());
-//        map.put("params", params);
-//
-//        objectMapper.writeValue(out, map);
-//
-//        //发起请求
-//        final DataInfo request = new DataInfo();
-//        request.setConsumesType("JSON");
-//        request.setConsumesValue(out.toString());
-//        request.setServiceName(invocationContext.getServiceName());
-//        request.setVersion(invocationContext.getVersionName());
-//        request.setMethodName(invocationContext.getMethodName());
+        List<Method> targetMethods = service.getMethods().stream().filter(_method ->
+                _method.name.equals(invocationContext.getMethodName()))
+                .collect(Collectors.toList());
 
-        Method method = null;
-        for (Method _method: service.getMethods()) {
-            if (_method.getName().equals(invocationContext.getMethodName())) {
-                method = _method;
-                break;
-            }
+        if (targetMethods.isEmpty()) {
+            return "method:" + invocationContext.getMethodName() + " for service:"
+                    + invocationContext.getServiceName() + " not found" ;
         }
 
-        JsonSerializer jsonEncoder = new JsonSerializer(service,method,method.request);
-        JsonSerializer jsonDecoder = new JsonSerializer(service,method,method.response);
+        Method method = targetMethods.get(0);
+
+
+        JsonSerializer jsonEncoder = new JsonSerializer(service, method, method.request, jsonParameter);
+        JsonSerializer jsonDecoder = new JsonSerializer(service, method, method.response);
 
         final long beginTime = System.currentTimeMillis();
 
         LOGGER.info("soa-request: {}", jsonParameter);
 
-        String jsonResponse = post(jsonParameter, jsonEncoder, jsonDecoder);
+        String jsonResponse = post(invocationContext.getServiceName(), invocationContext.getVersionName(), method.name,jsonParameter, jsonEncoder, jsonDecoder);
 
         LOGGER.info("soa-response: {} {}ms", jsonResponse, System.currentTimeMillis() - beginTime);
 
@@ -95,19 +81,17 @@ public class JsonPost {
      *
      * @return
      */
-    private String post(String requestJson, JsonSerializer jsonEncoder, JsonSerializer jsonDecoder) throws Exception {
+    private String post(String serviceName, String version, String method, String requestJson, JsonSerializer jsonEncoder, JsonSerializer jsonDecoder) throws Exception {
 
-        String jsonResponse = "{}";
+        String jsonResponse = "{}" ;
 
         TSoaTransport inputSoaTransport = null;
         TSoaTransport outputSoaTransport = null;
 
         try {
-            //TODO: need serialize jsonMap to RequestObj
+            Object result = new SoaConnectionImpl(host, port).send(serviceName, version, method, requestJson, jsonEncoder, jsonDecoder);
 
-            Object result = new SoaConnectionImpl(host,port).sendJson(requestJson,jsonEncoder,jsonEncoder);
-
-            jsonResponse = (String)result;
+            jsonResponse = (String) result;
 
         } catch (SoaException e) {
 
@@ -132,8 +116,7 @@ public class JsonPost {
             LOGGER.error(e.getMessage(), e);
             if (doNotThrowError) {
                 jsonResponse = String.format("{\"responseCode\":\"%s\", \"responseMsg\":\"%s\", \"success\":\"%s\"}", "9999", "系统繁忙，请稍后再试[9999]！", "{}");
-            }
-            else {
+            } else {
                 throw e;
             }
 

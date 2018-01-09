@@ -1,11 +1,16 @@
 package com.github.dapeng.client.json;
 
+import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.*;
+import com.github.dapeng.core.enums.CodecProtocol;
 import com.github.dapeng.core.metadata.*;
 import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.*;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,25 +20,56 @@ import java.util.stream.Collectors;
 import static com.github.dapeng.util.MetaDataUtil.*;
 
 public class JsonSerializer implements BeanSerializer<String> {
-    private final Logger logger = new Logger();
+    private final Logger logger = LoggerFactory.getLogger(JsonSerializer.class);
 
     private final Struct struct;
-    private ByteBuf byteBuf;
+    private ByteBuf requestByteBuf;
     private final Service service;
     private final Method method;
     private final InvocationContext invocationContext = InvocationContextImpl.Factory.getCurrentInstance();
 
+    /**
+     * for encode only
+     * @param service
+     * @param method
+     * @param struct
+     * @param jsonStr
+     * @throws TException
+     */
+    public JsonSerializer(Service service, Method method, Struct struct, String jsonStr) throws TException {
+        this.struct = struct;
+        this.service = service;
+        this.method = method;
+
+        if (jsonStr != null) {
+
+            try {
+                invocationContext.setCodecProtocol(CodecProtocol.Binary);
+                requestByteBuf = PooledByteBufAllocator.DEFAULT.buffer(8192);
+                TSoaTransport transport = new TSoaTransport(requestByteBuf);
+                TBinaryProtocol bodyProtocol = new TBinaryProtocol(transport);
+
+                new JsonParser(jsonStr, new Json2ThriftCallback(bodyProtocol)).parseJsValue();
+            } catch (Exception e) {
+                if (requestByteBuf != null) {
+                    requestByteBuf.release();
+                }
+                logger.error(e.getMessage(), e);
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * for decode only
+     * @param service
+     * @param method
+     * @param struct
+     */
     public JsonSerializer(Service service, Method method, Struct struct) {
         this.struct = struct;
         this.service = service;
         this.method = method;
-    }
-
-    public JsonSerializer(Service service, Method method, Struct struct, ByteBuf byteBuf) {
-        this.struct = struct;
-        this.service = service;
-        this.method = method;
-        this.byteBuf = byteBuf;
     }
 
     // thrift -> json
@@ -120,7 +156,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                 if (!skip) {
                     String subStructName = fieldDataType.qualifiedName;
                     Struct subStruct = findStruct(subStructName, service);
-                    new JsonSerializer(service, method, subStruct, byteBuf).read(iproto, writer);
+                    new JsonSerializer(service, method, subStruct).read(iproto, writer);
                 } else {
                     TProtocolUtil.skip(iproto, TType.STRUCT);
                 }
@@ -196,7 +232,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                 readField(iproto, metadataType, elemType, writer, false);
             } else {
                 if (struct != null) {
-                    new JsonSerializer(service, method, struct, byteBuf).read(iproto, writer);
+                    new JsonSerializer(service, method, struct).read(iproto, writer);
                 } else if (isCollectionKind(metadataType.kind)) {
                     //处理List<list<>>
                     TList list = iproto.readListBegin();
@@ -218,10 +254,6 @@ public class JsonSerializer implements BeanSerializer<String> {
         JsonWriter writer = new JsonWriter();
         read(iproto, writer);
         return writer.toString();
-    }
-
-    public void setByteBuf(ByteBuf byteBuf) {
-        this.byteBuf = byteBuf;
     }
 
     /**
@@ -277,9 +309,7 @@ public class JsonSerializer implements BeanSerializer<String> {
 
         //当前处理数据节点
         StackNode current;
-        String currentHeader;
-        //标志是否是第一个object
-//        boolean inited = false;
+        String currentHeaderName;
         //onStartField的时候, 记录是否找到该Field. 如果没找到,那么需要skip这个field
         boolean foundField = true;
 
@@ -329,12 +359,11 @@ public class JsonSerializer implements BeanSerializer<String> {
                 case HEADER_END:
                     break;
                 case BODY_BEGIN:
-                    new SoaHeaderSerializer().write(buildSoaHeader(), oproto);
                     //初始化当前数据节点
                     DataType initDataType = new DataType();
                     initDataType.setKind(DataType.KIND.STRUCT);
                     initDataType.qualifiedName = struct.name;
-                    current = new StackNode(initDataType, byteBuf.writerIndex(), struct);
+                    current = new StackNode(initDataType, requestByteBuf.writerIndex(), struct);
 
                     oproto.writeStructBegin(new TStruct(current.struct.name));
 
@@ -344,7 +373,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
                         peek().increaseElement();
                         //集合套集合的变态处理方式
-                        current = new StackNode(peek().dataType.valueType, byteBuf.writerIndex(), current.struct);
+                        current = new StackNode(peek().dataType.valueType, requestByteBuf.writerIndex(), current.struct);
                     }
                     switch (current.dataType.kind) {
                         case STRUCT:
@@ -417,7 +446,7 @@ public class JsonSerializer implements BeanSerializer<String> {
             if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
                 peek().increaseElement();
                 //集合套集合的变态处理方式
-                current = new StackNode(peek().dataType.valueType, byteBuf.writerIndex(), current.struct);
+                current = new StackNode(peek().dataType.valueType, requestByteBuf.writerIndex(), current.struct);
             }
 
             switch (current.dataType.kind) {
@@ -430,7 +459,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     break;
             }
 
-            stackNew(new StackNode(current.dataType.valueType, byteBuf.writerIndex(), findStruct(current.dataType.valueType.qualifiedName, service)));
+            stackNew(new StackNode(current.dataType.valueType, requestByteBuf.writerIndex(), findStruct(current.dataType.valueType.qualifiedName, service)));
         }
 
         @Override
@@ -462,22 +491,22 @@ public class JsonSerializer implements BeanSerializer<String> {
                     } else if (name.equals("body")) {
                         parsePhase = ParsePhase.BODY_BEGIN;
                     } else {
-                        logger.warning("skip field(" + name + ")@pase:" + parsePhase);
+                        logger.warn("skip field(" + name + ")@pase:" + parsePhase);
                     }
                     break;
                 case HEADER:
-                    currentHeader = name;
+                    currentHeaderName = name;
                     break;
                 case HEADER_END:
                     if (name.equals("body")) {
                         parsePhase = ParsePhase.BODY_BEGIN;
                     } else {
-                        logger.warning("skip field(" + name + ")@pase:" + parsePhase);
+                        logger.warn("skip field(" + name + ")@pase:" + parsePhase);
                     }
                     break;
                 case BODY:
                     if (current.dataType.kind == DataType.KIND.MAP) {
-                        stackNew(new StackNode(current.dataType.keyType, byteBuf.writerIndex(), null));
+                        stackNew(new StackNode(current.dataType.keyType, requestByteBuf.writerIndex(), null));
                         assert isValidMapKeyType(current.dataType.keyType.kind);
                         if (current.dataType.kind == DataType.KIND.STRING) {
                             oproto.writeString(name);
@@ -485,7 +514,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                             writeIntField(name, current.dataType.kind);
                         }
                         pop();
-                        stackNew(new StackNode(current.dataType.valueType, byteBuf.writerIndex(), findStruct(current.dataType.valueType.qualifiedName, service)));
+                        stackNew(new StackNode(current.dataType.valueType, requestByteBuf.writerIndex(), findStruct(current.dataType.valueType.qualifiedName, service)));
                     } else {
                         Field field = findField(name, current.struct);
                         if (field == null) {
@@ -497,11 +526,11 @@ public class JsonSerializer implements BeanSerializer<String> {
                         }
 
                         oproto.writeFieldBegin(new TField(field.name, dataType2Byte(field.dataType), (short) field.getTag()));
-                        stackNew(new StackNode(field.dataType, byteBuf.writerIndex(), findStruct(field.dataType.qualifiedName, service)));
+                        stackNew(new StackNode(field.dataType, requestByteBuf.writerIndex(), findStruct(field.dataType.qualifiedName, service)));
                     }
                     break;
                 case BODY_END:
-                    logger.warning("skip field(" + name + ")@pase:" + parsePhase);
+                    logger.warn("skip field(" + name + ")@pase:" + parsePhase);
                     break;
             }
 
@@ -541,14 +570,14 @@ public class JsonSerializer implements BeanSerializer<String> {
         public void onBoolean(boolean value) throws TException {
             switch (parsePhase) {
                 case HEADER:
-                    logger.warning("skip boolean(" + value + ")@pase:" + parsePhase);
+                    logger.warn("skip boolean(" + value + ")@pase:" + parsePhase);
                     break;
                 case BODY:
                     if (peek() != null && isMultiElementKind(peek().dataType.kind)) peek().increaseElement();
                     oproto.writeBool(value);
                     break;
                 default:
-                    logger.warning("skip boolean(" + value + ")@pase:" + parsePhase);
+                    logger.warn("skip boolean(" + value + ")@pase:" + parsePhase);
             }
 
         }
@@ -589,7 +618,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     }
                     break;
                 default:
-                    logger.warning("skip number(" + value + ")@pase:" + parsePhase);
+                    logger.warn("skip number(" + value + ")@pase:" + parsePhase);
             }
         }
 
@@ -600,7 +629,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     break;
                 case BODY:
                     //重置writerIndex
-                    byteBuf.writerIndex(current.byteBufPosition);
+                    requestByteBuf.writerIndex(current.byteBufPosition);
                     break;
             }
         }
@@ -622,7 +651,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     oproto.writeString(value);
                     break;
                 default:
-                    logger.warning("skip boolean(" + value + ")@pase:" + parsePhase);
+                    logger.warn("skip boolean(" + value + ")@pase:" + parsePhase);
             }
         }
 
@@ -650,10 +679,10 @@ public class JsonSerializer implements BeanSerializer<String> {
             int elCount = current.elCount;
 
             //备份最新的writerIndex
-            int currentIndex = byteBuf.writerIndex();
+            int currentIndex = requestByteBuf.writerIndex();
 
             //reWriteListBegin
-            byteBuf.writerIndex(beginPosition);
+            requestByteBuf.writerIndex(beginPosition);
 
             switch (current.dataType.kind) {
                 case MAP:
@@ -667,54 +696,40 @@ public class JsonSerializer implements BeanSerializer<String> {
                     break;
             }
 
-            byteBuf.writerIndex(currentIndex);
-        }
-
-        private SoaHeader buildSoaHeader() {
-            SoaHeader header = new SoaHeader();
-            header.setServiceName(invocationContext.getServiceName());
-            header.setMethodName(invocationContext.getMethodName());
-            header.setVersionName(invocationContext.getVersionName());
-            header.setCallerFrom(invocationContext.getCallerFrom());
-            header.setCallerIp(invocationContext.getCallerIp());
-            header.setCustomerId(invocationContext.getCustomerId());
-            header.setCustomerName(invocationContext.getCustomerName());
-            header.setOperatorId(invocationContext.getOperatorId());
-
-            return header;
+            requestByteBuf.writerIndex(currentIndex);
         }
 
         private void fillStringToInvocationCtx(String value) {
-            if ("serviceName".equals(currentHeader)) {
+            if ("serviceName".equals(currentHeaderName)) {
                 invocationContext.setServiceName(value);
-            } else if ("methodName".equals(currentHeader)) {
+            } else if ("methodName".equals(currentHeaderName)) {
                 invocationContext.setMethodName(value);
-            } else if ("versionName".equals(currentHeader)) {
+            } else if ("versionName".equals(currentHeaderName)) {
                 invocationContext.setVersionName(value);
-            } else if ("calleeIp".equals(currentHeader)) {
+            } else if ("calleeIp".equals(currentHeaderName)) {
                 invocationContext.setCalleeIp(Optional.of(value));
-            } else if ("callerFrom".equals(currentHeader)) {
+            } else if ("callerFrom".equals(currentHeaderName)) {
                 invocationContext.setCallerFrom(Optional.of(value));
-            } else if ("callerIp".equals(currentHeader)) {
+            } else if ("callerIp".equals(currentHeaderName)) {
                 invocationContext.setCallerFrom(Optional.of(value));
-            } else if ("customerName".equals(currentHeader)) {
+            } else if ("customerName".equals(currentHeaderName)) {
                 invocationContext.setCustomerName(Optional.of(value));
             } else {
-                logger.warning("skip field(" + currentHeader + ")@pase:" + parsePhase);
+                logger.warn("skip field(" + currentHeaderName + ")@pase:" + parsePhase);
             }
         }
 
         private void fillIntToInvocationCtx(int value) {
-            if ("calleePort".equals(currentHeader)) {
+            if ("calleePort".equals(currentHeaderName)) {
                 invocationContext.setCalleePort(Optional.of(value));
-            } else if ("operatorId".equals(currentHeader)) {
+            } else if ("operatorId".equals(currentHeaderName)) {
                 invocationContext.setOperatorId(Optional.of(value));
-            } else if ("customerId".equals(currentHeader)) {
+            } else if ("customerId".equals(currentHeaderName)) {
                 invocationContext.setCustomerId(Optional.of(value));
-            } else if ("transactionSequence".equals(currentHeader)) {
+            } else if ("transactionSequence".equals(currentHeaderName)) {
                 invocationContext.setTransactionSequence(Optional.of(value));
             } else {
-                logger.warning("skip field(" + currentHeader + ")@pase:" + parsePhase);
+                logger.warn("skip field(" + currentHeaderName + ")@pase:" + parsePhase);
             }
         }
     }
@@ -740,8 +755,14 @@ public class JsonSerializer implements BeanSerializer<String> {
      */
     @Override
     public void write(String input, TProtocol oproto) throws TException {
-
-        new JsonParser(input, new Json2ThriftCallback(oproto)).parseJsValue();
+        try {
+            int length = requestByteBuf.readableBytes();
+            for (int index = 0; index < length; index++){
+                oproto.writeByte(requestByteBuf.getByte(index));
+            }
+        } finally {
+            requestByteBuf.release();
+        }
     }
 
     @Override
@@ -794,23 +815,4 @@ public class JsonSerializer implements BeanSerializer<String> {
     private boolean isComplexKind(DataType.KIND kind) {
         return isMultiElementKind(kind) || kind == DataType.KIND.STRUCT;
     }
-
-    class Logger {
-        void debug(String msg) {
-            System.out.println(msg);
-        }
-
-        void info(String msg) {
-            System.out.println(msg);
-        }
-
-        void warning(String msg) {
-            System.out.println(msg);
-        }
-
-        void error(String msg) {
-            System.out.println(msg);
-        }
-    }
-
 }
