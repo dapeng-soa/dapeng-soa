@@ -1,11 +1,10 @@
 package com.github.dapeng.json;
 
 import com.github.dapeng.client.netty.TSoaTransport;
-import com.github.dapeng.core.BeanSerializer;
-import com.github.dapeng.core.InvocationContext;
-import com.github.dapeng.core.InvocationContextImpl;
+import com.github.dapeng.core.*;
 import com.github.dapeng.core.enums.CodecProtocol;
 import com.github.dapeng.core.metadata.*;
+import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.*;
 import io.netty.buffer.ByteBuf;
@@ -27,7 +26,7 @@ public class JsonSerializer implements BeanSerializer<String> {
     private ByteBuf requestByteBuf;
     private final Service service;
     private final Method method;
-    private final InvocationContext invocationContext = InvocationContextImpl.Factory.getCurrentInstance();
+    private final InvocationContext invocationCtx = InvocationContextImpl.Factory.getCurrentInstance();
 
     /**
      * for encode only
@@ -43,21 +42,7 @@ public class JsonSerializer implements BeanSerializer<String> {
         this.method = method;
 
         if (jsonStr != null) {
-
-            try {
-                invocationContext.setCodecProtocol(CodecProtocol.Binary);
-                requestByteBuf = PooledByteBufAllocator.DEFAULT.buffer(8192);
-                TSoaTransport transport = new TSoaTransport(requestByteBuf);
-                TBinaryProtocol bodyProtocol = new TBinaryProtocol(transport);
-
-                new JsonParser(jsonStr, new Json2ThriftCallback(bodyProtocol)).parseJsValue();
-            } catch (Exception e) {
-                if (requestByteBuf != null) {
-                    requestByteBuf.release();
-                }
-                logger.error(e.getMessage(), e);
-                throw e;
-            }
+            invocationCtx.setCodecProtocol(CodecProtocol.Binary);
         }
     }
 
@@ -360,6 +345,8 @@ public class JsonSerializer implements BeanSerializer<String> {
                 case HEADER_END:
                     break;
                 case BODY_BEGIN:
+                    new SoaHeaderSerializer().write(buildSoaHeader(), oproto);
+
                     //初始化当前数据节点
                     DataType initDataType = new DataType();
                     initDataType.setKind(DataType.KIND.STRUCT);
@@ -395,6 +382,22 @@ public class JsonSerializer implements BeanSerializer<String> {
                     logger.error("should not come here, current phase:" + parsePhase);
                     break;
             }
+        }
+
+        private SoaHeader buildSoaHeader() {
+            SoaHeader header = new SoaHeader();
+            header.setServiceName(invocationCtx.getServiceName());
+            header.setVersionName(invocationCtx.getVersionName());
+            header.setMethodName(invocationCtx.getMethodName());
+
+            InvocationContext invocationContext = InvocationContextImpl.Factory.getCurrentInstance();
+            header.setCallerFrom(invocationContext.getCallerFrom());
+            header.setCallerIp(invocationContext.getCallerIp());
+            header.setCustomerId(invocationContext.getCustomerId());
+            header.setCustomerName(invocationContext.getCustomerName());
+            header.setOperatorId(invocationContext.getOperatorId());
+
+            return header;
         }
 
         @Override
@@ -702,19 +705,19 @@ public class JsonSerializer implements BeanSerializer<String> {
 
         private void fillStringToInvocationCtx(String value) {
             if ("serviceName".equals(currentHeaderName)) {
-                invocationContext.setServiceName(value);
+                invocationCtx.setServiceName(value);
             } else if ("methodName".equals(currentHeaderName)) {
-                invocationContext.setMethodName(value);
+                invocationCtx.setMethodName(value);
             } else if ("versionName".equals(currentHeaderName)) {
-                invocationContext.setVersionName(value);
+                invocationCtx.setVersionName(value);
             } else if ("calleeIp".equals(currentHeaderName)) {
-                invocationContext.setCalleeIp(Optional.of(value));
+                invocationCtx.setCalleeIp(Optional.of(value));
             } else if ("callerFrom".equals(currentHeaderName)) {
-                invocationContext.setCallerFrom(Optional.of(value));
+                invocationCtx.setCallerFrom(Optional.of(value));
             } else if ("callerIp".equals(currentHeaderName)) {
-                invocationContext.setCallerFrom(Optional.of(value));
+                invocationCtx.setCallerFrom(Optional.of(value));
             } else if ("customerName".equals(currentHeaderName)) {
-                invocationContext.setCustomerName(Optional.of(value));
+                invocationCtx.setCustomerName(Optional.of(value));
             } else {
                 logger.warn("skip field(" + currentHeaderName + ")@pase:" + parsePhase);
             }
@@ -722,13 +725,13 @@ public class JsonSerializer implements BeanSerializer<String> {
 
         private void fillIntToInvocationCtx(int value) {
             if ("calleePort".equals(currentHeaderName)) {
-                invocationContext.setCalleePort(Optional.of(value));
+                invocationCtx.setCalleePort(Optional.of(value));
             } else if ("operatorId".equals(currentHeaderName)) {
-                invocationContext.setOperatorId(Optional.of(value));
+                invocationCtx.setOperatorId(Optional.of(value));
             } else if ("customerId".equals(currentHeaderName)) {
-                invocationContext.setCustomerId(Optional.of(value));
+                invocationCtx.setCustomerId(Optional.of(value));
             } else if ("transactionSequence".equals(currentHeaderName)) {
-                invocationContext.setTransactionSequence(Optional.of(value));
+                invocationCtx.setTransactionSequence(Optional.of(value));
             } else {
                 logger.warn("skip field(" + currentHeaderName + ")@pase:" + parsePhase);
             }
@@ -756,11 +759,7 @@ public class JsonSerializer implements BeanSerializer<String> {
      */
     @Override
     public void write(String input, TProtocol oproto) throws TException {
-        try {
-            oproto.writeBinary(requestByteBuf.nioBuffer());
-        } finally {
-            requestByteBuf.release();
-        }
+        new JsonParser(input, new Json2ThriftCallback(oproto)).parseJsValue();
     }
 
     @Override
@@ -812,5 +811,9 @@ public class JsonSerializer implements BeanSerializer<String> {
      */
     private boolean isComplexKind(DataType.KIND kind) {
         return isMultiElementKind(kind) || kind == DataType.KIND.STRUCT;
+    }
+
+    public void setRequestByteBuf(ByteBuf requestByteBuf) {
+        this.requestByteBuf = requestByteBuf;
     }
 }

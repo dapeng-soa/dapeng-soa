@@ -130,7 +130,7 @@
         <!-- dapeng-soa-->
         <dependency>
             <groupId>com.github.dapeng</groupId>
-            <artifactId>dapeng-client-netty</artifactId>
+            <artifactId>dapeng-json</artifactId>
             <version>${project.version}</version>
         </dependency>
 

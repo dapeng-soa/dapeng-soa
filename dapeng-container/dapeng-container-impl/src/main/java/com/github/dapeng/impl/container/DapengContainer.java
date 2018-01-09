@@ -120,12 +120,7 @@ public class DapengContainer implements Container {
     @Override
     public Executor getDispatcher() {
         if(!SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL){
-            return new Executor() {
-                @Override
-                public void execute(Runnable command) {
-                    command.run();
-                }
-            };
+            return command -> command.run();
         }
         else {
             return Executors.newFixedThreadPool(SoaSystemEnvProperties.SOA_CORE_POOL_SIZE);
@@ -157,13 +152,8 @@ public class DapengContainer implements Container {
         //4.启动Apploader， plugins
         getPlugins().forEach(Plugin::start);
 
-//        DapengContainer container = this;
-
         Runtime.getRuntime().addShutdownHook( new Thread( ()->{
             getPlugins().forEach(Plugin::stop);
-//            synchronized (container){
-//                container.notify();
-//            }
             shutdownSignal.countDown();
         } ) );
 
@@ -172,13 +162,6 @@ public class DapengContainer implements Container {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-//        synchronized (container){
-//            try {
-//                container.wait();
-//            }
-//            catch(InterruptedException ex){
-//            }
-//        }
     }
 
 
