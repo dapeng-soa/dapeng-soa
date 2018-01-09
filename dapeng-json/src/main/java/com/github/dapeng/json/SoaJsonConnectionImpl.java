@@ -1,5 +1,6 @@
-package com.github.dapeng.client.netty;
+package com.github.dapeng.json;
 
+import com.github.dapeng.client.netty.SoaBaseConnection;
 import com.github.dapeng.core.BeanSerializer;
 import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.SoaHeader;
@@ -10,23 +11,23 @@ import io.netty.buffer.PooledByteBufAllocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SoaConnectionImpl extends SoaBaseConnection {
+public class SoaJsonConnectionImpl extends SoaBaseConnection {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SoaConnectionImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SoaJsonConnectionImpl.class);
 
-    public SoaConnectionImpl(String host, int port) {
+    public SoaJsonConnectionImpl(String host, int port) {
         super(host, port);
     }
 
     protected  <REQ> ByteBuf buildRequestBuf(String service, String version, String method,int seqid, REQ request, BeanSerializer<REQ> requestSerializer) throws SoaException {
         final ByteBuf requestBuf = PooledByteBufAllocator.DEFAULT.buffer(8192);
 
-        SoaMessageBuilder<REQ> builder = new SoaMessageBuilder<>();
+        SoaJsonMessageBuilder<REQ> builder = new SoaJsonMessageBuilder();
 
-        SoaHeader header = buildHeader(service, version, method);
+        ((JsonSerializer)requestSerializer).setRequestByteBuf(requestBuf);
+
         try {
             ByteBuf buf = builder.buffer(requestBuf)
-                    .header(header)
                     .body(request, requestSerializer)
                     .seqid(seqid)
                     .build();

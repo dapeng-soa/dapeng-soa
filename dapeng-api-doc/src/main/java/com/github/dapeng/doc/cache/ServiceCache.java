@@ -37,23 +37,12 @@ public class ServiceCache {
 
     public void init() {
         System.out.println("------------------------- Initialize serviceCache......");
-        new Thread() {
-            @Override
-            public void run() {
-                // 延迟10秒
-                try {
-                    Thread.sleep(10 * 1000);
-                } catch (InterruptedException e) {
-                }
 
-                System.out.println("--------------------Container: " + ContainerFactory.getContainer());
-                System.out.println("--------------------Applications: " + ContainerFactory.getContainer().getApplications());
+        System.out.println("--------------------Container: " + ContainerFactory.getContainer());
+        System.out.println("--------------------Applications: " + ContainerFactory.getContainer().getApplications());
 
-                List<Application> applications = ContainerFactory.getContainer().getApplications();
-                applications.forEach(i -> loadServices(i));
-            }
-        }.start();
-
+        List<Application> applications = ContainerFactory.getContainer().getApplications();
+        applications.forEach(i -> loadServices(i));
     }
 
     private void unloadServices(Application application) {

@@ -52,7 +52,7 @@ public class Bootstrap {
     }
 
 
-    private static void startup(ClassLoader containerCl, List<ClassLoader> applicationCls) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    public static void startup(ClassLoader containerCl, List<ClassLoader> applicationCls) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         Thread.currentThread().setContextClassLoader(containerCl);
         Class<?> containerFactoryClz = containerCl.loadClass("com.github.dapeng.api.ContainerFactory");
         Method createContainerMethod = containerFactoryClz.getMethod("createContainer", List.class, ClassLoader.class);

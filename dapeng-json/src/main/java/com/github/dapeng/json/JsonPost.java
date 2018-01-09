@@ -89,7 +89,7 @@ public class JsonPost {
         TSoaTransport outputSoaTransport = null;
 
         try {
-            Object result = new SoaConnectionImpl(host, port).send(serviceName, version, method, requestJson, jsonEncoder, jsonDecoder);
+            Object result = new SoaJsonConnectionImpl(host, port).send(serviceName, version, method, requestJson, jsonEncoder, jsonDecoder);
 
             jsonResponse = (String) result;
 
@@ -102,16 +102,7 @@ public class JsonPost {
                 throw e;
             }
 
-        } catch (TException e) {
-
-            LOGGER.error(e.getMessage(), e);
-            if (doNotThrowError) {
-                jsonResponse = String.format("{\"responseCode\":\"%s\", \"responseMsg\":\"%s\", \"success\":\"%s\"}", "9999", e.getMessage(), "{}");
-            } else {
-                throw e;
-            }
-
-        } catch (Exception e) {
+        }  catch (Exception e) {
 
             LOGGER.error(e.getMessage(), e);
             if (doNotThrowError) {

@@ -1,10 +1,10 @@
 package com.github.dapeng.doc;
 
-import com.github.dapeng.doc.cache.ServiceCache;
-import com.github.dapeng.client.json.JsonPost;
 import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.metadata.Service;
+import com.github.dapeng.doc.cache.ServiceCache;
+import com.github.dapeng.json.JsonPost;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * 测试Controller
@@ -52,16 +54,50 @@ public class TestController {
 
         Service service = serviceCache.getService(serviceName, versionName);
 
-        InvocationContext invocationContext = InvocationContextImpl.Factory.getCurrentInstance();
-        invocationContext.setServiceName(serviceName);
-        invocationContext.setVersionName(versionName);
-        invocationContext.setMethodName(methodName);
-        invocationContext.setCallerFrom(Optional.of("TestController"));
+        InvocationContext invocationCtx = InvocationContextImpl.Factory.getCurrentInstance();
+        invocationCtx.setServiceName(serviceName);
+        invocationCtx.setVersionName(versionName);
+        invocationCtx.setMethodName(methodName);
+        invocationCtx.setCallerFrom(Optional.of("JsonCaller"));
+
+        fillInvocationCtx(invocationCtx, req);
+
         try {
-            return jsonPost.callServiceMethod(invocationContext, jsonParameter, service);
+            return jsonPost.callServiceMethod(invocationCtx, jsonParameter, service);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
         return null;
+    }
+
+    private void fillInvocationCtx(InvocationContext invocationCtx, HttpServletRequest req) {
+        Set<String> parameters = req.getParameterMap().keySet();
+        if (parameters.contains("calleeIp")) {
+            invocationCtx.setCalleeIp(Optional.of(req.getParameter("calleeIp")));
+        }
+
+        if (parameters.contains("calleePort")) {
+            invocationCtx.setCalleePort(Optional.of(Integer.valueOf(req.getParameter("calleePort"))));
+        }
+
+        if (parameters.contains("callerIp")) {
+            invocationCtx.setCallerIp(Optional.of(req.getParameter("callerIp")));
+        }
+
+        if (parameters.contains("callerFrom")) {
+            invocationCtx.setCallerFrom(Optional.of(req.getParameter("callerFrom")));
+        }
+
+        if (parameters.contains("customerName")) {
+            invocationCtx.setCustomerName(Optional.of(req.getParameter("customerName")));
+        }
+
+        if (parameters.contains("customerId")) {
+            invocationCtx.setCustomerId(Optional.of(Integer.valueOf(req.getParameter("customerId"))));
+        }
+
+        if (parameters.contains("operatorId")) {
+            invocationCtx.setOperatorId(Optional.of(Integer.valueOf(req.getParameter("operatorId"))));
+        }
     }
 }
