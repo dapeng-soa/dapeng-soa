@@ -35,8 +35,8 @@ public class SoaMessageParser<RESP> {
         this.buffer = buffer;
         this.bodySerializer = bodySerializer;
         // DEBUG
-        System.out.println("Dump SoaMessageParser...");
-        DumpUtil.dump(buffer);
+//        System.out.println("Dump SoaMessageParser...");
+//        DumpUtil.dump(buffer);
     }
 
     public SoaHeader getHeader() {

@@ -61,14 +61,14 @@ public class JsonPost {
         Method method = targetMethods.get(0);
 
 
-        JsonSerializer jsonEncoder = new JsonSerializer(service, method, method.request);
+        JsonSerializer jsonEncoder = new JsonSerializer(service, method, method.request, jsonParameter);
         JsonSerializer jsonDecoder = new JsonSerializer(service, method, method.response);
 
         final long beginTime = System.currentTimeMillis();
 
         LOGGER.info("soa-request: {}", jsonParameter);
 
-        String jsonResponse = post(jsonParameter, jsonEncoder, jsonDecoder);
+        String jsonResponse = post(invocationContext.getServiceName(), invocationContext.getVersionName(), method.name,jsonParameter, jsonEncoder, jsonDecoder);
 
         LOGGER.info("soa-response: {} {}ms", jsonResponse, System.currentTimeMillis() - beginTime);
 
@@ -81,7 +81,7 @@ public class JsonPost {
      *
      * @return
      */
-    private String post(String requestJson, JsonSerializer jsonEncoder, JsonSerializer jsonDecoder) throws Exception {
+    private String post(String serviceName, String version, String method, String requestJson, JsonSerializer jsonEncoder, JsonSerializer jsonDecoder) throws Exception {
 
         String jsonResponse = "{}" ;
 
@@ -89,9 +89,7 @@ public class JsonPost {
         TSoaTransport outputSoaTransport = null;
 
         try {
-            //TODO: need serialize jsonMap to RequestObj
-
-            Object result = new SoaConnectionImpl(host, port).sendJson(requestJson, jsonEncoder, jsonDecoder);
+            Object result = new SoaConnectionImpl(host, port).send(serviceName, version, method, requestJson, jsonEncoder, jsonDecoder);
 
             jsonResponse = (String) result;
 

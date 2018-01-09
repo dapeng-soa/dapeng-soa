@@ -1,9 +1,7 @@
 package com.github.dapeng.util;
 
-import com.github.dapeng.core.SoaHeaderSerializer;
+import com.github.dapeng.core.*;
 import com.github.dapeng.client.netty.TSoaTransport;
-import com.github.dapeng.core.BeanSerializer;
-import com.github.dapeng.core.SoaHeader;
 import com.github.dapeng.core.SoaHeaderSerializer;
 import com.github.dapeng.core.enums.CodecProtocol;
 import com.github.dapeng.org.apache.thrift.TException;
@@ -25,7 +23,8 @@ public class SoaMessageBuilder<T> {
     private SoaHeader header;
     private T body;
     private BeanSerializer<T> bodySerializer;
-    private CodecProtocol protocol=CodecProtocol.CompressedBinary;
+    private final InvocationContext invocationCtx = InvocationContextImpl.Factory.getCurrentInstance();
+    private CodecProtocol protocol;
     private int seqid;
 
     private ByteBuf buffer;
@@ -36,7 +35,7 @@ public class SoaMessageBuilder<T> {
         return this;
     }
 
-    public SoaMessageBuilder<T> buffer(ByteBuf buffer){
+    public SoaMessageBuilder<T> buffer(ByteBuf buffer) {
         this.buffer = buffer;
         return this;
     }
@@ -59,6 +58,8 @@ public class SoaMessageBuilder<T> {
 
     public ByteBuf build() throws TException {
         //buildHeader
+        protocol = protocol == null ? (invocationCtx.getCodecProtocol() == null ? CodecProtocol.CompressedBinary
+                : invocationCtx.getCodecProtocol()) : protocol;
         TSoaTransport transport = new TSoaTransport(buffer);
         TBinaryProtocol headerProtocol = new TBinaryProtocol(transport);
         headerProtocol.writeByte(STX);
@@ -82,32 +83,11 @@ public class SoaMessageBuilder<T> {
             default:
                 throw new TException("通讯协议不正确(包体协议)");
         }
-        bodySerializer.write(body,bodyProtocol);
+        bodySerializer.write(body, bodyProtocol);
 
         headerProtocol.writeByte(ETX);
         transport.flush();
 
         return this.buffer;
     }
-
-    public ByteBuf buildJson() throws TException {
-        //buildHeader
-        TSoaTransport transport = new TSoaTransport(buffer);
-        TBinaryProtocol binaryProtocol = new TBinaryProtocol(transport);
-        binaryProtocol.writeByte(STX);
-        binaryProtocol.writeByte(VERSION);
-        //TODO 协议
-        binaryProtocol.writeByte(CodecProtocol.Binary.getCode());
-        binaryProtocol.writeI32(seqid);
-
-        bodySerializer.write(body,binaryProtocol);
-
-        binaryProtocol.writeByte(ETX);
-        transport.flush();
-
-        return this.buffer;
-    }
-
-
-
 }

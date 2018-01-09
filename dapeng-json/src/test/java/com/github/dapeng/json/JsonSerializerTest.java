@@ -156,19 +156,19 @@ public class JsonSerializerTest {
 
     private static void doTest(Service service, Method method, Struct struct, String json, String desc) throws TException {
 
-        final ByteBuf requestBuf = PooledByteBufAllocator.DEFAULT.buffer(8192);
-
-        JsonSerializer jsonSerializer = new JsonSerializer(service, method, struct, requestBuf);
-
-        TProtocol outProtocol = new TBinaryProtocol(new TSoaTransport(requestBuf));
-        jsonSerializer.write(json, outProtocol);
-
-        TProtocol inProtocol = new TBinaryProtocol(new TSoaTransport(requestBuf));
-
-        System.out.println("origJson:\n" + json);
-
-        System.out.println("after enCode and decode:\n" + jsonSerializer.read(inProtocol));
-        System.out.println(desc + " ends=====================");
+//        final ByteBuf requestBuf = PooledByteBufAllocator.DEFAULT.buffer(8192);
+//
+//        JsonSerializer jsonSerializer = new JsonSerializer(service, method, struct, requestBuf);
+//
+//        TProtocol outProtocol = new TBinaryProtocol(new TSoaTransport(requestBuf));
+//        jsonSerializer.write(json, outProtocol);
+//
+//        TProtocol inProtocol = new TBinaryProtocol(new TSoaTransport(requestBuf));
+//
+//        System.out.println("origJson:\n" + json);
+//
+//        System.out.println("after enCode and decode:\n" + jsonSerializer.read(inProtocol));
+//        System.out.println(desc + " ends=====================");
 
     }
 
