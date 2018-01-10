@@ -71,7 +71,6 @@ public class ZookeeperWatcher {
             LOGGER.error("get children of config root error");
             LOGGER.error(e.getMessage(), e);
         } catch (InterruptedException e) {
-            e.printStackTrace();
             LOGGER.error(e.getMessage(), e);
         }
     }
@@ -130,7 +129,7 @@ public class ZookeeperWatcher {
                 new RouteParser().parseAll(routes, data);
             }
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
@@ -209,7 +208,7 @@ public class ZookeeperWatcher {
                 zk.close();
                 zk = null;
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                LOGGER.error(e.getMessage(), e);
             }
         }
     }

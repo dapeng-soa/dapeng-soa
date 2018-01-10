@@ -31,9 +31,9 @@ public class SoaClientHandler extends ChannelInboundHandlerAdapter {
             try {
                 callBack.onSuccess((ByteBuf) msg);
             } catch (ExecutionException e) {
-                e.printStackTrace();
+                LOGGER.error(e.getMessage(),e);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                LOGGER.error(e.getMessage(),e);
             }
     }
 

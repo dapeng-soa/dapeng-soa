@@ -38,7 +38,7 @@ public class StaticInfoHelper {
                 }
             });
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
@@ -60,7 +60,7 @@ public class StaticInfoHelper {
             prop.load(in);
         } catch (IOException e) {
             LOGGER.error("error reading file config.properties");
-            e.printStackTrace();
+            LOGGER.error(e.getMessage(), e);
         }
 
         Iterator<Map.Entry<Object, Object>> it = prop.entrySet().iterator();
@@ -84,9 +84,9 @@ public class StaticInfoHelper {
                 LOGGER.info("node {} deleted. ", path + "/" + configNodeName);
             }
         } catch (KeeperException e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage(), e);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage(), e);
         }
     }
 

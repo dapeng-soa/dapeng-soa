@@ -55,13 +55,32 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                 } catch (TException e) {
                     LOGGER.error(e.getMessage(), e);
                     writeErrorMessage(ctx, context, new SoaException(SoaBaseCode.UnKnown, e.getMessage()));
+                    if (reqMessage.refCnt() > 0)
+                        reqMessage.release();
+
+                    while (reqMessage.refCnt() > 0) {
+                        //TODO
+                        LOGGER.error("request ByteBuf did not release correctly.The current refCnt is " + reqMessage.refCnt(), new Throwable());
+                        reqMessage.release();
+                    }
                 }
             });
         } catch (TException ex) {
+            if (reqMessage.refCnt() > 0)
+                reqMessage.release();
+
+            while (reqMessage.refCnt() > 0) {
+                //TODO
+                LOGGER.error("request ByteBuf did not release correctly.The current refCnt is " + reqMessage.refCnt(), new Throwable());
+                reqMessage.release();
+            }
+
             LOGGER.error(ex.getMessage(), ex);
             if (context.getHeader() == null)
                 context.setHeader(new SoaHeader());
             writeErrorMessage(ctx, context, new SoaException(SoaBaseCode.UnKnown, "读请求异常"));
+        } finally {
+            assert (reqMessage.refCnt() == 0);
         }
 
     }
@@ -173,7 +192,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         filterContext.setAttach("context", context);
     }
 
-    private void writeErrorMessage(ChannelHandlerContext ctx, TransactionContext context,SoaException e) {
+    private void writeErrorMessage(ChannelHandlerContext ctx, TransactionContext context, SoaException e) {
         ByteBuf outputBuf = ctx.alloc().buffer(8192);
         TSoaTransport transport = new TSoaTransport(outputBuf);
         SoaMessageProcessor builder = new SoaMessageProcessor(transport);
@@ -190,6 +209,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
             LOGGER.info("{} {} {} response header:{} body:{null}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.toString());
         } catch (Throwable e1) {
+            //TODO
+            outputBuf.release();
             LOGGER.error(e1.getMessage(), e1);
         }
 

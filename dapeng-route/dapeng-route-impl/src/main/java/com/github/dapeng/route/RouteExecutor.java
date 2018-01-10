@@ -3,6 +3,8 @@ package com.github.dapeng.route;
 
 import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.route.pattern.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -15,6 +17,7 @@ import java.util.Set;
  * @date
  */
 public class RouteExecutor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RouteExecutor.class);
 
 
     /**
@@ -83,7 +86,7 @@ public class RouteExecutor {
                     InetAddress inetAddress = InetAddress.getByName(server);
                     added.add(inetAddress);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.error(e.getMessage(), e);
                 }
             }
         }
@@ -109,7 +112,7 @@ public class RouteExecutor {
                     inetAddresses.add(inetAddress);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.error(e.getMessage(), e);
             }
         }
         return inetAddresses;
@@ -272,8 +275,7 @@ public class RouteExecutor {
         try {
             ip = InetAddress.getByName(ipPattern.getIp());
         } catch (Exception e) {
-            e.printStackTrace();
-//            System.out.println(e.getLocalizedMessage());
+            LOGGER.error(e.getMessage(), e);
             return false;
         }
         byte[] bytes = ip.getAddress();
