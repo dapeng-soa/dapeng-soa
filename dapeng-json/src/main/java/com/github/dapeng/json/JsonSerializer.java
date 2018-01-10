@@ -602,6 +602,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                             oproto.writeI16((short) value);
                             break;
                         case INTEGER:
+                        case ENUM:
                             oproto.writeI32((int) value);
                             break;
                         case LONG:

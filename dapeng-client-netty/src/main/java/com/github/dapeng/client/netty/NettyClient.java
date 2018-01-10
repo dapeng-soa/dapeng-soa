@@ -136,7 +136,7 @@ public class NettyClient {
 
         AsyncRequestWithTimeout fwt = futuresCachesWithTimeout.peek();
 
-        while (fwt != null && fwt.getTimeout() < System.currentTimeMillis()) {
+        while (fwt != null && fwt.getTimeout() > System.currentTimeMillis()) {
             LOGGER.info("异步任务({})超时...", fwt.getSeqid());
             futuresCachesWithTimeout.remove();
 

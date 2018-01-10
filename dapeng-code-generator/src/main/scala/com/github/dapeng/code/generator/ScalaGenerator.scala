@@ -6,9 +6,6 @@ import java.util
 import com.github.dapeng.core.metadata.DataType.KIND
 import com.github.dapeng.core.metadata.TEnum.EnumItem
 import com.github.dapeng.core.metadata._
-import com.github.dapeng.core.metadata.DataType.KIND
-import com.github.dapeng.core.metadata.TEnum.EnumItem
-import com.github.dapeng.core.metadata._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -73,7 +70,6 @@ class ScalaGenerator extends CodeGenerator {
     if(generateAll){
       println("=========================================================")
       toStructArrayBuffer(structs).map{(struct: Struct)=>{
-        struct.setNamespace(toScalaNamespace(struct.namespace))
         println(s"生成struct:${struct.namespace}.${struct.name}.scala")
         val domainTemplate = new StringTemplate(toDomainTemplate(struct))
         val domainWriter = new PrintWriter(new File(rootDir(outDir, struct.getNamespace), s"${struct.name}.scala"), "UTF-8")
@@ -82,7 +78,6 @@ class ScalaGenerator extends CodeGenerator {
         println(s"生成struct:${struct.namespace}.${struct.name}.scala 完成")
 
         println(s"生成serializer: ${struct.namespace+".serializer."}${struct.name}Serializer.scala")
-        //struct.setNamespace(toScalaNamespace(struct.namespace))
         val structSerializerTemplate = new StringTemplate(new ScalaCodecGenerator().toStructSerializerTemplate(struct,structNamespaces))
         val structSerializerWriter = new PrintWriter(new File(rootDir(outDir, struct.namespace+".serializer."),s"${struct.name}Serializer.scala"), "UTF-8")
         structSerializerWriter.write(structSerializerTemplate.toString)
@@ -94,7 +89,6 @@ class ScalaGenerator extends CodeGenerator {
       toTEnumArrayBuffer(enums).map{(enum: TEnum)=>{
 
         println(s"生成Enum:${enum.name}.scala")
-        enum.setNamespace(toScalaNamespace(enum.namespace))
         val enumTemplate = new StringTemplate(toEnumTemplate(enum))
         val enumWriter = new PrintWriter(new File(rootDir(outDir, enum.getNamespace), s"${enum.name}.scala"), "UTF-8")
         enumWriter.write(enumTemplate.toString)
@@ -201,37 +195,13 @@ class ScalaGenerator extends CodeGenerator {
 
   }
 
-  /**
-    * like
-    * val namespace = com.github.dapeng.soa.service
-    * toScalaNamespace(namespace) => com.github.dapeng.soa.scala.service
-    * toScalaNamespace(namespace, 1) => com.github.dapeng.scala.soa.service
-    *
-    * @param namespace
-    * @param lastIndexCount
-    * @return
-    */
-  private def toScalaNamespace(namespace: String, lastIndexCount: Int = 0) = {
-    if (namespace != null && namespace.length > 0) {
-      var int = lastIndexCount
-      var beginStr = namespace
-      var endStr = ""
-      while ((int >= 0) ) {
-        endStr = s"${beginStr.substring(beginStr.lastIndexOf("."))}${endStr}"
-        beginStr = beginStr.substring(0,beginStr.lastIndexOf("."))
-        int -= 1
-      }
-      s"${beginStr}.scala${endStr}"
-    } else namespace
-  }
-
   private def replaceNamespace(services: util.List[Service],namespaces:util.Set[String],structNamespaces:util.Set[String]): Map[Service, String] ={
     val oriNameSpaces = mutable.HashMap[Service,String]()
     for (index <- (0 until services.size())) {
       val service = services.get(index)
-      oriNameSpaces.put(service, service.namespace)
+      oriNameSpaces.put(service, service.namespace.replace(".scala",""))
       //like: com.dapeng.hello.service => com.dapeng.hello.scala.service
-      service.setNamespace(toScalaNamespace(service.getNamespace))
+      service.setNamespace(service.getNamespace)
       namespaces.add(service.getNamespace)
 
       //設置method中字段的namespace
@@ -239,20 +209,20 @@ class ScalaGenerator extends CodeGenerator {
         val methodDefinition = service.getMethods.get(methodIndex)
         for(reqFieldIndex <- (0 until methodDefinition.request.fields.size()) ){
           val fieldDefinition=methodDefinition.request.fields.get(reqFieldIndex)
-          if (fieldDefinition.dataType != null) fieldDefinition.dataType.setQualifiedName(toScalaNamespace(fieldDefinition.dataType.qualifiedName,1))
+          if (fieldDefinition.dataType != null) fieldDefinition.dataType.setQualifiedName(fieldDefinition.dataType.qualifiedName)
 
           if (fieldDefinition.dataType != null && fieldDefinition.dataType.valueType != null) {
-            fieldDefinition.dataType.valueType.setQualifiedName(toScalaNamespace(fieldDefinition.dataType.valueType.qualifiedName,1))
+            fieldDefinition.dataType.valueType.setQualifiedName(fieldDefinition.dataType.valueType.qualifiedName)
           }
         }
 
         for(respFieldIndex <- (0 until methodDefinition.response.fields.size()) ){
           val field2Definition=methodDefinition.response.fields.get(respFieldIndex)
 
-          if (field2Definition.dataType != null) field2Definition.dataType.setQualifiedName(toScalaNamespace(field2Definition.dataType.qualifiedName,1))
+          if (field2Definition.dataType != null) field2Definition.dataType.setQualifiedName(field2Definition.dataType.qualifiedName)
 
           if (field2Definition.dataType != null && field2Definition.dataType.valueType != null) {
-            field2Definition.dataType.valueType.setQualifiedName(toScalaNamespace(field2Definition.dataType.valueType.qualifiedName,1))
+            field2Definition.dataType.valueType.setQualifiedName(field2Definition.dataType.valueType.qualifiedName)
           }
         }
 
@@ -260,12 +230,12 @@ class ScalaGenerator extends CodeGenerator {
 
       for(enumIndex <- (0 until service.getEnumDefinitions.size())) {
         val enumDefinition = service.getEnumDefinitions.get(enumIndex)
-        enumDefinition.setNamespace(toScalaNamespace(enumDefinition.namespace,1))
+        enumDefinition.setNamespace(enumDefinition.namespace)
         namespaces.add(enumDefinition.getNamespace)
       }
       for(structIndex <- (0 until service.getStructDefinitions.size())) {
         val structDefinition = service.getStructDefinitions.get(structIndex)
-        structDefinition.setNamespace(toScalaNamespace(structDefinition.getNamespace))
+        structDefinition.setNamespace(structDefinition.getNamespace)
         namespaces.add(structDefinition.getNamespace)
         structNamespaces.add(structDefinition.getNamespace)
 
@@ -273,10 +243,10 @@ class ScalaGenerator extends CodeGenerator {
         for(fieldIndex <- (0 until structDefinition.getFields.size())){
           val fieldDefinition = structDefinition.getFields.get(fieldIndex)
 
-          if (fieldDefinition.dataType != null) fieldDefinition.dataType.setQualifiedName(toScalaNamespace(fieldDefinition.dataType.qualifiedName,1))
+          if (fieldDefinition.dataType != null) fieldDefinition.dataType.setQualifiedName(fieldDefinition.dataType.qualifiedName)
 
           if (fieldDefinition.dataType != null && fieldDefinition.dataType.valueType != null) {
-            fieldDefinition.dataType.valueType.setQualifiedName(toScalaNamespace(fieldDefinition.dataType.valueType.qualifiedName,1))
+            fieldDefinition.dataType.valueType.setQualifiedName(fieldDefinition.dataType.valueType.qualifiedName)
           }
         }
       }
@@ -287,8 +257,8 @@ class ScalaGenerator extends CodeGenerator {
     return {
       <div>package {service.namespace.substring(0, service.namespace.lastIndexOf("."))}
 
-        import com.github.dapeng.core._;
-        import com.github.dapeng.org.apache.thrift._;
+        import com.isuwang.dapeng.core._;
+        import com.isuwang.org.apache.thrift._;
         import java.util.ServiceLoader;
         import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "Codec._"};
         import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + ".service." + service.name };
@@ -303,7 +273,7 @@ class ScalaGenerator extends CodeGenerator {
           override def apply(a: A): B = f(a)
         </block>
 
-          val serviceName = "{service.namespace.replace("scala.","") + "." + service.name }"
+          val serviceName = "{oriNamespace + service.name }"
           val version = "{service.meta.version}"
           val pool = <block>
             val serviceLoader = ServiceLoader.load(classOf[SoaConnectionPoolFactory])
@@ -364,8 +334,8 @@ class ScalaGenerator extends CodeGenerator {
     return {
       <div>package {service.namespace.substring(0, service.namespace.lastIndexOf("."))}
 
-        import com.github.dapeng.core._;
-        import com.github.dapeng.org.apache.thrift._;
+        import com.isuwang.dapeng.core._;
+        import com.isuwang.org.apache.thrift._;
         import java.util.ServiceLoader;
         import java.util.concurrent.CompletableFuture;
         import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "AsyncCodec._"};
@@ -380,7 +350,7 @@ class ScalaGenerator extends CodeGenerator {
         **/
         class {service.name}AsyncClient extends {service.name}Async <block>
 
-        val serviceName = "{service.namespace.replace("scala.","") + "." + service.name }"
+        val serviceName = "{oriNamespace + service.name }"
         val version = "{service.meta.version}"
         val pool = <block>
           val serviceLoader = ServiceLoader.load(classOf[SoaConnectionPoolFactory])
@@ -443,7 +413,7 @@ class ScalaGenerator extends CodeGenerator {
   private def toEnumTemplate(enum: TEnum): Elem = return {
     <div>package {enum.namespace};
 
-      class {enum.name} private(val id: Int, val name: String) extends com.github.dapeng.core.enums.TEnum(id,name) <block>{}</block>
+      class {enum.name} private(val id: Int, val name: String) extends com.isuwang.dapeng.core.enums.TEnum(id,name) <block>{}</block>
 
       /**
       {notice}
@@ -516,8 +486,8 @@ class ScalaGenerator extends CodeGenerator {
       <div>
         package {service.namespace}
 
-        import com.github.dapeng.core.<block>Processor, Service</block>
-        import com.github.dapeng.core.SoaGlobalTransactional
+        import com.isuwang.dapeng.core.<block>Processor, Service</block>
+        import com.isuwang.dapeng.core.SoaGlobalTransactional
 
         /**
         {notice}
@@ -534,7 +504,7 @@ class ScalaGenerator extends CodeGenerator {
             * {method.doc}
             **/
             {if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div>}
-            <div>@throws[com.github.dapeng.core.SoaException]</div>
+            <div>@throws[com.isuwang.dapeng.core.SoaException]</div>
             def {method.name}(
             {toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
             <div>{nameAsId(field.name)}: {toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}
@@ -556,8 +526,8 @@ class ScalaGenerator extends CodeGenerator {
     <div>
       package {service.namespace}
 
-      import com.github.dapeng.core.<block>Processor, Service</block>
-      import com.github.dapeng.core.SoaGlobalTransactional
+      import com.isuwang.dapeng.core.<block>Processor, Service</block>
+      import com.isuwang.dapeng.core.SoaGlobalTransactional
       import scala.concurrent.Future
 
       /**
@@ -566,7 +536,7 @@ class ScalaGenerator extends CodeGenerator {
       **/
       @Service(name ="{oriNamespace+"."+service.name}" , version = "{service.meta.version}")
       @Processor(className = "{service.namespace.substring(0, service.namespace.lastIndexOf("service"))}{service.name}AsyncCodec$Processor")
-      trait {service.name}Async extends com.github.dapeng.core.definition.AsyncService <block>
+      trait {service.name}Async extends com.isuwang.dapeng.core.definition.AsyncService <block>
       {
       toMethodArrayBuffer(service.methods).map { (method: Method) =>
       {
@@ -575,7 +545,7 @@ class ScalaGenerator extends CodeGenerator {
           * {method.doc}
           **/
           {if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div>}
-          <div>@throws[com.github.dapeng.core.SoaException]</div>
+          <div>@throws[com.isuwang.dapeng.core.SoaException]</div>
           def {method.name}(
           {toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
           <div>{nameAsId(field.name)}: {toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}
