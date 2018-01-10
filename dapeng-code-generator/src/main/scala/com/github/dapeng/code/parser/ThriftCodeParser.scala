@@ -38,9 +38,9 @@ class ThriftCodeParser(var language: String) {
 
   /**
     * like
-    * val namespace = com.isuwang.soa.service
-    * toScalaNamespace(namespace) => com.isuwang.soa.scala.service
-    * toScalaNamespace(namespace, 1) => com.isuwang.scala.soa.service
+    * val namespace = com.github.dapeng.soa.service
+    * toScalaNamespace(namespace) => com.github.dapeng.soa.scala.service
+    * toScalaNamespace(namespace, 1) => com.github.dapeng.scala.soa.service
     *
     * @param namespace
     * @param lastIndexCount

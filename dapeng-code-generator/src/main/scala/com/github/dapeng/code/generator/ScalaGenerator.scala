@@ -257,8 +257,8 @@ class ScalaGenerator extends CodeGenerator {
     return {
       <div>package {service.namespace.substring(0, service.namespace.lastIndexOf("."))}
 
-        import com.isuwang.dapeng.core._;
-        import com.isuwang.org.apache.thrift._;
+        import com.github.dapeng.core._;
+        import com.github.dapeng.org.apache.thrift._;
         import java.util.ServiceLoader;
         import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "Codec._"};
         import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + ".service." + service.name };
@@ -334,8 +334,8 @@ class ScalaGenerator extends CodeGenerator {
     return {
       <div>package {service.namespace.substring(0, service.namespace.lastIndexOf("."))}
 
-        import com.isuwang.dapeng.core._;
-        import com.isuwang.org.apache.thrift._;
+        import com.github.dapeng.core._;
+        import com.github.dapeng.org.apache.thrift._;
         import java.util.ServiceLoader;
         import java.util.concurrent.CompletableFuture;
         import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "AsyncCodec._"};
@@ -413,7 +413,7 @@ class ScalaGenerator extends CodeGenerator {
   private def toEnumTemplate(enum: TEnum): Elem = return {
     <div>package {enum.namespace};
 
-      class {enum.name} private(val id: Int, val name: String) extends com.isuwang.dapeng.core.enums.TEnum(id,name) <block>{}</block>
+      class {enum.name} private(val id: Int, val name: String) extends com.github.dapeng.core.enums.TEnum(id,name) <block>{}</block>
 
       /**
       {notice}
@@ -486,8 +486,8 @@ class ScalaGenerator extends CodeGenerator {
       <div>
         package {service.namespace}
 
-        import com.isuwang.dapeng.core.<block>Processor, Service</block>
-        import com.isuwang.dapeng.core.SoaGlobalTransactional
+        import com.github.dapeng.core.<block>Processor, Service</block>
+        import com.github.dapeng.core.SoaGlobalTransactional
 
         /**
         {notice}
@@ -504,7 +504,7 @@ class ScalaGenerator extends CodeGenerator {
             * {method.doc}
             **/
             {if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div>}
-            <div>@throws[com.isuwang.dapeng.core.SoaException]</div>
+            <div>@throws[com.github.dapeng.core.SoaException]</div>
             def {method.name}(
             {toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
             <div>{nameAsId(field.name)}: {toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}
@@ -526,8 +526,8 @@ class ScalaGenerator extends CodeGenerator {
     <div>
       package {service.namespace}
 
-      import com.isuwang.dapeng.core.<block>Processor, Service</block>
-      import com.isuwang.dapeng.core.SoaGlobalTransactional
+      import com.github.dapeng.core.<block>Processor, Service</block>
+      import com.github.dapeng.core.SoaGlobalTransactional
       import scala.concurrent.Future
 
       /**
@@ -536,7 +536,7 @@ class ScalaGenerator extends CodeGenerator {
       **/
       @Service(name ="{oriNamespace+"."+service.name}" , version = "{service.meta.version}")
       @Processor(className = "{service.namespace.substring(0, service.namespace.lastIndexOf("service"))}{service.name}AsyncCodec$Processor")
-      trait {service.name}Async extends com.isuwang.dapeng.core.definition.AsyncService <block>
+      trait {service.name}Async extends com.github.dapeng.core.definition.AsyncService <block>
       {
       toMethodArrayBuffer(service.methods).map { (method: Method) =>
       {
@@ -545,7 +545,7 @@ class ScalaGenerator extends CodeGenerator {
           * {method.doc}
           **/
           {if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div>}
-          <div>@throws[com.isuwang.dapeng.core.SoaException]</div>
+          <div>@throws[com.github.dapeng.core.SoaException]</div>
           def {method.name}(
           {toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
           <div>{nameAsId(field.name)}: {toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}
