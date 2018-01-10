@@ -29,6 +29,11 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     Thread cleanThread = null;  // clean idle connections;
     // TODO ClientInfo clean.
 
+    public SoaConnectionPoolImpl() {
+        IdleConnectionManager connectionManager = new IdleConnectionManager();
+        connectionManager.start();
+    }
+
 
     private boolean checkVersion(String reqVersion, String targetVersion) {
         // x.y.z
@@ -48,7 +53,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     @Override
     public <REQ, RESP> RESP send(String service, String version, String method, REQ request, BeanSerializer<REQ> requestSerializer, BeanSerializer<RESP> responseSerializer) throws SoaException {
 
-        SoaConnection connection = findConnection(service,version,method);
+        SoaConnection connection = findConnection(service, version, method);
 
         return connection.send(service, version, method, request, requestSerializer, responseSerializer);
     }
@@ -56,11 +61,11 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     @Override
     public <REQ, RESP> Future<RESP> sendAsync(String service, String version, String method, REQ request, BeanSerializer<REQ> requestSerializer, BeanSerializer<RESP> responseSerializer, long timeout) throws SoaException {
 
-        SoaConnection connection = findConnection(service,version,method);
-        return connection.sendAsync(service,version,method,request,requestSerializer,responseSerializer,timeout);
+        SoaConnection connection = findConnection(service, version, method);
+        return connection.sendAsync(service, version, method, request, requestSerializer, responseSerializer, timeout);
     }
 
-    public SoaConnection findConnection(String service, String version, String method){
+    public SoaConnection findConnection(String service, String version, String method) {
         ServiceZKInfo zkInfo = zkInfos.get(service);
 
         List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream().filter(rt -> {
@@ -68,7 +73,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }).collect(Collectors.toList());
 
         String serviceKey = service + "." + version + "." + method + ".consumer";
-        RuntimeInstance inst = loadbalance(serviceKey,compatibles);
+        RuntimeInstance inst = loadbalance(serviceKey, compatibles);
 
         inst.getActiveCount().incrementAndGet();
 
@@ -95,10 +100,10 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         RuntimeInstance instance = null;
         switch (balance) {
             case Random:
-                instance =  LoadBalanceService.random(compatibles);
+                instance = LoadBalanceService.random(compatibles);
                 break;
             case RoundRobin:
-                instance =  LoadBalanceService.roundRobin(compatibles);
+                instance = LoadBalanceService.roundRobin(compatibles);
                 break;
             case LeastActive:
                 instance = LoadBalanceService.leastActive(compatibles);
