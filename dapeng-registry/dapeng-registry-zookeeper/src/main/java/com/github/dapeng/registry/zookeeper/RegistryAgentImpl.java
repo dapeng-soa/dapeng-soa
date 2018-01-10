@@ -165,7 +165,7 @@ public class RegistryAgentImpl implements RegistryAgent {
                         tmpList.add(sif);
                     }
                 } catch (UnknownHostException e) {
-                    e.printStackTrace();
+                    LOGGER.error(e.getMessage(), e);
                 }
             }
 

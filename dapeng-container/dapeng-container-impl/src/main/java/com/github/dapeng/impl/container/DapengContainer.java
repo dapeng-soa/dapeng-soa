@@ -117,13 +117,17 @@ public class DapengContainer implements Container {
         this.applicationMap.putAll(applicationMap);
     }
 
+    private static class ExectorFactory {
+        private static Executor exector = Executors.newFixedThreadPool(SoaSystemEnvProperties.SOA_CORE_POOL_SIZE);
+    }
+
     @Override
     public Executor getDispatcher() {
         if(!SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL){
             return command -> command.run();
         }
         else {
-            return Executors.newFixedThreadPool(SoaSystemEnvProperties.SOA_CORE_POOL_SIZE);
+            return ExectorFactory.exector;
         }
     }
 
@@ -160,7 +164,7 @@ public class DapengContainer implements Container {
         try {
             shutdownSignal.await();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
         }
     }
 

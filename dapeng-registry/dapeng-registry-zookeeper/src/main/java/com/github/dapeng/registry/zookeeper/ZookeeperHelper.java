@@ -216,7 +216,7 @@ public class ZookeeperHelper {
                         checkIsMaster((String) ctx, name.replace(path, ""));
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.error(e.getMessage(), e);
                 }
                 break;
             case OK:
@@ -266,14 +266,14 @@ public class ZookeeperHelper {
                     String masterData = new String(zk.getData(PATH + children.get(0), false, null));
                     LOGGER.info("{}的master节点为{}", serviceKey, masterData);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.error(e.getMessage(), e);
                 }
                 ifLeastNodeExist(serviceKey, currentId, children.get(0).replace(serviceKey + "-", ""));
             }
         } catch (KeeperException e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage(), e);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
