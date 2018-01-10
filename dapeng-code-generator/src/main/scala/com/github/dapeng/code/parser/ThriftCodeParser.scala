@@ -3,10 +3,6 @@ package com.github.dapeng.code.parser
 import java.io._
 import java.util
 
-import com.github.dapeng.core
-import com.github.dapeng.core.metadata.Service.ServiceMeta
-import com.github.dapeng.core.metadata.TEnum.EnumItem
-import com.github.dapeng.core.metadata.{DataType, Method, TEnum}
 import com.github.mustachejava.Mustache
 import com.google.common.base.Charsets
 import com.google.common.io.CharStreams
@@ -34,11 +30,35 @@ class ThriftCodeParser(var language: String) {
   private val templateCache = new TrieMap[String, Mustache]
   private val docCache = new mutable.HashMap[String, Document]()
   private val enumCache = new util.ArrayList[TEnum]()
-  private val structCache = new util.ArrayList[core.metadata.Struct]()
-  private val serviceCache = new util.ArrayList[core.metadata.Service]()
+  private val structCache = new util.ArrayList[metadata.Struct]()
+  private val serviceCache = new util.ArrayList[metadata.Service]()
 
-  private val mapStructCache = new util.HashMap[String, core.metadata.Struct]()
-  private val mapEnumCache = new util.HashMap[String, TEnum]()
+  private val mapStructCache = new util.HashMap[String, metadata.Struct]()
+  private val mapEnumCache = new util.HashMap[String, metadata.TEnum]()
+
+  /**
+    * like
+    * val namespace = com.isuwang.soa.service
+    * toScalaNamespace(namespace) => com.isuwang.soa.scala.service
+    * toScalaNamespace(namespace, 1) => com.isuwang.scala.soa.service
+    *
+    * @param namespace
+    * @param lastIndexCount
+    * @return
+    */
+  private def toScalaNamespace(namespace: String, lastIndexCount: Int = 0) = {
+    if (namespace != null && namespace.length > 0) {
+      var int = lastIndexCount
+      var beginStr = namespace
+      var endStr = ""
+      while ((int >= 0) ) {
+        endStr = s"${beginStr.substring(beginStr.lastIndexOf("."))}${endStr}"
+        beginStr = beginStr.substring(0,beginStr.lastIndexOf("."))
+        int -= 1
+      }
+      s"${beginStr}.scala${endStr}"
+    } else namespace
+  }
 
   /**
     * 生成文档
@@ -53,9 +73,20 @@ class ThriftCodeParser(var language: String) {
     val br = new BufferedReader(new InputStreamReader(new FileInputStream(resource), Charsets.UTF_8))
     val txt = CharStreams.toString(br)
 
+    //如果是scala，需要重写namespace
+    val finalTxt = if (language.equals("scala")) {
+      // getNamespaceLine => "namespace java xxxxxx.xx.xx"
+      val namespaceLine = txt.split("\n")(0)
+      // getNamespace => xx.xx.xx
+      val namespace = namespaceLine.split(" ").reverse.head
+      val scalaNamespace = toScalaNamespace(namespace)
+
+      txt.replace(namespace,scalaNamespace)
+    } else txt
+
     val importer = Importer(Seq(homeDir))
     val parser = new ThriftParser(importer, true)
-    val doc = parser.parse(txt, parser.document)
+    val doc = parser.parse(finalTxt, parser.document)
 
     try {
       TypeResolver()(doc).document
@@ -249,11 +280,11 @@ class ThriftCodeParser(var language: String) {
     results
   }
 
-  private def findStructs(doc0: Document, generator: ApacheJavaGenerator): List[core.metadata.Struct] =
+  private def findStructs(doc0: Document, generator: ApacheJavaGenerator): List[metadata.Struct] =
     doc0.structs.toList.map { (struct: StructLike) =>
       val controller = new StructController(struct, false, generator, getNameSpace(doc0, language))
 
-      new core.metadata.Struct {
+      new metadata.Struct {
         //this.setNamespace(if (controller.has_non_nullable_fields) controller.namespace else null)
         this.setNamespace(controller.namespace)
         this.setName(controller.name)
@@ -272,7 +303,7 @@ class ThriftCodeParser(var language: String) {
 
           dataType0 = toDataType(field.fieldType, doc0, docSrting0)
 
-          new core.metadata.Field {
+          new metadata.Field {
             this.setTag(tag0)
             this.setName(name0)
             this.setOptional(optional0)
@@ -291,13 +322,13 @@ class ThriftCodeParser(var language: String) {
     }
 
 
-  private def findServices(doc: Document, generator: ApacheJavaGenerator): util.List[core.metadata.Service] = {
-    val results = new util.ArrayList[core.metadata.Service]()
+  private def findServices(doc: Document, generator: ApacheJavaGenerator): util.List[metadata.Service] = {
+    val results = new util.ArrayList[metadata.Service]()
 
     doc.services.foreach(s => {
       val controller = new ServiceController(s, generator, getNameSpace(doc, language))
 
-      val service = new core.metadata.Service()
+      val service = new metadata.Service()
 
       service.setNamespace(if (controller.has_namespace) controller.namespace else null)
       service.setName(controller.name)
@@ -309,8 +340,8 @@ class ThriftCodeParser(var language: String) {
       for (tmpIndex <- (0 until controller.functions.size)) {
         val functionField = controller.functions(tmpIndex)
         //controller.functions.foreach(functionField => {
-        val request = new core.metadata.Struct()
-        val response = new core.metadata.Struct()
+        val request = new metadata.Struct()
+        val response = new metadata.Struct()
 
         request.setName(functionField.name + "_args")
         response.setName(functionField.name + "_result")
@@ -329,8 +360,8 @@ class ThriftCodeParser(var language: String) {
         else
           method.setSoaTransactionProcess(false)
 
-        request.setFields(new util.ArrayList[core.metadata.Field]())
-        response.setFields(new util.ArrayList[core.metadata.Field]())
+        request.setFields(new util.ArrayList[metadata.Field]())
+        response.setFields(new util.ArrayList[metadata.Field]())
 
         for (index <- (0 until functionField.fields.size)) {
           val field = functionField.fields(index)
@@ -346,7 +377,7 @@ class ThriftCodeParser(var language: String) {
           f.setAccessible(true)
           val dataType = toDataType(f.get(field.field_type).asInstanceOf[FieldType], doc, docSrting)
 
-          val tfiled = new core.metadata.Field()
+          val tfiled = new metadata.Field()
           tfiled.setTag(tag)
           tfiled.setName(name)
           tfiled.setDoc(docSrting)
@@ -370,7 +401,7 @@ class ThriftCodeParser(var language: String) {
           dataType = toDataType(f.get(functionField.return_type).asInstanceOf[FieldType], doc, docSrting)
         }
 
-        val tfiled = new core.metadata.Field()
+        val tfiled = new metadata.Field()
         tfiled.setTag(0)
         tfiled.setName("success")
         tfiled.setDoc(docSrting)
@@ -389,7 +420,7 @@ class ThriftCodeParser(var language: String) {
     results
   }
 
-  def getAllStructs(resources: Array[String]): util.List[core.metadata.Struct] = {
+  def getAllStructs(resources: Array[String]): util.List[metadata.Struct] = {
     resources.foreach(resource => {
       val doc = generateDoc(resource)
       docCache.put(resource.substring(resource.lastIndexOf(File.separator) + 1, resource.lastIndexOf(".")), doc)
@@ -402,7 +433,7 @@ class ThriftCodeParser(var language: String) {
     structCache.toList
   }
 
-  def getAllEnums(resources: Array[String]): util.List[TEnum] = {
+  def getAllEnums(resources: Array[String]): util.List[metadata.TEnum] = {
     resources.foreach(resource => {
       val doc = generateDoc(resource)
       docCache.put(resource.substring(resource.lastIndexOf(File.separator) + 1, resource.lastIndexOf(".")), doc)
@@ -415,7 +446,7 @@ class ThriftCodeParser(var language: String) {
     enumCache.toList
   }
 
-  def toServices(resources: Array[String], serviceVersion: String): util.List[core.metadata.Service] = {
+  def toServices(resources: Array[String], serviceVersion: String): util.List[metadata.Service] = {
     resources.foreach(resource => {
       val doc = generateDoc(resource)
 
@@ -438,7 +469,7 @@ class ThriftCodeParser(var language: String) {
     for (index <- (0 until serviceCache.size())) {
       val service = serviceCache.get(index)
 
-      val structSet = new util.HashSet[core.metadata.Struct]()
+      val structSet = new util.HashSet[metadata.Struct]()
       val enumSet = new util.HashSet[TEnum]()
       //递归将service中所有method的所有用到的struct加入列表
       val loadedStructs = new util.HashSet[String]()
@@ -456,7 +487,7 @@ class ThriftCodeParser(var language: String) {
       service.setEnumDefinitions(enumSet.toList)
       //      service.setEnumDefinitions(enumCache)
       //      service.setStructDefinitions(structCache)
-      service.setMeta(new ServiceMeta {
+      service.setMeta(new metadata.Service.ServiceMeta {
         if (serviceVersion != null && !serviceVersion.trim.equals(""))
           this.version = serviceVersion.trim
         else
