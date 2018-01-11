@@ -55,10 +55,11 @@ public class HeadFilter implements Filter {
                 channelHandlerContext.writeAndFlush(outputBuf);
             }
         }catch (Exception e){
+            LOGGER.error(e.getMessage(), e);
+
             if (outputBuf != null) {
                 outputBuf.release();
             }
-            LOGGER.error(e.getMessage(), e);
         }
 
     }
