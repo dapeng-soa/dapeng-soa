@@ -61,7 +61,7 @@ public class SharedChain implements FilterChain {
         } else if (index > 0 && index < shared.size() + 1) {
             shared.get(index - 1).onExit(ctx, prev);
         } else if (index == shared.size() + 1) {
-            tail.onEntry(ctx, prev);
+            tail.onExit(ctx, prev);
         }
     }
 }

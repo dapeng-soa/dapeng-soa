@@ -150,10 +150,10 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         try {
             application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} response body:{}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.getOperatorId(), soaHeader.getOperatorName(), formatToString(soaFunction.respSerializer.toString(result)));
 
-            filterContext.setAttach("channelHandlerContext", channelHandlerContext);
-            filterContext.setAttach("context", context);
-            filterContext.setAttach("respSerializer", soaFunction.respSerializer);
-            filterContext.setAttach("result", result);
+            filterContext.setAttribute("channelHandlerContext", channelHandlerContext);
+            filterContext.setAttribute("context", context);
+            filterContext.setAttribute("respSerializer", soaFunction.respSerializer);
+            filterContext.setAttribute("result", result);
 
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
@@ -170,8 +170,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
         soaHeader.setRespCode(Optional.ofNullable(e.getCode()));
         soaHeader.setRespMessage(Optional.ofNullable(e.getMessage()));
-        filterContext.setAttach("channelHandlerContext", ctx);
-        filterContext.setAttach("context", context);
+        filterContext.setAttribute("channelHandlerContext", ctx);
+        filterContext.setAttribute("context", context);
     }
 
     private void writeErrorMessage(ChannelHandlerContext ctx, TransactionContext context, SoaException e) {

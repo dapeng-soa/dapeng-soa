@@ -9,9 +9,7 @@ public interface FilterContext {
 
     Object getAttach(Filter filter, String key);
 
-    void setAttach( String key, Object value);
+    void setAttribute(String key, Object value);
 
-    Object getAttach(String key);
-
-
+    Object getAttribute(String key);
 }

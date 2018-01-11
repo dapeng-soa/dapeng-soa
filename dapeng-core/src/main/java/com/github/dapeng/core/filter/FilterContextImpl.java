@@ -35,7 +35,7 @@ public class FilterContextImpl implements FilterContext {
     }
 
     @Override
-    public void setAttach(String key, Object value) {
+    public void setAttribute(String key, Object value) {
         if (attachments == null) {
             attachments = new HashMap<String, Object>();
         }
@@ -43,7 +43,7 @@ public class FilterContextImpl implements FilterContext {
     }
 
     @Override
-    public Object getAttach(String key) {
+    public Object getAttribute(String key) {
         if (attachments == null){
             return null;
         }
