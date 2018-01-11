@@ -55,6 +55,10 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         SoaConnection connection = findConnection(service, version, method);
 
+        if (connection == null) {
+            throw new SoaException(SoaBaseCode.NotConnected);
+        }
+
         return connection.send(service, version, method, request, requestSerializer, responseSerializer);
     }
 
@@ -62,6 +66,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     public <REQ, RESP> Future<RESP> sendAsync(String service, String version, String method, REQ request, BeanSerializer<REQ> requestSerializer, BeanSerializer<RESP> responseSerializer, long timeout) throws SoaException {
 
         SoaConnection connection = findConnection(service, version, method);
+        if (connection == null) {
+            throw new SoaException(SoaBaseCode.NotConnected);
+        }
         return connection.sendAsync(service, version, method, request, requestSerializer, responseSerializer, timeout);
     }
 

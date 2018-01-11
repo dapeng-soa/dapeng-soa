@@ -34,10 +34,10 @@ public class HeadFilter implements Filter {
         // 第一个filter不需要调onExit
         ByteBuf outputBuf = null;
         try {
-            ChannelHandlerContext channelHandlerContext = (ChannelHandlerContext) ctx.getAttach( "channelHandlerContext");
-            TransactionContext context = (TransactionContext) ctx.getAttach("context");
-            BeanSerializer serializer = (BeanSerializer) ctx.getAttach("respSerializer");
-            Object result = ctx.getAttach("result");
+            ChannelHandlerContext channelHandlerContext = (ChannelHandlerContext) ctx.getAttribute( "channelHandlerContext");
+            TransactionContext context = (TransactionContext) ctx.getAttribute("context");
+            BeanSerializer serializer = (BeanSerializer) ctx.getAttribute("respSerializer");
+            Object result = ctx.getAttribute("result");
 
             if(channelHandlerContext!=null) {
                 outputBuf = channelHandlerContext.alloc().buffer(8192);  // TODO 8192?
