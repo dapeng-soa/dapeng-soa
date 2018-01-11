@@ -273,7 +273,7 @@ class ScalaGenerator extends CodeGenerator {
           override def apply(a: A): B = f(a)
         </block>
 
-          val serviceName = "{oriNamespace + service.name }"
+          val serviceName = "{oriNamespace + "." + service.name }"
           val version = "{service.meta.version}"
           val pool = <block>
             val serviceLoader = ServiceLoader.load(classOf[SoaConnectionPoolFactory])
@@ -350,7 +350,7 @@ class ScalaGenerator extends CodeGenerator {
         **/
         class {service.name}AsyncClient extends {service.name}Async <block>
 
-        val serviceName = "{oriNamespace + service.name }"
+        val serviceName = "{oriNamespace + "." + service.name }"
         val version = "{service.meta.version}"
         val pool = <block>
           val serviceLoader = ServiceLoader.load(classOf[SoaConnectionPoolFactory])
