@@ -1,7 +1,7 @@
 package com.github.dapeng.metadata;
 
 import com.github.dapeng.core.BeanSerializer;
-import com.github.dapeng.core.SoaBaseCode;
+import com.github.dapeng.core.SoaCode;
 import com.github.dapeng.core.SoaException;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.*;
@@ -59,7 +59,7 @@ public class GetServiceMetadata_resultSerializer implements BeanSerializer<getSe
     public void validate(getServiceMetadata_result bean) throws TException {
 
         if (bean.getSuccess() == null)
-            throw new SoaException(SoaBaseCode.NotNull, "success字段不允许为空");
+            throw new SoaException(SoaCode.NotNull, "success字段不允许为空");
     }
 
     @Override

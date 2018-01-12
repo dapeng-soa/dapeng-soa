@@ -114,7 +114,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     } catch (Exception e) { // TODO
                         LOGGER.error(e.getMessage(), e);
                         Result<RESP> result = new Result<>(null,
-                                new SoaException(SoaBaseCode.UnKnown, "TODO"));
+                                new SoaException(SoaCode.UnKnown, "TODO"));
                         ctx.setAttribute("result", result);
                         getPrevChain(ctx).onExit(ctx);
                         return;
@@ -133,7 +133,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     LOGGER.error(e.getMessage(), e);
                     // TODO
                     Result<RESP> result = new Result<>(null,
-                            new SoaException(SoaBaseCode.UnKnown, "TODO"));
+                            new SoaException(SoaCode.UnKnown, "TODO"));
                     ctx.setAttribute("result", result);
                     getPrevChain(ctx).onExit(ctx);
                 }
@@ -219,7 +219,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
     private <RESP> Result<RESP> processResponse(ByteBuf responseBuf, BeanSerializer<RESP> responseSerializer) {
         try {
             if (responseBuf == null) {
-                return new Result<>(null, new SoaException(SoaBaseCode.TimeOut));
+                return new Result<>(null, new SoaException(SoaCode.TimeOut));
             } else {
                 SoaMessageParser parser = new SoaMessageParser(responseBuf, responseSerializer).parseHeader();
                 // TODO fill InvocationContext.lastInfo from response.Header
@@ -233,14 +233,14 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     return new Result<>(resp, null);
                 } else {
                     return new Result<>(null, new SoaException(
-                            (respHeader.getRespCode().isPresent()) ? respHeader.getRespCode().get() : SoaBaseCode.UnKnown.getCode(),
-                            (respHeader.getRespMessage().isPresent()) ? respHeader.getRespMessage().get() : SoaBaseCode.UnKnown.getMsg()));
+                            (respHeader.getRespCode().isPresent()) ? respHeader.getRespCode().get() : SoaCode.UnKnown.getCode(),
+                            (respHeader.getRespMessage().isPresent()) ? respHeader.getRespMessage().get() : SoaCode.UnKnown.getMsg()));
                 }
 
             }
         } catch (TException ex) {
             return new Result<>(null,
-                    new SoaException(SoaBaseCode.UnKnown, "TODO")); // TODO
+                    new SoaException(SoaCode.UnKnown, "TODO")); // TODO
         } finally {
             responseBuf.release();
         }
@@ -257,7 +257,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
         try {
             return channel = this.client.connect(host, port);
         } catch (Exception e) {
-            throw new SoaException(SoaBaseCode.NotConnected);
+            throw new SoaException(SoaCode.NotConnected);
         }
     }
 

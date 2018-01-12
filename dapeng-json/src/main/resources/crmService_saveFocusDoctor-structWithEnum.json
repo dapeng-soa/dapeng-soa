@@ -1,6 +1,8 @@
 {
-  "request": {
-    "doctorId": 628,
-    "focusType": "SCAN"
+  "body": {
+    "request": {
+      "doctorId": 628,
+      "focusType": "SCAN"
+    }
   }
 }

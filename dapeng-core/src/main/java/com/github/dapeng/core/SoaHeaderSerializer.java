@@ -267,11 +267,11 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
     @Override
     public void validate(SoaHeader bean) throws TException {
         if (bean.getServiceName() == null)
-            throw new SoaException(SoaBaseCode.NotNull, "serviceName字段不允许为空");
+            throw new SoaException(SoaCode.NotNull, "serviceName字段不允许为空");
         if (bean.getMethodName() == null)
-            throw new SoaException(SoaBaseCode.NotNull, "methodName字段不允许为空");
+            throw new SoaException(SoaCode.NotNull, "methodName字段不允许为空");
         if (bean.getVersionName() == null)
-            throw new SoaException(SoaBaseCode.NotNull, "versionName字段不允许为空");
+            throw new SoaException(SoaCode.NotNull, "versionName字段不允许为空");
     }
 
     @Override
