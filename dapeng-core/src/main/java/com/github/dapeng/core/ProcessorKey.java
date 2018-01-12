@@ -10,17 +10,9 @@ public class ProcessorKey {
         this.versionName = versionName;
     }
 
-    private final  String serviceName;
+    public final  String serviceName;
 
-    private final String versionName;
-
-    public String getServiceName() {
-        return serviceName;
-    }
-
-    public String getVersionName() {
-        return versionName;
-    }
+    public final String versionName;
 
     @Override
     public int hashCode() {
@@ -33,7 +25,7 @@ public class ProcessorKey {
         if (o instanceof ProcessorKey) {
             ProcessorKey target = (ProcessorKey) o;
 
-            if (target.getServiceName().equals(this.serviceName) && target.getVersionName().equals(this.versionName)) {
+            if (target.serviceName.equals(this.serviceName) && target.versionName.equals(this.versionName)) {
                 return true;
             }
         }
