@@ -338,7 +338,7 @@ class JavaCodecGenerator extends CodeGenerator {
           public void validate(getServiceMetadata_result bean) throws TException <block>
 
             if (bean.getSuccess() == null)
-            throw new SoaException(SoaBaseCode.NotNull, "success字段不允许为空");
+            throw new SoaException(SoaCode.NotNull, "success字段不允许为空");
           </block>
 
           @Override
@@ -724,7 +724,7 @@ class JavaCodecGenerator extends CodeGenerator {
           public void validate(getServiceMetadata_result bean) throws TException <block>
 
             if (bean.getSuccess() == null)
-            throw new SoaException(SoaBaseCode.NotNull, "success字段不允许为空");
+            throw new SoaException(SoaCode.NotNull, "success字段不允许为空");
           </block>
 
           @Override
@@ -1093,7 +1093,7 @@ class JavaCodecGenerator extends CodeGenerator {
           if(!field.isOptional && field.dataType.kind != DataType.KIND.VOID && checkIfNeedValidate(field.isOptional, field.dataType)){
             <div>
               if(bean.get{field.name.charAt(0).toUpper + field.name.substring(1)}() == null)
-              throw new SoaException(SoaBaseCode.NotNull, "{field.name}字段不允许为空");
+              throw new SoaException(SoaCode.NotNull, "{field.name}字段不允许为空");
             </div>}}</div>
           <div>{
             if(!field.isOptional && field.dataType.kind == KIND.STRUCT && field.dataType.kind != DataType.KIND.VOID){

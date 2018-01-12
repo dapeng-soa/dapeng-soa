@@ -207,7 +207,7 @@ class ScalaCodecGenerator extends CodeGenerator {
           @throws[TException]
           override def validate(bean: getServiceMetadata_result): Unit = <block>
             if (bean.success == null)
-            throw new SoaException(SoaBaseCode.NotNull, "success字段不允许为空")
+            throw new SoaException(SoaCode.NotNull, "success字段不允许为空")
           </block>
 
           override def toString(bean: getServiceMetadata_result): String = if (bean == null) "null" else bean.toString
@@ -447,7 +447,7 @@ class ScalaCodecGenerator extends CodeGenerator {
           @throws[TException]
           override def validate(bean: getServiceMetadata_result): Unit = <block>
             if (bean.success == null)
-            throw new SoaException(SoaBaseCode.NotNull, "success字段不允许为空")
+            throw new SoaException(SoaCode.NotNull, "success字段不允许为空")
           </block>
 
           override def toString(bean: getServiceMetadata_result): String = if (bean == null) "null" else bean.toString
@@ -779,7 +779,7 @@ class ScalaCodecGenerator extends CodeGenerator {
           if(!field.isOptional && field.dataType.kind != DataType.KIND.VOID && checkIfNeedValidate(field.isOptional, field.dataType)){
             <div>
               if(bean.{nameAsId(field.name)} == null)
-              throw new SoaException(SoaBaseCode.NotNull, "{nameAsId(field.name)}字段不允许为空")
+              throw new SoaException(SoaCode.NotNull, "{nameAsId(field.name)}字段不允许为空")
             </div>}}</div>
           <div>{
             if(!field.isOptional && field.dataType.kind == KIND.STRUCT && field.dataType.kind != DataType.KIND.VOID){
