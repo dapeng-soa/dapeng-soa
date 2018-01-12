@@ -116,15 +116,27 @@ public abstract class SoaBaseConnection implements SoaConnection {
                         Result<RESP> result = new Result<>(null,
                                 new SoaException(SoaCode.UnKnown, "TODO"));
                         ctx.setAttribute("result", result);
-                        getPrevChain(ctx).onExit(ctx);
+                        onExit(ctx, getPrevChain(ctx));
                         return;
                     }
 
+                    responseBufFuture.exceptionally(ex -> {
+                        LOGGER.error(ex.getMessage(), ex);
+                        Result<RESP> result = new Result<>(null,
+                                new SoaException(SoaCode.TimeOut));
+                        ctx.setAttribute("result", result);
+                        try {
+                            onExit(ctx, getPrevChain(ctx));
+                        } catch (SoaException e) {
+                            LOGGER.error(e.getMessage(), e);
+                        }
+                        return null;
+                    });
                     responseBufFuture.thenAccept(responseBuf -> {
                         Result<RESP> result = processResponse(responseBuf, responseSerializer);
                         ctx.setAttribute("result", result);
                         try {
-                            getPrevChain(ctx).onExit(ctx);
+                            onExit(ctx, getPrevChain(ctx));
                         } catch (SoaException e) {
                             LOGGER.error(e.getMessage(), e);
                         }
@@ -135,13 +147,13 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     Result<RESP> result = new Result<>(null,
                             new SoaException(SoaCode.UnKnown, "TODO"));
                     ctx.setAttribute("result", result);
-                    getPrevChain(ctx).onExit(ctx);
+                    onExit(ctx, getPrevChain(ctx));
                 }
             }
 
             @Override
-            public void onExit(FilterContext ctx, FilterChain prev) {
-
+            public void onExit(FilterContext ctx, FilterChain prev) throws SoaException {
+                prev.onExit(ctx);
             }
         };
 

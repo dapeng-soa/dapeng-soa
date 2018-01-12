@@ -143,7 +143,6 @@ public class NettyClient {
         return future;
     }
 
-    private static int timeouts = 0;
     private SoaClientHandler.CallBack callBack = msg -> {
         // length(4) stx(1) version(...) protocol(1) seqid(4) header(...) body(...) etx(1)
         int readerIndex = msg.readerIndex();
@@ -156,8 +155,6 @@ public class NettyClient {
         if (future != null) {
             future.complete(msg); // released in ...
         } else {
-            timeouts++;
-            LOGGER.error("now timeouts:" + timeouts);
             LOGGER.error("返回结果超时，siqid为：" + seqid);
             msg.release();
         }
