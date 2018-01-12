@@ -38,7 +38,6 @@ public class SoaProcessorFactory implements FactoryBean<SoaServiceDefinition<?>>
 
         List<Class<?>> filterInterfaces = interfaces.stream()
                 .filter(anInterface -> anInterface.isAnnotationPresent(Service.class) && anInterface.isAnnotationPresent(Processor.class))
-                .map(anInterface -> anInterface)
                 .collect(toList());
 
         if (filterInterfaces.isEmpty()) {
