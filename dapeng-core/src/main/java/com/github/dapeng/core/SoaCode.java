@@ -4,7 +4,7 @@ package com.github.dapeng.core;
  * @author craneding
  * @date 15/9/10
  */
-public enum SoaBaseCode implements SoaBaseCodeInterface {
+public enum SoaCode implements SoaBaseCodeInterface {
 
     UnKnown("Err-Core-000", "系统出错了!"),
     NotNull("Err-Core-001", "字段不允许为空"),
@@ -15,7 +15,7 @@ public enum SoaBaseCode implements SoaBaseCodeInterface {
     private String code;
     private String msg;
 
-    private SoaBaseCode(String code, String msg) {
+    private SoaCode(String code, String msg) {
         this.code = code;
         this.msg = msg;
     }

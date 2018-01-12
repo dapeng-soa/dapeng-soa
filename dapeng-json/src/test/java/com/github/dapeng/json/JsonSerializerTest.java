@@ -23,17 +23,20 @@ public class JsonSerializerTest {
 
     public static void main(String[] args) throws IOException, TException {
 
-        complexStructTest1();
+byte b = 127;
 
-        simpleStructTest();
-        simpleMapTest();
-        intArrayTest();
-        intMapTest();
-        enumTest();
-        simpleStructWithEnumTest();
-        simpleStructWithOptionTest();
 
-        complexStructTest();
+//        simpleStructTest();
+//        simpleMapTest();
+//        intArrayTest();
+//        intMapTest();
+//        enumTest();
+//        simpleStructWithEnumTest();
+//        simpleStructWithOptionTest();
+//
+//        complexStructTest();
+//        complexStructTest1();
+
     }
 
     private static void complexStructTest() throws IOException, TException {
@@ -156,19 +159,21 @@ public class JsonSerializerTest {
 
     private static void doTest(Service service, Method method, Struct struct, String json, String desc) throws TException {
 
-//        final ByteBuf requestBuf = PooledByteBufAllocator.DEFAULT.buffer(8192);
-//
-//        JsonSerializer jsonSerializer = new JsonSerializer(service, method, struct, requestBuf);
-//
-//        TProtocol outProtocol = new TBinaryProtocol(new TSoaTransport(requestBuf));
-//        jsonSerializer.write(json, outProtocol);
-//
-//        TProtocol inProtocol = new TBinaryProtocol(new TSoaTransport(requestBuf));
-//
-//        System.out.println("origJson:\n" + json);
-//
-//        System.out.println("after enCode and decode:\n" + jsonSerializer.read(inProtocol));
-//        System.out.println(desc + " ends=====================");
+        final ByteBuf requestBuf = PooledByteBufAllocator.DEFAULT.buffer(8192);
+
+        JsonSerializer jsonSerializer = new JsonSerializer(service, method, struct);
+        jsonSerializer.setRequestByteBuf(requestBuf);
+
+        TProtocol outProtocol = new TBinaryProtocol(new TSoaTransport(requestBuf));
+        jsonSerializer.write(json, outProtocol);
+
+        TProtocol inProtocol = new TBinaryProtocol(new TSoaTransport(requestBuf));
+
+        System.out.println("origJson:\n" + json);
+
+        System.out.println("after enCode and decode:\n" + jsonSerializer.read(inProtocol));
+        System.out.println(desc + " ends=====================");
+        requestBuf.release();
 
     }
 

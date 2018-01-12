@@ -1,6 +1,6 @@
 package com.github.dapeng.client.netty;
 
-import com.github.dapeng.core.SoaBaseCode;
+import com.github.dapeng.core.SoaCode;
 import com.github.dapeng.core.SoaException;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -72,7 +72,6 @@ public class NettyClient {
         /**
          * 一次检查中超过50个请求超时就打印一下日志
          */
-        private static int EXPIREDS = 50;
         static void checkTimeout() {
             long now = System.currentTimeMillis();
 
@@ -80,7 +79,7 @@ public class NettyClient {
             while (fwt != null && fwt.expired < now) {
                 CompletableFuture future = fwt.future;
                 if(future.isDone() == false) {
-                    future.completeExceptionally(new SoaException(SoaBaseCode.TimeOut));
+                    future.completeExceptionally(new SoaException(SoaCode.TimeOut));
                 }
 
                 futuresCachesWithTimeout.remove();
@@ -124,7 +123,7 @@ public class NettyClient {
             ByteBuf respByteBuf = future.get(30000, TimeUnit.MILLISECONDS);
             return respByteBuf;
         } catch (Exception e) {
-            throw new SoaException(SoaBaseCode.UnKnown, e.getMessage());
+            throw new SoaException(SoaCode.UnKnown, e.getMessage());
         } finally {
             RequestQueue.remove(seqid);
         }
@@ -144,6 +143,7 @@ public class NettyClient {
         return future;
     }
 
+    private static int timeouts = 0;
     private SoaClientHandler.CallBack callBack = msg -> {
         // length(4) stx(1) version(...) protocol(1) seqid(4) header(...) body(...) etx(1)
         int readerIndex = msg.readerIndex();
@@ -156,6 +156,8 @@ public class NettyClient {
         if (future != null) {
             future.complete(msg); // released in ...
         } else {
+            timeouts++;
+            LOGGER.error("now timeouts:" + timeouts);
             LOGGER.error("返回结果超时，siqid为：" + seqid);
             msg.release();
         }

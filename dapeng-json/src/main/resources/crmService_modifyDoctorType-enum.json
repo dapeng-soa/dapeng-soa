@@ -1,4 +1,6 @@
 {
-  "doctorId": 1,
-  "type": "CUSTOMER_DOCTOR"
+  "body": {
+    "doctorId": 1,
+    "type": "CUSTOMER_DOCTOR"
+  }
 }

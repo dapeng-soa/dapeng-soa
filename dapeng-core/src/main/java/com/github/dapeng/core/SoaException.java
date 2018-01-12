@@ -18,7 +18,7 @@ public class SoaException extends TException {
     public SoaException(TException err) {
         super(err);
 
-        this.code = SoaBaseCode.UnKnown.getCode();
+        this.code = SoaCode.UnKnown.getCode();
         this.msg = err.getMessage();
     }
 

@@ -7,8 +7,16 @@ public class TEnum {
         this.name = name;
     }
 
-    public final int id;
-    public final String name;
+    public int getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    private int id;
+    private String name;
 
     @Override
     public String toString() {

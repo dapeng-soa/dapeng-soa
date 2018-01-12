@@ -615,7 +615,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                             //TODO
                             break;
                         case BYTE:
-                            //TODO
+                            oproto.writeByte((byte)value);
                             break;
                         default:
                             throw new TException("DataType(" + current.dataType.kind + ") for " + current.dataType.qualifiedName + " is not a Number");

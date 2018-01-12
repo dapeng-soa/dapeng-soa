@@ -56,7 +56,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         SoaConnection connection = findConnection(service, version, method);
 
         if (connection == null) {
-            throw new SoaException(SoaBaseCode.NotConnected);
+            throw new SoaException(SoaCode.NotConnected);
         }
 
         return connection.send(service, version, method, request, requestSerializer, responseSerializer);
@@ -67,7 +67,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         SoaConnection connection = findConnection(service, version, method);
         if (connection == null) {
-            throw new SoaException(SoaBaseCode.NotConnected);
+            throw new SoaException(SoaCode.NotConnected);
         }
         return connection.sendAsync(service, version, method, request, requestSerializer, responseSerializer, timeout);
     }
