@@ -27,12 +27,12 @@ import java.util.concurrent.Executors;
 
 public class DapengContainer implements Container {
 
-    private static final Logger logger = LoggerFactory.getLogger(DapengContainer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DapengContainer.class);
     private List<AppListener> appListeners = new Vector<>();
     private List<Application> applications = new Vector<>();
     private List<Plugin> plugins = new ArrayList<>();
     private Map<ProcessorKey, SoaServiceDefinition<?>> processors = new ConcurrentHashMap<>();
-    private Map<ProcessorKey,Application>  applicationMap = new ConcurrentHashMap<>();
+    private Map<ProcessorKey, Application> applicationMap = new ConcurrentHashMap<>();
     private final List<ClassLoader> applicationCls;
 
     private final static CountDownLatch SHUTDOWN_SIGNAL = new CountDownLatch(1);
@@ -58,7 +58,7 @@ public class DapengContainer implements Container {
             try {
                 i.appRegistered(new AppEvent(app, AppEventType.REGISTER));
             } catch (Exception e) {
-                logger.error(" Faild to handler appEvent. listener: {}, eventType: {}",i, AppEventType.REGISTER , e.getStackTrace());
+                LOGGER.error(" Faild to handler appEvent. listener: {}, eventType: {}", i, AppEventType.REGISTER, e.getStackTrace());
             }
         });
     }
@@ -70,7 +70,7 @@ public class DapengContainer implements Container {
             try {
                 i.appUnRegistered(new AppEvent(app, AppEventType.UNREGISTER));
             } catch (Exception e) {
-                logger.error(" Faild to handler appEvent. listener: {}, eventType: {}",i, AppEventType.UNREGISTER , e.getStackTrace());
+                LOGGER.error(" Faild to handler appEvent. listener: {}, eventType: {}", i, AppEventType.UNREGISTER, e.getStackTrace());
             }
         });
     }
@@ -123,10 +123,9 @@ public class DapengContainer implements Container {
 
     @Override
     public Executor getDispatcher() {
-        if(!SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL){
+        if (!SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL) {
             return command -> command.run();
-        }
-        else {
+        } else {
             return ExectorFactory.exector;
         }
     }
@@ -139,14 +138,14 @@ public class DapengContainer implements Container {
     @Override
     public void startup() {
         //3. 初始化appLoader,dapengPlugin 应该用serviceLoader的方式去加载
-        Plugin springAppLoader = new SpringAppLoader(this,applicationCls);
+        Plugin springAppLoader = new SpringAppLoader(this, applicationCls);
         Plugin apiDocPlugin = new ApiDocPlugin(this);
         Plugin zookeeperPlugin = new ZookeeperRegistryPlugin(this);
         Plugin taskSchedulePlugin = new TaskSchedulePlugin(this);
         Plugin nettyPlugin = new NettyPlugin(this);
 
-        registerPlugin(springAppLoader);
         registerPlugin(zookeeperPlugin);
+        registerPlugin(springAppLoader);
         registerPlugin(taskSchedulePlugin);
         registerPlugin(nettyPlugin);
         registerPlugin(apiDocPlugin);
@@ -155,15 +154,22 @@ public class DapengContainer implements Container {
         //4.启动Apploader， plugins
         getPlugins().forEach(Plugin::start);
 
-        Runtime.getRuntime().addShutdownHook( new Thread( ()->{
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            LOGGER.warn("Container gracefule shutdown begin.");
             getPlugins().forEach(Plugin::stop);
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
             SHUTDOWN_SIGNAL.countDown();
-        } ) );
+            LOGGER.warn("Container gracefule shutdown end.");
+        }));
 
         try {
             SHUTDOWN_SIGNAL.await();
         } catch (InterruptedException e) {
-            logger.error(e.getMessage(), e);
+            LOGGER.error(e.getMessage(), e);
         }
     }
 

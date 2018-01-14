@@ -40,6 +40,9 @@ public class RegistryAgentImpl implements RegistryAgent {
 
     private final boolean isClient;
     private final ZookeeperHelper zooKeeperHelper = new ZookeeperHelper(this);
+    /**
+     * 灰度环境下访问生产环境的zk?
+     */
     private ZookeeperHelper zooKeeperMasterHelper = null;
 
     private ZookeeperWatcher siw, zkfbw;
@@ -92,10 +95,13 @@ public class RegistryAgentImpl implements RegistryAgent {
     @Override
     public void registerService(String serverName, String versionName) {
         try {
+            //注册服务信息到runtime节点
             String path = "/soa/runtime/services/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
             String data = "";
             zooKeeperHelper.addOrUpdateServerInfo(path, data);
 
+            //注册服务信息到master节点,并进行master选举
+            // TODO 后续需要优化选举机制
             if (SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_ISCONFIG) {
                 zooKeeperMasterHelper.createCurrentNode(ZookeeperHelper.generateKey(serverName, versionName));
             }

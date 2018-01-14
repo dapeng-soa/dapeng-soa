@@ -82,6 +82,10 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         String serviceKey = service + "." + version + "." + method + ".consumer";
         RuntimeInstance inst = loadbalance(serviceKey, compatibles);
 
+        if (inst == null) {
+            return null;
+        }
+
         inst.getActiveCount().incrementAndGet();
 
         IpPort ipPort = new IpPort(inst.ip, inst.port);

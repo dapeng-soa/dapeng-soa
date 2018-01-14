@@ -3,7 +3,9 @@ package com.github.dapeng.registry;
 import java.util.Map;
 
 /**
- * Created by lihuimin on 2017/12/24.
+ *
+ * @author lihuimin
+ * @date 2017/12/24
  */
 public interface ZkClientAgent {
 

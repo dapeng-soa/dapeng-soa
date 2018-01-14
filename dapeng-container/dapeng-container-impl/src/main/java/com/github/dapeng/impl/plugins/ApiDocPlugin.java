@@ -46,6 +46,7 @@ public class ApiDocPlugin implements AppListener, Plugin {
 
     @Override
     public void start() {
+        LOGGER.warn("Plugin::ApiDocPlugin start");
         Thread thread = new Thread("api-doc-thread") {
             @Override
             public void run() {
@@ -68,6 +69,11 @@ public class ApiDocPlugin implements AppListener, Plugin {
 
     @Override
     public void stop() {
-
+        LOGGER.warn("Plugin::ApiDocPlugin stop");
+        try {
+            server.stop();
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
     }
 }

@@ -22,7 +22,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
- * Created by tangliu on 2016/2/29.
+ *
+ * @author tangliu
+ * @date 2016/2/29
  */
 public class ZookeeperWatcher {
 
@@ -30,12 +32,18 @@ public class ZookeeperWatcher {
 
     private final boolean isClient;
     private final Map<String, List<ServiceInfo>> caches = new ConcurrentHashMap<>();
+    /**
+     * 其他配置信息
+     */
     private final Map<String, Map<ConfigKey, Object>> config = new ConcurrentHashMap<>();
+    /**
+     * 路由配置信息
+     */
     private final List<Route> routes = new ArrayList<>();
 
-    private final static String SERVICE_ROUTE = "/soa/runtime/services" ;
-    private final static String CONFIG_ROUTE = "/soa/config/service" ;
-    private final static String ROUTES_ROUTE = "/soa/config/route" ;
+    private final static String SERVICE_PATH = "/soa/runtime/services" ;
+    private final static String CONFIG_PATH = "/soa/config/service" ;
+    private final static String ROUTES_PATH = "/soa/config/route" ;
 
     private ZooKeeper zk;
     private String zkHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
@@ -51,7 +59,7 @@ public class ZookeeperWatcher {
 
     public void init() {
         connect();
-        getRouteConfig(ROUTES_ROUTE);
+        getRouteConfig(ROUTES_PATH);
         setConfigWatcher();
     }
 
@@ -59,7 +67,7 @@ public class ZookeeperWatcher {
     private void setConfigWatcher() {
 
         try {
-            List<String> children = zk.getChildren(CONFIG_ROUTE, watchedEvent -> {
+            List<String> children = zk.getChildren(CONFIG_PATH, watchedEvent -> {
                 if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
                     LOGGER.info("{}子节点发生变化，重新获取信息", watchedEvent.getPath());
                     setConfigWatcher();
@@ -120,7 +128,7 @@ public class ZookeeperWatcher {
         try {
             String data = new String(bytes, "utf-8");
 
-            if ("".equals(data.trim()) || "/soa/config/route".equals(data)) {
+            if ("".equals(data.trim()) || ROUTES_PATH.equals(data)) {
                 routes.clear();
                 return;
             }
@@ -239,7 +247,7 @@ public class ZookeeperWatcher {
     }
 
     public ServiceZKInfo getServiceZkInfo(String serviceName, Map<String, ServiceZKInfo> zkInfos) {
-        String servicePath = SERVICE_ROUTE + "/" + serviceName;
+        String servicePath = SERVICE_PATH + "/" + serviceName;
         try {
             if (zk == null)
                 init();
@@ -277,7 +285,7 @@ public class ZookeeperWatcher {
      */
     private void getServiceInfoByServiceName(String serviceName) {
 
-        String servicePath = SERVICE_ROUTE + "/" + serviceName;
+        String servicePath = SERVICE_PATH + "/" + serviceName;
         try {
 
             if (zk == null)
@@ -314,8 +322,8 @@ public class ZookeeperWatcher {
 
                 } else if (e.getState() == Watcher.Event.KeeperState.SyncConnected) {
                     LOGGER.info("{} Zookeeper Watcher 已连接 zookeeper Server", isClient ? "Client's" : "Server's");
-                    tryCreateNode(SERVICE_ROUTE);
-                    tryCreateNode(CONFIG_ROUTE);
+                    tryCreateNode(SERVICE_PATH);
+                    tryCreateNode(CONFIG_PATH);
 
                     caches.clear();
                     config.clear();
@@ -344,7 +352,7 @@ public class ZookeeperWatcher {
 
     private void getConfigData(String configNodeName) {
 
-        String configPath = CONFIG_ROUTE + "/" + configNodeName;
+        String configPath = CONFIG_PATH + "/" + configNodeName;
 
         try {
             byte[] data = zk.getData(configPath, watchedEvent -> {
