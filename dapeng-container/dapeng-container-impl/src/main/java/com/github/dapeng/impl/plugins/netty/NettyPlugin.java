@@ -25,7 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Created by lihuimin on 2017/12/7
+ * @date 2017/12/7
+ * @author lihuimin
  */
 public class NettyPlugin implements AppListener, Plugin {
 
@@ -48,6 +49,7 @@ public class NettyPlugin implements AppListener, Plugin {
 
     @Override
     public void start() {
+        LOGGER.warn("Plugin::NettyPlugin start");
         LOGGER.info("Bind Local Port {} [Netty]", port);
 
         new Thread("NettyContainer-Thread") {
@@ -89,6 +91,7 @@ public class NettyPlugin implements AppListener, Plugin {
 
     @Override
     public void stop() {
+        LOGGER.warn("Plugin::NettyPlugin stop");
         workerGroup.shutdownGracefully();
         bossGroup.shutdownGracefully();
     }

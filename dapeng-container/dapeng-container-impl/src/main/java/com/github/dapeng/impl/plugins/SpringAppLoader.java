@@ -6,8 +6,11 @@ import com.github.dapeng.api.Plugin;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.impl.container.DapengApplication;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
@@ -15,18 +18,19 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class SpringAppLoader implements Plugin {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(SpringAppLoader.class);
     private final Container container;
     private final List<ClassLoader> appClassLoaders;
+    private List<Object> springCtxs = new ArrayList<>();
 
     public SpringAppLoader(Container container, List<ClassLoader> appClassLoaders) {
         this.container = container;
         this.appClassLoaders = appClassLoaders;
     }
 
-    //伪代码
     @Override
     public void start() {
+        LOGGER.warn("Plugin::SpringAppLoader start.");
         String configPath = "META-INF/spring/services.xml";
 
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
@@ -35,17 +39,19 @@ public class SpringAppLoader implements Plugin {
 
                 // ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new Object[]{xmlPaths.toArray(new String[0])});
                 // context.start();
-                Class<?> appClass = appClassLoader.loadClass("org.springframework.context.support.ClassPathXmlApplicationContext");
+                Class<?> appCtxClass = appClassLoader.loadClass("org.springframework.context.support.ClassPathXmlApplicationContext");
                 Class<?>[] parameterTypes = new Class[]{String[].class};
-                Constructor<?> constructor = appClass.getConstructor(parameterTypes);
+                Constructor<?> constructor = appCtxClass.getConstructor(parameterTypes);
 
                 Thread.currentThread().setContextClassLoader(appClassLoader);
-                Object context = getSpringContext(configPath, appClassLoader, constructor);
+                Object springCtx = getSpringContext(configPath, appClassLoader, constructor);
 
-                Method method = appClass.getMethod("getBeansOfType", Class.class);
+                springCtxs.add(springCtx);
+
+                Method method = appCtxClass.getMethod("getBeansOfType", Class.class);
 
                 Map<String, SoaServiceDefinition<?>> processorMap = (Map<String, SoaServiceDefinition<?>>)
-                        method.invoke(context, appClassLoader.loadClass(SoaServiceDefinition.class.getName()));
+                        method.invoke(springCtx, appClassLoader.loadClass(SoaServiceDefinition.class.getName()));
                 //TODO: 需要构造Application对象
                 Map<String, ServiceInfo> appInfos = toServiceInfos(processorMap);
                 Application application = new DapengApplication(appInfos.values().stream().collect(Collectors.toList()),
@@ -60,16 +66,15 @@ public class SpringAppLoader implements Plugin {
                     container.registerAppMap(toApplicationMap(serviceDefinitionMap, application));
                 }
 
-                System.out.println(" ------------ SpringClassLoader: " + ContainerFactory.getContainer().getApplications());
+                LOGGER.info(" ------------ SpringClassLoader: " + ContainerFactory.getContainer().getApplications());
 
                 //Start spring context
-                System.out.println(" start to boot app");
-                Method startMethod = appClass.getMethod("start");
-                startMethod.invoke(context);
+                LOGGER.info(" start to boot app");
+                Method startMethod = appCtxClass.getMethod("start");
+                startMethod.invoke(springCtx);
 
             } catch (Exception e) {
-                e.printStackTrace();
-                System.out.println(e.getCause() + "  : " + e.getMessage());
+                LOGGER.error(e.getMessage(), e);
             } finally {
                 Thread.currentThread().setContextClassLoader(classLoader);
             }
@@ -86,7 +91,22 @@ public class SpringAppLoader implements Plugin {
 
     @Override
     public void stop() {
-
+        LOGGER.warn("Plugin:SpringAppLoader stop.");
+        LOGGER.warn("Gracefully shutdown not implemented yet");
+        // TODO stop or close??
+//        springCtxs.forEach(springCtx -> {
+//            LOGGER.info(" stop unload app");
+//            try {
+//                Method stopMethod = springCtx.getClass().getMethod("stop");
+//                stopMethod.invoke(springCtx);
+//            } catch (NoSuchMethodException e) {
+//                LOGGER.error(e.getMessage(), e);
+//            } catch (IllegalAccessException e) {
+//                LOGGER.error(e.getMessage(), e);
+//            } catch (InvocationTargetException e) {
+//                LOGGER.error(e.getMessage(), e);
+//            }
+//        });
     }
 
     private Map<String, ServiceInfo> toServiceInfos(Map<String, SoaServiceDefinition<?>> processorMap)
@@ -124,7 +144,7 @@ public class SpringAppLoader implements Plugin {
 
         Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitions = serviceInfoMap.entrySet().stream()
                 .collect(Collectors.toMap(
-                        entry -> new ProcessorKey(entry.getValue().serviceName,entry.getValue().version),
+                        entry -> new ProcessorKey(entry.getValue().serviceName, entry.getValue().version),
                         entry -> processorMap.get(entry.getKey())));
         return serviceDefinitions;
     }

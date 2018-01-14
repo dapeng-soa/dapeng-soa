@@ -14,7 +14,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Created by tangliu on 2016/2/29.
+ * @author tangliu
+ * @date 2016/2/29
  */
 public class ZookeeperHelper {
 
@@ -29,6 +30,9 @@ public class ZookeeperHelper {
         this.registryAgent = registryAgent;
     }
 
+    /**
+     * connect方法有可能在没有连接上的情况下就返回了, 这时候对zk的操作会出问题?
+     */
     public void connect() {
         try {
             zk = new ZooKeeper(zookeeperHost, 15000, watchedEvent -> {
@@ -94,7 +98,7 @@ public class ZookeeperHelper {
         Stat stat = exists(path);
 
         if (stat == null)
-            zk.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, persistNodeCreateCb, data);
+            zk.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, persistNodeCreateCallback, data);
 //        else
 //            try {
 //                zk.setData(path, data.getBytes(), -1);
@@ -116,7 +120,7 @@ public class ZookeeperHelper {
     /**
      * 添加持久化节点回调方法
      */
-    private AsyncCallback.StringCallback persistNodeCreateCb = (rc, path, ctx, name) -> {
+    private AsyncCallback.StringCallback persistNodeCreateCallback = (rc, path, ctx, name) -> {
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 LOGGER.info("创建节点:{},连接断开，重新创建", path);
@@ -139,13 +143,13 @@ public class ZookeeperHelper {
      * 异步添加serverInfo,为临时节点，如果server挂了就木有了
      */
     public void addServerInfo(String path, String data) {
-        zk.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, serverAddrCreateCb, data);
+        zk.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, serverInfoCreateCallback, data);
     }
 
     /**
      * 异步添加serverInfo的回调处理
      */
-    private AsyncCallback.StringCallback serverAddrCreateCb = (rc, path, ctx, name) -> {
+    private AsyncCallback.StringCallback serverInfoCreateCallback = (rc, path, ctx, name) -> {
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 LOGGER.info("添加serviceInfo:{},连接断开，重新添加", path);
@@ -171,14 +175,14 @@ public class ZookeeperHelper {
     /**
      * 异步更新节点信息
      */
-    public void updateServerInfo(String path, String data) {
-        zk.setData(path, data.getBytes(), -1, serverAddrUpdateCb, data);
+    private void updateServerInfo(String path, String data) {
+        zk.setData(path, data.getBytes(), -1, serverInfoUpdateCallback, data);
     }
 
     /**
      * 异步更新节点信息的回调方法
      */
-    private AsyncCallback.StatCallback serverAddrUpdateCb = (rc, path1, ctx, stat) -> {
+    private AsyncCallback.StatCallback serverInfoUpdateCallback = (rc, path1, ctx, stat) -> {
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 updateServerInfo(path1, (String) ctx);
@@ -193,9 +197,11 @@ public class ZookeeperHelper {
     }
 
     //-----竞选master---
-    public static Map<String, Boolean> isMaster = MasterHelper.isMaster;
+    private static Map<String, Boolean> isMaster = MasterHelper.isMaster;
 
-    private static final String PATH = "/soa/master/services/";
+    // TODO should be use other node for master election
+    @Deprecated
+    private static final String MASTER_PATH = "/soa/master/services/";
 
     /**
      * 竞选Master
@@ -203,10 +209,10 @@ public class ZookeeperHelper {
      * /soa/master/services/**.**.**.AccountService:1.0.0-0000000001   data [192.168.99.100:9090]
      */
     public void createCurrentNode(String key) {
-        zk.create(PATH + key + "-", CURRENT_CONTAINER_ADDR.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, masterCreateCb, key);
+        zk.create(MASTER_PATH + key + "-", CURRENT_CONTAINER_ADDR.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, masterCreateCallback, key);
     }
 
-    private AsyncCallback.StringCallback masterCreateCb = (rc, path, ctx, name) -> {
+    private AsyncCallback.StringCallback masterCreateCallback = (rc, path, ctx, name) -> {
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 try {
@@ -264,7 +270,7 @@ public class ZookeeperHelper {
                 LOGGER.info("({})竞选master失败，当前节点为({}), 监听最小节点", serviceKey, serviceKey + "-" + currentId, children.get(0));
 
                 try {
-                    String masterData = new String(zk.getData(PATH + children.get(0), false, null));
+                    String masterData = new String(zk.getData(MASTER_PATH + children.get(0), false, null));
                     LOGGER.info("{}的master节点为{}", serviceKey, masterData);
                 } catch (Exception e) {
                     LOGGER.error(e.getMessage(), e);
@@ -283,7 +289,7 @@ public class ZookeeperHelper {
      */
     private void ifLeastNodeExist(String serviceKey, String currentId, String leastId) {
 
-        zk.exists(PATH + serviceKey + "-" + leastId, event -> {
+        zk.exists(MASTER_PATH + serviceKey + "-" + leastId, event -> {
             if (event.getType() == Watcher.Event.EventType.NodeDeleted) {
                 LOGGER.info("最小节点({})被删除，当前节点({})竞选master", event.getPath(), serviceKey + "-" + currentId);
                 checkIsMaster(serviceKey, currentId);
@@ -325,7 +331,7 @@ public class ZookeeperHelper {
      * 创建/soa/master/services节点
      */
     private void addMasterRoute() {
-        String[] paths = PATH.split("/");
+        String[] paths = MASTER_PATH.split("/");
         String route = "/";
         for (int i = 1; i < paths.length; i++) {
             route += paths[i];

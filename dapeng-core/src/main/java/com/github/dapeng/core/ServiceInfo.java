@@ -4,7 +4,8 @@ public class ServiceInfo {
 
     public final String serviceName;
     public final String version;
-    public final String serviceType; //task, commonService. cron..etc.
+    //task, commonService. cron..etc.
+    public final String serviceType;
 
     /**
      * 用于Task 拿到对应的 class 类型
@@ -20,5 +21,9 @@ public class ServiceInfo {
         this.ifaceClass = ifaceClass;
     }
 
+    @Override
+    public String toString() {
+        return serviceName + ":" + version + "@" + serviceType + "-" + ifaceClass.getName();
+    }
 
 }
