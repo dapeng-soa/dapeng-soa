@@ -35,7 +35,7 @@ public class DapengContainer implements Container {
     private Map<ProcessorKey,Application>  applicationMap = new ConcurrentHashMap<>();
     private final List<ClassLoader> applicationCls;
 
-    private final static CountDownLatch shutdownSignal = new CountDownLatch(1);
+    private final static CountDownLatch SHUTDOWN_SIGNAL = new CountDownLatch(1);
 
     public DapengContainer(List<ClassLoader> applicationCls) {
         this.applicationCls = applicationCls;
@@ -145,7 +145,6 @@ public class DapengContainer implements Container {
         Plugin taskSchedulePlugin = new TaskSchedulePlugin(this);
         Plugin nettyPlugin = new NettyPlugin(this);
 
-        //ApiDocPlugin优先启动(为了Spring触发注册事件时，ServiceCache已经实例化，能收到消息)
         registerPlugin(springAppLoader);
         registerPlugin(zookeeperPlugin);
         registerPlugin(taskSchedulePlugin);
@@ -158,11 +157,11 @@ public class DapengContainer implements Container {
 
         Runtime.getRuntime().addShutdownHook( new Thread( ()->{
             getPlugins().forEach(Plugin::stop);
-            shutdownSignal.countDown();
+            SHUTDOWN_SIGNAL.countDown();
         } ) );
 
         try {
-            shutdownSignal.await();
+            SHUTDOWN_SIGNAL.await();
         } catch (InterruptedException e) {
             logger.error(e.getMessage(), e);
         }

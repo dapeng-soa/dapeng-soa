@@ -11,7 +11,7 @@ import java.io.ByteArrayOutputStream;
  */
 public class DumpUtil {
 
-    public static void main(String args[]){
+    public static void main(String[] args){
         ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(35);
         for(int i = 0; i<33; i++){
             buffer.writeByte('A' + i);

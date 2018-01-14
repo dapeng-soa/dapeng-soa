@@ -92,6 +92,8 @@ public class RouteConfigHelper {
                 case CONNECTIONLOSS:
                     updateConfigNodeData(s, (String) o);
                     return;
+                default:
+                    //just skip
             }
         }
     };

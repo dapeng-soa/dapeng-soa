@@ -48,6 +48,7 @@ public class InvocationContextImpl implements  InvocationContext {
     private int seqid;
 
     // read/write
+    @Override
     public CodecProtocol getCodecProtocol() {
         return codecProtocol;
     }
@@ -82,6 +83,7 @@ public class InvocationContextImpl implements  InvocationContext {
         this.invocationInfo = invocationInfo;
     }
 
+    @Override
     public Optional<Integer> getTransactionId() {
         return transactionId;
     }

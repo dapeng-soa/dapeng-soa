@@ -43,7 +43,7 @@ public class GenerateFilePlugin extends AbstractMojo {
         System.out.println(" sourceFilePath: " + sourceFilePath);
         System.out.println(" targetFilePath: " + targetFilePath);
 
-        if (language.equals("both") || language.equals("java")) {
+        if ("both".equals(language) || "java".equals(language)) {
             Scrooge.main(new String[]{"-gen", "java", "-all",
                     "-in", sourceFilePath,
                     "-out", targetFilePath});
@@ -52,7 +52,7 @@ public class GenerateFilePlugin extends AbstractMojo {
 //                deleteDir(commonFile);
 //            }
         }
-        if (language.equals("both") || language.equals("scala")) {
+        if ("both".equals(language) || "scala".equals(language)) {
             Scrooge.main(new String[]{"-gen", "scala", "-all",
                     "-in", sourceFilePath,
                     "-out", targetFilePath});
@@ -68,13 +68,13 @@ public class GenerateFilePlugin extends AbstractMojo {
         if (dir.isDirectory()) {
             String[] children = dir.list();
             for (int i = 0; i < children.length; i++) {
-                if (!children[i].equals("serializer")) {
+                if (!"serializer".equals(children[i])) {
                     deleteDir(new File(dir, children[i]));
 
                 }
             }
         }
-        if (!dir.getName().equals("serializer")) {
+        if (!"serializer".equals(dir.getName())) {
             dir.delete();
         }
 

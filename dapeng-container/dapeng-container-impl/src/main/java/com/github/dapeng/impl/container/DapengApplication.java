@@ -18,9 +18,9 @@ public class DapengApplication implements Application {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(DapengApplication.class);
 
-    private static final Map<String, Object> loggerMap = new ConcurrentHashMap<>();
+    private static final Map<String, Object> LOGER_MAP = new ConcurrentHashMap<>();
 
-    private static final Map<String, Method> logMethodMap = new ConcurrentHashMap<>();
+    private static final Map<String, Method> LOG_METHOD_MAP = new ConcurrentHashMap<>();
 
     private List<ServiceInfo> serviceInfos;
 
@@ -102,14 +102,14 @@ public class DapengApplication implements Application {
     public static Object getLogger(ClassLoader appClassLoader, Class<?> logClass, int classLoaderHex) throws Exception {
         Object logger;
         String logMethodKey= classLoaderHex+"."+logClass.getName();
-        if (loggerMap.containsKey(logMethodKey)) {
-            logger = loggerMap.get(logMethodKey);
+        if (LOGER_MAP.containsKey(logMethodKey)) {
+            logger = LOGER_MAP.get(logMethodKey);
         } else {
             Class<?> logFactoryClass = appClassLoader.loadClass("org.slf4j.LoggerFactory");
             Method getILoggerFactory = logFactoryClass.getMethod("getLogger", Class.class);
             getILoggerFactory.setAccessible(true);
             logger = getILoggerFactory.invoke(null, logClass);
-            loggerMap.put(logMethodKey, logger);
+            LOGER_MAP.put(logMethodKey, logger);
         }
         return logger;
     }
@@ -117,16 +117,16 @@ public class DapengApplication implements Application {
     public static Method getMethod(String methodName, Class<?> logClass, Object logger, int classLoaderHex) throws Exception {
         Method method;
         String logMethodKey = classLoaderHex + "." + logClass.getName() + methodName;
-        if (logMethodMap.containsKey(logMethodKey)) {
-            method = logMethodMap.get(logMethodKey);
+        if (LOG_METHOD_MAP.containsKey(logMethodKey)) {
+            method = LOG_METHOD_MAP.get(logMethodKey);
         } else {
-            if (methodName.equals("error")) {
+            if ("error".equals(methodName)) {
                 method = logger.getClass().getMethod(methodName, String.class, Throwable.class);
             } else {
                 method = logger.getClass().getMethod(methodName, String.class, Object[].class);
             }
 
-            logMethodMap.put(logMethodKey, method);
+            LOG_METHOD_MAP.put(logMethodKey, method);
         }
         return method;
     }

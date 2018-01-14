@@ -44,6 +44,7 @@ public class GetServiceMetadata_argsSerializer implements BeanSerializer<getServ
         oprot.writeStructEnd();
     }
 
+    @Override
     public void validate(getServiceMetadata_args bean) throws TException {
     }
 

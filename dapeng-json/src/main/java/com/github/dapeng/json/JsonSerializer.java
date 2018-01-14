@@ -30,6 +30,7 @@ public class JsonSerializer implements BeanSerializer<String> {
 
     /**
      * for encode only
+     *
      * @param service
      * @param method
      * @param struct
@@ -48,6 +49,7 @@ public class JsonSerializer implements BeanSerializer<String> {
 
     /**
      * for decode only
+     *
      * @param service
      * @param method
      * @param struct
@@ -68,7 +70,8 @@ public class JsonSerializer implements BeanSerializer<String> {
             if (field.type == TType.STOP)
                 break;
 
-            List<Field> flds = struct.getFields().stream().filter(_field -> _field.tag == field.id).collect(Collectors.toList()); // TODO get fld by field.id
+            List<Field> flds = struct.getFields().stream().filter(element -> element.tag == field.id)
+                    .collect(Collectors.toList());
 
             Field fld = flds.isEmpty() ? null : flds.get(0);
 
@@ -165,6 +168,8 @@ public class JsonSerializer implements BeanSerializer<String> {
                             case TType.I64:
                                 writer.onStartField(String.valueOf(iproto.readI64()));
                                 break;
+                            default:
+                                logger.error("won't be here", new Throwable());
                         }
 
                         readField(iproto, fieldDataType.valueType, map.valueType, writer, false);
@@ -376,6 +381,8 @@ public class JsonSerializer implements BeanSerializer<String> {
                             // 压缩模式下, default size不能设置为0...
                             oproto.writeMapBegin(new TMap(dataType2Byte(current.dataType.keyType), dataType2Byte(current.dataType.valueType), 1));
                             break;
+                        default:
+                            logger.error("won't be here", new Throwable());
                     }
                     break;
                 default:
@@ -431,8 +438,12 @@ public class JsonSerializer implements BeanSerializer<String> {
 
                             reWriteByteBuf();
                             break;
+                        default:
+                            logger.error("won't be here", new Throwable());
                     }
                     break;
+                default:
+                    logger.error("won't be here", new Throwable());
             }
         }
 
@@ -461,6 +472,8 @@ public class JsonSerializer implements BeanSerializer<String> {
                 case SET:
                     oproto.writeSetBegin(new TSet(dataType2Byte(current.dataType.valueType), 0));
                     break;
+                default:
+                    logger.error("won't be here", new Throwable());
             }
 
             stackNew(new StackNode(current.dataType.valueType, requestByteBuf.writerIndex(), findStruct(current.dataType.valueType.qualifiedName, service)));
@@ -483,6 +496,8 @@ public class JsonSerializer implements BeanSerializer<String> {
                     oproto.writeSetEnd();
                     reWriteByteBuf();
                     break;
+                default:
+                    logger.error("won't be here", new Throwable());
             }
         }
 
@@ -490,9 +505,9 @@ public class JsonSerializer implements BeanSerializer<String> {
         public void onStartField(String name) throws TException {
             switch (parsePhase) {
                 case INIT:
-                    if (name.equals("header")) {
+                    if ("header".equals(name)) {
                         parsePhase = ParsePhase.HEADER_BEGIN;
-                    } else if (name.equals("body")) {
+                    } else if ("body".equals(name)) {
                         parsePhase = ParsePhase.BODY_BEGIN;
                     } else {
                         logger.warn("skip field(" + name + ")@pase:" + parsePhase);
@@ -502,7 +517,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     currentHeaderName = name;
                     break;
                 case HEADER_END:
-                    if (name.equals("body")) {
+                    if ("body".equals(name)) {
                         parsePhase = ParsePhase.BODY_BEGIN;
                     } else {
                         logger.warn("skip field(" + name + ")@pase:" + parsePhase);
@@ -536,6 +551,8 @@ public class JsonSerializer implements BeanSerializer<String> {
                 case BODY_END:
                     logger.warn("skip field(" + name + ")@pase:" + parsePhase);
                     break;
+                default:
+                    logger.error("won't be here", new Throwable());
             }
 
         }
@@ -615,7 +632,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                             //TODO
                             break;
                         case BYTE:
-                            oproto.writeByte((byte)value);
+                            oproto.writeByte((byte) value);
                             break;
                         default:
                             throw new TException("DataType(" + current.dataType.kind + ") for " + current.dataType.qualifiedName + " is not a Number");
@@ -636,6 +653,8 @@ public class JsonSerializer implements BeanSerializer<String> {
                     //重置writerIndex
                     requestByteBuf.writerIndex(current.byteBufPosition);
                     break;
+                default:
+                    logger.error("won't be here", new Throwable());
             }
         }
 
@@ -699,6 +718,8 @@ public class JsonSerializer implements BeanSerializer<String> {
                 case LIST:
                     oproto.writeListBegin(new TList(dataType2Byte(current.dataType.valueType), elCount));
                     break;
+                default:
+                    logger.error("won't be here", new Throwable());
             }
 
             requestByteBuf.writerIndex(currentIndex);

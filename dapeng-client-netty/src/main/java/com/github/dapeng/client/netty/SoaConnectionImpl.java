@@ -18,7 +18,8 @@ public class SoaConnectionImpl extends SoaBaseConnection {
         super(host, port);
     }
 
-    protected  <REQ> ByteBuf buildRequestBuf(String service, String version, String method,int seqid, REQ request, BeanSerializer<REQ> requestSerializer) throws SoaException {
+    @Override
+    protected  <REQ> ByteBuf buildRequestBuf(String service, String version, String method, int seqid, REQ request, BeanSerializer<REQ> requestSerializer) throws SoaException {
         final ByteBuf requestBuf = PooledByteBufAllocator.DEFAULT.buffer(8192);
 
         SoaMessageBuilder<REQ> builder = new SoaMessageBuilder<>();

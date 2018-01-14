@@ -3,37 +3,19 @@ package com.github.dapeng.registry;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Created by tangliu on 2016/1/15.
+ *
+ * @author tangliu
+ * @date 2016/1/15
  */
 public class ServiceInfo {
 
-    public String versionName;
+    public final String versionName;
 
-    public String host;
+    public final String host;
 
-    public Integer port;
+    public final int port;
 
-    public String getVersionName() {
-        return versionName;
-    }
-
-    public AtomicInteger getActiveCount() {
-        return activeCount;
-    }
-
-    public String getHost() {
-        return host;
-    }
-
-    public Integer getPort() {
-        return port;
-    }
-
-    public AtomicInteger activeCount;
-
-    public void setActiveCount(AtomicInteger activeCount) {
-        this.activeCount = activeCount;
-    }
+    private AtomicInteger activeCount;
 
     public ServiceInfo(String host, Integer port, String versionName) {
 
@@ -45,16 +27,23 @@ public class ServiceInfo {
     }
 
     public boolean equalTo(ServiceInfo sinfo) {
-        if (!versionName.equals(sinfo.getVersionName()))
+        if (!versionName.equals(sinfo.versionName))
             return false;
 
-        if (!host.equals(sinfo.getHost()))
+        if (!host.equals(sinfo.host))
             return false;
 
-        if (port != sinfo.getPort())
+        if (port != sinfo.port)
             return false;
 
         return true;
     }
 
+    public AtomicInteger getActiveCount() {
+        return activeCount;
+    }
+
+    public void setActiveCount(AtomicInteger activeCount) {
+        this.activeCount = activeCount;
+    }
 }

@@ -21,11 +21,13 @@ public class WatcherUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(WatcherUtils.class);
 
     public static void processConfigData(String configNode, byte[] data, Map<String, Map<ConfigKey, Object>> config) {
-        Map<ConfigKey, Object> propertyMap = new HashMap<>();
         try {
             String propertiesStr = new String(data, "utf-8");
 
             String[] properties = propertiesStr.split(";");
+
+            Map<ConfigKey, Object> propertyMap = new HashMap<>(properties.length);
+
             for (String property : properties) {
 
                 String[] key_values = property.split("=");
@@ -55,16 +57,16 @@ public class WatcherUtils {
                         case Compatible:
                             propertyMap.put(type, key_values[1].split(","));
                             break;
+                        default:
+                            //just skip
                     }
                 }
             }
-
+            config.put(configNode, propertyMap);
             LOGGER.info("get config form {} with data [{}]", configNode, propertiesStr);
         } catch (UnsupportedEncodingException e) {
             LOGGER.error(e.getMessage(), e);
         }
-
-        config.put(configNode, propertyMap);
     }
 
 

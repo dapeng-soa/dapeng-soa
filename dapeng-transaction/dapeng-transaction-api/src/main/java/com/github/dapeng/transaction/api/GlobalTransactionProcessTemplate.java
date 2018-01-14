@@ -63,7 +63,7 @@ public class GlobalTransactionProcessTemplate<REQ> {
             transactionProcess.setTransactionSequence(transactionContext.getCurrentTransactionSequence());
 
             transactionProcess.setRedoTimes(0);
-            transactionProcess.setNextRedoTime(new Date(new Date().getTime() + 30 * 1000));
+            transactionProcess.setNextRedoTime(new Date(System.currentTimeMillis() + 30 * 1000));
 
             transactionProcess = service.create(transactionProcess);
 

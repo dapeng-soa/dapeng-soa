@@ -21,6 +21,7 @@ public enum TGlobalTransactionProcessExpectedStatus implements TEnum {
         this.value = value;
     }
 
+    @Override
     public int getValue() {
         return this.value;
     }

@@ -2,7 +2,6 @@ package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.core.helper.MasterHelper;
-import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
@@ -184,6 +183,8 @@ public class ZookeeperHelper {
             case CONNECTIONLOSS:
                 updateServerInfo(path1, (String) ctx);
                 return;
+            default:
+                //just skip
         }
     };
 
@@ -191,7 +192,7 @@ public class ZookeeperHelper {
         this.zookeeperHost = zookeeperHost;
     }
 
-    //----------------------------竞选master-------------------------------------------------------------------------
+    //-----竞选master---
     public static Map<String, Boolean> isMaster = MasterHelper.isMaster;
 
     private static final String PATH = "/soa/master/services/";
@@ -202,7 +203,7 @@ public class ZookeeperHelper {
      * /soa/master/services/**.**.**.AccountService:1.0.0-0000000001   data [192.168.99.100:9090]
      */
     public void createCurrentNode(String key) {
-        zk.create(PATH + key + "-", currentContainerAddr.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, masterCreateCb, key);
+        zk.create(PATH + key + "-", CURRENT_CONTAINER_ADDR.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, masterCreateCb, key);
     }
 
     private AsyncCallback.StringCallback masterCreateCb = (rc, path, ctx, name) -> {
@@ -257,7 +258,7 @@ public class ZookeeperHelper {
             String least = children.get(0).replace((serviceKey + "-"), "");
             if (least.equals(currentId)) {
                 isMaster.put(serviceKey, true);
-                LOGGER.info("({})竞选master成功, master({})", serviceKey, currentContainerAddr);
+                LOGGER.info("({})竞选master成功, master({})", serviceKey, CURRENT_CONTAINER_ADDR);
             } else {
                 isMaster.put(serviceKey, false);
                 LOGGER.info("({})竞选master失败，当前节点为({}), 监听最小节点", serviceKey, serviceKey + "-" + currentId, children.get(0));
@@ -318,7 +319,7 @@ public class ZookeeperHelper {
         return serviceName + ":" + versionName;
     }
 
-    private static final String currentContainerAddr = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
+    private static final String CURRENT_CONTAINER_ADDR = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
 
     /**
      * 创建/soa/master/services节点

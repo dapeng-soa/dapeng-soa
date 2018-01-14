@@ -17,7 +17,7 @@ public class IPUtils {
         try {
             inetAddress = InetAddress.getLocalHost();
 
-            if (inetAddress.getHostAddress() == null || inetAddress.getHostAddress().equals("127.0.0.1")) {
+            if (inetAddress.getHostAddress() == null || "127.0.0.1".equals(inetAddress.getHostAddress())) {
                 NetworkInterface ni = NetworkInterface.getByName("bond0");
                 if (ni == null)
                     throw new RuntimeException("wrong with get ip");
@@ -25,7 +25,7 @@ public class IPUtils {
                 Enumeration<InetAddress> ips = ni.getInetAddresses();
                 while (ips.hasMoreElements()) {
                     InetAddress nextElement = ips.nextElement();
-                    if (nextElement.getHostAddress().equals("127.0.0.1") || nextElement instanceof Inet6Address || nextElement.getHostAddress().contains(":"))
+                    if ("127.0.0.1".equals(nextElement.getHostAddress()) || nextElement instanceof Inet6Address || nextElement.getHostAddress().contains(":"))
                         continue;
                     inetAddress = nextElement;
                 }

@@ -85,10 +85,7 @@ public class RunContainerPlugin extends SoaAbstractMojo {
                 System.out.println("------set classloader-------------");
                 Thread.currentThread().setContextClassLoader(coreClassLoader);
 
-                Bootstrap bootstrap = new Bootstrap();
-                bootstrap.startup(platformClassLoader,appClassLoaders);
-
-
+                Bootstrap.startup(platformClassLoader,appClassLoaders);
 
             } catch (Exception e) {
                 Thread.currentThread().getThreadGroup().uncaughtException(Thread.currentThread(), e);
@@ -104,7 +101,7 @@ public class RunContainerPlugin extends SoaAbstractMojo {
     private boolean removeServiceProjectArtifact(Iterator<URL> iterator, URL url) {
         String regex = project.getArtifact().getFile().getAbsolutePath().replaceAll("\\\\", "/");
 
-        if (File.separator.equals("\\")) {
+        if ("\\".equals(File.separator)) {
             regex = regex.replace(File.separator, File.separator + File.separator);
         }
 

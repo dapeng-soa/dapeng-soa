@@ -49,23 +49,25 @@ public class NettyClient {
             final CompletableFuture<?> future;
         }
 
-        private static final Map<Integer, CompletableFuture<ByteBuf>> futureCaches = new ConcurrentHashMap<>();
-        private static final PriorityBlockingQueue<AsyncRequestWithTimeout> futuresCachesWithTimeout = new PriorityBlockingQueue<>(256,
-                (o1, o2) -> (int) (o1.expired - o2.expired));
+        private static final Map<Integer, CompletableFuture<ByteBuf>> FUTURE_CACHES =
+                new ConcurrentHashMap<>();
+        private static final PriorityBlockingQueue<AsyncRequestWithTimeout> FUTURES_CACHES_WITH_TIMEOUT =
+                new PriorityBlockingQueue<>(256,
+                        (o1, o2) -> (int) (o1.expired - o2.expired));
 
         static void put(int seqId, CompletableFuture<ByteBuf> requestFuture) {
-            futureCaches.put(seqId, requestFuture);
+            FUTURE_CACHES.put(seqId, requestFuture);
         }
 
         static void putAsync(int seqId, CompletableFuture<ByteBuf> requestFuture, long timeout) {
-            futureCaches.put(seqId, requestFuture);
+            FUTURE_CACHES.put(seqId, requestFuture);
 
             AsyncRequestWithTimeout fwt = new AsyncRequestWithTimeout(seqId, timeout, requestFuture);
-            futuresCachesWithTimeout.add(fwt);
+            FUTURES_CACHES_WITH_TIMEOUT.add(fwt);
         }
 
         static CompletableFuture<ByteBuf> remove(int seqId) {
-            return futureCaches.remove(seqId);
+            return FUTURE_CACHES.remove(seqId);
             // remove from prior-queue
         }
 
@@ -75,17 +77,17 @@ public class NettyClient {
         static void checkTimeout() {
             long now = System.currentTimeMillis();
 
-            AsyncRequestWithTimeout fwt = futuresCachesWithTimeout.peek();
+            AsyncRequestWithTimeout fwt = FUTURES_CACHES_WITH_TIMEOUT.peek();
             while (fwt != null && fwt.expired < now) {
                 CompletableFuture future = fwt.future;
                 if(future.isDone() == false) {
                     future.completeExceptionally(new SoaException(SoaCode.TimeOut));
                 }
 
-                futuresCachesWithTimeout.remove();
+                FUTURES_CACHES_WITH_TIMEOUT.remove();
                 remove(fwt.seqid);
 
-                fwt = futuresCachesWithTimeout.peek();
+                fwt = FUTURES_CACHES_WITH_TIMEOUT.peek();
             }
         }
     }
