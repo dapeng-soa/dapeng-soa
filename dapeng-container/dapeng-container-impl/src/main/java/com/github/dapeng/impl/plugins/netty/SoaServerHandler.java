@@ -117,6 +117,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             onExit(ctx, getPrevChain(ctx));
                         }
                     } catch (Exception e) {
+                        // TODO 是否该判断是业务的异常还是框架的异常? 这里只记录框架异常
                         LOGGER.error(e.getMessage(), e);
                         writeErrorMessage(channelHandlerContext, context, new SoaException(SoaCode.UnKnown, e.getMessage()));
                     }

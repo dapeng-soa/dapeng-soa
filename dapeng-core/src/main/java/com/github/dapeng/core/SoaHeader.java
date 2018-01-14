@@ -86,6 +86,7 @@ public class SoaHeader {
      */
     private Optional<String> sessionId = Optional.empty();
 
+    @Override
     public String toString() {
 
         StringBuilder sb = new StringBuilder("{");
@@ -237,13 +238,13 @@ public class SoaHeader {
 
     public void setAttachment(String key, String value) {
         if (attachments == null) {
-            attachments = new HashMap<String, String>();
+            attachments = new HashMap<>();
         }
         attachments.put(key, value);
     }
 
     public void setAttachments(Map<String, String> attachments) {
-        this.attachments = attachments == null ? new HashMap<String, String>() : attachments;
+        this.attachments = attachments == null ? new HashMap<>() : attachments;
     }
 
     public void addAttachments(Map<String, String> attachments) {
@@ -251,7 +252,7 @@ public class SoaHeader {
             return;
         }
         if (this.attachments == null) {
-            this.attachments = new HashMap<String, String>();
+            this.attachments = new HashMap<>();
         }
         this.attachments.putAll(attachments);
     }

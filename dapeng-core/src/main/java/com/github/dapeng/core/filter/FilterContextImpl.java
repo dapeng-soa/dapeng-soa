@@ -1,14 +1,12 @@
 package com.github.dapeng.core.filter;
 
 
-import com.github.dapeng.core.filter.FilterContext;
-import com.github.dapeng.core.filter.Filter;
-
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by lihuimin on 2017/12/11.
+ * @author lihuimin
+ * @date 2017/12/11
  */
 public class FilterContextImpl implements FilterContext {
 
@@ -19,7 +17,7 @@ public class FilterContextImpl implements FilterContext {
     @Override
     public void setAttach(Filter filter, String key, Object value) {
         Map<String, Object> attches = attachmentsWithFilter.get(filter);
-        if(attches == null){
+        if (attches == null) {
             attches = new HashMap<>();
             attachmentsWithFilter.put(filter, attches);
         }
@@ -29,7 +27,7 @@ public class FilterContextImpl implements FilterContext {
     @Override
     public Object getAttach(Filter filter, String key) {
         Map<String, Object> attaches = attachmentsWithFilter.get(filter);
-        if(attaches != null)
+        if (attaches != null)
             return attaches.get(key);
         else return null;
     }
@@ -37,14 +35,14 @@ public class FilterContextImpl implements FilterContext {
     @Override
     public void setAttribute(String key, Object value) {
         if (attachments == null) {
-            attachments = new HashMap<String, Object>();
+            attachments = new HashMap<>();
         }
         attachments.put(key, value);
     }
 
     @Override
     public Object getAttribute(String key) {
-        if (attachments == null){
+        if (attachments == null) {
             return null;
         }
         return attachments.get(key);

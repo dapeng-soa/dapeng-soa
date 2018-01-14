@@ -36,6 +36,7 @@ public enum TGlobalTransactionProcessStatus implements TEnum {
         this.value = value;
     }
 
+    @Override
     public int getValue() {
         return this.value;
     }

@@ -1,7 +1,9 @@
 package com.github.dapeng.route.pattern;
 
 /**
- * Created by tangliu on 2016/6/24.
+ *
+ * @author tangliu
+ * @date 2016/6/24
  */
 public class IpNode {
 
@@ -11,23 +13,7 @@ public class IpNode {
         this.mask = mask;
     }
 
-    String ip;
+    public final String ip;
 
-    public int mask;
-
-    public String getIp() {
-        return ip;
-    }
-
-    public void setIp(String ip) {
-        this.ip = ip;
-    }
-
-    public int getMask() {
-        return mask;
-    }
-
-    public void setMask(int mask) {
-        this.mask = mask;
-    }
+    public final int mask;
 }

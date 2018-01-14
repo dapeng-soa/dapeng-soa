@@ -10,14 +10,14 @@ import java.util.regex.Pattern;
  * @date 16/3/24
  */
 public class Version {
-    private static final Pattern versionPattern = Pattern.compile("(\\d+)(\\.(\\d+))?(\\.(\\d+))?(.*)");
+    private static final Pattern VERSION_PATTERN = Pattern.compile("(\\d+)(\\.(\\d+))?(\\.(\\d+))?(.*)");
 
     private final String fullName;
-    private final Integer majorNum;
-    private final Integer minorNum;
-    private final Integer patchNum;
+    private final int majorNum;
+    private final int minorNum;
+    private final int patchNum;
 
-    private Version(String fullName, Integer majorNum, Integer minorNum, Integer patchNum) {
+    private Version(String fullName, int majorNum, int minorNum, int patchNum) {
         this.fullName = fullName;
         this.majorNum = majorNum;
         this.minorNum = minorNum;
@@ -41,7 +41,7 @@ public class Version {
     }
 
     public static Version toVersion(String fullName) {
-        Matcher matcher = versionPattern.matcher(fullName);
+        Matcher matcher = VERSION_PATTERN.matcher(fullName);
 
         if (!matcher.matches())
             throw new IllegalArgumentException("版本格式错误:" + fullName);

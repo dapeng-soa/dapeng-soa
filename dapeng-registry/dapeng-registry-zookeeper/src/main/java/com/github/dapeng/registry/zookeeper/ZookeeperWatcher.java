@@ -33,9 +33,9 @@ public class ZookeeperWatcher {
     private final Map<String, Map<ConfigKey, Object>> config = new ConcurrentHashMap<>();
     private final List<Route> routes = new ArrayList<>();
 
-    private final static String serviceRoute = "/soa/runtime/services" ;
-    private final static String configRoute = "/soa/config/service" ;
-    private final static String routesRoute = "/soa/config/route" ;
+    private final static String SERVICE_ROUTE = "/soa/runtime/services" ;
+    private final static String CONFIG_ROUTE = "/soa/config/service" ;
+    private final static String ROUTES_ROUTE = "/soa/config/route" ;
 
     private ZooKeeper zk;
     private String zkHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
@@ -51,7 +51,7 @@ public class ZookeeperWatcher {
 
     public void init() {
         connect();
-        getRouteConfig(routesRoute);
+        getRouteConfig(ROUTES_ROUTE);
         setConfigWatcher();
     }
 
@@ -59,7 +59,7 @@ public class ZookeeperWatcher {
     private void setConfigWatcher() {
 
         try {
-            List<String> children = zk.getChildren(configRoute, watchedEvent -> {
+            List<String> children = zk.getChildren(CONFIG_ROUTE, watchedEvent -> {
                 if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
                     LOGGER.info("{}子节点发生变化，重新获取信息", watchedEvent.getPath());
                     setConfigWatcher();
@@ -120,7 +120,7 @@ public class ZookeeperWatcher {
         try {
             String data = new String(bytes, "utf-8");
 
-            if (data.trim().equals("") || data.equals("/soa/config/route")) {
+            if ("".equals(data.trim()) || "/soa/config/route".equals(data)) {
                 routes.clear();
                 return;
             }
@@ -230,16 +230,16 @@ public class ZookeeperWatcher {
         if (serverList != null && serverList.size() > 0) {
 
             if (!compatible) {
-                usableList.addAll(serverList.stream().filter(server -> server.getVersionName().equals(versionName)).collect(Collectors.toList()));
+                usableList.addAll(serverList.stream().filter(server -> server.versionName.equals(versionName)).collect(Collectors.toList()));
             } else {
-                usableList.addAll(serverList.stream().filter(server -> Version.toVersion(versionName).compatibleTo(Version.toVersion(server.getVersionName()))).collect(Collectors.toList()));
+                usableList.addAll(serverList.stream().filter(server -> Version.toVersion(versionName).compatibleTo(Version.toVersion(server.versionName))).collect(Collectors.toList()));
             }
         }
         return usableList;
     }
 
     public ServiceZKInfo getServiceZkInfo(String serviceName, Map<String, ServiceZKInfo> zkInfos) {
-        String servicePath = serviceRoute + "/" + serviceName;
+        String servicePath = SERVICE_ROUTE + "/" + serviceName;
         try {
             if (zk == null)
                 init();
@@ -277,7 +277,7 @@ public class ZookeeperWatcher {
      */
     private void getServiceInfoByServiceName(String serviceName) {
 
-        String servicePath = serviceRoute + "/" + serviceName;
+        String servicePath = SERVICE_ROUTE + "/" + serviceName;
         try {
 
             if (zk == null)
@@ -314,8 +314,8 @@ public class ZookeeperWatcher {
 
                 } else if (e.getState() == Watcher.Event.KeeperState.SyncConnected) {
                     LOGGER.info("{} Zookeeper Watcher 已连接 zookeeper Server", isClient ? "Client's" : "Server's");
-                    tryCreateNode(serviceRoute);
-                    tryCreateNode(configRoute);
+                    tryCreateNode(SERVICE_ROUTE);
+                    tryCreateNode(CONFIG_ROUTE);
 
                     caches.clear();
                     config.clear();
@@ -344,7 +344,7 @@ public class ZookeeperWatcher {
 
     private void getConfigData(String configNodeName) {
 
-        String configPath = configRoute + "/" + configNodeName;
+        String configPath = CONFIG_ROUTE + "/" + configNodeName;
 
         try {
             byte[] data = zk.getData(configPath, watchedEvent -> {

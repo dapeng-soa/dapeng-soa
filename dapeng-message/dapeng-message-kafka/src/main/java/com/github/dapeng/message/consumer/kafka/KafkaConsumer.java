@@ -121,7 +121,7 @@ public class KafkaConsumer extends Thread {
 
         long count = new ArrayList<>(Arrays.asList(iface.getClass().getInterfaces()))
                 .stream()
-                .filter(m -> m.getName().equals("org.springframework.aop.framework.Advised"))
+                .filter(m -> "org.springframework.aop.framework.Advised".equals(m.getName()))
                 .count();
 
         Class<?> ifaceClass;

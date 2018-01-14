@@ -68,11 +68,12 @@ public class JsonParser {
 
         protected int _cursor = -1;
 
+        @Override
         public int cursor() {
             return _cursor;
         }
-        //public void setCursor(int pos) { this._cursor = pos; }
 
+        @Override
         public Line getLine(int index) {
             StringBuilder sb = new StringBuilder();
             int savedCursor = _cursor;
@@ -170,7 +171,7 @@ public class JsonParser {
         else if (Character.isISOControl(errorChar)) unexpected = String.format("\\u%04x", (int) errorChar);
         else unexpected = "" + errorChar;
 
-        String expected = (target.equals("'\uFFFF'")) ? "end-of-input" : target;
+        String expected = ("'\uFFFF'".equals(target)) ? "end-of-input" : target;
 
         String summary = "Unexpected " + unexpected + " at input index:" +
                 input.cursor() + "(line:" + line.lineNr + ",position:" + line.column +

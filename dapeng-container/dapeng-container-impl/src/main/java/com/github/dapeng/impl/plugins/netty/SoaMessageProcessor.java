@@ -84,6 +84,8 @@ public class SoaMessageProcessor {
             case Xml:
                 contentProtocol = null;
                 break;
+            default:
+                LOGGER.error("Unknow Protocol", new Throwable());
         }
 
         new SoaHeaderSerializer().write(context.getHeader(), headerProtocol);

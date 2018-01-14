@@ -136,6 +136,8 @@ public class StaticInfoHelper {
                 case CONNECTIONLOSS:
                     updateConfigNodeData(s, (String) o);
                     return;
+                default:
+                    //Just skip
             }
         }
     };

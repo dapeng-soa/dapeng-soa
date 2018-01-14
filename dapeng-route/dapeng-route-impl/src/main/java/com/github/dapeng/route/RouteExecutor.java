@@ -206,12 +206,12 @@ public class RouteExecutor {
         } else if (pattern instanceof NumberPattern) {
             return matched(Long.valueOf(value.toString()), (NumberPattern) pattern);
         } else if (pattern instanceof RangePattern) {
-            return Long.valueOf(value.toString()) > ((RangePattern) pattern).getLow() && Long.valueOf(value.toString()) <= ((RangePattern) pattern).getHigh();
+            return Long.valueOf(value.toString()) > ((RangePattern) pattern).low && Long.valueOf(value.toString()) <= ((RangePattern) pattern).high;
         } else if (pattern instanceof IpPattern) {
             try {
                 return matched(InetAddress.getByName((String) value), (IpPattern) pattern);
             } catch (Exception e) {
-                System.out.print(e.getLocalizedMessage());
+                LOGGER.error(e.getLocalizedMessage(), e);
             }
         }
         return false;
@@ -228,14 +228,14 @@ public class RouteExecutor {
         return isMatch;
     }
 
-    public static boolean matched(Long num, ModPattern modPattern) {
-        Long remain = num % modPattern.getBase();
-        return remain >= modPattern.getRemain().getLow() && remain <= modPattern.getRemain().getHigh();
+    private static boolean matched(long num, ModPattern modPattern) {
+        long remain = num % modPattern.base;
+        return remain >= modPattern.remain.low && remain <= modPattern.remain.high;
     }
 
-    public static boolean matched(Long num, NumberPattern numberPattern) {
+    private static boolean matched(long num, NumberPattern numberPattern) {
         boolean isMatch = false;
-        for (Long temp : numberPattern.getValue()) {
+        for (long temp : numberPattern.value) {
             if (temp == num) {
                 isMatch = true;
                 break;
@@ -251,9 +251,9 @@ public class RouteExecutor {
      * @param ipPattern
      * @return
      */
-    public static boolean matched(InetAddress address, IpPattern ipPattern) {
+    private static boolean matched(InetAddress address, IpPattern ipPattern) {
 
-        List<IpNode> ips = ipPattern.getIps();
+        List<IpNode> ips = ipPattern.ips;
 
         for (IpNode node : ips) {
             if (matched(address, node))
@@ -269,18 +269,18 @@ public class RouteExecutor {
      * @param ipPattern
      * @return
      */
-    public static boolean matched(InetAddress address, IpNode ipPattern) {
+    private static boolean matched(InetAddress address, IpNode ipPattern) {
 
         InetAddress ip = null;
         try {
-            ip = InetAddress.getByName(ipPattern.getIp());
+            ip = InetAddress.getByName(ipPattern.ip);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
             return false;
         }
         byte[] bytes = ip.getAddress();
         int ipInt = ((bytes[0] & 0xFF) << 24) | ((bytes[1] & 0xFF) << 16) | ((bytes[2] & 0xFF) << 8) | ((bytes[3] & 0xFF));
-        int mask2 = 32 - ipPattern.getMask();  // 8
+        int mask2 = 32 - ipPattern.mask;  // 8
         int mask2Flag = (1 << mask2) - 1;
         int mask1Flag = -1 & (~mask2Flag);
 

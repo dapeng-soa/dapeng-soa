@@ -117,6 +117,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 break;
             case ConsistentHash:
                 break;
+            default:
+                // won't be here
         }
 
         return instance;

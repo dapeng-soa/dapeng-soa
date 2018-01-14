@@ -274,7 +274,7 @@ public class GlobalTransactionManager {
             String[] infos = callerInfo.split(":");
             jsonPost = new JsonPost(infos[0], Integer.valueOf(infos[1]), false);
 
-        } else if (SoaSystemEnvProperties.SOA_REMOTING_MODE.equals("local")) {
+        } else if ("local".equals(SoaSystemEnvProperties.SOA_REMOTING_MODE)) {
             jsonPost = new JsonPost(SoaSystemEnvProperties.SOA_CONTAINER_IP, SoaSystemEnvProperties.SOA_CONTAINER_PORT, false);
         }
 

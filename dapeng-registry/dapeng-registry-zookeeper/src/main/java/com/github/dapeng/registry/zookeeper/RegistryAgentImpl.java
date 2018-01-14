@@ -152,7 +152,7 @@ public class RegistryAgentImpl implements RegistryAgent {
         }
 
         //使用路由规则，过滤可用服务器 （local模式不考虑）
-        final boolean isLocal = SoaSystemEnvProperties.SOA_REMOTING_MODE.equals("local");
+        final boolean isLocal = "local".equals(SoaSystemEnvProperties.SOA_REMOTING_MODE);
         if (!isLocal) {
             InvocationContext context = InvocationContextImpl.Factory.getCurrentInstance();
             List<Route> routes = usingFallbackZookeeper ? zkfbw.getRoutes() : siw.getRoutes();
@@ -160,7 +160,7 @@ public class RegistryAgentImpl implements RegistryAgent {
 
             for (ServiceInfo sif : serviceInfos) {
                 try {
-                    InetAddress inetAddress = InetAddress.getByName(sif.getHost());
+                    InetAddress inetAddress = InetAddress.getByName(sif.host);
                     if (RouteExecutor.isServerMatched(context, routes, inetAddress)) {
                         tmpList.add(sif);
                     }

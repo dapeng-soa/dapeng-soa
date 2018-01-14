@@ -121,6 +121,7 @@ public abstract class SoaAbstractMojo extends AbstractMojo {
             super(name);
         }
 
+        @Override
         public void uncaughtException(Thread thread, Throwable throwable) {
             if (throwable instanceof ThreadDeath) {
                 return; // harmless

@@ -105,6 +105,7 @@ public class TGlobalTransaction implements Serializable{
     }
 
 
+    @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder("{");
         stringBuilder.append("\"").append("id").append("\":").append(this.id).append(",");

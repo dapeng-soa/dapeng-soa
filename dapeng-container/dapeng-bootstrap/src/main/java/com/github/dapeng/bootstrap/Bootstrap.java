@@ -15,14 +15,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Bootstrap {
-    private static final String enginePath = System.getProperty("soa.base", new File(Bootstrap.class.getProtectionDomain().getCodeSource().getLocation().getFile()).getParentFile().getParentFile().getParent() + "/dapeng-container-impl/target/dapeng-container/");
+    private static final String ENGINE_PATH = System.getProperty("soa.base", new File(Bootstrap.class.getProtectionDomain().getCodeSource().getLocation().getFile()).getParentFile().getParentFile().getParent() + "/dapeng-container-impl/target/dapeng-container/");
 
 
     public static void main(String[] args) throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        List<URL> coreURLs = findJarURLs(new File(enginePath, "lib"));
-        List<URL> containerURLs = findJarURLs(new File(enginePath, "bin/lib"));
-        List<List<URL>> applicationURLs = getUrlList(new File(enginePath, "apps"));
-        List<List<URL>> pluginURLs = getUrlList(new File(enginePath, "plugin"));
+        List<URL> coreURLs = findJarURLs(new File(ENGINE_PATH, "lib"));
+        List<URL> containerURLs = findJarURLs(new File(ENGINE_PATH, "bin/lib"));
+        List<List<URL>> applicationURLs = getUrlList(new File(ENGINE_PATH, "apps"));
+        List<List<URL>> pluginURLs = getUrlList(new File(ENGINE_PATH, "plugin"));
 
         CoreClassLoader coreClassLoader = new CoreClassLoader(coreURLs.toArray(new URL[coreURLs.size()]));
 

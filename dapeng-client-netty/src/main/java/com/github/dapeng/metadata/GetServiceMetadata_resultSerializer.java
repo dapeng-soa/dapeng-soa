@@ -56,6 +56,7 @@ public class GetServiceMetadata_resultSerializer implements BeanSerializer<getSe
         oprot.writeStructEnd();
     }
 
+    @Override
     public void validate(getServiceMetadata_result bean) throws TException {
 
         if (bean.getSuccess() == null)

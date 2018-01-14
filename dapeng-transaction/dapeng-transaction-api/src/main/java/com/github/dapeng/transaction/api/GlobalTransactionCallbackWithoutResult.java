@@ -10,6 +10,7 @@ import com.github.dapeng.org.apache.thrift.TException;
  */
 public abstract class GlobalTransactionCallbackWithoutResult implements GlobalTransactionCallback<Object> {
 
+    @Override
     public Object doInTransaction() throws TException {
         doInTransactionWithoutResult();
 

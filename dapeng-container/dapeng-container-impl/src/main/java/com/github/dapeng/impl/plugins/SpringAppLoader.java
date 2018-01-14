@@ -3,10 +3,7 @@ package com.github.dapeng.impl.plugins;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.Plugin;
-import com.github.dapeng.core.Application;
-import com.github.dapeng.core.ProcessorKey;
-import com.github.dapeng.core.Service;
-import com.github.dapeng.core.ServiceInfo;
+import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.impl.container.DapengApplication;
 
@@ -14,6 +11,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class SpringAppLoader implements Plugin {
@@ -42,23 +40,24 @@ public class SpringAppLoader implements Plugin {
                 Constructor<?> constructor = appClass.getConstructor(parameterTypes);
 
                 Thread.currentThread().setContextClassLoader(appClassLoader);
-                Object context = getSpringContext(configPath, appClassLoader,constructor);
+                Object context = getSpringContext(configPath, appClassLoader, constructor);
 
                 Method method = appClass.getMethod("getBeansOfType", Class.class);
 
                 Map<String, SoaServiceDefinition<?>> processorMap = (Map<String, SoaServiceDefinition<?>>)
                         method.invoke(context, appClassLoader.loadClass(SoaServiceDefinition.class.getName()));
                 //TODO: 需要构造Application对象
-                Map<String,ServiceInfo> appInfos = toServiceInfos(processorMap);
-                Application application = new DapengApplication(appInfos.values().stream().collect(Collectors.toList()),appClassLoader);
+                Map<String, ServiceInfo> appInfos = toServiceInfos(processorMap);
+                Application application = new DapengApplication(appInfos.values().stream().collect(Collectors.toList()),
+                        appClassLoader);
 
-                Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitionMap = toSoaServiceDefinitionMap(appInfos,processorMap);
+                Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitionMap = toSoaServiceDefinitionMap(appInfos, processorMap);
                 container.registerAppProcessors(serviceDefinitionMap);
 
                 // IApplication app = new ...
-                if (! application.getServiceInfos().isEmpty()) {
+                if (!application.getServiceInfos().isEmpty()) {
                     container.registerApplication(application);
-                    container.registerAppMap(toApplicationMap(serviceDefinitionMap,application));
+                    container.registerAppMap(toApplicationMap(serviceDefinitionMap, application));
                 }
 
                 System.out.println(" ------------ SpringClassLoader: " + ContainerFactory.getContainer().getApplications());
@@ -70,18 +69,18 @@ public class SpringAppLoader implements Plugin {
 
             } catch (Exception e) {
                 e.printStackTrace();
-                System.out.println(e.getCause() + "  : "+ e.getMessage());
+                System.out.println(e.getCause() + "  : " + e.getMessage());
             } finally {
                 Thread.currentThread().setContextClassLoader(classLoader);
             }
         }
     }
 
-    private Map<ProcessorKey,Application> toApplicationMap(Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitionMap,Application application){
-        Map<ProcessorKey,Application> map = new HashMap<>();
-        serviceDefinitionMap.forEach((key,serviceDef)->{
-            map.put(key,application);
-        });
+    private Map<ProcessorKey, Application> toApplicationMap(Map<ProcessorKey,
+            SoaServiceDefinition<?>> serviceDefinitionMap, Application application) {
+
+        Map<ProcessorKey, Application> map = serviceDefinitionMap.keySet().stream().
+                collect(Collectors.toMap(Function.identity(), processorKey -> application));
         return map;
     }
 
@@ -90,44 +89,49 @@ public class SpringAppLoader implements Plugin {
 
     }
 
-    private Map<String,ServiceInfo> toServiceInfos(Map<String, SoaServiceDefinition<?>> processorMap) throws Exception {
+    private Map<String, ServiceInfo> toServiceInfos(Map<String, SoaServiceDefinition<?>> processorMap)
+            throws Exception {
 
-        Map<String,ServiceInfo> serviceInfoMap = new HashMap<>();
+        Map<String, ServiceInfo> serviceInfoMap = new HashMap<>(processorMap.size());
         for (Map.Entry<String, SoaServiceDefinition<?>> processorEntry : processorMap.entrySet()) {
             String processorKey = processorEntry.getKey();
             SoaServiceDefinition<?> processor = processorEntry.getValue();
 
             long count = new ArrayList<>(Arrays.asList(processor.iface.getClass().getInterfaces()))
                     .stream()
-                    .filter(m -> m.getName().equals("org.springframework.aop.framework.Advised"))
+                    .filter(m -> "org.springframework.aop.framework.Advised".equals(m.getName()))
                     .count();
 
-            Class<?> ifaceClass = (Class) (count > 0 ? processor.iface.getClass().getMethod("getTargetClass").invoke(processor.iface) : processor.iface.getClass());
+            Class<?> ifaceClass = (Class) (count > 0 ?
+                    processor.iface.getClass().getMethod("getTargetClass").invoke(processor.iface) :
+                    processor.iface.getClass());
 
             Service service = processor.ifaceClass.getAnnotation(Service.class);
-            assert(service != null); // TODO
+            assert (service != null); // TODO
 
-            ServiceInfo serviceInfo = new ServiceInfo(service.name(), service.version(), "service", ifaceClass);
-            serviceInfoMap.put(processorKey,serviceInfo);
+            ServiceInfo serviceInfo = new ServiceInfo(service.name(), service.version(),
+                    "service", ifaceClass);
+            serviceInfoMap.put(processorKey, serviceInfo);
         }
 
         return serviceInfoMap;
     }
 
 
+    private Map<ProcessorKey, SoaServiceDefinition<?>> toSoaServiceDefinitionMap(
+            Map<String, ServiceInfo> serviceInfoMap,
+            Map<String, SoaServiceDefinition<?>> processorMap) {
 
-    private Map<ProcessorKey, SoaServiceDefinition<?>> toSoaServiceDefinitionMap(Map<String,ServiceInfo> serviceInfoMap, Map<String, SoaServiceDefinition<?>> processorMap) {
-        Map<ProcessorKey, SoaServiceDefinition<?>>  serviceDefinitions = new HashMap<>();
-        serviceInfoMap.entrySet().forEach(i -> {
-            serviceDefinitions.put(new ProcessorKey(i.getValue().serviceName,i.getValue().version), processorMap.get(i.getKey()));
-        });
+        Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitions = serviceInfoMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        entry -> new ProcessorKey(entry.getValue().serviceName,entry.getValue().version),
+                        entry -> processorMap.get(entry.getKey())));
         return serviceDefinitions;
     }
 
 
-    private Object getSpringContext(String configPath, ClassLoader appClassLoader, Constructor<?> constructor) throws Exception{
+    private Object getSpringContext(String configPath, ClassLoader appClassLoader, Constructor<?> constructor) throws Exception {
         List<String> xmlPaths = new ArrayList<>();
-
 
         Enumeration<URL> resources = appClassLoader.getResources(configPath);
 
