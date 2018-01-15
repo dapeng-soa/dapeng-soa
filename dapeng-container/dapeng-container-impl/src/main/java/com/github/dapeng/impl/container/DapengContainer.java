@@ -7,15 +7,16 @@ import com.github.dapeng.core.Application;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.Filter;
-import com.github.dapeng.impl.plugins.ApiDocPlugin;
-import com.github.dapeng.impl.plugins.SpringAppLoader;
-import com.github.dapeng.impl.plugins.TaskSchedulePlugin;
-import com.github.dapeng.impl.plugins.ZookeeperRegistryPlugin;
+import com.github.dapeng.impl.plugins.*;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import java.util.concurrent.Executors;
 public class DapengContainer implements Container {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DapengContainer.class);
+    private static final String RUN_MODE = System.getProperty("soa.run.mode", "maven");
     private List<AppListener> appListeners = new Vector<>();
     private List<Application> applications = new Vector<>();
     private List<Plugin> plugins = new ArrayList<>();
@@ -139,17 +141,24 @@ public class DapengContainer implements Container {
     public void startup() {
         //3. 初始化appLoader,dapengPlugin 应该用serviceLoader的方式去加载
         Plugin springAppLoader = new SpringAppLoader(this, applicationCls);
-        Plugin apiDocPlugin = new ApiDocPlugin(this);
         Plugin zookeeperPlugin = new ZookeeperRegistryPlugin(this);
         Plugin taskSchedulePlugin = new TaskSchedulePlugin(this);
         Plugin nettyPlugin = new NettyPlugin(this);
+
+        if (!"sbt".equals(RUN_MODE)) {
+            Plugin logbackPlugin = new LogbackPlugin();
+            registerPlugin(logbackPlugin);
+        }
 
         registerPlugin(zookeeperPlugin);
         registerPlugin(springAppLoader);
         registerPlugin(taskSchedulePlugin);
         registerPlugin(nettyPlugin);
-        registerPlugin(apiDocPlugin);
 
+        if ("maven".equals(RUN_MODE)) {
+            Plugin apiDocPlugin = new ApiDocPlugin(this);
+            registerPlugin(apiDocPlugin);
+        }
 
         //4.启动Apploader， plugins
         getPlugins().forEach(Plugin::start);
@@ -171,6 +180,12 @@ public class DapengContainer implements Container {
         } catch (InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
         }
+    }
+
+    public static InputStream loadInputStreamInClassLoader(String path) throws FileNotFoundException {
+        if ("sbt".equals(RUN_MODE) || "maven".equals(RUN_MODE))
+            return DapengContainer.class.getClassLoader().getResourceAsStream(path);
+        return new FileInputStream(new File(System.getProperty("soa.base"), "conf/" + path));
     }
 
 
