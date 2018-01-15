@@ -442,6 +442,8 @@ public class JsonSerializer implements BeanSerializer<String> {
                             logger.error("won't be here", new Throwable());
                     }
                     break;
+                case BODY_END:
+                    break;
                 default:
                     logger.error("won't be here", new Throwable());
             }
