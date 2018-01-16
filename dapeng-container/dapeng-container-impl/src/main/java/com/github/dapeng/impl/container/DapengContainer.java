@@ -117,7 +117,7 @@ public class DapengContainer implements Container {
         this.applicationMap.putAll(applicationMap);
     }
 
-    private static class ExectorFactory {
+    private static class ExecutorFactory {
         private static Executor exector = Executors.newFixedThreadPool(SoaSystemEnvProperties.SOA_CORE_POOL_SIZE);
     }
 
@@ -126,7 +126,7 @@ public class DapengContainer implements Container {
         if (!SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL) {
             return command -> command.run();
         } else {
-            return ExectorFactory.exector;
+            return ExecutorFactory.exector;
         }
     }
 
