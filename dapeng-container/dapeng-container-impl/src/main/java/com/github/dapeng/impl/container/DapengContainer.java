@@ -149,6 +149,7 @@ public class DapengContainer implements Container {
         Plugin taskSchedulePlugin = new TaskSchedulePlugin(this);
         Plugin nettyPlugin = new NettyPlugin(this);
 
+        // TODO
         if (!"sbt".equals(RUN_MODE)) {
             Plugin logbackPlugin = new LogbackPlugin();
             registerPlugin(logbackPlugin);

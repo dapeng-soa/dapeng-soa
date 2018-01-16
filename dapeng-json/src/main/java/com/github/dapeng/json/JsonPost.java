@@ -85,9 +85,6 @@ public class JsonPost {
 
         String jsonResponse = "{}" ;
 
-        TSoaTransport inputSoaTransport = null;
-        TSoaTransport outputSoaTransport = null;
-
         try {
             // Fixme should be obtained from a pool
             Object result = new SoaJsonConnectionImpl(host, port).send(serviceName, version, method, requestJson, jsonEncoder, jsonDecoder);
@@ -112,14 +109,6 @@ public class JsonPost {
                 throw e;
             }
 
-        } finally {
-            if (outputSoaTransport != null) {
-                outputSoaTransport.close();
-            }
-
-            if (inputSoaTransport != null) {
-                inputSoaTransport.close();
-            }
         }
 
         return jsonResponse;

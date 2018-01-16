@@ -121,7 +121,6 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     }
 
                     responseBufFuture.exceptionally(ex -> {
-                        LOGGER.error(ex.getMessage(), ex);
                         Result<RESP> result = new Result<>(null,
                                 new SoaException(SoaCode.TimeOut));
                         ctx.setAttribute("result", result);

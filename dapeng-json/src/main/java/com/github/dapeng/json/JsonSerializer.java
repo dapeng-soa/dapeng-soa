@@ -1,6 +1,5 @@
 package com.github.dapeng.json;
 
-import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.enums.CodecProtocol;
 import com.github.dapeng.core.metadata.*;
@@ -8,7 +7,6 @@ import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.*;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.PooledByteBufAllocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -367,6 +365,8 @@ public class JsonSerializer implements BeanSerializer<String> {
                         peek().increaseElement();
                         //集合套集合的变态处理方式
                         current = new StackNode(peek().dataType.valueType, requestByteBuf.writerIndex(), current.struct);
+                    } else if (!foundField) {
+                        return;
                     }
                     switch (current.dataType.kind) {
                         case STRUCT:
@@ -425,6 +425,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     logger.error("should not come here");
                     break;
                 case BODY:
+                    if (!foundField) return;
                     switch (current.dataType.kind) {
                         case STRUCT:
                             oproto.writeFieldStop();
@@ -458,7 +459,7 @@ public class JsonSerializer implements BeanSerializer<String> {
         public void onStartArray() throws TException {
             assert isCollectionKind(current.dataType.kind);
 
-            if (parsePhase != ParsePhase.BODY) return;
+            if (parsePhase != ParsePhase.BODY || !foundField) return;
 
             if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
                 peek().increaseElement();
@@ -483,7 +484,7 @@ public class JsonSerializer implements BeanSerializer<String> {
 
         @Override
         public void onEndArray() throws TException {
-            if (parsePhase != ParsePhase.BODY) return;
+            if (parsePhase != ParsePhase.BODY || !foundField) return;
 
             pop();
 
@@ -527,8 +528,8 @@ public class JsonSerializer implements BeanSerializer<String> {
                     break;
                 case BODY:
                     if (current.dataType.kind == DataType.KIND.MAP) {
-                        stackNew(new StackNode(current.dataType.keyType, requestByteBuf.writerIndex(), null));
                         assert isValidMapKeyType(current.dataType.keyType.kind);
+                        stackNew(new StackNode(current.dataType.keyType, requestByteBuf.writerIndex(), null));
                         if (current.dataType.kind == DataType.KIND.STRING) {
                             oproto.writeString(name);
                         } else {
@@ -577,14 +578,14 @@ public class JsonSerializer implements BeanSerializer<String> {
 
         @Override
         public void onEndField() throws TException {
-            if (parsePhase != ParsePhase.BODY) return;
-
-            if (!foundField) return;
+            if (parsePhase != ParsePhase.BODY || !foundField) {
+                // reset the flag
+                foundField = true;
+                return;
+            }
 
             pop();
-            if (current.dataType.kind == DataType.KIND.MAP) {
-
-            } else {
+            if (current.dataType.kind != DataType.KIND.MAP) {
                 oproto.writeFieldEnd();
             }
         }
@@ -596,7 +597,11 @@ public class JsonSerializer implements BeanSerializer<String> {
                     logger.warn("skip boolean(" + value + ")@pase:" + parsePhase);
                     break;
                 case BODY:
-                    if (peek() != null && isMultiElementKind(peek().dataType.kind)) peek().increaseElement();
+                    if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
+                        peek().increaseElement();
+                    } else if (!foundField) {
+                        return;
+                    }
                     oproto.writeBool(value);
                     break;
                 default:
@@ -614,7 +619,11 @@ public class JsonSerializer implements BeanSerializer<String> {
                 case BODY:
                     DataType.KIND currentType = current.dataType.kind;
 
-                    if (peek() != null && isMultiElementKind(peek().dataType.kind)) peek().increaseElement();
+                    if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
+                        peek().increaseElement();
+                    } else if (!foundField) {
+                        return;
+                    }
 
                     switch (currentType) {
                         case SHORT:
@@ -652,6 +661,9 @@ public class JsonSerializer implements BeanSerializer<String> {
                 case HEADER:
                     break;
                 case BODY:
+                    if (!foundField) {
+                        return;
+                    }
                     //重置writerIndex
                     requestByteBuf.writerIndex(current.byteBufPosition);
                     break;
@@ -667,7 +679,11 @@ public class JsonSerializer implements BeanSerializer<String> {
                     fillStringToInvocationCtx(value);
                     break;
                 case BODY:
-                    if (peek() != null && isMultiElementKind(peek().dataType.kind)) peek().increaseElement();
+                    if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
+                        peek().increaseElement();
+                    }  else if (!foundField) {
+                        return;
+                    }
 
                     if (current.dataType.kind == DataType.KIND.ENUM) {
                         TEnum tEnum = findEnum(current.dataType.qualifiedName, service);
