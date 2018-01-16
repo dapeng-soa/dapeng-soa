@@ -22,7 +22,7 @@ public class LogbackPlugin implements Plugin {
 
     @Override
     public void start() {
-        LOGGER.warn("Plugin::SpringAppLoader start.");
+        LOGGER.warn("Plugin::LogbackPlugin start.");
 
         try (InputStream logbackCnfgStream = new BufferedInputStream(DapengContainer.loadInputStreamInClassLoader("logback.xml"))) {
             LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();

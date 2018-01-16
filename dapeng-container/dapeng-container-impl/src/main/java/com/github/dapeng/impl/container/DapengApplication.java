@@ -12,23 +12,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 public class DapengApplication implements Application {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(DapengApplication.class);
 
-    private static final Map<String, Object> LOGER_MAP = new ConcurrentHashMap<>();
+    // Map<LoggerName, Logger in appClassLoader>
+    private final Map<String, Object> LOGER_MAP = new ConcurrentHashMap<>();
 
-    private static final Map<String, Method> LOG_METHOD_MAP = new ConcurrentHashMap<>();
+    private final ReentrantLock lock = new ReentrantLock();
+
+    private Method slf4jInfoMethod, slf4jErrorMethod;
 
     private List<ServiceInfo> serviceInfos;
 
     private ClassLoader appClassLoader;
 
-    public  DapengApplication(List<ServiceInfo> serviceInfos,ClassLoader appClassLoader ) {
-        this.serviceInfos=Collections.unmodifiableList(serviceInfos);
-        this.appClassLoader=appClassLoader;
+    public DapengApplication(List<ServiceInfo> serviceInfos, ClassLoader appClassLoader) {
+        this.serviceInfos = Collections.unmodifiableList(serviceInfos);
+        this.appClassLoader = appClassLoader;
+
+        initSlf4jMethods();
     }
 
     @Override
@@ -54,13 +60,16 @@ public class DapengApplication implements Application {
     @Override
     public void info(Class<?> logClass, String formattedMsg, Object... args) {
 
-        methodInvoke(logClass,"info",logger -> logger.info(formattedMsg, args), new Object[]{formattedMsg, args});
+        methodInvoke(logClass, slf4jInfoMethod, logger -> logger.info(formattedMsg, args),
+                new Object[]{formattedMsg, args});
+
     }
 
     @Override
-    public void error(Class<?> logClass,String errMsg, Throwable exception) {
+    public void error(Class<?> logClass, String errMsg, Throwable exception) {
 
-        methodInvoke(logClass,"error", logger -> logger.error(errMsg, exception), new Object[]{errMsg, exception});
+        methodInvoke(logClass, slf4jErrorMethod, logger -> logger.error(errMsg, exception),
+                new Object[]{errMsg, exception});
 
     }
 
@@ -79,56 +88,57 @@ public class DapengApplication implements Application {
 
     }
 
-    private void methodInvoke(Class<?> logClass, String methodName, Consumer<Logger> loggerConsumer, Object... args) {
+    private void methodInvoke(Class<?> logClass, Method method, Consumer<Logger> loggerConsumer, Object... args) {
         try {
 
             if (this.appClassLoader != null) {
-                Object appLogger = getLogger(appClassLoader, logClass, appClassLoader.hashCode());
-                Method infoMethod = getMethod(methodName, logClass, appLogger, appClassLoader.hashCode());
-                infoMethod.invoke(appLogger, args);
-            } else {
+                Object appLogger = getLogger(appClassLoader, logClass);
+                // Method infoMethod = getMethod(methodName, logClass, appLogger);
+                method.invoke(appLogger, args);
+            } else { // TODO
                 Logger containerLogger = LoggerFactory.getLogger(logClass);
                 loggerConsumer.accept(containerLogger);
             }
 
         } catch (Exception e) {
-            //有异常用容器的logger打日志
-            LOGGER.error(e.getMessage());
+            //有异常用容器的logger打日志e
+            LOGGER.error(e.getMessage(), e);
             Logger containerLogger = LoggerFactory.getLogger(logClass);
             loggerConsumer.accept(containerLogger);
         }
     }
 
-    public static Object getLogger(ClassLoader appClassLoader, Class<?> logClass, int classLoaderHex) throws Exception {
-        Object logger;
-        String logMethodKey= classLoaderHex+"."+logClass.getName();
+    public Object getLogger(ClassLoader appClassLoader, Class<?> logClass) throws Exception {
+        String logMethodKey = logClass.getName();
         if (LOGER_MAP.containsKey(logMethodKey)) {
-            logger = LOGER_MAP.get(logMethodKey);
-        } else {
+            return LOGER_MAP.get(logMethodKey);
+        }
+
+        lock.lock();
+        try {
+            if (LOGER_MAP.containsKey(logMethodKey)) {
+                return LOGER_MAP.get(logMethodKey);
+            }
+
             Class<?> logFactoryClass = appClassLoader.loadClass("org.slf4j.LoggerFactory");
             Method getILoggerFactory = logFactoryClass.getMethod("getLogger", Class.class);
             getILoggerFactory.setAccessible(true);
-            logger = getILoggerFactory.invoke(null, logClass);
+            Object logger = getILoggerFactory.invoke(null, logClass);
             LOGER_MAP.put(logMethodKey, logger);
+            return logger;
+        } finally {
+            lock.unlock();
         }
-        return logger;
     }
 
-    public static Method getMethod(String methodName, Class<?> logClass, Object logger, int classLoaderHex) throws Exception {
-        Method method;
-        String logMethodKey = classLoaderHex + "." + logClass.getName() + methodName;
-        if (LOG_METHOD_MAP.containsKey(logMethodKey)) {
-            method = LOG_METHOD_MAP.get(logMethodKey);
-        } else {
-            if ("error".equals(methodName)) {
-                method = logger.getClass().getMethod(methodName, String.class, Throwable.class);
-            } else {
-                method = logger.getClass().getMethod(methodName, String.class, Object[].class);
-            }
-
-            LOG_METHOD_MAP.put(logMethodKey, method);
+    private void initSlf4jMethods() {
+        try {
+            Class<?> loggerClass = appClassLoader.loadClass("org.slf4j.Logger");
+            this.slf4jErrorMethod = loggerClass.getMethod("error", String.class, Throwable.class);
+            this.slf4jInfoMethod = loggerClass.getMethod("info", String.class, Object[].class);
+            LOGGER.info("init Slf4j OK");
+        } catch (Exception ex) {
+            LOGGER.error("init Slf4j Methods failed", ex);
         }
-        return method;
     }
-
 }
