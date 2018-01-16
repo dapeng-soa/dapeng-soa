@@ -129,7 +129,6 @@ public class DapengContainer implements Container {
                 return Executors.newFixedThreadPool(SoaSystemEnvProperties.SOA_CORE_POOL_SIZE);
             }
         }
-
     }
 
     @Override
