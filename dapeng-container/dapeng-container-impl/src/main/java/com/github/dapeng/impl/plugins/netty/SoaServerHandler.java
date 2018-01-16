@@ -41,20 +41,24 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         ByteBuf reqMessage = (ByteBuf) msg;
         TSoaTransport inputSoaTransport = new TSoaTransport(reqMessage);
         SoaMessageProcessor parser = new SoaMessageProcessor(inputSoaTransport);
-        final TransactionContext context = TransactionContext.Factory.createNewInstance();
 
+        final TransactionContext context = TransactionContext.Factory.createNewInstance();
         try {
             // parser.service, version, method, header, bodyProtocol
             SoaHeader soaHeader = parser.parseSoaMessage(context);
             context.setHeader(soaHeader);
+
             SoaServiceDefinition processor = container.getServiceProcessors().get(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
             container.getDispatcher().execute(() -> {
                 try {
+                    TransactionContext.Factory.setCurrentInstance(context);
                     processRequest(ctx, parser.getContentProtocol(), processor, reqMessage, context);
                 } catch (TException e) {
                     LOGGER.error(e.getMessage(), e);
                     writeErrorMessage(ctx, context, new SoaException(SoaCode.UnKnown, e.getMessage()));
+                } finally {
+                    TransactionContext.Factory.removeCurrentInstance();
                 }
             });
         } catch (TException ex) {
@@ -67,6 +71,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             if (context.getHeader() == null)
                 context.setHeader(new SoaHeader());
             writeErrorMessage(ctx, context, new SoaException(SoaCode.UnKnown, "读请求异常"));
+        } finally {
+            TransactionContext.Factory.removeCurrentInstance();
         }
     }
 
@@ -107,6 +113,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             SoaFunctionDefinition.Async asyncFunc = (SoaFunctionDefinition.Async) soaFunction;
                             CompletableFuture<RESP> future = (CompletableFuture<RESP>) asyncFunc.apply(iface, args);
                             future.whenComplete((realResult, ex) -> {
+                                TransactionContext.Factory.setCurrentInstance(context);
                                 processResult(channelHandlerContext, soaFunction, context, realResult, application, ctx);
                                 onExit(ctx, getPrevChain(ctx));
                             });
@@ -117,7 +124,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             onExit(ctx, getPrevChain(ctx));
                         }
                     } catch (Exception e) {
-                        // TODO 是否该判断是业务的异常还是框架的异常? 这里只记录框架异常
                         LOGGER.error(e.getMessage(), e);
                         writeErrorMessage(channelHandlerContext, context, new SoaException(SoaCode.UnKnown, e.getMessage()));
                     }

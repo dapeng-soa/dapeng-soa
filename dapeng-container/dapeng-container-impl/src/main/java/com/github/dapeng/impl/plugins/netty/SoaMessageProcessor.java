@@ -134,9 +134,7 @@ public class SoaMessageProcessor {
         }
 
         context.setSeqid(headerProtocol.readI32());
-        SoaHeader soaHeader =new SoaHeaderSerializer().read( headerProtocol);
-        context.setHeader(soaHeader);
-        return soaHeader;
+        return new SoaHeaderSerializer().read( headerProtocol);
     }
 
     public void writeMessageEnd() throws TException {

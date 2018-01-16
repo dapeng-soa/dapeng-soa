@@ -80,7 +80,7 @@ public class NettyClient {
             AsyncRequestWithTimeout fwt = FUTURES_CACHES_WITH_TIMEOUT.peek();
             while (fwt != null && fwt.expired < now) {
                 CompletableFuture future = fwt.future;
-                if(future.isDone() == false) {
+                if (future.isDone() == false) {
                     future.completeExceptionally(new SoaException(SoaCode.TimeOut));
                 }
 
