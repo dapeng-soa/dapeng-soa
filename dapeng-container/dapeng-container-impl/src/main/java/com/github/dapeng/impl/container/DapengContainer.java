@@ -120,16 +120,21 @@ public class DapengContainer implements Container {
     }
 
     private static class ExectorFactory {
-        private static Executor exector = Executors.newFixedThreadPool(SoaSystemEnvProperties.SOA_CORE_POOL_SIZE);
+        private static Executor exector = initExecutor();
+
+        static Executor initExecutor() {
+            if (!SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL) {
+                return command -> command.run();
+            } else {
+                return Executors.newFixedThreadPool(SoaSystemEnvProperties.SOA_CORE_POOL_SIZE);
+            }
+        }
+
     }
 
     @Override
     public Executor getDispatcher() {
-        if (!SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL) {
-            return command -> command.run();
-        } else {
-            return ExectorFactory.exector;
-        }
+        return ExectorFactory.exector;
     }
 
     @Override

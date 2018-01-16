@@ -73,7 +73,13 @@ public class TransactionContext {
     public static class Factory {
         private static ThreadLocal<TransactionContext> threadLocal = new ThreadLocal<>();
 
+        /**
+         * 确保在业务线程入口设置context
+         * @return
+         */
         public static TransactionContext createNewInstance() {
+            assert(threadLocal.get() == null);
+
             TransactionContext context = new TransactionContext();
             threadLocal.set(context);
             return context;
@@ -85,7 +91,7 @@ public class TransactionContext {
             return context;
         }
 
-        public static TransactionContext getCurrentInstance() {
+        public static TransactionContext getCurrentInstance() { //TODO remove SoaException
             TransactionContext context = threadLocal.get();
 
             if (context == null) {
@@ -97,6 +103,9 @@ public class TransactionContext {
             return context;
         }
 
+        /**
+         * 确保在业务线程出口清除context
+         */
         public static void removeCurrentInstance() {
             threadLocal.remove();
         }
