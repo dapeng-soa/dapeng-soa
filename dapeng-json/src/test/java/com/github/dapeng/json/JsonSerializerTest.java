@@ -29,6 +29,7 @@ public class JsonSerializerTest {
 
     public static void main(String[] args) throws IOException, TException {
 
+        optionalBooleanTest();
         simpleStructTest();
         simpleMapTest();
         intArrayTest();
@@ -39,6 +40,18 @@ public class JsonSerializerTest {
 
         complexStructTest();
         complexStructTest1();
+
+    }
+
+    private static void optionalBooleanTest() throws IOException, TException {
+        final String supplierDescriptorXmlPath = "/com.today.api.supplier.service.SupplierService.xml";
+        Service orderService = getService(supplierDescriptorXmlPath);
+
+        Method createSupplierToGoods = orderService.methods.stream().filter(method -> method.name.equals("createSupplierToGoods")).collect(Collectors.toList()).get(0);
+        String json = loadJson("/supplierService_optionalBooleanStruct.json");
+
+        String desc = "optionalBooleanTest";
+        doTest2(orderService, createSupplierToGoods, createSupplierToGoods.request, json, desc);
 
     }
 
@@ -160,6 +173,7 @@ public class JsonSerializerTest {
     }
 
 
+    @Deprecated
     private static void doTest(Service service, Method method, Struct struct, String json, String desc) throws TException {
 
         final ByteBuf requestBuf = PooledByteBufAllocator.DEFAULT.buffer(8192);

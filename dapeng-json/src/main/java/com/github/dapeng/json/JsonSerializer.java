@@ -681,16 +681,24 @@ public class JsonSerializer implements BeanSerializer<String> {
                 case BODY:
                     if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
                         peek().increaseElement();
-                    }  else if (!foundField) {
+                    } else if (!foundField) {
                         return;
                     }
 
-                    if (current.dataType.kind == DataType.KIND.ENUM) {
-                        TEnum tEnum = findEnum(current.dataType.qualifiedName, service);
-                        oproto.writeI32(findEnumItemValue(tEnum, value));
-                        return;
+                    switch (current.dataType.kind) {
+                        case ENUM:
+                            TEnum tEnum = findEnum(current.dataType.qualifiedName, service);
+                            oproto.writeI32(findEnumItemValue(tEnum, value));
+                            break;
+                        case BOOLEAN:
+                            oproto.writeBool(Boolean.parseBoolean(value));
+                            break;
+                        default:
+                            assert current.dataType.kind == DataType.KIND.STRING;
+                            oproto.writeString(value);
                     }
-                    oproto.writeString(value);
+
+
                     break;
                 default:
                     logger.warn("skip boolean(" + value + ")@pase:" + parsePhase);
