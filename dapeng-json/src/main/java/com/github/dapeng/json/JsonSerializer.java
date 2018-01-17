@@ -697,7 +697,9 @@ public class JsonSerializer implements BeanSerializer<String> {
                             oproto.writeDouble(Double.parseDouble(value));
                             break;
                         default:
-                            assert current.dataType.kind == DataType.KIND.STRING;
+                            if (current.dataType.kind != DataType.KIND.STRING) {
+                                throw new TException("Not a real String!");
+                            }
                             oproto.writeString(value);
                     }
 
