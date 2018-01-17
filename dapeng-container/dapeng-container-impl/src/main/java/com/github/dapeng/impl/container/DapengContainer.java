@@ -150,7 +150,7 @@ public class DapengContainer implements Container {
         Plugin nettyPlugin = new NettyPlugin(this);
 
         // TODO
-        if (!"sbt".equals(RUN_MODE)) {
+        if (!"plugin".equals(RUN_MODE)) {
             Plugin logbackPlugin = new LogbackPlugin();
             registerPlugin(logbackPlugin);
         }
@@ -160,7 +160,7 @@ public class DapengContainer implements Container {
         registerPlugin(taskSchedulePlugin);
         registerPlugin(nettyPlugin);
 
-        if ("maven".equals(RUN_MODE)) {
+        if ("plugin".equals(RUN_MODE)) {
             Plugin apiDocPlugin = new ApiDocPlugin(this);
             registerPlugin(apiDocPlugin);
         }

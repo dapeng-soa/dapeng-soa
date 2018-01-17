@@ -91,7 +91,7 @@ public class TransactionContext {
             return context;
         }
 
-        public static TransactionContext getCurrentInstance() { //TODO remove SoaException
+        public static TransactionContext getCurrentInstance() {
             TransactionContext context = threadLocal.get();
 
             if (context == null) {
