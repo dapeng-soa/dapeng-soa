@@ -693,6 +693,9 @@ public class JsonSerializer implements BeanSerializer<String> {
                         case BOOLEAN:
                             oproto.writeBool(Boolean.parseBoolean(value));
                             break;
+                        case DOUBLE:
+                            oproto.writeDouble(Double.parseDouble(value));
+                            break;
                         default:
                             assert current.dataType.kind == DataType.KIND.STRING;
                             oproto.writeString(value);

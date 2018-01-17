@@ -3,7 +3,7 @@
     "request": {
       "skuId": 20,
       "supplierId":21,
-      "purchasePrice":22,
+      "purchasePrice":"22.2",
       "isPrimarySupplier":"false",
       "flag":2
     }
