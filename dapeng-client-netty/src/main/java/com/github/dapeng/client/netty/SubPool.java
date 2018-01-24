@@ -10,7 +10,8 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class SubPool {
 
-    private final ReentrantLock lock = new ReentrantLock();
+    private final ReentrantLock connectionLock = new ReentrantLock();
+    private final ReentrantLock jsonConnectionlock = new ReentrantLock();
 
     final String ip;
     final int port;
@@ -31,23 +32,28 @@ public class SubPool {
      */
     public SoaConnection getConnection(ConnectionType connectionType) {
 
-        try {
-            if (connectionType == ConnectionType.Json) {
-                lock.lock();
+        if (connectionType == ConnectionType.Json) {
+            try {
+                connectionLock.lock();
                 if (jsonConnection == null){
                     jsonConnection = new SoaJsonConnectionImpl(ip,port);
                 }
                 return jsonConnection;
-            } else {
-                lock.lock();
+            } finally {
+                connectionLock.unlock();
+            }
+        } else {
+            try {
+                jsonConnectionlock.lock();
                 if (commonConnection == null) {
                     commonConnection = new SoaConnectionImpl(ip,port);
                 }
                 return commonConnection;
+            } finally {
+                jsonConnectionlock.unlock();
             }
-        } finally {
-            lock.unlock();
         }
+
 
     }
 }
