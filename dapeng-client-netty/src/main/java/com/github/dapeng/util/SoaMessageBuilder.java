@@ -23,7 +23,6 @@ public class SoaMessageBuilder<T> {
     private SoaHeader header;
     protected T body;
     protected BeanSerializer<T> bodySerializer;
-    protected final InvocationContext invocationCtx = InvocationContextImpl.Factory.getCurrentInstance();
     protected CodecProtocol protocol;
     protected int seqid;
 
@@ -57,6 +56,8 @@ public class SoaMessageBuilder<T> {
     }
 
     public ByteBuf build() throws TException {
+        InvocationContext invocationCtx = InvocationContextImpl.Factory.getCurrentInstance();
+
         //buildHeader
         protocol = protocol == null ? (invocationCtx.getCodecProtocol() == null ? CodecProtocol.CompressedBinary
                 : invocationCtx.getCodecProtocol()) : protocol;

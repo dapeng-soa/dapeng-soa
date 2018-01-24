@@ -397,12 +397,11 @@ public class JsonSerializer implements BeanSerializer<String> {
             header.setVersionName(invocationCtx.getVersionName());
             header.setMethodName(invocationCtx.getMethodName());
 
-            InvocationContext invocationContext = InvocationContextImpl.Factory.getCurrentInstance();
-            header.setCallerFrom(invocationContext.getCallerFrom());
-            header.setCallerIp(invocationContext.getCallerIp());
-            header.setCustomerId(invocationContext.getCustomerId());
-            header.setCustomerName(invocationContext.getCustomerName());
-            header.setOperatorId(invocationContext.getOperatorId());
+            header.setCallerFrom(invocationCtx.getCallerFrom());
+            header.setCallerIp(invocationCtx.getCallerIp());
+            header.setCustomerId(invocationCtx.getCustomerId());
+            header.setCustomerName(invocationCtx.getCustomerName());
+            header.setOperatorId(invocationCtx.getOperatorId());
 
             return header;
         }
