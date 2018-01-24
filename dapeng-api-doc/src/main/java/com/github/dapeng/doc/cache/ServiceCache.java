@@ -1,6 +1,8 @@
 package com.github.dapeng.doc.cache;
 
 
+import com.github.dapeng.core.InvocationContext;
+import com.github.dapeng.core.InvocationContextImpl;
 import com.google.common.collect.TreeMultimap;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.Application;
@@ -58,9 +60,14 @@ public class ServiceCache {
         serviceInfos.forEach(s -> {
             String metadata = "";
             try {
+                //init service,no need to set params
+                InvocationContextImpl.Factory.createNewInstance();
+
                 metadata = new MetadataClient(s.serviceName, s.version).getServiceMetadata();
             } catch (Exception e) {
                 LOGGER.error(e.getMessage(), e);
+            } finally {
+                InvocationContextImpl.Factory.removeCurrentInstance();
             }
             if (metadata != null) {
                 try (StringReader reader = new StringReader(metadata)) {
