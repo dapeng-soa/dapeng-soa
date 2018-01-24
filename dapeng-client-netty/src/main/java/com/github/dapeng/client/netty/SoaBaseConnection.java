@@ -39,7 +39,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
     @Override
     public <REQ, RESP> RESP send(
             String service, String version, String method,
-            REQ request, BeanSerializer<REQ> requestSerializer, BeanSerializer<RESP> responseSerializer) throws SoaException {
+            REQ request, BeanSerializer<REQ> requestSerializer, BeanSerializer<RESP> responseSerializer, long timeout) throws SoaException {
 
         int seqid = this.seqidAtomic.getAndIncrement();
 
@@ -56,7 +56,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
                 // TODO filter
                 checkChannel();
-                ByteBuf responseBuf = client.send(channel, seqid, requestBuf); //发送请求，返回结果
+                ByteBuf responseBuf = client.send(channel, seqid, requestBuf, timeout); //发送请求，返回结果
 
                 Result<RESP> result = processResponse(responseBuf, responseSerializer);
                 ctx.setAttribute("result", result);

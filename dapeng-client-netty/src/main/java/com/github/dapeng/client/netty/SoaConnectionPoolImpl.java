@@ -58,8 +58,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         if (connection == null) {
             throw new SoaException(SoaCode.NotConnected);
         }
-
-        return connection.send(service, version, method, request, requestSerializer, responseSerializer);
+        long timeout = getTimeout(service, version, method, 0L);
+        return connection.send(service, version, method, request, requestSerializer, responseSerializer, timeout);
     }
 
     @Override
@@ -69,6 +69,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         if (connection == null) {
             throw new SoaException(SoaCode.NotConnected);
         }
+        timeout = getTimeout(service, version, method, timeout);
         return connection.sendAsync(service, version, method, request, requestSerializer, responseSerializer, timeout);
     }
 
@@ -127,6 +128,21 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         return instance;
 
+    }
+
+    private long getTimeout(String service, String version, String method, long timeout) {
+
+        String serviceKey = service + "." + version + "." + method + ".producer";
+        Map<ConfigKey, Object> configs = zkAgent.getConfig(false, serviceKey);
+        if (null != configs) {
+            Long timeoutConfig = (Long) configs.get(ConfigKey.Timeout);
+            timeout = timeoutConfig != null ? timeoutConfig.longValue() : timeout;
+        }
+        if (timeout == 0L) {
+            timeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT.longValue();
+        }
+
+        return timeout;
     }
 
 }
