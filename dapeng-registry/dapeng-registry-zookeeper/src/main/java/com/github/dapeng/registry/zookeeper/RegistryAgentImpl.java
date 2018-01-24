@@ -2,14 +2,8 @@ package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
+import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.Service;
-import com.github.dapeng.registry.ConfigKey;
-import com.github.dapeng.registry.RegistryAgent;
-import com.github.dapeng.registry.ServiceInfo;
-import com.github.dapeng.registry.ServiceInfos;
-import com.github.dapeng.route.Route;
-import com.github.dapeng.route.RouteExecutor;
-import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.RegistryAgent;
@@ -185,21 +179,7 @@ public class RegistryAgentImpl implements RegistryAgent {
 
     @Override
     public Map<ConfigKey, Object> getConfig(boolean usingFallback, String serviceKey) {
-
-        if (usingFallback) {
-            if (zkfbw.getConfigWithKey(serviceKey).entrySet().size() <= 0) {
-                return null;
-            } else {
-                return zkfbw.getConfigWithKey(serviceKey);
-            }
-        } else {
-
-            if (siw.getConfigWithKey(serviceKey).entrySet().size() <= 0) {
-                return null;
-            } else {
-                return siw.getConfigWithKey(serviceKey);
-            }
-        }
+        return null;
     }
 
     @Override

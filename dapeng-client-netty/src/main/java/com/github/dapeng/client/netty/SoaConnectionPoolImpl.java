@@ -135,11 +135,11 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         String serviceKey = service + "." + version + "." + method + ".producer";
         Map<ConfigKey, Object> configs = zkAgent.getConfig(false, serviceKey);
         if (null != configs) {
-            Long timeoutConfig = (Long) configs.get(ConfigKey.Timeout);
+            Long timeoutConfig = (Long) configs.get(ConfigKey.ClientTimeout);
             timeout = timeoutConfig != null ? timeoutConfig.longValue() : timeout;
         }
         if (timeout == 0L) {
-            timeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT.longValue();
+            timeout = SoaSystemEnvProperties.SOA_SERVICE_CLIENT_TIMEOUT.longValue();
         }
 
         return timeout;
