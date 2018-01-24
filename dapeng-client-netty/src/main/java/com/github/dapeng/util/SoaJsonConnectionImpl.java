@@ -1,11 +1,10 @@
-package com.github.dapeng.json;
+package com.github.dapeng.util;
 
 import com.github.dapeng.client.netty.SoaBaseConnection;
 import com.github.dapeng.core.BeanSerializer;
 import com.github.dapeng.core.SoaException;
-import com.github.dapeng.core.SoaHeader;
+import com.github.dapeng.json.JsonSerializer;
 import com.github.dapeng.org.apache.thrift.TException;
-import com.github.dapeng.util.SoaMessageBuilder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import org.slf4j.Logger;

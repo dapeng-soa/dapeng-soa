@@ -11,6 +11,7 @@ import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TBinaryProtocol;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
 import com.github.dapeng.util.DumpUtil;
+import com.github.dapeng.util.SoaJsonMessageBuilder;
 import com.github.dapeng.util.SoaMessageParser;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -234,7 +235,7 @@ public class JsonSerializerTest {
 
     private static Service getService(final String xmlFilePath) throws IOException {
         String xmlContent = IOUtils.toString(JsonSerializerTest.class.getResource(xmlFilePath), "UTF-8");
-        return JAXB.unmarshal(new StringReader(xmlContent), com.github.dapeng.core.metadata.Service.class);
+        return JAXB.unmarshal(new StringReader(xmlContent), Service.class);
     }
 
     private static String loadJson(final String jsonPath) throws IOException {
