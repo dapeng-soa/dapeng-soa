@@ -1,4 +1,4 @@
-package com.github.dapeng.json;
+package com.github.dapeng.util;
 
 import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.InvocationContext;

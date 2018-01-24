@@ -1,17 +1,17 @@
-package com.github.dapeng.json;
+package com.github.dapeng.client.netty;
 
-import com.github.dapeng.client.netty.SoaConnectionImpl;
-import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.InvocationContext;
+import com.github.dapeng.core.SoaConnectionPool;
+import com.github.dapeng.core.SoaConnectionPoolFactory;
 import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.metadata.Method;
 import com.github.dapeng.core.metadata.Service;
-import com.github.dapeng.org.apache.thrift.TException;
-import com.github.dapeng.util.SoaSystemEnvProperties;
+import com.github.dapeng.json.JsonSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.ServiceLoader;
 import java.util.stream.Collectors;
 
 
@@ -22,16 +22,17 @@ public class JsonPost {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JsonPost.class);
 
-    private String host = "127.0.0.1" ;
-
-    private Integer port = SoaSystemEnvProperties.SOA_CONTAINER_PORT;
-
     private boolean doNotThrowError = false;
 
-    public JsonPost(String host, Integer port, boolean doNotThrowError) {
-        this.host = host;
-        this.port = port;
-        this.doNotThrowError = doNotThrowError;
+    private SoaConnectionPool pool;
+
+    public JsonPost(String serviceName, String version) {
+        ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class);
+        for (SoaConnectionPoolFactory factory : factories) {
+            this.pool = factory.getPool();
+            break;
+        }
+        this.pool.registerClientInfo(serviceName, version);
     }
 
     /**
@@ -87,7 +88,7 @@ public class JsonPost {
 
         try {
             // Fixme should be obtained from a pool
-            Object result = new SoaJsonConnectionImpl(host, port).send(serviceName, version, method, requestJson, jsonEncoder, jsonDecoder);
+            Object result = this.pool.send(serviceName, version, method, requestJson, jsonEncoder, jsonDecoder);
 
             jsonResponse = (String) result;
 
