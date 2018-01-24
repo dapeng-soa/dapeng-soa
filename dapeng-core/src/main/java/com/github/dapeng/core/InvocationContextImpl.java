@@ -209,6 +209,13 @@ public class InvocationContextImpl implements  InvocationContext {
         public static InvocationContext getCurrentInstance() {
             InvocationContext context = threadLocal.get();
 
+            //客户端可能不手动创建上下文.
+            if (context == null) {
+                context = createNewInstance();
+
+                threadLocal.set(context);
+            }
+
             assert context != null;
 
             return context;
