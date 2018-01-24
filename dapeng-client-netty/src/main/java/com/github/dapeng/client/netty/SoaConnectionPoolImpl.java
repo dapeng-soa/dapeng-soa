@@ -54,8 +54,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     @Override
     public <REQ, RESP> RESP send(String service, String version, String method, REQ request, BeanSerializer<REQ> requestSerializer, BeanSerializer<RESP> responseSerializer) throws SoaException {
 
-        SoaConnection connection = findConnection(service, version, method,requestSerializer);
-
+        ConnectionType connectionType = getConnectionType(requestSerializer);
+        SoaConnection connection = findConnection(service, version, method,connectionType);
         if (connection == null) {
             throw new SoaException(SoaCode.NotConnected);
         }
@@ -66,14 +66,15 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     @Override
     public <REQ, RESP> Future<RESP> sendAsync(String service, String version, String method, REQ request, BeanSerializer<REQ> requestSerializer, BeanSerializer<RESP> responseSerializer, long timeout) throws SoaException {
 
-        SoaConnection connection = findConnection(service, version, method,requestSerializer);
+        ConnectionType connectionType = getConnectionType(requestSerializer);
+        SoaConnection connection = findConnection(service, version, method,connectionType);
         if (connection == null) {
             throw new SoaException(SoaCode.NotConnected);
         }
         return connection.sendAsync(service, version, method, request, requestSerializer, responseSerializer, timeout);
     }
 
-    public SoaConnection findConnection(String service, String version, String method, BeanSerializer requestSerializer) {
+    public SoaConnection findConnection(String service, String version, String method, ConnectionType connectionType) {
         ServiceZKInfo zkInfo = zkInfos.get(service);
 
         List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream().filter(rt -> {
@@ -94,14 +95,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         if (subPool == null) {
             subPool = new SubPool(inst.ip, inst.port);
             subPools.put(ipPort, subPool);
-        }
-
-
-        ConnectionType connectionType = null;
-        if (requestSerializer instanceof JsonSerializer) {
-            connectionType = ConnectionType.Json;
-        } else {
-            connectionType = ConnectionType.Common;
         }
 
         return subPool.getConnection(connectionType);
@@ -138,4 +131,15 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     }
 
+
+    private ConnectionType getConnectionType(BeanSerializer serializer) {
+        ConnectionType connectionType = null;
+        if (serializer instanceof JsonSerializer) {
+            connectionType = ConnectionType.Json;
+        } else {
+            connectionType = ConnectionType.Common;
+        }
+
+        return connectionType;
+    }
 }
