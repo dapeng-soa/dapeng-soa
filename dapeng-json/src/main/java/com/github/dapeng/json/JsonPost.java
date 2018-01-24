@@ -87,7 +87,7 @@ public class JsonPost {
 
         try {
             // Fixme should be obtained from a pool
-            Object result = new SoaJsonConnectionImpl(host, port).send(serviceName, version, method, requestJson, jsonEncoder, jsonDecoder);
+            Object result = new SoaJsonConnectionImpl(host, port).send(serviceName, version, method, requestJson, jsonEncoder, jsonDecoder,10);
 
             jsonResponse = (String) result;
 

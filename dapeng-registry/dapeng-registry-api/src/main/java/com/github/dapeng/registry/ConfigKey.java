@@ -9,7 +9,9 @@ public enum ConfigKey {
 
     ThreadPool("threadPool"),
 
-    Timeout("timeout"),
+    ClientTimeout("clientTimeout"),
+
+    ServerTimeout("serverTimeout"),
 
     LoadBalance("loadBalance"),
 
@@ -33,8 +35,10 @@ public enum ConfigKey {
                 return Thread;
             case "threadPool":
                 return ThreadPool;
-            case "timeout":
-                return Timeout;
+            case "clientTimeout":
+                return ClientTimeout;
+            case "serverTimeout":
+                return ServerTimeout;
             case "loadBalance":
                 return LoadBalance;
             case "failover":

@@ -14,12 +14,16 @@ import com.github.dapeng.core.filter.FilterContextImpl;
 import com.github.dapeng.impl.filters.HeadFilter;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
+import com.github.dapeng.registry.ConfigKey;
+import com.github.dapeng.registry.RegistryAgentProxy;
+import com.github.dapeng.util.SoaSystemEnvProperties;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -38,6 +42,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        final long stratTime = System.currentTimeMillis();
         ByteBuf reqMessage = (ByteBuf) msg;
         TSoaTransport inputSoaTransport = new TSoaTransport(reqMessage);
         SoaMessageProcessor parser = new SoaMessageProcessor(inputSoaTransport);
@@ -53,7 +58,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             container.getDispatcher().execute(() -> {
                 try {
                     TransactionContext.Factory.setCurrentInstance(context);
-                    processRequest(ctx, parser.getContentProtocol(), processor, reqMessage, context);
+                    processRequest(ctx, parser.getContentProtocol(), processor, reqMessage, context,stratTime);
                 } catch (TException e) {
                     LOGGER.error(e.getMessage(), e);
                     writeErrorMessage(ctx, context, new SoaException(SoaCode.UnKnown, e.getMessage()));
@@ -84,7 +89,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     private <I, REQ, RESP> void processRequest(ChannelHandlerContext channelHandlerContext, TProtocol contentProtocol, SoaServiceDefinition<I> serviceDef,
-                                               ByteBuf reqMessage, TransactionContext context) throws TException {
+                                               ByteBuf reqMessage, TransactionContext context, long startTime) throws TException {
 
         try {
             SoaHeader soaHeader = context.getHeader();
@@ -93,7 +98,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             SoaFunctionDefinition<I, REQ, RESP> soaFunction = (SoaFunctionDefinition<I, REQ, RESP>) serviceDef.functions.get(soaHeader.getMethodName());
             REQ args = soaFunction.reqSerializer.read(contentProtocol);
             contentProtocol.readMessageEnd();
-            //
+
             I iface = serviceDef.iface;
             //log request
             application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} request body:{}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.getOperatorId(), soaHeader.getOperatorName(), formatToString(soaFunction.reqSerializer.toString(args)));
@@ -143,8 +148,15 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             FilterContextImpl filterContext = new FilterContextImpl();
             filterContext.setAttach(dispatchFilter, "chain", sharedChain);
 
+            final long waitingTime = System.currentTimeMillis() - startTime;
+            long timeout = getTimeout(soaHeader);
+            if (waitingTime > timeout){
+                throw new SoaException(SoaCode.TimeOut,"请求超时");
+            }
             sharedChain.onEntry(filterContext);
-        } finally {
+        } catch (SoaException e){
+            writeErrorMessage(channelHandlerContext, context, e);
+        }finally {
             reqMessage.release();
         }
     }
@@ -217,6 +229,21 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             msg = msg.substring(0, 128) + "...(" + len + ")";
 
         return msg;
+    }
+
+    private long getTimeout(SoaHeader soaHeader){
+        long timeout = 0L;
+        String serviceKey = soaHeader.getServiceName() + "." + soaHeader.getVersionName() + "." + soaHeader.getMethodName() + ".producer";
+        Map<ConfigKey, Object> configs = RegistryAgentProxy.getCurrentInstance(RegistryAgentProxy.Type.Server).getConfig(false, serviceKey);
+        if (null != configs) {
+            Long timeoutConfig = (Long) configs.get(ConfigKey.ServerTimeout);
+            timeout = timeoutConfig != null ? timeoutConfig.longValue() : timeout;
+        }
+        if (timeout == 0L) {
+            timeout = SoaSystemEnvProperties.SOA_SERVICE_SERVER_TIMEOUT.longValue();
+        }
+
+        return timeout;
     }
 
 }
