@@ -194,7 +194,13 @@ public class InvocationContextImpl implements  InvocationContext {
     public static class Factory {
         private static ThreadLocal<InvocationContext> threadLocal = new ThreadLocal<>();
 
-        private static InvocationContext createNewInstance() {
+        /**
+         * must be invoked one time per thread before work begin
+         * @return
+         */
+        public static InvocationContext createNewInstance() {
+            assert threadLocal.get() == null;
+
             InvocationContext context = new InvocationContextImpl();
             threadLocal.set(context);
             return context;
@@ -203,15 +209,15 @@ public class InvocationContextImpl implements  InvocationContext {
         public static InvocationContext getCurrentInstance() {
             InvocationContext context = threadLocal.get();
 
-            if (context == null) {
-                context = createNewInstance();
-
-                threadLocal.set(context);
-            }
+            assert context != null;
 
             return context;
         }
 
+        /**
+         * must be invoked after work done
+         * @return
+         */
         public static void removeCurrentInstance() {
             threadLocal.remove();
         }
