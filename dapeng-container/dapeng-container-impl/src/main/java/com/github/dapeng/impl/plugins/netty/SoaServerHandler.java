@@ -58,7 +58,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             container.getDispatcher().execute(() -> {
                 try {
                     TransactionContext.Factory.setCurrentInstance(context);
-                    processRequest(ctx, parser.getContentProtocol(), processor, reqMessage, context,stratTime);
+                    processRequest(ctx, parser.getContentProtocol(), processor, reqMessage, context, stratTime);
                 } catch (TException e) {
                     LOGGER.error(e.getMessage(), e);
                     writeErrorMessage(ctx, context, new SoaException(SoaCode.UnKnown, e.getMessage()));
@@ -150,13 +150,13 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
             final long waitingTime = System.currentTimeMillis() - startTime;
             long timeout = getTimeout(soaHeader);
-            if (waitingTime > timeout){
-                throw new SoaException(SoaCode.TimeOut,"请求超时");
+            if (waitingTime > timeout) {
+                throw new SoaException(SoaCode.TimeOut, "请求超时");
             }
             sharedChain.onEntry(filterContext);
-        } catch (SoaException e){
+        } catch (SoaException e) {
             writeErrorMessage(channelHandlerContext, context, e);
-        }finally {
+        } finally {
             reqMessage.release();
         }
     }
@@ -231,16 +231,17 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         return msg;
     }
 
-    private long getTimeout(SoaHeader soaHeader){
+    private long getTimeout(SoaHeader soaHeader) {
         long timeout = 0L;
         String serviceKey = soaHeader.getServiceName() + "." + soaHeader.getVersionName() + "." + soaHeader.getMethodName() + ".producer";
         Map<ConfigKey, Object> configs = RegistryAgentProxy.getCurrentInstance(RegistryAgentProxy.Type.Server).getConfig(false, serviceKey);
+        long envTimeout = SoaSystemEnvProperties.SOA_SERVICE_SERVER_TIMEOUT.longValue();
         if (null != configs) {
             Long timeoutConfig = (Long) configs.get(ConfigKey.ServerTimeout);
-            timeout = timeoutConfig != null ? timeoutConfig.longValue() : timeout;
+            timeout = (timeoutConfig != null) ? timeoutConfig.longValue() : envTimeout;
         }
         if (timeout == 0L) {
-            timeout = SoaSystemEnvProperties.SOA_SERVICE_SERVER_TIMEOUT.longValue();
+            timeout = (envTimeout == 0) ? 2000L : envTimeout;
         }
 
         return timeout;

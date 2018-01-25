@@ -130,16 +130,18 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     }
 
-    private long getTimeout(String service, String version, String method, long timeout) {
+    private long getTimeout(String service, String version, String method, long paramTimeout) {
 
+        long timeout = 0L;
         String serviceKey = service + "." + version + "." + method + ".producer";
         Map<ConfigKey, Object> configs = zkAgent.getConfig(false, serviceKey);
+        long envTimeout = SoaSystemEnvProperties.SOA_SERVICE_CLIENT_TIMEOUT.longValue();
         if (null != configs) {
             Long timeoutConfig = (Long) configs.get(ConfigKey.ClientTimeout);
-            timeout = timeoutConfig != null ? timeoutConfig.longValue() : timeout;
+            timeout = timeoutConfig != null ? timeoutConfig.longValue() : envTimeout;
         }
         if (timeout == 0L) {
-            timeout = SoaSystemEnvProperties.SOA_SERVICE_CLIENT_TIMEOUT.longValue();
+            timeout = (envTimeout == 0L) ? (paramTimeout == 0 ? 2000L : paramTimeout) : envTimeout;
         }
 
         return timeout;
