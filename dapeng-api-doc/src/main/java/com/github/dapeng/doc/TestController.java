@@ -54,7 +54,7 @@ public class TestController {
 
         Service service = serviceCache.getService(serviceName, versionName);
 
-        InvocationContext invocationCtx = InvocationContextImpl.Factory.getCurrentInstance();
+        InvocationContext invocationCtx = InvocationContextImpl.Factory.createNewInstance();
         invocationCtx.setServiceName(serviceName);
         invocationCtx.setVersionName(versionName);
         invocationCtx.setMethodName(methodName);
@@ -66,7 +66,10 @@ public class TestController {
             return jsonPost.callServiceMethod(invocationCtx, jsonParameter, service);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
+        } finally {
+            InvocationContextImpl.Factory.removeCurrentInstance();
         }
+
         return null;
     }
 

@@ -17,6 +17,7 @@ public class SoaJsonMessageBuilder<REQ> extends SoaMessageBuilder<REQ> {
     public ByteBuf build() throws TException {
         //buildHeader
         InvocationContext invocationCtx = InvocationContextImpl.Factory.getCurrentInstance();
+
         protocol = protocol == null ? (invocationCtx.getCodecProtocol() == null ? CodecProtocol.CompressedBinary
                 : invocationCtx.getCodecProtocol()) : protocol;
 
