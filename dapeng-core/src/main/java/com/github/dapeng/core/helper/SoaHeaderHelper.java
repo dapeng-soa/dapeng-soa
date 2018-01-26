@@ -15,10 +15,10 @@ public class SoaHeaderHelper {
     /**
      * 服务端获取soaHeader
      *
-     * @param setDefalutIfEmpty 是否需要设置默认的customer和operator，如果header中没有值
+     * @param setDefaultIfEmpty 是否需要设置默认的customer和operator，如果header中没有值
      * @return
      */
-    public static SoaHeader getSoaHeader(boolean setDefalutIfEmpty) {
+    public static SoaHeader getSoaHeader(boolean setDefaultIfEmpty) {
         TransactionContext context = TransactionContext.Factory.getCurrentInstance();
 
         if (context.getHeader() == null) {
@@ -26,7 +26,7 @@ public class SoaHeaderHelper {
             context.setHeader(header);
         }
 
-        if (setDefalutIfEmpty) {
+        if (setDefaultIfEmpty) {
             resetSoaHeader(context.getHeader());
         }
 
