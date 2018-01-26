@@ -283,7 +283,7 @@ class ScalaCodecGenerator extends CodeGenerator {
         **/
         object {service.name}AsyncCodec <block>
 
-        implicit class Future[T](f: scala.concurrent.Future[T]) <block>
+        implicit class FutureX[T](f: scala.concurrent.Future[T]) <block>
           def tojava(): CompletableFuture[T] = <block>
             val java = new CompletableFuture[T]()
             f.onComplete<block>
