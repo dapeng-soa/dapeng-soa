@@ -33,7 +33,7 @@ import static java.util.stream.Collectors.toList;
  */
 public class GlobalTransactionManager {
 
-    Logger LOGGER = LoggerFactory.getLogger(GlobalTransactionManager.class);
+    final static Logger LOGGER = LoggerFactory.getLogger(GlobalTransactionManager.class);
 
     private AtomicBoolean working = new AtomicBoolean(false);
 
@@ -239,9 +239,9 @@ public class GlobalTransactionManager {
             }
 
             LOGGER.info("--- 定时事务管理器结束 ---");
-        }catch (Exception e){
-            LOGGER.error(e.getMessage(),e);
-        }finally {
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        } finally {
             working.set(false);
         }
     }
@@ -249,7 +249,7 @@ public class GlobalTransactionManager {
 
     private static String callServiceMethod(TGlobalTransactionProcess process, boolean rollbackOrForward) throws Exception {
 
-        String responseJson;
+        String responseJson = null;
         Service service = null;
 
         //获取服务的metadata
@@ -278,18 +278,25 @@ public class GlobalTransactionManager {
             jsonPost = new JsonPost(SoaSystemEnvProperties.SOA_CONTAINER_IP, SoaSystemEnvProperties.SOA_CONTAINER_PORT, false);
         }
 
-        InvocationContext invocationContext = InvocationContextImpl.Factory.getCurrentInstance();
+        InvocationContext invocationContext = InvocationContextImpl.Factory.createNewInstance();
         invocationContext.setServiceName(process.getServiceName());
         invocationContext.setVersionName(process.getVersionName());
         invocationContext.setMethodName(rollbackOrForward ? process.getRollbackMethodName() : process.getMethodName());
         invocationContext.setCallerFrom(Optional.of("GlobalTransactionManager"));
         invocationContext.setTransactionId(Optional.of(process.getTransactionId()));
         invocationContext.setTransactionSequence(Optional.of(process.getTransactionSequence()));
+        try {
+            if (rollbackOrForward) {
 
-        if (rollbackOrForward) {
-            responseJson = jsonPost.callServiceMethod(invocationContext, "", service);
-        } else {
-            responseJson = jsonPost.callServiceMethod(invocationContext, process.getRequestJson(), service);
+                responseJson = jsonPost.callServiceMethod(invocationContext, "", service);
+
+            } else {
+                responseJson = jsonPost.callServiceMethod(invocationContext, process.getRequestJson(), service);
+            }
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        } finally {
+            InvocationContextImpl.Factory.removeCurrentInstance();
         }
 
         return responseJson;
