@@ -196,7 +196,7 @@ public class JsonSerializerTest {
 
     private static void doTest2(Service service, Method method, Struct struct, String json, String desc) throws TException {
 
-        InvocationContext invocationContext = InvocationContextImpl.Factory.getCurrentInstance();
+        InvocationContext invocationContext = InvocationContextImpl.Factory.createNewInstance();
         invocationContext.setCodecProtocol(CodecProtocol.Binary);
 
         invocationContext.setServiceName(service.name);
@@ -229,6 +229,7 @@ public class JsonSerializerTest {
         System.out.println("after enCode and decode:\n" + parser.parseBody().getBody());
         System.out.println(desc + " ends=====================");
         requestBuf.release();
+        InvocationContextImpl.Factory.removeCurrentInstance();
     }
 
     private static Service getService(final String xmlFilePath) throws IOException {
