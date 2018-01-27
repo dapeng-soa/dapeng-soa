@@ -355,9 +355,9 @@ class ScalaCodecGenerator extends CodeGenerator {
 
               {
               if(method.getResponse.getFields.get(0).getDataType.kind != DataType.KIND.VOID)
-                <div>_result.map({method.name}_result(_))</div>
+                <div>_result.map({method.name}_result(_)).tojava</div>
               else <div>
-                _result.map(i => {method.name}_result())
+                _result.map(i => {method.name}_result()).tojava
 
               </div>
               }
@@ -481,7 +481,7 @@ class ScalaCodecGenerator extends CodeGenerator {
             source.close
             getServiceMetadata_result(success)
             </block>
-            result
+            result.tojava
 
           </block>
         </block>
