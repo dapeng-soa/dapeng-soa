@@ -4,7 +4,7 @@
         version="3.0"
         xmlns="http://www.oracle.com/webfolder/technetwork/jsc/xml/ns/javaee/index.html"
 >
-    <display-name>快塑网api文档</display-name>
+    <display-name>大鹏api文档</display-name>
 
     <filter>
         <filter-name>characterEncodingFilter</filter-name>

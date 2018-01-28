@@ -1,5 +1,5 @@
 #soa-container:base
-FROM openjdk:8-jre-alpine
+FROM docker.today36524.com.cn:5000/base/openjdk:jre8 
 MAINTAINER dapengsoa@gmail.com
 
 # Setting Envirnoment

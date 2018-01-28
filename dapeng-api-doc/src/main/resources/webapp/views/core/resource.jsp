@@ -13,16 +13,16 @@
 <%
     if (request.getAttribute("DEFAULT_TITLE") == null) {
 %>
-<title>快塑网Api文档</title>
+<title>大鹏Api文档</title>
 <%
     } else {
 %>
-<title>快塑网Api文档</title>
+<title>大鹏Api文档</title>
 <%
     }
 %>
-<meta name="author" content="快塑网">
-<meta name="description" content="快塑网Api文档，是一个快塑网内部的接口文档站点！">
+<meta name="author" content="大鹏开源">
+<meta name="description" content="大鹏Api文档，是一个大鹏内部的接口文档站点！">
 <meta name="keywords" content="api,thrift,zookeeper,netty,redis,mysql">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="format-detection" content="telephone=no">
