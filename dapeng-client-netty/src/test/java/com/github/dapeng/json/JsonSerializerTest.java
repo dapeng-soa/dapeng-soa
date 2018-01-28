@@ -173,28 +173,6 @@ public class JsonSerializerTest {
         doTest2(crmService, method, method.request, json, "simpleStructWithOptionTest");
     }
 
-
-    @Deprecated
-    private static void doTest(Service service, Method method, Struct struct, String json, String desc) throws TException {
-
-        final ByteBuf requestBuf = PooledByteBufAllocator.DEFAULT.buffer(8192);
-
-        JsonSerializer jsonSerializer = new JsonSerializer(service, method, struct);
-        jsonSerializer.setRequestByteBuf(requestBuf);
-
-        TProtocol outProtocol = new TBinaryProtocol(new TSoaTransport(requestBuf));
-        jsonSerializer.write(json, outProtocol);
-
-        TProtocol inProtocol = new TBinaryProtocol(new TSoaTransport(requestBuf));
-
-        System.out.println("origJson:\n" + json);
-
-        System.out.println("after enCode and decode:\n" + jsonSerializer.read(inProtocol));
-        System.out.println(desc + " ends=====================");
-        requestBuf.release();
-
-    }
-
     private static void doTest2(Service service, Method method, Struct struct, String json, String desc) throws TException {
 
         InvocationContext invocationContext = InvocationContextImpl.Factory.createNewInstance();
