@@ -1,16 +1,12 @@
 package com.github.dapeng.doc.cache;
 
 
-import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
+import com.github.dapeng.core.metadata.*;
 import com.google.common.collect.TreeMultimap;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.Application;
 import com.github.dapeng.core.ServiceInfo;
-import com.github.dapeng.core.metadata.Field;
-import com.github.dapeng.core.metadata.Method;
-import com.github.dapeng.core.metadata.Struct;
-import com.github.dapeng.core.metadata.TEnum;
 import com.github.dapeng.metadata.MetadataClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,9 +27,9 @@ public class ServiceCache {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceCache.class);
 
-    private static Map<String, com.github.dapeng.core.metadata.Service> services = new TreeMap<>();
+    private static Map<String, Service> services = new TreeMap<>();
 
-    private static Map<String, com.github.dapeng.core.metadata.Service> fullNameService = new TreeMap<>();
+    private static Map<String, Service> fullNameService = new TreeMap<>();
 
     public static TreeMultimap<String, String> urlMappings = TreeMultimap.create();
 
@@ -57,23 +53,25 @@ public class ServiceCache {
         urlMappings.clear();
 
         List<ServiceInfo> serviceInfos = application.getServiceInfos();
-        serviceInfos.forEach(s -> {
+        serviceInfos.forEach(serviceInfo -> {
             String metadata = "";
             try {
                 //init service,no need to set params
                 InvocationContextImpl.Factory.createNewInstance();
 
-                metadata = new MetadataClient(s.serviceName, s.version).getServiceMetadata();
+                metadata = new MetadataClient(serviceInfo.serviceName, serviceInfo.version)
+                        .getServiceMetadata();
             } catch (Exception e) {
                 LOGGER.error(e.getMessage(), e);
             } finally {
                 InvocationContextImpl.Factory.removeCurrentInstance();
             }
+
             if (metadata != null) {
                 try (StringReader reader = new StringReader(metadata)) {
-                    com.github.dapeng.core.metadata.Service serviceData = JAXB.unmarshal(reader, com.github.dapeng.core.metadata.Service.class);
-                    Map<String, com.github.dapeng.core.metadata.Service> serviceInfo = loadResource(serviceData);
-                    ServiceCache.services.putAll(serviceInfo);
+                    Service serviceData = JAXB.unmarshal(reader, Service.class);
+                    Map<String, Service> services = loadResource(serviceData);
+                    ServiceCache.services.putAll(services);
                 } catch (Exception e) {
                     LOGGER.error("生成SERVICE出错", e);
                 }
@@ -87,9 +85,9 @@ public class ServiceCache {
         services.clear();
     }
 
-    public Map<String, com.github.dapeng.core.metadata.Service> loadResource(com.github.dapeng.core.metadata.Service service) {
+    public Map<String, Service> loadResource(Service service) {
 
-        final Map<String, com.github.dapeng.core.metadata.Service> services = new TreeMap<>();
+        final Map<String, Service> services = new TreeMap<>();
 
         String key = getKey(service);
         services.put(key, service);
@@ -99,34 +97,34 @@ public class ServiceCache {
 
         //将service和service中的方法、结构体、枚举和字段名分别设置对应的url，以方便搜索
         urlMappings.put(service.getName(), "api/service/" + service.name + "/" + service.meta.version + ".htm");
-        List<Method> methods = service.getMethods();
-        for (int i = 0; i < methods.size(); i++) {
-            Method method = methods.get(i);
-            urlMappings.put(method.name, "api/method/" + service.name + "/" + service.meta.version + "/" + method.name + ".htm");
-        }
 
-        List<Struct> structs = service.getStructDefinitions();
-        for (int i = 0; i < structs.size(); i++) {
-            Struct struct = structs.get(i);
-            urlMappings.put(struct.name, "api/struct/" + service.name + "/" + service.meta.version + "/" + struct.namespace + "." + struct.name + ".htm");
+        service.getMethods().forEach(method -> {
+            urlMappings.put(method.name, "api/method/" + service.name + "/"
+                    + service.meta.version + "/" + method.name + ".htm");
+        });
 
-            List<Field> fields = struct.getFields();
-            for (int j = 0; j < fields.size(); j++) {
-                Field field = fields.get(j);
-                urlMappings.put(field.name, "api/struct/" + service.name + "/" + service.meta.version + "/" + struct.namespace + "." + struct.name + ".htm");
-            }
-        }
+        service.getStructDefinitions().forEach(struct -> {
+            urlMappings.put(struct.name, "api/struct/" + service.name + "/"
+                    + service.meta.version + "/" + struct.namespace + "."
+                    + struct.name + ".htm");
 
-        List<TEnum> tEnums = service.getEnumDefinitions();
-        for (int i = 0; i < tEnums.size(); i++) {
-            TEnum tEnum = tEnums.get(i);
-            urlMappings.put(tEnum.name, "api/enum/" + service.name + "/" + service.meta.version + "/" + tEnum.namespace + "." + tEnum.name + ".htm");
-        }
+            struct.getFields().forEach(field -> {
+                urlMappings.put(field.name, "api/struct/" + service.name + "/"
+                        + service.meta.version + "/" + struct.namespace + "."
+                        + struct.name + ".htm");
+            });
+        });
+
+        service.getEnumDefinitions().forEach(tEnum -> {
+            urlMappings.put(tEnum.name, "api/enum/" + service.name + "/"
+                    + service.meta.version + "/" + tEnum.namespace + "."
+                    + tEnum.name + ".htm");
+        });
 
         return services;
     }
 
-    public com.github.dapeng.core.metadata.Service getService(String name, String version) {
+    public Service getService(String name, String version) {
 
         if (name.contains(".")) {
             return fullNameService.get(getKey(name, version));
@@ -135,11 +133,11 @@ public class ServiceCache {
         }
     }
 
-    private String getKey(com.github.dapeng.core.metadata.Service service) {
+    private String getKey(Service service) {
         return getKey(service.getName(), service.getMeta().version);
     }
 
-    private String getFullNameKey(com.github.dapeng.core.metadata.Service service) {
+    private String getFullNameKey(Service service) {
         return getKey(service.getNamespace() + "." + service.getName(), service.getMeta().version);
     }
 
@@ -147,7 +145,7 @@ public class ServiceCache {
         return name + ":" + version;
     }
 
-    public Map<String, com.github.dapeng.core.metadata.Service> getServices() {
+    public Map<String, Service> getServices() {
         return services;
     }
 
