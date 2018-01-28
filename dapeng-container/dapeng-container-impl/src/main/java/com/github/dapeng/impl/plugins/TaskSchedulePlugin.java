@@ -62,13 +62,7 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
 
     @Override
     public void appUnRegistered(AppEvent event) {
-        Application application = (Application) event.getSource();
-
-        List<ServiceInfo> serviceInfos = application.getServiceInfos().stream()
-                .filter(serviceInfo ->
-                        serviceInfo.ifaceClass.isAnnotationPresent(ScheduledTask.class))
-                .collect(Collectors.toList());
-        serviceInfos.forEach(i -> stopTask(i));
+        stop();
     }
 
     @Override
@@ -86,13 +80,16 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
     @Override
     public void stop() {
         LOGGER.warn("Plugin::TaskSchedulePlugin stop");
-        container.getApplications().forEach(application -> {
-            List<ServiceInfo> serviceInfos = application.getServiceInfos().stream()
-                    .filter(serviceInfo ->
-                            serviceInfo.ifaceClass.isAnnotationPresent(ScheduledTask.class))
-                    .collect(Collectors.toList());
-            serviceInfos.forEach(serviceInfo -> stopTask(serviceInfo));
-        });
+        try {
+            if (scheduler != null) {
+                if (scheduler.isInStandbyMode() || !scheduler.isStarted()) {
+                    LOGGER.info(" start to shutdown scheduler: " + scheduler.getSchedulerName());
+                    scheduler.shutdown();
+                }
+            }
+        } catch (SchedulerException e) {
+            LOGGER.error(" Failed to shutdown scheduler: " + e.getMessage());
+        }
     }
 
     public void runTask(ServiceInfo serviceInfo) {
@@ -160,8 +157,4 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
         });
     }
 
-    public void stopTask(ServiceInfo serviceInfo) {
-        // TODO
-        LOGGER.warn("Stoping:" + serviceInfo + ".(Not implemented yet");
-    }
 }

@@ -80,6 +80,6 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
 
     public void unRegisterService(String serviceName, String version) {
         LOGGER.warn("unRegister service: " + serviceName + " " + version);
-        // TODO do something real?
+        registryAgent.unregisterService(serviceName,version);
     }
 }
