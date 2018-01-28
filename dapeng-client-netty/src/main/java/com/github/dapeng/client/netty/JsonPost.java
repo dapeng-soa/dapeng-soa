@@ -44,7 +44,8 @@ public class JsonPost {
      * @return
      * @throws Exception
      */
-    public String callServiceMethod(InvocationContext invocationContext, String jsonParameter, Service service) throws Exception {
+    public String callServiceMethod(InvocationContext invocationContext,
+                                    String jsonParameter, Service service) throws Exception {
 
         if (null == jsonParameter || "".equals(jsonParameter.trim())) {
             jsonParameter = "{}" ;
@@ -87,7 +88,6 @@ public class JsonPost {
         String jsonResponse = "{}" ;
 
         try {
-            // Fixme should be obtained from a pool
             Object result = this.pool.send(serviceName, version, method, requestJson, jsonEncoder, jsonDecoder);
 
             jsonResponse = (String) result;

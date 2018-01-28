@@ -3,6 +3,7 @@ package com.github.dapeng.impl.container;
 
 import com.github.dapeng.core.Application;
 import com.github.dapeng.core.ServiceInfo;
+import com.github.dapeng.util.CommonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,21 +115,25 @@ public class DapengApplication implements Application {
             return LOGER_MAP.get(logMethodKey);
         }
 
-        lock.lock();
-        try {
-            if (LOGER_MAP.containsKey(logMethodKey)) {
-                return LOGER_MAP.get(logMethodKey);
-            }
+        CommonUtil.newElementWithDoubleCheck(
+                () -> !LOGER_MAP.containsKey(logMethodKey),
+                () -> {
+                    try {
+                        Class<?> logFactoryClass = appClassLoader.loadClass("org.slf4j.LoggerFactory");
+                        Method getILoggerFactory = logFactoryClass.getMethod("getLogger", Class.class);
+                        getILoggerFactory.setAccessible(true);
+                        Object logger = getILoggerFactory.invoke(null, logClass);
+                        LOGER_MAP.put(logMethodKey, logger);
+                        return logger;
+                    } catch (Exception ex) {
+                        LOGGER.error(ex.getMessage(), ex);
+                        return null;
+                    }
+                },
+                lock
+        );
 
-            Class<?> logFactoryClass = appClassLoader.loadClass("org.slf4j.LoggerFactory");
-            Method getILoggerFactory = logFactoryClass.getMethod("getLogger", Class.class);
-            getILoggerFactory.setAccessible(true);
-            Object logger = getILoggerFactory.invoke(null, logClass);
-            LOGER_MAP.put(logMethodKey, logger);
-            return logger;
-        } finally {
-            lock.unlock();
-        }
+        return LOGER_MAP.get(logMethodKey);
     }
 
     private void initSlf4jMethods() {
