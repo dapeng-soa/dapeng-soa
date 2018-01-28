@@ -1,4 +1,4 @@
-package com.github.dapeng.json;
+package com.github.dapeng.util;
 
 import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.InvocationContext;
@@ -9,9 +9,11 @@ import com.github.dapeng.org.apache.thrift.protocol.TBinaryProtocol;
 import com.github.dapeng.org.apache.thrift.protocol.TCompactProtocol;
 import com.github.dapeng.org.apache.thrift.protocol.TJSONProtocol;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
-import com.github.dapeng.util.SoaMessageBuilder;
 import io.netty.buffer.ByteBuf;
 
+/**
+ * @author ever
+ */
 public class SoaJsonMessageBuilder<REQ> extends SoaMessageBuilder<REQ> {
     @Override
     public ByteBuf build() throws TException {

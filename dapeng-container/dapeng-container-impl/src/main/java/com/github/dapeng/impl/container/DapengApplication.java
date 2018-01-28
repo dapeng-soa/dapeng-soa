@@ -114,21 +114,21 @@ public class DapengApplication implements Application {
             return LOGER_MAP.get(logMethodKey);
         }
 
-        lock.lock();
         try {
-            if (LOGER_MAP.containsKey(logMethodKey)) {
-                return LOGER_MAP.get(logMethodKey);
+            lock.lock();
+            if (!LOGER_MAP.containsKey(logMethodKey)) {
+                Class<?> logFactoryClass = appClassLoader.loadClass("org.slf4j.LoggerFactory");
+                Method getILoggerFactory = logFactoryClass.getMethod("getLogger", Class.class);
+                getILoggerFactory.setAccessible(true);
+                Object logger = getILoggerFactory.invoke(null, logClass);
+                LOGER_MAP.put(logMethodKey, logger);
+                return logger;
             }
-
-            Class<?> logFactoryClass = appClassLoader.loadClass("org.slf4j.LoggerFactory");
-            Method getILoggerFactory = logFactoryClass.getMethod("getLogger", Class.class);
-            getILoggerFactory.setAccessible(true);
-            Object logger = getILoggerFactory.invoke(null, logClass);
-            LOGER_MAP.put(logMethodKey, logger);
-            return logger;
         } finally {
             lock.unlock();
         }
+
+        return LOGER_MAP.get(logMethodKey);
     }
 
     private void initSlf4jMethods() {
