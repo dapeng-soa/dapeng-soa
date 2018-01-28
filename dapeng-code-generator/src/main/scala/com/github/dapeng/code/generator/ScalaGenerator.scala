@@ -340,9 +340,8 @@ class ScalaGenerator extends CodeGenerator {
         import java.util.concurrent.CompletableFuture;
         import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "AsyncCodec._"};
         import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + ".service." + service.name }Async;
-        import scala.compat.java8.FutureConverters._
         import scala.concurrent.duration._
-        import scala.concurrent.Future
+        import scala.concurrent.<block>Future, Promise</block>
         import scala.concurrent.ExecutionContext.Implicits.global
 
         /**
@@ -372,6 +371,19 @@ class ScalaGenerator extends CodeGenerator {
           ).success
         </block>
 
+        /**
+        *  java CompletableFuture => scala Future common function
+        */
+        def toScala[T,R](response: CompletableFuture[T])(extractor: T => R): Future[R] = <block>
+
+          val promise = Promise[R]()
+          response.whenComplete((res: T, ex) => <block>
+            if (ex != null) promise.failure(ex)
+            else promise.success(extractor(res))
+          </block>)
+          promise.future
+        </block>
+
 
         {
         toMethodArrayBuffer(service.methods).map{(method:Method)=>{
@@ -397,7 +409,7 @@ class ScalaGenerator extends CodeGenerator {
             new {method.response.name.charAt(0).toUpper + method.response.name.substring(1)}Serializer()
             ,timeout).asInstanceOf[CompletableFuture[{method.response.name}]]
 
-            {if(method.getResponse.getFields.get(0).getDataType.kind != DataType.KIND.VOID) <div>toScala(response).map(_.success)</div> else <div>toScala(response).map(null)</div>}
+            {if(method.getResponse.getFields.get(0).getDataType.kind != DataType.KIND.VOID) <div>toScala(response)(_.success)</div> else <div>toScala(response)(null)</div>}
 
           </block>
 

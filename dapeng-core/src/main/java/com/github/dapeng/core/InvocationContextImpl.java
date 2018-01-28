@@ -216,8 +216,6 @@ public class InvocationContextImpl implements  InvocationContext {
                 threadLocal.set(context);
             }
 
-            assert context != null;
-
             return context;
         }
 
