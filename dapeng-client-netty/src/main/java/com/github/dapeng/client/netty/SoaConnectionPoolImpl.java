@@ -5,7 +5,6 @@ import com.github.dapeng.json.JsonSerializer;
 import com.github.dapeng.registry.*;
 import com.github.dapeng.registry.zookeeper.LoadBalanceService;
 import com.github.dapeng.registry.zookeeper.ZkClientAgentImpl;
-import com.github.dapeng.util.CommonUtil;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 
 import java.lang.ref.WeakReference;
@@ -111,12 +110,15 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         IpPort ipPort = new IpPort(inst.ip, inst.port);
         SubPool subPool = subPools.get(ipPort);
         if (subPool == null) {
-            CommonUtil.newElementWithDoubleCheck(
-                    () -> !subPools.containsKey(ipPort),
-                    () -> subPools.put(ipPort, new SubPool(inst.ip, inst.port)),
-                    subPoolLock
-            );
-            subPool = subPools.get(ipPort);
+            try {
+                subPoolLock.lock();
+                if (!subPools.containsKey(ipPort)) {
+                    subPool = new SubPool(inst.ip, inst.port);
+                    subPools.put(ipPort, subPool);
+                }
+            } finally {
+                subPoolLock.unlock();
+            }
         }
 
         return subPool.getConnection(connectionType);

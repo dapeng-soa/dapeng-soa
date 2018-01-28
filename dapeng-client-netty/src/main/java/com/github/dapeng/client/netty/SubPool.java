@@ -1,7 +1,6 @@
 package com.github.dapeng.client.netty;
 
 import com.github.dapeng.core.SoaConnection;
-import com.github.dapeng.util.CommonUtil;
 
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -40,17 +39,26 @@ public class SubPool {
         switch (connectionType) {
             case Json:
                 if (jsonConnection != null) return jsonConnection;
-                CommonUtil.newInstWithDoubleCheck(
-                        jsonConnection,
-                        () -> new SoaJsonConnectionImpl(ip, port),
-                        jsonConnectionlock);
+                try {
+                    jsonConnectionlock.lock();
+                    if (jsonConnection == null) {
+                        jsonConnection = new SoaJsonConnectionImpl(ip, port);
+                    }
+                } finally {
+                    jsonConnectionlock.unlock();
+                }
+
                 return jsonConnection;
             case Common:
                 if (normalConnection != null) return normalConnection;
-                CommonUtil.newInstWithDoubleCheck(
-                        normalConnection,
-                        () -> new SoaConnectionImpl(ip, port),
-                        connectionLock);
+                try {
+                    connectionLock.lock();
+                    if (normalConnection == null) {
+                        normalConnection = new SoaConnectionImpl(ip, port);
+                    }
+                } finally {
+                    connectionLock.unlock();
+                }
                 return normalConnection;
             default:
                 return null;
