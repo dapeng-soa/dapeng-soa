@@ -11,6 +11,7 @@ import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TBinaryProtocol;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
 import com.github.dapeng.util.DumpUtil;
+import com.github.dapeng.util.SoaJsonMessageBuilder;
 import com.github.dapeng.util.SoaMessageParser;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -172,28 +173,6 @@ public class JsonSerializerTest {
         doTest2(crmService, method, method.request, json, "simpleStructWithOptionTest");
     }
 
-
-    @Deprecated
-    private static void doTest(Service service, Method method, Struct struct, String json, String desc) throws TException {
-
-        final ByteBuf requestBuf = PooledByteBufAllocator.DEFAULT.buffer(8192);
-
-        JsonSerializer jsonSerializer = new JsonSerializer(service, method, struct);
-        jsonSerializer.setRequestByteBuf(requestBuf);
-
-        TProtocol outProtocol = new TBinaryProtocol(new TSoaTransport(requestBuf));
-        jsonSerializer.write(json, outProtocol);
-
-        TProtocol inProtocol = new TBinaryProtocol(new TSoaTransport(requestBuf));
-
-        System.out.println("origJson:\n" + json);
-
-        System.out.println("after enCode and decode:\n" + jsonSerializer.read(inProtocol));
-        System.out.println(desc + " ends=====================");
-        requestBuf.release();
-
-    }
-
     private static void doTest2(Service service, Method method, Struct struct, String json, String desc) throws TException {
 
         InvocationContext invocationContext = InvocationContextImpl.Factory.createNewInstance();
@@ -234,7 +213,7 @@ public class JsonSerializerTest {
 
     private static Service getService(final String xmlFilePath) throws IOException {
         String xmlContent = IOUtils.toString(JsonSerializerTest.class.getResource(xmlFilePath), "UTF-8");
-        return JAXB.unmarshal(new StringReader(xmlContent), com.github.dapeng.core.metadata.Service.class);
+        return JAXB.unmarshal(new StringReader(xmlContent), Service.class);
     }
 
     private static String loadJson(final String jsonPath) throws IOException {
