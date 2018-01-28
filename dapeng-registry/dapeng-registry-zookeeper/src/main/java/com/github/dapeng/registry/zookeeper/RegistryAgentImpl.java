@@ -93,6 +93,19 @@ public class RegistryAgentImpl implements RegistryAgent {
     }
 
     @Override
+    public void unregisterService(String serverName, String versionName) {
+        try {
+            String path = "/soa/runtime/services/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
+            String data = "";
+            LOGGER.info(" logger zookeeper unRegister service: " + path);
+            System.out.println(" systemOut zookeeper unRegister service: " + path);
+            zooKeeperHelper.deleteServiceInfo(path);
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    @Override
     public void registerService(String serverName, String versionName) {
         try {
             //注册服务信息到runtime节点

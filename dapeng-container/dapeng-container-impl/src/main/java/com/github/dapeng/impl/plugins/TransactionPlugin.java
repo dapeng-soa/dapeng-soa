@@ -81,7 +81,7 @@ public class TransactionPlugin implements Plugin {
     @Override
     public void stop() {
         if (context != null) {
-            context.stop();
+            context.close();
         }
     }
 

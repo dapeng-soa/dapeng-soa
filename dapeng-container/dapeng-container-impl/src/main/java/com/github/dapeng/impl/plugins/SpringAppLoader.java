@@ -91,22 +91,20 @@ public class SpringAppLoader implements Plugin {
 
     @Override
     public void stop() {
-        LOGGER.warn("Plugin:SpringAppLoader stop.");
-        LOGGER.warn("Gracefully shutdown not implemented yet");
-        // TODO stop or close??
-//        springCtxs.forEach(springCtx -> {
-//            LOGGER.info(" stop unload app");
-//            try {
-//                Method stopMethod = springCtx.getClass().getMethod("stop");
-//                stopMethod.invoke(springCtx);
-//            } catch (NoSuchMethodException e) {
-//                LOGGER.error(e.getMessage(), e);
-//            } catch (IllegalAccessException e) {
-//                LOGGER.error(e.getMessage(), e);
-//            } catch (InvocationTargetException e) {
-//                LOGGER.error(e.getMessage(), e);
-//            }
-//        });
+        LOGGER.warn("Plugin:SpringAppLoader stop..Gracefully shutdown not implemented yet");
+        springCtxs.forEach(context -> {
+            try {
+                LOGGER.info(" start to close SpringApplication.....");
+                Method method = context.getClass().getMethod("close");
+                method.invoke(context);
+            } catch (NoSuchMethodException e) {
+                LOGGER.info(" failed to get context close method.....");
+            } catch (IllegalAccessException e) {
+                LOGGER.info(e.getMessage());
+            } catch (InvocationTargetException e) {
+                LOGGER.info(e.getMessage());
+            }
+        });
     }
 
     private Map<String, ServiceInfo> toServiceInfos(Map<String, SoaServiceDefinition<?>> processorMap)

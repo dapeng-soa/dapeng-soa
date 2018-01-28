@@ -339,4 +339,17 @@ public class ZookeeperHelper {
             route += "/";
         }
     }
+
+
+    /**
+     * zookeeper 删除节点信息
+     * @param path
+     */
+    public void deleteServiceInfo(String path) {
+        try {
+            zk.delete(path, -1);
+        } catch (Exception e) {
+            LOGGER.error("删除serviceInfo:{} 失败:{}", path, e.getMessage());
+        }
+    }
 }
