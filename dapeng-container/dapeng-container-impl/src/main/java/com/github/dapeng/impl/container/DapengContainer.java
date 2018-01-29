@@ -31,7 +31,7 @@ import java.util.concurrent.Executors;
 public class DapengContainer implements Container {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DapengContainer.class);
-    private static final String RUN_MODE = System.getProperty("soa.run.mode", "maven");
+    private static final String RUN_MODE = System.getProperty("soa.run.mode", "plugin");
     private List<AppListener> appListeners = new Vector<>();
     private List<Application> applications = new Vector<>();
     private List<Plugin> plugins = new ArrayList<>();
