@@ -1,7 +1,7 @@
 package com.github.dapeng.soa;
 
 import com.github.dapeng.core.SoaException;
-import com.github.dapeng.soa.info.Info;
+import com.github.dapeng.soa.domain.Info;
 import com.github.dapeng.soa.service.PrintServiceAsync;
 
 import java.util.concurrent.CompletableFuture;
