@@ -35,6 +35,11 @@ public class JsonPost {
         this.pool.registerClientInfo(serviceName, version);
     }
 
+    public JsonPost(String serviceName, String version, boolean doNotThrowError) {
+        this(serviceName, version);
+        this.doNotThrowError = doNotThrowError;
+    }
+
     /**
      * 调用远程服务
      *

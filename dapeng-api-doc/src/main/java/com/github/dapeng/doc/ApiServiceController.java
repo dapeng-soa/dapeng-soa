@@ -46,7 +46,7 @@ public class ApiServiceController {
     }
 
     @RequestMapping(value = "service/{serviceName}/{version}", method = RequestMethod.GET)
-    @Transactional(value = "isuwang_api", rollbackFor = Exception.class)
+    @Transactional(value = "dapeng_api", rollbackFor = Exception.class)
     public String service(HttpServletRequest request, @PathVariable String serviceName, @PathVariable String version) {
         request.setAttribute("service", serviceCache.getService(serviceName, version));
         request.setAttribute("services", serviceCache.getServices().values());
@@ -54,7 +54,7 @@ public class ApiServiceController {
     }
 
     @RequestMapping(value = "method/{serviceName}/{version}/{methodName}", method = RequestMethod.GET)
-    @Transactional(value = "isuwang_api", rollbackFor = Exception.class)
+    @Transactional(value = "dapeng_api", rollbackFor = Exception.class)
     public String method(HttpServletRequest request, @PathVariable String serviceName, @PathVariable String version, @PathVariable String methodName) {
         Service service = serviceCache.getService(serviceName, version);
 
@@ -78,7 +78,7 @@ public class ApiServiceController {
     }
 
     @RequestMapping(value = "struct/{serviceName}/{version}/{ref}", method = RequestMethod.GET)
-    @Transactional(value = "isuwang_api", rollbackFor = Exception.class)
+    @Transactional(value = "dapeng_api", rollbackFor = Exception.class)
     public String struct(HttpServletRequest request, @PathVariable String serviceName, @PathVariable String version, @PathVariable String ref) {
         Service service = serviceCache.getService(serviceName, version);
 
@@ -97,7 +97,7 @@ public class ApiServiceController {
     }
 
     @RequestMapping(value = "enum/{serviceName}/{version}/{ref}", method = RequestMethod.GET)
-    @Transactional(value = "isuwang_api", rollbackFor = Exception.class)
+    @Transactional(value = "dapeng_api", rollbackFor = Exception.class)
     public String anEnum(HttpServletRequest request, @PathVariable String serviceName, @PathVariable String version, @PathVariable String ref) {
         Service service = serviceCache.getService(serviceName, version);
 
@@ -109,7 +109,7 @@ public class ApiServiceController {
     }
 
     @RequestMapping(value = "test/{serviceName}/{version}/{methodName}", method = RequestMethod.GET)
-    @Transactional(value = "isuwang_api", rollbackFor = Exception.class)
+    @Transactional(value = "dapeng_api", rollbackFor = Exception.class)
     public String goTest(HttpServletRequest request, @PathVariable String serviceName, @PathVariable String version, @PathVariable String methodName) {
 
         Service service = serviceCache.getService(serviceName, version);
