@@ -3,6 +3,7 @@ package com.github.dapeng.doc;
 import com.github.dapeng.client.netty.JsonPost;
 import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
+import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.doc.cache.ServiceCache;
 import com.github.dapeng.util.SoaSystemEnvProperties;
@@ -60,16 +61,22 @@ public class TestController {
 
         fillInvocationCtx(invocationCtx, req);
 
-        JsonPost jsonPost = new JsonPost(serviceName,methodName);
+        JsonPost jsonPost = new JsonPost(serviceName, methodName);
 
         try {
             return jsonPost.callServiceMethod(invocationCtx, jsonParameter, service);
+        } catch (SoaException e) {
+
+            LOGGER.error(e.getMsg());
+            return String.format("{\"responseCode\":\"%s\", \"responseMsg\":\"%s\", \"success\":\"%s\"}", e.getCode(), e.getMsg(), "{}");
+
         } catch (Exception e) {
+
             LOGGER.error(e.getMessage(), e);
+            return String.format("{\"responseCode\":\"%s\", \"responseMsg\":\"%s\", \"success\":\"%s\"}", "9999", "系统繁忙，请稍后再试[9999]！", "{}");
         } finally {
             InvocationContextImpl.Factory.removeCurrentInstance();
         }
-        return null;
     }
 
     private void fillInvocationCtx(InvocationContext invocationCtx, HttpServletRequest req) {
