@@ -695,6 +695,12 @@ public class JsonSerializer implements BeanSerializer<String> {
                         case DOUBLE:
                             oproto.writeDouble(Double.parseDouble(value));
                             break;
+                        case INTEGER:
+                            oproto.writeI32(Integer.parseInt(value));
+                            break;
+                        case SHORT:
+                            oproto.writeI16(Short.parseShort(value));
+                            break;
                         default:
                             if (current.dataType.kind != DataType.KIND.STRING) {
                                 throw new TException("Not a real String!");
