@@ -37,6 +37,8 @@ public class SoaSystemEnvProperties {
     private static final String KEY_SOA_LOCAL_HOST_NAME = "soa.local.host.name";
     private static final String KEY_SOA_TRANSACTIONAL_ENABLE = "soa.transactional.enable";
 
+    private static final String KEY_SOA_FILTER_EXCLUDES = "soa.filter.excludes";
+
 //    public static final String SOA_SERVICE_IP = get(KEY_SOA_SERVICE_IP, "127.0.0.1");
 //    public static final boolean SOA_SERVICE_IP_ISCONFIG = get(KEY_SOA_SERVICE_IP) != null;
 //
@@ -65,6 +67,8 @@ public class SoaSystemEnvProperties {
 
     public static final String SOA_LOCAL_HOST_NAME = get(KEY_SOA_LOCAL_HOST_NAME);
     public static final boolean SOA_TRANSACTIONAL_ENABLE = Boolean.valueOf(get(KEY_SOA_TRANSACTIONAL_ENABLE, "true"));
+
+    public static final String SOA_FILTER_EXCLUDES = get(KEY_SOA_FILTER_EXCLUDES,""); //
 
     public static String get(String key) {
         return get(key, null);

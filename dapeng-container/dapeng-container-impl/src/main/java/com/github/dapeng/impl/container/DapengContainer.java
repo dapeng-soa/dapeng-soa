@@ -9,9 +9,11 @@ import com.github.dapeng.core.Application;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.Filter;
+import com.github.dapeng.impl.filters.FilterLoader;
 import com.github.dapeng.impl.plugins.*;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
 import com.github.dapeng.util.SoaSystemEnvProperties;
+import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,10 +21,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -35,6 +34,7 @@ public class DapengContainer implements Container {
     private List<AppListener> appListeners = new Vector<>();
     private List<Application> applications = new Vector<>();
     private List<Plugin> plugins = new ArrayList<>();
+    private List<Filter> filters = new ArrayList<>();
     private Map<ProcessorKey, SoaServiceDefinition<?>> processors = new ConcurrentHashMap<>();
     private Map<ProcessorKey, Application> applicationMap = new ConcurrentHashMap<>();
     private final List<ClassLoader> applicationCls;
@@ -138,9 +138,20 @@ public class DapengContainer implements Container {
         return ExectorFactory.exector;
     }
 
+
+    @Override
+    public void registerFilter(Filter filter) {
+        this.filters.add(filter);
+    }
+
+    @Override
+    public void unregisterFilter(Filter filter) {
+        this.filters.remove(filter);
+    }
+
     @Override
     public List<Filter> getFilters() {
-        return new ArrayList<>(); //TODO
+        return ImmutableList.copyOf(this.filters);
     }
 
     @Override
@@ -169,6 +180,25 @@ public class DapengContainer implements Container {
 
         //4.启动Apploader， plugins
         getPlugins().forEach(Plugin::start);
+
+        // 载入Filter
+        String FILTER_EXCLUDES = SoaSystemEnvProperties.SOA_FILTER_EXCLUDES;
+        List<Filter> loadFilters = new FilterLoader().load();
+        List<Filter> removeFilters = new ArrayList<>();
+        for(Filter filter : loadFilters){
+            if(!"".equals(FILTER_EXCLUDES)){
+                for (String pkg:FILTER_EXCLUDES.trim().split(",")) {
+                    if(pkg.equals(filter.getClass().getName())){
+                        removeFilters.add(filter);
+                    }
+                }
+            }
+        }
+        loadFilters.removeAll(removeFilters);
+
+        for (Filter filter : loadFilters){
+            registerFilter(filter);
+        }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.warn("Container gracefule shutdown begin.");
