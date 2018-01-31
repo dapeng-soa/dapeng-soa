@@ -98,7 +98,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             //
             I iface = serviceDef.iface;
             //log request
-            LOGGER.info("============Test====================");
             application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} request body:{}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.getOperatorId(), soaHeader.getOperatorName(), formatToString(soaFunction.reqSerializer.toString(args)));
 
             HeadFilter headFilter = new HeadFilter();
