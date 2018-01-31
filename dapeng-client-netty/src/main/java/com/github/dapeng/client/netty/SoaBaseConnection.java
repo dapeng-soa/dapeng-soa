@@ -78,11 +78,8 @@ public abstract class SoaBaseConnection implements SoaConnection {
         FilterContextImpl filterContext = new FilterContextImpl();
         filterContext.setAttach(dispatchFilter, "chain", sharedChain);
 
-        try {
-            sharedChain.onEntry(filterContext);
-        } catch (TException e) {
-            throw new SoaException(e);
-        }
+        sharedChain.onEntry(filterContext);
+
         Result<RESP> result = (Result<RESP>) filterContext.getAttribute("result");
         assert (result != null);
 
