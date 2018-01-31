@@ -6,7 +6,7 @@ import com.github.dapeng.core.TransactionContext;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.filter.FilterChain;
 import com.github.dapeng.core.filter.FilterContext;
-import com.github.dapeng.monitor.domain.ServiceInfo;
+import com.github.dapeng.monitor.domain.ServiceSimpleInfo;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,19 +25,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class QpsFilter implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(QpsFilter.class);
     private static final int period = 5;
-    private static Map<ServiceInfo,AtomicInteger> qpsStats = new ConcurrentHashMap<>();
+    private static Map<ServiceSimpleInfo,AtomicInteger> qpsStats = new ConcurrentHashMap<>();
 
     @Override
     public void onEntry(FilterContext ctx, FilterChain next) throws SoaException {
         TransactionContext context = (TransactionContext) ctx.getAttribute("context");
         SoaHeader soaHeader = context.getHeader();
-        ServiceInfo serviceInfo = new ServiceInfo(soaHeader.getServiceName(),soaHeader.getMethodName(),soaHeader.getVersionName());
+        ServiceSimpleInfo simpleInfo = new ServiceSimpleInfo(soaHeader.getServiceName(),soaHeader.getMethodName(),soaHeader.getVersionName());
 
-        if (qpsStats.containsKey(serviceInfo)){
-            Integer count = qpsStats.get(serviceInfo).incrementAndGet();
-            LOGGER.info(serviceInfo.toString()+" count :{}", count);
+        if (qpsStats.containsKey(simpleInfo)){
+            Integer count = qpsStats.get(simpleInfo).incrementAndGet();
+            LOGGER.info(simpleInfo.toString()+" count :{}", count);
         }else {
-            qpsStats.put(serviceInfo,new AtomicInteger(1));
+            qpsStats.put(simpleInfo,new AtomicInteger(1));
         }
     }
 
@@ -56,7 +56,6 @@ public class QpsFilter implements Filter {
         calendar.set(Calendar.MILLISECOND, 0);
 
         LOGGER.info("QpsMonitorFilter 定时上送时间:{} 上送间隔:{}ms", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss S").format(calendar.getTime()), period * 1000);
-
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -77,7 +76,7 @@ public class QpsFilter implements Filter {
     }
 
     // 上送
-    public static void uploadQPSStat(Long millis,Map<ServiceInfo,AtomicInteger> qpsStats) throws SoaException {
+    private static void uploadQPSStat(Long millis,Map<ServiceSimpleInfo,AtomicInteger> qpsStats) throws SoaException {
         LOGGER.info("上送时间:{}ms  上送数据量{} ", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss S").format(millis), qpsStats.size());
         //todo
     }
