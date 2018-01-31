@@ -181,22 +181,8 @@ public class DapengContainer implements Container {
         //4.启动Apploader， plugins
         getPlugins().forEach(Plugin::start);
 
-        // 载入Filter
-        String FILTER_EXCLUDES = SoaSystemEnvProperties.SOA_FILTER_EXCLUDES;
-        List<Filter> loadFilters = new FilterLoader().load();
-        List<Filter> removeFilters = new ArrayList<>();
-        for(Filter filter : loadFilters){
-            if(!"".equals(FILTER_EXCLUDES)){
-                for (String pkg:FILTER_EXCLUDES.trim().split(",")) {
-                    if(pkg.equals(filter.getClass().getName())){
-                        removeFilters.add(filter);
-                    }
-                }
-            }
-        }
-        loadFilters.removeAll(removeFilters);
-
-        for (Filter filter : loadFilters){
+        // register Filters
+        for (Filter filter : new FilterLoader().load(this, applicationCls)){
             registerFilter(filter);
         }
 
