@@ -8,12 +8,12 @@ import java.util.Objects;
  * email :yq1724555319@gmail.com
  */
 
-public class ServiceInfo {
+public class ServiceSimpleInfo {
     private final String serviceName;
     private final String methodName;
     private final String versionName;
 
-    public ServiceInfo(String serviceName, String methodName, String versionName) {
+    public ServiceSimpleInfo(String serviceName, String methodName, String versionName) {
         this.serviceName = serviceName;
         this.methodName = methodName;
         this.versionName = versionName;
@@ -21,9 +21,13 @@ public class ServiceInfo {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ServiceInfo that = (ServiceInfo) o;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ServiceSimpleInfo that = (ServiceSimpleInfo) o;
         return Objects.equals(serviceName, that.serviceName) &&
                 Objects.equals(methodName, that.methodName) &&
                 Objects.equals(versionName, that.versionName);
