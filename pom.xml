@@ -149,7 +149,7 @@
 
 
         <profile>
-            <id>test</id>
+            <id>today</id>
             <distributionManagement>
                 <repository>
                     <id>today-dev</id>
