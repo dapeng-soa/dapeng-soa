@@ -38,6 +38,7 @@ public class ServiceCache {
 
         System.out.println("--------------------Container: " + ContainerFactory.getContainer());
         System.out.println("--------------------Applications: " + ContainerFactory.getContainer().getApplications());
+        System.out.println("--------------------Filters: " + ContainerFactory.getContainer().getFilters());
 
         List<Application> applications = ContainerFactory.getContainer().getApplications();
         applications.forEach(i -> loadServices(i));
