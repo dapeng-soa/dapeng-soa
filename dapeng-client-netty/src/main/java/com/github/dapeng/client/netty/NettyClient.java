@@ -125,7 +125,7 @@ public class NettyClient {
             ByteBuf respByteBuf = future.get(30000, TimeUnit.MILLISECONDS);
             return respByteBuf;
         } catch (Exception e) {
-            throw new SoaException(SoaCode.UnKnown, e.getMessage());
+            throw new SoaException(SoaCode.UnKnown.getCode(), SoaCode.UnKnown.getMsg());
         } finally {
             RequestQueue.remove(seqid);
         }
