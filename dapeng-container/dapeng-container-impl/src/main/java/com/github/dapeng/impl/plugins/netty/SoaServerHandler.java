@@ -25,7 +25,9 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Created by lihuimin on 2017/12/7.
+ *
+ * @author lihuimin
+ * @date 2017/12/7
  */
 @ChannelHandler.Sharable
 public class SoaServerHandler extends ChannelInboundHandlerAdapter {

@@ -93,15 +93,15 @@ public class JsonPost {
         String jsonResponse = "{}" ;
 
         try {
-            Object result = this.pool.send(serviceName, version, method, requestJson, jsonEncoder, jsonDecoder);
+            String result = this.pool.send(serviceName, version, method, requestJson, jsonEncoder, jsonDecoder);
 
-            jsonResponse = (String) result;
+            jsonResponse = result.substring(0,result.lastIndexOf('}')) + ",\"status\":1}";
 
         } catch (SoaException e) {
 
             LOGGER.error(e.getMsg());
             if (doNotThrowError) {
-                jsonResponse = String.format("{\"responseCode\":\"%s\", \"responseMsg\":\"%s\", \"success\":\"%s\"}", e.getCode(), e.getMsg(), "{}");
+                jsonResponse = String.format("{\"responseCode\":\"%s\", \"responseMsg\":\"%s\", \"success\":\"%s\", \"status\":0}", e.getCode(), e.getMsg(), "{}");
             } else {
                 throw e;
             }
@@ -110,7 +110,7 @@ public class JsonPost {
 
             LOGGER.error(e.getMessage(), e);
             if (doNotThrowError) {
-                jsonResponse = String.format("{\"responseCode\":\"%s\", \"responseMsg\":\"%s\", \"success\":\"%s\"}", "9999", "系统繁忙，请稍后再试[9999]！", "{}");
+                jsonResponse = String.format("{\"responseCode\":\"%s\", \"responseMsg\":\"%s\", \"success\":\"%s\", \"status\":0}", "9999", "系统繁忙，请稍后再试[9999]！", "{}");
             } else {
                 throw e;
             }
