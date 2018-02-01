@@ -108,7 +108,7 @@ public class NettyClient {
         return bootstrap;
     }
 
-    public ByteBuf send(Channel channel, int seqid, ByteBuf request) throws SoaException {
+    public ByteBuf send(Channel channel, int seqid, ByteBuf request, long timeout) throws SoaException {
 
         //means that this channel is not idle and would not managered by IdleConnectionManager
         IdleConnectionManager.remove(channel);
@@ -119,14 +119,14 @@ public class NettyClient {
 
         try {
             channel.writeAndFlush(request);
-            ByteBuf respByteBuf = future.get(30000, TimeUnit.MILLISECONDS);
+            ByteBuf respByteBuf = future.get(timeout, TimeUnit.MILLISECONDS);
             return respByteBuf;
         } catch (TimeoutException e) {
             LOGGER.error("请求超时，seqid:"+seqid);
             throw new SoaException(SoaCode.TimeOut.getCode(), SoaCode.TimeOut.getMsg());
-        } catch (Exception e){
-            throw new SoaException(SoaCode.UnKnown.getCode(), SoaCode.UnKnown.getMsg());
-        }finally {
+        } catch (Throwable e) {
+            throw new SoaException(SoaCode.UnKnown, e.getMessage() == null ? SoaCode.UnKnown.getMsg():e.getMessage());
+        } finally {
             RequestQueue.remove(seqid);
         }
 
