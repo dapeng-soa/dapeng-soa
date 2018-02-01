@@ -10,7 +10,9 @@ public enum SoaCode implements SoaBaseCodeInterface {
     NotNull("Err-Core-001", "字段不允许为空"),
     NotFoundServer("Err-Core-098", "无可用的服务实例"),
     NotConnected("Error-Core-002", "连接失败"),
-    TimeOut("Error-Core-003", "请求超时");
+    TimeOut("Error-Core-003", "请求超时"),
+    NotMatchedService("Error-Core-004","没有对应的服务或者没有对应的服务版本"),
+    NotMatchedMethod("Error-Core-005","没有对应的方法");
 
     private String code;
     private String msg;

@@ -92,7 +92,14 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             SoaHeader soaHeader = context.getHeader();
             Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
+            if (application == null){
+                throw new SoaException(SoaCode.NotMatchedService);
+            }
             SoaFunctionDefinition<I, REQ, RESP> soaFunction = (SoaFunctionDefinition<I, REQ, RESP>) serviceDef.functions.get(soaHeader.getMethodName());
+
+            if (serviceDef == null){
+                throw new SoaException(SoaCode.NotMatchedMethod);
+            }
             REQ args = soaFunction.reqSerializer.read(contentProtocol);
             contentProtocol.readMessageEnd();
             //
@@ -146,7 +153,10 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             filterContext.setAttach(dispatchFilter, "chain", sharedChain);
 
             sharedChain.onEntry(filterContext);
-        } finally {
+        }catch (SoaException e){
+            LOGGER.error(e.getMsg());
+            writeErrorMessage(channelHandlerContext, context, new SoaException(e.getCode(), e.getMsg()));
+        }finally {
             reqMessage.release();
         }
     }
