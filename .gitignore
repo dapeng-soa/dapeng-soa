@@ -1,0 +1,25 @@
+# Created by .ignore support plugin (hsz.mobi)
+*.iml
+dapeng.iml
+**/target/
+**/.idea/
+/.idea/
+/datas/
+/dapeng-code-generator/target/
+/dapeng-container/target/
+/dapeng-container/dapeng-container.iml
+/dapeng-core/target/
+/dapeng-core/dapeng-core.iml
+/dapeng-maven-plugin/target/
+/dapeng-maven-plugin/dapeng-maven-plugin.iml
+/dapeng-registry/dapeng-registry-api/target/
+/dapeng-registry/dapeng-registry-zookeeper/target/
+/dapeng-registry/dapeng-registry.iml
+/dapeng-registry/dapeng-registry-api/dapeng-registry-api.iml
+/dapeng-registry/dapeng-registry-zookeeper/dapeng-registry-zookeeper.iml
+/dapeng-spring/target/
+/dapeng-spring/dapeng-spring.iml
+/dapeng-zookeeper/target/
+/dapeng-zookeeper/dapeng-zookeeper.iml
+.DS_Store
+**/.DS_Store
