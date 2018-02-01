@@ -182,9 +182,7 @@ public class DapengContainer implements Container {
         getPlugins().forEach(Plugin::start);
 
         // register Filters
-        for (Filter filter : new FilterLoader().load(this, applicationCls)){
-            registerFilter(filter);
-        }
+        new FilterLoader(this, applicationCls);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.warn("Container gracefule shutdown begin.");

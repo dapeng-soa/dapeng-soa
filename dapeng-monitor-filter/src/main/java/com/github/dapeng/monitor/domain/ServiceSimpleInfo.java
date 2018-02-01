@@ -13,6 +13,18 @@ public class ServiceSimpleInfo {
     private final String methodName;
     private final String versionName;
 
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public String getMethodName() {
+        return methodName;
+    }
+
+    public String getVersionName() {
+        return versionName;
+    }
+
     public ServiceSimpleInfo(String serviceName, String methodName, String versionName) {
         this.serviceName = serviceName;
         this.methodName = methodName;
