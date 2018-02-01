@@ -25,7 +25,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
- *
  * @author lihuimin
  * @date 2017/12/7
  */
@@ -58,14 +57,14 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                 try {
                     TransactionContext.Factory.setCurrentInstance(context);
                     processRequest(ctx, parser.getContentProtocol(), processor, reqMessage, context);
-                } catch (TException e) {
+                } catch (Throwable e) {
                     LOGGER.error(e.getMessage(), e);
-                    writeErrorMessage(ctx, context, new SoaException(SoaCode.UnKnown, e.getMessage()));
+                    writeErrorMessage(ctx, context, new SoaException(SoaCode.UnKnown, e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage()));
                 } finally {
                     TransactionContext.Factory.removeCurrentInstance();
                 }
             });
-        } catch (TException ex) {
+        } catch (Throwable ex) {
             LOGGER.error(ex.getMessage(), ex);
 
             // Inside processRequest, reqMessage will be released.
@@ -130,7 +129,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                     } catch (Exception e) {
                         LOGGER.error(e.getMessage(), e);
                         writeErrorMessage(channelHandlerContext, context, new SoaException(SoaCode.UnKnown, e.getMessage()));
-                    }
+                    } // todo handle error
                 }
 
                 @Override
