@@ -17,10 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Created by lihuimin on 2017/12/21.
@@ -124,9 +121,12 @@ public class NettyClient {
             channel.writeAndFlush(request);
             ByteBuf respByteBuf = future.get(30000, TimeUnit.MILLISECONDS);
             return respByteBuf;
-        } catch (Exception e) {
+        } catch (TimeoutException e) {
+            LOGGER.error("请求超时，seqid:"+seqid);
+            throw new SoaException(SoaCode.TimeOut.getCode(), SoaCode.TimeOut.getMsg());
+        } catch (Exception e){
             throw new SoaException(SoaCode.UnKnown.getCode(), SoaCode.UnKnown.getMsg());
-        } finally {
+        }finally {
             RequestQueue.remove(seqid);
         }
 
