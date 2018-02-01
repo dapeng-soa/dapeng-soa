@@ -42,7 +42,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private boolean checkVersion(String reqVersion, String targetVersion) {
         // x.y.z
         // x.Y.Z Y.Z >= y.z
-        // TODO
         return true;
     }
 
@@ -66,8 +65,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         if (connection == null) {
             throw new SoaException(SoaCode.NotConnected);
         }
-
-        return connection.send(service, version, method, request, requestSerializer, responseSerializer);
+        long timeout = getTimeout(service, version, method, 0L);
+        return connection.send(service, version, method, request, requestSerializer, responseSerializer, timeout);
     }
 
     @Override
@@ -85,6 +84,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         if (connection == null) {
             throw new SoaException(SoaCode.NotConnected);
         }
+        timeout = getTimeout(service, version, method, timeout);
         return connection.sendAsync(service, version, method, request, requestSerializer, responseSerializer, timeout);
     }
 
@@ -155,6 +155,24 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         return instance;
 
     }
+
+    private long getTimeout(String service, String version, String method, long paramTimeout) {
+
+        long timeout = 0L;
+        String serviceKey = service + "." + version + "." + method + ".producer";
+        Map<ConfigKey, Object> configs = zkAgent.getConfig(false, serviceKey);
+        long envTimeout = SoaSystemEnvProperties.SOA_SERVICE_CLIENT_TIMEOUT.longValue();
+        if (null != configs) {
+            Long timeoutConfig = (Long) configs.get(ConfigKey.ClientTimeout);
+            timeout = timeoutConfig != null ? timeoutConfig.longValue() : envTimeout;
+        }
+        if (timeout == 0L) {
+            timeout = (envTimeout == 0L) ? (paramTimeout == 0 ? 2000L : paramTimeout) : envTimeout;
+        }
+
+        return timeout;
+    }
+
 
 
     private ConnectionType getConnectionType(BeanSerializer serializer) {
