@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<service namespace="com.isuwang.soa.price.service" name="PriceService">
+    <meta>
+        <version>1.0.0</version>
+        <timeout>30000</timeout>
+    </meta>
+    <methods>
+        <method name="insertPrice">
+            <request name="insertPrice_args">
+                <fields>
+                    <field tag="1" name="price" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.isuwang.soa.price.domain.Price</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="insertPrice_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="getPrices">
+            <request name="getPrices_args">
+                <fields/>
+            </request>
+            <response name="getPrices_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRUCT</kind>
+<ref>com.isuwang.soa.price.domain.Price</ref>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+    </methods>
+    <structs>
+        <struct namespace="com.isuwang.soa.price.domain" name="Price">
+            <fields>
+                <field tag="1" name="orderId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+                <field tag="2" name="price" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+    </structs>
+    <enums/>
+</service>

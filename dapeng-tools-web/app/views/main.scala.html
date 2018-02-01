@@ -1,0 +1,37 @@
+@*
+ * This template is called from the `index` template. This template
+ * handles the rendering of the page header and body tags. It takes
+ * two arguments, a `String` for the title of the page and an `Html`
+ * object to insert into the body of the page.
+ *@
+@(title: String)(content: Html)
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        @* Here's where we render the page title `String`. *@
+        <title>@title</title>
+        <link rel="stylesheet" media="screen" href="@routes.Assets.versioned("stylesheets/main.css")">
+        <link rel="shortcut icon" type="image/png" href="@routes.Assets.versioned("images/favicon.png")">
+        <script src="@routes.Assets.versioned("javascripts/hello.js")" type="text/javascript"></script>
+    </head>
+    <body>
+        @* And here's where we render the `Html` object containing
+         * the page content.
+        *@
+        <div style="padding-left: 30%">
+                 &nbsp;&nbsp;&nbsp;服务治理功能
+            <ul>
+                <li> 1. 列出服务注册的所有机器地址， 注册时间</li>
+                <li> 2. 点击某个机器地址， 列出其下面所有的服务，版本号，启动时间</li>
+                <li> 3. 选择页面中的服务， 能够调用命令行工具具备的所有功能</li>
+                <li> 4. 可在页面对机器地址进行停用， 启用， (主从切换)。</li>
+                <li> 5. 对所有的服务，进行停用，启用。</li>
+                <li> 6. 微服务部署的网页操作功能。</li>
+                <li> 7. 安全设计</li>
+            </ul>
+        </div>
+        @content
+
+    </body>
+</html>
