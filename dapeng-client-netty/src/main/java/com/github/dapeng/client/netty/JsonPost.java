@@ -99,7 +99,7 @@ public class JsonPost {
 
         } catch (SoaException e) {
 
-            LOGGER.error(e.getMsg());
+            LOGGER.error(e.getMsg(), e);
             if (doNotThrowError) {
                 jsonResponse = String.format("{\"responseCode\":\"%s\", \"responseMsg\":\"%s\", \"success\":\"%s\", \"status\":0}", e.getCode(), e.getMsg(), "{}");
             } else {
