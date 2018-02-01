@@ -40,5 +40,11 @@
             <artifactId>guava</artifactId>
             <version>16.0.1</version>
         </dependency>
+        <!--counter-->
+        <dependency>
+            <groupId>com.github.dapeng</groupId>
+            <artifactId>dapeng-counter-api_2.12</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 </project>
