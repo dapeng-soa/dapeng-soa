@@ -97,7 +97,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             }
             SoaFunctionDefinition<I, REQ, RESP> soaFunction = (SoaFunctionDefinition<I, REQ, RESP>) serviceDef.functions.get(soaHeader.getMethodName());
 
-            if (serviceDef == null){
+            if (soaFunction == null){
                 throw new SoaException(SoaCode.NotMatchedMethod);
             }
             REQ args = soaFunction.reqSerializer.read(contentProtocol);
