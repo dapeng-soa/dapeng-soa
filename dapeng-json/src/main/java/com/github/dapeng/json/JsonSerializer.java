@@ -368,12 +368,14 @@ public class JsonSerializer implements BeanSerializer<String> {
                     parsePhase = ParsePhase.BODY;
                     break;
                 case BODY:
+                    if (!foundField) {
+                        return;
+                    }
+
                     if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
                         peek().increaseElement();
                         //集合套集合的变态处理方式
                         current = new StackNode(peek().dataType.valueType, requestByteBuf.writerIndex(), current.struct, current.struct.name);
-                    } else if (!foundField) {
-                        return;
                     }
                     switch (current.dataType.kind) {
                         case STRUCT:
@@ -605,11 +607,13 @@ public class JsonSerializer implements BeanSerializer<String> {
                     logger.warn("skip boolean(" + value + ")@pase:" + parsePhase + " field:" + current.fieldName);
                     break;
                 case BODY:
-                    if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
-                        peek().increaseElement();
-                    } else if (!foundField) {
+                    if (!foundField) {
                         return;
                     }
+                    if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
+                        peek().increaseElement();
+                    }
+
                     oproto.writeBool(value);
                     break;
                 default:
@@ -627,10 +631,12 @@ public class JsonSerializer implements BeanSerializer<String> {
                 case BODY:
                     DataType.KIND currentType = current.dataType.kind;
 
+                    if (!foundField) {
+                        return;
+                    }
+
                     if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
                         peek().increaseElement();
-                    } else if (!foundField) {
-                        return;
                     }
 
                     switch (currentType) {
@@ -687,10 +693,12 @@ public class JsonSerializer implements BeanSerializer<String> {
                     fillStringToInvocationCtx(value);
                     break;
                 case BODY:
+                    if (!foundField) {
+                        return;
+                    }
+
                     if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
                         peek().increaseElement();
-                    } else if (!foundField) {
-                        return;
                     }
 
                     switch (current.dataType.kind) {
