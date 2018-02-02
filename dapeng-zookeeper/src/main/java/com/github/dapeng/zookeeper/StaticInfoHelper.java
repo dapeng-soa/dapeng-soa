@@ -21,7 +21,7 @@ public class StaticInfoHelper {
 
     private ZooKeeper zk;
 
-    private final String ZOOKEEPER_HOST = "127.0.0.1:2181";
+    private final String ZOOKEEPER_HOST = "125.88.153.75:2181";
 
     /**
      * connect to zookeeper
@@ -34,6 +34,8 @@ public class StaticInfoHelper {
                 public void process(WatchedEvent e) {
                     if (e.getState() == Watcher.Event.KeeperState.SyncConnected) {
                         LOGGER.info("zookeeper connected.");
+                        init();
+                        setLoadBalance();
                     }
                 }
             });
@@ -148,9 +150,9 @@ public class StaticInfoHelper {
         StaticInfoHelper staticInfoHelper = new StaticInfoHelper();
         staticInfoHelper.connect();
 
-        staticInfoHelper.init();
-
-        staticInfoHelper.setLoadBalance();
+//        staticInfoHelper.init();
+//
+//        staticInfoHelper.setLoadBalance();
 
         Thread.sleep(Long.MAX_VALUE);
     }
