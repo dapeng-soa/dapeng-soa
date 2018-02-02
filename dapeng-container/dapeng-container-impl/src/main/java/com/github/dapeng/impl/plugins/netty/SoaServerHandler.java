@@ -161,7 +161,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             final long waitingTime = System.currentTimeMillis() - startTime;
             long timeout = getTimeout(soaHeader);
             if (waitingTime > timeout) {
-                throw new SoaException(SoaCode.TimeOut, "请求超时");
+                throw new SoaException(SoaCode.TimeOut, "服务端请求超时");
             }
             sharedChain.onEntry(filterContext);
         }catch (SoaException e){
