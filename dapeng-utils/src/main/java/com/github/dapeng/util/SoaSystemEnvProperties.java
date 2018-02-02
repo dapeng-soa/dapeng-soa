@@ -61,6 +61,7 @@ public class SoaSystemEnvProperties {
     public static final String SOA_SERVICE_CALLERFROM = get(KEY_SOA_SERVICE_CALLERFROM, "unknown");
     public static final Long SOA_SERVICE_CLIENT_TIMEOUT = Long.valueOf(get(KEY_SOA_SERVICE_CLIENT_TIMEOUT, "0"));
     public static final Long SOA_SERVICE_SERVER_TIMEOUT = Long.valueOf(get(KEY_SOA_SERVICE_SERVER_TIMEOUT, "0"));
+    public static final Long SOA_MAX_TIMEOUT = 50000L;
 
     public static final Integer SOA_CORE_POOL_SIZE = Integer.valueOf(get(KEY_SOA_CORE_POOL_SIZE, (Runtime.getRuntime().availableProcessors() * 2) + ""));
     public static final Long SOA_MAX_READ_BUFFER_SIZE = Long.valueOf(get(KEY_SOA_MAX_READ_BUFFER_SIZE, (1024 * 1024 * 5) + ""));// 5M
