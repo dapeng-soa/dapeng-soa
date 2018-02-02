@@ -11,6 +11,7 @@ import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.impl.plugins.*;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
+import com.github.dapeng.message.consumer.container.KafkaMessagePlugin;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -150,7 +151,9 @@ public class DapengContainer implements Container {
         Plugin zookeeperPlugin = new ZookeeperRegistryPlugin(this);
         Plugin taskSchedulePlugin = new TaskSchedulePlugin(this);
         Plugin nettyPlugin = new NettyPlugin(this);
+        Plugin kafkaMessagePlugin = new KafkaMessagePlugin();
 
+        PluginLoader pluginLoader = new PluginLoader();
         // TODO
         if (!"plugin".equals(RUN_MODE)) {
             Plugin logbackPlugin = new LogbackPlugin();
@@ -161,6 +164,7 @@ public class DapengContainer implements Container {
         registerPlugin(springAppLoader);
         registerPlugin(taskSchedulePlugin);
         registerPlugin(nettyPlugin);
+        registerPlugin(kafkaMessagePlugin);
 
         if ("plugin".equals(RUN_MODE)) {
             Plugin apiDocPlugin = new ApiDocPlugin(this);
@@ -169,6 +173,7 @@ public class DapengContainer implements Container {
 
         //4.启动Apploader， plugins
         getPlugins().forEach(Plugin::start);
+
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.warn("Container gracefule shutdown begin.");

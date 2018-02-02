@@ -21,7 +21,12 @@ class ScalaGenerator extends CodeGenerator {
   override def generate(services: util.List[Service], outDir: String): Unit = {}
 
   private def rootDir(rootDir: String, packageName: String): File = {
-    val dir = rootDir + "/scala/" + packageName.replaceAll("[.]", "/")
+    val dir = if (rootDir.contains("src_managed")) {
+      rootDir + "/" + packageName.replaceAll("[.]", "/")
+    } else {
+      rootDir + "/scala/" + packageName.replaceAll("[.]", "/")
+    }
+
 
     val file = new File(dir)
 
@@ -47,7 +52,11 @@ class ScalaGenerator extends CodeGenerator {
   }
 
   private def resourceDir(rootDir: String, packageName: String): String = {
-    val dir = rootDir + "/resources/"
+    val dir = if (rootDir.contains("src_managed")) {
+      rootDir.replace("src_managed","resource_managed")
+    } else {
+      rootDir + "/resources/"
+    }
 
     val file = new File(dir)
 
