@@ -2,8 +2,7 @@ package com.github.dapeng.impl.filters;
 
 
 import com.github.dapeng.client.netty.TSoaTransport;
-import com.github.dapeng.core.BeanSerializer;
-import com.github.dapeng.core.TransactionContext;
+import com.github.dapeng.core.*;
 import com.github.dapeng.core.filter.FilterChain;
 import com.github.dapeng.core.filter.FilterContext;
 import com.github.dapeng.core.filter.Filter;
@@ -13,6 +12,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 public class HeadFilter implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(HeadFilter.class);
@@ -33,11 +34,11 @@ public class HeadFilter implements Filter {
     public void onExit(FilterContext ctx, FilterChain prev)  {
         // 第一个filter不需要调onExit
         ByteBuf outputBuf = null;
+        ChannelHandlerContext channelHandlerContext = (ChannelHandlerContext) ctx.getAttribute( "channelHandlerContext");
+        TransactionContext context = (TransactionContext) ctx.getAttribute("context");
+        BeanSerializer serializer = (BeanSerializer) ctx.getAttribute("respSerializer");
+        Object result = ctx.getAttribute("result");
         try {
-            ChannelHandlerContext channelHandlerContext = (ChannelHandlerContext) ctx.getAttribute( "channelHandlerContext");
-            TransactionContext context = (TransactionContext) ctx.getAttribute("context");
-            BeanSerializer serializer = (BeanSerializer) ctx.getAttribute("respSerializer");
-            Object result = ctx.getAttribute("result");
 
             if(channelHandlerContext!=null) {
                 outputBuf = channelHandlerContext.alloc().buffer(8192);  // TODO 8192?
@@ -57,9 +58,32 @@ public class HeadFilter implements Filter {
         }catch (Exception e){
             LOGGER.error(e.getMessage(), e);
 
+            writeErrorMessage(channelHandlerContext,context,new SoaException(SoaCode.UnKnown,e.getMessage()));
             if (outputBuf != null) {
                 outputBuf.release();
             }
+        }
+
+    }
+
+    private void writeErrorMessage(ChannelHandlerContext ctx, TransactionContext context, SoaException e) {
+        ByteBuf outputBuf = ctx.alloc().buffer(8192);
+        TSoaTransport transport = new TSoaTransport(outputBuf);
+        SoaMessageProcessor builder = new SoaMessageProcessor(transport);
+        SoaHeader soaHeader = context.getHeader();
+        try {
+            soaHeader.setRespCode(Optional.ofNullable(e.getCode()));
+            soaHeader.setRespMessage(Optional.ofNullable(e.getMsg()));
+            builder.writeHeader(context);
+            builder.writeMessageEnd();
+
+            transport.flush();
+
+            ctx.writeAndFlush(outputBuf);
+
+        } catch (Exception e1) {
+            LOGGER.error(e1.getMessage(), e1);
+            outputBuf.release();
         }
 
     }
