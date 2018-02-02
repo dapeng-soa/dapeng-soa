@@ -112,6 +112,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         if (subPool == null) {
             try {
                 subPoolLock.lock();
+                subPool = subPools.get(ipPort);
                 if (!subPools.containsKey(ipPort)) {
                     subPool = new SubPool(inst.ip, inst.port);
                     subPools.put(ipPort, subPool);
