@@ -170,6 +170,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             timeout = (envTimeout == 0L) ? (paramTimeout == 0 ? 2000L : paramTimeout) : envTimeout;
         }
 
+        if (timeout > SoaSystemEnvProperties.SOA_MAX_TIMEOUT){
+            timeout = SoaSystemEnvProperties.SOA_MAX_TIMEOUT;
+        }
         return timeout;
     }
 
