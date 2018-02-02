@@ -30,17 +30,34 @@ public class JsonSerializerTest {
 
     public static void main(String[] args) throws IOException, TException {
 
-        optionalBooleanTest();
-        simpleStructTest();
-        simpleMapTest();
-        intArrayTest();
-        intMapTest();
-        enumTest();
-        simpleStructWithEnumTest();
-        simpleStructWithOptionTest();
+        redundancyTest();
+//        optionalBooleanTest();
+//        simpleStructTest();
+//        simpleMapTest();
+//        intArrayTest();
+//        intMapTest();
+//        enumTest();
+//        simpleStructWithEnumTest();
+//        simpleStructWithOptionTest();
+//
+//        complexStructTest();
+//        complexStructTest1();
 
-        complexStructTest();
-        complexStructTest1();
+    }
+
+    /**
+     * 多余属性处理
+     * @throws IOException
+     */
+    private static void redundancyTest() throws IOException, TException {
+        final String categoryDescriptorXmlPath = "/com.today.api.category.service.CategoryService.xml";
+        Service categoryService = getService(categoryDescriptorXmlPath);
+
+        Method createCategoryAttribute = categoryService.methods.stream().filter(method -> method.name.equals("createCategoryAttribute")).collect(Collectors.toList()).get(0);
+        String json = loadJson("/categoryService_createCategoryAttribute.json");
+
+        String desc = "redundancyTest";
+        doTest2(categoryService, createCategoryAttribute, createCategoryAttribute.request, json, desc);
 
     }
 
