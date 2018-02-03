@@ -128,7 +128,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                         }
                     } catch (Exception e) {
                         LOGGER.error(e.getMessage(), e);
-                        writeErrorMessage(channelHandlerContext, context, new SoaException(SoaCode.UnKnown, e.getMessage()));
+                        writeErrorMessage(channelHandlerContext, context, new SoaException(SoaCode.UnKnown,
+                                e.getMessage()==null?SoaCode.UnKnown.getMsg():e.getMessage()));
                     } // todo handle error
                 }
 
@@ -165,9 +166,10 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             filterContext.setAttribute("respSerializer", soaFunction.respSerializer);
             filterContext.setAttribute("result", result);
 
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
-            writeErrorMessage(channelHandlerContext, context, filterContext, new SoaException(SoaCode.UnKnown, e.getMessage()));
+            writeErrorMessage(channelHandlerContext, context, filterContext, new SoaException(SoaCode.UnKnown,
+                    e.getMessage()==null?SoaCode.UnKnown.getMsg():e.getMessage()));
         } finally {
             TransactionContext.Factory.removeCurrentInstance();
         }
