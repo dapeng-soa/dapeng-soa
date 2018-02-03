@@ -1,5 +1,7 @@
 package com.github.dapeng.monitor.domain;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * 服务处理数据
  **/
@@ -8,7 +10,7 @@ public class ServiceProcessData {
     /**
      * 时间间隔:单位分钟
      **/
-    public Integer period;
+    private Integer period;
 
     public Integer getPeriod() {
         return this.period;
@@ -22,7 +24,7 @@ public class ServiceProcessData {
     /**
      * 统计分析时间(时间戳)
      **/
-    public Long analysisTime;
+    private Long analysisTime;
 
     public Long getAnalysisTime() {
         return this.analysisTime;
@@ -36,7 +38,7 @@ public class ServiceProcessData {
     /**
      * 服务名称
      **/
-    public String serviceName;
+    private String serviceName;
 
     public String getServiceName() {
         return this.serviceName;
@@ -50,7 +52,7 @@ public class ServiceProcessData {
     /**
      * 方法名称
      **/
-    public String methodName;
+    private String methodName;
 
     public String getMethodName() {
         return this.methodName;
@@ -64,7 +66,7 @@ public class ServiceProcessData {
     /**
      * 版本号
      **/
-    public String versionName;
+    private String versionName;
 
     public String getVersionName() {
         return this.versionName;
@@ -78,7 +80,7 @@ public class ServiceProcessData {
     /**
      * 服务器IP
      **/
-    public String serverIP;
+    private String serverIP;
 
     public String getServerIP() {
         return this.serverIP;
@@ -92,7 +94,7 @@ public class ServiceProcessData {
     /**
      * 服务器端口
      **/
-    public Integer serverPort;
+    private Integer serverPort;
 
     public Integer getServerPort() {
         return this.serverPort;
@@ -106,7 +108,7 @@ public class ServiceProcessData {
     /**
      * 平台最小耗时(单位:毫秒)
      **/
-    public Long pMinTime;
+    private Long pMinTime;
 
     public Long getPMinTime() {
         return this.pMinTime;
@@ -120,7 +122,7 @@ public class ServiceProcessData {
     /**
      * 平台最大耗时(单位:毫秒)
      **/
-    public Long pMaxTime;
+    private Long pMaxTime;
 
     public Long getPMaxTime() {
         return this.pMaxTime;
@@ -134,7 +136,7 @@ public class ServiceProcessData {
     /**
      * 平台平均耗时(单位:毫秒)
      **/
-    public Long pAverageTime;
+    private Long pAverageTime;
 
     public Long getPAverageTime() {
         return this.pAverageTime;
@@ -148,7 +150,7 @@ public class ServiceProcessData {
     /**
      * 平台总耗时(单位:毫秒)
      **/
-    public Long pTotalTime;
+    private Long pTotalTime;
 
     public Long getPTotalTime() {
         return this.pTotalTime;
@@ -162,7 +164,7 @@ public class ServiceProcessData {
     /**
      * 接口服务最小耗时(单位:毫秒)
      **/
-    public Long iMinTime;
+    private Long iMinTime;
 
     public Long getIMinTime() {
         return this.iMinTime;
@@ -176,7 +178,7 @@ public class ServiceProcessData {
     /**
      * 接口服务最大耗时(单位:毫秒)
      **/
-    public Long iMaxTime;
+    private Long iMaxTime;
 
     public Long getIMaxTime() {
         return this.iMaxTime;
@@ -190,7 +192,7 @@ public class ServiceProcessData {
     /**
      * 接口服务平均耗时(单位:毫秒)
      **/
-    public Long iAverageTime;
+    private Long iAverageTime;
 
     public Long getIAverageTime() {
         return this.iAverageTime;
@@ -204,7 +206,7 @@ public class ServiceProcessData {
     /**
      * 接口服务总耗时(单位:毫秒)
      **/
-    public Long iTotalTime;
+    private Long iTotalTime;
 
     public Long getITotalTime() {
         return this.iTotalTime;
@@ -215,52 +217,55 @@ public class ServiceProcessData {
     }
 
 
+    public AtomicInteger getTotalCalls() {
+        return totalCalls;
+    }
+
+    public void setTotalCalls(AtomicInteger totalCalls) {
+        this.totalCalls = totalCalls;
+    }
+
+    public AtomicInteger getSucceedCalls() {
+        return succeedCalls;
+    }
+
+    public void setSucceedCalls(AtomicInteger succeedCalls) {
+        this.succeedCalls = succeedCalls;
+    }
+
+    public AtomicInteger getFailCalls() {
+        return failCalls;
+    }
+
+    public void setFailCalls(AtomicInteger failCalls) {
+        this.failCalls = failCalls;
+    }
+
     /**
      * 总调用次数
      **/
-    public Integer totalCalls;
+    private AtomicInteger totalCalls;
 
-    public Integer getTotalCalls() {
-        return this.totalCalls;
-    }
-
-    public void setTotalCalls(Integer totalCalls) {
-        this.totalCalls = totalCalls;
-    }
 
 
     /**
      * 成功调用次数
      **/
-    public Integer succeedCalls;
+    private AtomicInteger succeedCalls;
 
-    public Integer getSucceedCalls() {
-        return this.succeedCalls;
-    }
-
-    public void setSucceedCalls(Integer succeedCalls) {
-        this.succeedCalls = succeedCalls;
-    }
 
 
     /**
      * 失败调用次数
      **/
-    public Integer failCalls;
+    private AtomicInteger failCalls;
 
-    public Integer getFailCalls() {
-        return this.failCalls;
-    }
-
-    public void setFailCalls(Integer failCalls) {
-        this.failCalls = failCalls;
-    }
 
 
     /**
      * 请求的流量(单位:字节)
      **/
-    public Integer requestFlow;
+    private Integer requestFlow;
 
     public Integer getRequestFlow() {
         return this.requestFlow;
@@ -274,7 +279,7 @@ public class ServiceProcessData {
     /**
      * 响应的流量(单位:字节)
      **/
-    public Integer responseFlow;
+    private Integer responseFlow;
 
     public Integer getResponseFlow() {
         return this.responseFlow;
@@ -282,36 +287,6 @@ public class ServiceProcessData {
 
     public void setResponseFlow(Integer responseFlow) {
         this.responseFlow = responseFlow;
-    }
-
-
-    public String toString() {
-        StringBuilder stringBuilder = new StringBuilder("{");
-        stringBuilder.append("\"").append("period").append("\":").append(this.period).append(",");
-        stringBuilder.append("\"").append("analysisTime").append("\":").append(this.analysisTime).append(",");
-        stringBuilder.append("\"").append("serviceName").append("\":\"").append(this.serviceName).append("\",");
-        stringBuilder.append("\"").append("methodName").append("\":\"").append(this.methodName).append("\",");
-        stringBuilder.append("\"").append("versionName").append("\":\"").append(this.versionName).append("\",");
-        stringBuilder.append("\"").append("serverIP").append("\":\"").append(this.serverIP).append("\",");
-        stringBuilder.append("\"").append("serverPort").append("\":").append(this.serverPort).append(",");
-        stringBuilder.append("\"").append("pMinTime").append("\":").append(this.pMinTime).append(",");
-        stringBuilder.append("\"").append("pMaxTime").append("\":").append(this.pMaxTime).append(",");
-        stringBuilder.append("\"").append("pAverageTime").append("\":").append(this.pAverageTime).append(",");
-        stringBuilder.append("\"").append("pTotalTime").append("\":").append(this.pTotalTime).append(",");
-        stringBuilder.append("\"").append("iMinTime").append("\":").append(this.iMinTime).append(",");
-        stringBuilder.append("\"").append("iMaxTime").append("\":").append(this.iMaxTime).append(",");
-        stringBuilder.append("\"").append("iAverageTime").append("\":").append(this.iAverageTime).append(",");
-        stringBuilder.append("\"").append("iTotalTime").append("\":").append(this.iTotalTime).append(",");
-        stringBuilder.append("\"").append("totalCalls").append("\":").append(this.totalCalls).append(",");
-        stringBuilder.append("\"").append("succeedCalls").append("\":").append(this.succeedCalls).append(",");
-        stringBuilder.append("\"").append("failCalls").append("\":").append(this.failCalls).append(",");
-        stringBuilder.append("\"").append("requestFlow").append("\":").append(this.requestFlow).append(",");
-        stringBuilder.append("\"").append("responseFlow").append("\":").append(this.responseFlow).append(",");
-
-        stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(","));
-        stringBuilder.append("}");
-
-        return stringBuilder.toString();
     }
 }
       
