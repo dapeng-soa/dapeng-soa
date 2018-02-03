@@ -8,7 +8,7 @@ import com.github.dapeng.core.TransactionContext;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.filter.FilterChain;
 import com.github.dapeng.core.filter.FilterContext;
-import com.github.dapeng.monitor.domain.MonitorProperties;
+import com.github.dapeng.monitor.config.MonitorProperties;
 import com.github.dapeng.monitor.domain.ServiceSimpleInfo;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.util.SoaSystemEnvProperties;

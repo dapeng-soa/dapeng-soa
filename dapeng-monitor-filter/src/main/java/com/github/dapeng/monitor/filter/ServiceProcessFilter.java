@@ -4,22 +4,19 @@ import com.github.dapeng.basic.api.counter.CounterServiceClient;
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
 import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.SoaHeader;
-import com.github.dapeng.core.SoaHeaderSerializer;
 import com.github.dapeng.core.TransactionContext;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.filter.FilterChain;
 import com.github.dapeng.core.filter.FilterContext;
-import com.github.dapeng.monitor.domain.MonitorProperties;
+import com.github.dapeng.monitor.config.MonitorProperties;
 import com.github.dapeng.monitor.domain.ServiceProcessData;
 import com.github.dapeng.monitor.domain.ServiceSimpleInfo;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import com.google.common.collect.ImmutableMap;
-import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,6 +34,7 @@ public class ServiceProcessFilter implements Filter {
     private static final int PERIOD = MonitorProperties.MONITOR_SERVICE_PROCESS_PERIOD;
     private static final String DATA_BASE = MonitorProperties.MONITOR_INFLUXDB_DATABASE;
     private static final String SERVER_IP = SoaSystemEnvProperties.SOA_CONTAINER_IP;
+    private static final String SUCCESS_CODE = "0000";
     private static final Integer SERVER_PORT = SoaSystemEnvProperties.SOA_CONTAINER_PORT;
     private Map<ServiceSimpleInfo, ServiceProcessData> serviceProcessCallDatas = new ConcurrentHashMap<>(16);
     private final CounterServiceClient SERVICE_CLIENT = new CounterServiceClient();
@@ -71,20 +69,34 @@ public class ServiceProcessFilter implements Filter {
         ServiceSimpleInfo simpleInfo = new ServiceSimpleInfo(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName());
 
         if (serviceProcessCallDatas.containsKey(simpleInfo)) {
-            serviceProcessCallDatas.get(simpleInfo).getTotalCalls().incrementAndGet();
+            ServiceProcessData  processData = serviceProcessCallDatas.get(simpleInfo);
+            processData.getTotalCalls().incrementAndGet();
+            processData.setAnalysisTime(Calendar.getInstance().getTimeInMillis());
+            if(soaHeader.getRespCode().isPresent() && SUCCESS_CODE.equals(soaHeader.getRespCode().get())){
+                processData.getSucceedCalls().incrementAndGet();
+            }else {
+                processData.getFailCalls().incrementAndGet();
+            }
         } else {
-            ServiceProcessData  processData = new ServiceProcessData();
-            processData.setServerIP(SERVER_IP);
-            processData.setServerPort(SERVER_PORT);
-            processData.setServiceName(simpleInfo.getServiceName());
-            processData.setMethodName(simpleInfo.getMethodName());
-            processData.setVersionName(simpleInfo.getVersionName());
-            processData.setPeriod(PERIOD);
-            processData.setAnalysisTime();
-            serviceProcessCallDatas.put(simpleInfo, new AtomicInteger(1));
+            ServiceProcessData  newProcessData = new ServiceProcessData();
+            newProcessData.setServerIP(SERVER_IP);
+            newProcessData.setServerPort(SERVER_PORT);
+            newProcessData.setServiceName(simpleInfo.getServiceName());
+            newProcessData.setMethodName(simpleInfo.getMethodName());
+            newProcessData.setVersionName(simpleInfo.getVersionName());
+            newProcessData.setPeriod(PERIOD);
+            newProcessData.setAnalysisTime(Calendar.getInstance().getTimeInMillis());
+            newProcessData.setAnalysisTime(Calendar.getInstance().getTimeInMillis());
+            newProcessData.setTotalCalls(new AtomicInteger(1));
+
+            if(soaHeader.getRespCode().isPresent() && SUCCESS_CODE.equals(soaHeader.getRespCode().get())){
+                newProcessData.setSucceedCalls(new AtomicInteger(1));
+            }else {
+                newProcessData.setFailCalls(new AtomicInteger(1));
+            }
+
+            serviceProcessCallDatas.put(simpleInfo, newProcessData);
         }
-
-
 
         LOGGER.debug("start ==>" +start+ " end with ==>" +end + serviceProcessCallDatas);
 
@@ -118,18 +130,18 @@ public class ServiceProcessFilter implements Filter {
     /**
      * upload
      * @param millis
-     * @param qps
+     * @param
      */
-    private void uploadServiceProcessData(Long millis, Map<ServiceSimpleInfo, AtomicInteger> qps) {
-        LOGGER.debug("上送时间:{}ms  上送数据{} ", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss S").format(millis), qps);
+    private void uploadServiceProcessData(Long millis, Map<ServiceSimpleInfo, ServiceProcessData> spd) {
+        LOGGER.debug("上送时间:{}ms  上送数据{} ", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss S").format(millis), spd);
 
         List<DataPoint> points = new ArrayList<>(16);
 
-        qps.forEach(((serviceSimpleInfo, atomicInteger) -> {
+        spd.forEach(((serviceSimpleInfo, atomicInteger) -> {
             DataPoint point = new DataPoint();
             Map<String,String> tag =  new ConcurrentHashMap<>(16);
             tag.put("period",PERIOD+"");
-                tag.put("analysisTime",millis.toString());
+                    tag.put("analysisTime",millis.toString());
             tag.put("serviceName","");
             tag.put("methodName","");
             tag.put("versionName","");
@@ -143,9 +155,9 @@ public class ServiceProcessFilter implements Filter {
                 tag.put("iMaxTime","");
                 tag.put("iAverageTime","");
                 tag.put("iTotalTime","");
-                tag.put("totalCalls","");
-                tag.put("succeedCalls","");
-                tag.put("failCalls","");
+                    tag.put("totalCalls","");
+                    tag.put("succeedCalls","");
+                    tag.put("failCalls","");
                 tag.put("requestFlow","");
                 tag.put("responseFlow","");
             point.setBizTag("dapeng_service_process");
@@ -161,7 +173,7 @@ public class ServiceProcessFilter implements Filter {
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }finally {
-            serviceProcessCallData.clear();
+            serviceProcessCallDatas.clear();
         }
     }
 
