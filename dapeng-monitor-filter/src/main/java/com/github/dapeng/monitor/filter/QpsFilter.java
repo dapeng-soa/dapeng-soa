@@ -32,8 +32,8 @@ public class QpsFilter implements Filter {
     private static final String DATA_BASE = MonitorProperties.MONITOR_INFLUXDB_DATABASE;
     private static final String SERVER_IP = SoaSystemEnvProperties.SOA_CONTAINER_IP;
     private static final Integer SERVER_PORT = SoaSystemEnvProperties.SOA_CONTAINER_PORT;
-    private static Map<ServiceSimpleInfo, AtomicInteger> qpsStats = new ConcurrentHashMap<>(16);
-    private static final CounterServiceClient SERVICE_CLIENT = new CounterServiceClient();
+    private Map<ServiceSimpleInfo, AtomicInteger> qpsStats = new ConcurrentHashMap<>(16);
+    private final CounterServiceClient SERVICE_CLIENT = new CounterServiceClient();
 
     @Override
     public void onEntry(FilterContext ctx, FilterChain next) {
