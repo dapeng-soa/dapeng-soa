@@ -217,6 +217,11 @@ public class ServiceProcessData {
     }
 
 
+    /**
+     * 总调用次数
+     **/
+    private AtomicInteger totalCalls;
+
     public AtomicInteger getTotalCalls() {
         return totalCalls;
     }
@@ -224,6 +229,12 @@ public class ServiceProcessData {
     public void setTotalCalls(AtomicInteger totalCalls) {
         this.totalCalls = totalCalls;
     }
+
+
+    /**
+     * 成功调用次数
+     **/
+    private AtomicInteger succeedCalls;
 
     public AtomicInteger getSucceedCalls() {
         return succeedCalls;
@@ -233,6 +244,11 @@ public class ServiceProcessData {
         this.succeedCalls = succeedCalls;
     }
 
+    /**
+     * 失败调用次数
+     **/
+    private AtomicInteger failCalls;
+
     public AtomicInteger getFailCalls() {
         return failCalls;
     }
@@ -240,25 +256,6 @@ public class ServiceProcessData {
     public void setFailCalls(AtomicInteger failCalls) {
         this.failCalls = failCalls;
     }
-
-    /**
-     * 总调用次数
-     **/
-    private AtomicInteger totalCalls;
-
-
-
-    /**
-     * 成功调用次数
-     **/
-    private AtomicInteger succeedCalls;
-
-
-
-    /**
-     * 失败调用次数
-     **/
-    private AtomicInteger failCalls;
 
 
 
