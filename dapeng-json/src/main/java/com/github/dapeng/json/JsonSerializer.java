@@ -488,7 +488,7 @@ public class JsonSerializer implements BeanSerializer<String> {
             }
 
             Struct nextStruct = findStruct(current.dataType.valueType.qualifiedName, service);
-            stackNew(new StackNode(current.dataType.valueType, requestByteBuf.writerIndex(), nextStruct, nextStruct.name));
+            stackNew(new StackNode(current.dataType.valueType, requestByteBuf.writerIndex(), nextStruct, nextStruct==null?"":nextStruct.name));
         }
 
         @Override
