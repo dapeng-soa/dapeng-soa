@@ -39,7 +39,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
     @Override
     public <REQ, RESP> RESP send(
             String service, String version,
-            String method,REQ request,
+            String method, REQ request,
             BeanSerializer<REQ> requestSerializer,
             BeanSerializer<RESP> responseSerializer)
             throws SoaException {
@@ -253,10 +253,13 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
             }
         } catch (TException ex) {
+            // TODO
             return new Result<>(null,
-                    new SoaException(SoaCode.UnKnown, "TODO")); // TODO
+                    new SoaException(SoaCode.UnKnown, "TODO"));
         } finally {
-            responseBuf.release();
+            if (responseBuf != null) {
+                responseBuf.release();
+            }
         }
 
     }
