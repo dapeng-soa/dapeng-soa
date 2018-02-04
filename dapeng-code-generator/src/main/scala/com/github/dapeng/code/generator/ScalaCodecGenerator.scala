@@ -227,7 +227,7 @@ class ScalaCodecGenerator extends CodeGenerator {
               var source: scala.io.Source = null
               try
               <block>
-                scala.io.Source.fromInputStream({service.name}Codec.getClass.getClassLoader.getResourceAsStream("{oriNamespace}.{service.name}.xml"))
+                source = scala.io.Source.fromInputStream({service.name}Codec.getClass.getClassLoader.getResourceAsStream("{oriNamespace}.{service.name}.xml"))
                 val success = source.mkString
                 getServiceMetadata_result(success)
               </block>
