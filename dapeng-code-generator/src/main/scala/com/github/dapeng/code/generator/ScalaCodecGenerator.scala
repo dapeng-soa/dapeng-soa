@@ -224,17 +224,8 @@ class ScalaCodecGenerator extends CodeGenerator {
       @throws[TException]
       override def apply(iface: {service.namespace}.{service.name}, args: getServiceMetadata_args): getServiceMetadata_result = <block>
 
-              var source: scala.io.Source = null
-              try
-              <block>
-                source = scala.io.Source.fromInputStream({service.name}Codec.getClass.getClassLoader.getResourceAsStream("{oriNamespace}.{service.name}.xml"))
-                val success = source.mkString
-                getServiceMetadata_result(success)
-              </block>
-              finally <block>
-              if (source != null) source.close
-            </block>
-
+              val source = scala.io.Source.fromInputStream({service.name}Codec.getClass.getClassLoader.getResourceAsStream("{oriNamespace}.{service.name}.xml"))
+              try getServiceMetadata_result(source.mkString) finally source.close
 
       </block>
       </block>
@@ -483,15 +474,8 @@ class ScalaCodecGenerator extends CodeGenerator {
           override def apply(iface: {service.namespace}.{service.name}Async, args: getServiceMetadata_args): Future[getServiceMetadata_result] = <block>
 
             val result = scala.concurrent.Future <block>
-            var source: scala.io.Source = null
-            try <block>
-               source = scala.io.Source.fromInputStream({service.name}Codec.getClass.getClassLoader.getResourceAsStream("{oriNamespace}.{service.name}.xml"))
-               val success = source.mkString
-               getServiceMetadata_result(success)
-              </block>
-            finally <block>
-              if (source != null) source.close
-              </block>
+              val source = scala.io.Source.fromInputStream({service.name}Codec.getClass.getClassLoader.getResourceAsStream("{oriNamespace}.{service.name}.xml"))
+              try getServiceMetadata_result(source.mkString) finally source.close
             </block>
             result.tojava
 
