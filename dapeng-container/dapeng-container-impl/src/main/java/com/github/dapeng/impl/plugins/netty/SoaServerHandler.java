@@ -14,7 +14,10 @@ import com.github.dapeng.core.filter.FilterContextImpl;
 import com.github.dapeng.impl.filters.HeadFilter;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
+import com.github.dapeng.org.apache.thrift.protocol.TProtocolException;
+import com.github.dapeng.util.DumpUtil;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -42,6 +45,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         ByteBuf reqMessage = (ByteBuf) msg;
+        ByteBuf reqMirror = reqMessage.slice(); // only used for debug packet
+
         TSoaTransport inputSoaTransport = new TSoaTransport(reqMessage);
         SoaMessageProcessor parser = new SoaMessageProcessor(inputSoaTransport);
 
@@ -56,7 +61,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             container.getDispatcher().execute(() -> {
                 try {
                     TransactionContext.Factory.setCurrentInstance(context);
-                    processRequest(ctx, parser.getContentProtocol(), processor, reqMessage, context);
+                    processRequest(ctx, parser.getContentProtocol(), processor, reqMirror, context);
                 } catch (Throwable e) {
                     LOGGER.error(e.getMessage(), e);
                     writeErrorMessage(ctx, context, new SoaException(SoaCode.UnKnown, e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage()));
@@ -71,8 +76,9 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             // But before processRequest invoked, there's still a chance to miss the releasing of reqMessage.
             reqMessage.release();
 
-            if (context.getHeader() == null)
+            if (context.getHeader() == null) {
                 context.setHeader(new SoaHeader());
+            }
             writeErrorMessage(ctx, context, new SoaException(SoaCode.UnKnown, "读请求异常"));
         } finally {
             TransactionContext.Factory.removeCurrentInstance();
@@ -87,19 +93,30 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     private <I, REQ, RESP> void processRequest(ChannelHandlerContext channelHandlerContext, TProtocol contentProtocol, SoaServiceDefinition<I> serviceDef,
-                                               ByteBuf reqMessage, TransactionContext context) throws TException {
+                                               ByteBuf reqMirror, TransactionContext context) throws TException {
 
         try {
             SoaHeader soaHeader = context.getHeader();
             Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
             SoaFunctionDefinition<I, REQ, RESP> soaFunction = (SoaFunctionDefinition<I, REQ, RESP>) serviceDef.functions.get(soaHeader.getMethodName());
-            REQ args = soaFunction.reqSerializer.read(contentProtocol);
+
+            REQ args;
+            try {
+                args = soaFunction.reqSerializer.read(contentProtocol);
+            } catch (TProtocolException | OutOfMemoryError e) {
+                LOGGER.error(e.getMessage(), e);
+                LOGGER.error(DumpUtil.dumpToStr(reqMirror));
+                throw e;
+            }
             contentProtocol.readMessageEnd();
             //
             I iface = serviceDef.iface;
             //log request
-            application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} request body:{}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.getOperatorId(), soaHeader.getOperatorName(), formatToString(soaFunction.reqSerializer.toString(args)));
+            application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} request body:{}",
+                    soaHeader.getServiceName(), soaHeader.getVersionName(),
+                    soaHeader.getMethodName(), soaHeader.getOperatorId(),
+                    soaHeader.getOperatorName(), formatToString(soaFunction.reqSerializer.toString(args)));
 
             HeadFilter headFilter = new HeadFilter();
             Filter dispatchFilter = new Filter() {
@@ -126,11 +143,11 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             processResult(channelHandlerContext, soaFunction, context, result, application, ctx);
                             onExit(ctx, getPrevChain(ctx));
                         }
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         LOGGER.error(e.getMessage(), e);
                         writeErrorMessage(channelHandlerContext, context, new SoaException(SoaCode.UnKnown,
                                 e.getMessage()==null?SoaCode.UnKnown.getMsg():e.getMessage()));
-                    } // todo handle error
+                    }
                 }
 
                 @Override
@@ -149,7 +166,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
             sharedChain.onEntry(filterContext);
         } finally {
-            reqMessage.release();
+            reqMirror.release();
         }
     }
 
@@ -210,16 +227,18 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     private String formatToString(String msg) {
-        if (msg == null)
+        if (msg == null) {
             return msg;
+        }
 
         msg = msg.indexOf("\r\n") != -1 ? msg.replaceAll("\r\n", "") : msg;
 
         int len = msg.length();
         int max_len = 128;
 
-        if (len > max_len)
+        if (len > max_len) {
             msg = msg.substring(0, 128) + "...(" + len + ")";
+        }
 
         return msg;
     }
