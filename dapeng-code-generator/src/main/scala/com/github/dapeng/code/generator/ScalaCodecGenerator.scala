@@ -483,10 +483,15 @@ class ScalaCodecGenerator extends CodeGenerator {
           override def apply(iface: {service.namespace}.{service.name}Async, args: getServiceMetadata_args): Future[getServiceMetadata_result] = <block>
 
             val result = scala.concurrent.Future <block>
-            val source = scala.io.Source.fromInputStream({service.name}Codec.getClass.getClassLoader.getResourceAsStream("{oriNamespace}.{service.name}.xml"))
-            val success = source.mkString
-            source.close
-            getServiceMetadata_result(success)
+            var source = null
+            try <block>
+               source = scala.io.Source.fromInputStream({service.name}Codec.getClass.getClassLoader.getResourceAsStream("{oriNamespace}.{service.name}.xml"))
+               val success = source.mkString
+               getServiceMetadata_result(success)
+              </block>
+            finally <block>
+              if (source != null) source.close
+              </block>
             </block>
             result.tojava
 
