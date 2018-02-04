@@ -224,10 +224,17 @@ class ScalaCodecGenerator extends CodeGenerator {
       @throws[TException]
       override def apply(iface: {service.namespace}.{service.name}, args: getServiceMetadata_args): getServiceMetadata_result = <block>
 
-              val source = scala.io.Source.fromInputStream({service.name}Codec.getClass.getClassLoader.getResourceAsStream("{oriNamespace}.{service.name}.xml"))
-              val success = source.mkString
-              source.close
-              getServiceMetadata_result(success)
+              var source = null
+              try
+              <block>
+                scala.io.Source.fromInputStream({service.name}Codec.getClass.getClassLoader.getResourceAsStream("{oriNamespace}.{service.name}.xml"))
+                val success = source.mkString
+                getServiceMetadata_result(success)
+              </block>
+              finally <block>
+              if (source != null) source.close
+            </block>
+
 
       </block>
       </block>
