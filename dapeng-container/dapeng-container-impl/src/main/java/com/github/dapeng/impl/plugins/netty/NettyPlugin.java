@@ -53,6 +53,7 @@ public class NettyPlugin implements AppListener, Plugin {
     public void start() {
         LOGGER.warn("Plugin::NettyPlugin start");
         LOGGER.info("Bind Local Port {} [Netty]", port);
+        LOGGER.info("ByteBufAllocator:{}", SoaSystemEnvProperties.SOA_POOLED_BYTEBUF?"pooled":"unpooled");
 
         new Thread("NettyContainer-Thread") {
             @Override
