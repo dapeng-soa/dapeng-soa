@@ -91,7 +91,7 @@ public class SpringAppLoader implements Plugin {
 
     @Override
     public void stop() {
-        LOGGER.warn("Plugin:SpringAppLoader stop..Gracefully shutdown not implemented yet");
+        LOGGER.warn("Plugin:SpringAppLoader stop ..");
         springCtxs.forEach(context -> {
             try {
                 LOGGER.info(" start to close SpringApplication.....");
@@ -105,6 +105,7 @@ public class SpringAppLoader implements Plugin {
                 LOGGER.info(e.getMessage());
             }
         });
+        LOGGER.warn("Plugin:SpringAppLoader stoped..");
     }
 
     private Map<String, ServiceInfo> toServiceInfos(Map<String, SoaServiceDefinition<?>> processorMap)
