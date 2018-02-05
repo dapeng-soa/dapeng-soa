@@ -32,17 +32,17 @@ public class JsonSerializerTest {
 
         createSupplierTest();
         redundancyTest();
-//        optionalBooleanTest();
-//        simpleStructTest();
-//        simpleMapTest();
-//        intArrayTest();
-//        intMapTest();
-//        enumTest();
-//        simpleStructWithEnumTest();
-//        simpleStructWithOptionTest();
-//
-//        complexStructTest();
-//        complexStructTest1();
+        optionalBooleanTest();
+        simpleStructTest();
+        simpleMapTest();
+        intArrayTest();
+        intMapTest();
+        enumTest();
+        simpleStructWithEnumTest();
+        simpleStructWithOptionTest();
+
+        complexStructTest();
+        complexStructTest1();
 
     }
 
