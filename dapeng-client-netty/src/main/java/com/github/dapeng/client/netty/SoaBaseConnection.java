@@ -22,7 +22,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
     private final int port;
     private Channel channel = null;
     private NettyClient client; // Netty Channel
-    private AtomicInteger seqidAtomic = new AtomicInteger(0);
+    private final static AtomicInteger seqidAtomic = new AtomicInteger(0);
 
     public SoaBaseConnection(String host, int port) {
         this.client = NettyClientFactory.getNettyClient();
@@ -44,7 +44,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
             BeanSerializer<RESP> responseSerializer)
             throws SoaException {
 
-        int seqid = this.seqidAtomic.getAndIncrement();
+        int seqid = seqidAtomic.getAndIncrement();
 
         Filter dispatchFilter = new Filter() {
             private FilterChain getPrevChain(FilterContext ctx) {
@@ -96,7 +96,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
     public <REQ, RESP> Future<RESP> sendAsync(String service, String version, String method, REQ request, BeanSerializer<REQ> requestSerializer,
                                               BeanSerializer<RESP> responseSerializer, long timeout) throws SoaException {
 
-        int seqid = this.seqidAtomic.getAndIncrement();
+        int seqid = seqidAtomic.getAndIncrement();
 
         Filter dispatchFilter = new Filter() {
             private FilterChain getPrevChain(FilterContext ctx) {
@@ -114,10 +114,10 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     try {
                         checkChannel();
                         responseBufFuture = client.sendAsync(channel, seqid, requestBuf, timeout); //发送请求，返回结果
-                    } catch (Exception e) { // TODO
+                    } catch (Exception e) {
                         LOGGER.error(e.getMessage(), e);
                         Result<RESP> result = new Result<>(null,
-                                new SoaException(SoaCode.UnKnown, "TODO"));
+                                new SoaException(SoaCode.UnKnown, SoaCode.UnKnown.getMsg()));
                         ctx.setAttribute("result", result);
                         onExit(ctx, getPrevChain(ctx));
                         return;
