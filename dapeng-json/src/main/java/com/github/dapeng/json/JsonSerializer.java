@@ -103,6 +103,10 @@ public class JsonSerializer implements BeanSerializer<String> {
                 break;
             case TType.BYTE:
                 // TODO
+                byte b = iproto.readByte();
+                if (!skip) {
+                    writer.onNumber(b);
+                }
                 break;
             case TType.DOUBLE:
                 double dValue = iproto.readDouble();
@@ -665,7 +669,8 @@ public class JsonSerializer implements BeanSerializer<String> {
                             oproto.writeDouble(value);
                             break;
                         case BIGDECIMAL:
-                            //TODO
+                            //TODO ??
+                            oproto.writeDouble(value);
                             break;
                         case BYTE:
                             oproto.writeByte((byte) value);
@@ -690,7 +695,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                         return;
                     }
                     foundNull = true;
-                    //重置writerIndex
+                    //reset writerIndex, skip the field
                     requestByteBuf.writerIndex(current.byteBufPositionBefore);
                     break;
                 default:
@@ -722,6 +727,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                             oproto.writeBool(Boolean.parseBoolean(value));
                             break;
                         case DOUBLE:
+                        case BIGDECIMAL:
                             oproto.writeDouble(Double.parseDouble(value));
                             break;
                         case INTEGER:
