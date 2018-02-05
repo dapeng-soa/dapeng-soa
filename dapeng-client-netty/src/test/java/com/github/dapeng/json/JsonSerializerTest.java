@@ -30,6 +30,7 @@ public class JsonSerializerTest {
 
     public static void main(String[] args) throws IOException, TException {
 
+        createSupplierTest();
         redundancyTest();
 //        optionalBooleanTest();
 //        simpleStructTest();
@@ -43,6 +44,17 @@ public class JsonSerializerTest {
 //        complexStructTest();
 //        complexStructTest1();
 
+    }
+
+    private static void createSupplierTest() throws IOException, TException {
+        final String supplierDescriptorXmlPath = "/com.today.api.supplier.service.SupplierService.xml";
+        Service orderService = getService(supplierDescriptorXmlPath);
+
+        Method createSupplier = orderService.methods.stream().filter(method -> method.name.equals("createSupplier")).collect(Collectors.toList()).get(0);
+        String json = loadJson("/createSupplier.json");
+
+        String desc = "createSupplierTest";
+        doTest2(orderService, createSupplier, createSupplier.request, json, desc);
     }
 
     /**

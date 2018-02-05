@@ -308,6 +308,8 @@ public class JsonSerializer implements BeanSerializer<String> {
         String currentHeaderName;
         //onStartField的时候, 记录是否找到该Field. 如果没找到,那么需要skip这个field
         boolean foundField = true;
+        //记录是否是null. 前端在处理optional字段的时候, 可能会传入一个null,见单元测试
+        boolean foundNull = true;
 
         /**
          * @param oproto
@@ -548,13 +550,14 @@ public class JsonSerializer implements BeanSerializer<String> {
                         pop();
                         stackNew(new StackNode(current.dataType.valueType, requestByteBuf.writerIndex(), findStruct(current.dataType.valueType.qualifiedName, service), name));
                     } else {
+                        // reset field status
+                        foundNull = false;
+                        foundField = true;
                         Field field = findField(name, current.struct);
                         if (field == null) {
                             foundField = false;
                             logger.info("field(" + name + ") not found. just skip");
                             return;
-                        } else {
-                            foundField = true;
                         }
 
                         oproto.writeFieldBegin(new TField(field.name, dataType2Byte(field.dataType), (short) field.getTag()));
@@ -595,7 +598,8 @@ public class JsonSerializer implements BeanSerializer<String> {
             }
 
             pop();
-            if (current.dataType.kind != DataType.KIND.MAP) {
+
+            if (current.dataType.kind != DataType.KIND.MAP && !foundNull) {
                 oproto.writeFieldEnd();
             }
         }
@@ -678,6 +682,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     if (!foundField) {
                         return;
                     }
+                    foundNull = true;
                     //重置writerIndex
                     requestByteBuf.writerIndex(current.byteBufPosition);
                     break;
