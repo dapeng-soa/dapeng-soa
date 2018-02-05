@@ -34,6 +34,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * @author JackLiang
+ */
 public class TaskSchedulePlugin implements AppListener, Plugin {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskSchedulePlugin.class);
@@ -88,7 +91,7 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
                 }
             }
         } catch (SchedulerException e) {
-            LOGGER.error(" Failed to shutdown scheduler: " + e.getMessage());
+            LOGGER.error(" Failed to shutdown scheduler: " + e.getMessage(), e);
         }
     }
 
