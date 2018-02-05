@@ -13,7 +13,7 @@
         <span class="sr-only">Toggle navigation</span>
         <span class="icon-bar"></span>
       </button>
-      <a href="${basePath}/" class="navbar-brand">快塑网技术平台</a>
+      <a href="${basePath}/" class="navbar-brand">大鹏技术平台</a>
     </div>
     <nav class="collapse navbar-collapse bs-navbar-collapse" id="navbar">
       <ul class="nav navbar-nav">
