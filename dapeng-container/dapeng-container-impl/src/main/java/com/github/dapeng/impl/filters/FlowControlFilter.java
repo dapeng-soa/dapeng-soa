@@ -1,9 +1,9 @@
 package com.github.dapeng.impl.filters;
 
+import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.filter.FilterChain;
 import com.github.dapeng.core.filter.FilterContext;
-import com.github.dapeng.org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,16 +16,12 @@ public class FlowControlFilter implements Filter {
     public void controlFlow(){}
 
     @Override
-    public void onEntry(FilterContext ctx, FilterChain next) {
-        try {
-            next.onEntry(ctx);
-        } catch (TException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
+    public void onEntry(FilterContext ctx, FilterChain next) throws SoaException {
+        next.onEntry(ctx);
     }
 
     @Override
-    public void onExit(FilterContext ctx, FilterChain prev) {
-
+    public void onExit(FilterContext ctx, FilterChain prev)  throws SoaException {
+        prev.onExit(ctx);
     }
 }
