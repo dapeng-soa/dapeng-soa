@@ -1,6 +1,8 @@
 package com.github.dapeng.impl.container;
 
-import com.github.dapeng.api.*;
+import com.github.dapeng.api.AppListener;
+import com.github.dapeng.api.Container;
+import com.github.dapeng.api.Plugin;
 import com.github.dapeng.api.events.AppEvent;
 import com.github.dapeng.api.events.AppEventType;
 import com.github.dapeng.core.Application;
@@ -29,7 +31,7 @@ import java.util.concurrent.Executors;
 public class DapengContainer implements Container {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DapengContainer.class);
-    private static final String RUN_MODE = System.getProperty("soa.run.mode", "maven");
+    private static final String RUN_MODE = System.getProperty("soa.run.mode", "plugin");
     private List<AppListener> appListeners = new Vector<>();
     private List<Application> applications = new Vector<>();
     private List<Plugin> plugins = new ArrayList<>();

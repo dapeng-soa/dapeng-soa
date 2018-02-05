@@ -2,9 +2,12 @@ package com.github.dapeng.client.netty;
 
 import com.github.dapeng.core.SoaCode;
 import com.github.dapeng.core.SoaException;
+import com.github.dapeng.util.SoaSystemEnvProperties;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.AbstractByteBufAllocator;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -17,10 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Created by lihuimin on 2017/12/21.
@@ -97,11 +97,14 @@ public class NettyClient {
     }
 
     protected Bootstrap initBootstrap() {
+        AbstractByteBufAllocator allocator =
+                SoaSystemEnvProperties.SOA_POOLED_BYTEBUF ?
+                        PooledByteBufAllocator.DEFAULT : UnpooledByteBufAllocator.DEFAULT;
         bootstrap = new Bootstrap();
         bootstrap.group(workerGroup);
         bootstrap.channel(NioSocketChannel.class);
         bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
-        bootstrap.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
+        bootstrap.option(ChannelOption.ALLOCATOR, allocator);
         bootstrap.handler(new ChannelInitializer<SocketChannel>() {
             @Override
             public void initChannel(SocketChannel ch) throws Exception {
@@ -124,8 +127,10 @@ public class NettyClient {
             channel.writeAndFlush(request);
             ByteBuf respByteBuf = future.get(30000, TimeUnit.MILLISECONDS);
             return respByteBuf;
-        } catch (Exception e) {
-            throw new SoaException(SoaCode.UnKnown, e.getMessage());
+        } catch (TimeoutException e) {
+            throw new SoaException(SoaCode.UnKnown, e.getMessage() == null ? "Timeout" : e.getMessage());
+        } catch (Throwable e) {
+            throw new SoaException(SoaCode.UnKnown, e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage());
         } finally {
             RequestQueue.remove(seqid);
         }

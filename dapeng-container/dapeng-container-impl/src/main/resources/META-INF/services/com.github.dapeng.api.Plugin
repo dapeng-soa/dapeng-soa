@@ -1,3 +1,7 @@
+com.github.dapeng.impl.plugins.SpringAppLoader
+com.github.dapeng.impl.plugins.netty.NettyPlugin
+com.github.dapeng.impl.plugins.LogbackPlugin
 com.github.dapeng.impl.plugins.TransactionPlugin
+
 
 
