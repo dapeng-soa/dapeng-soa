@@ -36,6 +36,7 @@ public class RunContainerPlugin extends SoaAbstractMojo {
         getLog().info("bundle:" + project.getGroupId() + ":" + project.getArtifactId() + ":" + project.getVersion());
 
         System.setProperty("soa.base", new File(project.getBuild().getOutputDirectory()).getAbsolutePath().replace("/target/classes", ""));
+        //todo should be plugin
         System.setProperty("soa.run.mode", "maven");
 
         IsolatedThreadGroup threadGroup = new IsolatedThreadGroup("RunContainerPlugin");

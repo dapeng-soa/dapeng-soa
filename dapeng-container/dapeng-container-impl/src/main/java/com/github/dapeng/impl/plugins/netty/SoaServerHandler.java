@@ -15,6 +15,7 @@ import com.github.dapeng.impl.filters.HeadFilter;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.slf4j.Logger;
@@ -24,8 +25,10 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Created by lihuimin on 2017/12/7.
+ * @author lihuimin
+ * @date 2017/12/7
  */
+@ChannelHandler.Sharable
 public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SoaServerHandler.class);
@@ -54,14 +57,14 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                 try {
                     TransactionContext.Factory.setCurrentInstance(context);
                     processRequest(ctx, parser.getContentProtocol(), processor, reqMessage, context);
-                } catch (TException e) {
+                } catch (Throwable e) {
                     LOGGER.error(e.getMessage(), e);
-                    writeErrorMessage(ctx, context, new SoaException(SoaCode.UnKnown, e.getMessage()));
+                    writeErrorMessage(ctx, context, new SoaException(SoaCode.UnKnown, e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage()));
                 } finally {
                     TransactionContext.Factory.removeCurrentInstance();
                 }
             });
-        } catch (TException ex) {
+        } catch (Throwable ex) {
             LOGGER.error(ex.getMessage(), ex);
 
             // Inside processRequest, reqMessage will be released.
@@ -126,7 +129,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                     } catch (Exception e) {
                         LOGGER.error(e.getMessage(), e);
                         writeErrorMessage(channelHandlerContext, context, new SoaException(SoaCode.UnKnown, e.getMessage()));
-                    }
+                    } // todo handle error
                 }
 
                 @Override

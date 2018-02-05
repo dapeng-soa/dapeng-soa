@@ -1,16 +1,15 @@
 package com.github.dapeng.transaction;
 
+import com.github.dapeng.client.netty.JsonPost;
 import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.helper.MasterHelper;
 import com.github.dapeng.core.metadata.Service;
-import com.github.dapeng.json.JsonPost;
 import com.github.dapeng.metadata.MetadataClient;
 import com.github.dapeng.transaction.api.domain.*;
 import com.github.dapeng.transaction.api.service.GlobalTransactionProcessService;
 import com.github.dapeng.transaction.dao.ITransactionDao;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +32,7 @@ import static java.util.stream.Collectors.toList;
  */
 public class GlobalTransactionManager {
 
-    final static Logger LOGGER = LoggerFactory.getLogger(GlobalTransactionManager.class);
+    Logger LOGGER = LoggerFactory.getLogger(GlobalTransactionManager.class);
 
     private AtomicBoolean working = new AtomicBoolean(false);
 
@@ -239,9 +238,9 @@ public class GlobalTransactionManager {
             }
 
             LOGGER.info("--- 定时事务管理器结束 ---");
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage(), e);
-        } finally {
+        }catch (Exception e){
+            LOGGER.error(e.getMessage(),e);
+        }finally {
             working.set(false);
         }
     }
@@ -249,7 +248,7 @@ public class GlobalTransactionManager {
 
     private static String callServiceMethod(TGlobalTransactionProcess process, boolean rollbackOrForward) throws Exception {
 
-        String responseJson = null;
+        String responseJson;
         Service service = null;
 
         //获取服务的metadata
@@ -261,42 +260,20 @@ public class GlobalTransactionManager {
         }
 
         //获取服务的ip和端口
-        JsonPost jsonPost = null;
+        JsonPost jsonPost = new JsonPost(process.getServiceName(), process.getVersionName());
 
-        String callerInfo = null;
-//        if (rollbackOrForward)
-//            callerInfo = LoadBalanceFilter.getCallerInfo(process.getServiceName(), process.getVersionName(), process.getRollbackMethodName());
-//        else
-//            callerInfo = LoadBalanceFilter.getCallerInfo(process.getServiceName(), process.getVersionName(), process.getMethodName());
-
-        if (callerInfo != null) {
-
-            String[] infos = callerInfo.split(":");
-            jsonPost = new JsonPost(infos[0], Integer.valueOf(infos[1]), false);
-
-        } else if ("local".equals(SoaSystemEnvProperties.SOA_REMOTING_MODE)) {
-            jsonPost = new JsonPost(SoaSystemEnvProperties.SOA_CONTAINER_IP, SoaSystemEnvProperties.SOA_CONTAINER_PORT, false);
-        }
-
-        InvocationContext invocationContext = InvocationContextImpl.Factory.createNewInstance();
+        InvocationContext invocationContext = InvocationContextImpl.Factory.getCurrentInstance();
         invocationContext.setServiceName(process.getServiceName());
         invocationContext.setVersionName(process.getVersionName());
         invocationContext.setMethodName(rollbackOrForward ? process.getRollbackMethodName() : process.getMethodName());
         invocationContext.setCallerFrom(Optional.of("GlobalTransactionManager"));
         invocationContext.setTransactionId(Optional.of(process.getTransactionId()));
         invocationContext.setTransactionSequence(Optional.of(process.getTransactionSequence()));
-        try {
-            if (rollbackOrForward) {
 
-                responseJson = jsonPost.callServiceMethod(invocationContext, "", service);
-
-            } else {
-                responseJson = jsonPost.callServiceMethod(invocationContext, process.getRequestJson(), service);
-            }
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage(), e);
-        } finally {
-            InvocationContextImpl.Factory.removeCurrentInstance();
+        if (rollbackOrForward) {
+            responseJson = jsonPost.callServiceMethod(invocationContext, "", service);
+        } else {
+            responseJson = jsonPost.callServiceMethod(invocationContext, process.getRequestJson(), service);
         }
 
         return responseJson;

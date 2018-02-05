@@ -50,7 +50,7 @@
     <modules>
         <module>dapeng-core</module>
         <module>dapeng-spring</module>
-        <module>dapeng-zookeeper</module>
+        <!--<module>dapeng-zookeeper</module>-->
         <module>dapeng-maven-plugin</module>
         <module>dapeng-registry</module>
         <module>dapeng-code-generator</module>
@@ -262,7 +262,7 @@
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-all</artifactId>
-                <version>4.1.6.Final</version>
+                <version>4.1.20.Final</version>
             </dependency>
 
             <dependency>
@@ -288,7 +288,7 @@
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-context</artifactId>
-                <version>4.2.4.RELEASE</version>
+                <version>4.3.5.RELEASE</version>
             </dependency>
 
             <dependency>
