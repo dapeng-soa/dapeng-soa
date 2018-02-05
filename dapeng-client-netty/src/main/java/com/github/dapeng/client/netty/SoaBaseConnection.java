@@ -38,8 +38,11 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
     @Override
     public <REQ, RESP> RESP send(
-            String service, String version, String method,
-            REQ request, BeanSerializer<REQ> requestSerializer, BeanSerializer<RESP> responseSerializer) throws SoaException {
+            String service, String version,
+            String method,REQ request,
+            BeanSerializer<REQ> requestSerializer,
+            BeanSerializer<RESP> responseSerializer)
+            throws SoaException {
 
         int seqid = this.seqidAtomic.getAndIncrement();
 
