@@ -103,6 +103,10 @@ public class JsonSerializer implements BeanSerializer<String> {
                 break;
             case TType.BYTE:
                 // TODO
+                byte b = iproto.readByte();
+                if (!skip) {
+                    writer.onNumber(b);
+                }
                 break;
             case TType.DOUBLE:
                 double dValue = iproto.readDouble();
@@ -272,9 +276,14 @@ public class JsonSerializer implements BeanSerializer<String> {
         class StackNode {
             final DataType dataType;
             /**
-             * byteBuf position when this node created
+             * byteBuf position after this node created
              */
             final int byteBufPosition;
+
+            /**
+             * byteBuf position before this node created
+             */
+            final int byteBufPositionBefore;
 
             /**
              * struct if dataType.kind==STRUCT
@@ -291,9 +300,10 @@ public class JsonSerializer implements BeanSerializer<String> {
              */
             private int elCount = 0;
 
-            StackNode(final DataType dataType, final int byteBufPosition, final Struct struct, String fieldName) {
+            StackNode(final DataType dataType, final int byteBufPosition, int byteBufPositionBefore, final Struct struct, String fieldName) {
                 this.dataType = dataType;
                 this.byteBufPosition = byteBufPosition;
+                this.byteBufPositionBefore = byteBufPositionBefore;
                 this.struct = struct;
                 this.fieldName = fieldName;
             }
@@ -308,6 +318,8 @@ public class JsonSerializer implements BeanSerializer<String> {
         String currentHeaderName;
         //onStartField的时候, 记录是否找到该Field. 如果没找到,那么需要skip这个field
         boolean foundField = true;
+        //记录是否是null. 前端在处理optional字段的时候, 可能会传入一个null,见单元测试
+        boolean foundNull = true;
 
         /**
          * @param oproto
@@ -361,19 +373,21 @@ public class JsonSerializer implements BeanSerializer<String> {
                     DataType initDataType = new DataType();
                     initDataType.setKind(DataType.KIND.STRUCT);
                     initDataType.qualifiedName = struct.name;
-                    current = new StackNode(initDataType, requestByteBuf.writerIndex(), struct, struct.name);
+                    current = new StackNode(initDataType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(), struct, struct.name);
 
                     oproto.writeStructBegin(new TStruct(current.struct.name));
 
                     parsePhase = ParsePhase.BODY;
                     break;
                 case BODY:
+                    if (!foundField) {
+                        return;
+                    }
+
                     if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
                         peek().increaseElement();
                         //集合套集合的变态处理方式
-                        current = new StackNode(peek().dataType.valueType, requestByteBuf.writerIndex(), current.struct, current.struct.name);
-                    } else if (!foundField) {
-                        return;
+                        current = new StackNode(peek().dataType.valueType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(), current.struct, current.struct==null?null:current.struct.name);
                     }
                     switch (current.dataType.kind) {
                         case STRUCT:
@@ -470,7 +484,7 @@ public class JsonSerializer implements BeanSerializer<String> {
             if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
                 peek().increaseElement();
                 //集合套集合的变态处理方式
-                current = new StackNode(peek().dataType.valueType, requestByteBuf.writerIndex(), current.struct, current.struct.name);
+                current = new StackNode(peek().dataType.valueType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(), current.struct, current.struct==null?null:current.struct.name);
             }
 
             switch (current.dataType.kind) {
@@ -486,7 +500,7 @@ public class JsonSerializer implements BeanSerializer<String> {
             }
 
             Struct nextStruct = findStruct(current.dataType.valueType.qualifiedName, service);
-            stackNew(new StackNode(current.dataType.valueType, requestByteBuf.writerIndex(), nextStruct, nextStruct.name));
+            stackNew(new StackNode(current.dataType.valueType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(), nextStruct, nextStruct==null?"":nextStruct.name));
         }
 
         @Override
@@ -536,7 +550,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                 case BODY:
                     if (current.dataType.kind == DataType.KIND.MAP) {
                         assert isValidMapKeyType(current.dataType.keyType.kind);
-                        stackNew(new StackNode(current.dataType.keyType, requestByteBuf.writerIndex(), null, name));
+                        stackNew(new StackNode(current.dataType.keyType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(), null, name));
                         // key有可能是String, 也有可能是Int
                         if (current.dataType.kind == DataType.KIND.STRING) {
                             oproto.writeString(name);
@@ -544,19 +558,21 @@ public class JsonSerializer implements BeanSerializer<String> {
                             writeIntField(name, current.dataType.kind);
                         }
                         pop();
-                        stackNew(new StackNode(current.dataType.valueType, requestByteBuf.writerIndex(), findStruct(current.dataType.valueType.qualifiedName, service), name));
+                        stackNew(new StackNode(current.dataType.valueType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(), findStruct(current.dataType.valueType.qualifiedName, service), name));
                     } else {
+                        // reset field status
+                        foundNull = false;
+                        foundField = true;
                         Field field = findField(name, current.struct);
                         if (field == null) {
                             foundField = false;
                             logger.info("field(" + name + ") not found. just skip");
                             return;
-                        } else {
-                            foundField = true;
                         }
 
+                        int byteBufPositionBefore = requestByteBuf.writerIndex();
                         oproto.writeFieldBegin(new TField(field.name, dataType2Byte(field.dataType), (short) field.getTag()));
-                        stackNew(new StackNode(field.dataType, requestByteBuf.writerIndex(), findStruct(field.dataType.qualifiedName, service), name));
+                        stackNew(new StackNode(field.dataType, requestByteBuf.writerIndex(), byteBufPositionBefore, findStruct(field.dataType.qualifiedName, service), name));
                     }
                     break;
                 case BODY_END:
@@ -593,7 +609,8 @@ public class JsonSerializer implements BeanSerializer<String> {
             }
 
             pop();
-            if (current.dataType.kind != DataType.KIND.MAP) {
+
+            if (current.dataType.kind != DataType.KIND.MAP && !foundNull) {
                 oproto.writeFieldEnd();
             }
         }
@@ -605,11 +622,13 @@ public class JsonSerializer implements BeanSerializer<String> {
                     logger.warn("skip boolean(" + value + ")@pase:" + parsePhase + " field:" + current.fieldName);
                     break;
                 case BODY:
-                    if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
-                        peek().increaseElement();
-                    } else if (!foundField) {
+                    if (!foundField) {
                         return;
                     }
+                    if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
+                        peek().increaseElement();
+                    }
+
                     oproto.writeBool(value);
                     break;
                 default:
@@ -627,10 +646,12 @@ public class JsonSerializer implements BeanSerializer<String> {
                 case BODY:
                     DataType.KIND currentType = current.dataType.kind;
 
+                    if (!foundField) {
+                        return;
+                    }
+
                     if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
                         peek().increaseElement();
-                    } else if (!foundField) {
-                        return;
                     }
 
                     switch (currentType) {
@@ -648,7 +669,8 @@ public class JsonSerializer implements BeanSerializer<String> {
                             oproto.writeDouble(value);
                             break;
                         case BIGDECIMAL:
-                            //TODO
+                            //TODO ??
+                            oproto.writeDouble(value);
                             break;
                         case BYTE:
                             oproto.writeByte((byte) value);
@@ -672,8 +694,9 @@ public class JsonSerializer implements BeanSerializer<String> {
                     if (!foundField) {
                         return;
                     }
-                    //重置writerIndex
-                    requestByteBuf.writerIndex(current.byteBufPosition);
+                    foundNull = true;
+                    //reset writerIndex, skip the field
+                    requestByteBuf.writerIndex(current.byteBufPositionBefore);
                     break;
                 default:
                     logger.error("Field:" + current.fieldName + ", won't be here", new Throwable());
@@ -687,10 +710,12 @@ public class JsonSerializer implements BeanSerializer<String> {
                     fillStringToInvocationCtx(value);
                     break;
                 case BODY:
+                    if (!foundField) {
+                        return;
+                    }
+
                     if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
                         peek().increaseElement();
-                    } else if (!foundField) {
-                        return;
                     }
 
                     switch (current.dataType.kind) {
@@ -702,6 +727,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                             oproto.writeBool(Boolean.parseBoolean(value));
                             break;
                         case DOUBLE:
+                        case BIGDECIMAL:
                             oproto.writeDouble(Double.parseDouble(value));
                             break;
                         case INTEGER:

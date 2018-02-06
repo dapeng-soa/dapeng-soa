@@ -113,7 +113,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             try {
                 subPoolLock.lock();
                 subPool = subPools.get(ipPort);
-                if (!subPools.containsKey(ipPort)) {
+                if (subPool == null) {
                     subPool = new SubPool(inst.ip, inst.port);
                     subPools.put(ipPort, subPool);
                 }
@@ -157,6 +157,14 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     }
 
+    /**
+     * IDL, ZK, 命令行
+     * @param service
+     * @param version
+     * @param method
+     * @param paramTimeout
+     * @return
+     */
     private long getTimeout(String service, String version, String method, long paramTimeout) {
 
         long timeout = 0L;
@@ -175,6 +183,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             timeout = SoaSystemEnvProperties.SOA_MAX_TIMEOUT;
         }
         return timeout;
+
     }
 
 

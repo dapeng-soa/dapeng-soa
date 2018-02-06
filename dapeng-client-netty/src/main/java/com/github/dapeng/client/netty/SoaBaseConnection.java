@@ -1,6 +1,5 @@
 package com.github.dapeng.client.netty;
 
-import com.github.dapeng.client.filter.LoadBalanceFilter;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.filter.*;
 import com.github.dapeng.org.apache.thrift.TException;
@@ -15,14 +14,17 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * @author lihuimin
+ */
 public abstract class SoaBaseConnection implements SoaConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(SoaBaseConnection.class);
 
     private final String host;
     private final int port;
     private Channel channel = null;
-    private NettyClient client; // Netty Channel
-    private AtomicInteger seqidAtomic = new AtomicInteger(0);
+    private NettyClient client;
+    private final static AtomicInteger seqidAtomic = new AtomicInteger(0);
 
     public SoaBaseConnection(String host, int port) {
         this.client = NettyClientFactory.getNettyClient();
@@ -38,10 +40,14 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
     @Override
     public <REQ, RESP> RESP send(
-            String service, String version, String method,
-            REQ request, BeanSerializer<REQ> requestSerializer, BeanSerializer<RESP> responseSerializer, long timeout) throws SoaException {
+            String service, String version,
+            String method, REQ request,
+            BeanSerializer<REQ> requestSerializer,
+            BeanSerializer<RESP> responseSerializer,
+            long timeout)
+            throws SoaException {
 
-        int seqid = this.seqidAtomic.getAndIncrement();
+        int seqid = seqidAtomic.getAndIncrement();
 
         Filter dispatchFilter = new Filter() {
             private FilterChain getPrevChain(FilterContext ctx) {
@@ -65,12 +71,25 @@ public abstract class SoaBaseConnection implements SoaConnection {
             }
 
             @Override
-            public void onExit(FilterContext ctx, FilterChain prev) {
-
+            public void onExit(FilterContext ctx, FilterChain prev) throws SoaException {
+                prev.onExit(ctx);
             }
         };
 
-        SharedChain sharedChain = new SharedChain(new LoadBalanceFilter(), new ArrayList<>(), dispatchFilter, 0);
+        //an empty filter
+        Filter headerFilter = new Filter() {
+            @Override
+            public void onEntry(FilterContext ctx, FilterChain next) throws SoaException {
+                next.onEntry(ctx);
+            }
+
+            @Override
+            public void onExit(FilterContext ctx, FilterChain prev) throws SoaException {
+                // do nothing
+            }
+        };
+        //todo shareFilter
+        SharedChain sharedChain = new SharedChain(headerFilter, new ArrayList<>(), dispatchFilter, 0);
 
         FilterContextImpl filterContext = new FilterContextImpl();
         filterContext.setAttach(dispatchFilter, "chain", sharedChain);
@@ -87,10 +106,14 @@ public abstract class SoaBaseConnection implements SoaConnection {
     }
 
     @Override
-    public <REQ, RESP> Future<RESP> sendAsync(String service, String version, String method, REQ request, BeanSerializer<REQ> requestSerializer,
-                                              BeanSerializer<RESP> responseSerializer, long timeout) throws SoaException {
+    public <REQ, RESP> Future<RESP> sendAsync(
+            String service, String version,
+            String method, REQ request,
+            BeanSerializer<REQ> requestSerializer,
+            BeanSerializer<RESP> responseSerializer,
+            long timeout) throws SoaException {
 
-        int seqid = this.seqidAtomic.getAndIncrement();
+        int seqid = seqidAtomic.getAndIncrement();
 
         Filter dispatchFilter = new Filter() {
             private FilterChain getPrevChain(FilterContext ctx) {
@@ -108,18 +131,23 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     try {
                         checkChannel();
                         responseBufFuture = client.sendAsync(channel, seqid, requestBuf, timeout); //发送请求，返回结果
-                    } catch (Exception e) { // TODO
+                    } catch (Exception e) {
                         LOGGER.error(e.getMessage(), e);
                         Result<RESP> result = new Result<>(null,
-                                new SoaException(SoaCode.UnKnown, "TODO"));
+                                new SoaException(SoaCode.UnKnown, SoaCode.UnKnown.getMsg()));
                         ctx.setAttribute("result", result);
                         onExit(ctx, getPrevChain(ctx));
                         return;
                     }
 
                     responseBufFuture.exceptionally(ex -> {
-                        Result<RESP> result = new Result<>(null,
-                                new SoaException(SoaCode.TimeOut));
+                        SoaException soaException = null;
+                        if (ex instanceof SoaException) {
+                            soaException = (SoaException)ex;
+                        } else {
+                            soaException = new SoaException(SoaCode.UnKnown.getCode(), ex.getMessage());
+                        }
+                        Result<RESP> result = new Result<>(null,soaException);
                         ctx.setAttribute("result", result);
                         try {
                             onExit(ctx, getPrevChain(ctx));
@@ -139,9 +167,13 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     });
                 } catch (Exception e) {
                     LOGGER.error(e.getMessage(), e);
-                    // TODO
-                    Result<RESP> result = new Result<>(null,
-                            new SoaException(SoaCode.UnKnown, "TODO"));
+                    SoaException soaException = null;
+                    if (e instanceof SoaException) {
+                        soaException = (SoaException)e;
+                    } else {
+                        soaException = new SoaException(SoaCode.UnKnown.getCode(), e.getMessage());
+                    }
+                    Result<RESP> result = new Result<>(null,soaException);
                     ctx.setAttribute("result", result);
                     onExit(ctx, getPrevChain(ctx));
                 }
@@ -247,10 +279,13 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
             }
         } catch (TException ex) {
+            LOGGER.error("通讯包解析出错:\n" + ex.getMessage(), ex);
             return new Result<>(null,
-                    new SoaException(SoaCode.UnKnown, "TODO")); // TODO
+                    new SoaException(SoaCode.UnKnown, "通讯包解析出错"));
         } finally {
-            responseBuf.release();
+            if (responseBuf != null) {
+                responseBuf.release();
+            }
         }
 
     }
