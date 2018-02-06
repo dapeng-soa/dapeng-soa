@@ -66,6 +66,7 @@
         <module>dapeng-transaction</module>
         <module>dapeng-json</module>
         <module>dapeng-monitor-filter</module>
+        <module>dapeng-counter</module>
     </modules>
 
     <properties>
