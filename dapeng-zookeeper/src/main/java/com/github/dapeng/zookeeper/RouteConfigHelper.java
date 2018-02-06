@@ -24,12 +24,9 @@ public class RouteConfigHelper {
     private void connect() {
 
         try {
-            zk = new ZooKeeper(ZOOKEEPER_HOST, 15000, new Watcher() {
-                @Override
-                public void process(WatchedEvent e) {
-                    if (e.getState() == Event.KeeperState.SyncConnected) {
-                        LOGGER.info("Route Config Helper connected to zookeeper {}.", ZOOKEEPER_HOST);
-                    }
+            zk = new ZooKeeper(ZOOKEEPER_HOST, 15000, e -> {
+                if (e.getState() == Watcher.Event.KeeperState.SyncConnected) {
+                    LOGGER.info("Route Config Helper connected to zookeeper {}.", ZOOKEEPER_HOST);
                 }
             });
         } catch (Exception e) {

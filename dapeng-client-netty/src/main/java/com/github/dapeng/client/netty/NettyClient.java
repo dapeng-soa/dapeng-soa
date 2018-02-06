@@ -2,9 +2,12 @@ package com.github.dapeng.client.netty;
 
 import com.github.dapeng.core.SoaCode;
 import com.github.dapeng.core.SoaException;
+import com.github.dapeng.util.SoaSystemEnvProperties;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.AbstractByteBufAllocator;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -94,11 +97,14 @@ public class NettyClient {
     }
 
     protected Bootstrap initBootstrap() {
+        AbstractByteBufAllocator allocator =
+                SoaSystemEnvProperties.SOA_POOLED_BYTEBUF ?
+                        PooledByteBufAllocator.DEFAULT : UnpooledByteBufAllocator.DEFAULT;
         bootstrap = new Bootstrap();
         bootstrap.group(workerGroup);
         bootstrap.channel(NioSocketChannel.class);
         bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
-        bootstrap.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
+        bootstrap.option(ChannelOption.ALLOCATOR, allocator);
         bootstrap.handler(new ChannelInitializer<SocketChannel>() {
             @Override
             public void initChannel(SocketChannel ch) throws Exception {
@@ -125,7 +131,7 @@ public class NettyClient {
             LOGGER.error("请求超时，seqid:"+seqid);
             throw new SoaException(SoaCode.TimeOut.getCode(), SoaCode.TimeOut.getMsg());
         } catch (Throwable e) {
-            throw new SoaException(SoaCode.UnKnown, e.getMessage() == null ? SoaCode.UnKnown.getMsg():e.getMessage());
+            throw new SoaException(SoaCode.UnKnown, e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage());
         } finally {
             RequestQueue.remove(seqid);
         }
