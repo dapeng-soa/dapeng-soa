@@ -351,7 +351,7 @@ class ScalaCodecGenerator extends CodeGenerator {
             @throws[TException]
             def apply(iface: {service.namespace}.{service.name}Async, args: {method.name}_args):Future[{method.name}_result] = <block>
 
-              val _result = iface.{method.name}({toFieldArrayBuffer(method.request.getFields).map{(field: Field)=>{<div>args.{nameAsId(field.name)}{if(field != method.request.getFields.get(method.request.getFields.size-1)) <span>,</span>}</div>}}}{if(method.request.getFields.size > 0 )"," }50000)
+              val _result = iface.{method.name}({toFieldArrayBuffer(method.request.getFields).map{(field: Field)=>{<div>args.{nameAsId(field.name)}{if(field != method.request.getFields.get(method.request.getFields.size-1)) <span>,</span>}</div>}}})
 
               {
               if(method.getResponse.getFields.get(0).getDataType.kind != DataType.KIND.VOID)

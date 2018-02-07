@@ -581,7 +581,7 @@ class JavaCodecGenerator extends CodeGenerator {
               public CompletableFuture{lt}{method.name}_result{gt} apply({service.name}Async iface, {method.name}_args {method.name}_args) throws SoaException
               <block>
 
-                CompletableFuture{lt}{ if(method.response.getFields.get(0).getDataType.kind== DataType.KIND.VOID) "Void" else  toJavaDataType(method.response.getFields.get(0).getDataType)}{gt} result = (CompletableFuture{lt}{ if(method.response.getFields.get(0).getDataType.kind== DataType.KIND.VOID) "Void" else  toJavaDataType(method.response.getFields.get(0).getDataType)}{gt}) iface.{method.name}({toFieldArrayBuffer(method.getRequest.getFields).map(i => {method.name} + "_args." + i.name).mkString(",")} {if(method.request.getFields.size() > 0) ",50000" else "50000"});
+                CompletableFuture{lt}{ if(method.response.getFields.get(0).getDataType.kind== DataType.KIND.VOID) "Void" else  toJavaDataType(method.response.getFields.get(0).getDataType)}{gt} result = (CompletableFuture{lt}{ if(method.response.getFields.get(0).getDataType.kind== DataType.KIND.VOID) "Void" else  toJavaDataType(method.response.getFields.get(0).getDataType)}{gt}) iface.{method.name}({toFieldArrayBuffer(method.getRequest.getFields).map(i => {method.name} + "_args." + i.name).mkString(",")});
 
                 return result.thenApply(({if(method.response.getFields.get(0).getDataType.kind== DataType.KIND.VOID)  "Void" else  <div> {toJavaDataType(method.response.getFields.get(0).getDataType)} i</div>}) -> <block>
                   {method.name}_result res = new {method.name}_result();
