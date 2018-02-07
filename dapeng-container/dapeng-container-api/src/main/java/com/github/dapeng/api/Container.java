@@ -57,6 +57,17 @@ public interface Container {
     public void unregisterPlugin(Plugin plugin);
 
     /**
+     * 注册Filter(like: monitor)
+     */
+    public void registerFilter(Filter filter);
+
+    /**
+     * 卸载Filter
+     * @param filter
+     */
+    public void unregisterFilter(Filter filter);
+
+    /**
      * 获取应用程序的相关信息
      * @return
      */
