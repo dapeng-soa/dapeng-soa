@@ -21,17 +21,17 @@
           * 
           **/
           
-             
-             void createSettle( com.isuwang.soa.settle.domain.Settle settle) throws com.github.dapeng.core.SoaException;
-            
+          
+            void createSettle( com.isuwang.soa.settle.domain.Settle settle) throws com.github.dapeng.core.SoaException;
+          
         
           /**
           * 
           **/
           
-             
-             com.isuwang.soa.settle.domain.Settle getSettleById( Integer settleId) throws com.github.dapeng.core.SoaException;
-            
+          
+            com.isuwang.soa.settle.domain.Settle getSettleById( Integer settleId) throws com.github.dapeng.core.SoaException;
+          
         
-      }
-      
+    }
+    

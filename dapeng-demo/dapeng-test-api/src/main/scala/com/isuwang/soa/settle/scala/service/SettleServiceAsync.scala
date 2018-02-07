@@ -23,7 +23,7 @@
           
           @throws[com.github.dapeng.core.SoaException]
           def createSettle(
-          settle: com.isuwang.soa.settle.scala.domain.Settle , timeout : Long): Future[Unit]
+          settle: com.isuwang.soa.settle.scala.domain.Settle ): Future[Unit]
 
         
           /**
@@ -32,7 +32,7 @@
           
           @throws[com.github.dapeng.core.SoaException]
           def getSettleById(
-          settleId: Int , timeout : Long): Future[com.isuwang.soa.settle.scala.domain.Settle]
+          settleId: Int ): Future[com.isuwang.soa.settle.scala.domain.Settle]
 
         
     }

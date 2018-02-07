@@ -65,14 +65,14 @@ package com.isuwang.soa.settle.domain;
 
         public String toString(){
           StringBuilder stringBuilder = new StringBuilder("{");
-          stringBuilder.append("\"").append("id").append("\":").append(this.id).append(",");
+            stringBuilder.append("\"").append("id").append("\":").append(this.id).append(",");
     stringBuilder.append("\"").append("orderId").append("\":").append(this.orderId).append(",");
     stringBuilder.append("\"").append("cash_debit").append("\":").append(this.cash_debit).append(",");
     stringBuilder.append("\"").append("cash_credit").append("\":").append(this.cash_credit).append(",");
     stringBuilder.append("\"").append("remark").append("\":\"").append(this.remark.isPresent()?this.remark.get():null).append("\",");
     
-          stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(","));
-          stringBuilder.append("}");
+            stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(","));
+            stringBuilder.append("}");
 
           return stringBuilder.toString();
         }

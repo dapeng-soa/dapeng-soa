@@ -14,10 +14,10 @@ package com.github.dapeng.soa;
 
       **/
       public class PrintServiceClient implements PrintService{
-        private final String serviceName;
-        private final String version;
+      private final String serviceName;
+      private final String version;
 
-        private SoaConnectionPool pool;
+      private SoaConnectionPool pool;
 
       public PrintServiceClient() {
         this.serviceName = "com.github.dapeng.soa.service.PrintService";
@@ -32,12 +32,12 @@ package com.github.dapeng.soa;
       }
 
       
-        
-       /**
-       * 
-       **/
           
-            public void print() throws SoaException{
+            /**
+            * 
+            **/
+            
+              public void print() throws SoaException{
 
               String methodName = "print";
 
@@ -49,17 +49,17 @@ package com.github.dapeng.soa;
               
                   
                 
-          }
+            }
+            
           
-        
 
         
-        
-       /**
-       * 
-       **/
           
-            public String printInfo(com.github.dapeng.soa.domain.Info info) throws SoaException{
+            /**
+            * 
+            **/
+            
+              public String printInfo(com.github.dapeng.soa.domain.Info info) throws SoaException{
 
               String methodName = "printInfo";
 
@@ -74,17 +74,17 @@ package com.github.dapeng.soa;
                       return response.getSuccess();
                     
                 
-          }
+            }
+            
           
-        
 
         
-        
-       /**
-       * 
-       **/
           
-            public String printInfo2(String name) throws SoaException{
+            /**
+            * 
+            **/
+            
+              public String printInfo2(String name) throws SoaException{
 
               String methodName = "printInfo2";
 
@@ -99,17 +99,17 @@ package com.github.dapeng.soa;
                       return response.getSuccess();
                     
                 
-          }
+            }
+            
           
-        
 
         
-        
-       /**
-       * 
-       **/
           
-            public String printInfo3() throws SoaException{
+            /**
+            * 
+            **/
+            
+              public String printInfo3() throws SoaException{
 
               String methodName = "printInfo3";
 
@@ -123,9 +123,9 @@ package com.github.dapeng.soa;
                       return response.getSuccess();
                     
                 
-          }
+            }
+            
           
-        
 
         
 
@@ -134,10 +134,10 @@ package com.github.dapeng.soa;
       **/
       public String getServiceMetadata() throws SoaException {
         String methodName = "getServiceMetadata";
-          getServiceMetadata_args getServiceMetadata_args = new getServiceMetadata_args();
-          getServiceMetadata_result response = pool.send(serviceName,version,methodName,getServiceMetadata_args, new GetServiceMetadata_argsSerializer(), new GetServiceMetadata_resultSerializer());
-          return response.getSuccess();
+        getServiceMetadata_args getServiceMetadata_args = new getServiceMetadata_args();
+        getServiceMetadata_result response = pool.send(serviceName,version,methodName,getServiceMetadata_args, new GetServiceMetadata_argsSerializer(), new GetServiceMetadata_resultSerializer());
+        return response.getSuccess();
       }
 
-      }
+    }
     

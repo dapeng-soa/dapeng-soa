@@ -167,7 +167,7 @@ package com.isuwang.soa.price.scala
             @throws[TException]
             def apply(iface: com.isuwang.soa.price.scala.service.PriceServiceAsync, args: insertPrice_args):Future[insertPrice_result] = {
 
-              val _result = iface.insertPrice(args.price,50000)
+              val _result = iface.insertPrice(args.price)
 
               
                 _result.map(i => insertPrice_result()).tojava
@@ -313,7 +313,7 @@ package com.isuwang.soa.price.scala
             @throws[TException]
             def apply(iface: com.isuwang.soa.price.scala.service.PriceServiceAsync, args: getPrices_args):Future[getPrices_result] = {
 
-              val _result = iface.getPrices(50000)
+              val _result = iface.getPrices()
 
               _result.map(getPrices_result(_)).tojava
 

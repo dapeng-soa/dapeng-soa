@@ -20,7 +20,7 @@ public class TestClient {
 
         //测试java客户端异步
         PrintServiceAsyncClient asyncClient = new PrintServiceAsyncClient();
-        CompletableFuture<String> asyncResult = asyncClient.printInfo2("test",20000);
+        CompletableFuture<String> asyncResult = asyncClient.printInfo2("test");
         asyncResult.whenComplete((res,ex) ->{
             System.out.println(res);
         });

@@ -16,67 +16,67 @@ package com.isuwang.soa.price.scala
         class PriceServiceClient extends PriceService {
 
         import java.util.function.{ Function ⇒ JFunction, Predicate ⇒ JPredicate, BiPredicate }
-          implicit def toJavaFunction[A, B](f: Function1[A, B]) = new JFunction[A, B] {
+        implicit def toJavaFunction[A, B](f: Function1[A, B]) = new JFunction[A, B] {
           override def apply(a: A): B = f(a)
         }
 
-          val serviceName = "com.isuwang.soa.price.service.PriceService"
-          val version = "1.0.0"
-          val pool = {
-            val serviceLoader = ServiceLoader.load(classOf[SoaConnectionPoolFactory])
+        val serviceName = "com.isuwang.soa.price.service.PriceService"
+        val version = "1.0.0"
+        val pool = {
+          val serviceLoader = ServiceLoader.load(classOf[SoaConnectionPoolFactory])
           if (serviceLoader.iterator().hasNext) {
-          val poolImpl = serviceLoader.iterator().next().getPool
-          poolImpl.registerClientInfo(serviceName,version)
-          poolImpl
+            val poolImpl = serviceLoader.iterator().next().getPool
+            poolImpl.registerClientInfo(serviceName,version)
+            poolImpl
           } else null
-           }
+        }
 
         def getServiceMetadata: String = {
-        pool.send(
+          pool.send(
           serviceName,
           version,
           "getServiceMetadata",
           new getServiceMetadata_args,
           new GetServiceMetadata_argsSerializer,
           new GetServiceMetadata_resultSerializer
-        ).success
+          ).success
         }
 
 
         
-             /**
-             * 
-             **/
+            /**
+            * 
+            **/
             def insertPrice(price:com.isuwang.soa.price.scala.domain.Price ) : Unit = {
 
-              val response = pool.send(
-              serviceName,
-              version,
-              "insertPrice",
-              insertPrice_args(price),
-              new InsertPrice_argsSerializer(),
-              new InsertPrice_resultSerializer())
+            val response = pool.send(
+            serviceName,
+            version,
+            "insertPrice",
+            insertPrice_args(price),
+            new InsertPrice_argsSerializer(),
+            new InsertPrice_resultSerializer())
 
-              
+            
 
-            }
+          }
           
-             /**
-             * 
-             **/
+            /**
+            * 
+            **/
             def getPrices() : List[com.isuwang.soa.price.scala.domain.Price] = {
 
-              val response = pool.send(
-              serviceName,
-              version,
-              "getPrices",
-              getPrices_args(),
-              new GetPrices_argsSerializer(),
-              new GetPrices_resultSerializer())
+            val response = pool.send(
+            serviceName,
+            version,
+            "getPrices",
+            getPrices_args(),
+            new GetPrices_argsSerializer(),
+            new GetPrices_resultSerializer())
 
-              response.success
+            response.success
 
-            }
+          }
           
       }
       

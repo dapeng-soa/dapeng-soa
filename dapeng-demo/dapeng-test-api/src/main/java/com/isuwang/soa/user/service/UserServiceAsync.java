@@ -24,7 +24,7 @@
             **/
             
             
-              Future<Void> createUser( com.isuwang.soa.user.domain.User user , long timeout) throws com.github.dapeng.core.SoaException;
+              Future<Void> createUser( com.isuwang.soa.user.domain.User user) throws com.github.dapeng.core.SoaException;
             
           
             /**
@@ -32,7 +32,7 @@
             **/
             
             
-              Future<com.isuwang.soa.user.domain.User> getUserById( Integer userId , long timeout) throws com.github.dapeng.core.SoaException;
+              Future<com.isuwang.soa.user.domain.User> getUserById( Integer userId) throws com.github.dapeng.core.SoaException;
             
           
       }

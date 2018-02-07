@@ -14,10 +14,10 @@ package com.isuwang.soa.order;
 
       **/
       public class OrderServiceClient implements OrderService{
-        private final String serviceName;
-        private final String version;
+      private final String serviceName;
+      private final String version;
 
-        private SoaConnectionPool pool;
+      private SoaConnectionPool pool;
 
       public OrderServiceClient() {
         this.serviceName = "com.isuwang.soa.order.service.OrderService";
@@ -32,12 +32,12 @@ package com.isuwang.soa.order;
       }
 
       
-        
-       /**
-       * 
-       **/
           
-            public void createOrder(com.isuwang.soa.order.domain.Order order) throws SoaException{
+            /**
+            * 
+            **/
+            
+              public void createOrder(com.isuwang.soa.order.domain.Order order) throws SoaException{
 
               String methodName = "createOrder";
 
@@ -50,17 +50,17 @@ package com.isuwang.soa.order;
               
                   
                 
-          }
+            }
+            
           
-        
 
         
-        
-       /**
-       * 
-       **/
           
-            public com.isuwang.soa.order.domain.Order getOrderById(Integer orderId) throws SoaException{
+            /**
+            * 
+            **/
+            
+              public com.isuwang.soa.order.domain.Order getOrderById(Integer orderId) throws SoaException{
 
               String methodName = "getOrderById";
 
@@ -75,9 +75,9 @@ package com.isuwang.soa.order;
                       return response.getSuccess();
                     
                 
-          }
+            }
+            
           
-        
 
         
 
@@ -86,10 +86,10 @@ package com.isuwang.soa.order;
       **/
       public String getServiceMetadata() throws SoaException {
         String methodName = "getServiceMetadata";
-          getServiceMetadata_args getServiceMetadata_args = new getServiceMetadata_args();
-          getServiceMetadata_result response = pool.send(serviceName,version,methodName,getServiceMetadata_args, new GetServiceMetadata_argsSerializer(), new GetServiceMetadata_resultSerializer());
-          return response.getSuccess();
+        getServiceMetadata_args getServiceMetadata_args = new getServiceMetadata_args();
+        getServiceMetadata_result response = pool.send(serviceName,version,methodName,getServiceMetadata_args, new GetServiceMetadata_argsSerializer(), new GetServiceMetadata_resultSerializer());
+        return response.getSuccess();
       }
 
-      }
+    }
     

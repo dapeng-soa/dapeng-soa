@@ -24,7 +24,7 @@
             **/
             
             
-              Future<Void> createSettle( com.isuwang.soa.settle.domain.Settle settle , long timeout) throws com.github.dapeng.core.SoaException;
+              Future<Void> createSettle( com.isuwang.soa.settle.domain.Settle settle) throws com.github.dapeng.core.SoaException;
             
           
             /**
@@ -32,7 +32,7 @@
             **/
             
             
-              Future<com.isuwang.soa.settle.domain.Settle> getSettleById( Integer settleId , long timeout) throws com.github.dapeng.core.SoaException;
+              Future<com.isuwang.soa.settle.domain.Settle> getSettleById( Integer settleId) throws com.github.dapeng.core.SoaException;
             
           
       }

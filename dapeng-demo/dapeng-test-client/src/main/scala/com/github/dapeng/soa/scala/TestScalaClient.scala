@@ -2,6 +2,7 @@ package com.github.dapeng.soa.scala
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Created by lihuimin on 2018/1/3.
@@ -21,15 +22,15 @@ object TestScalaClient {
 
     //测试异步调用
     val asyncClient = new PrintServiceAsyncClient
-    val asyncResult: Future[String] = asyncClient.printInfo2("test", 20000)
+    val asyncResult: Future[String] = asyncClient.printInfo2("test")
     asyncResult onComplete {
       case Success(value) => println(value)
       case Failure(t) => println("An error has occured: " + t.getMessage)
     }
 
-    val scalaClient = new CalculateServiceClient
-    val calResult = scalaClient.calcualteWordCount("sd","sdd");
-    println("result:"+ calResult);
+//    val scalaClient = new CalculateServiceClient
+//    val calResult = scalaClient.calcualteWordCount("sd","sdd");
+//    println("result:"+ calResult);
   }
 
 }

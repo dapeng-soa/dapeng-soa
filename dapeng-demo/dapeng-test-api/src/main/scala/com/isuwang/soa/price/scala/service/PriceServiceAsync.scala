@@ -23,7 +23,7 @@
           
           @throws[com.github.dapeng.core.SoaException]
           def insertPrice(
-          price: com.isuwang.soa.price.scala.domain.Price , timeout : Long): Future[Unit]
+          price: com.isuwang.soa.price.scala.domain.Price ): Future[Unit]
 
         
           /**
@@ -32,7 +32,7 @@
           
           @throws[com.github.dapeng.core.SoaException]
           def getPrices(
-           timeout : Long): Future[List[com.isuwang.soa.price.scala.domain.Price]]
+          ): Future[List[com.isuwang.soa.price.scala.domain.Price]]
 
         
     }

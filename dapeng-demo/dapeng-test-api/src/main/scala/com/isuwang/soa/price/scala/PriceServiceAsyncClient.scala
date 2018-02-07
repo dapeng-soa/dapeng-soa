@@ -60,8 +60,7 @@ package com.isuwang.soa.price.scala
             /**
             * 
             **/
-            def insertPrice(price:com.isuwang.soa.price.scala.domain.Price 
-            , timeout: Long = 5000) : Future[Unit] = {
+            def insertPrice(price:com.isuwang.soa.price.scala.domain.Price ) : Future[Unit] = {
 
             val response = pool.sendAsync(
             serviceName,
@@ -69,8 +68,7 @@ package com.isuwang.soa.price.scala
             "insertPrice",
             insertPrice_args(price),
             new InsertPrice_argsSerializer(),
-            new InsertPrice_resultSerializer()
-            ,timeout).asInstanceOf[CompletableFuture[insertPrice_result]]
+            new InsertPrice_resultSerializer() ).asInstanceOf[CompletableFuture[insertPrice_result]]
 
             toScala(response)(null)
 
@@ -81,8 +79,7 @@ package com.isuwang.soa.price.scala
             /**
             * 
             **/
-            def getPrices(
-             timeout: Long = 5000) : Future[List[com.isuwang.soa.price.scala.domain.Price]] = {
+            def getPrices() : Future[List[com.isuwang.soa.price.scala.domain.Price]] = {
 
             val response = pool.sendAsync(
             serviceName,
@@ -90,8 +87,7 @@ package com.isuwang.soa.price.scala
             "getPrices",
             getPrices_args(),
             new GetPrices_argsSerializer(),
-            new GetPrices_resultSerializer()
-            ,timeout).asInstanceOf[CompletableFuture[getPrices_result]]
+            new GetPrices_resultSerializer() ).asInstanceOf[CompletableFuture[getPrices_result]]
 
             toScala(response)(_.success)
 

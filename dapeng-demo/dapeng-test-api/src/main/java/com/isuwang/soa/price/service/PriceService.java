@@ -21,17 +21,17 @@
           * 
           **/
           
-             
-             void insertPrice( com.isuwang.soa.price.domain.Price price) throws com.github.dapeng.core.SoaException;
-            
+          
+            void insertPrice( com.isuwang.soa.price.domain.Price price) throws com.github.dapeng.core.SoaException;
+          
         
           /**
           * 
           **/
           
-             
-             java.util.List<com.isuwang.soa.price.domain.Price> getPrices() throws com.github.dapeng.core.SoaException;
-            
+          
+            java.util.List<com.isuwang.soa.price.domain.Price> getPrices() throws com.github.dapeng.core.SoaException;
+          
         
-      }
-      
+    }
+    

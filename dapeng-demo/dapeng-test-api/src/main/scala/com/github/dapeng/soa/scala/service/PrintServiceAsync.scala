@@ -23,7 +23,7 @@
           
           @throws[com.github.dapeng.core.SoaException]
           def print(
-           timeout : Long): Future[Unit]
+          ): Future[Unit]
 
         
           /**
@@ -32,7 +32,7 @@
           
           @throws[com.github.dapeng.core.SoaException]
           def printInfo(
-          info: com.github.dapeng.soa.scala.domain.Info , timeout : Long): Future[String]
+          info: com.github.dapeng.soa.scala.domain.Info ): Future[String]
 
         
           /**
@@ -41,7 +41,7 @@
           
           @throws[com.github.dapeng.core.SoaException]
           def printInfo2(
-          name: String , timeout : Long): Future[String]
+          name: String ): Future[String]
 
         
           /**
@@ -50,7 +50,7 @@
           
           @throws[com.github.dapeng.core.SoaException]
           def printInfo3(
-           timeout : Long): Future[String]
+          ): Future[String]
 
         
     }

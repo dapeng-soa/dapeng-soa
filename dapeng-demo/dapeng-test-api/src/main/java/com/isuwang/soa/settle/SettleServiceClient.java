@@ -14,10 +14,10 @@ package com.isuwang.soa.settle;
 
       **/
       public class SettleServiceClient implements SettleService{
-        private final String serviceName;
-        private final String version;
+      private final String serviceName;
+      private final String version;
 
-        private SoaConnectionPool pool;
+      private SoaConnectionPool pool;
 
       public SettleServiceClient() {
         this.serviceName = "com.isuwang.soa.settle.service.SettleService";
@@ -32,12 +32,12 @@ package com.isuwang.soa.settle;
       }
 
       
-        
-       /**
-       * 
-       **/
           
-            public void createSettle(com.isuwang.soa.settle.domain.Settle settle) throws SoaException{
+            /**
+            * 
+            **/
+            
+              public void createSettle(com.isuwang.soa.settle.domain.Settle settle) throws SoaException{
 
               String methodName = "createSettle";
 
@@ -50,17 +50,17 @@ package com.isuwang.soa.settle;
               
                   
                 
-          }
+            }
+            
           
-        
 
         
-        
-       /**
-       * 
-       **/
           
-            public com.isuwang.soa.settle.domain.Settle getSettleById(Integer settleId) throws SoaException{
+            /**
+            * 
+            **/
+            
+              public com.isuwang.soa.settle.domain.Settle getSettleById(Integer settleId) throws SoaException{
 
               String methodName = "getSettleById";
 
@@ -75,9 +75,9 @@ package com.isuwang.soa.settle;
                       return response.getSuccess();
                     
                 
-          }
+            }
+            
           
-        
 
         
 
@@ -86,10 +86,10 @@ package com.isuwang.soa.settle;
       **/
       public String getServiceMetadata() throws SoaException {
         String methodName = "getServiceMetadata";
-          getServiceMetadata_args getServiceMetadata_args = new getServiceMetadata_args();
-          getServiceMetadata_result response = pool.send(serviceName,version,methodName,getServiceMetadata_args, new GetServiceMetadata_argsSerializer(), new GetServiceMetadata_resultSerializer());
-          return response.getSuccess();
+        getServiceMetadata_args getServiceMetadata_args = new getServiceMetadata_args();
+        getServiceMetadata_result response = pool.send(serviceName,version,methodName,getServiceMetadata_args, new GetServiceMetadata_argsSerializer(), new GetServiceMetadata_resultSerializer());
+        return response.getSuccess();
       }
 
-      }
+    }
     

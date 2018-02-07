@@ -14,7 +14,7 @@ public class PriceServiceAsyncImpl implements PriceServiceAsync{
     private static final List<Price> prices = new ArrayList<>();
 
     @Override
-    public Future<Void> insertPrice(Price price, long timeout) throws SoaException {
+    public Future<Void> insertPrice(Price price) throws SoaException {
         System.out.println("=================insertPrice==================");
         return CompletableFuture.supplyAsync(() -> {
             prices.add(price);
@@ -23,7 +23,7 @@ public class PriceServiceAsyncImpl implements PriceServiceAsync{
     }
 
     @Override
-    public Future<List<Price>> getPrices(long timeout) throws SoaException {
+    public Future<List<Price>> getPrices() throws SoaException {
         System.out.println("=================getPrices===============================");
         return CompletableFuture.supplyAsync(() -> prices);
     }

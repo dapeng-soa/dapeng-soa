@@ -35,11 +35,11 @@ package com.isuwang.soa.price.domain;
 
         public String toString(){
           StringBuilder stringBuilder = new StringBuilder("{");
-          stringBuilder.append("\"").append("orderId").append("\":").append(this.orderId).append(",");
+            stringBuilder.append("\"").append("orderId").append("\":").append(this.orderId).append(",");
     stringBuilder.append("\"").append("price").append("\":").append(this.price).append(",");
     
-          stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(","));
-          stringBuilder.append("}");
+            stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(","));
+            stringBuilder.append("}");
 
           return stringBuilder.toString();
         }

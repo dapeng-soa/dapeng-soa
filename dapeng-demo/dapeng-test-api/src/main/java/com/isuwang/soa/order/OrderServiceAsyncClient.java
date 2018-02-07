@@ -39,14 +39,14 @@ package com.isuwang.soa.order;
             * 
             **/
             
-              public CompletableFuture<Void> createOrder(com.isuwang.soa.order.domain.Order order, long timeout) throws SoaException{
+              public CompletableFuture<Void> createOrder(com.isuwang.soa.order.domain.Order order) throws SoaException{
 
               String methodName = "createOrder";
               createOrder_args createOrder_args = new createOrder_args();
               createOrder_args.setOrder(order);
                 
 
-              CompletableFuture<createOrder_result> response = (CompletableFuture<createOrder_result>) pool.sendAsync(serviceName,version,"createOrder",createOrder_args, new CreateOrder_argsSerializer(), new CreateOrder_resultSerializer(),timeout);
+              CompletableFuture<createOrder_result> response = (CompletableFuture<createOrder_result>) pool.sendAsync(serviceName,version,"createOrder",createOrder_args, new CreateOrder_argsSerializer(), new CreateOrder_resultSerializer());
 
               
                   return response.thenApply((createOrder_result result )->  null);
@@ -61,14 +61,14 @@ package com.isuwang.soa.order;
             * 
             **/
             
-              public CompletableFuture<com.isuwang.soa.order.domain.Order> getOrderById(Integer orderId, long timeout) throws SoaException{
+              public CompletableFuture<com.isuwang.soa.order.domain.Order> getOrderById(Integer orderId) throws SoaException{
 
               String methodName = "getOrderById";
               getOrderById_args getOrderById_args = new getOrderById_args();
               getOrderById_args.setOrderId(orderId);
                 
 
-              CompletableFuture<getOrderById_result> response = (CompletableFuture<getOrderById_result>) pool.sendAsync(serviceName,version,"getOrderById",getOrderById_args, new GetOrderById_argsSerializer(), new GetOrderById_resultSerializer(),timeout);
+              CompletableFuture<getOrderById_result> response = (CompletableFuture<getOrderById_result>) pool.sendAsync(serviceName,version,"getOrderById",getOrderById_args, new GetOrderById_argsSerializer(), new GetOrderById_resultSerializer());
 
               
                   

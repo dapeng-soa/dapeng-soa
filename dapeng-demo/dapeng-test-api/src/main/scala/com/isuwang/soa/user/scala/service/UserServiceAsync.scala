@@ -23,7 +23,7 @@
           
           @throws[com.github.dapeng.core.SoaException]
           def createUser(
-          user: com.isuwang.soa.user.scala.domain.User , timeout : Long): Future[Unit]
+          user: com.isuwang.soa.user.scala.domain.User ): Future[Unit]
 
         
           /**
@@ -32,7 +32,7 @@
           
           @throws[com.github.dapeng.core.SoaException]
           def getUserById(
-          userId: Int , timeout : Long): Future[com.isuwang.soa.user.scala.domain.User]
+          userId: Int ): Future[com.isuwang.soa.user.scala.domain.User]
 
         
     }

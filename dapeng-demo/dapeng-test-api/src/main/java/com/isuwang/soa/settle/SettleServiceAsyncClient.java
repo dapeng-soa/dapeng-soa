@@ -39,14 +39,14 @@ package com.isuwang.soa.settle;
             * 
             **/
             
-              public CompletableFuture<Void> createSettle(com.isuwang.soa.settle.domain.Settle settle, long timeout) throws SoaException{
+              public CompletableFuture<Void> createSettle(com.isuwang.soa.settle.domain.Settle settle) throws SoaException{
 
               String methodName = "createSettle";
               createSettle_args createSettle_args = new createSettle_args();
               createSettle_args.setSettle(settle);
                 
 
-              CompletableFuture<createSettle_result> response = (CompletableFuture<createSettle_result>) pool.sendAsync(serviceName,version,"createSettle",createSettle_args, new CreateSettle_argsSerializer(), new CreateSettle_resultSerializer(),timeout);
+              CompletableFuture<createSettle_result> response = (CompletableFuture<createSettle_result>) pool.sendAsync(serviceName,version,"createSettle",createSettle_args, new CreateSettle_argsSerializer(), new CreateSettle_resultSerializer());
 
               
                   return response.thenApply((createSettle_result result )->  null);
@@ -61,14 +61,14 @@ package com.isuwang.soa.settle;
             * 
             **/
             
-              public CompletableFuture<com.isuwang.soa.settle.domain.Settle> getSettleById(Integer settleId, long timeout) throws SoaException{
+              public CompletableFuture<com.isuwang.soa.settle.domain.Settle> getSettleById(Integer settleId) throws SoaException{
 
               String methodName = "getSettleById";
               getSettleById_args getSettleById_args = new getSettleById_args();
               getSettleById_args.setSettleId(settleId);
                 
 
-              CompletableFuture<getSettleById_result> response = (CompletableFuture<getSettleById_result>) pool.sendAsync(serviceName,version,"getSettleById",getSettleById_args, new GetSettleById_argsSerializer(), new GetSettleById_resultSerializer(),timeout);
+              CompletableFuture<getSettleById_result> response = (CompletableFuture<getSettleById_result>) pool.sendAsync(serviceName,version,"getSettleById",getSettleById_args, new GetSettleById_argsSerializer(), new GetSettleById_resultSerializer());
 
               
                   

@@ -55,13 +55,13 @@ package com.isuwang.soa.order.domain;
 
         public String toString(){
           StringBuilder stringBuilder = new StringBuilder("{");
-          stringBuilder.append("\"").append("id").append("\":").append(this.id).append(",");
+            stringBuilder.append("\"").append("id").append("\":").append(this.id).append(",");
     stringBuilder.append("\"").append("order_no").append("\":\"").append(this.order_no).append("\",");
     stringBuilder.append("\"").append("status").append("\":").append(this.status).append(",");
     stringBuilder.append("\"").append("amount").append("\":").append(this.amount).append(",");
     
-          stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(","));
-          stringBuilder.append("}");
+            stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(","));
+            stringBuilder.append("}");
 
           return stringBuilder.toString();
         }
