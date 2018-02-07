@@ -31,6 +31,9 @@
                         <goals>
                             <goal>thriftGenerator</goal>
                         </goals>
+                        <configuration>
+                            <language>java</language>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
