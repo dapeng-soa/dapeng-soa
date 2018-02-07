@@ -19,7 +19,7 @@
         </dependency>
         <dependency>
             <groupId>com.github.dapeng</groupId>
-            <artifactId>dapeng-client-netty</artifactId>
+            <artifactId>dapeng-counter-service</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

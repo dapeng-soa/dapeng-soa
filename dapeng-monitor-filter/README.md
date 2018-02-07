@@ -1,9 +1,13 @@
 # dapeng-monitor-filter
 本项目为dapeng提供了QPS相关的数据统计监控能力.
 本项目仅提供数据统计功能,
-需配合[dapeng-counter](https://github.com/dapeng-soa/dapeng-counter.git)项目使用.
 
-### 在dapeng_soa项目中使用此监控插件
+数据存储依赖模块
+```sbtshell
+dapeng-counter-api
+```
+
+### 在基于dapeng-soa的项目中使用此监控插件
 
 ```sbtshell
 ==> build.sbt

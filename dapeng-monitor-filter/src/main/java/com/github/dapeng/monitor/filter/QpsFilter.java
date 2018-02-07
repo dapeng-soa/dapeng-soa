@@ -1,13 +1,13 @@
 package com.github.dapeng.monitor.filter;
 
-import com.github.dapeng.basic.api.counter.CounterServiceClient;
-import com.github.dapeng.basic.api.counter.domain.DataPoint;
 import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.SoaHeader;
 import com.github.dapeng.core.TransactionContext;
 import com.github.dapeng.core.filter.FilterChain;
 import com.github.dapeng.core.filter.FilterContext;
 import com.github.dapeng.core.filter.InitializableFilter;
+import com.github.dapeng.counter.api.domain.DataPoint;
+import com.github.dapeng.counter.service.CounterServiceImpl;
 import com.github.dapeng.monitor.domain.ServiceSimpleInfo;
 import com.github.dapeng.monitor.util.MonitorFilterProperties;
 import com.github.dapeng.util.SoaSystemEnvProperties;
@@ -32,7 +32,7 @@ public class QpsFilter implements InitializableFilter {
     private final String DATA_BASE = MonitorFilterProperties.SOA_MONITOR_INFLUXDB_DATABASE;
     private final String SERVER_IP = SoaSystemEnvProperties.SOA_CONTAINER_IP;
     private final Integer SERVER_PORT = SoaSystemEnvProperties.SOA_CONTAINER_PORT;
-    private final CounterServiceClient SERVICE_CLIENT = new CounterServiceClient();
+    private final CounterServiceImpl SERVICE_CLIENT = new CounterServiceImpl();
     private Map<ServiceSimpleInfo, AtomicInteger> qpsStats = new ConcurrentHashMap<>(16);
     private ReentrantLock qpsLock = new ReentrantLock();
     /**
