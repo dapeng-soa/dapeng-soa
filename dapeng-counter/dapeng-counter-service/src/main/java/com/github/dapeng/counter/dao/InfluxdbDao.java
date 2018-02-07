@@ -1,6 +1,6 @@
 package com.github.dapeng.counter.dao;
 
-import com.github.dapeng.counter.api.domain.DataPoint;
+import com.github.dapeng.basic.api.counter.domain.DataPoint;
 import com.github.dapeng.counter.util.CounterServiceProperties;
 import org.influxdb.dto.Point;
 import org.influxdb.InfluxDB;
