@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.ServiceLoader;
 
 /**
- * author with struy.
+ * @author with struy.
  * Create by 2018/1/29 20:56
  * email :yq1724555319@gmail.com
  */
