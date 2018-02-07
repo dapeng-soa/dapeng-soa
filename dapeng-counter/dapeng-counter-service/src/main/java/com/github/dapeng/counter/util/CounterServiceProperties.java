@@ -3,7 +3,7 @@ package com.github.dapeng.counter.util;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 
 /**
- * author with struy.
+ * @author with struy.
  * Create by 2018/2/7 00:43
  * email :yq1724555319@gmail.com
  */
