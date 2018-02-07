@@ -23,3 +23,4 @@ dapeng.iml
 /dapeng-zookeeper/dapeng-zookeeper.iml
 .DS_Store
 **/.DS_Store
+dapeng-client-netty/src/test

@@ -403,11 +403,11 @@ public class JsonSerializer implements BeanSerializer<String> {
                             oproto.writeMapBegin(new TMap(dataType2Byte(current.dataType.keyType), dataType2Byte(current.dataType.valueType), 1));
                             break;
                         default:
-                            logger.error("won't be here", new Throwable());
+                            logger.error("won't be here, currentField:" + current.fieldName, new Throwable());
                     }
                     break;
                 default:
-                    logger.error("should not come here, current phase:" + parsePhase);
+                    logger.error("should not come here, currentField:" + current.fieldName + ", current phase:" + parsePhase);
                     break;
             }
         }
