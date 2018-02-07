@@ -22,7 +22,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import com.github.dapeng.counter.service.CounterServiceImpl;
 
 /**
- * author with struy.
+ * @author with struy.
  * Create by 2018/1/29 20:56
  * email :yq1724555319@gmail.com
  */
