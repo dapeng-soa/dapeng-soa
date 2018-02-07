@@ -34,8 +34,7 @@ public interface SoaConnectionPool {
             String method,
             REQ request,
             BeanSerializer<REQ> requestSerializer,
-            BeanSerializer<RESP> responseSerializer,
-            long timeout) throws SoaException;
+            BeanSerializer<RESP> responseSerializer) throws SoaException;
 
 
 //    SoaConnection getConnection() throws SoaException;

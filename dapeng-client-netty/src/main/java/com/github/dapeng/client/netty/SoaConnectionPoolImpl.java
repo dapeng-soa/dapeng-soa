@@ -71,7 +71,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         if (connection == null) {
             throw new SoaException(SoaCode.NotConnected);
         }
-        long timeout = getTimeout(service, version, method, 0L);
+        long timeout = getTimeout(service, version, method);
         return connection.send(service, version, method, request, requestSerializer, responseSerializer, timeout);
     }
 
@@ -174,6 +174,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * 最后校验一下,拿到的值不能超过系统设置的最大值
      *
      *
+     *
      * @param service
      * @param version
      * @param method
@@ -181,31 +182,36 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      */
     private long getTimeout(String service, String version, String method) {
 
-        //1. 如果invocationContext有设置的话, 那么用invocationContext的(这个值每次调用都可能不一样)
+        Long maxTimeout = SoaSystemEnvProperties.SOA_MAX_TIMEOUT;
 
+        //1. 如果invocationContext有设置的话, 那么用invocationContext的(这个值每次调用都可能不一样)
+        Optional<Long> invocationTimeout = getInvocationTimeout();
 
         //TODO 2. invocationContext没有的话, 就拿IDL的(暂没实现该参数)(这个值每个方法可能都不一样)
+        Optional<Long> idlTimeout = getIdlTimeout(service,version,method);
 
         //TODO 3. IDL没有的话, 拿命令行或者环境变量的(这个值所有方法一致)
-        long envTimeout = SoaSystemEnvProperties.SOA_SERVICE_CLIENT_TIMEOUT.longValue();
+        Optional<Long> envTimeout = SoaSystemEnvProperties.SOA_SERVICE_CLIENT_TIMEOUT.longValue() == 0 ?
+                Optional.empty(): Optional.of(SoaSystemEnvProperties.SOA_SERVICE_CLIENT_TIMEOUT.longValue());
 
         // 4. 环境变量没有的话, 拿zk的(这个值所有方法一致)
+        Optional<Long> zkTimeout = getZkTimeout(service,version,method);
 
+        Optional<Long> timeout = Optional.empty();
+        if (invocationTimeout.isPresent()) {
+            timeout = invocationTimeout;
+        } else if (idlTimeout.isPresent()) {
+            timeout = idlTimeout;
+        } else if (envTimeout.isPresent()) {
+            timeout = envTimeout;
+        } else if (zkTimeout.isPresent()) {
+            timeout = zkTimeout;
+        } else {
+            timeout = Optional.of(maxTimeout);
+        }
 
+        return timeout.get();
 
-//        Map<ConfigKey, Object> configs = zkAgent.getConfig(false, serviceKey);
-//        if (null != configs) {
-//            Long timeoutConfig = (Long) configs.get(ConfigKey.ClientTimeout);
-//            timeout = timeoutConfig != null ? timeoutConfig.longValue() : envTimeout;
-//        }
-//        if (timeout == 0L) {
-//            timeout = (envTimeout == 0L) ? (paramTimeout == 0 ? 2000L : paramTimeout) : envTimeout;
-//        }
-//
-//        if (timeout > SoaSystemEnvProperties.SOA_MAX_TIMEOUT){
-//            timeout = SoaSystemEnvProperties.SOA_MAX_TIMEOUT;
-//        }
-//        return timeout;
     }
 
     private Optional<Long> getInvocationTimeout() {
