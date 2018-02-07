@@ -22,28 +22,28 @@ public class InfluxdbDao {
     private final String INFLUXDB_URL = CounterServiceProperties.SOA_COUNTER_INFLUXDB_URL;
     private final String INFLUXDB_USER = CounterServiceProperties.SOA_COUNTER_INFLUXDB_USER;
     private final String INFLUXDB_PWD = CounterServiceProperties.SOA_COUNTER_INFLUXDB_PWD;
-    private final InfluxDB influxDB =  getInfluxDBConnection();
+    private final InfluxDB influxDB = getInfluxDBConnection();
 
-    public InfluxDB getInfluxDBConnection(){
-        LOGGER.info("Connection InfluxDB on :{}",INFLUXDB_URL);
-        return  InfluxDBFactory.connect(INFLUXDB_URL,INFLUXDB_USER,INFLUXDB_PWD);
+    public InfluxDB getInfluxDBConnection() {
+        LOGGER.info("Connection InfluxDB on :{}", INFLUXDB_URL);
+        return InfluxDBFactory.connect(INFLUXDB_URL, INFLUXDB_USER, INFLUXDB_PWD);
     }
 
-    public void writePoint(DataPoint dataPoint){
+    public void writePoint(DataPoint dataPoint) {
         Point.Builder commit = Point.measurement(dataPoint.bizTag);
         dataPoint.values.forEach(commit::addField);
         dataPoint.tags.forEach(commit::tag);
         try {
             influxDB.write(dataPoint.database, "", commit.build());
-        }catch (Exception e){
-            LOGGER.error(e.getMessage(),e);
-        }finally {
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        } finally {
             influxDB.close();
         }
     }
 
-    public void writePoints(List<DataPoint> dataPoints){
-        LOGGER.info("counter writePoints {}" ,dataPoints);
+    public void writePoints(List<DataPoint> dataPoints) {
+        LOGGER.info("counter writePoints {}", dataPoints);
         dataPoints.forEach(this::writePoint);
         /*if (dataPoints.size()!=0){
             BatchPoints batchPoints = BatchPoints

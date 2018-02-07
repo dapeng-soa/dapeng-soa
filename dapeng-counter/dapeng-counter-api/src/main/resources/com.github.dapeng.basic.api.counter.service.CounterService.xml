@@ -113,10 +113,23 @@
  业务类型, 在时序数据库中也叫metric/measurement, 相当于关系型数据库的数据表
 </doc>
                 </field>
-                <field tag="2" name="value" optional="false" privacy="false">
+                <field tag="2" name="values" optional="false" privacy="false">
                     <dataType>
-                        <kind>STRING</kind>
+                        <kind>MAP</kind>
+                        <keyType>
+                            <kind>STRING</kind>
+                        </keyType>
+                        <valueType>
+                            <kind>STRING</kind>
+                        </valueType>
                     </dataType>
+                    <doc>
+
+ field
+ values 可以为一个，可以为多个Field
+ value支持的类型floats，integers，strings，booleans
+ value会用于展示
+</doc>
                 </field>
                 <field tag="3" name="timestamp" optional="false" privacy="false">
                     <dataType>
@@ -133,6 +146,10 @@
                             <kind>STRING</kind>
                         </valueType>
                     </dataType>
+                    <doc>
+
+ tag是可选的。不过写入数据时最好加上tag，因为它可以被索引。tag的类型只能是字符串。
+</doc>
                 </field>
                 <field tag="5" name="database" optional="false" privacy="false">
                     <dataType>

@@ -5,6 +5,7 @@ import com.github.dapeng.basic.api.counter.service.CounterService;
 import com.github.dapeng.core.SoaException;
 import com.github.dapeng.counter.dao.InfluxdbDao;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,7 +29,7 @@ public class CounterServiceImpl implements CounterService {
     }
 
     @Override
-    public void queryPoints(DataPoint condition, String beginTimeStamp, String endTimeStamp) {
-
+    public List<DataPoint> queryPoints(DataPoint condition, String beginTimeStamp, String endTimeStamp) {
+        return new ArrayList<>();
     }
 }
