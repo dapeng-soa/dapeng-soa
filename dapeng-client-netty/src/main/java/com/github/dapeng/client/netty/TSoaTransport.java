@@ -63,6 +63,7 @@ public class TSoaTransport extends TTransport {
     @Override
     public void write(byte[] buf, int off, int len) throws TTransportException {
         if (type == Type.Init) {
+            // placeholder for msg length
             byteBuf.writeInt(0);
 
             type = Type.Write;

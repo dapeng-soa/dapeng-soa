@@ -1,13 +1,12 @@
-include "info.thrift"
-include "account_enums.thrift"
-
 namespace java com.github.dapeng.soa.service
+
+include "info_domain.thrift"
 
 service PrintService{
 
     void print(),
 
-    string printInfo(1:info.Info info),
+    string printInfo(1:info_domain.Info info),
 
     string printInfo2(1:string name)
 
