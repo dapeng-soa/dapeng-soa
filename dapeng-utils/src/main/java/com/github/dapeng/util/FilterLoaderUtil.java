@@ -29,13 +29,16 @@ public class FilterLoaderUtil {
         if ("".equals(FILTER_EXCLUDES) && "".equals(FILTER_INCLUDES)) {
             return true;
         }
-        if (!"".equals(FILTER_EXCLUDES)) {
-            excludes.addAll(Arrays.asList(FILTER_EXCLUDES.split(",")));
-        }
 
         if (!"".equals(FILTER_INCLUDES)) {
             includes.addAll(Arrays.asList(FILTER_INCLUDES.split(",")));
         }
+
+        if (!"".equals(FILTER_EXCLUDES)) {
+            excludes.addAll(Arrays.asList(FILTER_EXCLUDES.split(",")));
+        }
+
+
         // default
         if (includes.size() == 0 && excludes.size() == 0) {
             return true;
