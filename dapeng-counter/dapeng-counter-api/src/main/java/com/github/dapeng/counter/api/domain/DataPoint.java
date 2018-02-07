@@ -1,5 +1,8 @@
 package com.github.dapeng.counter.api.domain;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * 数据点
  */
@@ -33,21 +36,21 @@ public class DataPoint {
      * value支持的类型floats，integers，strings，booleans
      * value会用于展示
      */
-    public java.util.Map<String, String> values = new java.util.HashMap<>();
+    public Map<String, String> values = new HashMap<>();
 
-    public java.util.Map<String, String> getValues() {
+    public Map<String, String> getValues() {
         return this.values;
     }
 
-    public void setValues(java.util.Map<String, String> values) {
+    public void setValues(Map<String, String> values) {
         this.values = values;
     }
 
-    public java.util.Map<String, String> values() {
+    public Map<String, String> values() {
         return this.values;
     }
 
-    public DataPoint values(java.util.Map<String, String> values) {
+    public DataPoint values(Map<String, String> values) {
         this.values = values;
         return this;
     }
@@ -115,6 +118,7 @@ public class DataPoint {
     }
 
 
+    @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder("{");
         stringBuilder.append("\"").append("bizTag").append("\":\"").append(this.bizTag).append("\",");

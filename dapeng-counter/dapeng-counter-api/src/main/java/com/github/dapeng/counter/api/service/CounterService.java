@@ -1,5 +1,9 @@
 package com.github.dapeng.counter.api.service;
 
+import com.github.dapeng.core.SoaException;
+import com.github.dapeng.counter.api.domain.DataPoint;
+import java.util.List;
+
 /**
  * author with struy.
  * Create by 2018/2/7 00:38
@@ -8,10 +12,10 @@ package com.github.dapeng.counter.api.service;
 
 public interface CounterService {
 
-    void submitPoint();
+    void submitPoint(DataPoint point) throws SoaException;
 
-    void submitPoints();
+    void submitPoints(List<DataPoint> points) throws SoaException;
 
-    void queryPoints();
+    void queryPoints(DataPoint condition,String beginTimeStamp, String endTimeStamp);
 
 }

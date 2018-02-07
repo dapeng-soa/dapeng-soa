@@ -1,6 +1,11 @@
 package com.github.dapeng.counter.service;
 
+import com.github.dapeng.core.SoaException;
+import com.github.dapeng.counter.api.domain.DataPoint;
 import com.github.dapeng.counter.api.service.CounterService;
+import com.github.dapeng.counter.dao.InfluxdbDao;
+
+import java.util.List;
 
 /**
  * author with struy.
@@ -9,18 +14,21 @@ import com.github.dapeng.counter.api.service.CounterService;
  */
 
 public class CounterServiceImpl implements CounterService {
-    @Override
-    public void submitPoint() {
 
+    private InfluxdbDao  influxdbDao = new InfluxdbDao();
+
+    @Override
+    public void submitPoint(DataPoint point) throws SoaException {
+        influxdbDao.writePoint(point);
     }
 
     @Override
-    public void submitPoints() {
-
+    public void submitPoints(List<DataPoint> points) throws SoaException {
+        influxdbDao.writePoints(points);
     }
 
     @Override
-    public void queryPoints() {
+    public void queryPoints(DataPoint condition, String beginTimeStamp, String endTimeStamp) {
 
     }
 }
