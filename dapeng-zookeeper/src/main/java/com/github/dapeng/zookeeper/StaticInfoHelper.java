@@ -29,12 +29,9 @@ public class StaticInfoHelper {
     private void connect() {
 
         try {
-            zk = new ZooKeeper(ZOOKEEPER_HOST, 15000, new Watcher() {
-                @Override
-                public void process(WatchedEvent e) {
-                    if (e.getState() == Watcher.Event.KeeperState.SyncConnected) {
-                        LOGGER.info("zookeeper connected.");
-                    }
+            zk = new ZooKeeper(ZOOKEEPER_HOST, 15000, e -> {
+                if (e.getState() == Watcher.Event.KeeperState.SyncConnected) {
+                    LOGGER.info("zookeeper connected.");
                 }
             });
         } catch (Exception e) {
@@ -98,25 +95,22 @@ public class StaticInfoHelper {
     /**
      * back call of createConfigNodeWithData
      */
-    private AsyncCallback.StringCallback configNodeCreateCallBack = new AsyncCallback.StringCallback() {
-        @Override
-        public void processResult(int rc, String path, Object ctx, String name) {
+    private AsyncCallback.StringCallback configNodeCreateCallBack = (rc, path, ctx, name) -> {
 
-            switch (KeeperException.Code.get(rc)) {
-                case CONNECTIONLOSS:
-                    LOGGER.info("connection loss while creating node {} with data [{}], try again.", path, (String) ctx);
-                    createConfigNodeWithData(path, (String) ctx);
-                    break;
-                case OK:
-                    LOGGER.info("creating node {} succeed with data [{}]", path, (String) ctx);
-                    break;
-                case NODEEXISTS:
-                    LOGGER.info("node {} already exist while creating, update with data [{}]", path, (String) ctx);
-                    updateConfigNodeData(path, (String) ctx);
-                    break;
-                default:
-                    LOGGER.info("Something went wrong when creating server info");
-            }
+        switch (KeeperException.Code.get(rc)) {
+            case CONNECTIONLOSS:
+                LOGGER.info("connection loss while creating node {} with data [{}], try again.", path, (String) ctx);
+                createConfigNodeWithData(path, (String) ctx);
+                break;
+            case OK:
+                LOGGER.info("creating node {} succeed with data [{}]", path, (String) ctx);
+                break;
+            case NODEEXISTS:
+                LOGGER.info("node {} already exist while creating, update with data [{}]", path, (String) ctx);
+                updateConfigNodeData(path, (String) ctx);
+                break;
+            default:
+                LOGGER.info("Something went wrong when creating server info");
         }
     };
 
