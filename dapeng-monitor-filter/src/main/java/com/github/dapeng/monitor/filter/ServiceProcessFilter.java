@@ -6,6 +6,7 @@ import com.github.dapeng.core.TransactionContext;
 import com.github.dapeng.core.filter.FilterChain;
 import com.github.dapeng.core.filter.FilterContext;
 import com.github.dapeng.core.filter.InitializableFilter;
+import com.github.dapeng.counter.api.service.CounterService;
 import com.github.dapeng.monitor.domain.ServiceProcessData;
 import com.github.dapeng.monitor.domain.ServiceSimpleInfo;
 import com.github.dapeng.monitor.util.MonitorFilterProperties;
@@ -34,7 +35,7 @@ public class ServiceProcessFilter implements InitializableFilter {
     private final String SERVER_IP = SoaSystemEnvProperties.SOA_CONTAINER_IP;
     private final Integer SERVER_PORT = SoaSystemEnvProperties.SOA_CONTAINER_PORT;
     private final String SUCCESS_CODE = "0000";
-    private final CounterServiceImpl SERVICE_CLIENT = new CounterServiceImpl();
+    private final CounterService SERVICE_CLIENT = new CounterServiceImpl();
     private Map<ServiceSimpleInfo, ServiceProcessData> serviceProcessCallDatas = new ConcurrentHashMap<>(16);
     private final ThreadLocal<Long> SERVICE_LOCAL = new ThreadLocal<>();
     private List<Map<ServiceSimpleInfo, Long>> serviceElapses = new ArrayList<>();

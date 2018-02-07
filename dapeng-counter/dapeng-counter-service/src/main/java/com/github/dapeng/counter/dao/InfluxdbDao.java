@@ -20,11 +20,12 @@ public class InfluxdbDao {
     private static final Logger LOGGER = LoggerFactory.getLogger(InfluxdbDao.class);
 
     private final String INFLUXDB_URL = CounterServiceProperties.SOA_COUNTER_INFLUXDB_URL;
-    private final String INFLUXDB_USER = CounterServiceProperties.SOA_COUNTER_INFLUXDB_URL;
-    private final String INFLUXDB_PWD = CounterServiceProperties.SOA_COUNTER_INFLUXDB_URL;
-    private InfluxDB influxDB =  getInfluxDBConnection();
+    private final String INFLUXDB_USER = CounterServiceProperties.SOA_COUNTER_INFLUXDB_USER;
+    private final String INFLUXDB_PWD = CounterServiceProperties.SOA_COUNTER_INFLUXDB_PWD;
+    private final InfluxDB influxDB =  getInfluxDBConnection();
 
     public InfluxDB getInfluxDBConnection(){
+        LOGGER.info("Connection InfluxDB on :{}",INFLUXDB_URL);
         return  InfluxDBFactory.connect(INFLUXDB_URL,INFLUXDB_USER,INFLUXDB_PWD);
     }
 

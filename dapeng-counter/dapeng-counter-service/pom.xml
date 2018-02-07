@@ -22,11 +22,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.github.dapeng</groupId>
-            <artifactId>dapeng-counter-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.influxdb</groupId>
             <artifactId>influxdb-java</artifactId>
             <version>${influxdb-version}</version>
@@ -47,6 +42,16 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.dapeng</groupId>
+            <artifactId>dapeng-utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.dapeng</groupId>
+            <artifactId>dapeng-counter-api</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 
