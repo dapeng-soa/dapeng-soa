@@ -13,10 +13,10 @@ import com.github.dapeng.core.metadata._
 import scala.xml.Elem
 
 /**
- * JAVA生成器
- *
- * @author tangliu
- */
+  * JAVA生成器
+  *
+  * @author tangliu
+  */
 class JavaGenerator extends CodeGenerator {
 
   override def generate(services: util.List[Service], outDir: String): Unit = {}
@@ -38,7 +38,7 @@ class JavaGenerator extends CodeGenerator {
     val file = new File(dir)
 
     if(!file.exists()){}
-      file.mkdirs()
+    file.mkdirs()
 
     dir
   }
@@ -207,10 +207,10 @@ class JavaGenerator extends CodeGenerator {
       {notice}
       **/
       public class {service.name}Client implements {service.name}<block>
-        private final String serviceName;
-        private final String version;
+      private final String serviceName;
+      private final String version;
 
-        private SoaConnectionPool pool;
+      private SoaConnectionPool pool;
 
       public {service.name}Client() <block>
         this.serviceName = "{service.namespace + "." + service.name }";
@@ -227,13 +227,13 @@ class JavaGenerator extends CodeGenerator {
       {
       toMethodArrayBuffer(service.methods).map{(method:Method)=>{
         <div>
-        <div>
-       /**
-       * {method.doc}
-       **/
           <div>
-            public { toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)} {method.name}({toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
-            <div>{toDataTypeTemplate(field.getDataType())} {field.name}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}) throws SoaException<block>
+            /**
+            * {method.doc}
+            **/
+            <div>
+              public { toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)} {method.name}({toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
+              <div>{toDataTypeTemplate(field.getDataType())} {field.name}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}) throws SoaException<block>
 
               String methodName = "{method.name}";
 
@@ -264,9 +264,9 @@ class JavaGenerator extends CodeGenerator {
               }
               }
               }
-          </block>
+            </block>
+            </div>
           </div>
-        </div>
 
         </div>
       }
@@ -278,12 +278,12 @@ class JavaGenerator extends CodeGenerator {
       **/
       public String getServiceMetadata() throws SoaException <block>
         String methodName = "getServiceMetadata";
-          getServiceMetadata_args getServiceMetadata_args = new getServiceMetadata_args();
-          getServiceMetadata_result response = pool.send(serviceName,version,methodName,getServiceMetadata_args, new GetServiceMetadata_argsSerializer(), new GetServiceMetadata_resultSerializer());
-          return response.getSuccess();
+        getServiceMetadata_args getServiceMetadata_args = new getServiceMetadata_args();
+        getServiceMetadata_result response = pool.send(serviceName,version,methodName,getServiceMetadata_args, new GetServiceMetadata_argsSerializer(), new GetServiceMetadata_resultSerializer());
+        return response.getSuccess();
       </block>
 
-      </block>
+    </block>
     </div>
   }
 
@@ -328,7 +328,7 @@ class JavaGenerator extends CodeGenerator {
             **/
             <div>
               public {if(method.getResponse.getFields().get(0).getDataType.kind.equals(KIND.VOID)) <div>CompletableFuture{lt}Void{gt}</div> else <div>CompletableFuture{lt}{toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)}{gt}</div>} {method.name}({toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
-              <div>{toDataTypeTemplate(field.getDataType())} {field.name}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}{if(toFieldArrayBuffer(method.getRequest.getFields).size==0) "long timeout" else ", long timeout"}) throws SoaException<block>
+              <div>{toDataTypeTemplate(field.getDataType())} {field.name}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}) throws SoaException<block>
 
               String methodName = "{method.name}";
               {method.getRequest.name} {method.getRequest.name} = new {method.getRequest.name}();
@@ -340,7 +340,7 @@ class JavaGenerator extends CodeGenerator {
               }
               }
 
-              CompletableFuture{lt}{method.response.name}{gt} response = (CompletableFuture{lt}{method.response.name}{gt}) pool.sendAsync(serviceName,version,"{method.name}",{method.request.name}, new {method.request.name.charAt(0).toUpper + method.request.name.substring(1)}Serializer(), new {method.response.name.charAt(0).toUpper + method.response.name.substring(1)}Serializer(),timeout);
+              CompletableFuture{lt}{method.response.name}{gt} response = (CompletableFuture{lt}{method.response.name}{gt}) pool.sendAsync(serviceName,version,"{method.name}",{method.request.name}, new {method.request.name.charAt(0).toUpper + method.request.name.substring(1)}Serializer(), new {method.response.name.charAt(0).toUpper + method.response.name.substring(1)}Serializer());
 
               {
               toFieldArrayBuffer(method.getResponse.getFields()).map {(field:Field)=> {
@@ -393,43 +393,43 @@ class JavaGenerator extends CodeGenerator {
         **/
         public enum {enum.name} implements com.github.dapeng.org.apache.thrift.TEnum<block>
         {
-          toEnumItemArrayBuffer(enum.enumItems).map{(enumItem: EnumItem)=>{
+        toEnumItemArrayBuffer(enum.enumItems).map{(enumItem: EnumItem)=>{
           <div>
             /**
             *{enumItem.getDoc}
             **/
             {enumItem.label}({enumItem.value}){if(enumItem == enum.enumItems.get(enum.enumItems.size() - 1)) <div>;</div> else <div>,</div>}
           </div>
-          }
-          }
+        }
+        }
         }
 
         private final int value;
 
         private {enum.name}(int value)<block>
-            this.value = value;
+          this.value = value;
         </block>
 
         public int getValue()<block>
-            return this.value;
+          return this.value;
         </block>
 
         public static {enum.name} findByValue(int value)<block>
-            switch(value)<block>
+          switch(value)<block>
             {
             toEnumItemArrayBuffer(enum.enumItems).map{(enumItem: EnumItem)=>{
-               <div>
-                 case {enumItem.value}:
-                    return {enumItem.label};
-               </div>
+              <div>
+                case {enumItem.value}:
+                return {enumItem.label};
+              </div>
             }
             }
             }
-               default:
-                   return null;
-            </block>
+            default:
+            return null;
+          </block>
         </block>
-        </block>
+      </block>
       </div>
     }
   }
@@ -470,13 +470,13 @@ class JavaGenerator extends CodeGenerator {
 
         public String toString()<block>
           StringBuilder stringBuilder = new StringBuilder("<block>");
-          {toFieldArrayBuffer(struct.getFields).map{(field : Field) =>{
-                getToStringElement(field)
-          }
-          }
-          }
-          stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(","));
-          stringBuilder.append("</block>");
+            {toFieldArrayBuffer(struct.getFields).map{(field : Field) =>{
+              getToStringElement(field)
+            }
+            }
+            }
+            stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(","));
+            stringBuilder.append("</block>");
 
           return stringBuilder.toString();
         </block>
@@ -508,17 +508,17 @@ class JavaGenerator extends CodeGenerator {
           * {method.doc}
           **/
           {if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div>}
-             <div>
-             {toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)} {method.name}({toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
-             <div> {toDataTypeTemplate(field.getDataType())} {field.name}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}
-             }}) throws com.github.dapeng.core.SoaException;
-            </div>
+          <div>
+            {toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)} {method.name}({toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
+            <div> {toDataTypeTemplate(field.getDataType())} {field.name}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}
+          }}) throws com.github.dapeng.core.SoaException;
+          </div>
         </div>
       }
       }
       }
-      </block>
-      </div>
+    </block>
+    </div>
   }
 
   private def toAsyncServiceTemplate(service:Service): Elem = {
@@ -550,7 +550,7 @@ class JavaGenerator extends CodeGenerator {
             <div>
               {if(method.getResponse.getFields().get(0).getDataType.kind.equals(KIND.VOID)) <div>Future{lt}Void{gt}</div> else <div>Future{lt}{toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)}{gt}</div>} {method.name}({toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
               <div> {toDataTypeTemplate(field.getDataType())} {field.name}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}
-            }} {if(toFieldArrayBuffer(method.getRequest.getFields).size>0) ","} long timeout) throws com.github.dapeng.core.SoaException;
+            }}) throws com.github.dapeng.core.SoaException;
             </div>
           </div>
         }
@@ -612,10 +612,10 @@ class JavaGenerator extends CodeGenerator {
   def getToStringByDataType(field: Field):Elem = {
 
     if(field.getDoc != null && field.getDoc.toLowerCase.contains("@logger(level=\"off\")"))
-       <div>"LOGGER_LEVEL_OFF"</div>
+      <div>"LOGGER_LEVEL_OFF"</div>
     else if(field.isOptional)
-       <div>this.{field.name}.isPresent()?this.{field.name}.get(){if(field.dataType.kind == KIND.STRUCT) <div>.toString()</div>}:null</div>
+      <div>this.{field.name}.isPresent()?this.{field.name}.get(){if(field.dataType.kind == KIND.STRUCT) <div>.toString()</div>}:null</div>
     else
-       <div>this.{field.name}{if(field.dataType.kind == KIND.STRUCT) <div>.toString()</div>}</div>
+      <div>this.{field.name}{if(field.dataType.kind == KIND.STRUCT) <div>.toString()</div>}</div>
   }
 }

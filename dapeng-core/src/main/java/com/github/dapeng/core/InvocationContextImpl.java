@@ -39,6 +39,9 @@ public class InvocationContextImpl implements  InvocationContext {
 
     private InvocationInfo invocationInfo;
 
+    private Optional<Long> timeout;
+
+
     /**
      * 全局事务id
      */
@@ -46,6 +49,16 @@ public class InvocationContextImpl implements  InvocationContext {
 
     // readonly
     private int seqid;
+
+    @Override
+    public Optional<Long> getTimeout() {
+        return timeout;
+    }
+
+    @Override
+    public void setTimeout(Optional<Long> timeout) {
+        this.timeout = timeout;
+    }
 
     // read/write
     @Override
