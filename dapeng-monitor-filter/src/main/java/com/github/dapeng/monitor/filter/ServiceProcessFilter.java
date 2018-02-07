@@ -1,5 +1,6 @@
 package com.github.dapeng.monitor.filter;
 
+import com.github.dapeng.basic.api.counter.CounterServiceClient;
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
 import com.github.dapeng.basic.api.counter.service.CounterService;
 import com.github.dapeng.core.SoaException;
@@ -19,7 +20,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
-import com.github.dapeng.counter.service.CounterServiceImpl;
 
 /**
  * @author with struy.
@@ -35,7 +35,7 @@ public class ServiceProcessFilter implements InitializableFilter {
     private final String SERVER_IP = SoaSystemEnvProperties.SOA_CONTAINER_IP;
     private final Integer SERVER_PORT = SoaSystemEnvProperties.SOA_CONTAINER_PORT;
     private final String SUCCESS_CODE = "0000";
-    private final CounterService SERVICE_CLIENT = new CounterServiceImpl();
+    private final CounterService SERVICE_CLIENT = new CounterServiceClient();
     private Map<ServiceSimpleInfo, ServiceProcessData> serviceProcessCallDatas = new ConcurrentHashMap<>(16);
     private final ThreadLocal<Long> SERVICE_LOCAL = new ThreadLocal<>();
     private List<Map<ServiceSimpleInfo, Long>> serviceElapses = new ArrayList<>();
