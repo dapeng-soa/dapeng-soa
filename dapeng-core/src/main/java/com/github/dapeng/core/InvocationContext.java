@@ -63,6 +63,9 @@ public interface InvocationContext {
 
     InvocationInfo getLastInfo();
 
+    public Optional<Long> getTimeout();
+
+    public void setTimeout(Optional<Long> timeout);
 
     // seqid
     // tid

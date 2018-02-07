@@ -12,10 +12,10 @@ import scala.collection.mutable.ArrayBuffer
 import scala.xml.Elem
 
 /**
- * Scala生成器
- *
- * @author tangliu
- */
+  * Scala生成器
+  *
+  * @author tangliu
+  */
 class ScalaGenerator extends CodeGenerator {
 
   override def generate(services: util.List[Service], outDir: String): Unit = {}
@@ -52,7 +52,7 @@ class ScalaGenerator extends CodeGenerator {
     val file = new File(dir)
 
     if(!file.exists()){}
-      file.mkdirs()
+    file.mkdirs()
 
     dir
   }
@@ -269,57 +269,57 @@ class ScalaGenerator extends CodeGenerator {
         class {service.name}Client extends {service.name} <block>
 
         import java.util.function.<block> Function ⇒ JFunction, Predicate ⇒ JPredicate, BiPredicate </block>
-          implicit def toJavaFunction[A, B](f: Function1[A, B]) = new JFunction[A, B] <block>
+        implicit def toJavaFunction[A, B](f: Function1[A, B]) = new JFunction[A, B] <block>
           override def apply(a: A): B = f(a)
         </block>
 
-          val serviceName = "{oriNamespace + "." + service.name }"
-          val version = "{service.meta.version}"
-          val pool = <block>
-            val serviceLoader = ServiceLoader.load(classOf[SoaConnectionPoolFactory])
+        val serviceName = "{oriNamespace + "." + service.name }"
+        val version = "{service.meta.version}"
+        val pool = <block>
+          val serviceLoader = ServiceLoader.load(classOf[SoaConnectionPoolFactory])
           if (serviceLoader.iterator().hasNext) <block>
-          val poolImpl = serviceLoader.iterator().next().getPool
-          poolImpl.registerClientInfo(serviceName,version)
-          poolImpl
+            val poolImpl = serviceLoader.iterator().next().getPool
+            poolImpl.registerClientInfo(serviceName,version)
+            poolImpl
           </block> else null
-           </block>
+        </block>
 
         def getServiceMetadata: String = <block>
-        pool.send(
+          pool.send(
           serviceName,
           version,
           "getServiceMetadata",
           new getServiceMetadata_args,
           new GetServiceMetadata_argsSerializer,
           new GetServiceMetadata_resultSerializer
-        ).success
+          ).success
         </block>
 
 
         {
         toMethodArrayBuffer(service.methods).map{(method:Method)=>{
           <div>
-             /**
-             * {method.doc}
-             **/
+            /**
+            * {method.doc}
+            **/
             def {method.name}({toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
-              <div>{nameAsId(field.name)}:{toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}) : {toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)} = <block>
+            <div>{nameAsId(field.name)}:{toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}) : {toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)} = <block>
 
-              val response = pool.send(
-              serviceName,
-              version,
-              "{method.name}",
-              {method.request.name}({
-              toFieldArrayBuffer(method.getRequest.getFields).map{(field: Field)=>{
-                <div>{nameAsId(field.name)}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>
-              }
-              }}),
-              new {method.request.name.charAt(0).toUpper + method.request.name.substring(1)}Serializer(),
-              new {method.response.name.charAt(0).toUpper + method.response.name.substring(1)}Serializer())
+            val response = pool.send(
+            serviceName,
+            version,
+            "{method.name}",
+            {method.request.name}({
+            toFieldArrayBuffer(method.getRequest.getFields).map{(field: Field)=>{
+              <div>{nameAsId(field.name)}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>
+            }
+            }}),
+            new {method.request.name.charAt(0).toUpper + method.request.name.substring(1)}Serializer(),
+            new {method.response.name.charAt(0).toUpper + method.response.name.substring(1)}Serializer())
 
-              {if(method.getResponse.getFields.get(0).getDataType.kind != DataType.KIND.VOID) <div>response.success</div>}
+            {if(method.getResponse.getFields.get(0).getDataType.kind != DataType.KIND.VOID) <div>response.success</div>}
 
-            </block>
+          </block>
           </div>
         }
         }
@@ -393,8 +393,7 @@ class ScalaGenerator extends CodeGenerator {
             * {method.doc}
             **/
             def {method.name}({toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
-            <div>{nameAsId(field.name)}:{toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}
-            {if(method.getRequest.fields.size() > 0) <span>,</span>} timeout: Long = 5000) : Future[{toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)}] = <block>
+            <div>{nameAsId(field.name)}:{toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}) : Future[{toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)}] = <block>
 
             val response = pool.sendAsync(
             serviceName,
@@ -406,8 +405,7 @@ class ScalaGenerator extends CodeGenerator {
             }
             }}),
             new {method.request.name.charAt(0).toUpper + method.request.name.substring(1)}Serializer(),
-            new {method.response.name.charAt(0).toUpper + method.response.name.substring(1)}Serializer()
-            ,timeout).asInstanceOf[CompletableFuture[{method.response.name}]]
+            new {method.response.name.charAt(0).toUpper + method.response.name.substring(1)}Serializer() ).asInstanceOf[CompletableFuture[{method.response.name}]]
 
             {if(method.getResponse.getFields.get(0).getDataType.kind != DataType.KIND.VOID) <div>toScala(response)(_.success)</div> else <div>toScala(response)(null)</div>}
 
@@ -520,7 +518,7 @@ class ScalaGenerator extends CodeGenerator {
             def {method.name}(
             {toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
             <div>{nameAsId(field.name)}: {toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}
-            }
+          }
             }): {toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)}
 
           </div>
@@ -528,8 +526,8 @@ class ScalaGenerator extends CodeGenerator {
         }
         }
         }
-        </block>
-        </div>
+      </block>
+      </div>
     }
   }
 
@@ -561,7 +559,7 @@ class ScalaGenerator extends CodeGenerator {
           def {method.name}(
           {toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
           <div>{nameAsId(field.name)}: {toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}
-        }}{if(method.getRequest.getFields().size()>0) ","} timeout : Long): Future[{if(method.getResponse.getFields().get(0).getDataType.kind.equals(KIND.VOID)) <div>Unit</div> else toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)}]
+        }}): Future[{if(method.getResponse.getFields().get(0).getDataType.kind.equals(KIND.VOID)) <div>Unit</div> else toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)}]
 
         </div>
       }
@@ -612,10 +610,10 @@ class ScalaGenerator extends CodeGenerator {
   def getToStringByDataType(field: Field):Elem = {
 
     if(field.getDoc != null && field.getDoc.toLowerCase.contains("@logger(level=\"off\")"))
-       <div>"LOGGER_LEVEL_OFF"</div>
+      <div>"LOGGER_LEVEL_OFF"</div>
     else if(field.isOptional)
-       <div>this.{nameAsId(field.name)}.isPresent()?this.{nameAsId(field.name)}.get(){if(field.dataType.kind == KIND.STRUCT) <div>.toString()</div>}:null</div>
+      <div>this.{nameAsId(field.name)}.isPresent()?this.{nameAsId(field.name)}.get(){if(field.dataType.kind == KIND.STRUCT) <div>.toString()</div>}:null</div>
     else
-       <div>this.{nameAsId(field.name)}{if(field.dataType.kind == KIND.STRUCT) <div>.toString()</div>}</div>
+      <div>this.{nameAsId(field.name)}{if(field.dataType.kind == KIND.STRUCT) <div>.toString()</div>}</div>
   }
 }
