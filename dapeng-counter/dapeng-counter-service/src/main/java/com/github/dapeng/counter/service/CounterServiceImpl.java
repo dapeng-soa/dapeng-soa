@@ -1,8 +1,8 @@
 package com.github.dapeng.counter.service;
 
+import com.github.dapeng.basic.api.counter.domain.DataPoint;
+import com.github.dapeng.basic.api.counter.service.CounterService;
 import com.github.dapeng.core.SoaException;
-import com.github.dapeng.counter.api.domain.DataPoint;
-import com.github.dapeng.counter.api.service.CounterService;
 import com.github.dapeng.counter.dao.InfluxdbDao;
 
 import java.util.List;
