@@ -21,17 +21,17 @@
           * 
           **/
           
-             
-             void createUser( com.isuwang.soa.user.domain.User user) throws com.github.dapeng.core.SoaException;
-            
+          
+            void createUser( com.isuwang.soa.user.domain.User user) throws com.github.dapeng.core.SoaException;
+          
         
           /**
           * 
           **/
           
-             
-             com.isuwang.soa.user.domain.User getUserById( Integer userId) throws com.github.dapeng.core.SoaException;
-            
+          
+            com.isuwang.soa.user.domain.User getUserById( Integer userId) throws com.github.dapeng.core.SoaException;
+          
         
-      }
-      
+    }
+    

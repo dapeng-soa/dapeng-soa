@@ -24,7 +24,7 @@
             **/
             
             
-              Future<Void> createOrder( com.isuwang.soa.order.domain.Order order , long timeout) throws com.github.dapeng.core.SoaException;
+              Future<Void> createOrder( com.isuwang.soa.order.domain.Order order) throws com.github.dapeng.core.SoaException;
             
           
             /**
@@ -32,7 +32,7 @@
             **/
             
             
-              Future<com.isuwang.soa.order.domain.Order> getOrderById( Integer orderId , long timeout) throws com.github.dapeng.core.SoaException;
+              Future<com.isuwang.soa.order.domain.Order> getOrderById( Integer orderId) throws com.github.dapeng.core.SoaException;
             
           
       }

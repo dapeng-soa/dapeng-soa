@@ -12,17 +12,17 @@ import java.util.concurrent.Future;
  */
 public class PrintServiceAsyncImpl implements PrintServiceAsync {
     @Override
-    public Future<Void> print(long timeout) throws SoaException {
+    public Future<Void> print() throws SoaException {
         return null;
     }
 
     @Override
-    public Future<String> printInfo(Info info, long timeout) throws SoaException {
+    public Future<String> printInfo(Info info) throws SoaException {
         return null;
     }
 
     @Override
-    public Future<String> printInfo2(String name, long timeout) throws SoaException {
+    public Future<String> printInfo2(String name) throws SoaException {
         CompletableFuture<String> response = CompletableFuture.supplyAsync(()->{
             String result = "233333333";
             try {
@@ -39,7 +39,7 @@ public class PrintServiceAsyncImpl implements PrintServiceAsync {
     }
 
     @Override
-    public Future<String> printInfo3(long timeout) throws SoaException {
+    public Future<String> printInfo3() throws SoaException {
         return null;
     }
 }

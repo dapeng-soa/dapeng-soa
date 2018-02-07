@@ -60,8 +60,7 @@ package com.isuwang.soa.order.scala
             /**
             * 
             **/
-            def createOrder(order:com.isuwang.soa.order.scala.domain.Order 
-            , timeout: Long = 5000) : Future[Unit] = {
+            def createOrder(order:com.isuwang.soa.order.scala.domain.Order ) : Future[Unit] = {
 
             val response = pool.sendAsync(
             serviceName,
@@ -69,8 +68,7 @@ package com.isuwang.soa.order.scala
             "createOrder",
             createOrder_args(order),
             new CreateOrder_argsSerializer(),
-            new CreateOrder_resultSerializer()
-            ,timeout).asInstanceOf[CompletableFuture[createOrder_result]]
+            new CreateOrder_resultSerializer() ).asInstanceOf[CompletableFuture[createOrder_result]]
 
             toScala(response)(null)
 
@@ -81,8 +79,7 @@ package com.isuwang.soa.order.scala
             /**
             * 
             **/
-            def getOrderById(orderId:Int 
-            , timeout: Long = 5000) : Future[com.isuwang.soa.order.scala.domain.Order] = {
+            def getOrderById(orderId:Int ) : Future[com.isuwang.soa.order.scala.domain.Order] = {
 
             val response = pool.sendAsync(
             serviceName,
@@ -90,8 +87,7 @@ package com.isuwang.soa.order.scala
             "getOrderById",
             getOrderById_args(orderId),
             new GetOrderById_argsSerializer(),
-            new GetOrderById_resultSerializer()
-            ,timeout).asInstanceOf[CompletableFuture[getOrderById_result]]
+            new GetOrderById_resultSerializer() ).asInstanceOf[CompletableFuture[getOrderById_result]]
 
             toScala(response)(_.success)
 

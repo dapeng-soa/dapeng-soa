@@ -167,7 +167,7 @@ package com.isuwang.soa.user.scala
             @throws[TException]
             def apply(iface: com.isuwang.soa.user.scala.service.UserServiceAsync, args: createUser_args):Future[createUser_result] = {
 
-              val _result = iface.createUser(args.user,50000)
+              val _result = iface.createUser(args.user)
 
               
                 _result.map(i => createUser_result()).tojava
@@ -321,7 +321,7 @@ package com.isuwang.soa.user.scala
             @throws[TException]
             def apply(iface: com.isuwang.soa.user.scala.service.UserServiceAsync, args: getUserById_args):Future[getUserById_result] = {
 
-              val _result = iface.getUserById(args.userId,50000)
+              val _result = iface.getUserById(args.userId)
 
               _result.map(getUserById_result(_)).tojava
 

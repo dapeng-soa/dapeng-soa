@@ -34,5 +34,5 @@
             settleId: Int ): com.isuwang.soa.settle.scala.domain.Settle
 
           
-        }
-        
+      }
+      

@@ -23,7 +23,7 @@
           
           @throws[com.github.dapeng.core.SoaException]
           def createOrder(
-          order: com.isuwang.soa.order.scala.domain.Order , timeout : Long): Future[Unit]
+          order: com.isuwang.soa.order.scala.domain.Order ): Future[Unit]
 
         
           /**
@@ -32,7 +32,7 @@
           
           @throws[com.github.dapeng.core.SoaException]
           def getOrderById(
-          orderId: Int , timeout : Long): Future[com.isuwang.soa.order.scala.domain.Order]
+          orderId: Int ): Future[com.isuwang.soa.order.scala.domain.Order]
 
         
     }

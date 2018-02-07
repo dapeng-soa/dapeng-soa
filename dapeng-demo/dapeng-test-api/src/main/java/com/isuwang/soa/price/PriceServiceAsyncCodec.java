@@ -202,7 +202,7 @@ package com.isuwang.soa.price;
               public CompletableFuture<insertPrice_result> apply(PriceServiceAsync iface, insertPrice_args insertPrice_args) throws SoaException
               {
 
-                CompletableFuture<Void> result = (CompletableFuture<Void>) iface.insertPrice(insertPrice_args.price ,50000);
+                CompletableFuture<Void> result = (CompletableFuture<Void>) iface.insertPrice(insertPrice_args.price);
 
                 return result.thenApply((Void) -> {
                   insertPrice_result res = new insertPrice_result();
@@ -398,7 +398,7 @@ package com.isuwang.soa.price;
               public CompletableFuture<getPrices_result> apply(PriceServiceAsync iface, getPrices_args getPrices_args) throws SoaException
               {
 
-                CompletableFuture<java.util.List<com.isuwang.soa.price.domain.Price>> result = (CompletableFuture<java.util.List<com.isuwang.soa.price.domain.Price>>) iface.getPrices( 50000);
+                CompletableFuture<java.util.List<com.isuwang.soa.price.domain.Price>> result = (CompletableFuture<java.util.List<com.isuwang.soa.price.domain.Price>>) iface.getPrices();
 
                 return result.thenApply(( java.util.List<com.isuwang.soa.price.domain.Price> i) -> {
                   getPrices_result res = new getPrices_result();

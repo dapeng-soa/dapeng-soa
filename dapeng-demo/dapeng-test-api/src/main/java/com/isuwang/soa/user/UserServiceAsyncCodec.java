@@ -202,7 +202,7 @@ package com.isuwang.soa.user;
               public CompletableFuture<createUser_result> apply(UserServiceAsync iface, createUser_args createUser_args) throws SoaException
               {
 
-                CompletableFuture<Void> result = (CompletableFuture<Void>) iface.createUser(createUser_args.user ,50000);
+                CompletableFuture<Void> result = (CompletableFuture<Void>) iface.createUser(createUser_args.user);
 
                 return result.thenApply((Void) -> {
                   createUser_result res = new createUser_result();
@@ -414,7 +414,7 @@ package com.isuwang.soa.user;
               public CompletableFuture<getUserById_result> apply(UserServiceAsync iface, getUserById_args getUserById_args) throws SoaException
               {
 
-                CompletableFuture<com.isuwang.soa.user.domain.User> result = (CompletableFuture<com.isuwang.soa.user.domain.User>) iface.getUserById(getUserById_args.userId ,50000);
+                CompletableFuture<com.isuwang.soa.user.domain.User> result = (CompletableFuture<com.isuwang.soa.user.domain.User>) iface.getUserById(getUserById_args.userId);
 
                 return result.thenApply(( com.isuwang.soa.user.domain.User i) -> {
                   getUserById_result res = new getUserById_result();

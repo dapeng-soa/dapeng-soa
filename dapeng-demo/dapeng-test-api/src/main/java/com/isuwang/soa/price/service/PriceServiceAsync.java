@@ -24,7 +24,7 @@
             **/
             
             
-              Future<Void> insertPrice( com.isuwang.soa.price.domain.Price price , long timeout) throws com.github.dapeng.core.SoaException;
+              Future<Void> insertPrice( com.isuwang.soa.price.domain.Price price) throws com.github.dapeng.core.SoaException;
             
           
             /**
@@ -32,7 +32,7 @@
             **/
             
             
-              Future<java.util.List<com.isuwang.soa.price.domain.Price>> getPrices(  long timeout) throws com.github.dapeng.core.SoaException;
+              Future<java.util.List<com.isuwang.soa.price.domain.Price>> getPrices() throws com.github.dapeng.core.SoaException;
             
           
       }

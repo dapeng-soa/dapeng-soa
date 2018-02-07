@@ -34,5 +34,5 @@
             orderId: Int ): com.isuwang.soa.order.scala.domain.Order
 
           
-        }
-        
+      }
+      

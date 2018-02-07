@@ -34,5 +34,5 @@
             ): List[com.isuwang.soa.price.scala.domain.Price]
 
           
-        }
-        
+      }
+      

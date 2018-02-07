@@ -202,7 +202,7 @@ package com.isuwang.soa.settle;
               public CompletableFuture<createSettle_result> apply(SettleServiceAsync iface, createSettle_args createSettle_args) throws SoaException
               {
 
-                CompletableFuture<Void> result = (CompletableFuture<Void>) iface.createSettle(createSettle_args.settle ,50000);
+                CompletableFuture<Void> result = (CompletableFuture<Void>) iface.createSettle(createSettle_args.settle);
 
                 return result.thenApply((Void) -> {
                   createSettle_result res = new createSettle_result();
@@ -414,7 +414,7 @@ package com.isuwang.soa.settle;
               public CompletableFuture<getSettleById_result> apply(SettleServiceAsync iface, getSettleById_args getSettleById_args) throws SoaException
               {
 
-                CompletableFuture<com.isuwang.soa.settle.domain.Settle> result = (CompletableFuture<com.isuwang.soa.settle.domain.Settle>) iface.getSettleById(getSettleById_args.settleId ,50000);
+                CompletableFuture<com.isuwang.soa.settle.domain.Settle> result = (CompletableFuture<com.isuwang.soa.settle.domain.Settle>) iface.getSettleById(getSettleById_args.settleId);
 
                 return result.thenApply(( com.isuwang.soa.settle.domain.Settle i) -> {
                   getSettleById_result res = new getSettleById_result();

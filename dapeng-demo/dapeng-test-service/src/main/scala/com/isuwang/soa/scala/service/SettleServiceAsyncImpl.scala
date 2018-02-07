@@ -15,7 +15,7 @@ class SettleServiceAsyncImpl extends SettleServiceAsync{
   /**
     *
     **/
-  override def createSettle(settle: Settle, timeout: Long) = {
+  override def createSettle(settle: Settle) = {
     println("=================createSettle===================")
     Future {
       settles.put(settle.id,settle)
@@ -25,7 +25,7 @@ class SettleServiceAsyncImpl extends SettleServiceAsync{
   /**
     *
     **/
-  override def getSettleById(settleId: Int, timeout: Long) = {
+  override def getSettleById(settleId: Int) = {
     println(" =================getSettleById=================")
     Future {
       settles.get(settleId) match {

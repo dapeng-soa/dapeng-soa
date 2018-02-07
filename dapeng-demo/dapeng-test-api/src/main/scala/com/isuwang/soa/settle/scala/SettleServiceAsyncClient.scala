@@ -60,8 +60,7 @@ package com.isuwang.soa.settle.scala
             /**
             * 
             **/
-            def createSettle(settle:com.isuwang.soa.settle.scala.domain.Settle 
-            , timeout: Long = 5000) : Future[Unit] = {
+            def createSettle(settle:com.isuwang.soa.settle.scala.domain.Settle ) : Future[Unit] = {
 
             val response = pool.sendAsync(
             serviceName,
@@ -69,8 +68,7 @@ package com.isuwang.soa.settle.scala
             "createSettle",
             createSettle_args(settle),
             new CreateSettle_argsSerializer(),
-            new CreateSettle_resultSerializer()
-            ,timeout).asInstanceOf[CompletableFuture[createSettle_result]]
+            new CreateSettle_resultSerializer() ).asInstanceOf[CompletableFuture[createSettle_result]]
 
             toScala(response)(null)
 
@@ -81,8 +79,7 @@ package com.isuwang.soa.settle.scala
             /**
             * 
             **/
-            def getSettleById(settleId:Int 
-            , timeout: Long = 5000) : Future[com.isuwang.soa.settle.scala.domain.Settle] = {
+            def getSettleById(settleId:Int ) : Future[com.isuwang.soa.settle.scala.domain.Settle] = {
 
             val response = pool.sendAsync(
             serviceName,
@@ -90,8 +87,7 @@ package com.isuwang.soa.settle.scala
             "getSettleById",
             getSettleById_args(settleId),
             new GetSettleById_argsSerializer(),
-            new GetSettleById_resultSerializer()
-            ,timeout).asInstanceOf[CompletableFuture[getSettleById_result]]
+            new GetSettleById_resultSerializer() ).asInstanceOf[CompletableFuture[getSettleById_result]]
 
             toScala(response)(_.success)
 

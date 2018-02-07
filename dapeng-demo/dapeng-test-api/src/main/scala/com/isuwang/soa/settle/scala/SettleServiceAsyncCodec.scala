@@ -167,7 +167,7 @@ package com.isuwang.soa.settle.scala
             @throws[TException]
             def apply(iface: com.isuwang.soa.settle.scala.service.SettleServiceAsync, args: createSettle_args):Future[createSettle_result] = {
 
-              val _result = iface.createSettle(args.settle,50000)
+              val _result = iface.createSettle(args.settle)
 
               
                 _result.map(i => createSettle_result()).tojava
@@ -321,7 +321,7 @@ package com.isuwang.soa.settle.scala
             @throws[TException]
             def apply(iface: com.isuwang.soa.settle.scala.service.SettleServiceAsync, args: getSettleById_args):Future[getSettleById_result] = {
 
-              val _result = iface.getSettleById(args.settleId,50000)
+              val _result = iface.getSettleById(args.settleId)
 
               _result.map(getSettleById_result(_)).tojava
 

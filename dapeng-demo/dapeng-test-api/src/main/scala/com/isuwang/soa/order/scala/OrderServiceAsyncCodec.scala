@@ -167,7 +167,7 @@ package com.isuwang.soa.order.scala
             @throws[TException]
             def apply(iface: com.isuwang.soa.order.scala.service.OrderServiceAsync, args: createOrder_args):Future[createOrder_result] = {
 
-              val _result = iface.createOrder(args.order,50000)
+              val _result = iface.createOrder(args.order)
 
               
                 _result.map(i => createOrder_result()).tojava
@@ -321,7 +321,7 @@ package com.isuwang.soa.order.scala
             @throws[TException]
             def apply(iface: com.isuwang.soa.order.scala.service.OrderServiceAsync, args: getOrderById_args):Future[getOrderById_result] = {
 
-              val _result = iface.getOrderById(args.orderId,50000)
+              val _result = iface.getOrderById(args.orderId)
 
               _result.map(getOrderById_result(_)).tojava
 

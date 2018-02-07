@@ -60,8 +60,7 @@ package com.isuwang.soa.user.scala
             /**
             * 
             **/
-            def createUser(user:com.isuwang.soa.user.scala.domain.User 
-            , timeout: Long = 5000) : Future[Unit] = {
+            def createUser(user:com.isuwang.soa.user.scala.domain.User ) : Future[Unit] = {
 
             val response = pool.sendAsync(
             serviceName,
@@ -69,8 +68,7 @@ package com.isuwang.soa.user.scala
             "createUser",
             createUser_args(user),
             new CreateUser_argsSerializer(),
-            new CreateUser_resultSerializer()
-            ,timeout).asInstanceOf[CompletableFuture[createUser_result]]
+            new CreateUser_resultSerializer() ).asInstanceOf[CompletableFuture[createUser_result]]
 
             toScala(response)(null)
 
@@ -81,8 +79,7 @@ package com.isuwang.soa.user.scala
             /**
             * 
             **/
-            def getUserById(userId:Int 
-            , timeout: Long = 5000) : Future[com.isuwang.soa.user.scala.domain.User] = {
+            def getUserById(userId:Int ) : Future[com.isuwang.soa.user.scala.domain.User] = {
 
             val response = pool.sendAsync(
             serviceName,
@@ -90,8 +87,7 @@ package com.isuwang.soa.user.scala
             "getUserById",
             getUserById_args(userId),
             new GetUserById_argsSerializer(),
-            new GetUserById_resultSerializer()
-            ,timeout).asInstanceOf[CompletableFuture[getUserById_result]]
+            new GetUserById_resultSerializer() ).asInstanceOf[CompletableFuture[getUserById_result]]
 
             toScala(response)(_.success)
 

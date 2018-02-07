@@ -202,7 +202,7 @@ package com.isuwang.soa.order;
               public CompletableFuture<createOrder_result> apply(OrderServiceAsync iface, createOrder_args createOrder_args) throws SoaException
               {
 
-                CompletableFuture<Void> result = (CompletableFuture<Void>) iface.createOrder(createOrder_args.order ,50000);
+                CompletableFuture<Void> result = (CompletableFuture<Void>) iface.createOrder(createOrder_args.order);
 
                 return result.thenApply((Void) -> {
                   createOrder_result res = new createOrder_result();
@@ -414,7 +414,7 @@ package com.isuwang.soa.order;
               public CompletableFuture<getOrderById_result> apply(OrderServiceAsync iface, getOrderById_args getOrderById_args) throws SoaException
               {
 
-                CompletableFuture<com.isuwang.soa.order.domain.Order> result = (CompletableFuture<com.isuwang.soa.order.domain.Order>) iface.getOrderById(getOrderById_args.orderId ,50000);
+                CompletableFuture<com.isuwang.soa.order.domain.Order> result = (CompletableFuture<com.isuwang.soa.order.domain.Order>) iface.getOrderById(getOrderById_args.orderId);
 
                 return result.thenApply(( com.isuwang.soa.order.domain.Order i) -> {
                   getOrderById_result res = new getOrderById_result();

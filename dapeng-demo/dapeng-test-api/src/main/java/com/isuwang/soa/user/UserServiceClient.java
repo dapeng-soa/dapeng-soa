@@ -14,10 +14,10 @@ package com.isuwang.soa.user;
 
       **/
       public class UserServiceClient implements UserService{
-        private final String serviceName;
-        private final String version;
+      private final String serviceName;
+      private final String version;
 
-        private SoaConnectionPool pool;
+      private SoaConnectionPool pool;
 
       public UserServiceClient() {
         this.serviceName = "com.isuwang.soa.user.service.UserService";
@@ -32,12 +32,12 @@ package com.isuwang.soa.user;
       }
 
       
-        
-       /**
-       * 
-       **/
           
-            public void createUser(com.isuwang.soa.user.domain.User user) throws SoaException{
+            /**
+            * 
+            **/
+            
+              public void createUser(com.isuwang.soa.user.domain.User user) throws SoaException{
 
               String methodName = "createUser";
 
@@ -50,17 +50,17 @@ package com.isuwang.soa.user;
               
                   
                 
-          }
+            }
+            
           
-        
 
         
-        
-       /**
-       * 
-       **/
           
-            public com.isuwang.soa.user.domain.User getUserById(Integer userId) throws SoaException{
+            /**
+            * 
+            **/
+            
+              public com.isuwang.soa.user.domain.User getUserById(Integer userId) throws SoaException{
 
               String methodName = "getUserById";
 
@@ -75,9 +75,9 @@ package com.isuwang.soa.user;
                       return response.getSuccess();
                     
                 
-          }
+            }
+            
           
-        
 
         
 
@@ -86,10 +86,10 @@ package com.isuwang.soa.user;
       **/
       public String getServiceMetadata() throws SoaException {
         String methodName = "getServiceMetadata";
-          getServiceMetadata_args getServiceMetadata_args = new getServiceMetadata_args();
-          getServiceMetadata_result response = pool.send(serviceName,version,methodName,getServiceMetadata_args, new GetServiceMetadata_argsSerializer(), new GetServiceMetadata_resultSerializer());
-          return response.getSuccess();
+        getServiceMetadata_args getServiceMetadata_args = new getServiceMetadata_args();
+        getServiceMetadata_result response = pool.send(serviceName,version,methodName,getServiceMetadata_args, new GetServiceMetadata_argsSerializer(), new GetServiceMetadata_resultSerializer());
+        return response.getSuccess();
       }
 
-      }
+    }
     

@@ -34,5 +34,5 @@
             userId: Int ): com.isuwang.soa.user.scala.domain.User
 
           
-        }
-        
+      }
+      

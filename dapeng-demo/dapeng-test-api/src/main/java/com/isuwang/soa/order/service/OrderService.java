@@ -21,17 +21,17 @@
           * 
           **/
           
-             
-             void createOrder( com.isuwang.soa.order.domain.Order order) throws com.github.dapeng.core.SoaException;
-            
+          
+            void createOrder( com.isuwang.soa.order.domain.Order order) throws com.github.dapeng.core.SoaException;
+          
         
           /**
           * 
           **/
           
-             
-             com.isuwang.soa.order.domain.Order getOrderById( Integer orderId) throws com.github.dapeng.core.SoaException;
-            
+          
+            com.isuwang.soa.order.domain.Order getOrderById( Integer orderId) throws com.github.dapeng.core.SoaException;
+          
         
-      }
-      
+    }
+    

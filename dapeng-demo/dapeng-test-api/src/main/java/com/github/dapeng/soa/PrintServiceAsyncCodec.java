@@ -170,7 +170,7 @@ package com.github.dapeng.soa;
               public CompletableFuture<print_result> apply(PrintServiceAsync iface, print_args print_args) throws SoaException
               {
 
-                CompletableFuture<Void> result = (CompletableFuture<Void>) iface.print( 50000);
+                CompletableFuture<Void> result = (CompletableFuture<Void>) iface.print();
 
                 return result.thenApply((Void) -> {
                   print_result res = new print_result();
@@ -385,7 +385,7 @@ package com.github.dapeng.soa;
               public CompletableFuture<printInfo_result> apply(PrintServiceAsync iface, printInfo_args printInfo_args) throws SoaException
               {
 
-                CompletableFuture<String> result = (CompletableFuture<String>) iface.printInfo(printInfo_args.info ,50000);
+                CompletableFuture<String> result = (CompletableFuture<String>) iface.printInfo(printInfo_args.info);
 
                 return result.thenApply(( String i) -> {
                   printInfo_result res = new printInfo_result();
@@ -596,7 +596,7 @@ package com.github.dapeng.soa;
               public CompletableFuture<printInfo2_result> apply(PrintServiceAsync iface, printInfo2_args printInfo2_args) throws SoaException
               {
 
-                CompletableFuture<String> result = (CompletableFuture<String>) iface.printInfo2(printInfo2_args.name ,50000);
+                CompletableFuture<String> result = (CompletableFuture<String>) iface.printInfo2(printInfo2_args.name);
 
                 return result.thenApply(( String i) -> {
                   printInfo2_result res = new printInfo2_result();
@@ -779,7 +779,7 @@ package com.github.dapeng.soa;
               public CompletableFuture<printInfo3_result> apply(PrintServiceAsync iface, printInfo3_args printInfo3_args) throws SoaException
               {
 
-                CompletableFuture<String> result = (CompletableFuture<String>) iface.printInfo3( 50000);
+                CompletableFuture<String> result = (CompletableFuture<String>) iface.printInfo3();
 
                 return result.thenApply(( String i) -> {
                   printInfo3_result res = new printInfo3_result();

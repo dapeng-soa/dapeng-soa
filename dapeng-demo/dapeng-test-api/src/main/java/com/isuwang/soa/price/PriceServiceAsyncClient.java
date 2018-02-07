@@ -39,14 +39,14 @@ package com.isuwang.soa.price;
             * 
             **/
             
-              public CompletableFuture<Void> insertPrice(com.isuwang.soa.price.domain.Price price, long timeout) throws SoaException{
+              public CompletableFuture<Void> insertPrice(com.isuwang.soa.price.domain.Price price) throws SoaException{
 
               String methodName = "insertPrice";
               insertPrice_args insertPrice_args = new insertPrice_args();
               insertPrice_args.setPrice(price);
                 
 
-              CompletableFuture<insertPrice_result> response = (CompletableFuture<insertPrice_result>) pool.sendAsync(serviceName,version,"insertPrice",insertPrice_args, new InsertPrice_argsSerializer(), new InsertPrice_resultSerializer(),timeout);
+              CompletableFuture<insertPrice_result> response = (CompletableFuture<insertPrice_result>) pool.sendAsync(serviceName,version,"insertPrice",insertPrice_args, new InsertPrice_argsSerializer(), new InsertPrice_resultSerializer());
 
               
                   return response.thenApply((insertPrice_result result )->  null);
@@ -61,13 +61,13 @@ package com.isuwang.soa.price;
             * 
             **/
             
-              public CompletableFuture<java.util.List<com.isuwang.soa.price.domain.Price>> getPrices(long timeout) throws SoaException{
+              public CompletableFuture<java.util.List<com.isuwang.soa.price.domain.Price>> getPrices() throws SoaException{
 
               String methodName = "getPrices";
               getPrices_args getPrices_args = new getPrices_args();
               
 
-              CompletableFuture<getPrices_result> response = (CompletableFuture<getPrices_result>) pool.sendAsync(serviceName,version,"getPrices",getPrices_args, new GetPrices_argsSerializer(), new GetPrices_resultSerializer(),timeout);
+              CompletableFuture<getPrices_result> response = (CompletableFuture<getPrices_result>) pool.sendAsync(serviceName,version,"getPrices",getPrices_args, new GetPrices_argsSerializer(), new GetPrices_resultSerializer());
 
               
                   

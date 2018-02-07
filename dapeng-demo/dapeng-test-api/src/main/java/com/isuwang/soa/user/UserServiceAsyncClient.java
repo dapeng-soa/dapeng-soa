@@ -39,14 +39,14 @@ package com.isuwang.soa.user;
             * 
             **/
             
-              public CompletableFuture<Void> createUser(com.isuwang.soa.user.domain.User user, long timeout) throws SoaException{
+              public CompletableFuture<Void> createUser(com.isuwang.soa.user.domain.User user) throws SoaException{
 
               String methodName = "createUser";
               createUser_args createUser_args = new createUser_args();
               createUser_args.setUser(user);
                 
 
-              CompletableFuture<createUser_result> response = (CompletableFuture<createUser_result>) pool.sendAsync(serviceName,version,"createUser",createUser_args, new CreateUser_argsSerializer(), new CreateUser_resultSerializer(),timeout);
+              CompletableFuture<createUser_result> response = (CompletableFuture<createUser_result>) pool.sendAsync(serviceName,version,"createUser",createUser_args, new CreateUser_argsSerializer(), new CreateUser_resultSerializer());
 
               
                   return response.thenApply((createUser_result result )->  null);
@@ -61,14 +61,14 @@ package com.isuwang.soa.user;
             * 
             **/
             
-              public CompletableFuture<com.isuwang.soa.user.domain.User> getUserById(Integer userId, long timeout) throws SoaException{
+              public CompletableFuture<com.isuwang.soa.user.domain.User> getUserById(Integer userId) throws SoaException{
 
               String methodName = "getUserById";
               getUserById_args getUserById_args = new getUserById_args();
               getUserById_args.setUserId(userId);
                 
 
-              CompletableFuture<getUserById_result> response = (CompletableFuture<getUserById_result>) pool.sendAsync(serviceName,version,"getUserById",getUserById_args, new GetUserById_argsSerializer(), new GetUserById_resultSerializer(),timeout);
+              CompletableFuture<getUserById_result> response = (CompletableFuture<getUserById_result>) pool.sendAsync(serviceName,version,"getUserById",getUserById_args, new GetUserById_argsSerializer(), new GetUserById_resultSerializer());
 
               
                   
