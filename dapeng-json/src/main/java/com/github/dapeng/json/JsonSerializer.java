@@ -363,7 +363,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     parsePhase = ParsePhase.HEADER;
                     break;
                 case HEADER:
-                    logger.error("should not come here");
+                    logAndThrowTException();
                 case HEADER_END:
                     break;
                 case BODY_BEGIN:
@@ -387,13 +387,14 @@ public class JsonSerializer implements BeanSerializer<String> {
                     if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
                         peek().increaseElement();
                         //集合套集合的变态处理方式
-                        current = new StackNode(peek().dataType.valueType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(), current.struct, current.struct==null?null:current.struct.name);
+                        current = new StackNode(peek().dataType.valueType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(), current.struct, current.struct == null ? null : current.struct.name);
                     }
                     switch (current.dataType.kind) {
                         case STRUCT:
                             Struct struct = current.struct;//findStruct(current.dataType.qualifiedName, service);
                             if (struct == null) {
-                                logger.info("struct not found");
+                                logger.error("struct not found");
+                                logAndThrowTException();
                             }
                             oproto.writeStructBegin(new TStruct(struct.name));
                             break;
@@ -403,13 +404,20 @@ public class JsonSerializer implements BeanSerializer<String> {
                             oproto.writeMapBegin(new TMap(dataType2Byte(current.dataType.keyType), dataType2Byte(current.dataType.valueType), 1));
                             break;
                         default:
-                            logger.error("won't be here, currentField:" + current.fieldName, new Throwable());
+                            logAndThrowTException();
                     }
                     break;
                 default:
-                    logger.error("should not come here, currentField:" + current.fieldName + ", current phase:" + parsePhase);
-                    break;
+                    logAndThrowTException();
             }
+        }
+
+        private void logAndThrowTException() throws TException {
+            TException ex = new TException("won't be here, currentField:"
+                    + current == null ? "" : current.fieldName
+                    + ", current phase:" + parsePhase);
+            logger.error(ex.getMessage(), ex);
+            throw ex;
         }
 
         private SoaHeader buildSoaHeader() {
@@ -433,16 +441,16 @@ public class JsonSerializer implements BeanSerializer<String> {
 
             switch (parsePhase) {
                 case HEADER_BEGIN:
-                    logger.error("should not come here");
+                    logAndThrowTException();
                     break;
                 case HEADER:
                     parsePhase = ParsePhase.HEADER_END;
                     break;
                 case HEADER_END:
-                    logger.error("should not come here");
+                    logAndThrowTException();
                     break;
                 case BODY_BEGIN:
-                    logger.error("should not come here");
+                    logAndThrowTException();
                     break;
                 case BODY:
                     if (!foundField) return;
@@ -460,13 +468,13 @@ public class JsonSerializer implements BeanSerializer<String> {
                             reWriteByteBuf();
                             break;
                         default:
-                            logger.error("field(" + current.fieldName + ") won't be here", new Throwable());
+                            logAndThrowTException();
                     }
                     break;
                 case BODY_END:
                     break;
                 default:
-                    logger.error("won't be here", new Throwable());
+                    logAndThrowTException();
             }
         }
 
@@ -484,7 +492,7 @@ public class JsonSerializer implements BeanSerializer<String> {
             if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
                 peek().increaseElement();
                 //集合套集合的变态处理方式
-                current = new StackNode(peek().dataType.valueType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(), current.struct, current.struct==null?null:current.struct.name);
+                current = new StackNode(peek().dataType.valueType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(), current.struct, current.struct == null ? null : current.struct.name);
             }
 
             switch (current.dataType.kind) {
@@ -496,11 +504,11 @@ public class JsonSerializer implements BeanSerializer<String> {
                     oproto.writeSetBegin(new TSet(dataType2Byte(current.dataType.valueType), 0));
                     break;
                 default:
-                    logger.error("field(" + current.fieldName + ") won't be here", new Throwable());
+                    logAndThrowTException();
             }
 
             Struct nextStruct = findStruct(current.dataType.valueType.qualifiedName, service);
-            stackNew(new StackNode(current.dataType.valueType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(), nextStruct, nextStruct==null?"":nextStruct.name));
+            stackNew(new StackNode(current.dataType.valueType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(), nextStruct, nextStruct == null ? "" : nextStruct.name));
         }
 
         @Override
@@ -521,7 +529,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     reWriteByteBuf();
                     break;
                 default:
-                    logger.error("field(" + current.fieldName + ") won't be here", new Throwable());
+                    logAndThrowTException();
             }
         }
 
@@ -579,7 +587,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     logger.warn("skip field(" + name + ")@pase:" + parsePhase);
                     break;
                 default:
-                    logger.error("field(" + name + ") won't be here", new Throwable());
+                    logAndThrowTException();
             }
 
         }
@@ -596,7 +604,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     oproto.writeI64(Long.valueOf(value));
                     break;
                 default:
-                    logger.error("field(" + current.fieldName + ") won't be here", new Throwable());
+                    logAndThrowTException();
             }
         }
 
@@ -699,7 +707,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     requestByteBuf.writerIndex(current.byteBufPositionBefore);
                     break;
                 default:
-                    logger.error("Field:" + current.fieldName + ", won't be here", new Throwable());
+                    logAndThrowTException();
             }
         }
 
