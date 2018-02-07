@@ -1,4 +1,4 @@
-FROM dapengsoa/dapeng-container:2.0.0-SNAPSHOT
+FROM dapengsoa/dapeng-container:2.0.0
 MAINTAINER dapengsoa@gmail.com
 
 ENV CONTAINER_HOME /dapeng-container
@@ -14,7 +14,7 @@ WORKDIR ${CONTAINER_HOME}/bin
 
 RUN mkdir -p /data/wordVec
 
-COPY dapeng-counter-service ${CONTAINER_HOME}/apps
+COPY dapeng-counter-service ${CONTAINER_HOME}/apps/dapeng-counter-service/
 
 CMD ${CONTAINER_HOME}/bin/startup.sh && tail -F ${CONTAINER_HOME}/bin/startup.sh
 
