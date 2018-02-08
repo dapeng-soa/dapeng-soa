@@ -741,6 +741,9 @@ public class JsonSerializer implements BeanSerializer<String> {
                         case INTEGER:
                             oproto.writeI32(Integer.parseInt(value));
                             break;
+                        case LONG:
+                            oproto.writeI64(Long.valueOf(value));
+                            break;
                         case SHORT:
                             oproto.writeI16(Short.parseShort(value));
                             break;
