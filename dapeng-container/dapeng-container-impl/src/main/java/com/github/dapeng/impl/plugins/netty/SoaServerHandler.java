@@ -268,10 +268,15 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     /**
+     * TODO
      * 获取timeout参数. 优先级如下:
-     * 1. 配置中心(zk参数)
-     * 2. 环境变量
-     * 3. 默认值(2000毫秒)
+     * 1. 如果invocationContext有设置的话, 那么用invocationContext的(这个值每次调用都可能不一样)
+     * 2. invocationContext没有的话, 就拿Option的(命令行或者环境变量)
+     * 3. 没设置Option的话, 那么取ZK的.
+     * 4. ZK没有的话, 拿IDL的(暂没实现该参数)
+     * 5. 都没有的话, 拿默认值.(这个值所有方法一致, 假设为50S)
+     *
+     * 最后校验一下,拿到的值不能超过系统设置的最大值
      *
      * 如果得到的数据超过最大值, 那么就用最大值.
      * @param soaHeader
