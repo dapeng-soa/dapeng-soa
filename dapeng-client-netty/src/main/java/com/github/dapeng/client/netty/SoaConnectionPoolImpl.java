@@ -123,7 +123,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             try {
                 subPoolLock.lock();
                 subPool = subPools.get(ipPort);
-                if (!subPools.containsKey(ipPort)) {
+                if (subPool == null) {
                     subPool = new SubPool(inst.ip, inst.port);
                     subPools.put(ipPort, subPool);
                 }
