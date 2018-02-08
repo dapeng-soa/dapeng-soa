@@ -5,8 +5,11 @@ import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.SoaHeader;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.util.SoaMessageBuilder;
+import com.github.dapeng.util.SoaSystemEnvProperties;
+import io.netty.buffer.AbstractByteBufAllocator;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.buffer.UnpooledByteBufAllocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +23,10 @@ public class SoaConnectionImpl extends SoaBaseConnection {
 
     @Override
     protected  <REQ> ByteBuf buildRequestBuf(String service, String version, String method, int seqid, REQ request, BeanSerializer<REQ> requestSerializer) throws SoaException {
-        final ByteBuf requestBuf = PooledByteBufAllocator.DEFAULT.buffer(8192);
+        AbstractByteBufAllocator allocator =
+                SoaSystemEnvProperties.SOA_POOLED_BYTEBUF ?
+                        PooledByteBufAllocator.DEFAULT : UnpooledByteBufAllocator.DEFAULT;
+        final ByteBuf requestBuf = allocator.buffer(8192);
 
         SoaMessageBuilder<REQ> builder = new SoaMessageBuilder<>();
 

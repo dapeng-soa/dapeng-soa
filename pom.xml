@@ -50,12 +50,11 @@
     <modules>
         <module>dapeng-core</module>
         <module>dapeng-spring</module>
-        <module>dapeng-zookeeper</module>
+        <!--<module>dapeng-zookeeper</module>-->
         <module>dapeng-maven-plugin</module>
         <module>dapeng-registry</module>
         <module>dapeng-code-generator</module>
         <module>dapeng-api-doc</module>
-        <!--<module>dapeng-monitor</module>-->
         <module>dapeng-route</module>
         <!--<module>dapeng-tools</module>-->
         <module>dapeng-message</module>
@@ -65,7 +64,9 @@
         <module>dapeng-client-netty</module>
         <module>dapeng-transaction</module>
         <module>dapeng-json</module>
-        <module>dapeng-demo</module>
+        <!--<module>dapeng-demo</module>-->
+        <module>dapeng-monitor-filter</module>
+        <module>dapeng-counter</module>
     </modules>
 
     <properties>
@@ -289,7 +290,7 @@
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-context</artifactId>
-                <version>4.2.4.RELEASE</version>
+                <version>4.3.5.RELEASE</version>
             </dependency>
 
             <dependency>

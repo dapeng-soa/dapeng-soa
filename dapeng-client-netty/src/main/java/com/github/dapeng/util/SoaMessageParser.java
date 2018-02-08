@@ -49,7 +49,8 @@ public class SoaMessageParser<RESP> {
 
     public SoaMessageParser<RESP> parseHeader() throws TException{
         TSoaTransport transport = new TSoaTransport(buffer);
-        TBinaryProtocol headerProtocol = new TBinaryProtocol(transport);
+        TBinaryProtocol headerProtocol = new TBinaryProtocol(transport, buffer.readableBytes(),
+                buffer.readableBytes(), false, true);
         this.headerProtocol = headerProtocol;
         // length(int32) stx(int8) version(int8) protocol(int8) seqid(i32) header(struct) body(struct) etx(int8)
 
@@ -65,10 +66,11 @@ public class SoaMessageParser<RESP> {
         CodecProtocol protocol = CodecProtocol.toCodecProtocol(headerProtocol.readByte());
         switch (protocol) {
             case Binary:
-                bodyProtocol = new TBinaryProtocol(transport);
+                bodyProtocol = new TBinaryProtocol(transport, buffer.readableBytes(), buffer.readableBytes(),
+                        false, true);
                 break;
             case CompressedBinary:
-                bodyProtocol = new TCompactProtocol(transport);
+                bodyProtocol = new TCompactProtocol(transport, buffer.readableBytes(), buffer.readableBytes());
                 break;
             case Json:
                 bodyProtocol = new TJSONProtocol(transport);

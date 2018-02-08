@@ -19,7 +19,7 @@ public class HeadFilter implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(HeadFilter.class);
 
     @Override
-    public void onEntry(FilterContext ctx, FilterChain next)  {
+    public void onEntry(FilterContext ctx, FilterChain next) {
 
         try {
             next.onEntry(ctx);
@@ -31,34 +31,34 @@ public class HeadFilter implements Filter {
     }
 
     @Override
-    public void onExit(FilterContext ctx, FilterChain prev)  {
+    public void onExit(FilterContext ctx, FilterChain prev) {
         // 第一个filter不需要调onExit
         ByteBuf outputBuf = null;
-        ChannelHandlerContext channelHandlerContext = (ChannelHandlerContext) ctx.getAttribute( "channelHandlerContext");
+        ChannelHandlerContext channelHandlerContext = (ChannelHandlerContext) ctx.getAttribute("channelHandlerContext");
         TransactionContext context = (TransactionContext) ctx.getAttribute("context");
         BeanSerializer serializer = (BeanSerializer) ctx.getAttribute("respSerializer");
         Object result = ctx.getAttribute("result");
         try {
 
-            if(channelHandlerContext!=null) {
+            if (channelHandlerContext != null) {
                 outputBuf = channelHandlerContext.alloc().buffer(8192);  // TODO 8192?
                 TSoaTransport transport = new TSoaTransport(outputBuf);
 
                 SoaMessageProcessor builder = new SoaMessageProcessor(transport);
                 builder.writeHeader(context);
-                if(serializer != null && result != null) {
+                if (serializer != null && result != null) {
                     builder.writeBody(serializer, result);
                 }
                 builder.writeMessageEnd();
                 transport.flush();
 
-                assert(outputBuf.refCnt() == 1);
+                assert (outputBuf.refCnt() == 1);
                 channelHandlerContext.writeAndFlush(outputBuf);
             }
-        }catch (Exception e){
+        } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
 
-            writeErrorMessage(channelHandlerContext,context,new SoaException(SoaCode.UnKnown,e.getMessage()));
+            writeErrorMessage(channelHandlerContext, context, new SoaException(SoaCode.UnKnown, e.getMessage()));
             if (outputBuf != null) {
                 outputBuf.release();
             }
