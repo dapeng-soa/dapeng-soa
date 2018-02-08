@@ -43,7 +43,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        final long startTime = System.currentTimeMillis();
+        final long invokeTime = System.currentTimeMillis();
         ByteBuf reqMessage = (ByteBuf) msg;
         ByteBuf reqMirror = reqMessage.slice(); // only used for debug packet
 
@@ -60,12 +60,12 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
             container.getDispatcher().execute(() -> {
                 try {
-                    final long waitingTime = System.currentTimeMillis() - startTime;
+                    //check if request expired
+                    final long waitingTime = System.currentTimeMillis() - invokeTime;
                     long timeout = getTimeout(soaHeader);
                     if (waitingTime > timeout) {
                         throw new SoaException(SoaCode.TimeOut, "服务端请求超时");
                     }
-
                     TransactionContext.Factory.setCurrentInstance(context);
                     processRequest(ctx, parser.getContentProtocol(), processor, reqMirror, context);
                 } catch (Throwable e) {
@@ -116,6 +116,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             if (soaFunction == null) {
                 throw new SoaException(SoaCode.NotMatchedMethod);
             }
+
             REQ args;
             try {
                 args = soaFunction.reqSerializer.read(contentProtocol);
@@ -182,9 +183,9 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
             sharedChain.onEntry(filterContext);
         } catch (SoaException e) {
-            LOGGER.error(e.getMsg());
+            LOGGER.error(e.getMsg(), e);
             writeErrorMessage(channelHandlerContext, context, new SoaException(e.getCode(), e.getMsg()));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
             writeErrorMessage(channelHandlerContext, context, new SoaException(SoaCode.UnKnown, e.getMessage()));
         } finally {
@@ -266,6 +267,16 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         return msg;
     }
 
+    /**
+     * 获取timeout参数. 优先级如下:
+     * 1. 配置中心(zk参数)
+     * 2. 环境变量
+     * 3. 默认值(2000毫秒)
+     *
+     * 如果得到的数据超过最大值, 那么就用最大值.
+     * @param soaHeader
+     * @return
+     */
     private long getTimeout(SoaHeader soaHeader) {
         long timeout = 0L;
         String serviceKey = soaHeader.getServiceName() + "." + soaHeader.getVersionName() + "." + soaHeader.getMethodName() + ".producer";
