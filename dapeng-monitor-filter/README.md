@@ -16,22 +16,19 @@ dapeng-counter-api
 ```
 ### 本项目包括的filter如下
 ```$xslt
-com.github.dapeng.monitor.filter.QpsFilter
 com.github.dapeng.monitor.filter.ServiceProcessFilter
 ```
 ### filter配置参数(可选, 不配置的话默认加载全部插件. 在dapeng配置文件或者命令行/环境变量中配置)
 ```$xslt
 排除或者引入指定的filter
 soa.filter.excludes=
-soa.filter.includes=com.github.dapeng.monitor.filter.QpsFilter
+soa.filter.includes=com.github.dapeng.monitor.filter.ServiceProcessFilter
 
 ```
 ### 监控配置参数(在dapeng配置文件或者命令行/环境变量中配置)
 ```$xslt
 #监控数据存储库
 soa.monitor.infulxdb.database=dapengState
-#qps的上送间隔,单位秒
-soa.monitor.qps.period=5
 #服务调用统计的上送间隔
 soa.monitor.service.period=60
 ```
@@ -42,7 +39,5 @@ soa.monitor.service.period=60
   如果配置了soa.filter.excludes,那么会排除该参数指定的filters.
   如果同时配置了上述两个参数, 那么只有soa.filter.includes有效
 - 监控数据存储库 dapengState,可配置
-- qps存储表dapeng_qps(暂不可配置)
 - 服务调用统计存储表dapeng_service_process(暂不可配置)
-- qps上送间隔5000ms
 - service_process上送间隔60000ms

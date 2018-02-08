@@ -149,7 +149,7 @@ public class ServiceProcessFilter implements InitializableFilter {
                     } catch (InterruptedException e1) {
                         LOGGER.error(e.getMessage(), e);
                     }
-                    LOGGER.error(e.getMessage(), e);
+                    //错误日志在counterservice中记录
                 }
             }
         });
