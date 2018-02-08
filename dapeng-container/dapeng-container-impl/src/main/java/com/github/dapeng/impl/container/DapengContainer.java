@@ -151,7 +151,6 @@ public class DapengContainer implements Container {
         Plugin zookeeperPlugin = new ZookeeperRegistryPlugin(this);
         Plugin taskSchedulePlugin = new TaskSchedulePlugin(this);
         Plugin nettyPlugin = new NettyPlugin(this);
-        Plugin kafkaMessagePlugin = new KafkaMessagePlugin();
 
         PluginLoader pluginLoader = new PluginLoader();
         // TODO
@@ -164,7 +163,8 @@ public class DapengContainer implements Container {
         registerPlugin(springAppLoader);
         registerPlugin(taskSchedulePlugin);
         registerPlugin(nettyPlugin);
-        registerPlugin(kafkaMessagePlugin);
+        registerPlugin(pluginLoader);
+
 
         if ("plugin".equals(RUN_MODE)) {
             Plugin apiDocPlugin = new ApiDocPlugin(this);
