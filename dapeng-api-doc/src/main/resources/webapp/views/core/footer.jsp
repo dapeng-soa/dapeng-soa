@@ -10,7 +10,7 @@
     <div class="container">
         <div class="row footer-top">
             <h4 class="text-center">
-                <img width="133px" height="60px" style="border-radius: 12px; background-clip: padding-box;"
+                <img width="133px" style="border-radius: 12px; background-clip: padding-box;"
                      src="${basePath}/images/logo.png" alt="大鹏服务化框架"> &nbsp;<a href="https://github.com/dapeng-soa" target="_blank">@大鹏开源出品</a>
             </h4>
         </div>
