@@ -1,6 +1,5 @@
 package com.github.dapeng.client.netty;
 
-import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.ServiceInfo;
@@ -25,7 +24,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 /**
- * Created by lihuimin on 2017/12/22.
+ *
+ * @author lihuimin
+ * @date 2017/12/22
  */
 public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
@@ -167,14 +168,13 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     }
 
-
     /**
      * 超时逻辑:
      * 1. 如果invocationContext有设置的话, 那么用invocationContext的(这个值每次调用都可能不一样)
-     * 2. invocationContext没有的话, 就拿IDL的(暂没实现该参数)(这个值每个方法可能都不一样)
-     * 3. IDL没有的话, 拿命令行或者环境变量的(这个值所有方法一致)
-     * 4. 环境变量没有的话, 拿zk的(这个值所有方法一致)
-     * 5. 都没有的话, 拿默认值.(这个值所有方法一致)
+     * 2. invocationContext没有的话, 就拿Option的(命令行或者环境变量)
+     * 3. 没设置Option的话, 那么取ZK的.
+     * 4. ZK没有的话, 拿IDL的(暂没实现该参数)
+     * 5. 都没有的话, 拿默认值.(这个值所有方法一致, 假设为10)
      *
      * 最后校验一下,拿到的值不能超过系统设置的最大值
      *
@@ -259,6 +259,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
 
         return timeout;
+
     }
 
     /**
