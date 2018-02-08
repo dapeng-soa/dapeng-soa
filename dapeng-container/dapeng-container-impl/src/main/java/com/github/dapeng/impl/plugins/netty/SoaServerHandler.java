@@ -180,6 +180,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
             filterContext.setAttribute("channelHandlerContext", channelHandlerContext);
             filterContext.setAttribute("context", context);
+            filterContext.setAttribute("reqSerializer", soaFunction.reqSerializer);
             filterContext.setAttribute("respSerializer", soaFunction.respSerializer);
             filterContext.setAttribute("result", result);
 
