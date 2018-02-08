@@ -174,7 +174,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * 2. invocationContext没有的话, 就拿Option的(命令行或者环境变量)
      * 3. 没设置Option的话, 那么取ZK的.
      * 4. ZK没有的话, 拿IDL的(暂没实现该参数)
-     * 5. 都没有的话, 拿默认值.(这个值所有方法一致, 假设为10)
+     * 5. 都没有的话, 拿默认值.(这个值所有方法一致, 假设为50S)
      *
      * 最后校验一下,拿到的值不能超过系统设置的最大值
      *
@@ -187,26 +187,20 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         Long maxTimeout = SoaSystemEnvProperties.SOA_MAX_TIMEOUT;
 
-        //1. 如果invocationContext有设置的话, 那么用invocationContext的(这个值每次调用都可能不一样)
         Optional<Long> invocationTimeout = getInvocationTimeout();
-
-        //TODO 2. invocationContext没有的话, 就拿IDL的(暂没实现该参数)(这个值每个方法可能都不一样)
-        Optional<Long> idlTimeout = getIdlTimeout(service,version,method);
-
-        //TODO 3. IDL没有的话, 拿命令行或者环境变量的(这个值所有方法一致)
         Optional<Long> envTimeout = SoaSystemEnvProperties.SOA_SERVICE_CLIENT_TIMEOUT.longValue() == 0 ?
                 Optional.empty(): Optional.of(SoaSystemEnvProperties.SOA_SERVICE_CLIENT_TIMEOUT.longValue());
 
-        // 4. 环境变量没有的话, 拿zk的(这个值所有方法一致)
         Optional<Long> zkTimeout = getZkTimeout(service,version,method);
+        Optional<Long> idlTimeout = getIdlTimeout(service,version,method);
 
-        Optional<Long> timeout = Optional.empty();
+        Optional<Long> timeout;
         if (invocationTimeout.isPresent()) {
             timeout = invocationTimeout;
-        } else if (idlTimeout.isPresent()) {
-            timeout = idlTimeout;
         } else if (envTimeout.isPresent()) {
             timeout = envTimeout;
+        } else if (idlTimeout.isPresent()) {
+            timeout = idlTimeout;
         } else if (zkTimeout.isPresent()) {
             timeout = zkTimeout;
         } else {

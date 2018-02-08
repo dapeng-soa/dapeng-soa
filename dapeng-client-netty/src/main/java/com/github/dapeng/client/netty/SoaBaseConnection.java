@@ -141,12 +141,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     }
 
                     responseBufFuture.exceptionally(ex -> {
-                        SoaException soaException = null;
-                        if (ex instanceof SoaException) {
-                            soaException = (SoaException)ex;
-                        } else {
-                            soaException = new SoaException(SoaCode.UnKnown.getCode(), ex.getMessage());
-                        }
+                        SoaException soaException = convertToSoaException(ex);
                         Result<RESP> result = new Result<>(null,soaException);
                         ctx.setAttribute("result", result);
                         try {
@@ -167,13 +162,9 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     });
                 } catch (Exception e) {
                     LOGGER.error(e.getMessage(), e);
-                    SoaException soaException = null;
-                    if (e instanceof SoaException) {
-                        soaException = (SoaException)e;
-                    } else {
-                        soaException = new SoaException(SoaCode.UnKnown.getCode(), e.getMessage());
-                    }
+                    SoaException soaException = convertToSoaException(e);
                     Result<RESP> result = new Result<>(null,soaException);
+
                     ctx.setAttribute("result", result);
                     onExit(ctx, getPrevChain(ctx));
                 }
@@ -221,6 +212,16 @@ public abstract class SoaBaseConnection implements SoaConnection {
         assert (resultFuture != null);
 
         return resultFuture;
+    }
+
+    private SoaException convertToSoaException(Throwable ex) {
+        SoaException soaException = null;
+        if (ex instanceof SoaException) {
+            soaException = (SoaException)ex;
+        } else {
+            soaException = new SoaException(SoaCode.UnKnown.getCode(), ex.getMessage());
+        }
+        return soaException;
     }
 
     protected SoaHeader buildHeader(String service, String version, String method) {

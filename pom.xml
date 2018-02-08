@@ -156,13 +156,13 @@
                 <repository>
                     <id>nexus-releases</id>
                     <name>Nexus Releases Repository</name>
-                    <url>http://nexus.oa.isuwang.com/repository/maven-releases/</url>
+                    <url>http://nexus.oa.dapeng.com/repository/maven-releases/</url>
                 </repository>
 
                 <snapshotRepository>
                     <id>nexus-snapshots</id>
                     <name>Nexus Snapshots Repository</name>
-                    <url>http://nexus.oa.isuwang.com/repository/maven-snapshots/</url>
+                    <url>http://nexus.oa.dapeng.com/repository/maven-snapshots/</url>
                 </snapshotRepository>
             </distributionManagement>
 
@@ -206,8 +206,8 @@
 
     <repositories>
         <repository>
-            <id>maven-isuwang-com</id>
-            <url>http://nexus.oa.isuwang.com/repository/maven-public/</url>
+            <id>maven-dapeng-com</id>
+            <url>http://nexus.oa.dapeng.com/repository/maven-public/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
