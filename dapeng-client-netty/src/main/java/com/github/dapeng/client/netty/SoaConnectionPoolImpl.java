@@ -9,7 +9,10 @@ import com.github.dapeng.registry.*;
 import com.github.dapeng.registry.zookeeper.LoadBalanceService;
 import com.github.dapeng.registry.zookeeper.ZkClientAgentImpl;
 import com.github.dapeng.util.SoaSystemEnvProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.annotation.Annotation;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -31,6 +34,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private ZkClientAgent zkAgent = new ZkClientAgentImpl();
 
     private ReentrantLock subPoolLock = new ReentrantLock();
+
+    private final Logger logger = LoggerFactory.getLogger(SoaConnectionPoolImpl.class);
 
     //TODO
     List<WeakReference<ClientInfo>> clientInfos;
@@ -173,8 +178,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      *
      * 最后校验一下,拿到的值不能超过系统设置的最大值
      *
-     *
-     *
      * @param service
      * @param version
      * @param method
@@ -210,13 +213,13 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             timeout = Optional.of(maxTimeout);
         }
 
-        return timeout.get();
+        return timeout.get() >= maxTimeout ? maxTimeout : timeout.get();
 
     }
 
     private Optional<Long> getInvocationTimeout() {
         InvocationContext context = InvocationContextImpl.Factory.getCurrentInstance();
-        return context.getTimeout();
+        return context.getTimeout() == null ? Optional.empty(): context.getTimeout();
     }
 
     //TODO
@@ -237,13 +240,20 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 List<Method> methods =  Arrays.stream(service.getMethods()).filter(method ->
                         methodName.equals(method.getName())).collect(Collectors.toList());
                 if (! methods.isEmpty()) {
-                    //TODO: 自定义注解类
-                    //Method method = methods.get(0);
-                    //if (method.isAnnotationPresent(xxx)) {
-                    //  Annotation annotation = method.getAnnotation(xxx)
-                    //  Long annotationTimeout = (String) annotation.getClass().getDeclaredMethod("timeout").invoke(annotation);
-                    //  timeout = Optional.of(annotationTimeout)
-                    //}
+                    //TODO: 自定义注解类 (Invocation(timeout=xxx))
+                    Method method = methods.get(0);
+                    try {
+                        Class InvocationClass = service.getClassLoader().loadClass("com.github.dapeng.core.Invocation");
+
+                        if (method.isAnnotationPresent(InvocationClass)) {
+                            Annotation annotation = method.getAnnotation(InvocationClass);
+                            Long annotationTimeout = (Long) annotation.getClass().getDeclaredMethod("timeout").invoke(annotation);
+                            timeout = Optional.of(annotationTimeout);
+                        }
+                    } catch (Exception e) {
+                        logger.error(" Failed to get method: {}:{}:{} invocation Annotation. ", serviceName,version,method);
+                    }
+
                 }
             }
         }
