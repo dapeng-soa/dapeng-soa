@@ -78,16 +78,19 @@
 
     <profiles>
         <profile>
-            <id>release</id>
+            <id>today-release</id>
             <distributionManagement>
-                <snapshotRepository>
-                    <id>oss</id>
-                    <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-                </snapshotRepository>
                 <repository>
-                    <id>oss</id>
-                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                    <id>today-dev</id>
+                    <name>Nexus Releases Repository</name>
+                    <url>http://nexus-inner.today36524.com.cn/repository/maven-releases/</url>
                 </repository>
+
+                <snapshotRepository>
+                    <id>today-dev</id>
+                    <name>Nexus Snapshots Repository</name>
+                    <url>http://nexus-inner.today36524.com.cn/repository/maven-snapshots/</url>
+                </snapshotRepository>
             </distributionManagement>
 
             <dependencies>
