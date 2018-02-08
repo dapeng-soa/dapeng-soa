@@ -42,9 +42,9 @@
     </developers>
 
     <scm>
-        <connection>scm:https://github.com/dapeng-soa/dapeng-soa.git</connection>
-        <developerConnection>scm:https://github.com/dapeng-soa/dapeng-soa.git</developerConnection>
-        <url>https://github.com/dapeng-soa/dapeng-soa.git</url>
+        <connection>scm:git:https://github.com/dapeng-soa/dapeng-soa.git</connection>
+        <developerConnection>scm:git:https://github.com/dapeng-soa/dapeng-soa.git</developerConnection>
+        <url>https://github.com/dapeng-soa/dapeng-soa</url>
     </scm>
 
     <modules>
