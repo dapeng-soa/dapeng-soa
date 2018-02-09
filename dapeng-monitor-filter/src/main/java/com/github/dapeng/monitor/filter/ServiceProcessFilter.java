@@ -56,19 +56,20 @@ public class ServiceProcessFilter implements InitializableFilter {
 
     @Override
     public void onExit(FilterContext ctx, FilterChain prev) throws SoaException {
-
-        SoaHeader soaHeader = ((TransactionContext) ctx.getAttribute("context")).getHeader();
-        final Long start = SERVICE_LOCAL.get();
-        SERVICE_LOCAL.remove();
-        final Long end = System.currentTimeMillis();
-        ServiceSimpleInfo simpleInfo = new ServiceSimpleInfo(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName());
-        Map<ServiceSimpleInfo, Long> map = new ConcurrentHashMap<>(16);
-        map.put(simpleInfo, end - start);
-        serviceElapses.add(map);
-
-        LOGGER.info("ServiceProcessFilter -" + SERVER_IP + SERVER_PORT + ":[" + simpleInfo.getMethodName() + "]" + " 耗时 ==>" + (end - start) + "ms");
-        serviceLock.lock();
         try {
+            SoaHeader soaHeader = ((TransactionContext) ctx.getAttribute("context")).getHeader();
+            //TODO different thread while in async mode
+            final Long start = SERVICE_LOCAL.get();
+            SERVICE_LOCAL.remove();
+            final Long end = System.currentTimeMillis();
+            ServiceSimpleInfo simpleInfo = new ServiceSimpleInfo(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName());
+            Map<ServiceSimpleInfo, Long> map = new ConcurrentHashMap<>(16);
+            map.put(simpleInfo, end - start);
+            serviceElapses.add(map);
+
+            LOGGER.info("ServiceProcessFilter -" + SERVER_IP + SERVER_PORT + ":[" + simpleInfo.getMethodName() + "]" + " 耗时 ==>" + (end - start) + "ms");
+            serviceLock.lock();
+
             ServiceProcessData processData = serviceProcessCallDatas.get(simpleInfo);
             if (processData != null) {
                 processData.getTotalCalls().incrementAndGet();
@@ -98,9 +99,13 @@ public class ServiceProcessFilter implements InitializableFilter {
 
                 serviceProcessCallDatas.put(simpleInfo, newProcessData);
             }
+        } catch (Throwable e) {
+            // Just swallow it
+            LOGGER.error(e.getMessage(), e);
         } finally {
             serviceLock.unlock();
         }
+
         prev.onExit(ctx);
     }
 
