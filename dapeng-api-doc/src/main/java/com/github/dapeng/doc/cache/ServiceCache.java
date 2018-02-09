@@ -1,6 +1,7 @@
 package com.github.dapeng.doc.cache;
 
 
+import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.metadata.*;
 import com.google.common.collect.TreeMultimap;
@@ -15,6 +16,7 @@ import javax.xml.bind.JAXB;
 import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 /**
@@ -58,8 +60,8 @@ public class ServiceCache {
             String metadata = "";
             try {
                 //init service,no need to set params
-                InvocationContextImpl.Factory.createNewInstance();
-
+                InvocationContext invocationContext = InvocationContextImpl.Factory.createNewInstance();
+                invocationContext.setTimeout(Optional.of(5000L));
                 metadata = new MetadataClient(serviceInfo.serviceName, serviceInfo.version)
                         .getServiceMetadata();
             } catch (Exception e) {
