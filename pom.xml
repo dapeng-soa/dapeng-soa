@@ -48,25 +48,7 @@
     </scm>
 
     <modules>
-        <module>dapeng-core</module>
-        <module>dapeng-spring</module>
-        <!--<module>dapeng-zookeeper</module>-->
-        <module>dapeng-maven-plugin</module>
-        <module>dapeng-registry</module>
-        <module>dapeng-code-generator</module>
-        <module>dapeng-api-doc</module>
-        <module>dapeng-route</module>
-        <!--<module>dapeng-tools</module>-->
-        <module>dapeng-message</module>
-        <!--<module>dapeng-service-invoke</module>-->
-        <module>dapeng-container</module>
-        <module>dapeng-utils</module>
-        <module>dapeng-client-netty</module>
-        <module>dapeng-transaction</module>
-        <module>dapeng-json</module>
-        <!--<module>dapeng-demo</module>-->
         <module>dapeng-monitor-filter</module>
-        <module>dapeng-counter</module>
     </modules>
 
     <properties>

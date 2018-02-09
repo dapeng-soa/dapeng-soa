@@ -15,6 +15,7 @@ import com.github.dapeng.monitor.util.MonitorFilterProperties;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
@@ -43,7 +44,7 @@ public class ServiceProcessFilter implements InitializableFilter {
     /**
      * 异常情况下，可以保留10小时的统计数据
      */
-    private ArrayBlockingQueue<List<DataPoint>> serviceDataQueue = new ArrayBlockingQueue<>(60 * 60 * 10/PERIOD);
+    private ArrayBlockingQueue<List<DataPoint>> serviceDataQueue = new ArrayBlockingQueue<>(60 * 60 * 10 / PERIOD);
 
 
     @Override
@@ -97,7 +98,7 @@ public class ServiceProcessFilter implements InitializableFilter {
 
                 serviceProcessCallDatas.put(simpleInfo, newProcessData);
             }
-        }finally {
+        } finally {
             serviceLock.unlock();
         }
         prev.onExit(ctx);
@@ -117,7 +118,7 @@ public class ServiceProcessFilter implements InitializableFilter {
         LOGGER.info("ServiceProcessFilter 定时上送时间:{} 上送间隔:{}ms", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss S").format(calendar.getTime()), PERIOD * 1000);
 
         ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-        executorService.scheduleAtFixedRate(()->{
+        executorService.scheduleAtFixedRate(() -> {
             serviceLock.lock();
             try {
                 serviceDataQueue.put(serviceData2Points(System.currentTimeMillis(), serviceProcessCallDatas, serviceElapses));
@@ -125,7 +126,7 @@ public class ServiceProcessFilter implements InitializableFilter {
                 serviceElapses.clear();
             } catch (Exception e) {
                 LOGGER.error(e.getMessage(), e);
-            }finally {
+            } finally {
                 serviceLock.unlock();
             }
         }, initialDelay, PERIOD * 1000, TimeUnit.MILLISECONDS);
@@ -134,12 +135,12 @@ public class ServiceProcessFilter implements InitializableFilter {
             while (true) {
                 List<DataPoint> points = null;
                 try {
-                    points =  serviceDataQueue.take();
+                    points = serviceDataQueue.take();
                 } catch (InterruptedException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
                 try {
-                    if (points != null && points.size() !=0 ){
+                    if (points != null && points.size() != 0) {
                         LOGGER.debug("ServiceProcessFilter 上送时间:{}ms ", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss S").format(System.currentTimeMillis()));
                         SERVICE_CLIENT.submitPoints(points);
                     }
@@ -198,13 +199,13 @@ public class ServiceProcessFilter implements InitializableFilter {
             tag.put("server_port", SERVER_PORT.toString());
             point.setTags(tag);
             Map<String, String> fields = new ConcurrentHashMap<>(16);
-            fields.put("i_min_time",iMinTime.toString());
-            fields.put("i_max_time",iMaxTime.toString());
-            fields.put("i_average_time",iAverageTime.toString());
-            fields.put("i_total_time",iTotalTime.toString());
-            fields.put("total_calls",serviceProcessData.getTotalCalls().toString());
-            fields.put("succeed_calls",serviceProcessData.getSucceedCalls().get()+"");
-            fields.put("fail_calls",serviceProcessData.getFailCalls().get()+"");
+            fields.put("i_min_time", iMinTime.toString());
+            fields.put("i_max_time", iMaxTime.toString());
+            fields.put("i_average_time", iAverageTime.toString());
+            fields.put("i_total_time", iTotalTime.toString());
+            fields.put("total_calls", serviceProcessData.getTotalCalls().toString());
+            fields.put("succeed_calls", serviceProcessData.getSucceedCalls().get() + "");
+            fields.put("fail_calls", serviceProcessData.getFailCalls().get() + "");
             point.setValues(fields);
             points.add(point);
         });
