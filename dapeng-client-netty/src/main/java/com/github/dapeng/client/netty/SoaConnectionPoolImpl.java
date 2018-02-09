@@ -185,7 +185,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      */
     private long getTimeout(String service, String version, String method) {
 
-        Long maxTimeout = SoaSystemEnvProperties.SOA_MAX_TIMEOUT;
+        long maxTimeout = SoaSystemEnvProperties.SOA_MAX_TIMEOUT;
+        long defaultTimeout = SoaSystemEnvProperties.SOA_DEFAULT_TIMEOUT;
 
         Optional<Long> invocationTimeout = getInvocationTimeout();
         Optional<Long> envTimeout = SoaSystemEnvProperties.SOA_SERVICE_CLIENT_TIMEOUT.longValue() == 0 ?
@@ -204,7 +205,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         } else if (zkTimeout.isPresent()) {
             timeout = zkTimeout;
         } else {
-            timeout = Optional.of(maxTimeout);
+            timeout = Optional.of(defaultTimeout);
         }
 
         return timeout.get() >= maxTimeout ? maxTimeout : timeout.get();

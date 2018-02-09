@@ -292,7 +292,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             timeout = (timeoutConfig != null) ? timeoutConfig.longValue() : envTimeout;
         }
         if (timeout == 0L) {
-            timeout = (envTimeout == 0) ? 2000L : envTimeout;
+            timeout = (envTimeout == 0) ? SoaSystemEnvProperties.SOA_DEFAULT_TIMEOUT : envTimeout;
         }
 
         if (timeout > SoaSystemEnvProperties.SOA_MAX_TIMEOUT) {
