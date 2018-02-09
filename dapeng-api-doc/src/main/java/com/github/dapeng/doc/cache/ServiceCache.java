@@ -74,7 +74,7 @@ public class ServiceCache {
                     Map<String, Service> services = loadResource(serviceData);
                     ServiceCache.services.putAll(services);
                 } catch (Exception e) {
-                    LOGGER.error("生成SERVICE出错", e);
+                    LOGGER.error("生成SERVICE出错, metaData:\n" + metadata, e);
                 }
             }
         });
