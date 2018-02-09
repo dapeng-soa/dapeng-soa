@@ -60,14 +60,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
             container.getDispatcher().execute(() -> {
                 try {
-                    //check if request expired
-                    final long waitingTime = System.currentTimeMillis() - invokeTime;
-                    long timeout = getTimeout(soaHeader);
-                    if (waitingTime > timeout) {
-                        throw new SoaException(SoaCode.TimeOut, "服务端请求超时");
-                    }
                     TransactionContext.Factory.setCurrentInstance(context);
-                    processRequest(ctx, parser.getContentProtocol(), processor, reqMirror, context);
+                    processRequest(ctx, parser.getContentProtocol(), processor, reqMirror, context, invokeTime);
                 } catch (Throwable e) {
                     LOGGER.error(e.getMessage(), e);
                     writeErrorMessage(ctx, context, new SoaException(SoaCode.UnKnown, e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage()));
@@ -102,10 +96,19 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                                                TProtocol contentProtocol,
                                                SoaServiceDefinition<I> serviceDef,
                                                ByteBuf reqMirror,
-                                               TransactionContext context) throws TException {
+                                               TransactionContext context,
+                                               long invokeTime) throws TException {
 
         try {
             SoaHeader soaHeader = context.getHeader();
+
+            //check if request expired
+            final long waitingTime = System.currentTimeMillis() - invokeTime;
+            long timeout = getTimeout(soaHeader);
+            if (waitingTime > timeout) {
+                throw new SoaException(SoaCode.TimeOut, "服务端请求超时");
+            }
+
             Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
             if (application == null) {
