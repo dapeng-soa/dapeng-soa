@@ -64,7 +64,7 @@ public class ServiceProcessFilter implements InitializableFilter {
             final Long end = System.currentTimeMillis();
             ServiceSimpleInfo simpleInfo = new ServiceSimpleInfo(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName());
             Map<ServiceSimpleInfo, Long> map = new ConcurrentHashMap<>(16);
-            map.put(simpleInfo, end - start);
+            map.put(simpleInfo, start == null? 0:end - start);
             serviceElapses.add(map);
 
             LOGGER.info("ServiceProcessFilter -" + SERVER_IP + SERVER_PORT + ":[" + simpleInfo.getMethodName() + "]" + " 耗时 ==>" + (end - start) + "ms");
