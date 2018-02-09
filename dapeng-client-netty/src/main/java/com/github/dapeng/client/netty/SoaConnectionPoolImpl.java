@@ -225,32 +225,33 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private Optional<Long> getIdlTimeout(String serviceName, String version, String methodName) {
         Optional<Long> timeout = Optional.empty();
 
-        Application application = ContainerFactory.getContainer().getApplication(new ProcessorKey(serviceName,version));
-
-        if (application != null) {
-            Optional<ServiceInfo> serviceInfo = application.getServiceInfo(serviceName,version);
-            if (serviceInfo.isPresent()) {
-                Class<?> service = serviceInfo.get().ifaceClass;
-                List<Method> methods =  Arrays.stream(service.getMethods()).filter(method ->
-                        methodName.equals(method.getName())).collect(Collectors.toList());
-                if (! methods.isEmpty()) {
-                    //TODO: 自定义注解类 (Invocation(timeout=xxx))
-                    Method method = methods.get(0);
-                    try {
-                        Class InvocationClass = service.getClassLoader().loadClass("com.github.dapeng.core.Invocation");
-
-                        if (method.isAnnotationPresent(InvocationClass)) {
-                            Annotation annotation = method.getAnnotation(InvocationClass);
-                            Long annotationTimeout = (Long) annotation.getClass().getDeclaredMethod("timeout").invoke(annotation);
-                            timeout = Optional.of(annotationTimeout);
-                        }
-                    } catch (Exception e) {
-                        logger.error(" Failed to get method: {}:{}:{} invocation Annotation. ", serviceName,version,method);
-                    }
-
-                }
-            }
-        }
+        //todo
+//        Application application = ContainerFactory.getContainer().getApplication(new ProcessorKey(serviceName,version));
+//
+//        if (application != null) {
+//            Optional<ServiceInfo> serviceInfo = application.getServiceInfo(serviceName,version);
+//            if (serviceInfo.isPresent()) {
+//                Class<?> service = serviceInfo.get().ifaceClass;
+//                List<Method> methods =  Arrays.stream(service.getMethods()).filter(method ->
+//                        methodName.equals(method.getName())).collect(Collectors.toList());
+//                if (! methods.isEmpty()) {
+//                    //TODO: 自定义注解类 (Invocation(timeout=xxx))
+//                    Method method = methods.get(0);
+//                    try {
+//                        Class InvocationClass = service.getClassLoader().loadClass("com.github.dapeng.core.Invocation");
+//
+//                        if (method.isAnnotationPresent(InvocationClass)) {
+//                            Annotation annotation = method.getAnnotation(InvocationClass);
+//                            Long annotationTimeout = (Long) annotation.getClass().getDeclaredMethod("timeout").invoke(annotation);
+//                            timeout = Optional.of(annotationTimeout);
+//                        }
+//                    } catch (Exception e) {
+//                        logger.error(" Failed to get method: {}:{}:{} invocation Annotation. ", serviceName,version,method);
+//                    }
+//
+//                }
+//            }
+//        }
 
         return timeout;
 
