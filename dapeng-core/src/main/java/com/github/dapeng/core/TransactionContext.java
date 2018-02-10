@@ -96,8 +96,6 @@ public class TransactionContext {
 
             if (context == null) {
                 context = createNewInstance();
-
-                threadLocal.set(context);
             }
 
             return context;

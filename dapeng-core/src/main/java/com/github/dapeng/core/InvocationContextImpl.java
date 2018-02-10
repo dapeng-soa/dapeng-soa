@@ -225,8 +225,6 @@ public class InvocationContextImpl implements  InvocationContext {
             //客户端可能不手动创建上下文.
             if (context == null) {
                 context = createNewInstance();
-
-                threadLocal.set(context);
             }
 
             return context;
