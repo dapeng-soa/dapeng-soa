@@ -209,7 +209,10 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         soaHeader.setRespMessage(Optional.of("ok"));
         context.setHeader(soaHeader);
         try {
-            application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} response body:{}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.getOperatorId(), soaHeader.getOperatorName(), formatToString(soaFunction.respSerializer.toString(result)));
+            application.info(this.getClass(),
+                    soaHeader.getServiceName() + ":" + soaHeader.getVersionName()
+                            + ":" + soaHeader.getMethodName() + " operatorId:" + soaHeader.getOperatorId()
+                            + " operatorName:" + soaHeader.getOperatorName());
 
             filterContext.setAttribute("channelHandlerContext", channelHandlerContext);
             filterContext.setAttribute("context", context);
@@ -228,6 +231,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
     /**
      * handle this within HeadFilter
+     *
      * @param ctx
      * @param context
      * @param filterContext
@@ -292,10 +296,11 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
      * 3. 没设置Option的话, 那么取ZK的.
      * 4. ZK没有的话, 拿IDL的(暂没实现该参数)
      * 5. 都没有的话, 拿默认值.(这个值所有方法一致, 假设为50S)
-     *
+     * <p>
      * 最后校验一下,拿到的值不能超过系统设置的最大值
-     *
+     * <p>
      * 如果得到的数据超过最大值, 那么就用最大值.
+     *
      * @param soaHeader
      * @return
      */
@@ -321,7 +326,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     private SoaException convertToSoaException(Throwable ex) {
         SoaException soaException = null;
         if (ex instanceof SoaException) {
-            soaException = (SoaException)ex;
+            soaException = (SoaException) ex;
         } else {
             soaException = new SoaException(SoaCode.UnKnown.getCode(), ex.getMessage());
         }
