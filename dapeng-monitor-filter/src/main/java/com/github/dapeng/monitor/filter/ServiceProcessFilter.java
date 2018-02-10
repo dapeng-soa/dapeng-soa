@@ -38,7 +38,6 @@ public class ServiceProcessFilter implements InitializableFilter {
     private final String SUCCESS_CODE = "0000";
     private final CounterService SERVICE_CLIENT = new CounterServiceClient();
     private Map<ServiceSimpleInfo, ServiceProcessData> serviceProcessCallDatas = new ConcurrentHashMap<>(16);
-    private final ThreadLocal<Long> SERVICE_LOCAL = new ThreadLocal<>();
     private List<Map<ServiceSimpleInfo, Long>> serviceElapses = new ArrayList<>();
     private ReentrantLock serviceLock = new ReentrantLock();
     /**
@@ -49,26 +48,25 @@ public class ServiceProcessFilter implements InitializableFilter {
 
     @Override
     public void onEntry(FilterContext ctx, FilterChain next) throws SoaException {
-        // start time Todo ThreadLocal？
-        SERVICE_LOCAL.set(System.currentTimeMillis());
+        // start time
+        ctx.setAttribute("invokeBeginTimeInMs", System.currentTimeMillis());
         next.onEntry(ctx);
     }
 
     @Override
     public void onExit(FilterContext ctx, FilterChain prev) throws SoaException {
         try {
+            serviceLock.lock();
             SoaHeader soaHeader = ((TransactionContext) ctx.getAttribute("context")).getHeader();
-            //TODO different thread while in async mode
-            final Long start = SERVICE_LOCAL.get();
-            SERVICE_LOCAL.remove();
-            final Long end = System.currentTimeMillis();
+
+            final Long invokeBeginTimeInMs = (Long)ctx.getAttribute("invokeBeginTimeInMs");
+            final Long cost = System.currentTimeMillis() - invokeBeginTimeInMs;
             ServiceSimpleInfo simpleInfo = new ServiceSimpleInfo(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName());
             Map<ServiceSimpleInfo, Long> map = new ConcurrentHashMap<>(16);
-            map.put(simpleInfo, start == null? 0:end - start);
+            map.put(simpleInfo, cost);
             serviceElapses.add(map);
 
-            LOGGER.info("ServiceProcessFilter -" + SERVER_IP + SERVER_PORT + ":[" + simpleInfo.getMethodName() + "]" + " 耗时 ==>" + (end - start) + "ms");
-            serviceLock.lock();
+            LOGGER.info("ServiceProcessFilter - {}:{}:[{}] 耗时 ==>{} ms", SERVER_IP,SERVER_PORT ,simpleInfo.getMethodName(),cost);
 
             ServiceProcessData processData = serviceProcessCallDatas.get(simpleInfo);
             if (processData != null) {
