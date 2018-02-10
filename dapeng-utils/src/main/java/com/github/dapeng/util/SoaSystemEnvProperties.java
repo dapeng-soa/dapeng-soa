@@ -78,6 +78,11 @@ public class SoaSystemEnvProperties {
     public static final String SOA_FILTER_EXCLUDES = get(KEY_SOA_FILTER_EXCLUDES,"");
     public static final String SOA_FILTER_INCLUDES = get(KEY_SOA_FILTER_INCLUDES,"");
 
+    /**
+     * 正常返回的时候的response code
+     */
+    public static final String SOA_NORMAL_RESP_CODE = "0000";
+
     public static String get(String key) {
         return get(key, null);
     }

@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import static com.github.dapeng.util.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
+
 /**
  * @author lihuimin
  * @date 2017/12/7
@@ -153,8 +155,13 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             SoaFunctionDefinition.Async asyncFunc = (SoaFunctionDefinition.Async) soaFunction;
                             CompletableFuture<RESP> future = (CompletableFuture<RESP>) asyncFunc.apply(iface, args);
                             future.whenComplete((realResult, ex) -> {
-                                TransactionContext.Factory.setCurrentInstance(context);
-                                processResult(channelHandlerContext, soaFunction, context, realResult, application, ctx);
+                                if (ex != null) {
+                                    SoaException soaException = convertToSoaException(ex);
+                                    writeErrorMessage(channelHandlerContext, context, ctx, soaException);
+                                } else {
+                                    TransactionContext.Factory.setCurrentInstance(context);
+                                    processResult(channelHandlerContext, soaFunction, context, realResult, application, ctx);
+                                }
                                 onExit(ctx, getPrevChain(ctx));
                             });
                         } else {
@@ -198,7 +205,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
     private void processResult(ChannelHandlerContext channelHandlerContext, SoaFunctionDefinition soaFunction, TransactionContext context, Object result, Application application, FilterContext filterContext) {
         SoaHeader soaHeader = context.getHeader();
-        soaHeader.setRespCode(Optional.of("0000"));
+        soaHeader.setRespCode(Optional.of(SOA_NORMAL_RESP_CODE));
         soaHeader.setRespMessage(Optional.of("ok"));
         context.setHeader(soaHeader);
         try {
@@ -219,6 +226,13 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
+    /**
+     * handle this within HeadFilter
+     * @param ctx
+     * @param context
+     * @param filterContext
+     * @param e
+     */
     private void writeErrorMessage(ChannelHandlerContext ctx, TransactionContext context, FilterContext filterContext, SoaException e) {
 
         SoaHeader soaHeader = context.getHeader();
@@ -304,4 +318,13 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         return timeout;
     }
 
+    private SoaException convertToSoaException(Throwable ex) {
+        SoaException soaException = null;
+        if (ex instanceof SoaException) {
+            soaException = (SoaException)ex;
+        } else {
+            soaException = new SoaException(SoaCode.UnKnown.getCode(), ex.getMessage());
+        }
+        return soaException;
+    }
 }

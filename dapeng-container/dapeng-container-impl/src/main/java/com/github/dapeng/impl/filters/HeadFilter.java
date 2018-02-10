@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
+import static com.github.dapeng.util.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
+
 public class HeadFilter implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(HeadFilter.class);
 
@@ -38,10 +40,14 @@ public class HeadFilter implements Filter {
         TransactionContext context = (TransactionContext) ctx.getAttribute("context");
         BeanSerializer serializer = (BeanSerializer) ctx.getAttribute("respSerializer");
         Object result = ctx.getAttribute("result");
+        SoaHeader soaHeader = context.getHeader();
+        Optional<String> respCode = soaHeader.getRespCode();
         try {
-
-            if (channelHandlerContext != null) {
-                outputBuf = channelHandlerContext.alloc().buffer(8192);  // TODO 8192?
+            if (respCode.isPresent() && !respCode.get().equals(SOA_NORMAL_RESP_CODE)) {
+                writeErrorMessage(channelHandlerContext, context, new SoaException(respCode.get(),
+                        soaHeader.getRespMessage().orElse(SoaCode.UnKnown.getMsg())));
+            } else if (channelHandlerContext != null) {
+                outputBuf = channelHandlerContext.alloc().buffer(8192);
                 TSoaTransport transport = new TSoaTransport(outputBuf);
 
                 SoaMessageProcessor builder = new SoaMessageProcessor(transport);
@@ -54,6 +60,8 @@ public class HeadFilter implements Filter {
 
                 assert (outputBuf.refCnt() == 1);
                 channelHandlerContext.writeAndFlush(outputBuf);
+            } else {
+                writeErrorMessage(channelHandlerContext, context, new SoaException(SoaCode.UnKnown));
             }
         } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);

@@ -3,6 +3,7 @@ package com.github.dapeng.client.netty;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.filter.*;
 import com.github.dapeng.org.apache.thrift.TException;
+import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.SoaMessageParser;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -140,20 +141,16 @@ public abstract class SoaBaseConnection implements SoaConnection {
                         return;
                     }
 
-                    responseBufFuture.exceptionally(ex -> {
-                        SoaException soaException = convertToSoaException(ex);
-                        Result<RESP> result = new Result<>(null,soaException);
-                        ctx.setAttribute("result", result);
-                        try {
-                            onExit(ctx, getPrevChain(ctx));
-                        } catch (SoaException e) {
-                            LOGGER.error(e.getMessage(), e);
+                    responseBufFuture.whenComplete((realResult, ex) -> {
+                        if (ex != null) {
+                            SoaException soaException = convertToSoaException(ex);
+                            Result<RESP> result = new Result<>(null,soaException);
+                            ctx.setAttribute("result", result);
+                        } else {
+                            Result<RESP> result = processResponse(realResult, responseSerializer);
+                            ctx.setAttribute("result", result);
                         }
-                        return null;
-                    });
-                    responseBufFuture.thenAccept(responseBuf -> {
-                        Result<RESP> result = processResponse(responseBuf, responseSerializer);
-                        ctx.setAttribute("result", result);
+
                         try {
                             onExit(ctx, getPrevChain(ctx));
                         } catch (SoaException e) {
@@ -281,6 +278,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
             }
         } catch (TException ex) {
             LOGGER.error("通讯包解析出错:\n" + ex.getMessage(), ex);
+            LOGGER.error(DumpUtil.dumpToStr(responseBuf));
             return new Result<>(null,
                     new SoaException(SoaCode.UnKnown, "通讯包解析出错"));
         } finally {
