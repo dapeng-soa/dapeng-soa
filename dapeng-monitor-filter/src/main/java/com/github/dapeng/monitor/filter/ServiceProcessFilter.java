@@ -35,16 +35,16 @@ public class ServiceProcessFilter implements InitializableFilter {
     private final String DATA_BASE = MonitorFilterProperties.SOA_MONITOR_INFLUXDB_DATABASE;
     private final String SERVER_IP = SoaSystemEnvProperties.SOA_CONTAINER_IP;
     private final Integer SERVER_PORT = SoaSystemEnvProperties.SOA_CONTAINER_PORT;
-    private final String SUCCESS_CODE = "0000";
+    private final String SUCCESS_CODE = SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
     private final CounterService SERVICE_CLIENT = new CounterServiceClient();
     private Map<ServiceSimpleInfo, ServiceProcessData> serviceProcessCallDatas = new ConcurrentHashMap<>(16);
     private List<Map<ServiceSimpleInfo, Long>> serviceElapses = new ArrayList<>();
     private ReentrantLock serviceLock = new ReentrantLock();
+    private byte[] workingLock = new byte[0];
     /**
      * 异常情况下，可以保留10小时的统计数据
      */
     private ArrayBlockingQueue<List<DataPoint>> serviceDataQueue = new ArrayBlockingQueue<>(60 * 60 * 10 / PERIOD);
-
 
     @Override
     public void onEntry(FilterContext ctx, FilterChain next) throws SoaException {
@@ -59,14 +59,14 @@ public class ServiceProcessFilter implements InitializableFilter {
             serviceLock.lock();
             SoaHeader soaHeader = ((TransactionContext) ctx.getAttribute("context")).getHeader();
 
-            final Long invokeBeginTimeInMs = (Long)ctx.getAttribute("invokeBeginTimeInMs");
+            final Long invokeBeginTimeInMs = (Long) ctx.getAttribute("invokeBeginTimeInMs");
             final Long cost = System.currentTimeMillis() - invokeBeginTimeInMs;
             ServiceSimpleInfo simpleInfo = new ServiceSimpleInfo(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName());
             Map<ServiceSimpleInfo, Long> map = new ConcurrentHashMap<>(16);
             map.put(simpleInfo, cost);
             serviceElapses.add(map);
 
-            LOGGER.info("ServiceProcessFilter - {}:{}:[{}] 耗时 ==>{} ms", SERVER_IP,SERVER_PORT ,simpleInfo.getMethodName(),cost);
+            LOGGER.info("ServiceProcessFilter - {}:{}:[{}] 耗时 ==>{} ms", SERVER_IP, SERVER_PORT, simpleInfo.getMethodName(), cost);
 
             ServiceProcessData processData = serviceProcessCallDatas.get(simpleInfo);
             if (processData != null) {
@@ -87,6 +87,7 @@ public class ServiceProcessFilter implements InitializableFilter {
                 newProcessData.setVersionName(simpleInfo.getVersionName());
                 newProcessData.setPeriod(PERIOD);
                 newProcessData.setAnalysisTime(Calendar.getInstance().getTimeInMillis());
+
                 newProcessData.setTotalCalls(new AtomicInteger(1));
 
                 if (soaHeader.getRespCode().isPresent() && SUCCESS_CODE.equals(soaHeader.getRespCode().get())) {
@@ -132,28 +133,38 @@ public class ServiceProcessFilter implements InitializableFilter {
             } finally {
                 serviceLock.unlock();
             }
+
+            workingLock.notify();
         }, initialDelay, PERIOD * 1000, TimeUnit.MILLISECONDS);
 
         Thread workerThread = new Thread(() -> {
             while (true) {
-                List<DataPoint> points = null;
-                try {
-                    points = serviceDataQueue.take();
-                } catch (InterruptedException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-                try {
-                    if (points != null && points.size() != 0) {
-                        LOGGER.debug("ServiceProcessFilter 上送时间:{}ms ", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss S").format(System.currentTimeMillis()));
-                        SERVICE_CLIENT.submitPoints(points);
+                List<DataPoint> points = serviceDataQueue.peek();
+
+
+                if (points != null) {
+                    if (!points.isEmpty()) {
+                        try {
+                            LOGGER.debug("ServiceProcessFilter 上送时间:{}ms ", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss S").format(System.currentTimeMillis()));
+                            SERVICE_CLIENT.submitPoints(points);
+                            serviceDataQueue.remove(points);
+                        } catch (Throwable e) {
+                            LOGGER.error(e.getMessage(), e);
+                            try {
+                                workingLock.wait();
+                            } catch (InterruptedException ex) {
+                                LOGGER.error(ex.getMessage(), ex);
+                            }
+                        }
+                    } else {
+                        serviceDataQueue.remove(points);
                     }
-                } catch (Exception e) {
+                } else {
                     try {
-                        serviceDataQueue.put(points);
-                    } catch (InterruptedException e1) {
+                        workingLock.wait();
+                    } catch (InterruptedException e) {
                         LOGGER.error(e.getMessage(), e);
                     }
-                    //错误日志在counterservice中记录
                 }
             }
         });
