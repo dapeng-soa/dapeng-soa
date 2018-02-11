@@ -10,4 +10,5 @@ public interface InitializableFilter extends Filter {
 
     void init();
 
+    void destroy();
 }

@@ -13,6 +13,7 @@ import com.github.dapeng.monitor.domain.ServiceProcessData;
 import com.github.dapeng.monitor.domain.ServiceSimpleInfo;
 import com.github.dapeng.monitor.util.MonitorFilterProperties;
 import com.github.dapeng.util.SoaSystemEnvProperties;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +21,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -39,8 +41,16 @@ public class ServiceProcessFilter implements InitializableFilter {
     private final CounterService SERVICE_CLIENT = new CounterServiceClient();
     private Map<ServiceSimpleInfo, ServiceProcessData> serviceProcessCallDatas = new ConcurrentHashMap<>(16);
     private List<Map<ServiceSimpleInfo, Long>> serviceElapses = new ArrayList<>();
-    private ReentrantLock serviceLock = new ReentrantLock();
-    private byte[] workingLock = new byte[0];
+
+    /**
+     * 共享资源锁, 用于保护serviceProcessCallDatas的同步锁
+     */
+    private ReentrantLock shareLock = new ReentrantLock();
+    /**
+     * 信号锁, 用于提醒线程跟数据上送线程的同步
+     */
+    private ReentrantLock signalLock = new ReentrantLock();
+    private Condition signalCondition = signalLock.newCondition();
     /**
      * 异常情况下，可以保留10小时的统计数据
      */
@@ -56,7 +66,7 @@ public class ServiceProcessFilter implements InitializableFilter {
     @Override
     public void onExit(FilterContext ctx, FilterChain prev) throws SoaException {
         try {
-            serviceLock.lock();
+            shareLock.lock();
             SoaHeader soaHeader = ((TransactionContext) ctx.getAttribute("context")).getHeader();
 
             final Long invokeBeginTimeInMs = (Long) ctx.getAttribute("invokeBeginTimeInMs");
@@ -66,7 +76,9 @@ public class ServiceProcessFilter implements InitializableFilter {
             map.put(simpleInfo, cost);
             serviceElapses.add(map);
 
-            LOGGER.info("ServiceProcessFilter - {}:{}:[{}] 耗时 ==>{} ms", SERVER_IP, SERVER_PORT, simpleInfo.getMethodName(), cost);
+            LOGGER.debug("ServiceProcessFilter - " + simpleInfo.getServiceName()
+                    + ":" + simpleInfo.getMethodName() + ":[" + simpleInfo.getVersionName() + "] 耗时 ==>"
+                    + cost + " ms");
 
             ServiceProcessData processData = serviceProcessCallDatas.get(simpleInfo);
             if (processData != null) {
@@ -79,14 +91,7 @@ public class ServiceProcessFilter implements InitializableFilter {
                     processData.getFailCalls().incrementAndGet();
                 }
             } else {
-                ServiceProcessData newProcessData = new ServiceProcessData();
-                newProcessData.setServerIP(SERVER_IP);
-                newProcessData.setServerPort(SERVER_PORT);
-                newProcessData.setServiceName(simpleInfo.getServiceName());
-                newProcessData.setMethodName(simpleInfo.getMethodName());
-                newProcessData.setVersionName(simpleInfo.getVersionName());
-                newProcessData.setPeriod(PERIOD);
-                newProcessData.setAnalysisTime(Calendar.getInstance().getTimeInMillis());
+                ServiceProcessData newProcessData = createNewData(simpleInfo);
 
                 newProcessData.setTotalCalls(new AtomicInteger(1));
 
@@ -102,10 +107,23 @@ public class ServiceProcessFilter implements InitializableFilter {
             // Just swallow it
             LOGGER.error(e.getMessage(), e);
         } finally {
-            serviceLock.unlock();
+            shareLock.unlock();
         }
 
         prev.onExit(ctx);
+    }
+
+    private ServiceProcessData createNewData(ServiceSimpleInfo simpleInfo) {
+        ServiceProcessData newProcessData = new ServiceProcessData();
+        newProcessData.setServerIP(SERVER_IP);
+        newProcessData.setServerPort(SERVER_PORT);
+        newProcessData.setServiceName(simpleInfo.getServiceName());
+        newProcessData.setMethodName(simpleInfo.getMethodName());
+        newProcessData.setVersionName(simpleInfo.getVersionName());
+        newProcessData.setPeriod(PERIOD);
+        newProcessData.setAnalysisTime(Calendar.getInstance().getTimeInMillis());
+
+        return newProcessData;
     }
 
     /**
@@ -119,11 +137,20 @@ public class ServiceProcessFilter implements InitializableFilter {
         calendar.set(Calendar.MILLISECOND, 0);
         Long initialDelay = calendar.getTime().getTime() - System.currentTimeMillis();
 
-        LOGGER.info("ServiceProcessFilter 定时上送时间:{} 上送间隔:{}ms", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss S").format(calendar.getTime()), PERIOD * 1000);
+        LOGGER.info("ServiceProcessFilter 定时上送时间:{} 上送间隔:{}s", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss S").format(calendar.getTime()), PERIOD * 1000);
 
-        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-        executorService.scheduleAtFixedRate(() -> {
-            serviceLock.lock();
+        ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(2,
+                new ThreadFactoryBuilder()
+                        .setDaemon(true)
+                        .setNameFormat("dapeng-monitor-filter-scheduler-%d")
+                        .build());
+        ExecutorService uploaderExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
+                .setDaemon(true)
+                .setNameFormat("dapeng-monitor-filter-uploader")
+                .build());
+
+        schedulerExecutorService.scheduleAtFixedRate(() -> {
+            shareLock.lock();
             try {
                 serviceDataQueue.put(serviceData2Points(System.currentTimeMillis(), serviceProcessCallDatas, serviceElapses));
                 serviceProcessCallDatas.clear();
@@ -131,68 +158,54 @@ public class ServiceProcessFilter implements InitializableFilter {
             } catch (Exception e) {
                 LOGGER.error(e.getMessage(), e);
             } finally {
-                serviceLock.unlock();
+                shareLock.unlock();
             }
         }, initialDelay, PERIOD * 1000, TimeUnit.MILLISECONDS);
 
-        Thread workerThread = new Thread(() -> {
+        // wake up the uploader thread every PERIOD.
+        schedulerExecutorService.scheduleAtFixedRate(() -> {
+            try {
+                signalLock.lock();
+                signalCondition.signal();
+            } finally {
+                signalLock.unlock();
+            }
+
+        }, initialDelay, PERIOD * 1000, TimeUnit.MILLISECONDS);
+
+        // uploader thread.
+        uploaderExecutor.execute(() -> {
             while (true) {
-                List<DataPoint> points = serviceDataQueue.peek();
-
-
-                if (points != null) {
-                    if (!points.isEmpty()) {
+                try {
+                    signalLock.lock();
+                    List<DataPoint> points = serviceDataQueue.peek();
+                    if (points != null) {
                         try {
-                            LOGGER.debug("ServiceProcessFilter 上送时间:{}ms ", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss S").format(System.currentTimeMillis()));
-                            SERVICE_CLIENT.submitPoints(points);
+                            if (!points.isEmpty()) {
+                                LOGGER.debug("ServiceProcessFilter 上送时间:{}ms ", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss S").format(System.currentTimeMillis()));
+                                SERVICE_CLIENT.submitPoints(points);
+                            }
                             serviceDataQueue.remove(points);
                         } catch (Throwable e) {
                             LOGGER.error(e.getMessage(), e);
-                            try {
-                                workingLock.notify();
-                                workingLock.wait();
-                            } catch (InterruptedException ex) {
-                                LOGGER.error(ex.getMessage(), ex);
-                            }
+                            signalCondition.await();
                         }
-                    } else {
-                        serviceDataQueue.remove(points);
+                    } else { // no task, just release the lock
+                        signalCondition.await();
+
                     }
-                } else {
-                    try {
-                        workingLock.notify();
-                        workingLock.wait();
-                    } catch (InterruptedException e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
-                }
-            }
-        });
-        workerThread.setDaemon(true);
-
-        workerThread.start();
-
-        try {
-            TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        Thread monitors = new Thread(() -> {
-            synchronized (workerThread) {
-                try {
-                    TimeUnit.SECONDS.sleep(60);
-                    this.notify();
-                    this.wait();
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    LOGGER.error(e.getMessage(), e);
+                } finally {
+                    signalLock.unlock();
                 }
-
-
             }
         });
+    }
 
-
+    @Override
+    public void destroy() {
+        //all threads in pools are daemons, no need to shutdown
     }
 
 
