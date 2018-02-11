@@ -133,8 +133,6 @@ public class ServiceProcessFilter implements InitializableFilter {
             } finally {
                 serviceLock.unlock();
             }
-
-            workingLock.notify();
         }, initialDelay, PERIOD * 1000, TimeUnit.MILLISECONDS);
 
         Thread workerThread = new Thread(() -> {
@@ -151,6 +149,7 @@ public class ServiceProcessFilter implements InitializableFilter {
                         } catch (Throwable e) {
                             LOGGER.error(e.getMessage(), e);
                             try {
+                                workingLock.notify();
                                 workingLock.wait();
                             } catch (InterruptedException ex) {
                                 LOGGER.error(ex.getMessage(), ex);
@@ -161,6 +160,7 @@ public class ServiceProcessFilter implements InitializableFilter {
                     }
                 } else {
                     try {
+                        workingLock.notify();
                         workingLock.wait();
                     } catch (InterruptedException e) {
                         LOGGER.error(e.getMessage(), e);
@@ -171,6 +171,28 @@ public class ServiceProcessFilter implements InitializableFilter {
         workerThread.setDaemon(true);
 
         workerThread.start();
+
+        try {
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        Thread monitors = new Thread(() -> {
+            synchronized (workerThread) {
+                try {
+                    TimeUnit.SECONDS.sleep(60);
+                    this.notify();
+                    this.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+
+            }
+        });
+
+
     }
 
 
