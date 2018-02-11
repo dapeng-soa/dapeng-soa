@@ -529,7 +529,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     reWriteByteBuf();
                     break;
                 default:
-                    logAndThrowTException();
+                    //do nothing
             }
         }
 
