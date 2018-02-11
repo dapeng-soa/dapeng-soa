@@ -137,7 +137,7 @@ public class ServiceProcessFilter implements InitializableFilter {
         calendar.set(Calendar.MILLISECOND, 0);
         Long initialDelay = calendar.getTime().getTime() - System.currentTimeMillis();
 
-        LOGGER.info("ServiceProcessFilter 定时上送时间:{} 上送间隔:{}s", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss S").format(calendar.getTime()), PERIOD * 1000);
+        LOGGER.info("ServiceProcessFilter started, upload interval:" + PERIOD * 1000 + "s");
 
         ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(2,
                 new ThreadFactoryBuilder()
@@ -152,9 +152,15 @@ public class ServiceProcessFilter implements InitializableFilter {
         schedulerExecutorService.scheduleAtFixedRate(() -> {
             shareLock.lock();
             try {
-                serviceDataQueue.put(serviceData2Points(System.currentTimeMillis(), serviceProcessCallDatas, serviceElapses));
-                serviceProcessCallDatas.clear();
-                serviceElapses.clear();
+                //todo check wether the queue size has reached 90%
+                List<DataPoint> dataList = serviceData2Points(System.currentTimeMillis(),
+                        serviceProcessCallDatas, serviceElapses);
+
+                if (!dataList.isEmpty()) {
+                    serviceDataQueue.put(dataList);
+                    serviceProcessCallDatas.clear();
+                    serviceElapses.clear();
+                }
             } catch (Exception e) {
                 LOGGER.error(e.getMessage(), e);
             } finally {
@@ -165,7 +171,9 @@ public class ServiceProcessFilter implements InitializableFilter {
         // wake up the uploader thread every PERIOD.
         schedulerExecutorService.scheduleAtFixedRate(() -> {
             try {
+                LOGGER.debug("remainder is working.");
                 signalLock.lock();
+                LOGGER.debug("remainder has woke up the uploader");
                 signalCondition.signal();
             } finally {
                 signalLock.unlock();
@@ -177,12 +185,12 @@ public class ServiceProcessFilter implements InitializableFilter {
         uploaderExecutor.execute(() -> {
             while (true) {
                 try {
+                    LOGGER.debug("uploader is working.");
                     signalLock.lock();
                     List<DataPoint> points = serviceDataQueue.peek();
                     if (points != null) {
                         try {
                             if (!points.isEmpty()) {
-                                LOGGER.debug("ServiceProcessFilter 上送时间:{}ms ", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss S").format(System.currentTimeMillis()));
                                 SERVICE_CLIENT.submitPoints(points);
                             }
                             serviceDataQueue.remove(points);
@@ -191,6 +199,7 @@ public class ServiceProcessFilter implements InitializableFilter {
                             signalCondition.await();
                         }
                     } else { // no task, just release the lock
+                        LOGGER.debug("no more tasks, uploader release the lock.");
                         signalCondition.await();
 
                     }
@@ -215,7 +224,9 @@ public class ServiceProcessFilter implements InitializableFilter {
      * @param millis
      * @param
      */
-    private List<DataPoint> serviceData2Points(Long millis, Map<ServiceSimpleInfo, ServiceProcessData> spd, List<Map<ServiceSimpleInfo, Long>> elapses) {
+    private List<DataPoint> serviceData2Points(Long millis,
+                                               Map<ServiceSimpleInfo, ServiceProcessData> spd,
+                                               List<Map<ServiceSimpleInfo, Long>> elapses) {
 
         List<DataPoint> points = new ArrayList<>(spd.size());
 
@@ -238,7 +249,7 @@ public class ServiceProcessFilter implements InitializableFilter {
             DataPoint point = new DataPoint();
             point.setDatabase(DATA_BASE);
             point.setBizTag("dapeng_service_process");
-            Map<String, String> tag = new ConcurrentHashMap<>(16);
+            Map<String, String> tag = new HashMap<>(16);
             tag.put("period", PERIOD + "");
             tag.put("analysis_time", millis.toString());
             tag.put("service_name", serviceSimpleInfo.getServiceName());
@@ -247,14 +258,14 @@ public class ServiceProcessFilter implements InitializableFilter {
             tag.put("server_ip", SERVER_IP);
             tag.put("server_port", SERVER_PORT.toString());
             point.setTags(tag);
-            Map<String, String> fields = new ConcurrentHashMap<>(16);
+            Map<String, String> fields = new HashMap<>(16);
             fields.put("i_min_time", iMinTime.toString());
             fields.put("i_max_time", iMaxTime.toString());
             fields.put("i_average_time", iAverageTime.toString());
             fields.put("i_total_time", iTotalTime.toString());
             fields.put("total_calls", serviceProcessData.getTotalCalls().toString());
-            fields.put("succeed_calls", serviceProcessData.getSucceedCalls().get() + "");
-            fields.put("fail_calls", serviceProcessData.getFailCalls().get() + "");
+            fields.put("succeed_calls", String.valueOf(serviceProcessData.getSucceedCalls().get()));
+            fields.put("fail_calls", String.valueOf(serviceProcessData.getFailCalls().get()));
             point.setValues(fields);
             points.add(point);
         });
