@@ -24,7 +24,7 @@
             **/
             
             
-              Future<Void> submitPoint( com.github.dapeng.basic.api.counter.domain.DataPoint dataPoint , long timeout) throws com.github.dapeng.core.SoaException;
+              Future<Void> submitPoint( com.github.dapeng.basic.api.counter.domain.DataPoint dataPoint) throws com.github.dapeng.core.SoaException;
             
           
             /**
@@ -32,7 +32,7 @@
             **/
             
             
-              Future<Void> submitPoints( java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint> dataPoints , long timeout) throws com.github.dapeng.core.SoaException;
+              Future<Void> submitPoints( java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint> dataPoints) throws com.github.dapeng.core.SoaException;
             
           
             /**
@@ -40,7 +40,7 @@
             **/
             
             
-              Future<java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint>> queryPoints( com.github.dapeng.basic.api.counter.domain.DataPoint condition, String beginTimeStamp, String endTimeStamp , long timeout) throws com.github.dapeng.core.SoaException;
+              Future<java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint>> queryPoints( com.github.dapeng.basic.api.counter.domain.DataPoint condition, String beginTimeStamp, String endTimeStamp) throws com.github.dapeng.core.SoaException;
             
           
       }

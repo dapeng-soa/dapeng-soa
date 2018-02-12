@@ -21,25 +21,25 @@
           * 
           **/
           
-             
-             void submitPoint( com.github.dapeng.basic.api.counter.domain.DataPoint dataPoint) throws com.github.dapeng.core.SoaException;
-            
+          
+            void submitPoint( com.github.dapeng.basic.api.counter.domain.DataPoint dataPoint) throws com.github.dapeng.core.SoaException;
+          
         
           /**
           * 
           **/
           
-             
-             void submitPoints( java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint> dataPoints) throws com.github.dapeng.core.SoaException;
-            
+          
+            void submitPoints( java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint> dataPoints) throws com.github.dapeng.core.SoaException;
+          
         
           /**
           * 
           **/
           
-             
-             java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint> queryPoints( com.github.dapeng.basic.api.counter.domain.DataPoint condition, String beginTimeStamp, String endTimeStamp) throws com.github.dapeng.core.SoaException;
-            
+          
+            java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint> queryPoints( com.github.dapeng.basic.api.counter.domain.DataPoint condition, String beginTimeStamp, String endTimeStamp) throws com.github.dapeng.core.SoaException;
+          
         
-      }
-      
+    }
+    

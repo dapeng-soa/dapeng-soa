@@ -1,6 +1,6 @@
  package com.github.dapeng.soa.scala.domain.serializer;
 
-        import com.github.dapeng.soa.scala.domain.serializer._;
+        import com.isuwang.soa.user.scala.domain.serializer._;import com.isuwang.soa.price.scala.domain.serializer._;import com.isuwang.soa.order.scala.domain.serializer._;import com.github.dapeng.soa.scala.domain.serializer._;import com.isuwang.soa.settle.scala.domain.serializer._;
         import com.github.dapeng.core._
         import com.github.dapeng.org.apache.thrift._
         import com.github.dapeng.org.apache.thrift.protocol._

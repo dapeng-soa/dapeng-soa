@@ -413,8 +413,8 @@ public class JsonSerializer implements BeanSerializer<String> {
         }
 
         private void logAndThrowTException() throws TException {
-            TException ex = new TException("won't be here, currentField:"
-                    + current == null ? "" : current.fieldName
+            TException ex = new TException("JsonError, please check. currentField:"
+                    + (current == null ? "" : current.fieldName)
                     + ", current phase:" + parsePhase);
             logger.error(ex.getMessage(), ex);
             throw ex;
@@ -529,7 +529,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     reWriteByteBuf();
                     break;
                 default:
-                    logAndThrowTException();
+                    //do nothing
             }
         }
 
@@ -729,7 +729,9 @@ public class JsonSerializer implements BeanSerializer<String> {
                     switch (current.dataType.kind) {
                         case ENUM:
                             TEnum tEnum = findEnum(current.dataType.qualifiedName, service);
-                            oproto.writeI32(findEnumItemValue(tEnum, value));
+                            Integer tValue = findEnumItemValue(tEnum, value);
+                            if (tValue == null) logAndThrowTException();
+                            oproto.writeI32(tValue);
                             break;
                         case BOOLEAN:
                             oproto.writeBool(Boolean.parseBoolean(value));

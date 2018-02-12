@@ -39,14 +39,14 @@ package com.github.dapeng.basic.api.counter;
             * 
             **/
             
-              public CompletableFuture<Void> submitPoint(com.github.dapeng.basic.api.counter.domain.DataPoint dataPoint, long timeout) throws SoaException{
+              public CompletableFuture<Void> submitPoint(com.github.dapeng.basic.api.counter.domain.DataPoint dataPoint) throws SoaException{
 
               String methodName = "submitPoint";
               submitPoint_args submitPoint_args = new submitPoint_args();
               submitPoint_args.setDataPoint(dataPoint);
                 
 
-              CompletableFuture<submitPoint_result> response = (CompletableFuture<submitPoint_result>) pool.sendAsync(serviceName,version,"submitPoint",submitPoint_args, new SubmitPoint_argsSerializer(), new SubmitPoint_resultSerializer(),timeout);
+              CompletableFuture<submitPoint_result> response = (CompletableFuture<submitPoint_result>) pool.sendAsync(serviceName,version,"submitPoint",submitPoint_args, new SubmitPoint_argsSerializer(), new SubmitPoint_resultSerializer());
 
               
                   return response.thenApply((submitPoint_result result )->  null);
@@ -61,14 +61,14 @@ package com.github.dapeng.basic.api.counter;
             * 
             **/
             
-              public CompletableFuture<Void> submitPoints(java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint> dataPoints, long timeout) throws SoaException{
+              public CompletableFuture<Void> submitPoints(java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint> dataPoints) throws SoaException{
 
               String methodName = "submitPoints";
               submitPoints_args submitPoints_args = new submitPoints_args();
               submitPoints_args.setDataPoints(dataPoints);
                 
 
-              CompletableFuture<submitPoints_result> response = (CompletableFuture<submitPoints_result>) pool.sendAsync(serviceName,version,"submitPoints",submitPoints_args, new SubmitPoints_argsSerializer(), new SubmitPoints_resultSerializer(),timeout);
+              CompletableFuture<submitPoints_result> response = (CompletableFuture<submitPoints_result>) pool.sendAsync(serviceName,version,"submitPoints",submitPoints_args, new SubmitPoints_argsSerializer(), new SubmitPoints_resultSerializer());
 
               
                   return response.thenApply((submitPoints_result result )->  null);
@@ -83,7 +83,7 @@ package com.github.dapeng.basic.api.counter;
             * 
             **/
             
-              public CompletableFuture<java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint>> queryPoints(com.github.dapeng.basic.api.counter.domain.DataPoint condition,String beginTimeStamp,String endTimeStamp, long timeout) throws SoaException{
+              public CompletableFuture<java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint>> queryPoints(com.github.dapeng.basic.api.counter.domain.DataPoint condition,String beginTimeStamp,String endTimeStamp) throws SoaException{
 
               String methodName = "queryPoints";
               queryPoints_args queryPoints_args = new queryPoints_args();
@@ -92,7 +92,7 @@ package com.github.dapeng.basic.api.counter;
                 queryPoints_args.setEndTimeStamp(endTimeStamp);
                 
 
-              CompletableFuture<queryPoints_result> response = (CompletableFuture<queryPoints_result>) pool.sendAsync(serviceName,version,"queryPoints",queryPoints_args, new QueryPoints_argsSerializer(), new QueryPoints_resultSerializer(),timeout);
+              CompletableFuture<queryPoints_result> response = (CompletableFuture<queryPoints_result>) pool.sendAsync(serviceName,version,"queryPoints",queryPoints_args, new QueryPoints_argsSerializer(), new QueryPoints_resultSerializer());
 
               
                   

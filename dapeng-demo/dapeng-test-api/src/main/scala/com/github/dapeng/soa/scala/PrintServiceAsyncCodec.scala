@@ -1,5 +1,5 @@
 package com.github.dapeng.soa.scala
-        import com.github.dapeng.soa.scala.domain.serializer._;
+        import com.isuwang.soa.user.scala.domain.serializer._;import com.isuwang.soa.price.scala.domain.serializer._;import com.isuwang.soa.order.scala.domain.serializer._;import com.github.dapeng.soa.scala.domain.serializer._;import com.isuwang.soa.settle.scala.domain.serializer._;
 
         import com.github.dapeng.core._
         import com.github.dapeng.org.apache.thrift._
@@ -143,7 +143,7 @@ package com.github.dapeng.soa.scala
             @throws[TException]
             def apply(iface: com.github.dapeng.soa.scala.service.PrintServiceAsync, args: print_args):Future[print_result] = {
 
-              val _result = iface.print(50000)
+              val _result = iface.print()
 
               
                 _result.map(i => print_result()).tojava
@@ -300,7 +300,7 @@ package com.github.dapeng.soa.scala
             @throws[TException]
             def apply(iface: com.github.dapeng.soa.scala.service.PrintServiceAsync, args: printInfo_args):Future[printInfo_result] = {
 
-              val _result = iface.printInfo(args.info,50000)
+              val _result = iface.printInfo(args.info)
 
               _result.map(printInfo_result(_)).tojava
 
@@ -447,7 +447,7 @@ package com.github.dapeng.soa.scala
             @throws[TException]
             def apply(iface: com.github.dapeng.soa.scala.service.PrintServiceAsync, args: printInfo2_args):Future[printInfo2_result] = {
 
-              val _result = iface.printInfo2(args.name,50000)
+              val _result = iface.printInfo2(args.name)
 
               _result.map(printInfo2_result(_)).tojava
 
@@ -577,7 +577,7 @@ package com.github.dapeng.soa.scala
             @throws[TException]
             def apply(iface: com.github.dapeng.soa.scala.service.PrintServiceAsync, args: printInfo3_args):Future[printInfo3_result] = {
 
-              val _result = iface.printInfo3(50000)
+              val _result = iface.printInfo3()
 
               _result.map(printInfo3_result(_)).tojava
 

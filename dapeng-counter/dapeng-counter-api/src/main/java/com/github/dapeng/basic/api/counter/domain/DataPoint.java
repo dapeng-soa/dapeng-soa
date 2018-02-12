@@ -80,14 +80,14 @@ package com.github.dapeng.basic.api.counter.domain;
 
         public String toString(){
           StringBuilder stringBuilder = new StringBuilder("{");
-          stringBuilder.append("\"").append("bizTag").append("\":\"").append(this.bizTag).append("\",");
+            stringBuilder.append("\"").append("bizTag").append("\":\"").append(this.bizTag).append("\",");
     stringBuilder.append("\"").append("values").append("\":").append(this.values).append(",");
     stringBuilder.append("\"").append("timestamp").append("\":").append(this.timestamp).append(",");
     stringBuilder.append("\"").append("tags").append("\":").append(this.tags).append(",");
     stringBuilder.append("\"").append("database").append("\":\"").append(this.database).append("\",");
     
-          stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(","));
-          stringBuilder.append("}");
+            stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(","));
+            stringBuilder.append("}");
 
           return stringBuilder.toString();
         }

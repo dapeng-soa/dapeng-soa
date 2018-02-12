@@ -14,10 +14,10 @@ package com.github.dapeng.basic.api.counter;
 
       **/
       public class CounterServiceClient implements CounterService{
-        private final String serviceName;
-        private final String version;
+      private final String serviceName;
+      private final String version;
 
-        private SoaConnectionPool pool;
+      private SoaConnectionPool pool;
 
       public CounterServiceClient() {
         this.serviceName = "com.github.dapeng.basic.api.counter.service.CounterService";
@@ -32,12 +32,12 @@ package com.github.dapeng.basic.api.counter;
       }
 
       
-        
-       /**
-       * 
-       **/
           
-            public void submitPoint(com.github.dapeng.basic.api.counter.domain.DataPoint dataPoint) throws SoaException{
+            /**
+            * 
+            **/
+            
+              public void submitPoint(com.github.dapeng.basic.api.counter.domain.DataPoint dataPoint) throws SoaException{
 
               String methodName = "submitPoint";
 
@@ -50,17 +50,17 @@ package com.github.dapeng.basic.api.counter;
               
                   
                 
-          }
+            }
+            
           
-        
 
         
-        
-       /**
-       * 
-       **/
           
-            public void submitPoints(java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint> dataPoints) throws SoaException{
+            /**
+            * 
+            **/
+            
+              public void submitPoints(java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint> dataPoints) throws SoaException{
 
               String methodName = "submitPoints";
 
@@ -73,17 +73,17 @@ package com.github.dapeng.basic.api.counter;
               
                   
                 
-          }
+            }
+            
           
-        
 
         
-        
-       /**
-       * 
-       **/
           
-            public java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint> queryPoints(com.github.dapeng.basic.api.counter.domain.DataPoint condition,String beginTimeStamp,String endTimeStamp) throws SoaException{
+            /**
+            * 
+            **/
+            
+              public java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint> queryPoints(com.github.dapeng.basic.api.counter.domain.DataPoint condition,String beginTimeStamp,String endTimeStamp) throws SoaException{
 
               String methodName = "queryPoints";
 
@@ -100,9 +100,9 @@ package com.github.dapeng.basic.api.counter;
                       return response.getSuccess();
                     
                 
-          }
+            }
+            
           
-        
 
         
 
@@ -111,10 +111,10 @@ package com.github.dapeng.basic.api.counter;
       **/
       public String getServiceMetadata() throws SoaException {
         String methodName = "getServiceMetadata";
-          getServiceMetadata_args getServiceMetadata_args = new getServiceMetadata_args();
-          getServiceMetadata_result response = pool.send(serviceName,version,methodName,getServiceMetadata_args, new GetServiceMetadata_argsSerializer(), new GetServiceMetadata_resultSerializer());
-          return response.getSuccess();
+        getServiceMetadata_args getServiceMetadata_args = new getServiceMetadata_args();
+        getServiceMetadata_result response = pool.send(serviceName,version,methodName,getServiceMetadata_args, new GetServiceMetadata_argsSerializer(), new GetServiceMetadata_resultSerializer());
+        return response.getSuccess();
       }
 
-      }
+    }
     

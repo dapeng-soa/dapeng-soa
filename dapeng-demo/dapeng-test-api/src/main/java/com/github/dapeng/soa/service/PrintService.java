@@ -21,33 +21,33 @@
           * 
           **/
           
-             
-             void print() throws com.github.dapeng.core.SoaException;
-            
+          
+            void print() throws com.github.dapeng.core.SoaException;
+          
         
           /**
           * 
           **/
           
-             
-             String printInfo( com.github.dapeng.soa.domain.Info info) throws com.github.dapeng.core.SoaException;
-            
+          
+            String printInfo( com.github.dapeng.soa.domain.Info info) throws com.github.dapeng.core.SoaException;
+          
         
           /**
           * 
           **/
           
-             
-             String printInfo2( String name) throws com.github.dapeng.core.SoaException;
-            
+          
+            String printInfo2( String name) throws com.github.dapeng.core.SoaException;
+          
         
           /**
           * 
           **/
           
-             
-             String printInfo3() throws com.github.dapeng.core.SoaException;
-            
+          
+            String printInfo3() throws com.github.dapeng.core.SoaException;
+          
         
-      }
-      
+    }
+    

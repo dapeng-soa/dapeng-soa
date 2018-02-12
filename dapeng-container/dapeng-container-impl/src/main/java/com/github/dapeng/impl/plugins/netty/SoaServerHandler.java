@@ -1,31 +1,32 @@
 package com.github.dapeng.impl.plugins.netty;
 
 
-import com.github.dapeng.api.*;
+import com.github.dapeng.api.Container;
 import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
-import com.github.dapeng.core.filter.Filter;
-import com.github.dapeng.core.filter.FilterChain;
-import com.github.dapeng.core.filter.FilterContext;
-import com.github.dapeng.core.filter.SharedChain;
-import com.github.dapeng.core.filter.FilterContextImpl;
+import com.github.dapeng.core.filter.*;
 import com.github.dapeng.impl.filters.HeadFilter;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocolException;
+import com.github.dapeng.registry.ConfigKey;
+import com.github.dapeng.registry.RegistryAgentProxy;
 import com.github.dapeng.util.DumpUtil;
+import com.github.dapeng.util.SoaSystemEnvProperties;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+
+import static com.github.dapeng.util.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
 
 /**
  * @author lihuimin
@@ -44,6 +45,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        final long invokeTime = System.currentTimeMillis();
         ByteBuf reqMessage = (ByteBuf) msg;
         ByteBuf reqMirror = reqMessage.slice(); // only used for debug packet
 
@@ -61,7 +63,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             container.getDispatcher().execute(() -> {
                 try {
                     TransactionContext.Factory.setCurrentInstance(context);
-                    processRequest(ctx, parser.getContentProtocol(), processor, reqMirror, context);
+                    processRequest(ctx, parser.getContentProtocol(), processor, reqMirror, context, invokeTime);
                 } catch (Throwable e) {
                     LOGGER.error(e.getMessage(), e);
                     writeErrorMessage(ctx, context, new SoaException(SoaCode.UnKnown, e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage()));
@@ -92,25 +94,45 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         ctx.close();
     }
 
-    private <I, REQ, RESP> void processRequest(ChannelHandlerContext channelHandlerContext, TProtocol contentProtocol, SoaServiceDefinition<I> serviceDef,
-                                               ByteBuf reqMirror, TransactionContext context) throws TException {
+    private <I, REQ, RESP> void processRequest(ChannelHandlerContext channelHandlerContext,
+                                               TProtocol contentProtocol,
+                                               SoaServiceDefinition<I> serviceDef,
+                                               ByteBuf reqMirror,
+                                               TransactionContext context,
+                                               long invokeTime) throws TException {
 
         try {
             SoaHeader soaHeader = context.getHeader();
+
+            //check if request expired
+            final long waitingTime = System.currentTimeMillis() - invokeTime;
+            long timeout = getTimeout(soaHeader);
+            if (waitingTime > timeout) {
+                throw new SoaException(SoaCode.TimeOut, "服务端请求超时");
+            }
+
             Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
+            if (application == null) {
+                throw new SoaException(SoaCode.NotMatchedService);
+            }
             SoaFunctionDefinition<I, REQ, RESP> soaFunction = (SoaFunctionDefinition<I, REQ, RESP>) serviceDef.functions.get(soaHeader.getMethodName());
+
+            if (soaFunction == null) {
+                throw new SoaException(SoaCode.NotMatchedMethod);
+            }
 
             REQ args;
             try {
                 args = soaFunction.reqSerializer.read(contentProtocol);
             } catch (TProtocolException | OutOfMemoryError e) {
+                //反序列化出错
                 LOGGER.error(e.getMessage(), e);
                 LOGGER.error(DumpUtil.dumpToStr(reqMirror));
                 throw e;
             }
             contentProtocol.readMessageEnd();
-            //
+
             I iface = serviceDef.iface;
             //log request
             application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} request body:{}",
@@ -133,8 +155,13 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             SoaFunctionDefinition.Async asyncFunc = (SoaFunctionDefinition.Async) soaFunction;
                             CompletableFuture<RESP> future = (CompletableFuture<RESP>) asyncFunc.apply(iface, args);
                             future.whenComplete((realResult, ex) -> {
-                                TransactionContext.Factory.setCurrentInstance(context);
-                                processResult(channelHandlerContext, soaFunction, context, realResult, application, ctx);
+                                if (ex != null) {
+                                    SoaException soaException = convertToSoaException(ex);
+                                    writeErrorMessage(channelHandlerContext, context, ctx, soaException);
+                                } else {
+                                    TransactionContext.Factory.setCurrentInstance(context);
+                                    processResult(channelHandlerContext, soaFunction, context, realResult, application, ctx);
+                                }
                                 onExit(ctx, getPrevChain(ctx));
                             });
                         } else {
@@ -146,7 +173,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                     } catch (Throwable e) {
                         LOGGER.error(e.getMessage(), e);
                         writeErrorMessage(channelHandlerContext, context, new SoaException(SoaCode.UnKnown,
-                                e.getMessage()==null?SoaCode.UnKnown.getMsg():e.getMessage()));
+                                e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage()));
                     }
                 }
 
@@ -165,6 +192,12 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             filterContext.setAttach(dispatchFilter, "chain", sharedChain);
 
             sharedChain.onEntry(filterContext);
+        } catch (SoaException e) {
+            LOGGER.error(e.getMsg(), e);
+            writeErrorMessage(channelHandlerContext, context, new SoaException(e.getCode(), e.getMsg()));
+        } catch (Throwable e) {
+            LOGGER.error(e.getMessage(), e);
+            writeErrorMessage(channelHandlerContext, context, new SoaException(SoaCode.UnKnown, e.getMessage()));
         } finally {
             reqMirror.release();
         }
@@ -172,11 +205,14 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
     private void processResult(ChannelHandlerContext channelHandlerContext, SoaFunctionDefinition soaFunction, TransactionContext context, Object result, Application application, FilterContext filterContext) {
         SoaHeader soaHeader = context.getHeader();
-        soaHeader.setRespCode(Optional.of("0000"));
+        soaHeader.setRespCode(Optional.of(SOA_NORMAL_RESP_CODE));
         soaHeader.setRespMessage(Optional.of("ok"));
         context.setHeader(soaHeader);
         try {
-            application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} response body:{}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.getOperatorId(), soaHeader.getOperatorName(), formatToString(soaFunction.respSerializer.toString(result)));
+            application.info(this.getClass(),
+                    soaHeader.getServiceName() + ":" + soaHeader.getVersionName()
+                            + ":" + soaHeader.getMethodName() + " operatorId:" + soaHeader.getOperatorId()
+                            + " operatorName:" + soaHeader.getOperatorName());
 
             filterContext.setAttribute("channelHandlerContext", channelHandlerContext);
             filterContext.setAttribute("context", context);
@@ -187,12 +223,20 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
             writeErrorMessage(channelHandlerContext, context, filterContext, new SoaException(SoaCode.UnKnown,
-                    e.getMessage()==null?SoaCode.UnKnown.getMsg():e.getMessage()));
+                    e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage()));
         } finally {
             TransactionContext.Factory.removeCurrentInstance();
         }
     }
 
+    /**
+     * handle this within HeadFilter
+     *
+     * @param ctx
+     * @param context
+     * @param filterContext
+     * @param e
+     */
     private void writeErrorMessage(ChannelHandlerContext ctx, TransactionContext context, FilterContext filterContext, SoaException e) {
 
         SoaHeader soaHeader = context.getHeader();
@@ -244,4 +288,48 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         return msg;
     }
 
+    /**
+     * TODO
+     * 获取timeout参数. 优先级如下:
+     * 1. 如果invocationContext有设置的话, 那么用invocationContext的(这个值每次调用都可能不一样)
+     * 2. invocationContext没有的话, 就拿Option的(命令行或者环境变量)
+     * 3. 没设置Option的话, 那么取ZK的.
+     * 4. ZK没有的话, 拿IDL的(暂没实现该参数)
+     * 5. 都没有的话, 拿默认值.(这个值所有方法一致, 假设为50S)
+     * <p>
+     * 最后校验一下,拿到的值不能超过系统设置的最大值
+     * <p>
+     * 如果得到的数据超过最大值, 那么就用最大值.
+     *
+     * @param soaHeader
+     * @return
+     */
+    private long getTimeout(SoaHeader soaHeader) {
+        long timeout = 0L;
+        String serviceKey = soaHeader.getServiceName() + "." + soaHeader.getVersionName() + "." + soaHeader.getMethodName() + ".producer";
+        Map<ConfigKey, Object> configs = RegistryAgentProxy.getCurrentInstance(RegistryAgentProxy.Type.Server).getConfig(false, serviceKey);
+        long envTimeout = SoaSystemEnvProperties.SOA_SERVICE_SERVER_TIMEOUT.longValue();
+        if (null != configs) {
+            Long timeoutConfig = (Long) configs.get(ConfigKey.ServerTimeout);
+            timeout = (timeoutConfig != null) ? timeoutConfig.longValue() : envTimeout;
+        }
+        if (timeout == 0L) {
+            timeout = (envTimeout == 0) ? SoaSystemEnvProperties.SOA_DEFAULT_TIMEOUT : envTimeout;
+        }
+
+        if (timeout > SoaSystemEnvProperties.SOA_MAX_TIMEOUT) {
+            timeout = SoaSystemEnvProperties.SOA_MAX_TIMEOUT;
+        }
+        return timeout;
+    }
+
+    private SoaException convertToSoaException(Throwable ex) {
+        SoaException soaException = null;
+        if (ex instanceof SoaException) {
+            soaException = (SoaException) ex;
+        } else {
+            soaException = new SoaException(SoaCode.UnKnown.getCode(), ex.getMessage());
+        }
+        return soaException;
+    }
 }
