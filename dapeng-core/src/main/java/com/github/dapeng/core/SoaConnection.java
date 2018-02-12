@@ -14,7 +14,7 @@ public interface SoaConnection {
             String method,
             REQ request,
             BeanSerializer<REQ> requestSerializer,
-            BeanSerializer<RESP> responseSerializer) throws SoaException;
+            BeanSerializer<RESP> responseSerializer,long timeout) throws SoaException;
 
     <REQ, RESP> Future<RESP> sendAsync(
             String service,

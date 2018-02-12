@@ -202,7 +202,7 @@ package com.github.dapeng.basic.api.counter;
               public CompletableFuture<submitPoint_result> apply(CounterServiceAsync iface, submitPoint_args submitPoint_args) throws SoaException
               {
 
-                CompletableFuture<Void> result = (CompletableFuture<Void>) iface.submitPoint(submitPoint_args.dataPoint ,50000);
+                CompletableFuture<Void> result = (CompletableFuture<Void>) iface.submitPoint(submitPoint_args.dataPoint);
 
                 return result.thenApply((Void) -> {
                   submitPoint_result res = new submitPoint_result();
@@ -399,7 +399,7 @@ package com.github.dapeng.basic.api.counter;
               public CompletableFuture<submitPoints_result> apply(CounterServiceAsync iface, submitPoints_args submitPoints_args) throws SoaException
               {
 
-                CompletableFuture<Void> result = (CompletableFuture<Void>) iface.submitPoints(submitPoints_args.dataPoints ,50000);
+                CompletableFuture<Void> result = (CompletableFuture<Void>) iface.submitPoints(submitPoints_args.dataPoints);
 
                 return result.thenApply((Void) -> {
                   submitPoints_result res = new submitPoints_result();
@@ -683,7 +683,7 @@ package com.github.dapeng.basic.api.counter;
               public CompletableFuture<queryPoints_result> apply(CounterServiceAsync iface, queryPoints_args queryPoints_args) throws SoaException
               {
 
-                CompletableFuture<java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint>> result = (CompletableFuture<java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint>>) iface.queryPoints(queryPoints_args.condition,queryPoints_args.beginTimeStamp,queryPoints_args.endTimeStamp ,50000);
+                CompletableFuture<java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint>> result = (CompletableFuture<java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint>>) iface.queryPoints(queryPoints_args.condition,queryPoints_args.beginTimeStamp,queryPoints_args.endTimeStamp);
 
                 return result.thenApply(( java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint> i) -> {
                   queryPoints_result res = new queryPoints_result();

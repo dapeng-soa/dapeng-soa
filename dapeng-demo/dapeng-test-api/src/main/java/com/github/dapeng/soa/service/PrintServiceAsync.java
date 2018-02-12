@@ -24,7 +24,7 @@
             **/
             
             
-              Future<Void> print(  long timeout) throws com.github.dapeng.core.SoaException;
+              Future<Void> print() throws com.github.dapeng.core.SoaException;
             
           
             /**
@@ -32,7 +32,7 @@
             **/
             
             
-              Future<String> printInfo( com.github.dapeng.soa.domain.Info info , long timeout) throws com.github.dapeng.core.SoaException;
+              Future<String> printInfo( com.github.dapeng.soa.domain.Info info) throws com.github.dapeng.core.SoaException;
             
           
             /**
@@ -40,7 +40,7 @@
             **/
             
             
-              Future<String> printInfo2( String name , long timeout) throws com.github.dapeng.core.SoaException;
+              Future<String> printInfo2( String name) throws com.github.dapeng.core.SoaException;
             
           
             /**
@@ -48,7 +48,7 @@
             **/
             
             
-              Future<String> printInfo3(  long timeout) throws com.github.dapeng.core.SoaException;
+              Future<String> printInfo3() throws com.github.dapeng.core.SoaException;
             
           
       }
