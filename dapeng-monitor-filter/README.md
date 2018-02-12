@@ -12,7 +12,7 @@ dapeng-counter-api
 ```sbtshell
 ==> build.sbt
 
-"com.github.dapeng" % "dapeng-monitor-filter" % "2.0.0-SNAPSHOT"
+"com.github.dapeng" % "dapeng-monitor-filter" % "2.0.0"
 ```
 ### 本项目包括的filter如下
 ```$xslt
