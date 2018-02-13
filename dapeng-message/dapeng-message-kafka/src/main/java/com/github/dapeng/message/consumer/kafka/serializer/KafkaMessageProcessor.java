@@ -23,12 +23,12 @@ public class KafkaMessageProcessor<T> {
      *
      * @return
      */
-    public MessageInfo<T> parseMessage(byte[] bytes) throws TException {
+    public MessageInfo parseMessage(byte[] bytes) throws TException {
         TKafkaTransport kafkaTransport = new TKafkaTransport(bytes, TKafkaTransport.Type.Read);
         TCompactProtocol protocol = new TCompactProtocol(kafkaTransport);
         String eventType = kafkaTransport.getEventType();
         T event = beanSerializer.read(protocol);
-        return new MessageInfo<>(eventType, event);
+        return new MessageInfo(eventType, event);
     }
 
     public byte[] buildMessageByte(T event) throws TException {
