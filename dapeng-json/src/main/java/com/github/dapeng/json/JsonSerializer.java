@@ -325,13 +325,40 @@ public class JsonSerializer implements BeanSerializer<String> {
         String currentHeaderName;
         //onStartField的时候, 记录是否找到该Field. 如果没找到,那么需要skip这个field
         boolean foundField = true;
+        /**
+         * todo
+         * 从第一个多余字段开始后,到该多余字段结束, 所解析到的字段的计数值.
+         * 用于在多余字段是复杂结构类型的情况下, 忽略该复杂结构内嵌套的所有多余字段
+         * 例如:
+         * {
+         *     createdOrderRequest: {
+         *         "buyerId":2,
+         *         "sellerId":3,
+         *         "uselessField1":{
+         *             "innerField1":"a",
+         *             "innerField2":"b"
+         *         },
+         *         "uselessField2":[{
+         *             "innerField3":"c",
+         *             "innerField4":"d"
+         *         },
+         *         {
+         *             "innerField3":"c",
+         *             "innerField4":"d"
+         *         }]
+         *     }
+         * }
+         * 当uselessField1跟uselessField2是多余字段时,我们要确保其内部所有字段都
+         * 给skip掉.
+         */
+        int fieldsSinceLastNotFound = 0;
         //记录是否是null. 前端在处理optional字段的时候, 可能会传入一个null,见单元测试
         boolean foundNull = true;
 
         /**
          * @param oproto
          */
-        public Json2ThriftCallback(TProtocol oproto) {
+        Json2ThriftCallback(TProtocol oproto) {
             this.oproto = oproto;
         }
 
@@ -417,29 +444,6 @@ public class JsonSerializer implements BeanSerializer<String> {
                 default:
                     logAndThrowTException();
             }
-        }
-
-        private void logAndThrowTException() throws TException {
-            TException ex = new TException("JsonError, please check. currentField:"
-                    + (current == null ? "" : current.fieldName)
-                    + ", current phase:" + parsePhase);
-            logger.error(ex.getMessage(), ex);
-            throw ex;
-        }
-
-        private SoaHeader buildSoaHeader() {
-            SoaHeader header = new SoaHeader();
-            header.setServiceName(invocationCtx.getServiceName());
-            header.setVersionName(invocationCtx.getVersionName());
-            header.setMethodName(invocationCtx.getMethodName());
-
-            header.setCallerFrom(invocationCtx.getCallerFrom());
-            header.setCallerIp(invocationCtx.getCallerIp());
-            header.setCustomerId(invocationCtx.getCustomerId());
-            header.setCustomerName(invocationCtx.getCustomerName());
-            header.setOperatorId(invocationCtx.getOperatorId());
-
-            return header;
         }
 
         @Override
@@ -737,7 +741,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                         case ENUM:
                             TEnum tEnum = findEnum(current.dataType.qualifiedName, service);
                             Integer tValue = findEnumItemValue(tEnum, value);
-                            if (tValue == null) logAndThrowTException();
+//                            if (tValue == null) logAndThrowTException();
                             oproto.writeI32(tValue);
                             break;
                         case BOOLEAN:
@@ -836,6 +840,33 @@ public class JsonSerializer implements BeanSerializer<String> {
             }
         }
 
+
+
+        private void logAndThrowTException() throws TException {
+            String fieldName = current==null?"":current.fieldName;
+            String struct = current==null?"":current.struct==null?(peek().struct==null?"":peek().struct.name):current.struct.name;
+            TException ex = new TException("JsonError, please check:"
+                    + struct + "." + fieldName
+                    + ", current phase:" + parsePhase);
+            logger.error(ex.getMessage(), ex);
+            throw ex;
+        }
+
+        private SoaHeader buildSoaHeader() {
+            SoaHeader header = new SoaHeader();
+            header.setServiceName(invocationCtx.getServiceName());
+            header.setVersionName(invocationCtx.getVersionName());
+            header.setMethodName(invocationCtx.getMethodName());
+
+            header.setCallerFrom(invocationCtx.getCallerFrom());
+            header.setCallerIp(invocationCtx.getCallerIp());
+            header.setCustomerId(invocationCtx.getCustomerId());
+            header.setCustomerName(invocationCtx.getCustomerName());
+            header.setOperatorId(invocationCtx.getOperatorId());
+
+            return header;
+        }
+
         private void fillIntToInvocationCtx(int value) {
             if ("calleePort".equals(currentHeaderName)) {
                 invocationCtx.setCalleePort(Optional.of(value));
@@ -872,7 +903,17 @@ public class JsonSerializer implements BeanSerializer<String> {
      */
     @Override
     public void write(String input, TProtocol oproto) throws TException {
-        new JsonParser(input, new Json2ThriftCallback(oproto)).parseJsValue();
+        Json2ThriftCallback j2tCallback = new Json2ThriftCallback(oproto);
+        try {
+            new JsonParser(input, j2tCallback).parseJsValue();
+        } catch (RuntimeException e) {
+            if (j2tCallback.current != null) {
+                String errorMsg = "Please check field:" + j2tCallback.current.fieldName;
+                logger.error(errorMsg + "\n" + e.getMessage(), e);
+                throw new TException(errorMsg);
+            }
+            throw e;
+        }
     }
 
     @Override
