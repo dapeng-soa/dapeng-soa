@@ -43,7 +43,7 @@ public class TCompactProtocol extends TProtocol {
   private final static TStruct ANONYMOUS_STRUCT = new TStruct("");
   private final static TField TSTOP = new TField("", TType.STOP, (short)0);
 
-  private final static byte[] ttypeToCompactType = new byte[16];
+  public final static byte[] ttypeToCompactType = new byte[16];
 
   static {
     ttypeToCompactType[TType.STOP] = TType.STOP;
