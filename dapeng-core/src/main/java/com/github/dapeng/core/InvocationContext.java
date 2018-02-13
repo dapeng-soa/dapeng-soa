@@ -5,7 +5,9 @@ import com.github.dapeng.core.enums.CodecProtocol;
 import java.util.Optional;
 
 /**
- * Created by lihuimin on 2017/12/21.
+ *
+ * @author lihuimin
+ * @date 2017/12/21
  */
 public interface InvocationContext {
 
@@ -63,9 +65,13 @@ public interface InvocationContext {
 
     InvocationInfo getLastInfo();
 
-    public Optional<Long> getTimeout();
+    /**
+     * 客户端超时设置
+     * @return
+     */
+    Optional<Long> getTimeout();
 
-    public void setTimeout(Optional<Long> timeout);
+    void setTimeout(Optional<Long> timeout);
 
     // seqid
     // tid

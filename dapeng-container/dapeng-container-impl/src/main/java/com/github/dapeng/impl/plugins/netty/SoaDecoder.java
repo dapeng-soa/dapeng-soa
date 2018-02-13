@@ -45,7 +45,7 @@ public class SoaDecoder extends ByteToMessageDecoder {
             return;
         }
 
-        // must be to release one times
+        // must be to release one time
         ByteBuf msg = in.slice(readerIndex, length + Integer.BYTES).retain();
 
         /**

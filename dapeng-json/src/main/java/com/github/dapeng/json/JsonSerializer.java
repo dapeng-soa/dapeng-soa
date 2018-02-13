@@ -17,6 +17,9 @@ import java.util.stream.Collectors;
 
 import static com.github.dapeng.util.MetaDataUtil.*;
 
+/**
+ * @author ever
+ */
 public class JsonSerializer implements BeanSerializer<String> {
     private final Logger logger = LoggerFactory.getLogger(JsonSerializer.class);
 
@@ -267,6 +270,10 @@ public class JsonSerializer implements BeanSerializer<String> {
     }
 
     class Json2ThriftCallback implements JsonCallback {
+        /**
+         * 压缩二进制编码下,集合的默认长度(占3字节)
+         */
+        private final int COLLECTION_LENGTH_PLACEHOLDER = 65537;
         private final TProtocol oproto;
         private ParsePhase parsePhase = ParsePhase.INIT;
 
