@@ -734,7 +734,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                         case ENUM:
                             TEnum tEnum = findEnum(current.dataType.qualifiedName, service);
                             Integer tValue = findEnumItemValue(tEnum, value);
-//                            if (tValue == null) logAndThrowTException();
+                            if (tValue == null) logAndThrowTException();
                             oproto.writeI32(tValue);
                             break;
                         case BOOLEAN:
