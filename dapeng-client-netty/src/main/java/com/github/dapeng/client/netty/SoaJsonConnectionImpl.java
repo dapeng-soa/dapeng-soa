@@ -35,7 +35,7 @@ public class SoaJsonConnectionImpl extends SoaBaseConnection {
 
         final ByteBuf requestBuf = allocator.buffer(8192);
 
-        SoaJsonMessageBuilder<REQ> builder = new SoaJsonMessageBuilder();
+        SoaJsonMessageBuilder<REQ> builder = new SoaJsonMessageBuilder<REQ>();
 
         ((JsonSerializer)requestSerializer).setRequestByteBuf(requestBuf);
 
