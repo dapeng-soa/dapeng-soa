@@ -9,7 +9,7 @@ import io.netty.buffer.ByteBuf;
  *
  * @author ever
  */
-public class TJsonCompactProtocolUtil {
+public class TJsonCompressProtocolUtil {
 
     /**
      * Invoked before we get the actually collection size.
@@ -21,7 +21,7 @@ public class TJsonCompactProtocolUtil {
     public static void writeCollectionBegin(byte elemType, ByteBuf byteBuf) throws TException {
         writeByteDirect((byte) (0xf0 | TCompactProtocol.ttypeToCompactType[elemType]), byteBuf);
         //write 3 byte with 0x0 to hold the collectionSize
-        writeVarint32(byteBuf);
+        writeFixedLengthVarint32(3, byteBuf);
     }
 
     /**
@@ -33,7 +33,8 @@ public class TJsonCompactProtocolUtil {
      * @throws TException
      */
     public static void reWriteCollectionBegin(byte elemType, int size, ByteBuf byteBuf) throws TException {
-        writeByteDirect((byte) (0xf0 | TCompactProtocol.ttypeToCompactType[elemType]), byteBuf);
+//        writeByteDirect((byte) (0xf0 | TCompactProtocol.ttypeToCompactType[elemType]), byteBuf);
+        byteBuf.writerIndex(byteBuf.writerIndex()+1);
         reWriteVarint32(size, byteBuf);
     }
 
@@ -51,25 +52,23 @@ public class TJsonCompactProtocolUtil {
 //            writeByteDirect(getCompactType(map.keyType) << 4 | getCompactType(map.valueType));
 //        }
 
-        writeVarint32(byteBuf);
+        writeFixedLengthVarint32(3, byteBuf);
         writeByteDirect((byte) (TCompactProtocol.ttypeToCompactType[keyType] << 4
                 | TCompactProtocol.ttypeToCompactType[valueType]), byteBuf);
     }
 
     /**
      * Invoked after we get the actually collection size.
-     *
+     * Please note that writerIndex should be updated:
+     * 1. size > 0, byteBuf.writerIndex(currentWriterIndex);
+     * 2. size = 0, byteBuf.writerIndex(byteBuf.writerIndex() + 1);
      * @param size               collection size
      * @param byteBuf            byteBuf which has reset the writerIndex to before collection
-     * @param currentWriterIndex writerIndex point to tail of the byteBuf
      * @throws TException
      */
-    public static void reWriteMapBegin(int size, ByteBuf byteBuf, int currentWriterIndex) throws TException {
+    public static void reWriteMapBegin(int size, ByteBuf byteBuf) throws TException {
         if (size > 0) {
             reWriteVarint32(size, byteBuf);
-            byteBuf.writerIndex(currentWriterIndex);
-        } else {
-            byteBuf.writerIndex(byteBuf.writerIndex() + 3);
         }
     }
 
@@ -81,15 +80,14 @@ public class TJsonCompactProtocolUtil {
     }
 
     /**
-     * write 3 bytes as placeholder
+     * write count bytes as placeholder
      *
+     * @param count count of bytes
      * @param byteBuf
      * @throws TException
      */
-    private static void writeVarint32(ByteBuf byteBuf) throws TException {
-        writeByteDirect((byte) 0, byteBuf);
-        writeByteDirect((byte) 0, byteBuf);
-        writeByteDirect((byte) 0, byteBuf);
+    private static void writeFixedLengthVarint32(int count, ByteBuf byteBuf) throws TException {
+        for (int i = 0; i < count; i++) writeByteDirect((byte) 0, byteBuf);
     }
 
     /**
