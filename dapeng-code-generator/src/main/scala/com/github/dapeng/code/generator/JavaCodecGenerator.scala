@@ -742,7 +742,9 @@ class JavaCodecGenerator extends CodeGenerator {
           public CompletableFuture{lt}getServiceMetadata_result{gt} apply(I iface, getServiceMetadata_args args) <block>
             getServiceMetadata_result result = new getServiceMetadata_result();
 
-           return CompletableFuture.supplyAsync(() -> <block>
+            //fake async method, to avoid the JDK default ForkJoinPool.common
+            CompletableFuture{lt}getServiceMetadata_result{gt} resultFuture = new CompletableFuture{lt}{gt}();
+
             try (InputStreamReader isr = new InputStreamReader({service.name}Codec.class.getClassLoader().getResourceAsStream("{service.namespace}.{service.name}.xml"));
             BufferedReader in = new BufferedReader(isr)) <block>
               int len = 0;
@@ -764,8 +766,8 @@ class JavaCodecGenerator extends CodeGenerator {
               result.success = "";
             </block>
 
-            return result;
-          </block>);
+            resultFuture.complete(result);
+            return resultFuture;
           </block>
 
         </block>
