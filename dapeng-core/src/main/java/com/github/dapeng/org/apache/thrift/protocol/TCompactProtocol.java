@@ -865,7 +865,7 @@ public class TCompactProtocol extends TProtocol {
    * Given a TCompactProtocol.Types constant, convert it to its corresponding
    * TType value.
    */
-  private byte getTType(byte type) throws TProtocolException {
+  public static byte getTType(byte type) throws TProtocolException {
     switch ((byte)(type & 0x0f)) {
       case TType.STOP:
         return TType.STOP;

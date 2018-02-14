@@ -2,7 +2,12 @@ package com.github.dapeng.json;
 
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TCompactProtocol;
+import com.github.dapeng.org.apache.thrift.protocol.TMap;
+import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
+import com.github.dapeng.org.apache.thrift.protocol.TProtocolException;
 import io.netty.buffer.ByteBuf;
+
+import static com.github.dapeng.org.apache.thrift.protocol.TCompactProtocol.getTType;
 
 /**
  * dapeng-json定制的Thrift二进制压缩协议工具类,主要更改了集合类的序列化方法
@@ -34,7 +39,7 @@ public class TJsonCompressProtocolUtil {
      */
     public static void reWriteCollectionBegin(byte elemType, int size, ByteBuf byteBuf) throws TException {
 //        writeByteDirect((byte) (0xf0 | TCompactProtocol.ttypeToCompactType[elemType]), byteBuf);
-        byteBuf.writerIndex(byteBuf.writerIndex()+1);
+        byteBuf.writerIndex(byteBuf.writerIndex() + 1);
         reWriteVarint32(size, byteBuf);
     }
 
@@ -62,14 +67,22 @@ public class TJsonCompressProtocolUtil {
      * Please note that writerIndex should be updated:
      * 1. size > 0, byteBuf.writerIndex(currentWriterIndex);
      * 2. size = 0, byteBuf.writerIndex(byteBuf.writerIndex() + 1);
-     * @param size               collection size
-     * @param byteBuf            byteBuf which has reset the writerIndex to before collection
+     *
+     * @param size    collection size
+     * @param byteBuf byteBuf which has reset the writerIndex to before collection
      * @throws TException
      */
     public static void reWriteMapBegin(int size, ByteBuf byteBuf) throws TException {
         if (size > 0) {
             reWriteVarint32(size, byteBuf);
         }
+    }
+
+    public static TMap readMapBegin(TProtocol inProtocol) throws TException {
+        int size = readVarint32(inProtocol);
+//        checkContainerReadLength(size);
+        byte keyAndValueType = size == 0 ? 0 : inProtocol.readByte();
+        return new TMap(getTType((byte) (keyAndValueType >> 4)), getTType((byte) (keyAndValueType & 0xf)), size);
     }
 
     private static byte[] byteDirectBuffer = new byte[1];
@@ -82,7 +95,7 @@ public class TJsonCompressProtocolUtil {
     /**
      * write count bytes as placeholder
      *
-     * @param count count of bytes
+     * @param count   count of bytes
      * @param byteBuf
      * @throws TException
      */
@@ -112,6 +125,20 @@ public class TJsonCompressProtocolUtil {
         for (int i = idx; i < i32buf.length; i++) {
             byteBuf.writeByte((byte) 0x80);
         }
+
         byteBuf.writeBytes(i32buf, 0, idx);
     }
+
+    //TODO
+    private static int readVarint32(TProtocol inProtocol) throws TException {
+        int result = 0;
+
+        while (true) {
+            byte b = inProtocol.readByte();
+            result |= (int) (b & 0x7f);
+            if ((b & 0x80) != 0x80) break;
+        }
+        return result;
+    }
+
 }

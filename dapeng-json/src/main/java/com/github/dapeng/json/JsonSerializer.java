@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
+import static com.github.dapeng.json.TJsonCompressProtocolUtil.readMapBegin;
 import static com.github.dapeng.util.MetaDataUtil.*;
 
 public class JsonSerializer implements BeanSerializer<String> {
@@ -128,7 +129,8 @@ public class JsonSerializer implements BeanSerializer<String> {
                 break;
             case TType.MAP:
                 if (!skip) {
-                    TMap map = iproto.readMapBegin();
+                    TMap map = invocationCtx.getCodecProtocol() == CodecProtocol.Binary ?
+                            iproto.readMapBegin() : readMapBegin(iproto);
                     writer.onStartObject();
                     for (int index = 0; index < map.size; index++) {
                         switch (map.keyType) {
@@ -763,7 +765,6 @@ public class JsonSerializer implements BeanSerializer<String> {
             //备份最新的writerIndex
             int currentIndex = requestByteBuf.writerIndex();
 
-            //reWriteListBegin
             requestByteBuf.writerIndex(beginPosition);
 
             switch (current.dataType.kind) {
