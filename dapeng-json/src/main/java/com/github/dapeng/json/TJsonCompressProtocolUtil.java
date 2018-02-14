@@ -112,6 +112,6 @@ public class TJsonCompressProtocolUtil {
         for (int i = idx; i < i32buf.length; i++) {
             byteBuf.writeByte((byte) 0x80);
         }
-        byteBuf.writeBytes(i32buf);
+        byteBuf.writeBytes(i32buf, 0, idx);
     }
 }
