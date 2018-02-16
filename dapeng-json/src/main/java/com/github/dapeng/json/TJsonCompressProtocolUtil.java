@@ -78,12 +78,12 @@ public class TJsonCompressProtocolUtil {
         }
     }
 
-    public static TMap readMapBegin(TProtocol inProtocol) throws TException {
-        int size = readVarint32(inProtocol);
-//        checkContainerReadLength(size);
-        byte keyAndValueType = size == 0 ? 0 : inProtocol.readByte();
-        return new TMap(getTType((byte) (keyAndValueType >> 4)), getTType((byte) (keyAndValueType & 0xf)), size);
-    }
+//    public static TMap readMapBegin(TProtocol inProtocol) throws TException {
+//        int size = readVarint32(inProtocol);
+////        checkContainerReadLength(size);
+//        byte keyAndValueType = size == 0 ? 0 : inProtocol.readByte();
+//        return new TMap(getTType((byte) (keyAndValueType >> 4)), getTType((byte) (keyAndValueType & 0xf)), size);
+//    }
 
     private static byte[] byteDirectBuffer = new byte[1];
 
@@ -104,6 +104,11 @@ public class TJsonCompressProtocolUtil {
     }
 
     /**
+     * 低位在前, 高位在后,
+     * n = 3, result = 0x83 0x80 0x00
+     * n = 129(1000 0001), result = 0x81 0x81 0x00
+     * n = 130(1000 0010), result = 0x82 0x81 0x00
+     * n = 65537(1 0000 0000 0000 0001) result = 0x81 0x80 0x04
      * Write an i32 as a varint. Always results in 3 bytes on the wire.
      */
     private static byte[] i32buf = new byte[3];
@@ -122,23 +127,31 @@ public class TJsonCompressProtocolUtil {
             }
         }
 
-        for (int i = idx; i < i32buf.length; i++) {
-            byteBuf.writeByte((byte) 0x80);
+        // 如果不够位数, 那么最后一个首位需要置1,说明后续还有数字.
+        if (idx < i32buf.length) {
+            i32buf[idx-1] |= 0x80;
         }
 
         byteBuf.writeBytes(i32buf, 0, idx);
+
+        for (int i = idx; i < i32buf.length-1; i++) {
+            byteBuf.writeByte((byte) 0x80);
+        }
+
+        if (idx < i32buf.length)
+            byteBuf.writeByte((byte) 0x00);
     }
 
     //TODO
-    private static int readVarint32(TProtocol inProtocol) throws TException {
-        int result = 0;
-
-        while (true) {
-            byte b = inProtocol.readByte();
-            result |= (int) (b & 0x7f);
-            if ((b & 0x80) != 0x80) break;
-        }
-        return result;
-    }
+//    private static int readVarint32(TProtocol inProtocol) throws TException {
+//        int result = 0;
+//
+//        while (true) {
+//            byte b = inProtocol.readByte();
+//            result |= (int) (b & 0x7f);
+//            if ((b & 0x80) != 0x80) break;
+//        }
+//        return result;
+//    }
 
 }

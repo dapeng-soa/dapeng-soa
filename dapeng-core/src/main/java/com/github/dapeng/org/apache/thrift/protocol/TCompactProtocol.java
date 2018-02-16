@@ -780,7 +780,7 @@ public class TCompactProtocol extends TProtocol {
       while (true) {
         byte b = readByte();
         result |= (int) (b & 0x7f) << shift;
-        if ((b & 0x80) != 0x80) break;
+        if ((b & 0x80) != 0x80) break;//如果后续没有字节了(首位为0),那么跳出
         shift += 7;
       }
     }

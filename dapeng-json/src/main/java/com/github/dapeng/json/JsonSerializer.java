@@ -15,7 +15,7 @@ import java.util.Optional;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
-import static com.github.dapeng.json.TJsonCompressProtocolUtil.readMapBegin;
+//import static com.github.dapeng.json.TJsonCompressProtocolUtil.readMapBegin;
 import static com.github.dapeng.util.MetaDataUtil.*;
 
 public class JsonSerializer implements BeanSerializer<String> {
@@ -129,8 +129,9 @@ public class JsonSerializer implements BeanSerializer<String> {
                 break;
             case TType.MAP:
                 if (!skip) {
-                    TMap map = invocationCtx.getCodecProtocol() == CodecProtocol.Binary ?
-                            iproto.readMapBegin() : readMapBegin(iproto);
+                    TMap map = iproto.readMapBegin();
+//                            invocationCtx.getCodecProtocol() == CodecProtocol.Binary ?
+//                            iproto.readMapBegin() : readMapBegin(iproto);
                     writer.onStartObject();
                     for (int index = 0; index < map.size; index++) {
                         switch (map.keyType) {
@@ -370,7 +371,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                 case HEADER_END:
                     break;
                 case BODY_BEGIN:
-                    new SoaHeaderSerializer().write(buildSoaHeader(), oproto);
+                    new SoaHeaderSerializer().write(buildSoaHeader(), new TBinaryProtocol(oproto.getTransport()));
 
                     //初始化当前数据节点
                     DataType initDataType = new DataType();
