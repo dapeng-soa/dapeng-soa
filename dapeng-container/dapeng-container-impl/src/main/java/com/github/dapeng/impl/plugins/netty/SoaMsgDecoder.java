@@ -35,8 +35,10 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             out.add(parseSoaMsg(msg));
         } catch (SoaException e) {
             // todo
+            LOGGER.error(e.getMessage(), e);
         } catch (Throwable e) {
             // todo
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
@@ -70,7 +72,6 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             args = soaFunction.reqSerializer.read(contentProtocol);
         } catch (TProtocolException | OutOfMemoryError e) {
             //反序列化出错
-            LOGGER.error(e.getMessage(), e);
             LOGGER.error(DumpUtil.dumpToStr(msg));
             throw e;
         }
