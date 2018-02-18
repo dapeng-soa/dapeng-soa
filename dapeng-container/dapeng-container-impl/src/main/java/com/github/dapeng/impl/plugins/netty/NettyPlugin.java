@@ -6,11 +6,6 @@ import com.github.dapeng.api.Container;
 import com.github.dapeng.api.Plugin;
 import com.github.dapeng.api.events.AppEvent;
 import com.github.dapeng.util.SoaSystemEnvProperties;
-import com.github.dapeng.api.AppListener;
-import com.github.dapeng.api.Container;
-import com.github.dapeng.api.Plugin;
-import com.github.dapeng.api.events.AppEvent;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.AbstractByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -27,17 +22,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @date 2017/12/7
  * @author lihuimin
+ * @date 2017/12/7
  */
 public class NettyPlugin implements AppListener, Plugin {
 
     private final Container container;
+
     public NettyPlugin(Container container) {
         this.container = container;
         container.registerAppListener(this);
     }
-
 
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NettyPlugin.class);
@@ -53,7 +48,7 @@ public class NettyPlugin implements AppListener, Plugin {
     public void start() {
         LOGGER.warn("Plugin::NettyPlugin start");
         LOGGER.info("Bind Local Port {} [Netty]", port);
-        LOGGER.info("ByteBufAllocator:{}", SoaSystemEnvProperties.SOA_POOLED_BYTEBUF?"pooled":"unpooled");
+        LOGGER.info("ByteBufAllocator:{}", SoaSystemEnvProperties.SOA_POOLED_BYTEBUF ? "pooled" : "unpooled");
 
         new Thread("NettyContainer-Thread") {
             @Override
@@ -74,7 +69,8 @@ public class NettyPlugin implements AppListener, Plugin {
                                             new SoaDecoder(), //粘包和断包处理
                                             new SoaIdleHandler(),  //心跳处理
                                             new SoaMsgDecoder(container),
-                                            new SoaMsgEncoder(),
+                                            new SoaErrorMsgEncoder(),
+                                            new SoaNormalMsgEncoder(),
                                             new SoaServerHandler(container));  //调用处理
                                 }
                             })
