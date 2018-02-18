@@ -2,20 +2,15 @@ package com.github.dapeng.impl.plugins.netty;
 
 
 import com.github.dapeng.api.Container;
-import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.*;
 import com.github.dapeng.impl.filters.HeadFilter;
 import com.github.dapeng.org.apache.thrift.TException;
-import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
-import com.github.dapeng.org.apache.thrift.protocol.TProtocolException;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.RegistryAgentProxy;
-import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.SoaSystemEnvProperties;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -44,20 +39,20 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+    public void channelRead(ChannelHandlerContext channelHandlerContext, Object msg) {
         final long invokeTime = System.currentTimeMillis();
-        final TransactionContext context = TransactionContext.Factory.getCurrentInstance();
+        final TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
         try {
-            SoaHeader soaHeader = context.getHeader();
+            SoaHeader soaHeader = transactionContext.getHeader();
             SoaServiceDefinition processor = container.getServiceProcessors().get(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
             container.getDispatcher().execute(() -> {
                 try {
-                    TransactionContext.Factory.setCurrentInstance(context);
-                    processRequest(ctx, processor, msg, context, invokeTime);
+                    TransactionContext.Factory.setCurrentInstance(transactionContext);
+                    processRequest(channelHandlerContext, processor, msg, transactionContext, invokeTime);
                 } catch (Throwable e) {
                     LOGGER.error(e.getMessage(), e);
-                    writeErrorMessage(ctx, context, new SoaException(SoaCode.UnKnown, e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage()));
+                    writeErrorMessage(channelHandlerContext, transactionContext, new SoaException(SoaCode.UnKnown, e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage()));
                 } finally {
                     TransactionContext.Factory.removeCurrentInstance();
                 }
@@ -65,10 +60,10 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         } catch (Throwable ex) {
             LOGGER.error(ex.getMessage(), ex);
 
-            if (context.getHeader() == null) {
-                context.setHeader(new SoaHeader());
+            if (transactionContext.getHeader() == null) {
+                transactionContext.setHeader(new SoaHeader());
             }
-            writeErrorMessage(ctx, context, new SoaException(SoaCode.UnKnown, "读请求异常"));
+            writeErrorMessage(channelHandlerContext, transactionContext, new SoaException(SoaCode.UnKnown, "读请求异常"));
         } finally {
             TransactionContext.Factory.removeCurrentInstance();
         }
@@ -84,11 +79,12 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     private <I, REQ, RESP> void processRequest(ChannelHandlerContext channelHandlerContext,
                                                SoaServiceDefinition<I> serviceDef,
                                                REQ args,
-                                               TransactionContext context,
+                                               TransactionContext transactionContext,
                                                long invokeTime) throws TException {
 
+        FilterContextImpl filterContext = new FilterContextImpl();
         try {
-            SoaHeader soaHeader = context.getHeader();
+            SoaHeader soaHeader = transactionContext.getHeader();
 
             //check if request expired
             final long waitingTime = System.currentTimeMillis() - invokeTime;
@@ -119,7 +115,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                 }
 
                 @Override
-                public void onEntry(FilterContext ctx, FilterChain next) {
+                public void onEntry(FilterContext filterContext, FilterChain next) {
                     try {
                         if (serviceDef.isAsync) {
                             SoaFunctionDefinition.Async asyncFunc = (SoaFunctionDefinition.Async) soaFunction;
@@ -127,22 +123,22 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             future.whenComplete((realResult, ex) -> {
                                 if (ex != null) {
                                     SoaException soaException = convertToSoaException(ex);
-                                    writeErrorMessage(channelHandlerContext, context, ctx, soaException);
+                                    writeErrorMessage(channelHandlerContext, transactionContext, soaException);
                                 } else {
-                                    TransactionContext.Factory.setCurrentInstance(context);
-                                    processResult(channelHandlerContext, soaFunction, context, realResult, application, ctx);
+                                    TransactionContext.Factory.setCurrentInstance(transactionContext);
+                                    processResult(channelHandlerContext, soaFunction, transactionContext, realResult, application, filterContext);
                                 }
-                                onExit(ctx, getPrevChain(ctx));
+                                onExit(filterContext, getPrevChain(filterContext));
                             });
                         } else {
                             SoaFunctionDefinition.Sync syncFunction = (SoaFunctionDefinition.Sync) soaFunction;
                             RESP result = (RESP) syncFunction.apply(iface, args);
-                            processResult(channelHandlerContext, soaFunction, context, result, application, ctx);
-                            onExit(ctx, getPrevChain(ctx));
+                            processResult(channelHandlerContext, soaFunction, transactionContext, result, application, filterContext);
+                            onExit(filterContext, getPrevChain(filterContext));
                         }
                     } catch (Throwable e) {
                         LOGGER.error(e.getMessage(), e);
-                        writeErrorMessage(channelHandlerContext, context, new SoaException(SoaCode.UnKnown,
+                        writeErrorMessage(channelHandlerContext, transactionContext,  new SoaException(SoaCode.UnKnown,
                                 e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage()));
                     }
                 }
@@ -158,24 +154,30 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             };
             SharedChain sharedChain = new SharedChain(headFilter, container.getFilters(), dispatchFilter, 0);
 
-            FilterContextImpl filterContext = new FilterContextImpl();
             filterContext.setAttach(dispatchFilter, "chain", sharedChain);
 
             sharedChain.onEntry(filterContext);
         } catch (SoaException e) {
             LOGGER.error(e.getMsg(), e);
-            writeErrorMessage(channelHandlerContext, context, new SoaException(e.getCode(), e.getMsg()));
+            // can't reach the headFilter
+            writeErrorMessage(channelHandlerContext, transactionContext,  new SoaException(e.getCode(), e.getMsg()));
         } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
-            writeErrorMessage(channelHandlerContext, context, new SoaException(SoaCode.UnKnown, e.getMessage()));
+            // can't reach the headFilter
+            writeErrorMessage(channelHandlerContext, transactionContext, new SoaException(SoaCode.UnKnown, e.getMessage()));
         }
     }
 
-    private void processResult(ChannelHandlerContext channelHandlerContext, SoaFunctionDefinition soaFunction, TransactionContext context, Object result, Application application, FilterContext filterContext) {
-        SoaHeader soaHeader = context.getHeader();
+    private void processResult(ChannelHandlerContext channelHandlerContext,
+                               SoaFunctionDefinition soaFunction,
+                               TransactionContext transactionContext,
+                               Object result,
+                               Application application,
+                               FilterContext filterContext) {
+        SoaHeader soaHeader = transactionContext.getHeader();
         soaHeader.setRespCode(Optional.of(SOA_NORMAL_RESP_CODE));
         soaHeader.setRespMessage(Optional.of("ok"));
-        context.setHeader(soaHeader);
+        transactionContext.setHeader(soaHeader);
         try {
             application.info(this.getClass(),
                     soaHeader.getServiceName() + ":" + soaHeader.getVersionName()
@@ -183,14 +185,14 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             + " operatorName:" + soaHeader.getOperatorName());
 
             filterContext.setAttribute("channelHandlerContext", channelHandlerContext);
-            filterContext.setAttribute("context", context);
+            filterContext.setAttribute("context", transactionContext);
             filterContext.setAttribute("reqSerializer", soaFunction.reqSerializer);
             filterContext.setAttribute("respSerializer", soaFunction.respSerializer);
             filterContext.setAttribute("result", result);
 
         } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
-            writeErrorMessage(channelHandlerContext, context, filterContext, new SoaException(SoaCode.UnKnown,
+            writeErrorMessage(channelHandlerContext, transactionContext, new SoaException(SoaCode.UnKnown,
                     e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage()));
         } finally {
             TransactionContext.Factory.removeCurrentInstance();
@@ -198,45 +200,21 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     /**
-     * handle this within HeadFilter
+     * we can't handle this within HeadFilter as sometimes can't reach the headFilter
      *
      * @param ctx
-     * @param context
-     * @param filterContext
+     * @param transactionContext
      * @param e
      */
-    private void writeErrorMessage(ChannelHandlerContext ctx, TransactionContext context, FilterContext filterContext, SoaException e) {
+    private void writeErrorMessage(ChannelHandlerContext ctx, TransactionContext transactionContext, SoaException e) {
 
-        SoaHeader soaHeader = context.getHeader();
+        SoaHeader soaHeader = transactionContext.getHeader();
         LOGGER.info("{} {} {} response header:{} body:{null}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.toString());
 
         soaHeader.setRespCode(Optional.ofNullable(e.getCode()));
         soaHeader.setRespMessage(Optional.ofNullable(e.getMessage()));
-        filterContext.setAttribute("channelHandlerContext", ctx);
-        filterContext.setAttribute("context", context);
-    }
 
-    private void writeErrorMessage(ChannelHandlerContext ctx, TransactionContext context, SoaException e) {
-        ByteBuf outputBuf = ctx.alloc().buffer(8192);
-        TSoaTransport transport = new TSoaTransport(outputBuf);
-        SoaMessageProcessor builder = new SoaMessageProcessor(transport);
-        SoaHeader soaHeader = context.getHeader();
-        try {
-            soaHeader.setRespCode(Optional.ofNullable(e.getCode()));
-            soaHeader.setRespMessage(Optional.ofNullable(e.getMsg()));
-            builder.writeHeader(context);
-            builder.writeMessageEnd();
-
-            transport.flush();
-
-            ctx.writeAndFlush(outputBuf);
-
-            LOGGER.info("{} {} {} response header:{} body:{null}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.toString());
-        } catch (Throwable e1) {
-            LOGGER.error(e1.getMessage(), e1);
-            outputBuf.release();
-        }
-
+        ctx.writeAndFlush(e);
     }
 
     /**
