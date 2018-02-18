@@ -130,8 +130,6 @@ public class JsonSerializer implements BeanSerializer<String> {
             case TType.MAP:
                 if (!skip) {
                     TMap map = iproto.readMapBegin();
-//                            invocationCtx.getCodecProtocol() == CodecProtocol.Binary ?
-//                            iproto.readMapBegin() : readMapBegin(iproto);
                     writer.onStartObject();
                     for (int index = 0; index < map.size; index++) {
                         switch (map.keyType) {
