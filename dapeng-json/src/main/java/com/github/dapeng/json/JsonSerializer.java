@@ -321,7 +321,7 @@ public class JsonSerializer implements BeanSerializer<String> {
          * 当uselessField1跟uselessField2是多余字段时,我们要确保其内部所有字段都
          * 给skip掉.
          */
-        int fieldsSinceLastNotFound = 0;
+        int skipFieldsStack = 0;
         //记录是否是null. 前端在处理optional字段的时候, 可能会传入一个null,见单元测试
         boolean foundNull = true;
 
@@ -359,7 +359,6 @@ public class JsonSerializer implements BeanSerializer<String> {
 
         @Override
         public void onStartObject() throws TException {
-//            assert current.dataType.kind == DataType.KIND.STRUCT || current.dataType.kind == DataType.KIND.MAP;
             switch (parsePhase) {
                 case INIT:
                     break;
@@ -385,8 +384,11 @@ public class JsonSerializer implements BeanSerializer<String> {
                     break;
                 case BODY:
                     if (!foundField) {
+                        skipFieldsStack++;
                         return;
                     }
+
+                    assert current.dataType.kind == DataType.KIND.STRUCT || current.dataType.kind == DataType.KIND.MAP;
 
                     if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
                         peek().increaseElement();
@@ -417,8 +419,6 @@ public class JsonSerializer implements BeanSerializer<String> {
 
         @Override
         public void onEndObject() throws TException {
-//            assert current.dataType.kind == DataType.KIND.STRUCT || current.dataType.kind == DataType.KIND.MAP;
-
             switch (parsePhase) {
                 case HEADER_BEGIN:
                     logAndThrowTException();
@@ -433,7 +433,13 @@ public class JsonSerializer implements BeanSerializer<String> {
                     logAndThrowTException();
                     break;
                 case BODY:
-                    if (!foundField) return;
+                    if (!foundField) {
+                        skipFieldsStack--;
+                        return;
+                    } else assert skipFieldsStack == 0;
+
+                    assert current.dataType.kind == DataType.KIND.STRUCT || current.dataType.kind == DataType.KIND.MAP;
+
                     switch (current.dataType.kind) {
                         case STRUCT:
                             oproto.writeFieldStop();
@@ -465,9 +471,14 @@ public class JsonSerializer implements BeanSerializer<String> {
          */
         @Override
         public void onStartArray() throws TException {
-            assert isCollectionKind(current.dataType.kind);
+            if (parsePhase != ParsePhase.BODY || !foundField) {
+                if (!foundField) {
+                    skipFieldsStack++;
+                }
+                return;
+            }
 
-            if (parsePhase != ParsePhase.BODY || !foundField) return;
+            assert isCollectionKind(current.dataType.kind);
 
             if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
                 peek().increaseElement();
@@ -490,7 +501,12 @@ public class JsonSerializer implements BeanSerializer<String> {
 
         @Override
         public void onEndArray() throws TException {
-            if (parsePhase != ParsePhase.BODY || !foundField) return;
+            if (parsePhase != ParsePhase.BODY || !foundField) {
+                if (!foundField) {
+                    skipFieldsStack--;
+                }
+                return;
+            }
 
             pop();
 
@@ -533,6 +549,10 @@ public class JsonSerializer implements BeanSerializer<String> {
                     }
                     break;
                 case BODY:
+                    if (!foundField) {
+                        return;
+                    }
+
                     if (current.dataType.kind == DataType.KIND.MAP) {
                         assert isValidMapKeyType(current.dataType.keyType.kind);
                         stackNew(new StackNode(current.dataType.keyType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(), null, name));
@@ -589,7 +609,9 @@ public class JsonSerializer implements BeanSerializer<String> {
         public void onEndField() throws TException {
             if (parsePhase != ParsePhase.BODY || !foundField) {
                 // reset the flag
-                foundField = true;
+                if (skipFieldsStack == 0) {
+                    foundField = true;
+                }
                 return;
             }
 
@@ -1018,7 +1040,7 @@ class TJsonCompressProtocolUtil {
     /**
      * Invoked after we get the actually collection size.
      *
-     * @param size     collection size
+     * @param size    collection size
      * @param byteBuf
      * @throws TException
      */
@@ -1111,12 +1133,12 @@ class TJsonCompressProtocolUtil {
 
         // 如果不够位数, 那么最后一个首位需要置1,说明后续还有数字.
         if (idx < i32buf.length) {
-            i32buf[idx-1] |= 0x80;
+            i32buf[idx - 1] |= 0x80;
         }
 
         byteBuf.writeBytes(i32buf, 0, idx);
 
-        for (int i = idx; i < i32buf.length-1; i++) {
+        for (int i = idx; i < i32buf.length - 1; i++) {
             byteBuf.writeByte((byte) 0x80);
         }
 
