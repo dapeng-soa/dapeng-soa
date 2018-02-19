@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 错误返回的消息编码器
+ * 错误返回的消息编码器(有可能是filter产生,或者压根没经过filter(例如请求反序列化的时候出错))
  *
  * @author Ever
  */

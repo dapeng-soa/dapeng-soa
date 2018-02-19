@@ -17,15 +17,15 @@ import java.util.Optional;
 import static com.github.dapeng.util.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
 
 /**
- * 正常返回的消息编码器
+ * 经过Filter处理后的消息的编码器
  *
  * @author Ever
  */
 @ChannelHandler.Sharable
-public class SoaNormalMsgEncoder extends MessageToByteEncoder<FilterContext> {
+public class SoaFilterMsgEncoder extends MessageToByteEncoder<FilterContext> {
     private final Container container;
 
-    SoaNormalMsgEncoder(Container container) {
+    SoaFilterMsgEncoder(Container container) {
         this.container = container;
     }
 
