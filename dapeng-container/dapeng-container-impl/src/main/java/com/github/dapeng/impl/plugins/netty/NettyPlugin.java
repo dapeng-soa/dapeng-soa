@@ -70,7 +70,7 @@ public class NettyPlugin implements AppListener, Plugin {
                                             new SoaIdleHandler(),  //心跳处理
                                             new SoaMsgDecoder(container),//请求解码器
                                             new SoaErrorMsgEncoder(container),//错误响应编码器
-                                            new SoaNormalMsgEncoder(container),//正常响应编码器
+                                            new SoaFilterMsgEncoder(container),//正常响应编码器
                                             new SoaServerHandler(container));  //业务处理处理
                                 }
                             })
