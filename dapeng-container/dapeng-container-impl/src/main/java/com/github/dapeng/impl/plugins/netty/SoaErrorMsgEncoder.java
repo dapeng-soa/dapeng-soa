@@ -49,20 +49,11 @@ public class SoaErrorMsgEncoder extends MessageToByteEncoder<TransactionContext>
                             + " operatorId:" + soaHeader.getOperatorId()
                             + " operatorName:" + soaHeader.getOperatorName(),
                     soaException);
-            application.info(this.getClass(),
-                    soaHeader.getServiceName()
-                            + ":" + soaHeader.getVersionName()
-                            + ":" + soaHeader.getMethodName()
-                            + " operatorId:" + soaHeader.getOperatorId()
-                            + " operatorName:" + soaHeader.getOperatorName()
-                            + " exception:" + soaException.getCode() + "-" + soaException.getMsg());
         } catch (Exception e1) {
             LOGGER.error(e1.getMessage(), e1);
             if (outputBuf != null) {
                 outputBuf.release();
             }
         }
-
-        LOGGER.error(soaException.getMsg(), soaException);
     }
 }

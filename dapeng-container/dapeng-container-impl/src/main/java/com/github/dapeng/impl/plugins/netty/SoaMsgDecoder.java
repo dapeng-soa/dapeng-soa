@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.github.dapeng.util.ExceptionUtil.convertToSoaException;
 
@@ -39,9 +40,14 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             out.add(parseSoaMsg(msg));
         } catch (Throwable e) {
             SoaException soaException = convertToSoaException(e);
-            TransactionContext context = TransactionContext.Factory.getCurrentInstance();
-            context.setSoaException(soaException);
-            ctx.writeAndFlush(soaException);
+            TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
+
+            SoaHeader soaHeader = transactionContext.getHeader();
+            soaHeader.setRespCode(Optional.ofNullable(soaException.getCode()));
+            soaHeader.setRespMessage(Optional.ofNullable(soaException.getMessage()));
+
+            transactionContext.setSoaException(soaException);
+            ctx.writeAndFlush(transactionContext);
         }
     }
 

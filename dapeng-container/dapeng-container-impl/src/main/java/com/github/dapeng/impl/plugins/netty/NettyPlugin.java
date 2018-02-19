@@ -68,10 +68,10 @@ public class NettyPlugin implements AppListener, Plugin {
                                     ch.pipeline().addLast(new IdleStateHandler(15, 0, 0), //超时设置
                                             new SoaDecoder(), //粘包和断包处理
                                             new SoaIdleHandler(),  //心跳处理
-                                            new SoaMsgDecoder(container),
-                                            new SoaErrorMsgEncoder(container),
-                                            new SoaNormalMsgEncoder(container),
-                                            new SoaServerHandler(container));  //调用处理
+                                            new SoaMsgDecoder(container),//请求解码器
+                                            new SoaErrorMsgEncoder(container),//错误响应编码器
+                                            new SoaNormalMsgEncoder(container),//正常响应编码器
+                                            new SoaServerHandler(container));  //业务处理处理
                                 }
                             })
                             .option(ChannelOption.SO_BACKLOG, 1024)
