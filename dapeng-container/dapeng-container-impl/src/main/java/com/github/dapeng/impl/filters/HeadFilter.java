@@ -30,20 +30,11 @@ public class HeadFilter implements Filter {
     }
 
     @Override
-    public void onExit(FilterContext ctx, FilterChain prev) {
+    public void onExit(FilterContext filterContext, FilterChain prev) {
         // 第一个filter不需要调onExit(这里不能通过TransactionContext.getCurrentInstance()的方式.因为已经给remove掉了.
-        TransactionContext transactionContext = (TransactionContext) ctx.getAttribute("context");
+        TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
+        ChannelHandlerContext channelHandlerContext = (ChannelHandlerContext) filterContext.getAttribute("channelHandlerContext");
 
-        SoaHeader soaHeader = transactionContext.getHeader();
-        Optional<String> respCode = soaHeader.getRespCode();
-
-        ChannelHandlerContext channelHandlerContext = (ChannelHandlerContext) ctx.getAttribute("channelHandlerContext");
-
-        if (respCode.isPresent() && !respCode.get().equals(SOA_NORMAL_RESP_CODE)) {
-            channelHandlerContext.writeAndFlush(new SoaException(respCode.get(),
-                    soaHeader.getRespMessage().orElse(SoaCode.UnKnown.getMsg())));
-        } else {
-            channelHandlerContext.writeAndFlush(ctx);
-        }
+        channelHandlerContext.writeAndFlush(filterContext);
     }
 }

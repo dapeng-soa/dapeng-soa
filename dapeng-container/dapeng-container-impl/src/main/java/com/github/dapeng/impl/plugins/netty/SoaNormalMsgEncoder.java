@@ -4,6 +4,7 @@ import com.github.dapeng.api.Container;
 import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.filter.FilterContext;
+import com.github.dapeng.util.ExceptionUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -32,17 +33,22 @@ public class SoaNormalMsgEncoder extends MessageToByteEncoder<FilterContext> {
     protected void encode(ChannelHandlerContext channelHandlerContext, FilterContext ctx, ByteBuf out) throws Exception {
         ByteBuf outputBuf = null;
         TransactionContext transactionContext = (TransactionContext) ctx.getAttribute("context");
-        BeanSerializer serializer = (BeanSerializer) ctx.getAttribute("respSerializer");
-        Object result = ctx.getAttribute("result");
         SoaHeader soaHeader = transactionContext.getHeader();
         Optional<String> respCode = soaHeader.getRespCode();
 
         try {
             if (respCode.isPresent() && !respCode.get().equals(SOA_NORMAL_RESP_CODE)) {
-                channelHandlerContext.writeAndFlush(
-                        new SoaException(respCode.get(),
-                                soaHeader.getRespMessage().orElse(SoaCode.UnKnown.getMsg())));
+                SoaException soaException = transactionContext.getSoaException();
+                if (soaException==null) {
+                    soaException = new SoaException(respCode.get(),
+                            soaHeader.getRespMessage().orElse(SoaCode.UnKnown.getMsg()));
+                    transactionContext.setSoaException(soaException);
+                }
+                channelHandlerContext.writeAndFlush(transactionContext);
             } else {
+                BeanSerializer serializer = (BeanSerializer) ctx.getAttribute("respSerializer");
+                Object result = ctx.getAttribute("result");
+
                 outputBuf = channelHandlerContext.alloc().buffer(8192);
                 TSoaTransport transport = new TSoaTransport(outputBuf);
                 SoaMessageProcessor messageProcessor = new SoaMessageProcessor(transport);
@@ -69,7 +75,13 @@ public class SoaNormalMsgEncoder extends MessageToByteEncoder<FilterContext> {
 
             }
         } catch (Throwable e) {
-            channelHandlerContext.writeAndFlush(new SoaException(SoaCode.UnKnown, e.getMessage()));
+            SoaException soaException = ExceptionUtil.convertToSoaException(e);
+
+            soaHeader.setRespCode(Optional.ofNullable(soaException.getCode()));
+            soaHeader.setRespMessage(Optional.ofNullable(soaException.getMessage()));
+
+            transactionContext.setSoaException(soaException);
+            channelHandlerContext.writeAndFlush(transactionContext);
 
             if (outputBuf != null) {
                 outputBuf.release();

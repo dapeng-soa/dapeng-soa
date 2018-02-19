@@ -75,7 +75,7 @@ public class ServiceProcessFilter implements InitializableFilter {
             Map<ServiceSimpleInfo, Long> map = new ConcurrentHashMap<>(16);
             map.put(simpleInfo, cost);
             serviceElapses.add(map);
-
+if (LOGGER.isDebugEnabled())
             LOGGER.debug("ServiceProcessFilter - " + simpleInfo.getServiceName()
                     + ":" + simpleInfo.getMethodName() + ":[" + simpleInfo.getVersionName() + "] 耗时 ==>"
                     + cost + " ms");
@@ -98,7 +98,7 @@ public class ServiceProcessFilter implements InitializableFilter {
                 if (soaHeader.getRespCode().isPresent() && SUCCESS_CODE.equals(soaHeader.getRespCode().get())) {
                     newProcessData.getSucceedCalls().incrementAndGet();
                 } else {
-                    newProcessData.getSucceedCalls().incrementAndGet();
+                    newProcessData.getFailCalls().incrementAndGet();
                 }
 
                 serviceProcessCallDatas.put(simpleInfo, newProcessData);

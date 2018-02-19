@@ -61,6 +61,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             });
         } catch (Throwable ex) {
             if (transactionContext.getHeader() == null) {
+                LOGGER.error("should not come here. soaHeader is null");
                 transactionContext.setHeader(new SoaHeader());
             }
             writeErrorMessage(channelHandlerContext, transactionContext, new SoaException(SoaCode.UnKnown.getCode(), "读请求异常", ex));
@@ -82,7 +83,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                                                TransactionContext transactionContext,
                                                long invokeTime) throws TException {
 
-        FilterContextImpl filterContext = new FilterContextImpl();
         try {
             SoaHeader soaHeader = transactionContext.getHeader();
 
@@ -123,7 +123,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             future.whenComplete((realResult, ex) -> {
                                 if (ex != null) {
                                     SoaException soaException = ExceptionUtil.convertToSoaException(ex);
-                                    writeErrorMessage(channelHandlerContext, transactionContext, soaException);
+                                    attachErrorInfo(transactionContext, soaException);
                                 } else {
                                     TransactionContext.Factory.setCurrentInstance(transactionContext);
                                     processResult(channelHandlerContext, soaFunction, transactionContext, realResult, filterContext);
@@ -137,7 +137,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             onExit(filterContext, getPrevChain(filterContext));
                         }
                     } catch (Throwable e) {
-                        writeErrorMessage(channelHandlerContext, transactionContext, ExceptionUtil.convertToSoaException(e));
+                        attachErrorInfo(transactionContext, ExceptionUtil.convertToSoaException(e));
+                        onExit(filterContext, getPrevChain(filterContext));
                     }
                 }
 
@@ -146,12 +147,15 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                     try {
                         prev.onExit(ctx);
                     } catch (TException e) {
-                        writeErrorMessage(channelHandlerContext, transactionContext, ExceptionUtil.convertToSoaException(e));
+                        attachErrorInfo(transactionContext, ExceptionUtil.convertToSoaException(e));
                     }
                 }
             };
             SharedChain sharedChain = new SharedChain(headFilter, container.getFilters(), dispatchFilter, 0);
 
+            FilterContextImpl filterContext = new FilterContextImpl();
+            filterContext.setAttribute("channelHandlerContext", channelHandlerContext);
+            filterContext.setAttribute("context", transactionContext);
             filterContext.setAttach(dispatchFilter, "chain", sharedChain);
 
             sharedChain.onEntry(filterContext);
@@ -172,29 +176,26 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         SoaHeader soaHeader = transactionContext.getHeader();
         soaHeader.setRespCode(Optional.of(SOA_NORMAL_RESP_CODE));
         soaHeader.setRespMessage(Optional.of("ok"));
-        transactionContext.setHeader(soaHeader);
         try {
-            filterContext.setAttribute("channelHandlerContext", channelHandlerContext);
-            filterContext.setAttribute("context", transactionContext);
             filterContext.setAttribute("reqSerializer", soaFunction.reqSerializer);
             filterContext.setAttribute("respSerializer", soaFunction.respSerializer);
             filterContext.setAttribute("result", result);
 
         } catch (Throwable e) {
-            writeErrorMessage(channelHandlerContext, transactionContext, ExceptionUtil.convertToSoaException(e));
+            attachErrorInfo(transactionContext, ExceptionUtil.convertToSoaException(e));
         } finally {
             TransactionContext.Factory.removeCurrentInstance();
         }
     }
 
+
     /**
-     * we can't handle this within HeadFilter as sometimes can't reach the headFilter
+     * attach errorInfo to transactionContext, so that we could handle it with HeadFilter
      *
-     * @param ctx
      * @param transactionContext
      * @param e
      */
-    private void writeErrorMessage(ChannelHandlerContext ctx, TransactionContext transactionContext, SoaException e) {
+    private void attachErrorInfo(TransactionContext transactionContext, SoaException e) {
 
         SoaHeader soaHeader = transactionContext.getHeader();
 
@@ -202,6 +203,19 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         soaHeader.setRespMessage(Optional.ofNullable(e.getMessage()));
 
         transactionContext.setSoaException(e);
+    }
+
+    /**
+     * we can't handle this within HeadFilter as sometimes we can't reach the headFilter(errors that outside the filterChain)
+     * so we write the transactionContext to outbound
+     *
+     * @param ctx
+     * @param transactionContext
+     * @param e
+     */
+    private void writeErrorMessage(ChannelHandlerContext ctx, TransactionContext transactionContext, SoaException e) {
+
+        attachErrorInfo(transactionContext, e);
 
         ctx.writeAndFlush(transactionContext);
     }
