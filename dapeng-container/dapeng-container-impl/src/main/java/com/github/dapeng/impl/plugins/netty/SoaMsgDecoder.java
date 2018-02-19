@@ -10,6 +10,7 @@ import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocolException;
 import com.github.dapeng.util.DumpUtil;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import org.slf4j.Logger;
@@ -17,9 +18,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+import static com.github.dapeng.util.ExceptionUtil.convertToSoaException;
+
 /**
  * @author ever
  */
+@ChannelHandler.Sharable
 public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SoaMsgDecoder.class);
 
@@ -34,11 +38,9 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         try {
             out.add(parseSoaMsg(msg));
         } catch (SoaException e) {
-            LOGGER.error(e.getMessage(), e);
             ctx.writeAndFlush(e);
         } catch (Throwable e) {
-            LOGGER.error(e.getMessage(), e);
-            ctx.writeAndFlush(new SoaException(SoaCode.UnKnown, e.getMessage()));
+            ctx.writeAndFlush(convertToSoaException(e));
         }
     }
 
@@ -77,11 +79,13 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         }
         contentProtocol.readMessageEnd();
 
-        //log request
-        application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} request body:{}",
-                soaHeader.getServiceName(), soaHeader.getVersionName(),
-                soaHeader.getMethodName(), soaHeader.getOperatorId(),
-                soaHeader.getOperatorName(), formatToString(soaFunction.reqSerializer.toString(args)));
+        application.info(this.getClass(),
+                soaHeader.getServiceName()
+                        + ":" + soaHeader.getVersionName()
+                        + ":" + soaHeader.getMethodName()
+                        + " operatorId:" + soaHeader.getOperatorId()
+                        + " operatorName:" + soaHeader.getOperatorName()
+                        + " request body:" + formatToString(soaFunction.reqSerializer.toString(args)));
 
         return args;
     }
