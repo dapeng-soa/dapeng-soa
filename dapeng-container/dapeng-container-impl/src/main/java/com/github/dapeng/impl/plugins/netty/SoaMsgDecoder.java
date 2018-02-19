@@ -34,11 +34,11 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         try {
             out.add(parseSoaMsg(msg));
         } catch (SoaException e) {
-            // todo
             LOGGER.error(e.getMessage(), e);
+            ctx.writeAndFlush(e);
         } catch (Throwable e) {
-            // todo
             LOGGER.error(e.getMessage(), e);
+            ctx.writeAndFlush(new SoaException(SoaCode.UnKnown, e.getMessage()));
         }
     }
 
