@@ -22,20 +22,19 @@ public class HeadFilter implements Filter {
 
     @Override
     public void onEntry(FilterContext ctx, FilterChain next) {
-
         try {
             next.onEntry(ctx);
         } catch (TException e) {
             LOGGER.error(e.getMessage(), e);
         }
-
-
     }
 
     @Override
     public void onExit(FilterContext ctx, FilterChain prev) {
-        // 第一个filter不需要调onExit
-        SoaHeader soaHeader = TransactionContext.Factory.getCurrentInstance().getHeader();
+        // 第一个filter不需要调onExit(这里不能通过TransactionContext.getCurrentInstance()的方式.因为已经给remove掉了.
+        TransactionContext transactionContext = (TransactionContext) ctx.getAttribute("context");
+
+        SoaHeader soaHeader = transactionContext.getHeader();
         Optional<String> respCode = soaHeader.getRespCode();
 
         ChannelHandlerContext channelHandlerContext = (ChannelHandlerContext) ctx.getAttribute("channelHandlerContext");

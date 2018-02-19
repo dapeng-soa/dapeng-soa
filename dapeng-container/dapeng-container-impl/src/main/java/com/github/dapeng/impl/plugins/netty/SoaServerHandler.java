@@ -126,14 +126,14 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                                     writeErrorMessage(channelHandlerContext, transactionContext, soaException);
                                 } else {
                                     TransactionContext.Factory.setCurrentInstance(transactionContext);
-                                    processResult(channelHandlerContext, soaFunction, transactionContext, realResult, application, filterContext);
+                                    processResult(channelHandlerContext, soaFunction, transactionContext, realResult, filterContext);
                                 }
                                 onExit(filterContext, getPrevChain(filterContext));
                             });
                         } else {
                             SoaFunctionDefinition.Sync syncFunction = (SoaFunctionDefinition.Sync) soaFunction;
                             RESP result = (RESP) syncFunction.apply(iface, args);
-                            processResult(channelHandlerContext, soaFunction, transactionContext, result, application, filterContext);
+                            processResult(channelHandlerContext, soaFunction, transactionContext, result, filterContext);
                             onExit(filterContext, getPrevChain(filterContext));
                         }
                     } catch (Throwable e) {
@@ -168,7 +168,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                                SoaFunctionDefinition soaFunction,
                                TransactionContext transactionContext,
                                Object result,
-                               Application application,
                                FilterContext filterContext) {
         SoaHeader soaHeader = transactionContext.getHeader();
         soaHeader.setRespCode(Optional.of(SOA_NORMAL_RESP_CODE));
@@ -198,12 +197,13 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     private void writeErrorMessage(ChannelHandlerContext ctx, TransactionContext transactionContext, SoaException e) {
 
         SoaHeader soaHeader = transactionContext.getHeader();
-        LOGGER.info("{} {} {} response header:{} body:{null}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.toString());
 
         soaHeader.setRespCode(Optional.ofNullable(e.getCode()));
         soaHeader.setRespMessage(Optional.ofNullable(e.getMessage()));
 
-        ctx.writeAndFlush(e);
+        transactionContext.setSoaException(e);
+
+        ctx.writeAndFlush(transactionContext);
     }
 
     /**

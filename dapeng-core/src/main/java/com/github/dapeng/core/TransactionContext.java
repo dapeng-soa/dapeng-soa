@@ -22,6 +22,8 @@ public class TransactionContext {
 
     private Integer currentTransactionId = 0;
 
+    private SoaException soaException;
+
     public void setCodecProtocol(CodecProtocol codecProtocol) {
         this.codecProtocol = codecProtocol;
     }
@@ -68,6 +70,14 @@ public class TransactionContext {
 
     public void setCurrentTransactionId(Integer currentTransactionId) {
         this.currentTransactionId = currentTransactionId;
+    }
+
+    public SoaException getSoaException() {
+        return soaException;
+    }
+
+    public void setSoaException(SoaException soaException) {
+        this.soaException = soaException;
     }
 
     public static class Factory {

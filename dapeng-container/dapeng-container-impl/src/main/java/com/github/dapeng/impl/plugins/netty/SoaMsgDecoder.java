@@ -37,10 +37,11 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
     protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List out) throws Exception {
         try {
             out.add(parseSoaMsg(msg));
-        } catch (SoaException e) {
-            ctx.writeAndFlush(e);
         } catch (Throwable e) {
-            ctx.writeAndFlush(convertToSoaException(e));
+            SoaException soaException = convertToSoaException(e);
+            TransactionContext context = TransactionContext.Factory.getCurrentInstance();
+            context.setSoaException(soaException);
+            ctx.writeAndFlush(soaException);
         }
     }
 
