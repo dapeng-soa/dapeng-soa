@@ -14,14 +14,14 @@ import java.util.concurrent.Future;
  * @author maple.lei
  * @date 2018年02月12日 上午11:50
  */
-public class SoaKafkaProducer extends Thread {
+public class SoaKafkaProducer {
     private Logger LOGGER = LoggerFactory.getLogger(SoaKafkaProducer.class);
     /**
      * 127.0.0.1:9091,127.0.0.1:9092
      */
     private String kafkaConnect = SoaSystemEnvProperties.SOA_KAFKA_PORT;
 
-    private Producer<Long, String> producer;
+    private Producer<Long, byte[]> producer;
     private final Boolean isAsync;
     private final String topic;
 
@@ -46,23 +46,18 @@ public class SoaKafkaProducer extends Thread {
         producer = new KafkaProducer<>(props);
     }
 
-    @Override
-    public void run() {
-        LOGGER.info("start to producer message...");
+//    @Override
+//    public void run() {
+//        LOGGER.info("start to producer message...");
+//    }
+
+    public void send(Long id, byte[] msg) {
+        Future<RecordMetadata> send = producer.send(new ProducerRecord<>(topic, id, msg));
+
     }
 
-    public void send(String msg) {
-
-        Future<RecordMetadata> send = producer.send(new ProducerRecord<Long, String>(topic, 1L, msg));
-
-    }
-
-    public void sendAsync(String msg) {
-        producer.send(new ProducerRecord<Long, String>(topic, 1L, msg), new Callback() {
-            @Override
-            public void onCompletion(RecordMetadata metadata, Exception exception) {
-                System.out.println("#offset: " + metadata.offset());
-            }
-        });
+    public void sendAsync(Long id, byte[] msg) {
+        producer.send(new ProducerRecord<>(topic, id, msg),
+                (metadata, exception) -> System.out.println("#offset: " + metadata.offset()));
     }
 }
