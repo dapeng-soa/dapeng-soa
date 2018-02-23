@@ -66,12 +66,11 @@ public class NettyPlugin implements AppListener, Plugin {
                                 @Override
                                 protected void initChannel(SocketChannel ch) throws Exception {
                                     ch.pipeline().addLast(new IdleStateHandler(15, 0, 0), //超时设置
-                                            new SoaDecoder(), //粘包和断包处理
+                                            new SoaFrameDecoder(), //粘包和断包处理
                                             new SoaIdleHandler(),  //心跳处理
                                             new SoaMsgDecoder(container),//请求解码器
-                                            new SoaErrorMsgEncoder(container),//错误响应消息编码器
-                                            new SoaFilterMsgEncoder(container),//经Filter处理后的响应消息的编码器
-                                            new SoaServerHandler(container));  //业务处理器
+                                            new SoaMsgEncoder(container),//响应消息编码器
+                                            new SoaServerHandler(container));//业务处理器
                                 }
                             })
                             .option(ChannelOption.SO_BACKLOG, 1024)

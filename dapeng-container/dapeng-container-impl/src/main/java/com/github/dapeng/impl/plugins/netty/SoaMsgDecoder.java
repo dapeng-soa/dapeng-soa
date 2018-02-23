@@ -47,7 +47,11 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             soaHeader.setRespMessage(Optional.ofNullable(soaException.getMessage()));
 
             transactionContext.setSoaException(soaException);
-            ctx.writeAndFlush(transactionContext);
+            SoaResponseWrapper responseWrapper = new SoaResponseWrapper(transactionContext,
+                    Optional.ofNullable(null),
+                    Optional.ofNullable(null));
+
+            ctx.writeAndFlush(responseWrapper);
         }
     }
 

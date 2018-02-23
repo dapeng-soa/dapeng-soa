@@ -217,7 +217,11 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
         attachErrorInfo(transactionContext, e);
 
-        ctx.writeAndFlush(transactionContext);
+        SoaResponseWrapper responseWrapper = new SoaResponseWrapper(transactionContext,
+                Optional.ofNullable(null),
+                Optional.ofNullable(null));
+
+        ctx.writeAndFlush(responseWrapper);
     }
 
     /**
