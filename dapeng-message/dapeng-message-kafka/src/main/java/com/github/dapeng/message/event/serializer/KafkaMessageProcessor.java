@@ -1,7 +1,7 @@
 package com.github.dapeng.message.event.serializer;
 
 import com.github.dapeng.core.BeanSerializer;
-import com.github.dapeng.message.consumer.kafka.MessageInfo;
+import com.github.dapeng.message.event.MessageInfo;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TCompactProtocol;
 import org.slf4j.Logger;
@@ -19,11 +19,11 @@ public class KafkaMessageProcessor<T> {
     private BeanSerializer<T> beanSerializer;
     private byte[] realMessage;
 
-    public T dealMessage(byte[] message,ClassLoader classLoader) throws TException {
+    public T dealMessage(byte[] message, ClassLoader classLoader) throws TException {
 
         String eventType = getEventType(message);
         LOGGER.info("fetch eventType: {}", eventType);
-        beanSerializer = assemblyBeanSerializer(eventType,classLoader);
+        beanSerializer = assemblyBeanSerializer(eventType, classLoader);
         MessageInfo<T> messageInfo = parseMessage(message);
 
         T event = messageInfo.getEvent();
@@ -93,15 +93,13 @@ public class KafkaMessageProcessor<T> {
      * @param eventType
      * @return
      */
-    private BeanSerializer assemblyBeanSerializer(String eventType,ClassLoader classLoader) {
+    private BeanSerializer assemblyBeanSerializer(String eventType, ClassLoader classLoader) {
         String eventSerializerName = null;
         try {
-
             String eventPackage = eventType.substring(0, eventType.lastIndexOf("."));
             String eventName = eventType.substring(eventType.lastIndexOf(".") + 1);
             eventSerializerName = eventPackage + ".serializer." + eventName + "Serializer";
 
-            //Class<?> serializerClazz = this.getClass().getClassLoader().loadClass(eventSerializerName);
             Class<?> serializerClazz = classLoader.loadClass(eventSerializerName);
             BeanSerializer beanSerializer = (BeanSerializer) serializerClazz.newInstance();
 

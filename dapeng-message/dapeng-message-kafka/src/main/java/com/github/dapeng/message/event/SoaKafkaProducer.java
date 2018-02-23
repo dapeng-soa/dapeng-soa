@@ -1,4 +1,4 @@
-package com.github.dapeng.message.consumer.kafka;
+package com.github.dapeng.message.event;
 
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.kafka.clients.producer.*;
@@ -15,6 +15,7 @@ import java.util.concurrent.Future;
  * @date 2018年02月12日 上午11:50
  */
 public class SoaKafkaProducer {
+
     private Logger LOGGER = LoggerFactory.getLogger(SoaKafkaProducer.class);
     /**
      * 127.0.0.1:9091,127.0.0.1:9092
@@ -46,14 +47,9 @@ public class SoaKafkaProducer {
         producer = new KafkaProducer<>(props);
     }
 
-//    @Override
-//    public void run() {
-//        LOGGER.info("start to producer message...");
-//    }
-
     public void send(Long id, byte[] msg) {
         Future<RecordMetadata> send = producer.send(new ProducerRecord<>(topic, id, msg));
-
+        LOGGER.info("send message successful,topic: {}, id: {}, msg: {}", topic, id, msg);
     }
 
     public void sendAsync(Long id, byte[] msg) {
