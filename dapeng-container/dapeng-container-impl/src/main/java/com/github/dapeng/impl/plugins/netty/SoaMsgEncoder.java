@@ -31,8 +31,9 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
     }
 
     @Override
-    protected void encode(ChannelHandlerContext channelHandlerContext, SoaResponseWrapper wrapper, ByteBuf out) throws Exception {
-        ByteBuf outputBuf = null;
+    protected void encode(ChannelHandlerContext channelHandlerContext,
+                          SoaResponseWrapper wrapper,
+                          ByteBuf out) throws Exception {
         TransactionContext transactionContext = wrapper.transactionContext;
         SoaHeader soaHeader = transactionContext.getHeader();
         Optional<String> respCode = soaHeader.getRespCode();
@@ -41,14 +42,13 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
 
 
         if (respCode.isPresent() && !respCode.get().equals(SOA_NORMAL_RESP_CODE)) {
-            writeErrorResponse(transactionContext, channelHandlerContext, application);
+            writeErrorResponse(transactionContext, application, out);
         } else {
             try {
                 BeanSerializer serializer = wrapper.serializer.get();
                 Object result = wrapper.result.get();
 
-                outputBuf = channelHandlerContext.alloc().buffer(8192);
-                TSoaTransport transport = new TSoaTransport(outputBuf);
+                TSoaTransport transport = new TSoaTransport(out);
                 SoaMessageProcessor messageProcessor = new SoaMessageProcessor(transport);
 
                 messageProcessor.writeHeader(transactionContext);
@@ -57,9 +57,6 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                 }
                 messageProcessor.writeMessageEnd();
                 transport.flush();
-
-                assert (outputBuf.refCnt() == 1);
-                channelHandlerContext.writeAndFlush(outputBuf);
 
                 application.info(this.getClass(),
                         soaHeader.getServiceName()
@@ -76,17 +73,32 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                 soaHeader.setRespMessage(Optional.ofNullable(soaException.getMessage()));
 
                 transactionContext.setSoaException(soaException);
-                writeErrorResponse(transactionContext, channelHandlerContext, application);
-                if (outputBuf != null) {
-                    outputBuf.release();
-                }
+                writeErrorResponse(transactionContext, application, out);
             }
         }
     }
 
+    /**
+     * override the initialCapacity to 1024
+     * @param ctx
+     * @param msg
+     * @param preferDirect
+     * @return
+     * @throws Exception
+     */
+    @Override
+    protected ByteBuf allocateBuffer(ChannelHandlerContext ctx, @SuppressWarnings("unused") SoaResponseWrapper msg,
+                                     boolean preferDirect) throws Exception {
+        if (preferDirect) {
+            return ctx.alloc().ioBuffer(1024);
+        } else {
+            return ctx.alloc().heapBuffer(1024);
+        }
+    }
+
     private void writeErrorResponse(TransactionContext transactionContext,
-                                    ChannelHandlerContext channelHandlerContext,
-                                    Application application) {
+                                    Application application,
+                                    ByteBuf out) {
         SoaHeader soaHeader = transactionContext.getHeader();
         SoaException soaException = transactionContext.getSoaException();
         if (soaException == null) {
@@ -94,8 +106,11 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     soaHeader.getRespMessage().orElse(SoaCode.UnKnown.getMsg()));
             transactionContext.setSoaException(soaException);
         }
-        ByteBuf outputBuf = channelHandlerContext.alloc().buffer(8192);
-        TSoaTransport transport = new TSoaTransport(outputBuf);
+        if (out.readableBytes() > 0) {
+            out.clear();
+        }
+
+        TSoaTransport transport = new TSoaTransport(out);
         SoaMessageProcessor messageProcessor = new SoaMessageProcessor(transport);
 
         try {
@@ -103,8 +118,6 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             messageProcessor.writeMessageEnd();
 
             transport.flush();
-
-            channelHandlerContext.writeAndFlush(outputBuf);
 
             application.error(this.getClass(),
                     soaHeader.getServiceName()
@@ -115,9 +128,6 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     soaException);
         } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
-            if (outputBuf != null) {
-                outputBuf.release();
-            }
         }
     }
 }
