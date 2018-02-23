@@ -193,6 +193,30 @@ public class InvocationContextImpl implements  InvocationContext {
 
     public static class Factory {
         private static ThreadLocal<InvocationContext> threadLocal = new ThreadLocal<>();
+        private static ISoaHeaderProxy soaHeaderProxy;
+
+        public static interface ISoaHeaderProxy {
+
+            Optional<String> callerFrom();
+
+            Optional<Integer> customerId();
+
+            Optional<String> customerName();
+
+            Optional<Integer> operatorId();
+
+            Optional<String> operatorName();
+
+            Optional<String> sessionId();
+        }
+
+        public static void setSoaHeaderProxy(ISoaHeaderProxy soaHeaderProxy) {
+            Factory.soaHeaderProxy = soaHeaderProxy;
+        }
+
+        public static ISoaHeaderProxy getSoaHeaderProxy() {
+            return soaHeaderProxy;
+        }
 
         /**
          * must be invoked one time per thread before work begin
