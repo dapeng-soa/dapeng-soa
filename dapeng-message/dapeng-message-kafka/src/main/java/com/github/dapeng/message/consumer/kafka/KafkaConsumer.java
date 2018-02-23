@@ -38,9 +38,6 @@ public class KafkaConsumer extends Thread {
     private String kafkaConnect = SoaSystemEnvProperties.SOA_KAFKA_PORT;
 
     protected org.apache.kafka.clients.consumer.KafkaConsumer<ByteBuffer, ByteBuffer> consumer;
-//    protected final static String ZookeeperSessionTimeoutMs = "40000";
-//    protected final static String ZookeeperSyncTimeMs = "200";
-//    protected final static String AutoCommitIntervalMs = "1000";
 
     public void init() {
 

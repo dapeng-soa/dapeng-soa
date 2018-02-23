@@ -6,9 +6,9 @@ package com.github.dapeng.message.consumer.kafka;
  * @author maple.lei
  * @date 2018年02月13日 上午11:52
  */
-public class MessageInfo {
+public class MessageInfo<T> {
     private String eventType;
-    private Object event;
+    private T event;
 
     public String getEventType() {
         return eventType;
@@ -18,15 +18,15 @@ public class MessageInfo {
         this.eventType = eventType;
     }
 
-    public Object getEvent() {
+    public T getEvent() {
         return event;
     }
 
-    public void setEvent(Object event) {
+    public void setEvent(T event) {
         this.event = event;
     }
 
-    public MessageInfo(String eventType, Object event) {
+    public MessageInfo(String eventType, T event) {
         this.eventType = eventType;
         this.event = event;
     }
