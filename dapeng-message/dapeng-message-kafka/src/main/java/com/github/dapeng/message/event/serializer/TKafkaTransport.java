@@ -1,8 +1,6 @@
-package com.github.dapeng.message.consumer.kafka.serializer;
-
+package com.github.dapeng.message.event.serializer;
 import com.github.dapeng.org.apache.thrift.transport.TTransport;
 import com.github.dapeng.org.apache.thrift.transport.TTransportException;
-
 import java.util.Arrays;
 
 /**
@@ -114,7 +112,6 @@ public class TKafkaTransport extends TTransport {
     }
 
     /**
-     *
      * @return
      */
     public String getEventType() {
@@ -129,7 +126,6 @@ public class TKafkaTransport extends TTransport {
     }
 
     /**
-     *
      * @param eventType
      * @throws TTransportException
      */

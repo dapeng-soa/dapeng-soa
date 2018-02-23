@@ -1,6 +1,7 @@
 package com.github.dapeng.message.consumer.kafka;
 
-import com.github.dapeng.message.consumer.kafka.serializer.KafkaMessageProcessor;
+import com.github.dapeng.message.event.serializer.KafkaMessageProcessor;
+import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -52,7 +53,6 @@ public class SoaKafkaConsumer extends Thread {
 
     @Override
     public void run() {
-
         try {
             logger.info("[KafkaConsumer][{}][run] ", groupId + ":" + topic);
 
@@ -73,14 +73,12 @@ public class SoaKafkaConsumer extends Thread {
      *
      * @param message
      */
-    private void receive(byte[] message) {
+    private void receive(byte[] message) throws TException {
         logger.info("KafkaConsumer groupId({}) topic({}) 收到消息", groupId, topic);
-        System.out.println("=====>  " + new String(message));
         dealMessage(message);
     }
 
-    private void dealMessage(byte[] message) {
-
+    private void dealMessage(byte[] message) throws TException {
         KafkaMessageProcessor processor = new KafkaMessageProcessor();
         Object event = processor.dealMessage(message);
 

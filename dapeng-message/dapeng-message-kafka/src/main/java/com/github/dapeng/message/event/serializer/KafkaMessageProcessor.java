@@ -1,10 +1,9 @@
-package com.github.dapeng.message.consumer.kafka.serializer;
+package com.github.dapeng.message.event.serializer;
 
 import com.github.dapeng.core.BeanSerializer;
 import com.github.dapeng.message.consumer.kafka.MessageInfo;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TCompactProtocol;
-import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,52 +19,29 @@ public class KafkaMessageProcessor<T> {
     private BeanSerializer<T> beanSerializer;
     private byte[] realMessage;
 
-    public KafkaMessageProcessor(BeanSerializer<T> beanSerializer) {
-        this.beanSerializer = beanSerializer;
+    public T dealMessage(byte[] message) throws TException {
+
+        String eventType = getEventType(message);
+        LOGGER.info("fetch eventType: {}", eventType);
+        beanSerializer = assemblyBeanSerializer(eventType);
+        MessageInfo<T> messageInfo = parseMessage(message);
+
+        T event = messageInfo.getEvent();
+        LOGGER.info("dealMessage:event {}", event.toString());
+        return event;
     }
-
-    public KafkaMessageProcessor() {
-    }
-
-    public T dealMessage(byte[] message) {
-        String serializerQualifyName = null;
-        try {
-            String eventType = getEventType(message);
-            LOGGER.info("fetch eventType: {}", eventType);
-
-            serializerQualifyName = assemblySerializerName(eventType);
-            Class<?> serializerClazz = this.getClass().getClassLoader().loadClass(serializerQualifyName);
-            beanSerializer = (BeanSerializer) serializerClazz.newInstance();
-            MessageInfo<T> messageInfo = parseMessage(message);
-
-            T event = messageInfo.getEvent();
-            LOGGER.info("dealMessage:event {}", event.toString());
-            return event;
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (TException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            LOGGER.error("找不到对应的消息解码器 {}", serializerQualifyName);
-            LOGGER.error(e.getMessage(), e);
-        }
-        return null;
-    }
-
 
     /**
      * decode kafka message
      *
      * @return
      */
-    public MessageInfo<T> parseMessage(byte[] bytes) throws TException {
+    private MessageInfo<T> parseMessage(byte[] bytes) throws TException {
         TKafkaTransport kafkaTransport = new TKafkaTransport(bytes, TKafkaTransport.Type.Read);
         TCompactProtocol protocol = new TCompactProtocol(kafkaTransport);
         String eventType = kafkaTransport.getEventType();
         T event = beanSerializer.read(protocol);
-        return new MessageInfo<T>(eventType, event);
+        return new MessageInfo<>(eventType, event);
     }
 
     /**
@@ -76,10 +52,12 @@ public class KafkaMessageProcessor<T> {
      * @throws TException
      */
     public byte[] buildMessageByte(T event) throws TException {
+        String eventType = event.getClass().getName();
+        beanSerializer = assemblyBeanSerializer(eventType);
+
         byte[] bytes = new byte[8192];
         TKafkaTransport kafkaTransport = new TKafkaTransport(bytes, TKafkaTransport.Type.Write);
         TCompactProtocol protocol = new TCompactProtocol(kafkaTransport);
-        String eventType = event.getClass().getName();
         kafkaTransport.setEventType(eventType);
         beanSerializer.write(event, protocol);
         kafkaTransport.flush();
@@ -109,25 +87,35 @@ public class KafkaMessageProcessor<T> {
         return new String(subBytes);
     }
 
-
     /**
-     * 拼接 serializer 全限定名
+     * 根据event类名 构造event 编解码器对象
      *
      * @param eventType
      * @return
      */
-    private String assemblySerializerName(String eventType) {
+    private BeanSerializer assemblyBeanSerializer(String eventType) {
+        String eventSerializerName = null;
         try {
+
             String eventPackage = eventType.substring(0, eventType.lastIndexOf("."));
             String eventName = eventType.substring(eventType.lastIndexOf(".") + 1);
-            String eventSerializerName = eventPackage + ".serializer." + eventName + "Serializer";
-            return eventSerializerName;
-        } catch (RuntimeException e) {
-            LOGGER.error("组装权限定名出错");
+            eventSerializerName = eventPackage + ".serializer." + eventName + "Serializer";
+
+            Class<?> serializerClazz = this.getClass().getClassLoader().loadClass(eventSerializerName);
+            BeanSerializer beanSerializer = (BeanSerializer) serializerClazz.newInstance();
+
+            return beanSerializer;
+        } catch (StringIndexOutOfBoundsException e) {
+            LOGGER.error("组装权限定名出错!!");
+            LOGGER.error(e.getMessage(), e);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            LOGGER.error("找不到对应的消息解码器 {}", eventSerializerName);
             LOGGER.error(e.getMessage(), e);
         }
         return null;
     }
-
-
 }
