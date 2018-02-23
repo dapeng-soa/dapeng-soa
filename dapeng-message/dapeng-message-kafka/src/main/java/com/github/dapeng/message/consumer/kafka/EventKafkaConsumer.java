@@ -19,20 +19,18 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- * 描述:
+ * 描述: 作为事件总线 的消费者
  *
  * @author maple.lei
  * @date 2018年02月23日 下午4:26
  */
-public class TestConsumer extends Thread {
-
+public class EventKafkaConsumer extends Thread {
     private static final Logger logger = LoggerFactory.getLogger(KafkaConsumer.class);
-
     private List<ConsumerContext> customers = new ArrayList<>();
 
     private String groupId, topic;
 
-    public TestConsumer(String groupId, String topic) {
+    public EventKafkaConsumer(String groupId, String topic) {
         this.groupId = groupId;
         this.topic = topic;
         init();
@@ -57,9 +55,6 @@ public class TestConsumer extends Thread {
         props.put("key.deserializer", LongDeserializer.class);
         props.put("value.deserializer", ByteArrayDeserializer.class);
 
-//        props.put("zookeeper.session.timeout.ms", ZookeeperSessionTimeoutMs);
-//        props.put("zookeeper.sync.time.ms", ZookeeperSyncTimeMs);
-//        props.put("auto.commit.interval.ms", AutoCommitIntervalMs);
         consumer = new org.apache.kafka.clients.consumer.KafkaConsumer<>(props);
 
     }
@@ -114,11 +109,14 @@ public class TestConsumer extends Thread {
     }
 
 
-
+    /**
+     * 处理收到的消息
+     *
+     * @param customer
+     * @param message
+     * @throws TException
+     */
     private void dealMessage(ConsumerContext customer, byte[] message) throws TException {
-
-
-
 
         SoaFunctionDefinition.Sync functionDefinition = (SoaFunctionDefinition.Sync) customer.getSoaFunctionDefinition();
         Object iface = customer.getIface();
@@ -135,36 +133,28 @@ public class TestConsumer extends Thread {
             logger.error(e.getMessage(), e);
             ifaceClass = iface.getClass();
         }
-
-
+        /**
+         * 解码消息为event
+         */
         KafkaMessageProcessor processor = new KafkaMessageProcessor();
-        Object event = processor.dealMessage(message,iface.getClass().getClassLoader());
-
+        Object event = processor.dealMessage(message, iface.getClass().getClassLoader());
 
         Method method = ((SoaFunctionDefinition.Sync) functionDefinition).getClass().getDeclaredMethods()[1];
-
         Parameter[] parameters = method.getParameters();
         Object argsParam = null;
-        for (Parameter param: parameters) {
+        for (Parameter param : parameters) {
             if (param.getType().getName().contains("args")) {
                 try {
                     Constructor<?> constructor = param.getType().getConstructor(event.getClass());
                     argsParam = constructor.newInstance(event);
                 } catch (Exception e) {
-                    logger.error(e.getMessage(),e);
+                    logger.error(e.getMessage(), e);
                     logger.error(" failed to instance method: {}" + method.getName());
                 }
             }
         }
 
-
-//        Field field = argsParam.getClass().getDeclaredFields()[0];
-//        field.setAccessible(true);//暴力访问，取消私有权限,让对象可以访问
-
-
         try {
-//            field.set(argsParam, event);
-
             logger.info("{}收到kafka消息，执行{}方法", ifaceClass.getName(), functionDefinition.methodName);
             functionDefinition.apply(iface, argsParam);
             logger.info("{}收到kafka消息，执行{}方法完成", ifaceClass.getName(), functionDefinition.methodName);
@@ -172,5 +162,6 @@ public class TestConsumer extends Thread {
             logger.error("{}收到kafka消息，执行{}方法异常", ifaceClass.getName(), functionDefinition.methodName);
             logger.error(e.getMessage(), e);
         }
+
     }
 }
