@@ -1,4 +1,4 @@
-package com.github.dapeng.message.consumer.kafka;
+package com.github.dapeng.message.event;
 
 import com.github.dapeng.message.event.serializer.KafkaMessageProcessor;
 import com.github.dapeng.org.apache.thrift.TException;

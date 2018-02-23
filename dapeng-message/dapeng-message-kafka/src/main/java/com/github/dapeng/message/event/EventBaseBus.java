@@ -1,6 +1,13 @@
 package com.github.dapeng.message.event;
 
 
+import com.github.dapeng.message.event.dao.IMessageDao;
+import com.github.dapeng.message.event.dao.SpringContextHolder;
+import com.github.dapeng.message.event.serializer.KafkaMessageProcessor;
+import com.github.dapeng.org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * 描述:
  *
@@ -8,21 +15,25 @@ package com.github.dapeng.message.event;
  * @date 2018年02月23日 上午11:11
  */
 public abstract class EventBaseBus {
+    private Logger logger = LoggerFactory.getLogger(EventBaseBus.class);
 
-    public static void fireEvent(Object event) {
+    public void fireEvent(Object event) throws TException {
         dispatchEvent(event);
-        PersistenceEvent(event);
+        persistenceEvent(event);
 
     }
 
-    protected static void dispatchEvent(Object event){};
+    protected abstract void dispatchEvent(Object event);
 
-    private static void PersistenceEvent(Object event) {
+    private void persistenceEvent(Object event) throws TException {
+        logger.info("prepare to save event message");
 
+        KafkaMessageProcessor processor = new KafkaMessageProcessor<>();
+        byte[] bytes = processor.buildMessageByte(event);
+        IMessageDao messageDao = SpringContextHolder.getBean(IMessageDao.class);
+        messageDao.saveMessageToDB(event.getClass().getName(), bytes);
 
     }
-
-    protected abstract void matchCaseEvent(Object event);
 
 
 }
