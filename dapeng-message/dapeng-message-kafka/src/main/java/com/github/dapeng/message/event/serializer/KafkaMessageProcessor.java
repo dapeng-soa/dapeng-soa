@@ -19,11 +19,11 @@ public class KafkaMessageProcessor<T> {
     private BeanSerializer<T> beanSerializer;
     private byte[] realMessage;
 
-    public T dealMessage(byte[] message) throws TException {
+    public T dealMessage(byte[] message,ClassLoader classLoader) throws TException {
 
         String eventType = getEventType(message);
         LOGGER.info("fetch eventType: {}", eventType);
-        beanSerializer = assemblyBeanSerializer(eventType);
+        beanSerializer = assemblyBeanSerializer(eventType,classLoader);
         MessageInfo<T> messageInfo = parseMessage(message);
 
         T event = messageInfo.getEvent();
@@ -93,6 +93,33 @@ public class KafkaMessageProcessor<T> {
      * @param eventType
      * @return
      */
+    private BeanSerializer assemblyBeanSerializer(String eventType,ClassLoader classLoader) {
+        String eventSerializerName = null;
+        try {
+
+            String eventPackage = eventType.substring(0, eventType.lastIndexOf("."));
+            String eventName = eventType.substring(eventType.lastIndexOf(".") + 1);
+            eventSerializerName = eventPackage + ".serializer." + eventName + "Serializer";
+
+            //Class<?> serializerClazz = this.getClass().getClassLoader().loadClass(eventSerializerName);
+            Class<?> serializerClazz = classLoader.loadClass(eventSerializerName);
+            BeanSerializer beanSerializer = (BeanSerializer) serializerClazz.newInstance();
+
+            return beanSerializer;
+        } catch (StringIndexOutOfBoundsException e) {
+            LOGGER.error("组装权限定名出错!!");
+            LOGGER.error(e.getMessage(), e);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            LOGGER.error("找不到对应的消息解码器 {}", eventSerializerName);
+            LOGGER.error(e.getMessage(), e);
+        }
+        return null;
+    }
+
     private BeanSerializer assemblyBeanSerializer(String eventType) {
         String eventSerializerName = null;
         try {

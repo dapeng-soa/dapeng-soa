@@ -1,6 +1,5 @@
 package com.github.dapeng.message.consumer.kafka;
 
-import com.github.dapeng.core.BeanSerializer;
 import com.github.dapeng.message.event.serializer.KafkaMessageProcessor;
 import com.github.dapeng.org.apache.thrift.TException;
 
@@ -12,7 +11,7 @@ import com.github.dapeng.org.apache.thrift.TException;
  */
 public abstract class MessagePersistent {
 
-    public <T> void persistents(T event, BeanSerializer<T> serializer) throws TException {
+    public <T> void persistents(T event) throws TException {
         KafkaMessageProcessor<T> processor = new KafkaMessageProcessor<>();
         byte[] bytes = processor.buildMessageByte(event);
         saveMessageToDB(event.getClass().getName(),bytes);

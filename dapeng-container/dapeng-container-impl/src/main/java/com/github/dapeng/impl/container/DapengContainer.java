@@ -12,6 +12,7 @@ import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.impl.filters.FilterLoader;
 import com.github.dapeng.impl.plugins.*;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
+import com.github.dapeng.message.consumer.container.KafkaMessagePlugin;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
@@ -161,7 +162,8 @@ public class DapengContainer implements Container {
         Plugin zookeeperPlugin = new ZookeeperRegistryPlugin(this);
         Plugin taskSchedulePlugin = new TaskSchedulePlugin(this);
         Plugin nettyPlugin = new NettyPlugin(this);
-
+        //add messagePlugin
+        Plugin messagePlugin = new KafkaMessagePlugin();
         // TODO
         if (!"plugin".equals(RUN_MODE)) {
             Plugin logbackPlugin = new LogbackPlugin();
@@ -172,6 +174,9 @@ public class DapengContainer implements Container {
         registerPlugin(springAppLoader);
         registerPlugin(taskSchedulePlugin);
         registerPlugin(nettyPlugin);
+
+        //add messagePlugin
+        registerPlugin(messagePlugin);
 
         if ("plugin".equals(RUN_MODE)) {
             Plugin apiDocPlugin = new ApiDocPlugin(this);

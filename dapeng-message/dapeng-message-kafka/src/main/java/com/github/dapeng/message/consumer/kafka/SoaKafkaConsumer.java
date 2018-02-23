@@ -75,10 +75,10 @@ public class SoaKafkaConsumer extends Thread {
      */
     private void receive(byte[] message) throws TException {
         logger.info("KafkaConsumer groupId({}) topic({}) 收到消息", groupId, topic);
-        dealMessage(message);
+//        dealMessage(message);
     }
 
-    private void dealMessage(byte[] message) throws TException {
+    /*private void dealMessage(byte[] message) throws TException {
         KafkaMessageProcessor processor = new KafkaMessageProcessor();
         Object event = processor.dealMessage(message);
 
@@ -87,5 +87,5 @@ public class SoaKafkaConsumer extends Thread {
         } else {
             System.out.println("解析出错");
         }
-    }
+    }*/
 }
