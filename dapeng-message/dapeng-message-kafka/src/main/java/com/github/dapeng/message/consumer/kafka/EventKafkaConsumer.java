@@ -12,8 +12,7 @@ import org.apache.kafka.common.serialization.LongDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -142,9 +141,32 @@ public class TestConsumer extends Thread {
         Object event = processor.dealMessage(message,iface.getClass().getClassLoader());
 
 
+        Method method = ((SoaFunctionDefinition.Sync) functionDefinition).getClass().getDeclaredMethods()[1];
+
+        Parameter[] parameters = method.getParameters();
+        Object argsParam = null;
+        for (Parameter param: parameters) {
+            if (param.getType().getName().contains("args")) {
+                try {
+                    Constructor<?> constructor = param.getType().getConstructor(event.getClass());
+                    argsParam = constructor.newInstance(event);
+                } catch (Exception e) {
+                    logger.error(e.getMessage(),e);
+                    logger.error(" failed to instance method: {}" + method.getName());
+                }
+            }
+        }
+
+
+//        Field field = argsParam.getClass().getDeclaredFields()[0];
+//        field.setAccessible(true);//暴力访问，取消私有权限,让对象可以访问
+
+
         try {
+//            field.set(argsParam, event);
+
             logger.info("{}收到kafka消息，执行{}方法", ifaceClass.getName(), functionDefinition.methodName);
-            functionDefinition.apply(iface, event);
+            functionDefinition.apply(iface, argsParam);
             logger.info("{}收到kafka消息，执行{}方法完成", ifaceClass.getName(), functionDefinition.methodName);
         } catch (Exception e) {
             logger.error("{}收到kafka消息，执行{}方法异常", ifaceClass.getName(), functionDefinition.methodName);
