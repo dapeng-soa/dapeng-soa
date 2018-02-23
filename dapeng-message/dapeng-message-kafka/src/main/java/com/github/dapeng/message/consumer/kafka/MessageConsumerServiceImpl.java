@@ -15,7 +15,7 @@ import java.util.Map;
 public class MessageConsumerServiceImpl implements MessageConsumerService {
     private static final Logger logger = LoggerFactory.getLogger(MessageConsumerServiceImpl.class);
 
-    public static final Map<String, KafkaConsumer> TOPIC_CONSUMERS = new HashMap<>();
+    public static final Map<String, TestConsumer> TOPIC_CONSUMERS = new HashMap<>();
 
     @Override
     public void addConsumer(ConsumerContext context) {
@@ -33,7 +33,8 @@ public class MessageConsumerServiceImpl implements MessageConsumerService {
             if (TOPIC_CONSUMERS.containsKey(consumerKey)) {
                 TOPIC_CONSUMERS.get(consumerKey).addCustomer(context);
             } else {
-                KafkaConsumer consumer = new KafkaConsumer(groupId, topic);
+               // KafkaConsumer consumer = new KafkaConsumer(groupId, topic);
+                TestConsumer consumer = new TestConsumer(groupId,topic);
                 consumer.start();
                 consumer.addCustomer(context);
                 TOPIC_CONSUMERS.put(consumerKey, consumer);

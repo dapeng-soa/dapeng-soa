@@ -9,13 +9,15 @@ package com.github.dapeng.message.event;
  */
 public abstract class EventBaseBus {
 
-    public void fireEvent(Object event) {
-        matchCaseEvent(event);
+    public static void fireEvent(Object event) {
+        dispatchEvent(event);
         PersistenceEvent(event);
 
     }
 
-    private void PersistenceEvent(Object event) {
+    protected static void dispatchEvent(Object event){};
+
+    private static void PersistenceEvent(Object event) {
 
 
     }
