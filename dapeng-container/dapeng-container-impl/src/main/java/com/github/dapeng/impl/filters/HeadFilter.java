@@ -1,13 +1,11 @@
 package com.github.dapeng.impl.filters;
 
 
-import com.github.dapeng.core.SoaCode;
-import com.github.dapeng.core.SoaException;
-import com.github.dapeng.core.SoaHeader;
-import com.github.dapeng.core.TransactionContext;
+import com.github.dapeng.core.*;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.filter.FilterChain;
 import com.github.dapeng.core.filter.FilterContext;
+import com.github.dapeng.impl.plugins.netty.SoaResponseWrapper;
 import com.github.dapeng.org.apache.thrift.TException;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
@@ -35,6 +33,9 @@ public class HeadFilter implements Filter {
         TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
         ChannelHandlerContext channelHandlerContext = (ChannelHandlerContext) filterContext.getAttribute("channelHandlerContext");
 
-        channelHandlerContext.writeAndFlush(filterContext);
+        SoaResponseWrapper responseWrapper = new SoaResponseWrapper(transactionContext,
+                Optional.ofNullable(filterContext.getAttribute("result")),
+                Optional.ofNullable((BeanSerializer)filterContext.getAttribute("respSerializer")));
+        channelHandlerContext.writeAndFlush(responseWrapper);
     }
 }
