@@ -42,6 +42,7 @@ public class MessageScheduled {
 
     //todo 事务会失效？
     private void doDeleteMessage(EventInfo eventInfo) {
+        //fixme 便于测试。。。
 //        messageDao.deleteMessage(eventInfo.getId());
         logger.info("消息发送kafka broker 成功，删除message，id: {}", eventInfo.getId());
     }
