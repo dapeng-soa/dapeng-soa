@@ -1,6 +1,5 @@
 package com.github.dapeng.message.consumer.kafka;
 
-import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.message.consumer.api.context.ConsumerContext;
 import com.github.dapeng.message.event.serializer.KafkaMessageProcessor;
@@ -62,10 +61,7 @@ public class EventKafkaConsumer extends Thread {
 
     @Override
     public void run() {
-
-
         logger.info("[KafkaConsumer][{}][run] ", groupId + ":" + topic);
-
         consumer.subscribe(Arrays.asList(topic));
 
         while (true) {
@@ -78,7 +74,6 @@ public class EventKafkaConsumer extends Thread {
                 logger.error("[KafkaConsumer][{}][run] " + e.getMessage(), groupId + ":" + topic, e);
             }
         }
-
     }
 
 

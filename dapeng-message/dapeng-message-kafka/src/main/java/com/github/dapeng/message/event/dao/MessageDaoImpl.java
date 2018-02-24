@@ -30,9 +30,8 @@ public class MessageDaoImpl extends JdbcDaoSupport implements IMessageDao {
 
     @Override
     public int saveMessageToDB(String eventType, byte[] event) {
-        final String executeSql = "INSERT INTO  common_event set id = ? ,event_type=?, event_binary=?";
-        Long eventId = Long.valueOf(new Random().nextInt(1000));
-        int result = this.getJdbcTemplate().update(executeSql, eventId, eventType, event);
+        final String executeSql = "INSERT INTO  common_event set event_type=?, event_binary=?";
+        int result = this.getJdbcTemplate().update(executeSql, eventType, event);
 
         return result;
     }
