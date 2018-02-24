@@ -28,9 +28,9 @@
     <bean id="message_dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init"
           destroy-method="close">
         <!-- 基本属性 url、user、password -->
-        <property name="url" value="${DB_MESSAGE_URL}"/>
-        <property name="username" value="${DB_MESSAGE_USER}"/>
-        <property name="password" value="${DB_MESSAGE_PASSWD}"/>
+        <property name="url" value="${DB.MESSAGE.URL}"/>
+        <property name="username" value="${DB.MESSAGE.USER}"/>
+        <property name="password" value="${DB.MESSAGE.PASSWD}"/>
 
         <!-- 配置初始化大小、最小、最大 -->
         <property name="initialSize" value="1"/>
