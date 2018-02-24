@@ -9,7 +9,7 @@
          http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
 
     <!--参数配置-->
-    <context:property-placeholder location="classpath:config_transaction.properties" local-override="false"
+    <context:property-placeholder location="classpath:config_message.properties" local-override="false"
                                   ignore-unresolvable="true" system-properties-mode="ENVIRONMENT"/>
 
     <!--当使用 <context:component-scan/> 后，即可将 <context:annotation-config/> 省去。-->
@@ -28,9 +28,9 @@
     <bean id="message_dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init"
           destroy-method="close">
         <!-- 基本属性 url、user、password -->
-        <property name="url" value="${DB_GLOBAL_TX_URL}"/>
-        <property name="username" value="${DB_GLOBAL_TX_USER}"/>
-        <property name="password" value="${DB_GLOBAL_TX_PASSWD}"/>
+        <property name="url" value="${DB_MESSAGE_URL}"/>
+        <property name="username" value="${DB_MESSAGE_USER}"/>
+        <property name="password" value="${DB_MESSAGE_PASSWD}"/>
 
         <!-- 配置初始化大小、最小、最大 -->
         <property name="initialSize" value="1"/>
@@ -89,9 +89,8 @@
     <bean id="contextHolder" class="com.github.dapeng.message.event.dao.SpringContextHolder"/>
 
 
-    <bean id="soaKafkaProducer" class="com.github.dapeng.message.event.SoaKafkaProducer">
+    <bean id="soaKafkaProducer" class="com.github.dapeng.message.event.EventKafkaProducer">
         <constructor-arg index="0" value="false"/>
-        <constructor-arg index="1" value="event"/>
     </bean>
 
     <tx:annotation-driven/>

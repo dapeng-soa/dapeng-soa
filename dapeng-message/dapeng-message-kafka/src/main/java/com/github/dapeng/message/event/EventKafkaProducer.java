@@ -14,21 +14,20 @@ import java.util.concurrent.Future;
  * @author maple.lei
  * @date 2018年02月12日 上午11:50
  */
-public class SoaKafkaProducer {
+public class EventKafkaProducer {
 
-    private Logger LOGGER = LoggerFactory.getLogger(SoaKafkaProducer.class);
+    private Logger LOGGER = LoggerFactory.getLogger(EventKafkaProducer.class);
     /**
      * 127.0.0.1:9091,127.0.0.1:9092
      */
     private String kafkaConnect = SoaSystemEnvProperties.SOA_KAFKA_PORT;
 
     private Producer<Long, byte[]> producer;
-    private final Boolean isAsync;
-    private final String topic;
 
-    public SoaKafkaProducer(Boolean isAsync, String topic) {
+    private final Boolean isAsync;
+
+    public EventKafkaProducer(Boolean isAsync) {
         this.isAsync = isAsync;
-        this.topic = topic;
         init();
     }
 
@@ -47,12 +46,12 @@ public class SoaKafkaProducer {
         producer = new KafkaProducer<>(props);
     }
 
-    public void send(Long id, byte[] msg) {
+    public void send(String topic, Long id, byte[] msg) {
         Future<RecordMetadata> send = producer.send(new ProducerRecord<>(topic, id, msg));
-        LOGGER.info("send message successful,topic: {}, id: {}, msg: {}", topic, id, msg);
+        LOGGER.info("send message successful,topic: {}, id: {}", topic, id);
     }
 
-    public void sendAsync(Long id, byte[] msg) {
+    public void sendAsync(String topic, Long id, byte[] msg) {
         producer.send(new ProducerRecord<>(topic, id, msg),
                 (metadata, exception) -> System.out.println("#offset: " + metadata.offset()));
     }
