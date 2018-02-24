@@ -14,8 +14,8 @@ import org.slf4j.LoggerFactory;
  * @date 2018年02月13日 上午11:39
  */
 public class KafkaMessageProcessor<T> {
-
     private Logger LOGGER = LoggerFactory.getLogger(KafkaMessageProcessor.class);
+
     private BeanSerializer<T> beanSerializer;
     private byte[] realMessage;
 

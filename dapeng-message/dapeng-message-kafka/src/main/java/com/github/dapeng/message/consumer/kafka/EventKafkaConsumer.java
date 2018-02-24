@@ -25,7 +25,7 @@ import java.util.Properties;
  * @date 2018年02月23日 下午4:26
  */
 public class EventKafkaConsumer extends Thread {
-    private static final Logger logger = LoggerFactory.getLogger(KafkaConsumer.class);
+    private static final Logger logger = LoggerFactory.getLogger(EventKafkaConsumer.class);
     private List<ConsumerContext> customers = new ArrayList<>();
 
     private String groupId, topic;
@@ -147,21 +147,37 @@ public class EventKafkaConsumer extends Thread {
                 try {
                     Constructor<?> constructor = param.getType().getConstructor(event.getClass());
                     argsParam = constructor.newInstance(event);
+                } catch (NoSuchMethodException e) {
+                    logger.error("当前方法参数不匹配: {}, 当前消息事件不匹配该方法", method.getName());
                 } catch (Exception e) {
                     logger.error(e.getMessage(), e);
-                    logger.error(" failed to instance method: {}" + method.getName());
+                    logger.error(" failed to instance method: {}", method.getName());
+                    logger.error("当前方法参数不匹配: {}", method.getName());
                 }
             }
         }
 
         try {
+            checkNotNull(argsParam);
+
             logger.info("{}收到kafka消息，执行{}方法", ifaceClass.getName(), functionDefinition.methodName);
             functionDefinition.apply(iface, argsParam);
             logger.info("{}收到kafka消息，执行{}方法完成", ifaceClass.getName(), functionDefinition.methodName);
+
+        } catch (NullPointerException e) {
+            logger.error("{}收到kafka消息，执行{}方法异常,msg: {}", ifaceClass.getName(), functionDefinition.methodName, e.getMessage());
         } catch (Exception e) {
             logger.error("{}收到kafka消息，执行{}方法异常", ifaceClass.getName(), functionDefinition.methodName);
             logger.error(e.getMessage(), e);
         }
 
     }
+
+    private void checkNotNull(Object argsParam) {
+        if (argsParam == null) {
+            throw new NullPointerException("解析订阅方法参数错误，可能该方法不处理这个事件");
+        }
+    }
+
+
 }

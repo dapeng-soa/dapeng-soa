@@ -1,7 +1,8 @@
 package com.github.dapeng.message.event.task;
 
-import com.github.dapeng.message.event.SoaKafkaProducer;
+import com.github.dapeng.message.event.EventKafkaProducer;
 import com.github.dapeng.message.event.dao.IMessageDao;
+import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,23 +20,25 @@ import java.util.List;
 public class MessageScheduled {
     private Logger logger = LoggerFactory.getLogger(MessageScheduled.class);
 
+    private String producerTopic = SoaSystemEnvProperties.SOA_EVENT_MESSAGE_TOPIC;
+
     @Autowired
     private IMessageDao messageDao;
 
     @Autowired
-    private SoaKafkaProducer producer;
+    private EventKafkaProducer producer;
 
 
     public void fetchMessage() {
         List<EventInfo> eventInfos = messageDao.listMessages();
         if (!eventInfos.isEmpty()) {
             eventInfos.forEach(eventInfo -> {
-                producer.send(eventInfo.getId(), eventInfo.getEventBinary());
+                producer.send(producerTopic, eventInfo.getId(), eventInfo.getEventBinary());
                 logger.info("send message to kafka success eventInfo:  {}", eventInfo.getEventType());
                 doDeleteMessage(eventInfo);
             });
         } else {
-            logger.info("no event to send");
+            logger.debug("no event to send");
         }
 
     }
@@ -43,7 +46,7 @@ public class MessageScheduled {
     //todo 事务会失效？
     private void doDeleteMessage(EventInfo eventInfo) {
         //fixme 便于测试。。。
-//        messageDao.deleteMessage(eventInfo.getId());
+        messageDao.deleteMessage(eventInfo.getId());
         logger.info("消息发送kafka broker 成功，删除message，id: {}", eventInfo.getId());
     }
 

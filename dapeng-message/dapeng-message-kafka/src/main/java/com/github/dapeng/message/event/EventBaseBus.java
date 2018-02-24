@@ -23,6 +23,11 @@ public abstract class EventBaseBus {
 
     }
 
+    /**
+     * 业务系统处理事件分发逻辑
+     *
+     * @param event
+     */
     protected abstract void dispatchEvent(Object event);
 
     private void persistenceEvent(Object event) throws TException {
@@ -32,7 +37,7 @@ public abstract class EventBaseBus {
         byte[] bytes = processor.buildMessageByte(event);
         IMessageDao messageDao = SpringContextHolder.getBean(IMessageDao.class);
         messageDao.saveMessageToDB(event.getClass().getName(), bytes);
-
+        logger.info("save message successful ");
     }
 
 

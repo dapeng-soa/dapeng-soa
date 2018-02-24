@@ -41,6 +41,8 @@ public class SoaSystemEnvProperties {
 
     private static final String KEY_SOA_FILTER_EXCLUDES = "soa.filter.excludes";
     private static final String KEY_SOA_FILTER_INCLUDES = "soa.filter.includes";
+    private static final String KEY_SOA_EVENT_MESSAGE_TOPIC = "soa.event.topic";
+
 
 //    public static final String SOA_SERVICE_IP = get(KEY_SOA_SERVICE_IP, "127.0.0.1");
 //    public static final boolean SOA_SERVICE_IP_ISCONFIG = get(KEY_SOA_SERVICE_IP) != null;
@@ -77,6 +79,8 @@ public class SoaSystemEnvProperties {
 
     public static final String SOA_FILTER_EXCLUDES = get(KEY_SOA_FILTER_EXCLUDES,"");
     public static final String SOA_FILTER_INCLUDES = get(KEY_SOA_FILTER_INCLUDES,"");
+
+    public static final String SOA_EVENT_MESSAGE_TOPIC = get(KEY_SOA_EVENT_MESSAGE_TOPIC,"");
 
     /**
      * 正常返回的时候的response code
