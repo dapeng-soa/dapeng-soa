@@ -1,5 +1,6 @@
 package com.github.dapeng.message.consumer.kafka;
 
+import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.message.consumer.api.context.ConsumerContext;
 import com.github.dapeng.message.event.serializer.KafkaMessageProcessor;
@@ -62,19 +63,22 @@ public class EventKafkaConsumer extends Thread {
     @Override
     public void run() {
 
-        try {
-            logger.info("[KafkaConsumer][{}][run] ", groupId + ":" + topic);
 
-            consumer.subscribe(Arrays.asList(topic));
-            while (true) {
+        logger.info("[KafkaConsumer][{}][run] ", groupId + ":" + topic);
+
+        consumer.subscribe(Arrays.asList(topic));
+
+        while (true) {
+            try {
                 ConsumerRecords<Long, byte[]> records = consumer.poll(100);
                 for (ConsumerRecord<Long, byte[]> record : records) {
                     receive(record.value());
                 }
+            } catch (Exception e) {
+                logger.error("[KafkaConsumer][{}][run] " + e.getMessage(), groupId + ":" + topic, e);
             }
-        } catch (Exception e) {
-            logger.error("[KafkaConsumer][{}][run] " + e.getMessage(), groupId + ":" + topic, e);
         }
+
     }
 
 
@@ -137,10 +141,20 @@ public class EventKafkaConsumer extends Thread {
          * 解码消息为event
          */
         KafkaMessageProcessor processor = new KafkaMessageProcessor();
-        Object event = processor.dealMessage(message, iface.getClass().getClassLoader());
+        Object event = null;
+        Method method = null;
+        Parameter[] parameters = null;
+        try {
+            event = processor.dealMessage(message, iface.getClass().getClassLoader());
+            method = ((SoaFunctionDefinition.Sync) functionDefinition).getClass().getDeclaredMethods()[1];
+            parameters = method.getParameters();
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            logger.error("解析kafka消息流，获取method和parameters出错");
+            throw new TException("解析消息出错");
+        }
 
-        Method method = ((SoaFunctionDefinition.Sync) functionDefinition).getClass().getDeclaredMethods()[1];
-        Parameter[] parameters = method.getParameters();
+
         Object argsParam = null;
         for (Parameter param : parameters) {
             if (param.getType().getName().contains("args")) {
