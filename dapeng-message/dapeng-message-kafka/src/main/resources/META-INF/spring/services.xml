@@ -104,6 +104,6 @@
 
     <task:scheduled-tasks scheduler="qbScheduler">
         <!--"0 0/1 * * * ?"-->
-        <task:scheduled ref="messageScheduled" method="fetchMessage" cron="*/5 * * * * ?"/>
+        <task:scheduled ref="messageScheduled" method="fetchMessage" cron="${message.fetch.cron}"/>
     </task:scheduled-tasks>
 </beans>
