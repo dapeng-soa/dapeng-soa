@@ -3,8 +3,6 @@ package com.github.dapeng.message.event.task;
 import com.github.dapeng.message.event.EventKafkaProducer;
 import com.github.dapeng.message.event.dao.IMessageDao;
 import com.github.dapeng.util.SoaSystemEnvProperties;
-import org.apache.kafka.clients.producer.Callback;
-import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,16 +30,19 @@ public class MessageScheduled {
 
 
     public void fetchMessage() {
-        List<EventInfo> eventInfos = messageDao.listMessages();
-        if (!eventInfos.isEmpty()) {
-            eventInfos.forEach(eventInfo -> {
+        List<EventStore> eventStores = messageDao.listMessages();
+        if (!eventStores.isEmpty()) {
+            eventStores.forEach(eventInfo -> {
                 producer.send(producerTopic, eventInfo.getId(), eventInfo.getEventBinary(), (metadata, exception) -> {
                     if (exception != null) {
                         // 是否 抛异常
                         LOGGER.error(exception.getMessage(), exception);
                         LOGGER.error("send message failed,topic: {}, id: {}", producerTopic, eventInfo.getId());
+                        //todo handleException
                     }
-                    LOGGER.info("send message successful,topic: {}, id: {}", producerTopic, eventInfo.getId());
+                    LOGGER.info("send message successful, id: {}, topic: {}, offset: {}, partition: {}",
+                            eventInfo.getId(), metadata.topic(), metadata.offset(), metadata.partition());
+
                     doDeleteMessage(eventInfo);
                 });
             });
@@ -51,10 +52,10 @@ public class MessageScheduled {
 
     }
 
-    private void doDeleteMessage(EventInfo eventInfo) {
+    private void doDeleteMessage(EventStore eventStore) {
         //fixme 便于测试。。。
-        messageDao.deleteMessage(eventInfo.getId());
-        LOGGER.info("消息发送kafka broker 成功，删除message，id: {}", eventInfo.getId());
+        messageDao.deleteMessage(eventStore.getId());
+        LOGGER.info("消息发送kafka broker 成功，删除message，id: {}", eventStore.getId());
     }
 
 

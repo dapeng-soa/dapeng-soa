@@ -1,17 +1,11 @@
 package com.github.dapeng.message.event.dao;
 
-import com.github.dapeng.message.event.task.EventInfo;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import com.github.dapeng.message.event.task.EventStore;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.support.JdbcDaoSupport;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 
 import java.sql.*;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
 
 /**
  * @author maple.lei
@@ -19,10 +13,10 @@ import java.util.Random;
 public class MessageDaoImpl extends JdbcDaoSupport implements IMessageDao {
 
     @Override
-    public List<EventInfo> listMessages() {
+    public List<EventStore> listMessages() {
 
         final String querySQl = "SELECT * FROM common_event";
-        List<EventInfo> eventInfos = this.getJdbcTemplate().query(querySQl, new MessageRowMapper());
+        List<EventStore> eventInfos = this.getJdbcTemplate().query(querySQl, new MessageRowMapper());
         return eventInfos;
 
     }
@@ -44,16 +38,16 @@ public class MessageDaoImpl extends JdbcDaoSupport implements IMessageDao {
     }
 
 
-    class MessageRowMapper implements RowMapper<EventInfo> {
+    class MessageRowMapper implements RowMapper<EventStore> {
 
         @Override
-        public EventInfo mapRow(ResultSet rs, int rowNum) throws SQLException {
-            EventInfo info = new EventInfo();
-            info.setId(rs.getLong("id"));
-            info.setEventType(rs.getString("event_type"));
-            info.setEventBinary(rs.getBytes("event_binary"));
-            info.setUpdateAt(rs.getTimestamp("updated_at"));
-            return info;
+        public EventStore mapRow(ResultSet rs, int rowNum) throws SQLException {
+            EventStore store = new EventStore();
+            store.setId(rs.getLong("id"));
+            store.setEventType(rs.getString("event_type"));
+            store.setEventBinary(rs.getBytes("event_binary"));
+            store.setUpdateAt(rs.getTimestamp("updated_at"));
+            return store;
         }
     }
 }

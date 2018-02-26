@@ -1,18 +1,15 @@
 package com.github.dapeng.message.consumer.kafka;
 
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
-import com.github.dapeng.message.KafkaConfigBuilder;
+import com.github.dapeng.message.config.KafkaConfigBuilder;
 import com.github.dapeng.message.consumer.api.context.ConsumerContext;
 import com.github.dapeng.message.event.serializer.KafkaMessageProcessor;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
-import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.LongDeserializer;
-import org.apache.kafka.common.serialization.LongSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

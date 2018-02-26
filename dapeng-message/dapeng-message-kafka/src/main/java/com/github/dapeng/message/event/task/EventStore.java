@@ -9,7 +9,7 @@ import java.util.Arrays;
  * @author maple.lei
  * @date 2018年02月23日 下午9:23
  */
-public class EventInfo {
+public class EventStore {
     private Long id;
     private String eventType;
     private byte[] eventBinary;

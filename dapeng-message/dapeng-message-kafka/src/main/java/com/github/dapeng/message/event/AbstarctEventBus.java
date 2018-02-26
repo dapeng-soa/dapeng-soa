@@ -9,18 +9,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 描述:
+ * 描述: 抽象消息总线 基类
  *
  * @author maple.lei
  * @date 2018年02月23日 上午11:11
  */
-public abstract class EventBaseBus {
-    private Logger logger = LoggerFactory.getLogger(EventBaseBus.class);
+public abstract class AbstarctEventBus {
+
+    private Logger logger = LoggerFactory.getLogger(AbstarctEventBus.class);
 
     public void fireEvent(Object event) throws TException {
         dispatchEvent(event);
         persistenceEvent(event);
-
     }
 
     /**
@@ -35,6 +35,7 @@ public abstract class EventBaseBus {
 
         KafkaMessageProcessor processor = new KafkaMessageProcessor<>();
         byte[] bytes = processor.buildMessageByte(event);
+
         IMessageDao messageDao = SpringContextHolder.getBean(IMessageDao.class);
         messageDao.saveMessageToDB(event.getClass().getName(), bytes);
         logger.info("save message successful ");
