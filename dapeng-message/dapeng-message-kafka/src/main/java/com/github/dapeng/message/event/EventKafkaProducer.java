@@ -9,7 +9,7 @@ import java.util.Properties;
 import java.util.concurrent.Future;
 
 /**
- * 描述:
+ * 描述: 跨领域（跨系统）事件  kafka 生产者
  *
  * @author maple.lei
  * @date 2018年02月12日 上午11:50
@@ -34,9 +34,12 @@ public class EventKafkaProducer {
     public void init() {
         Properties props = new Properties();
         props.put("bootstrap.servers", kafkaConnect);
+        /**
+         * 指定了“all”将会阻塞消息，这种设置性能最低，但是是最可靠的
+         */
         props.put("acks", "all");
         props.put("retries", 1);
-        //缓存每个分区未发送消息
+        //缓存每个分区未发送消息,缓冲区大小
         props.put("batch.size", 16384);
         props.put("linger.ms", 1);
         props.put("buffer.memory", 33554432);
@@ -46,20 +49,8 @@ public class EventKafkaProducer {
         producer = new KafkaProducer<>(props);
     }
 
-    public void send(String topic, Long id, byte[] msg) {
-        Future<RecordMetadata> send = producer.send(new ProducerRecord<>(topic, id, msg), (metadata, exception) -> {
-            if (exception != null) {
-                LOGGER.error(exception.getMessage(), exception);
-                LOGGER.error("send message failed,topic: {}, id: {}", topic, id);
-            }
-            LOGGER.info("send message successful,topic: {}, id: {}", topic, id);
-        });
-
-        LOGGER.info("send message successful,topic: {}, id: {}", topic, id);
+    public void send(String topic, Long id, byte[] msg,Callback callback) {
+        Future<RecordMetadata> send = producer.send(new ProducerRecord<>(topic, id, msg),callback);
     }
 
-    public void sendAsync(String topic, Long id, byte[] msg) {
-        producer.send(new ProducerRecord<>(topic, id, msg),
-                (metadata, exception) -> System.out.println("#offset: " + metadata.offset()));
-    }
 }

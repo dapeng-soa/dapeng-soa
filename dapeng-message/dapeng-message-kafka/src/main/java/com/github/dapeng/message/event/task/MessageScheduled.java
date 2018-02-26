@@ -3,6 +3,8 @@ package com.github.dapeng.message.event.task;
 import com.github.dapeng.message.event.EventKafkaProducer;
 import com.github.dapeng.message.event.dao.IMessageDao;
 import com.github.dapeng.util.SoaSystemEnvProperties;
+import org.apache.kafka.clients.producer.Callback;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +20,7 @@ import java.util.List;
  */
 @Transactional(rollbackFor = Exception.class)
 public class MessageScheduled {
-    private Logger logger = LoggerFactory.getLogger(MessageScheduled.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(MessageScheduled.class);
 
     private String producerTopic = SoaSystemEnvProperties.SOA_EVENT_MESSAGE_TOPIC;
 
@@ -33,21 +35,27 @@ public class MessageScheduled {
         List<EventInfo> eventInfos = messageDao.listMessages();
         if (!eventInfos.isEmpty()) {
             eventInfos.forEach(eventInfo -> {
-                producer.send(producerTopic, eventInfo.getId(), eventInfo.getEventBinary());
-                logger.info("send message to kafka success eventInfo:  {}", eventInfo.getEventType());
-                doDeleteMessage(eventInfo);
+                producer.send(producerTopic, eventInfo.getId(), eventInfo.getEventBinary(), (metadata, exception) -> {
+                    if (exception != null) {
+                        // 是否 抛异常
+                        LOGGER.error(exception.getMessage(), exception);
+                        LOGGER.error("send message failed,topic: {}, id: {}", producerTopic, eventInfo.getId());
+                    }
+                    LOGGER.info("send message successful,topic: {}, id: {}", producerTopic, eventInfo.getId());
+                    doDeleteMessage(eventInfo);
+                });
             });
         } else {
-            logger.debug("no event to send");
+            LOGGER.debug("no event to send");
         }
 
     }
 
-    //todo 事务会失效？
     private void doDeleteMessage(EventInfo eventInfo) {
         //fixme 便于测试。。。
         messageDao.deleteMessage(eventInfo.getId());
-        logger.info("消息发送kafka broker 成功，删除message，id: {}", eventInfo.getId());
+        LOGGER.info("消息发送kafka broker 成功，删除message，id: {}", eventInfo.getId());
     }
+
 
 }
