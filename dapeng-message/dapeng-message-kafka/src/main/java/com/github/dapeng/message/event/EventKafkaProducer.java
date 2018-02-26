@@ -47,7 +47,14 @@ public class EventKafkaProducer {
     }
 
     public void send(String topic, Long id, byte[] msg) {
-        Future<RecordMetadata> send = producer.send(new ProducerRecord<>(topic, id, msg));
+        Future<RecordMetadata> send = producer.send(new ProducerRecord<>(topic, id, msg), (metadata, exception) -> {
+            if (exception != null) {
+                LOGGER.error(exception.getMessage(), exception);
+                LOGGER.error("send message failed,topic: {}, id: {}", topic, id);
+            }
+            LOGGER.info("send message successful,topic: {}, id: {}", topic, id);
+        });
+
         LOGGER.info("send message successful,topic: {}, id: {}", topic, id);
     }
 
