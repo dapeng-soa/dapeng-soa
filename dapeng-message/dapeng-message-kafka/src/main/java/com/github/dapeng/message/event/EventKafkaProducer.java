@@ -1,7 +1,11 @@
 package com.github.dapeng.message.event;
 
+import com.github.dapeng.message.KafkaConfigBuilder;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.kafka.clients.producer.*;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
+import org.apache.kafka.common.serialization.LongSerializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,25 +36,17 @@ public class EventKafkaProducer {
     }
 
     public void init() {
-        Properties props = new Properties();
-        props.put("bootstrap.servers", kafkaConnect);
-        /**
-         * 指定了“all”将会阻塞消息，这种设置性能最低，但是是最可靠的
-         */
-        props.put("acks", "all");
-        props.put("retries", 1);
-        //缓存每个分区未发送消息,缓冲区大小
-        props.put("batch.size", 16384);
-        props.put("linger.ms", 1);
-        props.put("buffer.memory", 33554432);
-        props.put("key.serializer", "org.apache.kafka.common.serialization.LongSerializer");
-        props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
+        KafkaConfigBuilder.ProducerConfiguration builder = KafkaConfigBuilder.defaultProducer();
 
-        producer = new KafkaProducer<>(props);
+        final Properties properties = builder.withKeySerializer(LongSerializer.class)
+                                             .withValueSerializer(ByteArraySerializer.class)
+                                             .bootstrapServers(kafkaConnect)
+                                             .build();
+
+        producer = new KafkaProducer<>(properties);
     }
 
-    public void send(String topic, Long id, byte[] msg,Callback callback) {
-        Future<RecordMetadata> send = producer.send(new ProducerRecord<>(topic, id, msg),callback);
+    public void send(String topic, Long id, byte[] msg, Callback callback) {
+        producer.send(new ProducerRecord<>(topic, id, msg), callback);
     }
-
 }

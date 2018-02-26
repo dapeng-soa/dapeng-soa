@@ -1,14 +1,18 @@
 package com.github.dapeng.message.consumer.kafka;
 
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
+import com.github.dapeng.message.KafkaConfigBuilder;
 import com.github.dapeng.message.consumer.api.context.ConsumerContext;
 import com.github.dapeng.message.event.serializer.KafkaMessageProcessor;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.LongDeserializer;
+import org.apache.kafka.common.serialization.LongSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,24 +44,23 @@ public class EventKafkaConsumer extends Thread {
 
     protected org.apache.kafka.clients.consumer.KafkaConsumer<Long, byte[]> consumer;
 
-    public void init() {
 
+    public void init() {
         logger.info(new StringBuffer("[KafkaConsumer] [init] ")
                 .append("kafkaConnect(").append(kafkaConnect)
                 .append(") groupId(").append(groupId)
                 .append(") topic(").append(topic).append(")").toString());
 
-        Properties props = new Properties();
-        props.put("bootstrap.servers", kafkaConnect);
-        props.put("group.id", groupId);
-        props.put("enable.auto.commit", "true");
-        props.put("auto.commit.interval.ms", "1000");
-        props.put("key.deserializer", LongDeserializer.class);
-        props.put("value.deserializer", ByteArrayDeserializer.class);
+        KafkaConfigBuilder.ConsumerConfiguration builder = KafkaConfigBuilder.defaultConsumer();
+        final Properties props = builder.bootstrapServers(kafkaConnect)
+                .group(groupId)
+                .withKeyDeserializer(LongDeserializer.class)
+                .withValueDeserializer(ByteArrayDeserializer.class)
+                .build();
 
         consumer = new org.apache.kafka.clients.consumer.KafkaConsumer<>(props);
-
     }
+
 
     @Override
     public void run() {
@@ -187,6 +190,5 @@ public class EventKafkaConsumer extends Thread {
             throw new NullPointerException("解析订阅方法参数错误，可能该方法不处理这个事件");
         }
     }
-
 
 }
