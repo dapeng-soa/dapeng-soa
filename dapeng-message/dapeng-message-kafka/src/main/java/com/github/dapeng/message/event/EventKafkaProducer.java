@@ -1,16 +1,14 @@
 package com.github.dapeng.message.event;
 
-import com.github.dapeng.message.KafkaConfigBuilder;
+import com.github.dapeng.message.config.KafkaConfigBuilder;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.LongSerializer;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
-import java.util.concurrent.Future;
 
 /**
  * 描述: 跨领域（跨系统）事件  kafka 生产者

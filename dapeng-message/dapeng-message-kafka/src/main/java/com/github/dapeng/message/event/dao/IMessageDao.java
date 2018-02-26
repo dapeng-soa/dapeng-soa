@@ -1,6 +1,6 @@
 package com.github.dapeng.message.event.dao;
 
-import com.github.dapeng.message.event.task.EventInfo;
+import com.github.dapeng.message.event.task.EventStore;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ public interface IMessageDao {
      * @param
      * @return
      */
-    List<EventInfo> listMessages();
+    List<EventStore> listMessages();
 
     /**
      * fire事件后，将事件持久化到数据库中
