@@ -7,6 +7,8 @@ import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.metadata.Method;
 import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.json.JsonSerializer;
+import com.github.dapeng.util.DumpUtil;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,11 +75,17 @@ public class JsonPost {
 
         final long beginTime = System.currentTimeMillis();
 
-        LOGGER.info("soa-request: {}", jsonParameter);
+        LOGGER.info("soa-request: " + jsonParameter);
 
-        String jsonResponse = post(invocationContext.getServiceName(), invocationContext.getVersionName(), method.name,jsonParameter, jsonEncoder, jsonDecoder);
+        String escapedJson = StringEscapeUtils.escapeEcmaScript(jsonParameter);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("EscapedJson:" + escapedJson);
+        }
 
-        LOGGER.info("soa-response: {} {}ms", jsonResponse, System.currentTimeMillis() - beginTime);
+        String jsonResponse = post(invocationContext.getServiceName(), invocationContext.getVersionName(),
+                method.name, escapedJson, jsonEncoder, jsonDecoder);
+
+        LOGGER.info("soa-response: " + DumpUtil.formatToString(jsonResponse) + (System.currentTimeMillis() - beginTime) + "ms");
 
         return jsonResponse;
     }
