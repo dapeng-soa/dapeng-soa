@@ -1,17 +1,15 @@
-package com.github.dapeng.message.event;
+package com.github.dapeng.eventbus.message.kafka;
 
-import com.github.dapeng.message.config.KafkaConfigBuilder;
-import com.github.dapeng.message.event.task.EventStore;
 import com.github.dapeng.util.SoaSystemEnvProperties;
-import org.apache.kafka.clients.producer.*;
+import org.apache.kafka.clients.producer.Callback;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -71,7 +69,7 @@ public class EventKafkaProducer {
         producer.send(new ProducerRecord<>(topic, id, msg), callback);
     }
 
-    public void batchSend(String topic, List<EventStore> msgs, TransCallback callback) {
+    /*public void batchSend(String topic, List<EventStore> msgs, TransCallback callback) {
         try {
 
             producer.beginTransaction();
@@ -83,6 +81,6 @@ public class EventKafkaProducer {
         } catch (Exception e) {
             producer.abortTransaction();
         }
-    }
+    }*/
 
 }

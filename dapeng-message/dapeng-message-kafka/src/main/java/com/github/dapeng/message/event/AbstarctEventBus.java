@@ -19,8 +19,12 @@ public abstract class AbstarctEventBus {
     private Logger logger = LoggerFactory.getLogger(AbstarctEventBus.class);
 
     public void fireEvent(Object event) throws TException {
-        dispatchEvent(event);
-        persistenceEvent(event);
+        try {
+            dispatchEvent(event);
+            persistenceEvent(event);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
     }
 
     /**
