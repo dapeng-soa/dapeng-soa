@@ -5,12 +5,15 @@ import com.github.dapeng.core.*;
 import com.github.dapeng.core.filter.*;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.util.SoaMessageParser;
+import com.github.dapeng.util.SoaSystemEnvProperties;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -199,16 +202,41 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
     protected SoaHeader buildHeader(String service, String version, String method) {
         SoaHeader header = new SoaHeader();
+
+        InvocationContext invocationContext = InvocationContextImpl.Factory.getCurrentInstance();
+        header.setCallerFrom(invocationContext.getCallerFrom());
+        header.setOperatorId(invocationContext.getOperatorId());
+        header.setOperatorName(invocationContext.getOperatorName());
+        header.setCustomerId(invocationContext.getCustomerId());
+        header.setCustomerName(invocationContext.getCustomerName());
+        header.setSessionId(invocationContext.getSessionId());
+
+        //如果在容器内调用其它服务，将原始的调用者信息(customerId/customerName/operatorId/operatorName)传递
+        if (TransactionContext.hasCurrentInstance()) {
+
+            TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
+            SoaHeader oriHeader = transactionContext.getHeader();
+
+            header.setCustomerId(oriHeader.getCustomerId());
+            header.setCustomerName(oriHeader.getCustomerName());
+            header.setOperatorId(oriHeader.getOperatorId());
+            header.setOperatorName(oriHeader.getOperatorName());
+            header.setSessionId(oriHeader.getSessionId());
+        }
+
+        header.setCallerIp(Optional.of(SoaSystemEnvProperties.SOA_CALLER_IP));
+
         header.setServiceName(service);
         header.setVersionName(version);
         header.setMethodName(method);
 
-        InvocationContext invocationContext = InvocationContextImpl.Factory.getCurrentInstance();
-        header.setCallerFrom(invocationContext.getCallerFrom());
-        header.setCallerIp(invocationContext.getCallerIp());
-        header.setCustomerId(invocationContext.getCustomerId());
-        header.setCustomerName(invocationContext.getCustomerName());
-        header.setOperatorId(invocationContext.getOperatorId());
+        if (!header.getCallerFrom().isPresent())
+            header.setCallerFrom(Optional.of(SoaSystemEnvProperties.SOA_SERVICE_CALLERFROM));
+
+
+        if (!header.getSessionId().isPresent()) {
+            header.setSessionId(Optional.of(UUID.randomUUID().toString()));
+        }
 
         return header;
     }

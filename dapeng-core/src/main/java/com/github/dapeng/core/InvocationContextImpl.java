@@ -31,6 +31,8 @@ public class InvocationContextImpl implements  InvocationContext {
 
     private Optional<Integer> operatorId = Optional.empty();
 
+    private Optional<String> operatorName = Optional.empty();
+
     private Optional<Integer> customerId = Optional.empty();
 
     private Optional<String> customerName = Optional.empty();
@@ -38,6 +40,8 @@ public class InvocationContextImpl implements  InvocationContext {
     private Optional<Integer> transactionSequence = Optional.empty();
 
     private InvocationInfo invocationInfo;
+
+    private Optional<String> sessionId = Optional.empty();
 
     /**
      * 全局事务id
@@ -76,6 +80,16 @@ public class InvocationContextImpl implements  InvocationContext {
     @Override
     public InvocationInfo getLastInfo() {
         return this.invocationInfo;
+    }
+
+    @Override
+    public void setSessionId(Optional<String> sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    @Override
+    public Optional<String> getSessionId() {
+        return this.sessionId;
     }
 
     @Override
@@ -121,6 +135,16 @@ public class InvocationContextImpl implements  InvocationContext {
     @Override
     public Optional<Integer> getOperatorId() {
         return this.operatorId;
+    }
+
+    @Override
+    public void setOperatorName(Optional<String> operatorName) {
+        this.operatorName = operatorName;
+    }
+
+    @Override
+    public Optional<String> getOperatorName() {
+        return this.operatorName;
     }
 
     @Override
@@ -193,7 +217,6 @@ public class InvocationContextImpl implements  InvocationContext {
 
     public static class Factory {
         private static ThreadLocal<InvocationContext> threadLocal = new ThreadLocal<>();
-
         /**
          * must be invoked one time per thread before work begin
          * @return
