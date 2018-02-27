@@ -1,4 +1,4 @@
-package com.github.dapeng.message.config;
+package com.github.dapeng.eventbus.message.kafka;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;

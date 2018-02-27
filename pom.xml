@@ -71,6 +71,7 @@
         <!--<module>dapeng-demo</module>-->
         <module>dapeng-monitor-filter</module>
         <module>dapeng-counter</module>
+        <module>dapeng-eventbus</module>
     </modules>
 
     <properties>

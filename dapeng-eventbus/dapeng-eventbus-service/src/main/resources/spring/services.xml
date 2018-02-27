@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:tx="http://www.springframework.org/schema/tx"
-       xmlns:context="http://www.springframework.org/schema/context"
-       xmlns:task="http://www.springframework.org/schema/task"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
         http://www.springframework.org/schema/beans/spring-beans.xsd
-         http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
 
     <!--参数配置-->
-    <context:property-placeholder location="classpath:config_message.properties" local-override="false"
+    <context:property-placeholder location="classpath:config_eventbus.properties" local-override="false"
                                   ignore-unresolvable="true" system-properties-mode="ENVIRONMENT"/>
 
     <!--当使用 <context:component-scan/> 后，即可将 <context:annotation-config/> 省去。-->
-    <context:component-scan base-package="com.github.dapeng.message.*"/>
+    <context:component-scan base-package="com.github.dapeng.eventbus.*"/>
 
     <bean id="slf4j-filter" class="com.alibaba.druid.filter.logging.Slf4jLogFilter">
         <property name="statementExecutableSqlLogEnable" value="true"/>
@@ -84,26 +83,15 @@
         <property name="jdbcTemplate" ref="jdbcTemplate"/>
     </bean>
 
-    <bean id="messageDao" class="com.github.dapeng.message.event.dao.MessageDaoImpl" parent="abstractDao"/>
+    <bean id="messageDao" class="com.github.dapeng.eventbus.message.dao.MessageDaoImpl" parent="abstractDao"/>
 
-    <bean id="contextHolder" class="com.github.dapeng.message.event.dao.SpringContextHolder"/>
+    <bean id="contextHolder" class="com.github.dapeng.eventbus.message.dao.SpringContextHolder"/>
 
 
-    <bean id="soaKafkaProducer" class="com.github.dapeng.message.event.EventKafkaProducer">
+    <bean id="soaKafkaProducer" class="com.github.dapeng.eventbus.message.kafka.EventKafkaProducer">
         <constructor-arg index="0" value="false"/>
     </bean>
 
     <tx:annotation-driven/>
 
-    <!--定时任务-->
-    <bean id="messageScheduled" class="com.github.dapeng.message.event.task.MessageScheduled"/>
-
-
-    <!--<task:annotation-driven scheduler="qbScheduler" mode="proxy"/>
-    <task:scheduler id="qbScheduler" pool-size="10"/>
-
-    <task:scheduled-tasks scheduler="qbScheduler">
-        &lt;!&ndash;"0 0/1 * * * ?"&ndash;&gt;
-        <task:scheduled ref="messageScheduled" method="fetchMessage" cron="${message.fetch.cron}"/>
-    </task:scheduled-tasks>-->
 </beans>

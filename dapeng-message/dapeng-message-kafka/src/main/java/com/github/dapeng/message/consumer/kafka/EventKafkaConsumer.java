@@ -6,6 +6,8 @@ import com.github.dapeng.message.consumer.api.context.ConsumerContext;
 import com.github.dapeng.message.event.serializer.KafkaMessageProcessor;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.util.SoaSystemEnvProperties;
+import org.apache.kafka.clients.consumer.CommitFailedException;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
@@ -49,10 +51,15 @@ public class EventKafkaConsumer extends Thread {
                 .append(") topic(").append(topic).append(")").toString());
 
         KafkaConfigBuilder.ConsumerConfiguration builder = KafkaConfigBuilder.defaultConsumer();
+        Properties properties = new Properties();
+        properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+
+
         final Properties props = builder.bootstrapServers(kafkaConnect)
                 .group(groupId)
                 .withKeyDeserializer(LongDeserializer.class)
                 .withValueDeserializer(ByteArrayDeserializer.class)
+                .withOffsetCommitted("false")
                 .build();
 
         consumer = new org.apache.kafka.clients.consumer.KafkaConsumer<>(props);
@@ -69,6 +76,12 @@ public class EventKafkaConsumer extends Thread {
                 ConsumerRecords<Long, byte[]> records = consumer.poll(100);
                 for (ConsumerRecord<Long, byte[]> record : records) {
                     receive(record.value());
+                }
+
+                try {
+                    consumer.commitSync();
+                } catch (CommitFailedException e) {
+                    logger.error("commit failed", e);
                 }
             } catch (Exception e) {
                 logger.error("[KafkaConsumer][{}][run] " + e.getMessage(), groupId + ":" + topic, e);

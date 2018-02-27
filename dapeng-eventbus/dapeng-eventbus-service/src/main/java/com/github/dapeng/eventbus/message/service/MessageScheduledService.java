@@ -1,25 +1,29 @@
-package com.github.dapeng.message.event.task;
+package com.github.dapeng.eventbus.message.service;
 
-import com.github.dapeng.message.event.EventKafkaProducer;
-import com.github.dapeng.message.event.TransCallback;
-import com.github.dapeng.message.event.dao.IMessageDao;
+import com.github.dapeng.core.SoaException;
+import com.github.dapeng.core.timer.ScheduledTask;
+import com.github.dapeng.core.timer.ScheduledTaskCron;
+import com.github.dapeng.eventbus.api.message.service.MsgScheduledService;
+import com.github.dapeng.eventbus.message.EventStore;
+import com.github.dapeng.eventbus.message.dao.IMessageDao;
+import com.github.dapeng.eventbus.message.kafka.EventKafkaProducer;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 /**
  * 描述:
  *
- * @author maple.lei
- * @date 2018年02月23日 下午9:21
+ * @author hz.lei
+ * @date 2018年02月27日 下午9:34
  */
-@Transactional(rollbackFor = Exception.class)
-public class MessageScheduled {
-    private static Logger LOGGER = LoggerFactory.getLogger(MessageScheduled.class);
+@ScheduledTask
+public class MessageScheduledService implements MsgScheduledService {
+
+    private static Logger LOGGER = LoggerFactory.getLogger(MessageScheduledService.class);
 
     private String producerTopic = SoaSystemEnvProperties.SOA_EVENT_MESSAGE_TOPIC;
 
@@ -30,7 +34,13 @@ public class MessageScheduled {
     private EventKafkaProducer producer;
 
 
-    public void fetchMessage() {
+    @Override
+    @ScheduledTaskCron(cron = "*/5 * * * * ?")
+    public void fetchMessage() throws SoaException {
+
+        System.out.println("what are you doing ???");
+
+
         List<EventStore> eventStores = messageDao.listMessages();
         if (!eventStores.isEmpty()) {
             eventStores.forEach(eventInfo -> {
@@ -61,7 +71,7 @@ public class MessageScheduled {
     }
 
 
-    public void transFetchMessage() {
+   /* public void transFetchMessage() {
         List<EventStore> eventStores = messageDao.listMessages();
         if (!eventStores.isEmpty()) {
             producer.batchSend(producerTopic, eventStores, new TransCallback() {
@@ -75,6 +85,5 @@ public class MessageScheduled {
             LOGGER.debug("no event to send");
         }
 
-    }
-
+    }*/
 }
