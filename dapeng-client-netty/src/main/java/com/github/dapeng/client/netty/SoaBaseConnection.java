@@ -203,13 +203,15 @@ public abstract class SoaBaseConnection implements SoaConnection {
     protected SoaHeader buildHeader(String service, String version, String method) {
         SoaHeader header = new SoaHeader();
 
-        InvocationContext invocationContext = InvocationContextImpl.Factory.getCurrentInstance();
-        header.setCallerFrom(invocationContext.getCallerFrom());
-        header.setOperatorId(invocationContext.getOperatorId());
-        header.setOperatorName(invocationContext.getOperatorName());
-        header.setCustomerId(invocationContext.getCustomerId());
-        header.setCustomerName(invocationContext.getCustomerName());
-        header.setSessionId(invocationContext.getSessionId());
+        InvocationContextImpl.Factory.ISoaHeaderProxy headerProxy = InvocationContextImpl.Factory.getSoaHeaderProxy();
+        if (headerProxy != null) {
+            header.setCallerFrom(headerProxy.callerFrom());
+            header.setCustomerId(headerProxy.customerId());
+            header.setCustomerName(headerProxy.customerName());
+            header.setOperatorId(headerProxy.operatorId());
+            header.setOperatorName(headerProxy.operatorName());
+            header.setSessionId(headerProxy.sessionId());
+        }
 
         //如果在容器内调用其它服务，将原始的调用者信息(customerId/customerName/operatorId/operatorName)传递
         if (TransactionContext.hasCurrentInstance()) {
@@ -229,6 +231,12 @@ public abstract class SoaBaseConnection implements SoaConnection {
         header.setServiceName(service);
         header.setVersionName(version);
         header.setMethodName(method);
+
+//        header.setCallerFrom(invocationContext.getCallerFrom());
+//        header.setCallerIp(invocationContext.getCallerIp());
+//        header.setCustomerId(invocationContext.getCustomerId());
+//        header.setCustomerName(invocationContext.getCustomerName());
+//        header.setOperatorId(invocationContext.getOperatorId());
 
         if (!header.getCallerFrom().isPresent())
             header.setCallerFrom(Optional.of(SoaSystemEnvProperties.SOA_SERVICE_CALLERFROM));
