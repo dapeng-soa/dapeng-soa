@@ -1,4 +1,4 @@
-package com.github.dapeng.message.event;
+package com.github.dapeng.message.config;
 
 /**
  * 描述:
