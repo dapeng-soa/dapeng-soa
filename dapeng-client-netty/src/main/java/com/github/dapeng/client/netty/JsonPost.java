@@ -8,7 +8,6 @@ import com.github.dapeng.core.metadata.Method;
 import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.json.JsonSerializer;
 import com.github.dapeng.util.DumpUtil;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
