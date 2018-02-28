@@ -1,7 +1,7 @@
-package com.github.dapeng.message.event.serializer;
+package com.github.dapeng.message.serializer;
 
 import com.github.dapeng.core.BeanSerializer;
-import com.github.dapeng.message.event.MessageInfo;
+import com.github.dapeng.message.config.MessageInfo;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TCompactProtocol;
 import org.slf4j.Logger;

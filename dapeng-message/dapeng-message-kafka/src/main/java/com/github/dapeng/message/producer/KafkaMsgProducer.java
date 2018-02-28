@@ -1,7 +1,6 @@
-package com.github.dapeng.message.event;
+package com.github.dapeng.message.producer;
 
 import com.github.dapeng.message.config.KafkaConfigBuilder;
-import com.github.dapeng.message.event.task.EventStore;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -9,9 +8,6 @@ import org.apache.kafka.common.serialization.LongSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -20,9 +16,9 @@ import java.util.Properties;
  * @author maple.lei
  * @date 2018年02月12日 上午11:50
  */
-public class EventKafkaProducer {
+public class KafkaMsgProducer {
 
-    private Logger LOGGER = LoggerFactory.getLogger(EventKafkaProducer.class);
+    private Logger LOGGER = LoggerFactory.getLogger(KafkaMsgProducer.class);
     /**
      * 127.0.0.1:9091,127.0.0.1:9092
      */
@@ -32,7 +28,7 @@ public class EventKafkaProducer {
 
     private final Boolean isAsync;
 
-    public EventKafkaProducer(Boolean isAsync) {
+    public KafkaMsgProducer(Boolean isAsync) {
         this.isAsync = isAsync;
         init();
     }
@@ -71,18 +67,5 @@ public class EventKafkaProducer {
         producer.send(new ProducerRecord<>(topic, id, msg), callback);
     }
 
-    public void batchSend(String topic, List<EventStore> msgs, TransCallback callback) {
-        try {
-
-            producer.beginTransaction();
-            for (EventStore eventStore : msgs) {
-                // todo
-            }
-            producer.commitTransaction();
-            callback.onSuccess();
-        } catch (Exception e) {
-            producer.abortTransaction();
-        }
-    }
 
 }

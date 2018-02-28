@@ -1,4 +1,4 @@
-package com.github.dapeng.message.event.serializer;
+package com.github.dapeng.message.serializer;
 import com.github.dapeng.org.apache.thrift.transport.TTransport;
 import com.github.dapeng.org.apache.thrift.transport.TTransportException;
 import java.util.Arrays;
