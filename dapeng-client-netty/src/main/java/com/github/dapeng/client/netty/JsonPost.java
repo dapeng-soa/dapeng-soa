@@ -79,7 +79,6 @@ public class JsonPost {
                 method.name, jsonParameter, jsonEncoder, jsonDecoder);
 
         String escapedJson = jsonResponse.replaceAll("\n","\\\\n");
-        //StringEscapeUtils.escapeEcmaScript(jsonResponse);
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("EscapedJson:" + escapedJson);
         }
