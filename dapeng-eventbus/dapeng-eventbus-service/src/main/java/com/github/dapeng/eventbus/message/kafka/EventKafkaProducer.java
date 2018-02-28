@@ -1,16 +1,17 @@
 package com.github.dapeng.eventbus.message.kafka;
 
+import com.github.dapeng.eventbus.message.EventStore;
 import com.github.dapeng.util.SoaSystemEnvProperties;
-import org.apache.kafka.clients.producer.Callback;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * 描述: 跨领域（跨系统）事件  kafka 生产者
@@ -28,11 +29,12 @@ public class EventKafkaProducer {
 
     private Producer<Long, byte[]> producer;
 
-    private final Boolean isAsync;
+    private Boolean isAsync;
 
     public EventKafkaProducer(Boolean isAsync) {
         this.isAsync = isAsync;
-        init();
+//        init();
+        createTransactionalProducer();
     }
 
     public void init() {
@@ -51,17 +53,15 @@ public class EventKafkaProducer {
      *
      * @return
      */
-    protected Producer<Long, byte[]> createTransactionalProducer() {
+    protected void createTransactionalProducer() {
         KafkaConfigBuilder.ProducerConfiguration builder = KafkaConfigBuilder.defaultProducer();
         final Properties properties = builder.withKeySerializer(LongSerializer.class)
                 .withValueSerializer(ByteArraySerializer.class)
                 .bootstrapServers(kafkaConnect)
                 .withTransactions("event")
                 .build();
-
         producer = new KafkaProducer<>(properties);
         producer.initTransactions();
-        return producer;
     }
 
 
@@ -69,18 +69,29 @@ public class EventKafkaProducer {
         producer.send(new ProducerRecord<>(topic, id, msg), callback);
     }
 
-    /*public void batchSend(String topic, List<EventStore> msgs, TransCallback callback) {
+    /**
+     * batch to send message , if one is failed ,all batch message will  rollback.
+     *
+     * @param topic
+     * @param eventMessage
+     */
+    public void batchSend(String topic, List<EventStore> eventMessage) {
         try {
-
             producer.beginTransaction();
-            for (EventStore eventStore : msgs) {
-                // todo
-            }
+            eventMessage.forEach(eventStore -> {
+                producer.send(new ProducerRecord<>(topic, eventStore.getId(), eventStore.getEventBinary()), (metadata, exception) -> {
+                    LOGGER.info("in transaction per msg ,send message to broker successful, " +
+                                    "id: {}, topic: {}, offset: {}, partition: {}",
+                            eventStore.getId(), metadata.topic(), metadata.offset(), metadata.partition());
+                });
+            });
             producer.commitTransaction();
-            callback.onSuccess();
         } catch (Exception e) {
             producer.abortTransaction();
+            LOGGER.error(e.getMessage(), e);
+            LOGGER.error("send message failed,topic: {}", topic);
+            throw e;
         }
-    }*/
+    }
 
 }
