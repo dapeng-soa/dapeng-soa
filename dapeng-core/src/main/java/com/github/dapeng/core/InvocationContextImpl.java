@@ -218,9 +218,9 @@ public class InvocationContextImpl implements  InvocationContext {
     public static class Factory {
         private static ThreadLocal<InvocationContext> threadLocal = new ThreadLocal<>();
 
-        private static ISoaHeaderProxy soaHeaderProxy;
+        private static InvocationContextProxy invocationContextProxy;
 
-        public static interface ISoaHeaderProxy {
+        public static interface InvocationContextProxy {
 
             Optional<String> callerFrom();
 
@@ -235,12 +235,12 @@ public class InvocationContextImpl implements  InvocationContext {
             Optional<String> sessionId();
         }
 
-        public static void setSoaHeaderProxy(ISoaHeaderProxy soaHeaderProxy) {
-            Factory.soaHeaderProxy = soaHeaderProxy;
+        public static void setInvocationContextProxy(InvocationContextProxy invocationContextProxy) {
+            Factory.invocationContextProxy = invocationContextProxy;
         }
 
-        public static ISoaHeaderProxy getSoaHeaderProxy() {
-            return soaHeaderProxy;
+        public static InvocationContextProxy getInvocationContextProxy() {
+            return invocationContextProxy;
         }
         /**
          * must be invoked one time per thread before work begin

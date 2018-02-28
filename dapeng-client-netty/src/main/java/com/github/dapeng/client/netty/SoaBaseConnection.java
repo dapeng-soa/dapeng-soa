@@ -203,7 +203,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
     protected SoaHeader buildHeader(String service, String version, String method) {
         SoaHeader header = new SoaHeader();
 
-        InvocationContextImpl.Factory.ISoaHeaderProxy headerProxy = InvocationContextImpl.Factory.getSoaHeaderProxy();
+        InvocationContextImpl.Factory.InvocationContextProxy headerProxy = InvocationContextImpl.Factory.getInvocationContextProxy();
         if (headerProxy != null) {
             header.setCallerFrom(headerProxy.callerFrom());
             header.setCustomerId(headerProxy.customerId());
@@ -232,11 +232,6 @@ public abstract class SoaBaseConnection implements SoaConnection {
         header.setVersionName(version);
         header.setMethodName(method);
 
-//        header.setCallerFrom(invocationContext.getCallerFrom());
-//        header.setCallerIp(invocationContext.getCallerIp());
-//        header.setCustomerId(invocationContext.getCustomerId());
-//        header.setCustomerName(invocationContext.getCustomerName());
-//        header.setOperatorId(invocationContext.getOperatorId());
 
         if (!header.getCallerFrom().isPresent())
             header.setCallerFrom(Optional.of(SoaSystemEnvProperties.SOA_SERVICE_CALLERFROM));
