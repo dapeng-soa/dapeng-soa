@@ -75,17 +75,17 @@ public class JsonPost {
 
         final long beginTime = System.currentTimeMillis();
 
-        String escapedJson = StringEscapeUtils.escapeEcmaScript(jsonParameter);
+        String jsonResponse = post(invocationContext.getServiceName(), invocationContext.getVersionName(),
+                method.name, jsonParameter, jsonEncoder, jsonDecoder);
+
+        String escapedJson = StringEscapeUtils.escapeEcmaScript(jsonResponse);
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("EscapedJson:" + escapedJson);
         }
 
-        String jsonResponse = post(invocationContext.getServiceName(), invocationContext.getVersionName(),
-                method.name, escapedJson, jsonEncoder, jsonDecoder);
+        LOGGER.info("soa-response: " + DumpUtil.formatToString(escapedJson) + (System.currentTimeMillis() - beginTime) + "ms");
 
-        LOGGER.info("soa-response: " + DumpUtil.formatToString(jsonResponse) + (System.currentTimeMillis() - beginTime) + "ms");
-
-        return jsonResponse;
+        return escapedJson;
     }
 
 
