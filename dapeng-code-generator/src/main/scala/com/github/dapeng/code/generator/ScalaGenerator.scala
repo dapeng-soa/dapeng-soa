@@ -493,6 +493,11 @@ class ScalaGenerator extends CodeGenerator {
 
       <div>package {struct.namespace}
 
+        import com.github.dapeng.core.BeanSerializer
+        object {struct.name} <block>
+          implicit val x: BeanSerializer[{struct.namespace}.{struct.name}] = new {struct.namespace}.serializer.{struct.name}Serializer
+      </block>
+
         /**
         {notice}
         *{struct.doc}
