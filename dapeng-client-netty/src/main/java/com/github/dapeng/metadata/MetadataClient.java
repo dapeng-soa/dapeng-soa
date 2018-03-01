@@ -1,10 +1,8 @@
 package com.github.dapeng.metadata;
 
-import com.github.dapeng.client.netty.SoaConnectionImpl;
-import com.github.dapeng.client.netty.SoaConnectionImpl;
 import com.github.dapeng.core.SoaConnectionPool;
 import com.github.dapeng.core.SoaConnectionPoolFactory;
-import com.github.dapeng.util.SoaSystemEnvProperties;
+import com.github.dapeng.core.SoaException;
 
 import java.util.ServiceLoader;
 
@@ -35,7 +33,7 @@ public class MetadataClient {
     /**
      * getServiceMetadata
      **/
-    public String getServiceMetadata() throws Exception {
+    public String getServiceMetadata() throws SoaException {
         getServiceMetadata_result result = pool.send(serviceName, version, methodName,
                 new getServiceMetadata_args(),
                 new GetServiceMetadata_argsSerializer(),
