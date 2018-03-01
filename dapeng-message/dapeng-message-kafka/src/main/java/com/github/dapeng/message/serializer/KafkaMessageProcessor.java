@@ -7,6 +7,8 @@ import com.github.dapeng.org.apache.thrift.protocol.TCompactProtocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
+
 /**
  * 描述: kafka 消息 编解码器
  *
@@ -14,6 +16,7 @@ import org.slf4j.LoggerFactory;
  * @date 2018年02月13日 上午11:39
  */
 public class KafkaMessageProcessor<T> {
+
     private Logger LOGGER = LoggerFactory.getLogger(KafkaMessageProcessor.class);
 
     private BeanSerializer<T> beanSerializer;
@@ -30,6 +33,27 @@ public class KafkaMessageProcessor<T> {
         LOGGER.info("dealMessage:event {}", event.toString());
         return event;
     }
+
+    /**
+     * decode message
+     *
+     * @param msgBuffer
+     * @param beanSerializer
+     * @return
+     * @throws TException
+     */
+    public T decodeMessage(ByteBuffer msgBuffer, BeanSerializer beanSerializer) throws TException {
+        LOGGER.info("fetch event body: ");
+        byte[] bytes = new byte[msgBuffer.remaining()];
+        TKafkaTransport kafkaTransport = new TKafkaTransport(bytes, TKafkaTransport.Type.Read);
+        TCompactProtocol protocol = new TCompactProtocol(kafkaTransport);
+
+        T event = (T) beanSerializer.read(protocol);
+
+        LOGGER.info("dealMessage:event {}", event.toString());
+        return event;
+    }
+
 
     /**
      * decode kafka message
@@ -86,6 +110,11 @@ public class KafkaMessageProcessor<T> {
         System.arraycopy(message, pos, realMessage, 0, message.length - pos);
         return new String(subBytes);
     }
+
+    public byte[] getEventBinary() {
+        return realMessage;
+    }
+
 
     /**
      * 根据event类名 构造event 编解码器对象

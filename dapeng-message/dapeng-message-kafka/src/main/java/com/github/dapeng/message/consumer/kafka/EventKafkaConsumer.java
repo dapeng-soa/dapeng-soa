@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.*;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -99,7 +100,7 @@ public class EventKafkaConsumer extends Thread {
 
         logger.info("KafkaConsumer groupId({}) topic({}) 收到消息", groupId, topic);
         for (ConsumerContext customer : customers) {
-            dealMessage(customer, message);
+            dealMessage2(customer, message);
         }
     }
 
@@ -201,4 +202,80 @@ public class EventKafkaConsumer extends Thread {
         }
     }
 
+
+    private void dealMessage2(ConsumerContext customer, byte[] message) throws TException {
+        /**
+         * 解码消息为event
+         */
+        KafkaMessageProcessor processor = new KafkaMessageProcessor();
+
+        String eventType = processor.getEventType(message);
+        byte[] eventBinary = processor.getEventBinary();
+        ByteBuffer eventBuf = ByteBuffer.wrap(eventBinary);
+
+
+        SoaFunctionDefinition.Sync functionDefinition = (SoaFunctionDefinition.Sync) customer.getSoaFunctionDefinition();
+        Object iface = customer.getIface();
+        String consumerTag = customer.getEventType();
+
+
+        long count = new ArrayList<>(Arrays.asList(iface.getClass().getInterfaces()))
+                .stream()
+                .filter(m -> "org.springframework.aop.framework.Advised".equals(m.getName()))
+                .count();
+        Class<?> ifaceClass;
+
+        try {
+            ifaceClass = (Class) (count > 0 ? iface.getClass().getMethod("getTargetClass").invoke(iface) : iface.getClass());
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            ifaceClass = iface.getClass();
+        }
+
+        Method method;
+        Parameter[] parameters;
+
+        try {
+            method = ((SoaFunctionDefinition.Sync) functionDefinition).getClass().getDeclaredMethods()[1];
+            parameters = method.getParameters();
+
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            logger.error("解析kafka消息流，获取method和parameters出错");
+            throw new TException("解析消息出错");
+        }
+
+        Object argsParam = null;
+        for (Parameter param : parameters) {
+            if (param.getType().getName().contains("args")) {
+                try {
+                    Constructor<?> constructor = param.getType().getConstructor(ByteBuffer.class);
+                    argsParam = constructor.newInstance(eventBuf);
+                } catch (NoSuchMethodException e) {
+                    logger.error("当前方法参数不匹配: {}, 当前消息事件不匹配该方法", method.getName());
+                } catch (Exception e) {
+                    logger.error(e.getMessage(), e);
+                    logger.error(" failed to instance method: {}", method.getName());
+                }
+            }
+        }
+
+
+        try {
+//            checkNotNull(argsParam);
+            if (consumerTag.equals(eventType)) {
+                logger.info("{}收到kafka消息，执行{}方法", ifaceClass.getName(), functionDefinition.methodName);
+                functionDefinition.apply(iface, argsParam);
+                logger.info("{}收到kafka消息，执行{}方法完成", ifaceClass.getName(), functionDefinition.methodName);
+            } else {
+                logger.info("{} 收到kafka消息，但是该方法 {} 不订阅此事件", ifaceClass.getName(), functionDefinition.methodName);
+            }
+        } catch (NullPointerException e) {
+            logger.error("{}收到kafka消息，执行{}方法异常,msg: {}", ifaceClass.getName(), functionDefinition.methodName, e.getMessage());
+        } catch (Exception e) {
+            logger.error("{}收到kafka消息，执行{}方法异常", ifaceClass.getName(), functionDefinition.methodName);
+            logger.error(e.getMessage(), e);
+        }
+
+    }
 }
