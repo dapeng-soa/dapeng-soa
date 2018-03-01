@@ -40,7 +40,6 @@ package com.github.dapeng.eventbus.api.message;
 
             **/
             
-              @Override
               public void fetchMessage() throws SoaException{
 
               String methodName = "fetchMessage";
