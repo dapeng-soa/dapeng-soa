@@ -6,7 +6,7 @@ import java.util.Arrays;
 /**
  * 描述: 消息持久化对象
  *
- * @author maple.lei
+ * @author hz.lei
  * @date 2018年02月23日 下午9:23
  */
 public class EventStore {

@@ -17,6 +17,10 @@ public class ConsumerContext {
     Object consumer;
     String groupId;
     String topic;
+    /**
+     * event Type
+     */
+    String eventType;
 
 
     public Object getIface() {
@@ -65,5 +69,13 @@ public class ConsumerContext {
 
     public void setTopic(String topic) {
         this.topic = topic;
+    }
+
+    public String getEventType() {
+        return eventType;
+    }
+
+    public void setEventType(String eventType) {
+        this.eventType = eventType;
     }
 }

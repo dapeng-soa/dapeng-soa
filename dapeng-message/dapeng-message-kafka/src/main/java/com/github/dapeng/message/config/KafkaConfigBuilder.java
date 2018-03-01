@@ -6,7 +6,6 @@ import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.springframework.util.Assert;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -122,8 +121,8 @@ public abstract class KafkaConfigBuilder {
 
         @Override
         void validate() {
-            Assert.notNull(properties.get(ConsumerConfig.GROUP_ID_CONFIG), "Group must be set.");
-            Assert.notNull(properties.get(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG), "Bootstrap servers must be set.");
+            notNull(properties.get(ConsumerConfig.GROUP_ID_CONFIG), "Group must be set.");
+            notNull(properties.get(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG), "Bootstrap servers must be set.");
         }
     }
 
@@ -152,7 +151,7 @@ public abstract class KafkaConfigBuilder {
 
         @Override
         void validate() {
-            Assert.notNull(properties.get(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG), "Bootstrap servers must be set.");
+            notNull(properties.get(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG), "Bootstrap servers must be set.");
         }
 
 
@@ -163,5 +162,14 @@ public abstract class KafkaConfigBuilder {
             source.forEach((key, value) -> target.put(key, value));
         }
 
+    }
+
+    /**
+     * not null
+     */
+    public static void notNull(Object object, String message) {
+        if (object == null) {
+            throw new IllegalArgumentException(message);
+        }
     }
 }

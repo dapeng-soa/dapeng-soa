@@ -2,6 +2,8 @@ package com.github.dapeng.eventbus.message.dao;
 
 import com.github.dapeng.eventbus.message.EventStore;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -27,12 +29,17 @@ public interface IMessageDao {
     int saveMessageToDB(String eventType, byte[] event);
 
     /**
-     * kafka consumer消费消息后，删除持久化的消息
+     * 单条删除
      *
      * @param eventId
-     * @return
      */
-    int deleteMessage(Long eventId);
+    void deleteMessage(Long eventId);
 
+    /**
+     * 批量删除
+     *
+     * @param eventStores
+     */
+    void deleteBatchMessage(List<EventStore> eventStores);
 
 }
