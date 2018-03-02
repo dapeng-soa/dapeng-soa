@@ -150,6 +150,7 @@ public class EventKafkaConsumer extends Thread {
          * 解码消息为event
          */
         KafkaMessageProcessor processor = new KafkaMessageProcessor();
+
         Object event = null;
         Method method = null;
         Parameter[] parameters = null;
