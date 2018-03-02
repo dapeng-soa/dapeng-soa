@@ -163,7 +163,7 @@ public class DapengContainer implements Container {
         Plugin taskSchedulePlugin = new TaskSchedulePlugin(this);
         Plugin nettyPlugin = new NettyPlugin(this);
         //add messagePlugin
-        Plugin messagePlugin = new KafkaMessagePlugin();
+//        Plugin messagePlugin = new KafkaMessagePlugin();
         // TODO
         if (!"plugin".equals(RUN_MODE)) {
             Plugin logbackPlugin = new LogbackPlugin();
@@ -176,7 +176,7 @@ public class DapengContainer implements Container {
         registerPlugin(nettyPlugin);
 
         //add messagePlugin
-        registerPlugin(messagePlugin);
+//        registerPlugin(messagePlugin);
 
         if ("plugin".equals(RUN_MODE)) {
             Plugin apiDocPlugin = new ApiDocPlugin(this);

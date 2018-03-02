@@ -118,6 +118,11 @@ public abstract class KafkaConfigBuilder {
             return this;
         }
 
+        public ConsumerConfiguration withIsolation(String level) {
+            properties.put(ConsumerConfig.ISOLATION_LEVEL_CONFIG, level);
+            return this;
+        }
+
 
         @Override
         void validate() {
