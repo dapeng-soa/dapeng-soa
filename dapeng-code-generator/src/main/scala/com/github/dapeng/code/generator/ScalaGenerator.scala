@@ -10,6 +10,7 @@ import com.github.dapeng.core.metadata._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.xml.Elem
+import collection.JavaConverters._
 
 /**
   * Scala生成器
@@ -102,6 +103,18 @@ class ScalaGenerator extends CodeGenerator {
     for (index <- (0 until services.size())) {
 
       val service = services.get(index)
+      val oriMethods = service.methods
+      val nonVirtualMethods = service.methods.asScala.filter(i => {
+        val annotations = i.annotations
+        if (annotations != null) {
+          val virtualAnnotations = annotations.asScala.filter(a => a.key.equals("virtual") && a.value.equals("true"))
+          virtualAnnotations.isEmpty
+        } else {
+          true
+        }
+      })
+      service.setMethods(nonVirtualMethods.asJava)
+
       val t1 = System.currentTimeMillis();
       println("=========================================================")
       println(s"服务名称:${service.name}")
@@ -178,12 +191,20 @@ class ScalaGenerator extends CodeGenerator {
 
 
       //scala & java client should use the same xml
+      service.setMethods(oriMethods)
       if (!service.namespace.contains("scala")) {
         println(s"生成metadata:${service.namespace}.${service.name}.xml")
         new MetadataGenerator().generateXmlFile(service, resourceDir(outDir, service.namespace.substring(0, service.namespace.lastIndexOf("."))));
         println(s"生成metadata:${service.namespace}.${service.name}.xml 完成")
       } else {
-        println(" skip *.scala.metadata.xml generate....")
+        val nonScalaNameSpace = service.namespace.replace(".scala","")
+        val xmlFile = new File(resourceDir(outDir, nonScalaNameSpace.substring(0, nonScalaNameSpace.lastIndexOf("."))) + s"${nonScalaNameSpace}.${service.name}.xml")
+        if (!xmlFile.exists()) {
+          service.setNamespace(nonScalaNameSpace)
+          new MetadataGenerator().generateXmlFile(service, resourceDir(outDir, nonScalaNameSpace.substring(0, nonScalaNameSpace.lastIndexOf("."))));
+        } else {
+          println(" skip *.scala.metadata.xml generate....")
+        }
       }
 
       println("==========================================================")
@@ -471,6 +492,11 @@ class ScalaGenerator extends CodeGenerator {
       var index = 0
 
       <div>package {struct.namespace}
+
+        import com.github.dapeng.core.BeanSerializer
+        object {struct.name} <block>
+          implicit val x: BeanSerializer[{struct.namespace}.{struct.name}] = new {struct.namespace}.serializer.{struct.name}Serializer
+      </block>
 
         /**
         {notice}
