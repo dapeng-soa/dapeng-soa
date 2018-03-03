@@ -9,14 +9,27 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import java.util.List;
 
 /**
- * Soa Decoder
+ * A decoder that splits the received {@link ByteBuf}s by the number of bytes which takes the first 4 bytes.
+ * For example, if you received the following four fragmented packets:
+ * <pre>
+ * +---+----+------+----+----+--+
+ * | 000AAB | C | DEF0007G | HI |
+ * +---+----+------+----+----+--+
+ * </pre>
+ * A {@link SoaFrameDecoder}{@code ()} will decode them into the
+ * following two packets:
+ * <pre>
+ * +-----+-----+-----+----+
+ * | 000AABCDEF | 0007GHI |
+ * +-----+-----+-----+----+
+ * </pre>
  *
  * @author craneding
  * @date 16/1/12
  */
-public class SoaDecoder extends ByteToMessageDecoder {
+public class SoaFrameDecoder extends ByteToMessageDecoder {
 
-    public SoaDecoder() {
+    public SoaFrameDecoder() {
         setSingleDecode(false);
     }
 
@@ -45,7 +58,6 @@ public class SoaDecoder extends ByteToMessageDecoder {
             return;
         }
 
-        // must be to release one times
         ByteBuf msg = in.slice(readerIndex, length + Integer.BYTES).retain();
 
         /**
