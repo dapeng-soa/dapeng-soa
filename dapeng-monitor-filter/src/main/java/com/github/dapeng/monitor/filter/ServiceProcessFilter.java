@@ -75,10 +75,10 @@ public class ServiceProcessFilter implements InitializableFilter {
             Map<ServiceSimpleInfo, Long> map = new ConcurrentHashMap<>(16);
             map.put(simpleInfo, cost);
             serviceElapses.add(map);
-
-            LOGGER.debug("ServiceProcessFilter - " + simpleInfo.getServiceName()
-                    + ":" + simpleInfo.getMethodName() + ":[" + simpleInfo.getVersionName() + "] 耗时 ==>"
-                    + cost + " ms");
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("ServiceProcessFilter - " + simpleInfo.getServiceName()
+                        + ":" + simpleInfo.getMethodName() + ":[" + simpleInfo.getVersionName() + "] 耗时 ==>"
+                        + cost + " ms");
 
             ServiceProcessData processData = serviceProcessCallDatas.get(simpleInfo);
             if (processData != null) {
@@ -98,7 +98,7 @@ public class ServiceProcessFilter implements InitializableFilter {
                 if (soaHeader.getRespCode().isPresent() && SUCCESS_CODE.equals(soaHeader.getRespCode().get())) {
                     newProcessData.getSucceedCalls().incrementAndGet();
                 } else {
-                    newProcessData.getSucceedCalls().incrementAndGet();
+                    newProcessData.getFailCalls().incrementAndGet();
                 }
 
                 serviceProcessCallDatas.put(simpleInfo, newProcessData);
@@ -171,9 +171,11 @@ public class ServiceProcessFilter implements InitializableFilter {
         // wake up the uploader thread every PERIOD.
         schedulerExecutorService.scheduleAtFixedRate(() -> {
             try {
-                LOGGER.debug("remainder is working.");
+                if (LOGGER.isDebugEnabled())
+                    LOGGER.debug("remainder is working.");
                 signalLock.lock();
-                LOGGER.debug("remainder has woke up the uploader");
+                if (LOGGER.isDebugEnabled())
+                    LOGGER.debug("remainder has woke up the uploader");
                 signalCondition.signal();
             } finally {
                 signalLock.unlock();
@@ -185,7 +187,8 @@ public class ServiceProcessFilter implements InitializableFilter {
         uploaderExecutor.execute(() -> {
             while (true) {
                 try {
-                    LOGGER.debug("uploader is working.");
+                    if (LOGGER.isDebugEnabled())
+                        LOGGER.debug("uploader is working.");
                     signalLock.lock();
                     List<DataPoint> points = serviceDataQueue.peek();
                     if (points != null) {
@@ -199,7 +202,8 @@ public class ServiceProcessFilter implements InitializableFilter {
                             signalCondition.await();
                         }
                     } else { // no task, just release the lock
-                        LOGGER.debug("no more tasks, uploader release the lock.");
+                        if (LOGGER.isDebugEnabled())
+                            LOGGER.debug("no more tasks, uploader release the lock.");
                         signalCondition.await();
 
                     }

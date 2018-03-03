@@ -105,6 +105,10 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                                          ConnectionType connectionType) {
         ServiceZKInfo zkInfo = zkInfos.get(service);
 
+        if (zkInfo==null) {
+            return null;
+        }
+
         List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
                 .filter(rt -> checkVersion(version, rt.version))
                 .collect(Collectors.toList());

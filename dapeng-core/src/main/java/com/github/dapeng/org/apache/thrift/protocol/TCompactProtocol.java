@@ -43,7 +43,7 @@ public class TCompactProtocol extends TProtocol {
   private final static TStruct ANONYMOUS_STRUCT = new TStruct("");
   private final static TField TSTOP = new TField("", TType.STOP, (short)0);
 
-  private final static byte[] ttypeToCompactType = new byte[16];
+  public final static byte[] ttypeToCompactType = new byte[16];
 
   static {
     ttypeToCompactType[TType.STOP] = TType.STOP;
@@ -780,7 +780,7 @@ public class TCompactProtocol extends TProtocol {
       while (true) {
         byte b = readByte();
         result |= (int) (b & 0x7f) << shift;
-        if ((b & 0x80) != 0x80) break;
+        if ((b & 0x80) != 0x80) break;//如果后续没有字节了(首位为0),那么跳出
         shift += 7;
       }
     }
@@ -865,7 +865,7 @@ public class TCompactProtocol extends TProtocol {
    * Given a TCompactProtocol.Types constant, convert it to its corresponding
    * TType value.
    */
-  private byte getTType(byte type) throws TProtocolException {
+  public static byte getTType(byte type) throws TProtocolException {
     switch ((byte)(type & 0x0f)) {
       case TType.STOP:
         return TType.STOP;

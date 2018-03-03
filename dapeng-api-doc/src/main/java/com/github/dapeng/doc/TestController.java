@@ -4,6 +4,7 @@ import com.github.dapeng.client.netty.JsonPost;
 import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.SoaException;
+import com.github.dapeng.core.enums.CodecProtocol;
 import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.doc.cache.ServiceCache;
 import com.github.dapeng.util.SoaSystemEnvProperties;
@@ -58,6 +59,7 @@ public class TestController {
         invocationCtx.setVersionName(versionName);
         invocationCtx.setMethodName(methodName);
         invocationCtx.setCallerFrom(Optional.of("JsonCaller"));
+        invocationCtx.setCodecProtocol(CodecProtocol.CompressedBinary);
 
         fillInvocationCtx(invocationCtx, req);
 

@@ -15,6 +15,7 @@ import com.github.dapeng.impl.plugins.netty.NettyPlugin;
 import com.github.dapeng.message.consumer.container.KafkaMessagePlugin;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,10 +24,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 public class DapengContainer implements Container {
 
@@ -129,7 +127,17 @@ public class DapengContainer implements Container {
             if (!SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL) {
                 return command -> command.run();
             } else {
-                return Executors.newFixedThreadPool(SoaSystemEnvProperties.SOA_CORE_POOL_SIZE);
+                ThreadPoolExecutor bizExector = (ThreadPoolExecutor)Executors.newFixedThreadPool(SoaSystemEnvProperties.SOA_CORE_POOL_SIZE,
+                        new ThreadFactoryBuilder()
+                                .setDaemon(true)
+                                .setNameFormat("dapeng-container-biz-pool-%d")
+                                .build());
+                if ("native".equals(RUN_MODE)) {
+                    //容器模式下,预热所有的业务线程
+                    bizExector.prestartCoreThread();
+                }
+
+                return bizExector;
             }
         }
     }
