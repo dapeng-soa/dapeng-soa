@@ -4,6 +4,7 @@ import com.github.dapeng.core.BeanSerializer;
 import com.github.dapeng.message.config.MessageInfo;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TCompactProtocol;
+import com.github.dapeng.util.TKafkaTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
