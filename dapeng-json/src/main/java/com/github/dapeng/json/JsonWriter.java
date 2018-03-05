@@ -11,8 +11,8 @@ public class JsonWriter implements JsonCallback {
 
     @Override
     public void onEndObject() {
-        if (builder.charAt(builder.length()-1) == ',') {
-            builder.setLength(builder.length()-1);
+        if (builder.charAt(builder.length() - 1) == ',') {
+            builder.setLength(builder.length() - 1);
         }
         builder.append('}');
     }
@@ -24,8 +24,8 @@ public class JsonWriter implements JsonCallback {
 
     @Override
     public void onEndArray() {
-        if (builder.charAt(builder.length()-1) == ',') {
-            builder.setLength(builder.length()-1);
+        if (builder.charAt(builder.length() - 1) == ',') {
+            builder.setLength(builder.length() - 1);
         }
         builder.append(']');
     }
@@ -42,7 +42,7 @@ public class JsonWriter implements JsonCallback {
 
     @Override
     public void onBoolean(boolean value) {
-        builder.append( value ? "true" : "false");
+        builder.append(value ? "true" : "false");
     }
 
     @Override
@@ -62,15 +62,18 @@ public class JsonWriter implements JsonCallback {
 
     /**
      * 对回车以及双引号做转义
+     *
      * @param value
      * @return
      */
     private String escapeString(String value) {
-        if (value.contains("\n")) {
-            value = value.replaceAll("[\n\r]","\\\\n");
-        }
-        if (value.contains("\"")) {
-            value = value.replaceAll("\"","\\\\\"");
+        if (value != null) {
+            if (value.contains("\n")) {
+                value = value.replaceAll("[\n\r]", "\\\\n");
+            }
+            if (value.contains("\"")) {
+                value = value.replaceAll("\"", "\\\\\"");
+            }
         }
         return value;
     }
