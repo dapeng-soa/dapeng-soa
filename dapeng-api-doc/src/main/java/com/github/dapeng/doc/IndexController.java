@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletRequest;
  * Created by tangliu on 2016/3/1.
  */
 @Controller
-@RequestMapping("index")
+@RequestMapping("/")
 public class IndexController {
 
     @ModelAttribute

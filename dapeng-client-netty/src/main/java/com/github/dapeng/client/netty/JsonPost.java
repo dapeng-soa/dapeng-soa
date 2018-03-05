@@ -77,14 +77,9 @@ public class JsonPost {
         String jsonResponse = post(invocationContext.getServiceName(), invocationContext.getVersionName(),
                 method.name, jsonParameter, jsonEncoder, jsonDecoder);
 
-        String escapedJson = jsonResponse.replaceAll("\n","\\\\n");
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("EscapedJson:" + escapedJson);
-        }
+        LOGGER.info("soa-response: " + DumpUtil.formatToString(jsonResponse) + (System.currentTimeMillis() - beginTime) + "ms");
 
-        LOGGER.info("soa-response: " + DumpUtil.formatToString(escapedJson) + (System.currentTimeMillis() - beginTime) + "ms");
-
-        return escapedJson;
+        return jsonResponse;
     }
 
 
