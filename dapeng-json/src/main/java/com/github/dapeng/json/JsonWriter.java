@@ -32,7 +32,6 @@ public class JsonWriter implements JsonCallback {
 
     @Override
     public void onStartField(String name) {
-        // TODO emit ','
         builder.append('\"').append(name).append('\"').append(':');
     }
 
@@ -58,8 +57,22 @@ public class JsonWriter implements JsonCallback {
 
     @Override
     public void onString(String value) {
-        // TODO escapse if needed
-        builder.append('\"').append(value).append('\"');
+        builder.append('\"').append(escapeString(value)).append('\"');
+    }
+
+    /**
+     * 对回车以及双引号做转义
+     * @param value
+     * @return
+     */
+    private String escapeString(String value) {
+        if (value.contains("\n")) {
+            value = value.replaceAll("[\n\r]","\\\\n");
+        }
+        if (value.contains("\"")) {
+            value = value.replaceAll("\"","\\\\\"");
+        }
+        return value;
     }
 
     @Override
