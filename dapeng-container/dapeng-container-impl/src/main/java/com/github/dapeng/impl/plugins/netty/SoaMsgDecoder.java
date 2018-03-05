@@ -91,12 +91,12 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         contentProtocol.readMessageEnd();
 
         application.info(this.getClass(),
-                soaHeader.getServiceName()
+                "request:"
+                        + soaHeader.getServiceName()
                         + ":" + soaHeader.getVersionName()
                         + ":" + soaHeader.getMethodName()
                         + " operatorId:" + soaHeader.getOperatorId()
-                        + " operatorName:" + soaHeader.getOperatorName()
-                        + " request body:" + DumpUtil.formatToString(soaFunction.reqSerializer.toString(args)));
+                        + " operatorName:" + soaHeader.getOperatorName());
 
         return args;
     }
