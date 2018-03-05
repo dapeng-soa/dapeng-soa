@@ -59,12 +59,12 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                 transport.flush();
 
                 application.info(this.getClass(),
-                        soaHeader.getServiceName()
+                        "response:"
+                                + soaHeader.getServiceName()
                                 + ":" + soaHeader.getVersionName()
                                 + ":" + soaHeader.getMethodName()
                                 + " operatorId:" + soaHeader.getOperatorId()
-                                + " operatorName:" + soaHeader.getOperatorName()
-                                + " response sent");
+                                + " operatorName:" + soaHeader.getOperatorName());
 
             } catch (Throwable e) {
                 SoaException soaException = ExceptionUtil.convertToSoaException(e);
@@ -80,6 +80,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
 
     /**
      * override the initialCapacity to 1024
+     *
      * @param ctx
      * @param msg
      * @param preferDirect
