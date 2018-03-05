@@ -91,9 +91,9 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
     protected ByteBuf allocateBuffer(ChannelHandlerContext ctx, @SuppressWarnings("unused") SoaResponseWrapper msg,
                                      boolean preferDirect) throws Exception {
         if (preferDirect) {
-            return ctx.alloc().ioBuffer(1024);
+            return ctx.alloc().ioBuffer(5120);
         } else {
-            return ctx.alloc().heapBuffer(1024);
+            return ctx.alloc().heapBuffer(5120);
         }
     }
 
@@ -107,6 +107,8 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     soaHeader.getRespMessage().orElse(SoaCode.UnKnown.getMsg()));
             transactionContext.setSoaException(soaException);
         }
+
+        //Reuse the byteBuf
         if (out.readableBytes() > 0) {
             out.clear();
         }
