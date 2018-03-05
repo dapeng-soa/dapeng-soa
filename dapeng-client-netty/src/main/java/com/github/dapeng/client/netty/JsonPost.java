@@ -8,7 +8,6 @@ import com.github.dapeng.core.metadata.Method;
 import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.json.JsonSerializer;
 import com.github.dapeng.util.DumpUtil;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,13 +76,8 @@ public class JsonPost {
 
         LOGGER.info("soa-request: " + jsonParameter);
 
-        String escapedJson = StringEscapeUtils.escapeEcmaScript(jsonParameter);
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("EscapedJson:" + escapedJson);
-        }
-
         String jsonResponse = post(invocationContext.getServiceName(), invocationContext.getVersionName(),
-                method.name, escapedJson, jsonEncoder, jsonDecoder);
+                method.name, jsonParameter, jsonEncoder, jsonDecoder);
 
         LOGGER.info("soa-response: " + DumpUtil.formatToString(jsonResponse) + (System.currentTimeMillis() - beginTime) + "ms");
 
