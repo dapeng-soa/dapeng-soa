@@ -132,11 +132,7 @@
     </profiles>
     
     <dependencies>
-        <dependency>
-            <groupId>com.github.dapeng</groupId>
-            <artifactId>dapeng-container-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+
         <dependency>
             <groupId>com.github.dapeng</groupId>
             <artifactId>dapeng-spring</artifactId>

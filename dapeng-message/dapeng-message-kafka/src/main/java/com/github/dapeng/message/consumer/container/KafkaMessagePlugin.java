@@ -1,8 +1,7 @@
 package com.github.dapeng.message.consumer.container;
 
-import com.github.dapeng.api.ContainerFactory;
-import com.github.dapeng.api.Plugin;
 import com.github.dapeng.core.Application;
+import com.github.dapeng.core.Plugin;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.ServiceInfo;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
@@ -14,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.List;
 
 /**
  * Created by tangliu on 2016/9/18.
@@ -28,8 +27,6 @@ public class KafkaMessagePlugin implements Plugin{
     @Override
     public void start() {
 
-        Map<ProcessorKey, SoaServiceDefinition<?>> processorMap = ContainerFactory.getContainer().getServiceProcessors();
-        List<Application> applications = ContainerFactory.getContainer().getApplications();
         try {
             //Collection<SoaServiceDefinition<?>> soaServiceDefinitions = processorMap.values();
             for (Application application : applications) {

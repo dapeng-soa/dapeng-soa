@@ -2,7 +2,7 @@ package com.github.dapeng.impl.container;
 
 import com.github.dapeng.api.AppListener;
 import com.github.dapeng.api.Container;
-import com.github.dapeng.api.Plugin;
+import com.github.dapeng.core.Plugin;
 import com.github.dapeng.api.events.AppEvent;
 import com.github.dapeng.api.events.AppEventType;
 import com.github.dapeng.core.Application;
@@ -11,7 +11,6 @@ import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.impl.plugins.*;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
-import com.github.dapeng.message.consumer.container.KafkaMessagePlugin;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,11 +38,14 @@ public class DapengContainer implements Container {
     private Map<ProcessorKey, SoaServiceDefinition<?>> processors = new ConcurrentHashMap<>();
     private Map<ProcessorKey, Application> applicationMap = new ConcurrentHashMap<>();
     private final List<ClassLoader> applicationCls;
+    private final  List<ClassLoader> pluginClassLoaders;
+
 
     private final static CountDownLatch SHUTDOWN_SIGNAL = new CountDownLatch(1);
 
-    public DapengContainer(List<ClassLoader> applicationCls) {
+    public DapengContainer(List<ClassLoader> applicationCls, List<ClassLoader> pluginClassLoaders) {
         this.applicationCls = applicationCls;
+        this.pluginClassLoaders = pluginClassLoaders;
     }
 
     @Override
@@ -152,7 +154,7 @@ public class DapengContainer implements Container {
         Plugin taskSchedulePlugin = new TaskSchedulePlugin(this);
         Plugin nettyPlugin = new NettyPlugin(this);
 
-        PluginLoader pluginLoader = new PluginLoader();
+        PluginLoader pluginLoader = new PluginLoader(pluginClassLoaders);
         // TODO
         if (!"plugin".equals(RUN_MODE)) {
             Plugin logbackPlugin = new LogbackPlugin();

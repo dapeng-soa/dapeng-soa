@@ -4,7 +4,7 @@ package com.github.dapeng.impl.plugins;
 import com.github.dapeng.api.AppListener;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
-import com.github.dapeng.api.Plugin;
+import com.github.dapeng.core.Plugin;
 import com.github.dapeng.api.events.AppEvent;
 import com.github.dapeng.core.ServiceInfo;
 import com.github.dapeng.impl.container.DapengApplication;
