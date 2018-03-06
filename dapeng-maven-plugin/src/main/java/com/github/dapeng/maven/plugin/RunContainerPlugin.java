@@ -83,10 +83,14 @@ public class RunContainerPlugin extends SoaAbstractMojo {
 
                 ContainerClassLoader platformClassLoader = new ContainerClassLoader(platformUrls.toArray(new URL[platformUrls.size()]),coreClassLoader);
 
+                List<ClassLoader> pluginClassLoaders = new ArrayList<>();
+                pluginClassLoaders.add(coreClassLoader);
+
                 System.out.println("------set classloader-------------");
                 Thread.currentThread().setContextClassLoader(coreClassLoader);
 
-                Bootstrap.startup(platformClassLoader,appClassLoaders);
+
+                Bootstrap.startup(platformClassLoader,appClassLoaders,pluginClassLoaders);
 
             } catch (Exception e) {
                 Thread.currentThread().getThreadGroup().uncaughtException(Thread.currentThread(), e);

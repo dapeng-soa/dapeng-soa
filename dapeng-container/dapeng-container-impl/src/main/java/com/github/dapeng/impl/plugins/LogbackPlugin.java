@@ -3,7 +3,7 @@ package com.github.dapeng.impl.plugins;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.util.StatusPrinter;
-import com.github.dapeng.api.Plugin;
+import com.github.dapeng.core.Plugin;
 import com.github.dapeng.impl.container.DapengContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

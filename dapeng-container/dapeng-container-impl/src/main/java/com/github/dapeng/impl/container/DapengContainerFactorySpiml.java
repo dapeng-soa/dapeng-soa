@@ -9,7 +9,7 @@ import java.util.List;
 
 public class DapengContainerFactorySpiml implements ContainerFactorySpi {
     @Override
-    public Container createInstance(List<ClassLoader> applicationCls) {
-        return new DapengContainer(applicationCls);
+    public Container createInstance(List<ClassLoader> applicationCls, List<ClassLoader> pluginClassLoaders) {
+        return new DapengContainer(applicationCls,pluginClassLoaders);
     }
 }
