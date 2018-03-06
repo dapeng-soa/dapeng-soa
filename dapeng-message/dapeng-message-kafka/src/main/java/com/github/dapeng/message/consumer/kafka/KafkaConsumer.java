@@ -45,12 +45,12 @@ public class KafkaConsumer extends Thread {
     public void init() {
 
         logger.info(new StringBuffer("[KafkaConsumer] [init] ")
-                .append("kafkaConnect(").append("192.168.4.5:9092")
+                .append("kafkaConnect(").append(kafkaConnect)
                 .append(") groupId(").append(groupId)
                 .append(") topic(").append(topic).append(")").toString());
 
         Properties props = new Properties();
-        props.put("bootstrap.servers", "192.168.4.5:9092");
+        props.put("bootstrap.servers", kafkaConnect);
         props.put("group.id", groupId);
         props.put("enable.auto.commit", "true");
         props.put("auto.commit.interval.ms", "1000");
