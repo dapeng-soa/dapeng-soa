@@ -13,4 +13,6 @@ public @interface MessageConsumerAction {
 
     String topic() default "Binlog";
 
+    String eventType();
+
 }
