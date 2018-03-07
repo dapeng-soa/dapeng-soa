@@ -13,6 +13,16 @@ public class ConsumerContext {
 
     public SoaFunctionDefinition<Object, Object, Object> soaFunctionDefinition;
 
+    Object action;
+    Object consumer;
+    String groupId;
+    String topic;
+    /**
+     * event Type
+     */
+    String eventType;
+
+
     public Object getIface() {
         return iface;
     }
@@ -28,9 +38,6 @@ public class ConsumerContext {
     public void setSoaFunctionDefinition(SoaFunctionDefinition<Object, Object, Object> soaFunctionDefinition) {
         this.soaFunctionDefinition = soaFunctionDefinition;
     }
-
-    Object action;
-    Object consumer;
 
     public Object getAction() {
         return action;
@@ -48,10 +55,6 @@ public class ConsumerContext {
         this.consumer = consumer;
     }
 
-    String groupId;
-
-    String topic;
-
     public String getGroupId() {
         return groupId;
     }
@@ -66,5 +69,13 @@ public class ConsumerContext {
 
     public void setTopic(String topic) {
         this.topic = topic;
+    }
+
+    public String getEventType() {
+        return eventType;
+    }
+
+    public void setEventType(String eventType) {
+        this.eventType = eventType;
     }
 }

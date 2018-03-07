@@ -11,6 +11,12 @@
 
     <artifactId>dapeng-message-kafka</artifactId>
 
+
+    <properties>
+        <org.springframework-version>4.3.5.RELEASE</org.springframework-version>
+        <druid-version>1.0.17</druid-version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.github.dapeng</groupId>
