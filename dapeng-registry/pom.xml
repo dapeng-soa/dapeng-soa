@@ -9,11 +9,10 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>dapeng-registry</artifactId>
+    <artifactId>dapeng-com.github.dapeng.registry.registry</artifactId>
     <packaging>pom</packaging>
 
     <modules>
-        <module>dapeng-registry-api</module>
         <module>dapeng-registry-zookeeper</module>
     </modules>
 
@@ -21,7 +20,7 @@
         <dependencies>
             <dependency>
                 <groupId>com.github.dapeng</groupId>
-                <artifactId>dapeng-registry-api</artifactId>
+                <artifactId>dapeng-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

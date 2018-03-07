@@ -17,7 +17,7 @@ public class RegistryAgentProxy {
     /*
     public static synchronized void loadImpl(Class<?> clazz) throws IllegalAccessException, InstantiationException {
         if (RegistryAgentProxy.registryAgent != null)
-            throw new RuntimeException("registry agent is exist.");
+            throw new RuntimeException("com.github.dapeng.registry.registry agent is exist.");
 
         RegistryAgentProxy.registryAgent = (RegistryAgent) clazz.newInstance();
     }

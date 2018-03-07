@@ -36,10 +36,10 @@ public class BaseController {
                     new ZookeeperWatcher(true,apiServices).init();
                 }
             } catch (Exception e) {
-                LOGGER.error("Load registry error", e);
+                LOGGER.error("Load com.github.dapeng.registry.registry error", e);
             }
         } else {
-            LOGGER.info("soa remoting mode is {},client not load registry", SoaSystemEnvProperties.SOA_REMOTING_MODE);
+            LOGGER.info("soa remoting mode is {},client not load com.github.dapeng.registry.registry", SoaSystemEnvProperties.SOA_REMOTING_MODE);
         }
 
     }

@@ -1,6 +1,5 @@
 package com.github.dapeng.registry;
 
-import com.github.dapeng.route.Route;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.route.Route;

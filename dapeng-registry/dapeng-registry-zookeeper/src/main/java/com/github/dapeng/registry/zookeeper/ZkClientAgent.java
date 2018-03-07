@@ -1,4 +1,6 @@
-package com.github.dapeng.registry;
+package com.github.dapeng.registry.zookeeper;
+
+import com.github.dapeng.registry.ConfigKey;
 
 import java.util.Map;
 
@@ -13,7 +15,7 @@ public interface ZkClientAgent {
 
     void stop();
 
-    void syncService(String serviceName, Map<String,ServiceZKInfo> zkInfos);
+    void syncService(String serviceName, Map<String, ServiceZKInfo> zkInfos);
 
     void cancnelSyncService(String service);
 

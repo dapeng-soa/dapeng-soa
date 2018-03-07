@@ -4,7 +4,6 @@ import com.github.dapeng.core.version.Version;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.RuntimeInstance;
 import com.github.dapeng.registry.ServiceInfo;
-import com.github.dapeng.registry.ServiceZKInfo;
 import com.github.dapeng.route.Route;
 import com.github.dapeng.route.parse.RouteParser;
 import com.github.dapeng.util.SoaSystemEnvProperties;
