@@ -54,9 +54,9 @@ dapeng-container/target/dapeng-container
 |   |   |-- dapeng-monitor-api         监控模块api工程
 |   |   |-- dapeng-monitor-druid       druid的监控工具
 |   |   |-- dapeng-monitor-influxdb    监控模块api实现工程(influxdb版本)
-|   |-- dapeng-registry
-|   |   |-- dapeng-registry-api        注册模块api工程
-|   |   |-- dapeng-registry-zookeeper  注册模块api实现工程(zookeeper版本)
+|   |-- dapeng-com.github.dapeng.registry.registry
+|   |   |-- dapeng-com.github.dapeng.registry.registry-api        注册模块api工程
+|   |   |-- dapeng-com.github.dapeng.registry.registry-zookeeper  注册模块api实现工程(zookeeper版本)
 |   |-- dapeng-remoting
 |   |   |-- dapeng-remoting-api        客户端通讯模块api工程
 |   |   |-- dapeng-remoting-netty      客户端通讯模块api实现工程(netty版本)
@@ -322,7 +322,7 @@ mvn compile com.github.dapeng:dapeng-maven-plugin:2.0.0:run
 
 ##### 依赖配置
 
-客户端要依赖`hello-api`,`dapeng-registry-zookeeper`和`dapeng-remoting-netty`
+客户端要依赖`hello-api`,`dapeng-com.github.dapeng.registry.registry-zookeeper`和`dapeng-remoting-netty`
 ```
 <dependency>
     <groupId>com.github.dapeng</groupId>
@@ -331,7 +331,7 @@ mvn compile com.github.dapeng:dapeng-maven-plugin:2.0.0:run
 </dependency>
 <dependency>
     <groupId>com.github.dapeng</groupId>
-    <artifactId>dapeng-registry-zookeeper</artifactId>
+    <artifactId>dapeng-com.github.dapeng.registry.registry-zookeeper</artifactId>
     <version>2.0.0</version>
 </dependency>
 <dependency>

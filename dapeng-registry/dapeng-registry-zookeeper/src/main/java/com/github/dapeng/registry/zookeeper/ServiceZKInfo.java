@@ -1,4 +1,6 @@
-package com.github.dapeng.registry;
+package com.github.dapeng.registry.zookeeper;
+
+import com.github.dapeng.registry.RuntimeInstance;
 
 import java.util.List;
 import java.util.Properties;
