@@ -67,9 +67,7 @@ public class GlobalTransactionProcessTemplate<REQ> {
 
             transactionProcess = service.create(transactionProcess);
 
-            result = action.doInTransaction();
-
-            success = true;
+            success = action.doInTransaction();
 
             return result;
         } catch (SoaException e) {

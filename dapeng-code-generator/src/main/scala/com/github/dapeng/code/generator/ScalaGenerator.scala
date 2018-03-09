@@ -304,7 +304,19 @@ class ScalaGenerator extends CodeGenerator {
         ).success
         </block>
 
+        def isSoaTransactionalProcess: Boolean = <block>
 
+          var isSoaTransactionalProcess = false
+          {toMethodArrayBuffer(service.methods).map{(method:Method)=>{
+
+            if(method.doc != null && method.doc.contains("@IsSoaTransactionProcess")){
+              <div>
+                if(InvocationContextImpl.Factory.getCurrentInstance.getMethodName().equals("{method.name}"))<block>
+                isSoaTransactionalProcess = true</block>
+              </div>}
+          }}}
+          isSoaTransactionalProcess
+        </block>
         {
         toMethodArrayBuffer(service.methods).map{(method:Method)=>{
           <div>
@@ -314,6 +326,9 @@ class ScalaGenerator extends CodeGenerator {
             def {method.name}({toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
               <div>{nameAsId(field.name)}:{toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}) : {toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)} = <block>
 
+              val context = InvocationContextImpl.Factory.getCurrentInstance
+              context.setMethodName("{method.name}")
+              context.setSoaTransactionProcess(isSoaTransactionalProcess)
               val response = pool.send(
               serviceName,
               version,
@@ -380,6 +395,20 @@ class ScalaGenerator extends CodeGenerator {
           ).success
         </block>
 
+        def isSoaTransactionalProcess: Boolean = <block>
+
+          var isSoaTransactionalProcess = false
+          {toMethodArrayBuffer(service.methods).map{(method:Method)=>{
+
+            if(method.doc != null && method.doc.contains("@IsSoaTransactionProcess")){
+              <div>
+                if(InvocationContextImpl.Factory.getCurrentInstance.getMethodName().equals("{method.name}"))<block>
+                isSoaTransactionalProcess = true</block>
+              </div>}
+          }}}
+          isSoaTransactionalProcess
+        </block>
+
         /**
         *  java CompletableFuture => scala Future common function
         */
@@ -405,6 +434,9 @@ class ScalaGenerator extends CodeGenerator {
             <div>{nameAsId(field.name)}:{toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}
             {if(method.getRequest.fields.size() > 0) <span>,</span>} timeout: Long = 5000) : Future[{toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)}] = <block>
 
+            val context = InvocationContextImpl.Factory.getCurrentInstance
+            context.setMethodName("{method.name}")
+            context.setSoaTransactionProcess(isSoaTransactionalProcess)
             val response = pool.sendAsync(
             serviceName,
             version,

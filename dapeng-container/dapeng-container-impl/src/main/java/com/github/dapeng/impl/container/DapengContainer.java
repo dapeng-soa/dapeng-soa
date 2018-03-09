@@ -8,6 +8,7 @@ import com.github.dapeng.api.events.AppEventType;
 import com.github.dapeng.core.Application;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
+import com.github.dapeng.core.filter.ContainerFilter;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.impl.plugins.*;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
@@ -19,10 +20,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -39,6 +37,7 @@ public class DapengContainer implements Container {
     private Map<ProcessorKey, Application> applicationMap = new ConcurrentHashMap<>();
     private final List<ClassLoader> applicationCls;
     private final  List<ClassLoader> pluginClassLoaders;
+    private List<Filter> filters = new ArrayList<>();
 
 
     private final static CountDownLatch SHUTDOWN_SIGNAL = new CountDownLatch(1);
@@ -97,6 +96,15 @@ public class DapengContainer implements Container {
         return this.applications;
     }
 
+    @Override
+    public void registerFilters(Filter filter) {
+        this.filters.add(filter);
+    }
+
+    @Override
+    public void unRegisterFilters(Filter filter) {
+        this.filters.remove(filter);
+    }
 
     @Override
     public List<Plugin> getPlugins() {
@@ -143,7 +151,7 @@ public class DapengContainer implements Container {
 
     @Override
     public List<Filter> getFilters() {
-        return new ArrayList<>(); //TODO
+        return this.filters;
     }
 
     @Override
@@ -159,6 +167,16 @@ public class DapengContainer implements Container {
         if (!"plugin".equals(RUN_MODE)) {
             Plugin logbackPlugin = new LogbackPlugin();
             registerPlugin(logbackPlugin);
+        }
+
+        ServiceLoader<ContainerFilter> filterLoader = ServiceLoader.load(ContainerFilter.class,Thread.currentThread().getContextClassLoader());
+        for(Filter filter : filterLoader){
+            registerFilters(filter);
+        }
+
+        if (SoaSystemEnvProperties.SOA_TRANSACTIONAL_ENABLE){
+            Plugin transactionPlugin = new TransactionPlugin();
+            registerPlugin(transactionPlugin);
         }
 
         registerPlugin(zookeeperPlugin);

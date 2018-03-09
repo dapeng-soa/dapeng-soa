@@ -1,6 +1,6 @@
 package com.github.dapeng.client.netty;
 
-import com.github.dapeng.client.filter.LoadBalanceFilter;
+import com.github.dapeng.client.filter.HeadFilter;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.filter.*;
 import com.github.dapeng.org.apache.thrift.TException;
@@ -11,9 +11,7 @@ import io.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -42,13 +40,13 @@ public abstract class SoaBaseConnection implements SoaConnection {
     @Override
     public <REQ, RESP> RESP send(
             String service, String version,
-            String method,REQ request,
+            String method, REQ request,
             BeanSerializer<REQ> requestSerializer,
             BeanSerializer<RESP> responseSerializer)
             throws SoaException {
 
         int seqid = this.seqidAtomic.getAndIncrement();
-
+        fillContext(service, version, method);
         Filter dispatchFilter = new Filter() {
             private FilterChain getPrevChain(FilterContext ctx) {
                 SharedChain chain = (SharedChain) ctx.getAttach(this, "chain");
@@ -65,21 +63,32 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 ByteBuf responseBuf = client.send(channel, seqid, requestBuf); //发送请求，返回结果
 
                 Result<RESP> result = processResponse(responseBuf, responseSerializer);
+                if (result.success == null){
+                    ctx.setAttribute("isSuccess",false);
+                }
                 ctx.setAttribute("result", result);
-
                 onExit(ctx, getPrevChain(ctx));
+
             }
 
             @Override
-            public void onExit(FilterContext ctx, FilterChain prev) {
+            public void onExit(FilterContext ctx, FilterChain prev) throws SoaException {
+
+                prev.onExit(ctx);
 
             }
         };
+        ServiceLoader<Filter> filterLoader = ServiceLoader.load(Filter.class, this.getClass().getClassLoader());
+        List<Filter> filters = new ArrayList<>();
+        for (Filter filter : filterLoader) {
+            filters.add(filter);
+        }
 
-        SharedChain sharedChain = new SharedChain(new LoadBalanceFilter(), new ArrayList<>(), dispatchFilter, 0);
+        SharedChain sharedChain = new SharedChain(new HeadFilter(), filters, dispatchFilter, 0);
 
         FilterContextImpl filterContext = new FilterContextImpl();
         filterContext.setAttach(dispatchFilter, "chain", sharedChain);
+        filterContext.setAttribute("request", request);
 
         try {
             sharedChain.onEntry(filterContext);
@@ -89,10 +98,12 @@ public abstract class SoaBaseConnection implements SoaConnection {
         Result<RESP> result = (Result<RESP>) filterContext.getAttribute("result");
         assert (result != null);
 
-        if (result.success != null)
+        if (result.success != null) {
             return result.success;
-        else
+        }
+        else {
             throw result.exception;
+        }
     }
 
     @Override
@@ -100,7 +111,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                                               BeanSerializer<RESP> responseSerializer, long timeout) throws SoaException {
 
         int seqid = this.seqidAtomic.getAndIncrement();
-
+        fillContext(service, version, method);
         Filter dispatchFilter = new Filter() {
             private FilterChain getPrevChain(FilterContext ctx) {
                 SharedChain chain = (SharedChain) ctx.getAttach(this, "chain");
@@ -110,7 +121,6 @@ public abstract class SoaBaseConnection implements SoaConnection {
             @Override
             public void onEntry(FilterContext ctx, FilterChain next) throws SoaException {
                 try {
-
                     ByteBuf requestBuf = buildRequestBuf(service, version, method, seqid, request, requestSerializer);
 
                     CompletableFuture<ByteBuf> responseBufFuture = null;
@@ -187,6 +197,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         FilterContextImpl filterContext = new FilterContextImpl();
         filterContext.setAttach(dispatchFilter, "chain", sharedChain);
+        filterContext.setAttribute("request", request);
 
         try {
             sharedChain.onEntry(filterContext);
@@ -242,6 +253,13 @@ public abstract class SoaBaseConnection implements SoaConnection {
         }
 
         return header;
+    }
+
+    protected void fillContext(String serviceName, String version, String methodName) {
+        InvocationContext context = InvocationContextImpl.Factory.getCurrentInstance();
+        context.setServiceName(serviceName);
+        context.setVersionName(version);
+        context.setMethodName(methodName);
     }
 
     protected abstract <REQ> ByteBuf buildRequestBuf(String service, String version, String method, int seqid, REQ request, BeanSerializer<REQ> requestSerializer) throws SoaException;

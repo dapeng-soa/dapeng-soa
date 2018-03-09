@@ -1,16 +1,12 @@
 package com.github.dapeng.impl.plugins.netty;
 
 
-import com.github.dapeng.api.*;
+import com.github.dapeng.api.Container;
 import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
-import com.github.dapeng.core.filter.Filter;
-import com.github.dapeng.core.filter.FilterChain;
-import com.github.dapeng.core.filter.FilterContext;
-import com.github.dapeng.core.filter.SharedChain;
-import com.github.dapeng.core.filter.FilterContextImpl;
+import com.github.dapeng.core.filter.*;
 import com.github.dapeng.impl.filters.HeadFilter;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
@@ -126,9 +122,10 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             processResult(channelHandlerContext, soaFunction, context, result, application, ctx);
                             onExit(ctx, getPrevChain(ctx));
                         }
-                    } catch (Exception e) {
+                    } catch (SoaException e) {
                         LOGGER.error(e.getMessage(), e);
                         writeErrorMessage(channelHandlerContext, context, new SoaException(SoaCode.UnKnown, e.getMessage()));
+                        ctx.setAttribute("isSuccess",false);
                     } // todo handle error
                 }
 
@@ -136,8 +133,9 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                 public void onExit(FilterContext ctx, FilterChain prev) {
                     try {
                         prev.onExit(ctx);
-                    } catch (TException e) {
+                    } catch (SoaException e) {
                         LOGGER.error(e.getMessage(), e);
+                        ctx.setAttribute("isSuccess",false);
                     }
                 }
             };
@@ -145,7 +143,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
             FilterContextImpl filterContext = new FilterContextImpl();
             filterContext.setAttach(dispatchFilter, "chain", sharedChain);
-
+            filterContext.setAttribute("serviceDef",serviceDef);
+            filterContext.setAttribute("soaHeader",soaHeader);
             sharedChain.onEntry(filterContext);
         } finally {
             reqMessage.release();
