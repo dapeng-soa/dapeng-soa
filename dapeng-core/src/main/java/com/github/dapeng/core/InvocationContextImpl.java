@@ -51,6 +51,8 @@ public class InvocationContextImpl implements  InvocationContext {
     // readonly
     private int seqid;
 
+    private boolean isSoaTransactionProcess;
+
     // read/write
     @Override
     public CodecProtocol getCodecProtocol() {
@@ -90,6 +92,16 @@ public class InvocationContextImpl implements  InvocationContext {
     @Override
     public Optional<String> getSessionId() {
         return this.sessionId;
+    }
+
+    @Override
+    public boolean isSoaTransactionProcess() {
+      return this.isSoaTransactionProcess;
+    }
+
+    @Override
+    public void setSoaTransactionProcess(Boolean isSoaTransactionProcess) {
+        this.isSoaTransactionProcess = isSoaTransactionProcess;
     }
 
     @Override

@@ -271,9 +271,9 @@ public class GlobalTransactionManager {
         invocationContext.setTransactionSequence(Optional.of(process.getTransactionSequence()));
 
         if (rollbackOrForward) {
-            responseJson = jsonPost.callServiceMethod(invocationContext, "", service);
+            responseJson = jsonPost.callServiceMethod(invocationContext, "{\"body\": { }}", service);
         } else {
-            responseJson = jsonPost.callServiceMethod(invocationContext, process.getRequestJson(), service);
+            responseJson = jsonPost.callServiceMethod(invocationContext,"{\"body\":"+ process.getRequestJson() +"}", service);
         }
 
         return responseJson;

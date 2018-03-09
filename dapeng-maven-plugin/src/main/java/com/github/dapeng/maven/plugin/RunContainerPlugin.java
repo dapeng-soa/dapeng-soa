@@ -61,6 +61,7 @@ public class RunContainerPlugin extends SoaAbstractMojo {
                 while (iterator.hasNext()) {
                     URL url = iterator.next();
                     if (removeServiceProjectArtifact(iterator, url)) continue;
+                    if(removeClientNetty(iterator,url)) continue;
                     //if (removeTwitterAndScalaDependency(iterator,url)) continue;
                 }
 
@@ -113,6 +114,14 @@ public class RunContainerPlugin extends SoaAbstractMojo {
         if (url.getFile().matches("^.*" + regex + ".*$")) {
             iterator.remove();
 
+            return true;
+        }
+        return false;
+    }
+
+    private boolean removeClientNetty(Iterator<URL> iterator, URL url){
+        if(url.getFile().matches("^.*/dapeng-client-netty.*\\.jar$")) {
+            iterator.remove();
             return true;
         }
         return false;

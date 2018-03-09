@@ -1,10 +1,10 @@
 package com.github.dapeng.api;
 
-import com.github.dapeng.core.*;
+import com.github.dapeng.core.Application;
+import com.github.dapeng.core.Plugin;
+import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.Filter;
-import com.github.dapeng.core.Application;
-import com.github.dapeng.core.ProcessorKey;
 
 import java.util.List;
 import java.util.Map;
@@ -58,6 +58,10 @@ public interface Container {
      * @return
      */
     public List<Application> getApplications();
+
+    public void registerFilters(Filter filter);
+
+    public void unRegisterFilters(Filter filter);
 
     public List<Plugin> getPlugins();
 

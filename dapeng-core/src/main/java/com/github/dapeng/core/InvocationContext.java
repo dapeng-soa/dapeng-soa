@@ -71,6 +71,10 @@ public interface InvocationContext {
 
     Optional<String> getSessionId();
 
+    boolean isSoaTransactionProcess();
+
+    void setSoaTransactionProcess(Boolean isSoaTransactionProcess);
+
 
     // seqid
     // tid

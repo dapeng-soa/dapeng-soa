@@ -10,6 +10,6 @@ import com.github.dapeng.org.apache.thrift.TException;
  */
 public interface GlobalTransactionCallback<T> {
 
-    T doInTransaction() throws TException;
+    boolean doInTransaction() throws TException;
 
 }
