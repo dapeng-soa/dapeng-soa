@@ -84,6 +84,7 @@ class ScalaGenerator extends CodeGenerator {
         structSerializerWriter.write(structSerializerTemplate.toString)
         structSerializerWriter.close()
         println(s"生成serializer:${struct.namespace+".serializer."}${struct.name}Serializer.scala 完成")
+
       }
       }
 

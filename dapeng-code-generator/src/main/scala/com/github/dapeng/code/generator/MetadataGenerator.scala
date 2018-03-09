@@ -46,6 +46,6 @@ class MetadataGenerator extends CodeGenerator {
   def generateXmlFile(service:Service, outDir:String):Unit = {
 
     JAXB.marshal(service, new FileOutputStream(new File(new File(outDir), s"${service.namespace}.${service.name}.xml")))
-
   }
+
 }
