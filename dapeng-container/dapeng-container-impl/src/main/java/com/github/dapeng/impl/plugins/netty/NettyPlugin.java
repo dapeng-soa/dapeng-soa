@@ -10,10 +10,7 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.AbstractByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.UnpooledByteBufAllocator;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -21,11 +18,15 @@ import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author lihuimin
  * @date 2017/12/7
  */
 public class NettyPlugin implements AppListener, Plugin {
+    private final boolean MONITOR_ENABLE = SoaSystemEnvProperties.SOA_MONITOR_ENABLE;
 
     private final Container container;
 
@@ -65,13 +66,19 @@ public class NettyPlugin implements AppListener, Plugin {
                             .childHandler(new ChannelInitializer<SocketChannel>() {
                                 @Override
                                 protected void initChannel(SocketChannel ch) throws Exception {
+                                    ch.pipeline().addLast(new SoaFrameDecoder());//粘包和断包处理
+                                    if(MONITOR_ENABLE)ch.pipeline()
+                                            .addLast(new SoaMsgFlow()); // 平台流量
                                     ch.pipeline().addLast(
-                                            new SoaFrameDecoder(), //粘包和断包处理
-                                            new SoaMsgDecoder(container),//请求解码器
-                                            new SoaMsgEncoder(container),//响应消息编码器
-                                            new IdleStateHandler(15, 0, 0), //超时设置
-                                            new SoaIdleHandler(),//心跳处理
-                                            new SoaServerHandler(container));//业务处理器
+                                            new SoaMsgDecoder(container), //请求解码
+                                            new SoaMsgEncoder(container));//响应解码
+                                    if(MONITOR_ENABLE)ch.pipeline()
+                                            .addLast(new SoaInvokeCalls()) // 服务统计
+                                            .addLast(
+                                                new IdleStateHandler(15, 0, 0), //超时设置
+                                                new SoaIdleHandler(),//心跳处理
+                                                new SoaServerHandler(container) //业务处理器
+                                            );
                                 }
                             })
                             .option(ChannelOption.SO_BACKLOG, 1024)
