@@ -18,10 +18,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 /**
- *
  * @author tangliu
  * @date 2016/2/29
  */
@@ -40,9 +40,9 @@ public class ZookeeperWatcher {
      */
     private final List<Route> routes = new ArrayList<>();
 
-    private final static String SERVICE_PATH = "/soa/runtime/services" ;
-    private final static String CONFIG_PATH = "/soa/config/service" ;
-    private final static String ROUTES_PATH = "/soa/config/route" ;
+    private final static String SERVICE_PATH = "/soa/runtime/services";
+    private final static String CONFIG_PATH = "/soa/config/service";
+    private final static String ROUTES_PATH = "/soa/config/route";
 
     private ZooKeeper zk;
     private String zkHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
@@ -149,11 +149,11 @@ public class ZookeeperWatcher {
 
         String[] paths = path.split("/");
 
-        String createPath = "/" ;
+        String createPath = "/";
         for (int i = 1; i < paths.length; i++) {
             createPath += paths[i];
             addPersistServerNode(createPath, path);
-            createPath += "/" ;
+            createPath += "/";
         }
     }
 
@@ -180,8 +180,7 @@ public class ZookeeperWatcher {
         Stat stat = null;
         try {
             stat = zk.exists(path, false);
-        } catch (KeeperException e) {
-        } catch (InterruptedException e) {
+        } catch (KeeperException | InterruptedException e) {
         }
         return stat;
     }
@@ -254,11 +253,13 @@ public class ZookeeperWatcher {
             List<String> childrens = zk.getChildren(servicePath, watchedEvent -> {
                 if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
                     LOGGER.info("{}子节点发生变化，重新获取信息", watchedEvent.getPath());
-                    getServiceZkInfo(serviceName, zkInfos);
+                    if (zkInfos.containsKey(serviceName)) {
+                        getServiceZkInfo(serviceName, zkInfos);
+                    }
                 }
             });
 
-            if (childrens.size() == 0){
+            if (childrens.size() == 0) {
                 return null;
             }
             List<RuntimeInstance> runtimeInstanceList = new ArrayList<>();
@@ -315,27 +316,40 @@ public class ZookeeperWatcher {
      */
     private void connect() {
         try {
+            CountDownLatch semaphore = new CountDownLatch(1);
+
+            // Fixme zk连接状态变化不应该引起本地runtime缓存的清除, 尤其是zk挂了之后, 不至于影响业务(本地缓存还存在于每个SoaConnectionPool中?)
             zk = new ZooKeeper(zkHost, 15000, e -> {
-                if (e.getState() == Watcher.Event.KeeperState.Expired) {
-                    LOGGER.info("{} 到zookeeper Server的session过期，重连", isClient ? "Client's" : "Server's");
+                switch (e.getState()) {
+                    case Expired:
+                        LOGGER.info("{} 到zookeeper Server的session过期，重连", isClient ? "Client's" : "Server's");
 
-                    destroy();
-                    init();
+                        destroy();
+                        init();
+                        break;
+                    case SyncConnected:
+                        semaphore.countDown();
+                        LOGGER.info("{} Zookeeper Watcher 已连接 zookeeper Server", isClient ? "Client's" : "Server's");
+                        tryCreateNode(SERVICE_PATH);
+                        tryCreateNode(CONFIG_PATH);
 
-                } else if (e.getState() == Watcher.Event.KeeperState.SyncConnected) {
-                    LOGGER.info("{} Zookeeper Watcher 已连接 zookeeper Server", isClient ? "Client's" : "Server's");
-                    tryCreateNode(SERVICE_PATH);
-                    tryCreateNode(CONFIG_PATH);
-
-                    caches.clear();
-                    config.clear();
-
-                } else if (e.getState() == Watcher.Event.KeeperState.Disconnected) {
-                    LOGGER.error("{}到zookeeper的连接被断开", isClient ? "Client's" : "Server's");
-                    destroy();
-                    init();
+                        caches.clear();
+                        config.clear();
+                        break;
+                    case Disconnected:
+                        LOGGER.error("{}到zookeeper的连接被断开", isClient ? "Client's" : "Server's");
+                        destroy();
+                        init();
+                        break;
+                    case AuthFailed:
+                        LOGGER.info("Zookeeper connection auth failed ...");
+                        destroy();
+                        break;
+                    default:
+                        break;
                 }
             });
+            semaphore.await();
         } catch (Exception e) {
             LOGGER.info(e.getMessage(), e);
         }

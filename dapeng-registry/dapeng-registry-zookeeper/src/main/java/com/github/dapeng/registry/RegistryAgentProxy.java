@@ -2,7 +2,7 @@ package com.github.dapeng.registry;
 
 /**
  * Registry Agent Proxy
- *
+ * Fixme Server side only now
  * @author craneding
  * @date 16/3/1
  */

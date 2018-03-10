@@ -18,7 +18,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by lihuimin on 2017/12/24.
+ * @author lihuimin
+ * @date 2017/12/24
  */
 public class ZkClientAgentImpl implements ZkClientAgent {
 
@@ -26,7 +27,7 @@ public class ZkClientAgentImpl implements ZkClientAgent {
 
     private ZookeeperWatcher siw, zkfbw;
 
-    public ZkClientAgentImpl(){
+    public ZkClientAgentImpl() {
         start();
     }
 
@@ -40,9 +41,9 @@ public class ZkClientAgentImpl implements ZkClientAgent {
             zkfbw = new ZookeeperWatcher(true, SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_HOST);
             zkfbw.init();
         }
-
     }
 
+    //todo 优雅退出的时候, 需要调用这个
     @Override
     public void stop() {
         if (siw != null) {
@@ -56,21 +57,20 @@ public class ZkClientAgentImpl implements ZkClientAgent {
     }
 
     @Override
-    public void cancnelSyncService(String service) {
-
-
+    public void cancnelSyncService(String serviceName, Map<String, ServiceZKInfo> zkInfos) {
+        zkInfos.remove(serviceName);
     }
 
     @Override
-    public void syncService(String serviceName, Map<String,ServiceZKInfo> zkInfos) {
+    public void syncService(String serviceName, Map<String, ServiceZKInfo> zkInfos) {
 
         boolean usingFallbackZookeeper = SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_ISCONFIG;
 
         ServiceZKInfo zkInfo = zkInfos.get(serviceName);
-        if(zkInfo == null){  //zkInfos没有，从zookeeper拿
-            zkInfo = siw.getServiceZkInfo(serviceName,zkInfos);
-            if(zkInfo == null && usingFallbackZookeeper){
-                zkInfo = zkfbw.getServiceZkInfo(serviceName,zkInfos);
+        if (zkInfo == null) {
+            zkInfo = siw.getServiceZkInfo(serviceName, zkInfos);
+            if (zkInfo == null && usingFallbackZookeeper) {
+                zkInfo = zkfbw.getServiceZkInfo(serviceName, zkInfos);
             }
         }
 
@@ -79,7 +79,7 @@ public class ZkClientAgentImpl implements ZkClientAgent {
         List<Route> routes = usingFallbackZookeeper ? zkfbw.getRoutes() : siw.getRoutes();
         List<RuntimeInstance> runtimeList = new ArrayList<>();
 
-        if (zkInfo != null&&zkInfo.getRuntimeInstances()!=null) {
+        if (zkInfo != null && zkInfo.getRuntimeInstances() != null) {
             for (RuntimeInstance instance : zkInfo.getRuntimeInstances()) {
                 try {
                     InetAddress inetAddress = InetAddress.getByName(instance.ip);
@@ -87,11 +87,11 @@ public class ZkClientAgentImpl implements ZkClientAgent {
                         runtimeList.add(instance);
                     }
                 } catch (UnknownHostException e) {
-                    LOGGER.error(e.getMessage(),e);
+                    LOGGER.error(e.getMessage(), e);
                 }
             }
             zkInfo.setRuntimeInstances(runtimeList);
-            zkInfos.put(serviceName,zkInfo);
+            zkInfos.put(serviceName, zkInfo);
         }
 
     }

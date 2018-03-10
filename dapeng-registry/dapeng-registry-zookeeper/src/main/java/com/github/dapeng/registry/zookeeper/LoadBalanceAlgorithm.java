@@ -7,9 +7,11 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Created by lihuimin on 2017/12/26.
+ *
+ * @author lihuimin
+ * @date 2017/12/26
  */
-public class LoadBalanceService {
+public class LoadBalanceAlgorithm {
 
     private static AtomicInteger roundRobinIndex = new AtomicInteger(8);
 

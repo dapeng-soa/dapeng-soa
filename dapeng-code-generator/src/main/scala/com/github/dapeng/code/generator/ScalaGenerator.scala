@@ -72,7 +72,7 @@ class ScalaGenerator extends CodeGenerator {
       println("=========================================================")
       toStructArrayBuffer(structs).map{(struct: Struct)=>{
         println(s"生成struct:${struct.namespace}.${struct.name}.scala")
-        val domainTemplate = new StringTemplate(toDomainTemplate(struct))
+        [val domainTemplate = new StringTemplate(toDomainTemplate(struct))
         val domainWriter = new PrintWriter(new File(rootDir(outDir, struct.getNamespace), s"${struct.name}.scala"), "UTF-8")
         domainWriter.write(domainTemplate.toString)
         domainWriter.close()

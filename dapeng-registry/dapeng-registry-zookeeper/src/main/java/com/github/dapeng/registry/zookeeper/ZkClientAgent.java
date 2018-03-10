@@ -5,7 +5,6 @@ import com.github.dapeng.registry.ConfigKey;
 import java.util.Map;
 
 /**
- *
  * @author lihuimin
  * @date 2017/12/24
  */
@@ -17,10 +16,8 @@ public interface ZkClientAgent {
 
     void syncService(String serviceName, Map<String, ServiceZKInfo> zkInfos);
 
-    void cancnelSyncService(String service);
+    void cancnelSyncService(String serviceName, Map<String, ServiceZKInfo> zkInfos);
 
     Map<ConfigKey,Object> getConfig(boolean usingFallback, String serviceKey);
-
-
 
 }

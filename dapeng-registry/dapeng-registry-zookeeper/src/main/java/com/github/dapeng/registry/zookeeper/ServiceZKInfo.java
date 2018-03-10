@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- * Created by lihuimin on 2017/12/25.
+ *
+ * @author lihuimin
+ * @date 2017/12/25
  */
 public class ServiceZKInfo {
 

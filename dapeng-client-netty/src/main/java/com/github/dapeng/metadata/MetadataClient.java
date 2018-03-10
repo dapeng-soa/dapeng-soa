@@ -9,7 +9,9 @@ import com.github.dapeng.util.SoaSystemEnvProperties;
 import java.util.ServiceLoader;
 
 /**
- * Created by tangliu on 2016/3/3.
+ *
+ * @author tangliu
+ * @date 2016/3/3
  */
 public class MetadataClient {
 
@@ -17,18 +19,17 @@ public class MetadataClient {
     private final String version;
     private final String methodName = "getServiceMetadata";
 
-    private SoaConnectionPool pool;
+    private final SoaConnectionPool pool;
+
+    private final SoaConnectionPool.ClientInfo clientInfo;
 
     public MetadataClient(String serviceName, String version) {
         this.serviceName = serviceName;
         this.version = version;
 
         ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class);
-        for (SoaConnectionPoolFactory factory : factories) {
-            this.pool = factory.getPool();
-            break;
-        }
-        this.pool.registerClientInfo(serviceName, version);
+        this.pool = factories.iterator().next().getPool();
+        this.clientInfo = this.pool.registerClientInfo(serviceName, version);
 
     }
 
