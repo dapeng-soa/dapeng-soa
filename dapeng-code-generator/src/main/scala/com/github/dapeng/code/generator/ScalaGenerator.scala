@@ -72,7 +72,7 @@ class ScalaGenerator extends CodeGenerator {
       println("=========================================================")
       toStructArrayBuffer(structs).map{(struct: Struct)=>{
         println(s"生成struct:${struct.namespace}.${struct.name}.scala")
-        [val domainTemplate = new StringTemplate(toDomainTemplate(struct))
+        val domainTemplate = new StringTemplate(toDomainTemplate(struct))
         val domainWriter = new PrintWriter(new File(rootDir(outDir, struct.getNamespace), s"${struct.name}.scala"), "UTF-8")
         domainWriter.write(domainTemplate.toString)
         domainWriter.close()
@@ -298,12 +298,9 @@ class ScalaGenerator extends CodeGenerator {
         val version = "{service.meta.version}"
         val pool = <block>
           val serviceLoader = ServiceLoader.load(classOf[SoaConnectionPoolFactory])
-          if (serviceLoader.iterator().hasNext) <block>
-            val poolImpl = serviceLoader.iterator().next().getPool
-            poolImpl.registerClientInfo(serviceName,version)
-            poolImpl
-          </block> else null
+          if (serviceLoader.iterator().hasNext) <block> serviceLoader.iterator().next().getPool </block> else null
         </block>
+        val clientInfo = if (pool != null) pool.registerClientInfo(serviceName,version) else null
 
         def getServiceMetadata: String = <block>
           pool.send(
@@ -374,12 +371,9 @@ class ScalaGenerator extends CodeGenerator {
         val version = "{service.meta.version}"
         val pool = <block>
           val serviceLoader = ServiceLoader.load(classOf[SoaConnectionPoolFactory])
-          if (serviceLoader.iterator().hasNext) <block>
-            val poolImpl = serviceLoader.iterator().next().getPool
-            poolImpl.registerClientInfo(serviceName,version)
-            poolImpl
-          </block> else null
+          if (serviceLoader.iterator().hasNext) <block> serviceLoader.iterator().next().getPool </block> else null
         </block>
+        val clientInfo = if (pool != null) pool.registerClientInfo(serviceName,version) else null
 
         def getServiceMetadata: String = <block>
           pool.send(
