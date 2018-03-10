@@ -21,7 +21,7 @@ public enum ConfigKey {
 
     private final String value;
 
-    private ConfigKey(String value) {
+    ConfigKey(String value) {
         this.value = value;
     }
 

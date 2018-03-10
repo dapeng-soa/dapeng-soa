@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>dapeng-com.github.dapeng.registry.registry</artifactId>
+    <artifactId>dapeng-registry</artifactId>
     <packaging>pom</packaging>
 
     <modules>
@@ -21,6 +21,21 @@
             <dependency>
                 <groupId>com.github.dapeng</groupId>
                 <artifactId>dapeng-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.dapeng</groupId>
+                <artifactId>dapeng-route-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.dapeng</groupId>
+                <artifactId>dapeng-route-impl</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.dapeng</groupId>
+                <artifactId>dapeng-utils</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
