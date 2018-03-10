@@ -223,17 +223,15 @@ class JavaGenerator extends CodeGenerator {
       private final String version;
 
       private SoaConnectionPool pool;
+      private final SoaConnectionPool.ClientInfo clientInfo;
 
       public {service.name}Client() <block>
         this.serviceName = "{service.namespace + "." + service.name }";
         this.version = "{service.meta.version}";
 
         ServiceLoader{lt}SoaConnectionPoolFactory{gt} factories = ServiceLoader.load(SoaConnectionPoolFactory.class);
-        for (SoaConnectionPoolFactory factory: factories) <block>
-          this.pool = factory.getPool();
-          break;
-        </block>
-        this.pool.registerClientInfo(serviceName,version);
+        this.pool = factories.iterator().next().getPool();
+        this.clientInfo = this.pool.registerClientInfo(serviceName,version);
       </block>
 
       {
@@ -318,17 +316,15 @@ class JavaGenerator extends CodeGenerator {
       private final String version;
 
       private SoaConnectionPool pool;
+      private final SoaConnectionPool.ClientInfo clientInfo;
 
-      public {service.name}AsyncClient() <block>
-        this.serviceName = "{service.namespace+ "." + service.name}";
+      public {service.name}Client() <block>
+        this.serviceName = "{service.namespace + "." + service.name }";
         this.version = "{service.meta.version}";
 
         ServiceLoader{lt}SoaConnectionPoolFactory{gt} factories = ServiceLoader.load(SoaConnectionPoolFactory.class);
-        for (SoaConnectionPoolFactory factory: factories) <block>
-          this.pool = factory.getPool();
-          break;
-        </block>
-        this.pool.registerClientInfo(serviceName,version);
+        this.pool = factories.iterator().next().getPool();
+        this.clientInfo = this.pool.registerClientInfo(serviceName,version);
       </block>
 
       {
