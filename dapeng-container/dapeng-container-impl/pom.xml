@@ -162,9 +162,17 @@
             <artifactId>dapeng-utils</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!--
+        // use new monitor?
         <dependency>
             <groupId>com.github.dapeng</groupId>
             <artifactId>dapeng-monitor-filter</artifactId>
+            <version>${project.version}</version>
+        </dependency>-->
+        <!--counter-->
+        <dependency>
+            <groupId>com.github.dapeng</groupId>
+            <artifactId>dapeng-counter-api</artifactId>
             <version>${project.version}</version>
         </dependency>
 

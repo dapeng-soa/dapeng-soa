@@ -105,19 +105,19 @@ public class SoaInvokeCalls extends ChannelDuplexHandler {
             }
             serviceProcessCallDatas.put(simpleInfo, newProcessData);
         }
-        System.out.printf("====>当前seqid{%s} ==> service:{%s}:version[%s]:method:[{%s}] 耗时 ==>{%s} ms 响应状态码[{%s}]",seqId,simpleInfo.getServiceName(),simpleInfo.getMethodName(),simpleInfo.getVersionName(),cost,soaHeader.getRespCode().get());
+        System.out.printf("====>当前seqid{%s} ==> service:{%s}:version[%s]:method:[{%s}] 耗时 ==>{%s} ms 响应状态码[{%s}]", seqId, simpleInfo.getServiceName(), simpleInfo.getMethodName(), simpleInfo.getVersionName(), cost, soaHeader.getRespCode().get());
 
         ctx.write(msg, promise);
     }
 
-    SoaInvokeCalls(){
+    SoaInvokeCalls() {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MINUTE, 1);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
         Long initialDelay = calendar.getTime().getTime() - System.currentTimeMillis();
 
-        LOGGER.info("dapengMonitor started, upload interval:" + PERIOD * 1000 + "s");
+        LOGGER.info("dapeng invoke Monitor started, upload interval:" + PERIOD * 1000 + "s");
 
         ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(2,
                 new ThreadFactoryBuilder()
@@ -135,7 +135,9 @@ public class SoaInvokeCalls extends ChannelDuplexHandler {
                 //todo check wether the queue size has reached 90%
                 List<DataPoint> dataList = serviceData2Points(System.currentTimeMillis(),
                         serviceProcessCallDatas, serviceElapses);
-
+                if (serviceDataQueue.size() >= (60 * 60 * 10 / PERIOD) * 0.9) {
+                    serviceDataQueue.take();
+                }
                 if (!dataList.isEmpty()) {
                     serviceDataQueue.put(dataList);
                     serviceProcessCallDatas.clear();
@@ -175,8 +177,8 @@ public class SoaInvokeCalls extends ChannelDuplexHandler {
                     if (points != null) {
                         try {
                             if (!points.isEmpty()) {
+                                LOGGER.debug("uploading , submitPoints ");
                                 System.out.println("====> submitPoints : " + points);
-                                // if uploading error ????
                                 SERVICE_CLIENT.submitPoints(points);
                             }
                             serviceDataQueue.remove(points);
@@ -184,12 +186,12 @@ public class SoaInvokeCalls extends ChannelDuplexHandler {
                             LOGGER.error(e.getMessage(), e);
                             signalCondition.await();
                         }
-                    }else {
+                    } else {
                         if (LOGGER.isDebugEnabled())
                             LOGGER.debug("no more tasks, uploader release the lock.");
                         signalCondition.await();
                     }
-                }catch (InterruptedException e) {
+                } catch (InterruptedException e) {
                     LOGGER.error(e.getMessage(), e);
                 } finally {
                     signalLock.unlock();
@@ -237,15 +239,15 @@ public class SoaInvokeCalls extends ChannelDuplexHandler {
             DataPoint point = new DataPoint();
             point.setDatabase(DATA_BASE);
             point.setBizTag("dapeng_service_process");
-            Map<String, String> tag = new HashMap<>(16);
-            tag.put("period", PERIOD + "");
-            tag.put("analysis_time", millis.toString());
-            tag.put("service_name", serviceSimpleInfo.getServiceName());
-            tag.put("method_name", serviceProcessData.getMethodName());
-            tag.put("version_name", serviceProcessData.getVersionName());
-            tag.put("server_ip", SERVER_IP);
-            tag.put("server_port", SERVER_PORT.toString());
-            point.setTags(tag);
+            Map<String, String> tags = new HashMap<>(16);
+            tags.put("period", PERIOD + "");
+            tags.put("analysis_time", millis.toString());
+            tags.put("service_name", serviceSimpleInfo.getServiceName());
+            tags.put("method_name", serviceProcessData.getMethodName());
+            tags.put("version_name", serviceProcessData.getVersionName());
+            tags.put("server_ip", SERVER_IP);
+            tags.put("server_port", SERVER_PORT.toString());
+            point.setTags(tags);
             Map<String, String> fields = new HashMap<>(16);
             fields.put("i_min_time", iMinTime.toString());
             fields.put("i_max_time", iMaxTime.toString());
