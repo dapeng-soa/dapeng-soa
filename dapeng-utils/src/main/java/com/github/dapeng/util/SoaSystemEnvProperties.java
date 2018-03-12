@@ -36,8 +36,10 @@ public class SoaSystemEnvProperties {
     private static final String KEY_SOA_MAX_READ_BUFFER_SIZE = "soa.max.read.buffer.size";
     private static final String KEY_SOA_LOCAL_HOST_NAME = "soa.local.host.name";
     private static final String KEY_SOA_TRANSACTIONAL_ENABLE = "soa.transactional.enable";
+    private static final String KEY_SOA_LOG_FORMAT_ENABLE = "soa.log.format.enable";
 
-//    public static final String SOA_SERVICE_IP = get(KEY_SOA_SERVICE_IP, "127.0.0.1");
+
+    //    public static final String SOA_SERVICE_IP = get(KEY_SOA_SERVICE_IP, "127.0.0.1");
 //    public static final boolean SOA_SERVICE_IP_ISCONFIG = get(KEY_SOA_SERVICE_IP) != null;
 //
 //    public static final Integer SOA_SERVICE_PORT = Integer.valueOf(get(KEY_SOA_SERVICE_PORT, "9090"));
@@ -65,6 +67,8 @@ public class SoaSystemEnvProperties {
 
     public static final String SOA_LOCAL_HOST_NAME = get(KEY_SOA_LOCAL_HOST_NAME);
     public static final boolean SOA_TRANSACTIONAL_ENABLE = Boolean.valueOf(get(KEY_SOA_TRANSACTIONAL_ENABLE, "true"));
+    public static final boolean SOA_LOG_FORMAT_ENABLE = Boolean.valueOf(get(KEY_SOA_LOG_FORMAT_ENABLE, "true"));
+
 
     public static String get(String key) {
         return get(key, null);
