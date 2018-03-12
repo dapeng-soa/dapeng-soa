@@ -32,9 +32,7 @@ public class SoaGlobalTransactionalFilter implements ContainerFilter {
 
         SoaHeader soaHeader = (SoaHeader) ctx.getAttribute("soaHeader");
         SoaServiceDefinition serviceDef = (SoaServiceDefinition) ctx.getAttribute("serviceDef");
-        System.out.println("~~~~~~soaheader:"+soaHeader+"~~~~~~serviceDef"+serviceDef.ifaceClass.getName());
         if (soaHeader != null && serviceDef != null) {
-            System.out.println("~~~~~~~~~~~~~service name"+serviceDef.iface.getClass().getName());
             long count = new ArrayList<>(Arrays.asList(serviceDef.ifaceClass.getMethods()))
                     .stream()
                     .filter(m -> m.getName().equals(soaHeader.getMethodName()) && m.isAnnotationPresent(SoaGlobalTransactional.class))
@@ -56,9 +54,7 @@ public class SoaGlobalTransactionalFilter implements ContainerFilter {
             if (isSoaGlobalTransactional) {
                 context.setSoaGlobalTransactional(true);
             }
-            System.out.println("~~~~~~~~~~~count:"+count);
             if (soaHeader.getTransactionId().isPresent() || !SoaSystemEnvProperties.SOA_TRANSACTIONAL_ENABLE) {// in a global transaction
-                System.out.println("~~~~~~~~~~~~~not global transaction");
                 next.onEntry(ctx);
             } else {
                 if (context.isSoaGlobalTransactional()) {
