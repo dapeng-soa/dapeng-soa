@@ -175,7 +175,7 @@ public class DapengContainer implements Container {
         }
 
         if (SoaSystemEnvProperties.SOA_TRANSACTIONAL_ENABLE){
-            Plugin transactionPlugin = new TransactionPlugin();
+            Plugin transactionPlugin = new TransactionPlugin(this);
             registerPlugin(transactionPlugin);
         }
 
