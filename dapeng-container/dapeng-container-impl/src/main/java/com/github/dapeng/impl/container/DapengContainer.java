@@ -184,6 +184,7 @@ public class DapengContainer implements Container {
 
         ServiceLoader<ContainerFilter> filterLoader = ServiceLoader.load(ContainerFilter.class,Thread.currentThread().getContextClassLoader());
         for(Filter filter : filterLoader){
+            System.out.println("Container filter:" + filter.getClass().getName());
             registerFilters(filter);
         }
 
