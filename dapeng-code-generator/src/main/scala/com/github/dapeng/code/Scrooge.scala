@@ -113,11 +113,11 @@ object Scrooge {
       //2. 如果没有xml文件 => needUpdate
       //3. 如果language == scala && scala文件没有生成过 => needUpdate
       //4. 如果language == java && java文件没有生成过 => needUpdate
-      val resourcePath = new File(resources(0)).getParentFile.getParentFile
+      val resourcePath = new File(outDir + System.getProperty("file.separator") + "resources")
       val thriftFiles = resources.map(new File(_))
       val needUpdate = {
         val xmlFiles = resourcePath.listFiles().filter(_.getName.endsWith(".xml"))
-        val targetDirFiles = getFiles(outDir).filter(file=> {
+        val targetDirFiles = getFiles(outDir).filter(file => {
           val fileName = file.getName
           fileName.endsWith(".java") || fileName.endsWith(".scala")
         })
@@ -136,7 +136,9 @@ object Scrooge {
       }
 
       if (resources != null && language != "" && needUpdate) {
-
+        System.out.println("----------------need update")
+        //删除文件再生成
+        fileDel(new File(outDir))
         val parserLanguage = if (language == "scala") "scala" else "java"
         val services = new ThriftCodeParser(parserLanguage).toServices(resources, version)
         val structs = if (generateAll) new ThriftCodeParser(parserLanguage).getAllStructs(resources) else null
@@ -172,6 +174,24 @@ object Scrooge {
     } else {
       List(new File(path))
     }
+  }
+
+  //删除目录和文件
+  def fileDel(path: File) {
+    if (!path.exists())
+      return
+    if (path.isFile() && (path.getName.endsWith(".java") || path.getName.endsWith(".scala") || path.getName.endsWith(".xml"))) {
+      path.delete()
+      return
+    }
+
+    val file: Array[File] = path.listFiles()
+    if (file != null) {
+      for (d <- file) {
+        fileDel(d)
+      }
+    }
+
   }
 
 }
