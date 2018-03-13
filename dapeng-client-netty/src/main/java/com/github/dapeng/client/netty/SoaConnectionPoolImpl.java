@@ -50,7 +50,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 String version = clientInfoRef.get().version;
 
                 clientInfos.remove(serviceName + ":" + version);
-                zkAgent.cancnelSyncService(serviceName);
+                zkAgent.cancnelSyncService(serviceName, zkInfos);
             } catch (Throwable e) {
                 logger.error(e.getMessage(), e);
             }
