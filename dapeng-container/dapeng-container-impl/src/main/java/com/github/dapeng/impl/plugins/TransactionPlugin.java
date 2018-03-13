@@ -1,15 +1,19 @@
 package com.github.dapeng.impl.plugins;
 
-import com.github.dapeng.api.Container;
 import com.github.dapeng.core.Plugin;
-import com.github.dapeng.core.ProcessorKey;
-import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.transaction.api.GlobalTransactionFactory;
 import com.github.dapeng.transaction.api.service.GlobalTransactionProcessService;
 import com.github.dapeng.transaction.api.service.GlobalTransactionService;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.List;
 
 /**
  * TransactionContainer
@@ -20,32 +24,47 @@ import org.slf4j.LoggerFactory;
 public class TransactionPlugin implements Plugin {
     private static final Logger LOGGER = LoggerFactory.getLogger(TransactionPlugin.class);
 
-    private final Container container;
+    public static final String SPRING_CONFIG = "soa.spring.config";
+    public static final String DEFAULT_SPRING_CONFIG = "META-INF/spring/services.xml";
 
-    public TransactionPlugin( Container container){
-        this.container = container;
-    }
+    private ClassPathXmlApplicationContext context;
+
 
     @Override
     public void start() {
         if (SoaSystemEnvProperties.SOA_TRANSACTIONAL_ENABLE) {
             System.out.println(" Start to initialize transaction plugin......");
+            String configPath = System.getProperty(SPRING_CONFIG);
+            if (configPath == null || configPath.length() <= 0) {
+                configPath = DEFAULT_SPRING_CONFIG;
+            }
 
             try {
+                List<String> xmlPaths = new ArrayList<>();
 
-                ProcessorKey transactionKey = new ProcessorKey("com.github.dapeng.transaction.api.service.GlobalTransactionService","1.0.0");
-                SoaServiceDefinition<GlobalTransactionService> transactionServiceDef = (SoaServiceDefinition<GlobalTransactionService>)container.getServiceProcessors().get(transactionKey);
+                Enumeration<URL> resources = TransactionPlugin.class.getClassLoader().getResources(configPath);
 
-                ProcessorKey processKey = new ProcessorKey("com.github.dapeng.transaction.api.service.GlobalTransactionProcessService","1.0.0");
-                SoaServiceDefinition<GlobalTransactionProcessService>processServicesDef = (SoaServiceDefinition<GlobalTransactionProcessService> )container.getServiceProcessors().get(processKey);
 
-                if (transactionServiceDef!=null) {
-                    GlobalTransactionFactory.setGlobalTransactionService(transactionServiceDef.iface);
+                while (resources.hasMoreElements()) {
+                    URL nextElement = resources.nextElement();
+
+                    if (nextElement.toString().matches(".*dapeng-transaction.*")) {
+                        xmlPaths.add(nextElement.toString());
+                    }
+                }
+
+                context = new ClassPathXmlApplicationContext(xmlPaths.toArray(new String[0]));
+                context.start();
+
+                Collection<GlobalTransactionService> services = context.getBeansOfType(GlobalTransactionService.class).values();
+                Collection<GlobalTransactionProcessService> processServices = context.getBeansOfType(GlobalTransactionProcessService.class).values();
+                if (services.iterator().hasNext()) {
+                    GlobalTransactionFactory.setGlobalTransactionService(services.iterator().next());
                 } else {
                     LOGGER.warn("----------- No GlobalTransactionService Found..-------");
                 }
-                if (processServicesDef!=null) {
-                    GlobalTransactionFactory.setGlobalTransactionProcessService(processServicesDef.iface);
+                if (processServices.iterator().hasNext()) {
+                    GlobalTransactionFactory.setGlobalTransactionProcessService(processServices.iterator().next());
                 } else {
                     LOGGER.warn("----------- No GlobalTransactionProcessService Found --------");
                 }
@@ -58,7 +77,9 @@ public class TransactionPlugin implements Plugin {
 
     @Override
     public void stop() {
-
+        if (context != null) {
+            context.stop();
+        }
     }
 
 }
