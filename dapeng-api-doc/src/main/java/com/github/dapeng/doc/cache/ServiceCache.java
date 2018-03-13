@@ -1,6 +1,7 @@
 package com.github.dapeng.doc.cache;
 
 
+import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.metadata.*;
 import com.google.common.collect.TreeMultimap;
@@ -15,6 +16,7 @@ import javax.xml.bind.JAXB;
 import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 /**
@@ -38,6 +40,7 @@ public class ServiceCache {
 
         System.out.println("--------------------Container: " + ContainerFactory.getContainer());
         System.out.println("--------------------Applications: " + ContainerFactory.getContainer().getApplications());
+        System.out.println("--------------------Filters: " + ContainerFactory.getContainer().getFilters());
 
         List<Application> applications = ContainerFactory.getContainer().getApplications();
         applications.forEach(i -> loadServices(i));
@@ -57,8 +60,8 @@ public class ServiceCache {
             String metadata = "";
             try {
                 //init service,no need to set params
-                InvocationContextImpl.Factory.createNewInstance();
-
+                InvocationContext invocationContext = InvocationContextImpl.Factory.createNewInstance();
+                invocationContext.setTimeout(Optional.of(5000L));
                 metadata = new MetadataClient(serviceInfo.serviceName, serviceInfo.version)
                         .getServiceMetadata();
             } catch (Exception e) {
@@ -73,7 +76,7 @@ public class ServiceCache {
                     Map<String, Service> services = loadResource(serviceData);
                     ServiceCache.services.putAll(services);
                 } catch (Exception e) {
-                    LOGGER.error("生成SERVICE出错", e);
+                    LOGGER.error("生成SERVICE出错, metaData:\n" + metadata, e);
                 }
             }
         });

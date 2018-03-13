@@ -75,6 +75,9 @@ public interface InvocationContext {
 
     void setSoaTransactionProcess(Boolean isSoaTransactionProcess);
 
+    public Optional<Long> getTimeout();
+
+    public void setTimeout(Optional<Long> timeout);
 
     // seqid
     // tid

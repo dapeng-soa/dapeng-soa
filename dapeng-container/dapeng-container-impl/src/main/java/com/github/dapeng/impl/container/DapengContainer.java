@@ -10,9 +10,11 @@ import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.ContainerFilter;
 import com.github.dapeng.core.filter.Filter;
+import com.github.dapeng.impl.filters.FilterLoader;
 import com.github.dapeng.impl.plugins.*;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
 import com.github.dapeng.util.SoaSystemEnvProperties;
+import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -149,9 +151,20 @@ public class DapengContainer implements Container {
         return ExectorFactory.exector;
     }
 
+
+    @Override
+    public void registerFilter(Filter filter) {
+        this.filters.add(filter);
+    }
+
+    @Override
+    public void unregisterFilter(Filter filter) {
+        this.filters.remove(filter);
+    }
+
     @Override
     public List<Filter> getFilters() {
-        return this.filters;
+        return ImmutableList.copyOf(this.filters);
     }
 
     @Override
@@ -194,6 +207,8 @@ public class DapengContainer implements Container {
         //4.启动Apploader， plugins
         getPlugins().forEach(Plugin::start);
 
+        // register Filters
+        new FilterLoader(this, applicationCls);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.warn("Container gracefule shutdown begin.");

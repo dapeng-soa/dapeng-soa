@@ -43,6 +43,9 @@ public class InvocationContextImpl implements  InvocationContext {
 
     private Optional<String> sessionId = Optional.empty();
 
+    private Optional<Long> timeout;
+
+
     /**
      * 全局事务id
      */
@@ -52,6 +55,16 @@ public class InvocationContextImpl implements  InvocationContext {
     private int seqid;
 
     private boolean isSoaTransactionProcess;
+
+    @Override
+    public Optional<Long> getTimeout() {
+        return timeout;
+    }
+
+    @Override
+    public void setTimeout(Optional<Long> timeout) {
+        this.timeout = timeout;
+    }
 
     // read/write
     @Override
@@ -272,8 +285,6 @@ public class InvocationContextImpl implements  InvocationContext {
             //客户端可能不手动创建上下文.
             if (context == null) {
                 context = createNewInstance();
-
-                threadLocal.set(context);
             }
 
             return context;

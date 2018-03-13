@@ -373,6 +373,7 @@ class ThriftCodeParser(var language: String) {
 
           val docSrting = if (realField.docstring.isDefined) toDocString(realField.docstring) else ""
 
+
           val f = field.field_type.getClass.getDeclaredField("fieldType");
           f.setAccessible(true)
           val dataType = toDataType(f.get(field.field_type).asInstanceOf[FieldType], doc, docSrting)
@@ -388,23 +389,24 @@ class ThriftCodeParser(var language: String) {
           request.getFields.add(tfiled)
         }
 
-        val docSrting = if (s.functions.get(tmpIndex).docstring.isDefined) toDocString(s.functions.get(tmpIndex).docstring) else ""
+        //val docSrting = if (s.functions.get(tmpIndex).docstring.isDefined) toDocString(s.functions.get(tmpIndex).docstring) else ""
 
         val f = functionField.return_type.getClass.getDeclaredField("fieldType")
         f.setAccessible(true)
 
+        //返回值没法获取注释，默认""
         var dataType: DataType = null
         if (f.get(functionField.return_type).getClass == com.twitter.scrooge.ast.Void.getClass) {
           dataType = new DataType()
           dataType.setKind(DataType.KIND.VOID)
         } else {
-          dataType = toDataType(f.get(functionField.return_type).asInstanceOf[FieldType], doc, docSrting)
+          dataType = toDataType(f.get(functionField.return_type).asInstanceOf[FieldType], doc, "")
         }
 
         val tfiled = new metadata.Field()
         tfiled.setTag(0)
         tfiled.setName("success")
-        tfiled.setDoc(docSrting)
+        tfiled.setDoc("")
         tfiled.setDataType(dataType)
         tfiled.setOptional(false)
         response.getFields.add(tfiled)

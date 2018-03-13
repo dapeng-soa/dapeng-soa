@@ -1,5 +1,5 @@
  package com.github.dapeng.soa.domain.serializer;
-        import com.github.dapeng.soa.domain.serializer.*;
+        import com.isuwang.soa.order.domain.serializer.*;import com.github.dapeng.soa.domain.serializer.*;import com.isuwang.soa.price.domain.serializer.*;import com.isuwang.soa.user.domain.serializer.*;import com.isuwang.soa.settle.domain.serializer.*;
 
         import com.github.dapeng.core.*;
         import com.github.dapeng.org.apache.thrift.*;

@@ -3,7 +3,9 @@ package com.github.dapeng.core.definition;
 import java.util.Map;
 
 /**
- * Created by lihuimin on 2017/12/14.
+ *
+ * @author lihuimin
+ * @date 2017/12/14
  */
 public class SoaServiceDefinition<I>{
     public final I iface;    // sync interface
