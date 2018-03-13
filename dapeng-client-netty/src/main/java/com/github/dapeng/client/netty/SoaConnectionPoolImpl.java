@@ -3,7 +3,7 @@ package com.github.dapeng.client.netty;
 import com.github.dapeng.core.*;
 import com.github.dapeng.json.JsonSerializer;
 import com.github.dapeng.registry.ConfigKey;
-import com.github.dapeng.registry.LoadBalanceStratage;
+import com.github.dapeng.registry.LoadBalanceStrategy;
 import com.github.dapeng.registry.RuntimeInstance;
 import com.github.dapeng.registry.zookeeper.LoadBalanceAlgorithm;
 import com.github.dapeng.registry.zookeeper.ServiceZKInfo;
@@ -170,11 +170,11 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private RuntimeInstance loadbalance(String serviceKey, List<RuntimeInstance> compatibles) {
 
         boolean usingFallbackZookeeper = SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_ISCONFIG;
-        LoadBalanceStratage balance = LoadBalanceStratage.Random;
+        LoadBalanceStrategy balance = LoadBalanceStrategy.Random;
 
         Map<ConfigKey, Object> configs = zkAgent.getConfig(usingFallbackZookeeper, serviceKey);
         if (null != configs) {
-            balance = LoadBalanceStratage.findByValue((String) configs.get(ConfigKey.LoadBalance));
+            balance = LoadBalanceStrategy.findByValue((String) configs.get(ConfigKey.LoadBalance));
         }
 
         RuntimeInstance instance = null;

@@ -203,13 +203,15 @@ public class ZookeeperHelper {
     @Deprecated
     private static final String MASTER_PATH = "/soa/master/services/";
 
+    private static final String RUNTIME_PATH = "/soa/runtime/services/";
+
     /**
      * 竞选Master
      * <p>
      * /soa/master/services/**.**.**.AccountService:1.0.0-0000000001   data [192.168.99.100:9090]
      */
     public void createCurrentNode(String key) {
-        zk.create(MASTER_PATH + key + "-", CURRENT_CONTAINER_ADDR.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, masterCreateCallback, key);
+        zk.create(RUNTIME_PATH + key + "-", CURRENT_CONTAINER_ADDR.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, masterCreateCallback, key);
     }
 
     private AsyncCallback.StringCallback masterCreateCallback = (rc, path, ctx, name) -> {
