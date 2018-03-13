@@ -15,6 +15,7 @@ public class SoaSystemEnvProperties {
     private static final String KEY_SOA_CALLER_IP = "soa.caller.ip";
     private static final String KEY_SOA_APIDOC_PORT = "soa.apidoc.port";
     private static final String KEY_SOA_KAFKA_HOST = "soa.kafka.host";
+    private static final String KEY_SOA_BYTEBUF_ALLOCATOR = "soa.bytebuf.allocator";
 
     /**
      * 可指定主从竞选master
