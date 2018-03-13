@@ -35,11 +35,11 @@ package com.github.dapeng.soa.domain;
 
         public String toString(){
           StringBuilder stringBuilder = new StringBuilder("{");
-          stringBuilder.append("\"").append("name").append("\":\"").append(this.name).append("\",");
+            stringBuilder.append("\"").append("name").append("\":\"").append(this.name).append("\",");
     stringBuilder.append("\"").append("code").append("\":\"").append(this.code).append("\",");
     
-          stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(","));
-          stringBuilder.append("}");
+            stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(","));
+            stringBuilder.append("}");
 
           return stringBuilder.toString();
         }

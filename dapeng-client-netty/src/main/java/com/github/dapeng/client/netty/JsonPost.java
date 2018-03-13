@@ -7,6 +7,7 @@ import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.metadata.Method;
 import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.json.JsonSerializer;
+import com.github.dapeng.util.DumpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,11 +74,13 @@ public class JsonPost {
 
         final long beginTime = System.currentTimeMillis();
 
-        LOGGER.info("soa-request: {}", jsonParameter);
-
-        String jsonResponse = post(invocationContext.getServiceName(), invocationContext.getVersionName(), method.name,jsonParameter, jsonEncoder, jsonDecoder);
-
-        LOGGER.info("soa-response: {} {}ms", jsonResponse, System.currentTimeMillis() - beginTime);
+        String jsonResponse = post(invocationContext.getServiceName(), invocationContext.getVersionName(),
+                method.name, jsonParameter, jsonEncoder, jsonDecoder);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("soa-response: " + jsonResponse + " cost:" + (System.currentTimeMillis() - beginTime) + "ms");
+        } else {
+            LOGGER.info("soa-response: " + DumpUtil.formatToString(jsonResponse) + (System.currentTimeMillis() - beginTime) + "ms");
+        }
 
         return jsonResponse;
     }

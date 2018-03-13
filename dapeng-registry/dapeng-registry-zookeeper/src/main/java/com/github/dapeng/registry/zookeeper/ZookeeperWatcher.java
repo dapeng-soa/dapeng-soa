@@ -259,6 +259,9 @@ public class ZookeeperWatcher {
                 }
             });
 
+            if (childrens.size() == 0){
+                return null;
+            }
             List<RuntimeInstance> runtimeInstanceList = new ArrayList<>();
             LOGGER.info("获取{}的子节点成功", servicePath);
             //child = 10.168.13.96:9085:1.0.0

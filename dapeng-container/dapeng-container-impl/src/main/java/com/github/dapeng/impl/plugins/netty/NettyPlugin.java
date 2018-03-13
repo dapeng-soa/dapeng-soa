@@ -7,7 +7,9 @@ import com.github.dapeng.core.Plugin;
 import com.github.dapeng.api.events.AppEvent;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.AbstractByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -46,12 +48,17 @@ public class NettyPlugin implements AppListener, Plugin {
     public void start() {
         LOGGER.warn("Plugin::NettyPlugin start");
         LOGGER.info("Bind Local Port {} [Netty]", port);
+        LOGGER.info("ByteBufAllocator:{}", SoaSystemEnvProperties.SOA_POOLED_BYTEBUF?"pooled":"unpooled");
 
         new Thread("NettyContainer-Thread") {
             @Override
             public void run() {
                 try {
                     bootstrap = new ServerBootstrap();
+
+                    AbstractByteBufAllocator allocator =
+                            SoaSystemEnvProperties.SOA_POOLED_BYTEBUF ?
+                                    PooledByteBufAllocator.DEFAULT : UnpooledByteBufAllocator.DEFAULT;
 
                     bootstrap.group(bossGroup, workerGroup)
                             .channel(NioServerSocketChannel.class)
@@ -65,9 +72,9 @@ public class NettyPlugin implements AppListener, Plugin {
                                 }
                             })
                             .option(ChannelOption.SO_BACKLOG, 1024)
-                            .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)//重复利用之前分配的内存空间(PooledByteBuf -> ByteBuf)
+                            .option(ChannelOption.ALLOCATOR, allocator)
                             .childOption(ChannelOption.SO_KEEPALIVE, true)
-                            .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
+                            .childOption(ChannelOption.ALLOCATOR, allocator);
 
                     // Start the server.
                     ChannelFuture f = bootstrap.bind(port).sync();

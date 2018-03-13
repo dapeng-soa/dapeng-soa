@@ -46,9 +46,13 @@ public class WatcherUtils {
                             Boolean bool = Boolean.valueOf(key_values[1]);
                             propertyMap.put(type, bool);
                             break;
-                        case Timeout:
-                            Integer timeout = Integer.valueOf(key_values[1]);
-                            propertyMap.put(type, timeout);
+                        case ClientTimeout:
+                            long clientTimeout = Long.valueOf(key_values[1]);
+                            propertyMap.put(type, clientTimeout);
+                            break;
+                        case ServerTimeout:
+                            long serverTimeout = Long.valueOf(key_values[1]);
+                            propertyMap.put(type, serverTimeout);
                             break;
                         case LoadBalance:
                             propertyMap.put(type, key_values[1]);
