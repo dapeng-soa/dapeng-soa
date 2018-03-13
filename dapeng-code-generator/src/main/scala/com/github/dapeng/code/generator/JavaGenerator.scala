@@ -318,7 +318,7 @@ class JavaGenerator extends CodeGenerator {
       private SoaConnectionPool pool;
       private final SoaConnectionPool.ClientInfo clientInfo;
 
-      public {service.name}Client() <block>
+      public {service.name}AsyncClient() <block>
         this.serviceName = "{service.namespace + "." + service.name }";
         this.version = "{service.meta.version}";
 
