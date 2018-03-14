@@ -246,92 +246,8 @@ public class ZookeeperHelper {
     //-----竞选master---
     private static Map<String, Boolean> isMaster = MasterHelper.isMaster;
 
-    // TODO should be use other node for master election
-    @Deprecated
-    private static final String MASTER_PATH = "/soa/master/services/";
 
     private static final String RUNTIME_PATH = "/soa/runtime/services/";
-
-    /**
-     * 竞选Master
-     * <p>
-     * /soa/master/services/**.**.**.AccountService:1.0.0-0000000001   data [192.168.99.100:9090]
-     */
-    /*public void createCurrentNode(String key) {
-        zk.create(RUNTIME_PATH + key + "-", CURRENT_CONTAINER_ADDR.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, masterCreateCallback, key);
-    }*/
-
-   /* private AsyncCallback.StringCallback masterCreateCallback = (rc, path, ctx, name) -> {
-        switch (KeeperException.Code.get(rc)) {
-            case CONNECTIONLOSS:
-                try {
-                    Stat stat = zk.exists(name, false);
-                    if (stat == null) {
-                        createCurrentNode((String) ctx);
-                    } else {
-                        checkIsMaster((String) ctx, name.replace(path, ""));
-                    }
-                } catch (Exception e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-                break;
-            case OK:
-                LOGGER.info("节点({})添加成功，判断是否master", name);
-                String currentId = name.replace(path, "");
-                checkIsMaster((String) ctx, currentId);
-                break;
-            case NODEEXISTS:
-                LOGGER.error("创建节点({})时发现已存在，这是不可能发生的!!!", name);
-                break;
-            case NONODE:
-                LOGGER.error("({})的父节点不存在，创建失败", name);
-                break;
-            default:
-                LOGGER.error("创建({})异常：{}", path, KeeperException.Code.get(rc));
-        }
-    };*/
-
-
-    /**
-     * 根据serviceKey, 当前容器中serviceKey对应在zookeeper中的id, 判断当前节点是否master
-     *
-     * @param serviceKey
-     * @param currentId
-     */
-    /*private void checkIsMaster(String serviceKey, String currentId) {
-
-        try {
-            List<String> children = zk.getChildren("/soa/master/services", false).stream().filter(s -> s.startsWith(serviceKey + "-")).collect(Collectors.toList());
-
-            if (children.size() <= 0) {
-                createCurrentNode(serviceKey);
-                return;
-            }
-
-            Collections.sort(children);
-
-            String least = children.get(0).replace((serviceKey + "-"), "");
-            if (least.equals(currentId)) {
-                isMaster.put(serviceKey, true);
-                LOGGER.info("({})竞选master成功, master({})", serviceKey, CURRENT_CONTAINER_ADDR);
-            } else {
-                isMaster.put(serviceKey, false);
-                LOGGER.info("({})竞选master失败，当前节点为({}), 监听最小节点", serviceKey, serviceKey + "-" + currentId, children.get(0));
-
-                try {
-                    String masterData = new String(zk.getData(MASTER_PATH + children.get(0), false, null));
-                    LOGGER.info("{}的master节点为{}", serviceKey, masterData);
-                } catch (Exception e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-                ifLeastNodeExist(serviceKey, currentId, children.get(0).replace(serviceKey + "-", ""));
-            }
-        } catch (KeeperException e) {
-            LOGGER.error(e.getMessage(), e);
-        } catch (InterruptedException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }*/
 
 
     /**
@@ -344,6 +260,12 @@ public class ZookeeperHelper {
             return;
         }
 
+        /**
+         * 排序规则
+         * a: 192.168.100.1:9081:1.0.0-0000000022
+         * b: 192.168.100.1:9081:1.0.0-0000000014
+         * 根据 - 之后的数字进行排序，由小到大，每次取zk临时有序节点中的序列最小的节点作为master
+         */
         Collections.sort(children, (o1, o2) -> {
             Integer int1 = Integer.valueOf(o1.substring(o1.indexOf("-") + 1));
             Integer int2 = Integer.valueOf(o2.substring(o2.indexOf("-") + 1));
@@ -365,57 +287,8 @@ public class ZookeeperHelper {
     }
 
 
-    /**
-     * 监控最小节点是否存在，存在则保持监听，不存在则继续判断自己是否master
-     */
-   /* private void ifLeastNodeExist(String serviceKey, String currentId, String leastId) {
-
-        zk.exists(MASTER_PATH + serviceKey + "-" + leastId, event -> {
-            if (event.getType() == Watcher.Event.EventType.NodeDeleted) {
-                LOGGER.info("最小节点({})被删除，当前节点({})竞选master", event.getPath(), serviceKey + "-" + currentId);
-                checkIsMaster(serviceKey, currentId);
-            }
-
-        }, (rc, path, ctx, stat) -> {
-
-            switch (KeeperException.Code.get(rc)) {
-                case CONNECTIONLOSS:
-                    ifLeastNodeExist(serviceKey, currentId, leastId);
-                    break;
-                case NONODE:
-                    LOGGER.info("最小节点({})不存在，当前节点({})竞选master", serviceKey + "-" + leastId, serviceKey + "-" + currentId);
-                    checkIsMaster(serviceKey, currentId);
-                    break;
-                case OK:
-                    if (stat == null) {
-                        LOGGER.info("最小节点({})不存在，当前节点({})竞选master", serviceKey + "-" + leastId, serviceKey + "-" + currentId);
-                        checkIsMaster(serviceKey, currentId);
-                    } else
-                        LOGGER.info("最小节点({})存在，当前节点({})保持对最小节点监听", serviceKey + "-" + leastId, serviceKey + "-" + currentId);
-
-                    break;
-                default:
-                    checkIsMaster(serviceKey, currentId);
-            }
-
-        }, serviceKey + "-" + currentId);
-    }
-*/
+    private static final String CURRENT_CONTAINER_ADDR = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" +
+            String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
 
 
-
-    private static final String CURRENT_CONTAINER_ADDR = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
-
-    /**
-     * 创建/soa/master/services节点
-     */
-    /*private void addMasterRoute() {
-        String[] paths = MASTER_PATH.split("/");
-        String route = "/";
-        for (int i = 1; i < paths.length; i++) {
-            route += paths[i];
-            addPersistServerNodeAsync(route, "");
-            route += "/";
-        }
-    }*/
 }
