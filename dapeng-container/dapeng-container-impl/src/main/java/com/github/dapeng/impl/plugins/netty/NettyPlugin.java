@@ -18,9 +18,6 @@ import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author lihuimin
  * @date 2017/12/7
@@ -68,12 +65,12 @@ public class NettyPlugin implements AppListener, Plugin {
                                 protected void initChannel(SocketChannel ch) throws Exception {
                                     ch.pipeline().addLast(new SoaFrameDecoder());//粘包和断包处理
                                     if(MONITOR_ENABLE)ch.pipeline()
-                                            .addLast(new SoaMsgFlow()); // 平台流量
+                                            .addLast(new SoaFlowMonitorHandler()); // 平台流量
                                     ch.pipeline().addLast(
                                             new SoaMsgDecoder(container), //请求解码
                                             new SoaMsgEncoder(container));//响应解码
                                     if(MONITOR_ENABLE)ch.pipeline()
-                                            .addLast(new SoaInvokeCalls()) // 服务统计
+                                            .addLast(new SoaInvokeMonitorHandler()) // 服务统计
                                             .addLast(
                                                 new IdleStateHandler(15, 0, 0), //超时设置
                                                 new SoaIdleHandler(),//心跳处理

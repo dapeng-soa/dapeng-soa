@@ -30,7 +30,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * 请求要获取seqid和作为响应的匹配表示
  */
 
-public class SoaInvokeCalls extends ChannelDuplexHandler {
+public class SoaInvokeMonitorHandler extends ChannelDuplexHandler {
     private final Logger LOGGER = LoggerFactory.getLogger(getClass());
     private static final int PERIOD = MonitorFilterProperties.SOA_MONITOR_SERVICE_PROCESS_PERIOD;
     private static final String DATA_BASE = MonitorFilterProperties.SOA_MONITOR_INFLUXDB_DATABASE;
@@ -110,7 +110,7 @@ public class SoaInvokeCalls extends ChannelDuplexHandler {
         ctx.write(msg, promise);
     }
 
-    SoaInvokeCalls() {
+    SoaInvokeMonitorHandler() {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MINUTE, 1);
         calendar.set(Calendar.SECOND, 0);
