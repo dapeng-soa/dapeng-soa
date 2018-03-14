@@ -45,12 +45,12 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     Thread cleanThread = new Thread(() -> {
         while (true) {
             try {
-                Reference<ClientInfo> clientInfoRef = (Reference<ClientInfo>) referenceQueue.poll();
+                Reference<ClientInfo> clientInfoRef = (Reference<ClientInfo>) referenceQueue.remove(1000);
                 String serviceName = clientInfoRef.get().serviceName;
                 String version = clientInfoRef.get().version;
 
                 clientInfos.remove(serviceName + ":" + version);
-                zkAgent.cancnelSyncService(serviceName);
+                zkAgent.cancnelSyncService(serviceName, zkInfos);
             } catch (Throwable e) {
                 logger.error(e.getMessage(), e);
             }
