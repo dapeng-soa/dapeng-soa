@@ -108,7 +108,7 @@ public class ZookeeperHelper {
         }
 
 
-        addServerInfo(path + "-", data);
+        addServerInfo(path + ":", data);
         //添加 watch ，监听子节点变化
         watchInstanceChange(watchPath, serviceName, versionName, instancePath);
     }
@@ -132,6 +132,7 @@ public class ZookeeperHelper {
 
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
+            // fixme
             watchInstanceChange(path, serviceName, versionName, instancePath);
         }
 
@@ -267,14 +268,18 @@ public class ZookeeperHelper {
          * 根据 - 之后的数字进行排序，由小到大，每次取zk临时有序节点中的序列最小的节点作为master
          */
         Collections.sort(children, (o1, o2) -> {
-            Integer int1 = Integer.valueOf(o1.substring(o1.indexOf("-") + 1));
-            Integer int2 = Integer.valueOf(o2.substring(o2.indexOf("-") + 1));
+            Integer int1 = Integer.valueOf(o1.substring(o1.lastIndexOf(":") + 1));
+            Integer int2 = Integer.valueOf(o2.substring(o2.lastIndexOf(":") + 1));
             return int1 - int2;
         });
 
         String firstNode = children.get(0);
 
-        String firstInfo = firstNode.replace(firstNode.substring(firstNode.lastIndexOf("-")), "");
+        System.out.println("------------->  " + firstNode);
+
+        String firstInfo = firstNode.replace(firstNode.substring(firstNode.lastIndexOf(":")), "");
+
+        System.out.println("------------->  " + firstInfo);
 
 
         if (firstInfo.equals(instanceKey)) {
