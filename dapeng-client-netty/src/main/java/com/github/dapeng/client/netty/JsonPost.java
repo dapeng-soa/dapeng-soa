@@ -78,8 +78,11 @@ public class JsonPost {
 
         String jsonResponse = post(invocationContext.getServiceName(), invocationContext.getVersionName(),
                 method.name, jsonParameter, jsonEncoder, jsonDecoder);
-
-        LOGGER.info("soa-response: " + DumpUtil.formatToString(jsonResponse) + (System.currentTimeMillis() - beginTime) + "ms");
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("soa-response: " + jsonResponse + " cost:" + (System.currentTimeMillis() - beginTime) + "ms");
+        } else {
+            LOGGER.info("soa-response: " + DumpUtil.formatToString(jsonResponse) + (System.currentTimeMillis() - beginTime) + "ms");
+        }
 
         return jsonResponse;
     }
