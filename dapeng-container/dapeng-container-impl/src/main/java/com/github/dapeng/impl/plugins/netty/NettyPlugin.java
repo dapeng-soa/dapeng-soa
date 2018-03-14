@@ -18,9 +18,6 @@ import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author lihuimin
  * @date 2017/12/7
@@ -51,7 +48,7 @@ public class NettyPlugin implements AppListener, Plugin {
         LOGGER.info("Bind Local Port {} [Netty]", port);
         LOGGER.info("ByteBufAllocator:{}", SoaSystemEnvProperties.SOA_POOLED_BYTEBUF ? "pooled" : "unpooled");
 
-        new Thread("NettyContainer-Thread") {
+        Thread bootstrapThread = new Thread("NettyContainer-Thread") {
             @Override
             public void run() {
                 try {
@@ -61,24 +58,38 @@ public class NettyPlugin implements AppListener, Plugin {
                             SoaSystemEnvProperties.SOA_POOLED_BYTEBUF ?
                                     PooledByteBufAllocator.DEFAULT : UnpooledByteBufAllocator.DEFAULT;
 
+                    //粘包和断包处理
+                    ChannelHandler frameDecoder = new SoaFrameDecoder();
+                    //流量统计
+                    ChannelHandler flowCounter = new SoaFlowCounter();
+                    ChannelHandler invokeCounter = new SoaInvokeCounter();
+                    //编解码器
+                    ChannelHandler soaMsgDecoder = new SoaMsgDecoder(container);
+                    ChannelHandler soaMsgEncoder = new SoaMsgEncoder(container);
+                    //心跳处理
+                    ChannelHandler soaIdleHandler = new SoaIdleHandler();
+                    //业务处理器
+                    ChannelHandler soaServerHandler = new SoaServerHandler(container);
                     bootstrap.group(bossGroup, workerGroup)
                             .channel(NioServerSocketChannel.class)
                             .childHandler(new ChannelInitializer<SocketChannel>() {
                                 @Override
                                 protected void initChannel(SocketChannel ch) throws Exception {
-                                    ch.pipeline().addLast(new SoaFrameDecoder());//粘包和断包处理
-                                    if(MONITOR_ENABLE)ch.pipeline()
-                                            .addLast(new SoaMsgFlow()); // 平台流量
+                                    ch.pipeline().addLast(frameDecoder);
+
+                                    if (MONITOR_ENABLE)
+                                        ch.pipeline().addLast(flowCounter);
+
+                                    ch.pipeline().addLast(soaMsgDecoder, soaMsgEncoder);
+
+                                    if (MONITOR_ENABLE) ch.pipeline().addLast(invokeCounter);
+
                                     ch.pipeline().addLast(
-                                            new SoaMsgDecoder(container), //请求解码
-                                            new SoaMsgEncoder(container));//响应解码
-                                    if(MONITOR_ENABLE)ch.pipeline()
-                                            .addLast(new SoaInvokeCalls()) // 服务统计
-                                            .addLast(
-                                                new IdleStateHandler(15, 0, 0), //超时设置
-                                                new SoaIdleHandler(),//心跳处理
-                                                new SoaServerHandler(container) //业务处理器
-                                            );
+                                            //超时设置
+                                            new IdleStateHandler(15, 0, 0),
+                                            soaIdleHandler,
+                                            soaServerHandler
+                                    );
                                 }
                             })
                             .option(ChannelOption.SO_BACKLOG, 1024)
@@ -98,7 +109,9 @@ public class NettyPlugin implements AppListener, Plugin {
                     bossGroup.shutdownGracefully();
                 }
             }
-        }.start();
+        };
+        bootstrapThread.setDaemon(true);
+        bootstrapThread.start();
     }
 
     @Override

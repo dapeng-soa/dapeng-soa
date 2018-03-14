@@ -11,6 +11,7 @@ import com.github.dapeng.impl.plugins.monitor.config.MonitorFilterProperties;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import org.slf4j.Logger;
@@ -29,8 +30,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * 单独的上送，可以统计到失败的请求。
  * 请求要获取seqid和作为响应的匹配表示
  */
-
-public class SoaInvokeCalls extends ChannelDuplexHandler {
+@ChannelHandler.Sharable
+public class SoaInvokeCounter extends ChannelDuplexHandler {
     private final Logger LOGGER = LoggerFactory.getLogger(getClass());
     private static final int PERIOD = MonitorFilterProperties.SOA_MONITOR_SERVICE_PROCESS_PERIOD;
     private static final String DATA_BASE = MonitorFilterProperties.SOA_MONITOR_INFLUXDB_DATABASE;
@@ -40,9 +41,19 @@ public class SoaInvokeCalls extends ChannelDuplexHandler {
     private final CounterService SERVICE_CLIENT = new CounterServiceClient();
     private List<Map<ServiceSimpleInfo, Long>> serviceElapses = new ArrayList<>();
     /**
-     * 异常情况存储10小时
+     * 异常情况本地可存储10小时的数据.
+     * 当本地容量达到90%时, 触发告警, 将会把部分消息丢弃, 降低到80%的水位
      */
-    private ArrayBlockingQueue<List<DataPoint>> serviceDataQueue = new ArrayBlockingQueue<>(60 * 60 * 10 / PERIOD);
+    private static final int MAX_SIZE = 60 * 60 * 10 / PERIOD;
+    /**
+     * 告警水位
+     */
+    private static final int ALERT_SIZE = (int) (MAX_SIZE * 0.9);
+    /**
+     * 正常水位
+     */
+    private static final int NORMAL_SIZE = (int) (MAX_SIZE * 0.8);
+    private ArrayBlockingQueue<List<DataPoint>> serviceDataQueue = new ArrayBlockingQueue<>(MAX_SIZE);
     /**
      * k => seqId ,v => invokeStartTime
      * if seqId exist,cost = invokeEndTime - invokeStartTime
@@ -65,8 +76,7 @@ public class SoaInvokeCalls extends ChannelDuplexHandler {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
         Integer seqId = transactionContext.getSeqid();
-        Long invokeStartTime = System.currentTimeMillis();
-        invokeStartPair.put(seqId, invokeStartTime);
+        invokeStartPair.put(seqId, System.currentTimeMillis());
         ctx.fireChannelRead(msg);
     }
 
@@ -110,7 +120,7 @@ public class SoaInvokeCalls extends ChannelDuplexHandler {
         ctx.write(msg, promise);
     }
 
-    SoaInvokeCalls() {
+    SoaInvokeCounter() {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MINUTE, 1);
         calendar.set(Calendar.SECOND, 0);

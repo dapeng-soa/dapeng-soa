@@ -10,12 +10,15 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
+ * 流量计数器,包括请求跟响应的流量
+ *
  * @author with struy.
  * Create by 2018/3/6 20:42
  * email :yq1724555319@gmail.com
@@ -23,26 +26,38 @@ import java.util.concurrent.locks.ReentrantLock;
  * 只统计流量的出入，单独的上送任务？
  * 单独的数据存储表？
  */
-//@ChannelHandler.Sharable ?
-public class SoaMsgFlow extends ChannelDuplexHandler {
+@ChannelHandler.Sharable
+public class SoaFlowCounter extends ChannelDuplexHandler {
     private Logger LOGGER = LoggerFactory.getLogger(getClass());
     private static final int PERIOD = MonitorFilterProperties.SOA_MONITOR_SERVICE_PROCESS_PERIOD;
     private final String DATA_BASE = MonitorFilterProperties.SOA_MONITOR_INFLUXDB_DATABASE;
     private final String NODE_IP = SoaSystemEnvProperties.SOA_CONTAINER_IP;
     private final Integer NODE_PORT = SoaSystemEnvProperties.SOA_CONTAINER_PORT;
     private final CounterService SERVICE_CLIENT = new CounterServiceClient();
-    private List<Long> requestFlows = new ArrayList<>();
-    private List<Long> responseFlows = new ArrayList<>();
+    private Collection<Long> requestFlows = new ConcurrentLinkedQueue<>();
+    private Collection<Long> responseFlows = new ConcurrentLinkedQueue<>();
     /**
-     * 异常情况存储10小时
+     * 异常情况本地可存储10小时的数据.
+     * 当本地容量达到90%时, 触发告警, 将会把部分消息丢弃, 降低到80%的水位
      */
-    private ArrayBlockingQueue<DataPoint> flowDataQueue = new ArrayBlockingQueue<>(60 * 60 * 10 / PERIOD);
+    private static final int MAX_SIZE = 60 * 60 * 10 / PERIOD;
+    /**
+     * 告警水位
+     */
+    private static final int ALERT_SIZE = (int) (MAX_SIZE * 0.9);
+    /**
+     * 正常水位
+     */
+    private static final int NORMAL_SIZE = (int) (MAX_SIZE * 0.8);
+
+    private ArrayBlockingQueue<DataPoint> flowDataQueue = new ArrayBlockingQueue<>(MAX_SIZE);
 
     /**
      * 信号锁, 用于提醒线程跟数据上送线程的同步
      */
     private ReentrantLock signalLock = new ReentrantLock();
     private Condition signalCondition = signalLock.newCondition();
+
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         Long requestFlow = (long) ((ByteBuf) msg).readableBytes();
@@ -57,7 +72,7 @@ public class SoaMsgFlow extends ChannelDuplexHandler {
         ctx.write(msg, promise);
     }
 
-    SoaMsgFlow() {
+    SoaFlowCounter() {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MINUTE, 1);
         calendar.set(Calendar.SECOND, 0);
@@ -78,14 +93,23 @@ public class SoaMsgFlow extends ChannelDuplexHandler {
 
         schedulerExecutorService.scheduleAtFixedRate(() -> {
             try {
-                DataPoint point = flowInfo2Point(requestFlows,responseFlows);
-                if (flowDataQueue.size() >= (60 * 60 * 10 / PERIOD) * 0.9) {
-                    flowDataQueue.take();
+                List<Long> requests = new ArrayList<>(requestFlows.size());
+                requests.addAll(requestFlows);
+                requestFlows.clear();
+                List<Long> responses = new ArrayList<>(responseFlows.size());
+                responses.addAll(responseFlows);
+                responseFlows.clear();
+
+                DataPoint point = flowInfo2Point(requests, responses);
+
+                // 当容量达到最大容量的90%时
+                if (flowDataQueue.size() >= ALERT_SIZE) {
+                    LOGGER.warn("本地容量超过" + ALERT_SIZE);
+                    while (flowDataQueue.size() >= NORMAL_SIZE)
+                        flowDataQueue.take();
                 }
-                if (null!=point) {
+                if (null != point) {
                     flowDataQueue.put(point);
-                    requestFlows.clear();
-                    responseFlows.clear();
                 }
             } catch (Exception e) {
                 LOGGER.error(e.getMessage(), e);
@@ -141,7 +165,7 @@ public class SoaMsgFlow extends ChannelDuplexHandler {
 
     private DataPoint flowInfo2Point(List<Long> requestFlows, List<Long> responseFlows) {
 
-        if (requestFlows.size()>0&&responseFlows.size()>0){
+        if (requestFlows.size() > 0 && responseFlows.size() > 0) {
 
             long maxRequestFlow = requestFlows.stream()
                     .sorted()
@@ -150,9 +174,9 @@ public class SoaMsgFlow extends ChannelDuplexHandler {
                     .sorted()
                     .min(Comparator.naturalOrder()).get();
             long sumRequestFlow = requestFlows.stream()
-                    .reduce((x,y) -> (x+y))
+                    .reduce((x, y) -> (x + y))
                     .get();
-            long avgRequestFlow = sumRequestFlow/ (long) requestFlows.size();
+            long avgRequestFlow = sumRequestFlow / (long) requestFlows.size();
 
             long minResponseFlow = responseFlows.stream()
                     .sorted()
@@ -161,33 +185,33 @@ public class SoaMsgFlow extends ChannelDuplexHandler {
                     .sorted()
                     .max(Comparator.naturalOrder()).get();
             long sumResponseFlow = responseFlows.stream()
-                    .reduce((x,y) -> (x+y))
+                    .reduce((x, y) -> (x + y))
                     .get();
-            long avgResponseFlow = sumResponseFlow/ (long) responseFlows.size();
+            long avgResponseFlow = sumResponseFlow / (long) responseFlows.size();
 
             DataPoint point = new DataPoint();
             point.setDatabase(DATA_BASE);
             point.setBizTag("dapeng_node_flow");
             Map<String, String> tags = new HashMap<>(16);
-            tags.put("period", PERIOD + "");
-            tags.put("analysis_time",System.currentTimeMillis()+"");
-            tags.put("node_ip",NODE_IP);
-            tags.put("node_port",NODE_PORT+"");
+            tags.put("period", String.valueOf(PERIOD));
+            tags.put("analysis_time", String.valueOf(System.currentTimeMillis()));
+            tags.put("node_ip", NODE_IP);
+            tags.put("node_port", String.valueOf(NODE_PORT));
             point.setTags(tags);
             Map<String, String> fields = new HashMap<>(16);
-            fields.put("max_request_flow",maxRequestFlow+"");
-            fields.put("min_request_flow",minRequestFlow+"");
-            fields.put("sum_request_flow",sumRequestFlow+"");
-            fields.put("avg_request_flow",avgRequestFlow+"");
-            fields.put("max_response_flow",minResponseFlow+"");
-            fields.put("min_response_flow",maxResponseFlow+"");
-            fields.put("sum_response_flow",sumResponseFlow+"");
-            fields.put("avg_response_flow",avgResponseFlow+"");
+            fields.put("max_request_flow", String.valueOf(maxRequestFlow));
+            fields.put("min_request_flow", String.valueOf(minRequestFlow));
+            fields.put("sum_request_flow", String.valueOf(sumRequestFlow));
+            fields.put("avg_request_flow", String.valueOf(avgRequestFlow));
+            fields.put("max_response_flow", String.valueOf(minResponseFlow));
+            fields.put("min_response_flow", String.valueOf(maxResponseFlow));
+            fields.put("sum_response_flow", String.valueOf(sumResponseFlow));
+            fields.put("avg_response_flow", String.valueOf(avgResponseFlow));
             point.setValues(fields);
 
             return point;
 
-        }else {
+        } else {
             return null;
         }
     }
