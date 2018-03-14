@@ -62,7 +62,6 @@ public class NettyPlugin implements AppListener, Plugin {
                     ChannelHandler frameDecoder = new SoaFrameDecoder();
                     //流量统计
                     ChannelHandler flowCounter = new SoaFlowCounter();
-                    ChannelHandler invokeCounter = new SoaInvokeCounter();
                     //编解码器
                     ChannelHandler soaMsgDecoder = new SoaMsgDecoder(container);
                     ChannelHandler soaMsgEncoder = new SoaMsgEncoder(container);
@@ -81,8 +80,8 @@ public class NettyPlugin implements AppListener, Plugin {
                                         ch.pipeline().addLast(flowCounter);
 
                                     ch.pipeline().addLast(soaMsgDecoder, soaMsgEncoder);
-
-                                    if (MONITOR_ENABLE) ch.pipeline().addLast(invokeCounter);
+                                    // 服务调用统计
+                                    if (MONITOR_ENABLE) ch.pipeline().addLast(new SoaInvokeCounter());
 
                                     ch.pipeline().addLast(
                                             //超时设置

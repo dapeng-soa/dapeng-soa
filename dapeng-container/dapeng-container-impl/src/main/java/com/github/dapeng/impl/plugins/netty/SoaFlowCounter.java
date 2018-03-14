@@ -10,7 +10,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
@@ -18,21 +17,18 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * 流量计数器,包括请求跟响应的流量
- *
  * @author with struy.
  * Create by 2018/3/6 20:42
  * email :yq1724555319@gmail.com
- * 单独的流量统计？
- * 只统计流量的出入，单独的上送任务？
- * 单独的数据存储表？
+ *
  */
 @ChannelHandler.Sharable
 public class SoaFlowCounter extends ChannelDuplexHandler {
-    private Logger LOGGER = LoggerFactory.getLogger(getClass());
+    private static final Logger LOGGER = LoggerFactory.getLogger(SoaFlowCounter.class);
     private static final int PERIOD = MonitorFilterProperties.SOA_MONITOR_SERVICE_PROCESS_PERIOD;
-    private final String DATA_BASE = MonitorFilterProperties.SOA_MONITOR_INFLUXDB_DATABASE;
-    private final String NODE_IP = SoaSystemEnvProperties.SOA_CONTAINER_IP;
-    private final Integer NODE_PORT = SoaSystemEnvProperties.SOA_CONTAINER_PORT;
+    private static final String DATA_BASE = MonitorFilterProperties.SOA_MONITOR_INFLUXDB_DATABASE;
+    private static final String NODE_IP = SoaSystemEnvProperties.SOA_CONTAINER_IP;
+    private static final Integer NODE_PORT = SoaSystemEnvProperties.SOA_CONTAINER_PORT;
     private final CounterService SERVICE_CLIENT = new CounterServiceClient();
     private Collection<Long> requestFlows = new ConcurrentLinkedQueue<>();
     private Collection<Long> responseFlows = new ConcurrentLinkedQueue<>();
@@ -54,6 +50,7 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
 
     /**
      * 信号锁, 用于提醒线程跟数据上送线程的同步
+     * 避免因为上送失败引起的线程异常
      */
     private ReentrantLock signalLock = new ReentrantLock();
     private Condition signalCondition = signalLock.newCondition();
@@ -79,7 +76,7 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
         calendar.set(Calendar.MILLISECOND, 0);
         Long initialDelay = calendar.getTime().getTime() - System.currentTimeMillis();
 
-        LOGGER.info("dapeng flow Monitor started, upload interval:" + PERIOD * 1000 + "s");
+        LOGGER.info("dapeng flow Monitor started, upload interval:" + PERIOD + "s");
 
         ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(2,
                 new ThreadFactoryBuilder()
@@ -91,6 +88,7 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
                 .setNameFormat("dapeng-monitor-uploader-%d")
                 .build());
 
+        // 定时统计时间段内的流量值并加入到上送队列
         schedulerExecutorService.scheduleAtFixedRate(() -> {
             try {
                 List<Long> requests = new ArrayList<>(requestFlows.size());
@@ -104,7 +102,7 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
 
                 // 当容量达到最大容量的90%时
                 if (flowDataQueue.size() >= ALERT_SIZE) {
-                    LOGGER.warn("本地容量超过" + ALERT_SIZE);
+                    LOGGER.warn("流量监控本地容量超过" + ALERT_SIZE);
                     while (flowDataQueue.size() >= NORMAL_SIZE)
                         flowDataQueue.take();
                 }
@@ -120,10 +118,10 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
         schedulerExecutorService.scheduleAtFixedRate(() -> {
             try {
                 if (LOGGER.isDebugEnabled())
-                    LOGGER.debug("remainder is working.");
+                    LOGGER.debug("reminder is working.");
                 signalLock.lock();
                 if (LOGGER.isDebugEnabled())
-                    LOGGER.debug("remainder has woke up the uploader");
+                    LOGGER.debug("reminder has woke up the uploader");
                 signalCondition.signal();
             } finally {
                 signalLock.unlock();
@@ -131,7 +129,7 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
 
         }, initialDelay, PERIOD * 1000, TimeUnit.MILLISECONDS);
 
-        // uploader thread.
+        // uploader point thread.
         uploaderExecutor.execute(() -> {
             while (true) {
                 try {
@@ -141,11 +139,11 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
                     DataPoint point = flowDataQueue.peek();
                     if (null != point) {
                         try {
-                            LOGGER.debug("uploading , submitPoint ");
-                            System.out.println("====> flow submitPoint : " + point);
+                            LOGGER.debug("uploading submitPoint ");
                             SERVICE_CLIENT.submitPoint(point);
                             flowDataQueue.remove(point);
                         } catch (Throwable e) {
+                            // 上送出错
                             LOGGER.error(e.getMessage(), e);
                             signalCondition.await();
                         }
@@ -163,6 +161,12 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
         });
     }
 
+    /**
+     * 将流量数据转换为Point
+     * @param requestFlows
+     * @param responseFlows
+     * @return
+     */
     private DataPoint flowInfo2Point(List<Long> requestFlows, List<Long> responseFlows) {
 
         if (requestFlows.size() > 0 && responseFlows.size() > 0) {
