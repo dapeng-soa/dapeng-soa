@@ -251,7 +251,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
             point.setDatabase(DATA_BASE);
             point.setBizTag("dapeng_service_process");
             Map<String, String> tags = new HashMap<>(16);
-            tags.put("period", PERIOD + "");
+            tags.put("period", String.valueOf(PERIOD));
             tags.put("analysis_time", millis.toString());
             tags.put("service_name", serviceBasicInfo.getServiceName());
             tags.put("method_name", serviceProcessData.getMethodName());
