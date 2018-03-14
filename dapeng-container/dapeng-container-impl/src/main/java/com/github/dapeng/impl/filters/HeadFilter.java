@@ -28,7 +28,8 @@ public class HeadFilter implements Filter {
 
     @Override
     public void onExit(FilterContext filterContext, FilterChain prev) {
-        // 第一个filter不需要调onExit(这里不能通过TransactionContext.getCurrentInstance()的方式.因为已经给remove掉了.
+        // 第一个filter不需要调onExit
+        // (这里不能通过TransactionContext.getCurrentInstance()的方式.因为已经给remove掉了.
         TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
         ChannelHandlerContext channelHandlerContext = (ChannelHandlerContext) filterContext.getAttribute("channelHandlerContext");
 
