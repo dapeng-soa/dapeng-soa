@@ -19,17 +19,14 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author with struy.
  * Create by 2018/3/6 20:42
  * email :yq1724555319@gmail.com
- * 单独的流量统计？
- * 只统计流量的出入，单独的上送任务？
- * 单独的数据存储表？
  */
 //@ChannelHandler.Sharable ?
-public class SoaMsgFlow extends ChannelDuplexHandler {
+public class SoaFlowMonitorHandler extends ChannelDuplexHandler {
     private Logger LOGGER = LoggerFactory.getLogger(getClass());
     private static final int PERIOD = MonitorFilterProperties.SOA_MONITOR_SERVICE_PROCESS_PERIOD;
-    private final String DATA_BASE = MonitorFilterProperties.SOA_MONITOR_INFLUXDB_DATABASE;
-    private final String NODE_IP = SoaSystemEnvProperties.SOA_CONTAINER_IP;
-    private final Integer NODE_PORT = SoaSystemEnvProperties.SOA_CONTAINER_PORT;
+    private static final String DATA_BASE = MonitorFilterProperties.SOA_MONITOR_INFLUXDB_DATABASE;
+    private static final String NODE_IP = SoaSystemEnvProperties.SOA_CONTAINER_IP;
+    private static final Integer NODE_PORT = SoaSystemEnvProperties.SOA_CONTAINER_PORT;
     private final CounterService SERVICE_CLIENT = new CounterServiceClient();
     private List<Long> requestFlows = new ArrayList<>();
     private List<Long> responseFlows = new ArrayList<>();
@@ -57,7 +54,7 @@ public class SoaMsgFlow extends ChannelDuplexHandler {
         ctx.write(msg, promise);
     }
 
-    SoaMsgFlow() {
+    SoaFlowMonitorHandler() {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MINUTE, 1);
         calendar.set(Calendar.SECOND, 0);
@@ -69,11 +66,11 @@ public class SoaMsgFlow extends ChannelDuplexHandler {
         ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(2,
                 new ThreadFactoryBuilder()
                         .setDaemon(true)
-                        .setNameFormat("dapeng-monitor-scheduler-%d")
+                        .setNameFormat("dapeng-flow-monitor-scheduler-%d")
                         .build());
         ExecutorService uploaderExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
                 .setDaemon(true)
-                .setNameFormat("dapeng-monitor-uploader-%d")
+                .setNameFormat("dapeng-flow-monitor-uploader-%d")
                 .build());
 
         schedulerExecutorService.scheduleAtFixedRate(() -> {
@@ -118,7 +115,6 @@ public class SoaMsgFlow extends ChannelDuplexHandler {
                     if (null != point) {
                         try {
                             LOGGER.debug("uploading , submitPoint ");
-                            System.out.println("====> flow submitPoint : " + point);
                             SERVICE_CLIENT.submitPoint(point);
                             flowDataQueue.remove(point);
                         } catch (Throwable e) {
