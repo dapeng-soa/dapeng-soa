@@ -3,6 +3,7 @@ package com.github.dapeng.impl.plugins.netty;
 import com.github.dapeng.core.SoaException;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 
@@ -27,6 +28,7 @@ import java.util.List;
  * @author craneding
  * @date 16/1/12
  */
+@ChannelHandler.Sharable
 public class SoaFrameDecoder extends ByteToMessageDecoder {
 
     public SoaFrameDecoder() {
