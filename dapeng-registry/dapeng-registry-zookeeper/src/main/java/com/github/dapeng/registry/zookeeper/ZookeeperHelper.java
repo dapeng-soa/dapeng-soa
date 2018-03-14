@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -105,10 +106,11 @@ public class ZookeeperHelper {
             addPersistServerNodeAsync(createPath, "");
             createPath += "/";
         }
+
+
+        addServerInfo(path + "-", data);
         //添加 watch ，监听子节点变化
         watchInstanceChange(watchPath, serviceName, versionName, instancePath);
-
-        addServerInfo(path, data);
     }
 
 
@@ -342,8 +344,16 @@ public class ZookeeperHelper {
             return;
         }
 
-        Collections.sort(children);
-        String firstInfo = children.get(0);
+        Collections.sort(children, (o1, o2) -> {
+            Integer int1 = Integer.valueOf(o1.substring(o1.indexOf("-") + 1));
+            Integer int2 = Integer.valueOf(o2.substring(o2.indexOf("-") + 1));
+            return int1 - int2;
+        });
+
+        String firstNode = children.get(0);
+
+        String firstInfo = firstNode.replace(firstNode.substring(firstNode.lastIndexOf("-")), "");
+
 
         if (firstInfo.equals(instanceKey)) {
             isMaster.put(serviceKey, true);
