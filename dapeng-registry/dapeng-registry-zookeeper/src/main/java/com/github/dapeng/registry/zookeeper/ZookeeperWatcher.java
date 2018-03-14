@@ -166,8 +166,9 @@ public class ZookeeperWatcher {
     private void addPersistServerNode(String path, String data) {
         Stat stat = exists(path);
 
-        if (stat == null)
+        if (stat == null) {
             zk.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, nodeCreatedCallBack, data);
+        }
     }
 
     /**
@@ -247,8 +248,9 @@ public class ZookeeperWatcher {
     public ServiceZKInfo getServiceZkInfo(String serviceName, Map<String, ServiceZKInfo> zkInfos) {
         String servicePath = SERVICE_PATH + "/" + serviceName;
         try {
-            if (zk == null)
+            if (zk == null) {
                 init();
+            }
 
             List<String> childrens = zk.getChildren(servicePath, watchedEvent -> {
                 if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
@@ -291,8 +293,9 @@ public class ZookeeperWatcher {
         String servicePath = SERVICE_PATH + "/" + serviceName;
         try {
 
-            if (zk == null)
+            if (zk == null) {
                 init();
+            }
 
             List<String> children = zk.getChildren(servicePath, watchedEvent -> {
                 if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
