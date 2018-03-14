@@ -15,7 +15,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,8 +25,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author with struy.
  * Create by 2018/3/8 15:37
  * email :yq1724555319@gmail.com
- * 单独的上送，可以统计到失败的请求。
- * 请求要获取seqid和作为响应的匹配表示
  */
 
 public class SoaInvokeMonitorHandler extends ChannelDuplexHandler {
@@ -77,7 +74,6 @@ public class SoaInvokeMonitorHandler extends ChannelDuplexHandler {
         SoaResponseWrapper wrapper = (SoaResponseWrapper) msg;
         TransactionContext context = wrapper.transactionContext;
         SoaHeader soaHeader = context.getHeader();
-        //synchronized ?
         Integer seqId = context.getSeqid();
 
         ServiceSimpleInfo simpleInfo = new ServiceSimpleInfo(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName());
@@ -88,6 +84,7 @@ public class SoaInvokeMonitorHandler extends ChannelDuplexHandler {
         map.put(simpleInfo, cost);
         serviceElapses.add(map);
 
+        //synchronized ?
         if (null != processData) {
             processData.getTotalCalls().incrementAndGet();
             if (soaHeader.getRespCode().isPresent() && SUCCESS_CODE.equals(soaHeader.getRespCode().get())) {
@@ -105,7 +102,7 @@ public class SoaInvokeMonitorHandler extends ChannelDuplexHandler {
             }
             serviceProcessCallDatas.put(simpleInfo, newProcessData);
         }
-        System.out.printf("====>当前seqid{%s} ==> service:{%s}:version[%s]:method:[{%s}] 耗时 ==>{%s} ms 响应状态码[{%s}]", seqId, simpleInfo.getServiceName(), simpleInfo.getMethodName(), simpleInfo.getVersionName(), cost, soaHeader.getRespCode().get());
+        LOGGER.info("当前seqid{} ==> service:{}:version[]:method:[{}] 耗时 ==>{} ms 响应状态码[{}]", seqId, simpleInfo.getServiceName(), simpleInfo.getMethodName(), simpleInfo.getVersionName(), cost, soaHeader.getRespCode().get());
 
         ctx.write(msg, promise);
     }
@@ -132,7 +129,6 @@ public class SoaInvokeMonitorHandler extends ChannelDuplexHandler {
         schedulerExecutorService.scheduleAtFixedRate(() -> {
             shareLock.lock();
             try {
-                //todo check wether the queue size has reached 90%
                 List<DataPoint> dataList = serviceData2Points(System.currentTimeMillis(),
                         serviceProcessCallDatas, serviceElapses);
                 if (serviceDataQueue.size() >= (60 * 60 * 10 / PERIOD) * 0.9) {
