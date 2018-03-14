@@ -46,6 +46,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         while (true) {
             try {
                 Reference<ClientInfo> clientInfoRef = (Reference<ClientInfo>) referenceQueue.remove(1000);
+                if (clientInfoRef == null) continue;
+
                 String serviceName = clientInfoRef.get().serviceName;
                 String version = clientInfoRef.get().version;
 
