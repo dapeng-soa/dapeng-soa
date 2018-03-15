@@ -115,6 +115,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
     }
 
     SoaInvokeCounter() {
+        ensureNotSharable();
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MINUTE, 1);
         calendar.set(Calendar.SECOND, 0);

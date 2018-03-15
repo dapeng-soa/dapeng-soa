@@ -32,6 +32,7 @@ public class RegistryAgentImpl implements RegistryAgent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RegistryAgentImpl.class);
 
+    private final String RUNTIME_PATH = "/soa/runtime/services";
     private final boolean isClient;
     private final ZookeeperHelper zooKeeperHelper = new ZookeeperHelper(this);
     /**
@@ -64,7 +65,7 @@ public class RegistryAgentImpl implements RegistryAgent {
                 zooKeeperMasterHelper.connect();
             }
         }
-
+        //todo why?
         siw = new ZookeeperWatcher(isClient, SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
         siw.init();
 
@@ -89,19 +90,34 @@ public class RegistryAgentImpl implements RegistryAgent {
     @Override
     public void registerService(String serverName, String versionName) {
         try {
-            //注册服务信息到runtime节点
+            /**
+             * eg: /soa/runtime/services/com.today.api.service.UserService
+             */
             String path = "/soa/runtime/services/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
-            String data = "";
+
+            String data = "timeout/800ms,createSupplier:100ms,modifySupplier:200ms";
+
+            //zooKeeperHelper.addOrUpdateServerInfo(servicePath, data);
+
             zooKeeperHelper.addOrUpdateServerInfo(path, data);
 
-            //注册服务信息到master节点,并进行master选举
-            // TODO 后续需要优化选举机制
-            if (SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_ISCONFIG) {
-                zooKeeperMasterHelper.createCurrentNode(ZookeeperHelper.generateKey(serverName, versionName));
-            }
-            else {
-                zooKeeperHelper.createCurrentNode(ZookeeperHelper.generateKey(serverName, versionName));
-            }
+            /*
+
+                //注册服务信息到master节点,并进行master选举
+                // TODO 后续需要优化选举机制
+                if (SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_ISCONFIG) {
+                    zooKeeperMasterHelper.createCurrentNode(ZookeeperHelper.generateKey(serverName, versionName));
+                } else {
+                    zooKeeperHelper.createCurrentNode(ZookeeperHelper.generateKey(serverName, versionName));
+                }
+
+                if (SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_ISCONFIG) {
+                    zooKeeperMasterHelper.checkIsMasterNew(serverName, versionName);
+                } else {
+                    zooKeeperHelper.checkIsMasterNew(serverName, versionName);
+                }
+            */
+
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -118,7 +134,7 @@ public class RegistryAgentImpl implements RegistryAgent {
         for (ProcessorKey key : keys) {
             SoaServiceDefinition<?> processor = processorMap.get(key);
 
-            if (processor.ifaceClass!= null) {
+            if (processor.ifaceClass != null) {
                 Service service = processor.ifaceClass.getAnnotation(Service.class);
 
                 this.registerService(service.name(), service.version());

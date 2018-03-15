@@ -1,12 +1,12 @@
 package com.github.dapeng.registry;
 
 /**
- * Load Balance Stratage
+ * Load Balance Stratage strategy
  *
  * @author craneding
  * @date 16/1/20
  */
-public enum LoadBalanceStratage {
+public enum LoadBalanceStrategy {
 
     /**
      * <ul>
@@ -40,7 +40,7 @@ public enum LoadBalanceStratage {
      */
     ConsistentHash;
 
-    public static LoadBalanceStratage findByValue(String value) {
+    public static LoadBalanceStrategy findByValue(String value) {
         switch (value) {
             case "random":
                 return Random;
