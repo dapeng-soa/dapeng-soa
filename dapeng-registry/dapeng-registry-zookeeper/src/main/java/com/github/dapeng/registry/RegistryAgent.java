@@ -70,4 +70,10 @@ public interface RegistryAgent {
      * @return
      */
     List<Route> getRoutes(boolean usingFallback);
+
+    // todo 完善
+    void registerConfig(ZkNodeConfigContext configs, String serverName, String versionName);
+
+
+    void registerAllConfig(ZkNodeConfigContext configs);
 }
