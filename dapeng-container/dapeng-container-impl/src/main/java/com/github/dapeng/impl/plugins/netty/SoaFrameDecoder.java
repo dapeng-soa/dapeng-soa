@@ -28,7 +28,6 @@ import java.util.List;
  * @author craneding
  * @date 16/1/12
  */
-@ChannelHandler.Sharable
 public class SoaFrameDecoder extends ByteToMessageDecoder {
 
     public SoaFrameDecoder() {

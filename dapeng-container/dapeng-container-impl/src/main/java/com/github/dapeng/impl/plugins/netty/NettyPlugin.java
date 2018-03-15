@@ -58,8 +58,6 @@ public class NettyPlugin implements AppListener, Plugin {
                             SoaSystemEnvProperties.SOA_POOLED_BYTEBUF ?
                                     PooledByteBufAllocator.DEFAULT : UnpooledByteBufAllocator.DEFAULT;
 
-                    //粘包和断包处理
-                    ChannelHandler frameDecoder = new SoaFrameDecoder();
                     //流量统计
                     ChannelHandler flowCounter = new SoaFlowCounter();
                     //编解码器
@@ -74,7 +72,7 @@ public class NettyPlugin implements AppListener, Plugin {
                             .childHandler(new ChannelInitializer<SocketChannel>() {
                                 @Override
                                 protected void initChannel(SocketChannel ch) throws Exception {
-                                    ch.pipeline().addLast(frameDecoder);
+                                    ch.pipeline().addLast(new SoaFrameDecoder()); //粘包和断包处理
 
                                     if (MONITOR_ENABLE)
                                         ch.pipeline().addLast(flowCounter);
