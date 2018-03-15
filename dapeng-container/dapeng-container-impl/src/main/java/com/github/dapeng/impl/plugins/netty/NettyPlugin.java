@@ -10,10 +10,7 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.AbstractByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.UnpooledByteBufAllocator;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -26,6 +23,7 @@ import org.slf4j.LoggerFactory;
  * @date 2017/12/7
  */
 public class NettyPlugin implements AppListener, Plugin {
+    private final boolean MONITOR_ENABLE = SoaSystemEnvProperties.SOA_MONITOR_ENABLE;
 
     private final Container container;
 
@@ -50,7 +48,7 @@ public class NettyPlugin implements AppListener, Plugin {
         LOGGER.info("Bind Local Port {} [Netty]", port);
         LOGGER.info("ByteBufAllocator:{}", SoaSystemEnvProperties.SOA_POOLED_BYTEBUF ? "pooled" : "unpooled");
 
-        new Thread("NettyContainer-Thread") {
+        Thread bootstrapThread = new Thread("NettyContainer-Thread") {
             @Override
             public void run() {
                 try {
@@ -60,18 +58,37 @@ public class NettyPlugin implements AppListener, Plugin {
                             SoaSystemEnvProperties.SOA_POOLED_BYTEBUF ?
                                     PooledByteBufAllocator.DEFAULT : UnpooledByteBufAllocator.DEFAULT;
 
+                    //粘包和断包处理
+                    ChannelHandler frameDecoder = new SoaFrameDecoder();
+                    //流量统计
+                    ChannelHandler flowCounter = new SoaFlowCounter();
+                    //编解码器
+                    ChannelHandler soaMsgDecoder = new SoaMsgDecoder(container);
+                    ChannelHandler soaMsgEncoder = new SoaMsgEncoder(container);
+                    //心跳处理
+                    ChannelHandler soaIdleHandler = new SoaIdleHandler();
+                    //业务处理器
+                    ChannelHandler soaServerHandler = new SoaServerHandler(container);
                     bootstrap.group(bossGroup, workerGroup)
                             .channel(NioServerSocketChannel.class)
                             .childHandler(new ChannelInitializer<SocketChannel>() {
                                 @Override
                                 protected void initChannel(SocketChannel ch) throws Exception {
+                                    ch.pipeline().addLast(frameDecoder);
+
+                                    if (MONITOR_ENABLE)
+                                        ch.pipeline().addLast(flowCounter);
+
+                                    ch.pipeline().addLast(soaMsgDecoder, soaMsgEncoder);
+                                    // 服务调用统计
+                                    if (MONITOR_ENABLE) ch.pipeline().addLast(new SoaInvokeCounter());
+
                                     ch.pipeline().addLast(
-                                            new SoaFrameDecoder(), //粘包和断包处理
-                                            new SoaMsgDecoder(container),//请求解码器
-                                            new SoaMsgEncoder(container),//响应消息编码器
-                                            new IdleStateHandler(15, 0, 0), //超时设置
-                                            new SoaIdleHandler(),//心跳处理
-                                            new SoaServerHandler(container));//业务处理器
+                                            //超时设置
+                                            new IdleStateHandler(15, 0, 0),
+                                            soaIdleHandler,
+                                            soaServerHandler
+                                    );
                                 }
                             })
                             .option(ChannelOption.SO_BACKLOG, 1024)
@@ -91,7 +108,9 @@ public class NettyPlugin implements AppListener, Plugin {
                     bossGroup.shutdownGracefully();
                 }
             }
-        }.start();
+        };
+        bootstrapThread.setDaemon(true);
+        bootstrapThread.start();
     }
 
     @Override
