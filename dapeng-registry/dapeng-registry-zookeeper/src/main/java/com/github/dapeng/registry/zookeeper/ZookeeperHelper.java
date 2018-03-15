@@ -9,9 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * @author tangliu
@@ -31,10 +32,13 @@ public class ZookeeperHelper {
     }
 
     /**
-     * connect方法有可能在没有连接上的情况下就返回了, 这时候对zk的操作会出问题?
+     * zk 客户端实例化
+     * 使用 CountDownLatch 门闩 锁，保证zk连接成功后才返回
      */
     public void connect() {
         try {
+            CountDownLatch semaphore = new CountDownLatch(1);
+
             zk = new ZooKeeper(zookeeperHost, 15000, watchedEvent -> {
                 if (watchedEvent.getState() == Watcher.Event.KeeperState.Expired) {
                     LOGGER.info("ZookeeperHelper session timeout to  {} [Zookeeper]", zookeeperHost);
@@ -42,10 +46,11 @@ public class ZookeeperHelper {
                     connect();
 
                 } else if (Watcher.Event.KeeperState.SyncConnected == watchedEvent.getState()) {
+                    semaphore.countDown();
                     LOGGER.info("ZookeeperHelper connected to  {} [Zookeeper]", zookeeperHost);
-                    addMasterRoute();
-                    if (registryAgent != null)
+                    if (registryAgent != null) {
                         registryAgent.registerAllServices();//重新注册服务
+                    }
 
                 } else if (Watcher.Event.KeeperState.Disconnected == watchedEvent.getState()) {
                     //zookeeper重启或zookeeper实例重新创建
@@ -57,11 +62,17 @@ public class ZookeeperHelper {
                     connect();
                 }
             });
+
+            semaphore.await();
+
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
 
+    /**
+     * 关闭 zk 连接
+     */
     public void destroy() {
         if (zk != null) {
             try {
@@ -75,36 +86,70 @@ public class ZookeeperHelper {
 
     }
 
+    /**
+     * @param path /soa/runtime/services/com.github.user.UserService/192.168.1.12:9081:1.0.0
+     * @param data
+     */
     public void addOrUpdateServerInfo(String path, String data) {
         String[] paths = path.split("/");
+        String serviceName = paths[4];
+        String instancePath = paths[5];
+        String versionName = instancePath.substring(instancePath.lastIndexOf(":") + 1);
+
+        String watchPath = path.substring(0, path.lastIndexOf("/"));
 
         String createPath = "/";
         for (int i = 1; i < paths.length - 1; i++) {
             createPath += paths[i];
-            addPersistServerNode(createPath, "");
+            // 异步递归创建持久化节点
+            addPersistServerNodeAsync(createPath, "");
             createPath += "/";
         }
 
-        addServerInfo(path, data);
+
+        addServerInfo(path + ":", data);
+        //添加 watch ，监听子节点变化
+        watchInstanceChange(watchPath, serviceName, versionName, instancePath);
     }
 
+
     /**
-     * 添加持久化的节点
+     * 监听服务节点下面的子节点（临时节点，实例信息）变化
+     */
+    private void watchInstanceChange(String path, String serviceName, String versionName, String instancePath) {
+        try {
+            List<String> children = zk.getChildren(path, event -> {
+                //Children发生变化，则重新获取最新的services列表
+                if (event.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
+                    LOGGER.info("{}子节点发生变化，重新获取子节点...", event.getPath());
+                    // chekck
+                    watchInstanceChange(path, serviceName, versionName, instancePath);
+                }
+            });
+
+            checkIsMaster(children, MasterHelper.generateKey(serviceName, versionName), instancePath);
+
+        } catch (KeeperException | InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
+            // fixme
+            watchInstanceChange(path, serviceName, versionName, instancePath);
+        }
+
+    }
+
+
+    /**
+     * 异步添加持久化的节点
      *
      * @param path
      * @param data
      */
-    private void addPersistServerNode(String path, String data) {
+    private void addPersistServerNodeAsync(String path, String data) {
         Stat stat = exists(path);
 
-        if (stat == null)
+        if (stat == null) {
             zk.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, persistNodeCreateCallback, data);
-//        else
-//            try {
-//                zk.setData(path, data.getBytes(), -1);
-//            } catch (KeeperException e) {
-//            } catch (InterruptedException e) {
-//            }
+        }
     }
 
     private Stat exists(String path) {
@@ -118,13 +163,13 @@ public class ZookeeperHelper {
     }
 
     /**
-     * 添加持久化节点回调方法
+     * 异步添加持久化节点回调方法
      */
     private AsyncCallback.StringCallback persistNodeCreateCallback = (rc, path, ctx, name) -> {
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 LOGGER.info("创建节点:{},连接断开，重新创建", path);
-                addPersistServerNode(path, (String) ctx);
+                addPersistServerNodeAsync(path, (String) ctx);
                 break;
             case OK:
                 LOGGER.info("创建节点:{},成功", path);
@@ -140,19 +185,20 @@ public class ZookeeperHelper {
 
 
     /**
-     * 异步添加serverInfo,为临时节点，如果server挂了就木有了
+     * 异步添加serverInfo,为临时有序节点，如果server挂了就木有了
      */
     public void addServerInfo(String path, String data) {
-        zk.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, serverInfoCreateCallback, data);
+        zk.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, serverInfoCreateCallback, data);
     }
 
     /**
-     * 异步添加serverInfo的回调处理
+     * 异步添加serverInfo 临时节点 的回调处理
      */
     private AsyncCallback.StringCallback serverInfoCreateCallback = (rc, path, ctx, name) -> {
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 LOGGER.info("添加serviceInfo:{},连接断开，重新添加", path);
+
                 addOrUpdateServerInfo(path, (String) ctx);
                 break;
             case OK:
@@ -161,6 +207,7 @@ public class ZookeeperHelper {
             case NODEEXISTS:
                 LOGGER.info("添加serviceInfo:{},已存在，删掉后重新添加", path);
                 try {
+                    //只删除了当前serviceInfo的节点
                     zk.delete(path, -1);
                 } catch (Exception e) {
                     LOGGER.error("删除serviceInfo:{} 失败:{}", path, e.getMessage());
@@ -199,144 +246,45 @@ public class ZookeeperHelper {
     //-----竞选master---
     private static Map<String, Boolean> isMaster = MasterHelper.isMaster;
 
-    // TODO should be use other node for master election
-    @Deprecated
-    private static final String MASTER_PATH = "/soa/master/services/";
-
     /**
-     * 竞选Master
-     * <p>
-     * /soa/master/services/**.**.**.AccountService:1.0.0-0000000001   data [192.168.99.100:9090]
+     * @param children    当前方法下的实例列表，        eg 127.0.0.1:9081:1.0.0,192.168.1.12:9081:1.0.0
+     * @param serviceKey  当前服务信息                eg com.github.user.UserService:1.0.0
+     * @param instanceKey 当前服务节点实例信息         eg  192.168.10.17:9081:1.0.0
      */
-    public void createCurrentNode(String key) {
-        zk.create(MASTER_PATH + key + "-", CURRENT_CONTAINER_ADDR.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, masterCreateCallback, key);
-    }
-
-    private AsyncCallback.StringCallback masterCreateCallback = (rc, path, ctx, name) -> {
-        switch (KeeperException.Code.get(rc)) {
-            case CONNECTIONLOSS:
-                try {
-                    Stat stat = zk.exists(name, false);
-                    if (stat == null) {
-                        createCurrentNode((String) ctx);
-                    } else {
-                        checkIsMaster((String) ctx, name.replace(path, ""));
-                    }
-                } catch (Exception e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-                break;
-            case OK:
-                LOGGER.info("节点({})添加成功，判断是否master", name);
-                String currentId = name.replace(path, "");
-                checkIsMaster((String) ctx, currentId);
-                break;
-            case NODEEXISTS:
-                LOGGER.error("创建节点({})时发现已存在，这是不可能发生的!!!", name);
-                break;
-            case NONODE:
-                LOGGER.error("({})的父节点不存在，创建失败", name);
-                break;
-            default:
-                LOGGER.error("创建({})异常：{}", path, KeeperException.Code.get(rc));
+    public void checkIsMaster(List<String> children, String serviceKey, String instanceKey) {
+        if (children.size() <= 0) {
+            return;
         }
-    };
 
+        /**
+         * 排序规则
+         * a: 192.168.100.1:9081:1.0.0-0000000022
+         * b: 192.168.100.1:9081:1.0.0-0000000014
+         * 根据 - 之后的数字进行排序，由小到大，每次取zk临时有序节点中的序列最小的节点作为master
+         */
+        Collections.sort(children, (o1, o2) -> {
+            Integer int1 = Integer.valueOf(o1.substring(o1.lastIndexOf(":") + 1));
+            Integer int2 = Integer.valueOf(o2.substring(o2.lastIndexOf(":") + 1));
+            return int1 - int2;
+        });
 
-    /**
-     * 根据serviceKey, 当前容器中serviceKey对应在zookeeper中的id, 判断当前节点是否master
-     *
-     * @param serviceKey
-     * @param currentId
-     */
-    private void checkIsMaster(String serviceKey, String currentId) {
+        String firstNode = children.get(0);
+        LOGGER.info("serviceInfo firstNode {}", firstNode);
 
-        try {
-            List<String> children = zk.getChildren("/soa/master/services", false).stream().filter(s -> s.startsWith(serviceKey + "-")).collect(Collectors.toList());
+        String firstInfo = firstNode.replace(firstNode.substring(firstNode.lastIndexOf(":")), "");
 
-            if (children.size() <= 0) {
-                createCurrentNode(serviceKey);
-                return;
-            }
-
-            Collections.sort(children);
-
-            String least = children.get(0).replace((serviceKey + "-"), "");
-            if (least.equals(currentId)) {
-                isMaster.put(serviceKey, true);
-                LOGGER.info("({})竞选master成功, master({})", serviceKey, CURRENT_CONTAINER_ADDR);
-            } else {
-                isMaster.put(serviceKey, false);
-                LOGGER.info("({})竞选master失败，当前节点为({}), 监听最小节点", serviceKey, serviceKey + "-" + currentId, children.get(0));
-
-                try {
-                    String masterData = new String(zk.getData(MASTER_PATH + children.get(0), false, null));
-                    LOGGER.info("{}的master节点为{}", serviceKey, masterData);
-                } catch (Exception e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-                ifLeastNodeExist(serviceKey, currentId, children.get(0).replace(serviceKey + "-", ""));
-            }
-        } catch (KeeperException e) {
-            LOGGER.error(e.getMessage(), e);
-        } catch (InterruptedException e) {
-            LOGGER.error(e.getMessage(), e);
+        if (firstInfo.equals(instanceKey)) {
+            isMaster.put(serviceKey, true);
+            LOGGER.info("({})竞选master成功, master({})", serviceKey, CURRENT_CONTAINER_ADDR);
+        } else {
+            isMaster.put(serviceKey, false);
+            LOGGER.info("({})竞选master失败，当前节点为({})", serviceKey);
         }
     }
 
-    /**
-     * 监控最小节点是否存在，存在则保持监听，不存在则继续判断自己是否master
-     */
-    private void ifLeastNodeExist(String serviceKey, String currentId, String leastId) {
 
-        zk.exists(MASTER_PATH + serviceKey + "-" + leastId, event -> {
-            if (event.getType() == Watcher.Event.EventType.NodeDeleted) {
-                LOGGER.info("最小节点({})被删除，当前节点({})竞选master", event.getPath(), serviceKey + "-" + currentId);
-                checkIsMaster(serviceKey, currentId);
-            }
-
-        }, (rc, path, ctx, stat) -> {
-
-            switch (KeeperException.Code.get(rc)) {
-                case CONNECTIONLOSS:
-                    ifLeastNodeExist(serviceKey, currentId, leastId);
-                    break;
-                case NONODE:
-                    LOGGER.info("最小节点({})不存在，当前节点({})竞选master", serviceKey + "-" + leastId, serviceKey + "-" + currentId);
-                    checkIsMaster(serviceKey, currentId);
-                    break;
-                case OK:
-                    if (stat == null) {
-                        LOGGER.info("最小节点({})不存在，当前节点({})竞选master", serviceKey + "-" + leastId, serviceKey + "-" + currentId);
-                        checkIsMaster(serviceKey, currentId);
-                    } else
-                        LOGGER.info("最小节点({})存在，当前节点({})保持对最小节点监听", serviceKey + "-" + leastId, serviceKey + "-" + currentId);
-
-                    break;
-                default:
-                    checkIsMaster(serviceKey, currentId);
-            }
-
-        }, serviceKey + "-" + currentId);
-    }
+    private static final String CURRENT_CONTAINER_ADDR = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" +
+            String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
 
 
-    public static String generateKey(String serviceName, String versionName) {
-        return serviceName + ":" + versionName;
-    }
-
-    private static final String CURRENT_CONTAINER_ADDR = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
-
-    /**
-     * 创建/soa/master/services节点
-     */
-    private void addMasterRoute() {
-        String[] paths = MASTER_PATH.split("/");
-        String route = "/";
-        for (int i = 1; i < paths.length; i++) {
-            route += paths[i];
-            addPersistServerNode(route, "");
-            route += "/";
-        }
-    }
 }
