@@ -48,7 +48,6 @@ public class ZookeeperHelper {
                 } else if (Watcher.Event.KeeperState.SyncConnected == watchedEvent.getState()) {
                     semaphore.countDown();
                     LOGGER.info("ZookeeperHelper connected to  {} [Zookeeper]", zookeeperHost);
-//                    addMasterRoute();
                     if (registryAgent != null) {
                         registryAgent.registerAllServices();//重新注册服务
                     }
@@ -247,10 +246,6 @@ public class ZookeeperHelper {
     //-----竞选master---
     private static Map<String, Boolean> isMaster = MasterHelper.isMaster;
 
-
-    private static final String RUNTIME_PATH = "/soa/runtime/services/";
-
-
     /**
      * @param children    当前方法下的实例列表，        eg 127.0.0.1:9081:1.0.0,192.168.1.12:9081:1.0.0
      * @param serviceKey  当前服务信息                eg com.github.user.UserService:1.0.0
@@ -274,13 +269,9 @@ public class ZookeeperHelper {
         });
 
         String firstNode = children.get(0);
-
-        System.out.println("------------->  " + firstNode);
+        LOGGER.info("serviceInfo firstNode {}", firstNode);
 
         String firstInfo = firstNode.replace(firstNode.substring(firstNode.lastIndexOf(":")), "");
-
-        System.out.println("------------->  " + firstInfo);
-
 
         if (firstInfo.equals(instanceKey)) {
             isMaster.put(serviceKey, true);
