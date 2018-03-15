@@ -10,6 +10,7 @@ import com.github.dapeng.core.ServiceInfo;
 import com.github.dapeng.impl.container.DapengApplication;
 import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.registry.RegistryAgentProxy;
+import com.github.dapeng.registry.ZkNodeConfigContext;
 import com.github.dapeng.registry.zookeeper.RegistryAgentImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,7 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
         //TODO: zookeeper注册是否允许部分失败？ 对于整个应用来说应该要保证完整性吧
         application.getServiceInfos().forEach(serviceInfo ->
                 registerService(serviceInfo.serviceName, serviceInfo.version)
+
         );
 
         // Monitor ZK's config properties for service
@@ -59,7 +61,11 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
 
         container.getApplications().forEach(app -> {
             List<ServiceInfo> serviceInfos = app.getServiceInfos();
-            serviceInfos.forEach(serviceInfo -> registerService(serviceInfo.serviceName, serviceInfo.version));
+            serviceInfos.forEach(serviceInfo -> {
+                registerService(serviceInfo.serviceName, serviceInfo.version);
+                //fixme 配置信息
+                registerConfigTimeOut(serviceInfo.serviceName, serviceInfo.version);
+            });
         });
     }
 
@@ -82,4 +88,17 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
         LOGGER.warn("unRegister service: " + serviceName + " " + version);
         // TODO do something real?
     }
+
+    /**
+     * 注册配置信息
+     */
+    public void registerConfigTimeOut(String serviceName, String version) {
+        LOGGER.info("register time out config: " + serviceName + " " + version);
+        registryAgent.registerConfig(new ZkNodeConfigContext("", "", ""),
+                serviceName, version);
+
+
+    }
+
+
 }

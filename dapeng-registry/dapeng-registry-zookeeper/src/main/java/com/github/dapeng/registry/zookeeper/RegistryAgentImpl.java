@@ -5,10 +5,7 @@ import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.Service;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
-import com.github.dapeng.registry.ConfigKey;
-import com.github.dapeng.registry.RegistryAgent;
-import com.github.dapeng.registry.ServiceInfo;
-import com.github.dapeng.registry.ServiceInfos;
+import com.github.dapeng.registry.*;
 import com.github.dapeng.route.Route;
 import com.github.dapeng.route.RouteExecutor;
 import com.github.dapeng.util.SoaSystemEnvProperties;
@@ -33,6 +30,7 @@ public class RegistryAgentImpl implements RegistryAgent {
     private static final Logger LOGGER = LoggerFactory.getLogger(RegistryAgentImpl.class);
 
     private final String RUNTIME_PATH = "/soa/runtime/services";
+    private final String CONFIG_PATH = "/soa/config/services";
     private final boolean isClient;
     private final ZookeeperHelper zooKeeperHelper = new ZookeeperHelper(this);
     /**
@@ -90,34 +88,9 @@ public class RegistryAgentImpl implements RegistryAgent {
     @Override
     public void registerService(String serverName, String versionName) {
         try {
-            /**
-             * eg: /soa/runtime/services/com.today.api.service.UserService
-             */
-            String path = "/soa/runtime/services/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
-
-            String data = "timeout/800ms,createSupplier:100ms,modifySupplier:200ms";
-
-            //zooKeeperHelper.addOrUpdateServerInfo(servicePath, data);
-
+            String path = RUNTIME_PATH + "/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
+            String data = "";
             zooKeeperHelper.addOrUpdateServerInfo(path, data);
-
-            /*
-
-                //注册服务信息到master节点,并进行master选举
-                // TODO 后续需要优化选举机制
-                if (SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_ISCONFIG) {
-                    zooKeeperMasterHelper.createCurrentNode(ZookeeperHelper.generateKey(serverName, versionName));
-                } else {
-                    zooKeeperHelper.createCurrentNode(ZookeeperHelper.generateKey(serverName, versionName));
-                }
-
-                if (SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_ISCONFIG) {
-                    zooKeeperMasterHelper.checkIsMasterNew(serverName, versionName);
-                } else {
-                    zooKeeperHelper.checkIsMasterNew(serverName, versionName);
-                }
-            */
-
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -125,12 +98,24 @@ public class RegistryAgentImpl implements RegistryAgent {
 
     @Override
     public void registerAllServices() {
-        if (processorMap == null) {
+        List<Service> services = getAllServices();
+        if (services == null) {
             return;
         }
 
-        Set<ProcessorKey> keys = processorMap.keySet();
+        services.forEach(service -> {
+            registerService(service.name(), service.version());
+        });
 
+        //如果开启了全局事务，将事务服务也注册到zookeeper,为了主从竞选，只有主全局事务管理器会执行
+        if (SoaSystemEnvProperties.SOA_TRANSACTIONAL_ENABLE) {
+            this.registerService("com.github.dapeng.transaction.api.service.GlobalTransactionService", "1.0.0");
+        }
+
+        /*if (processorMap == null) {
+            return;
+        }
+        Set<ProcessorKey> keys = processorMap.keySet();
         for (ProcessorKey key : keys) {
             SoaServiceDefinition<?> processor = processorMap.get(key);
 
@@ -140,11 +125,10 @@ public class RegistryAgentImpl implements RegistryAgent {
                 this.registerService(service.name(), service.version());
             }
         }
-
         //如果开启了全局事务，将事务服务也注册到zookeeper,为了主从竞选，只有主全局事务管理器会执行
         if (SoaSystemEnvProperties.SOA_TRANSACTIONAL_ENABLE) {
             this.registerService("com.github.dapeng.transaction.api.service.GlobalTransactionService", "1.0.0");
-        }
+        }*/
     }
 
     @Override
@@ -202,4 +186,61 @@ public class RegistryAgentImpl implements RegistryAgent {
     public List<Route> getRoutes(boolean usingFallback) {
         return null;
     }
+
+    /**
+     * @param configs
+     * @param serverName
+     * @param versionName
+     * @author hz.lei
+     */
+    @Override
+    public void registerConfig(ZkNodeConfigContext configs, String serverName, String versionName) {
+        try {
+            String path = CONFIG_PATH + "/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
+            zooKeeperHelper.addOrUpdateConfigNode(path, configs);
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+
+    @Override
+    public void registerAllConfig(ZkNodeConfigContext configs) {
+        List<Service> services = getAllServices();
+        if (services == null) {
+            return;
+        }
+        services.forEach(service -> {
+            registerConfig(configs, service.name(), service.version());
+        });
+    }
+
+    /**
+     * getAllServices
+     *
+     * @return
+     */
+    public List<Service> getAllServices() {
+        List<Service> services = new ArrayList<>();
+
+        if (processorMap == null) {
+            return null;
+        }
+        Set<ProcessorKey> keys = processorMap.keySet();
+        for (ProcessorKey key : keys) {
+            SoaServiceDefinition<?> processor = processorMap.get(key);
+
+            if (processor.ifaceClass != null) {
+                Service service = processor.ifaceClass.getAnnotation(Service.class);
+                services.add(service);
+            }
+        }
+        //如果开启了全局事务，将事务服务也注册到zookeeper,为了主从竞选，只有主全局事务管理器会执行
+        if (SoaSystemEnvProperties.SOA_TRANSACTIONAL_ENABLE) {
+            this.registerService("com.github.dapeng.transaction.api.service.GlobalTransactionService", "1.0.0");
+        }
+        return services;
+    }
+
+
 }
