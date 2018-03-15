@@ -19,6 +19,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
@@ -37,8 +38,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private ReentrantLock subPoolLock = new ReentrantLock();
 
 
-    Map<String, WeakReference<ClientInfo>> clientInfos = new ConcurrentHashMap<>(16);
-    ReferenceQueue<ClientInfo> referenceQueue = new ReferenceQueue<>();
+    private Map<String, WeakReference<ClientInfo>> clientInfos = new ConcurrentHashMap<>(16);
+    private Map<WeakReference<ClientInfo>, String> clientInfoRefs = new ConcurrentHashMap<>(16);
+    private final ReferenceQueue<ClientInfo> referenceQueue = new ReferenceQueue<>();
 
     // TODO connection idle process.
 
@@ -48,11 +50,14 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 Reference<ClientInfo> clientInfoRef = (Reference<ClientInfo>) referenceQueue.remove(1000);
                 if (clientInfoRef == null) continue;
 
-                String serviceName = clientInfoRef.get().serviceName;
-                String version = clientInfoRef.get().version;
+                String serviceVersion = clientInfoRefs.remove(clientInfoRef);
 
-                clientInfos.remove(serviceName + ":" + version);
-                zkAgent.cancnelSyncService(serviceName, zkInfos);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("client for service:" + serviceVersion + " is gone.");
+                }
+
+                clientInfos.remove(serviceVersion);
+                zkAgent.cancnelSyncService(serviceVersion.split(":")[0], zkInfos);
             } catch (Throwable e) {
                 logger.error(e.getMessage(), e);
             }
@@ -87,6 +92,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 new ClientInfo(serviceName, version), referenceQueue));
 
         clientInfos.put(key, newClientInfoRef);
+        clientInfoRefs.put(newClientInfoRef, key);
 
         if (!clientInfoRef.isPresent()) {
             zkAgent.syncService(serviceName, zkInfos);
