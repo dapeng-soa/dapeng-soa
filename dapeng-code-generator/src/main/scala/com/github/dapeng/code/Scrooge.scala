@@ -138,7 +138,7 @@ object Scrooge {
       if (resources != null && language != "" && needUpdate) {
         System.out.println("----------------need update")
         //删除文件再生成
-        fileDel(new File(outDir))
+        fileDel(new File(outDir),language)
         val parserLanguage = if (language == "scala") "scala" else "java"
         val services = new ThriftCodeParser(parserLanguage).toServices(resources, version)
         val structs = if (generateAll) new ThriftCodeParser(parserLanguage).getAllStructs(resources) else null
@@ -177,10 +177,10 @@ object Scrooge {
   }
 
   //删除目录和文件
-  def fileDel(path: File) {
+  def fileDel(path: File , language : String) {
     if (!path.exists())
       return
-    if (path.isFile() && (path.getName.endsWith(".java") || path.getName.endsWith(".scala") || path.getName.endsWith(".xml"))) {
+    if (path.isFile() && (path.getName.endsWith(language)  || path.getName.endsWith(".xml"))) {
       path.delete()
       return
     }
@@ -188,7 +188,7 @@ object Scrooge {
     val file: Array[File] = path.listFiles()
     if (file != null) {
       for (d <- file) {
-        fileDel(d)
+        fileDel(d , language)
       }
     }
 
