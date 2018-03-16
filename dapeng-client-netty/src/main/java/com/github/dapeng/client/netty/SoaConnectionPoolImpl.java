@@ -42,8 +42,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private Map<WeakReference<ClientInfo>, String> clientInfoRefs = new ConcurrentHashMap<>(16);
     private final ReferenceQueue<ClientInfo> referenceQueue = new ReferenceQueue<>();
 
-    // TODO connection idle process.
-
     Thread cleanThread = new Thread(() -> {
         while (true) {
             try {
@@ -64,9 +62,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
     }, "dapeng-zk-monitor-thread");
 
-
-    // clean idle connections;
-    // TODO ClientInfo clean.
 
     public SoaConnectionPoolImpl() {
         IdleConnectionManager connectionManager = new IdleConnectionManager();
