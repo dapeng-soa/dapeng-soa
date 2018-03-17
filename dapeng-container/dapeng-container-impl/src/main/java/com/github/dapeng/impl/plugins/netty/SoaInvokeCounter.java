@@ -146,7 +146,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
                 if (serviceDataQueue.size() >= ALERT_SIZE) {
                     LOGGER.warn("服务调用监控本地容量超过" + ALERT_SIZE);
                     while (serviceDataQueue.size() >= NORMAL_SIZE)
-                        serviceDataQueue.take();
+                        serviceDataQueue.remove();
                 }
                 if (!dataList.isEmpty()) {
                     serviceDataQueue.put(dataList);
