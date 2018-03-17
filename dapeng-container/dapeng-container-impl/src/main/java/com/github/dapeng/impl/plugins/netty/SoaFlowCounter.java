@@ -57,6 +57,9 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(getClass().getSimpleName() + "::read");
+        }
         Long requestFlow = (long) ((ByteBuf) msg).readableBytes();
         requestFlows.add(requestFlow);
         ctx.fireChannelRead(msg);
@@ -64,6 +67,9 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(getClass().getSimpleName() + "::write");
+        }
         Long responseFlow = (long) ((ByteBuf) msg).readableBytes();
         responseFlows.add(responseFlow);
         ctx.write(msg, promise);
@@ -91,6 +97,9 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
         // 定时统计时间段内的流量值并加入到上送队列
         schedulerExecutorService.scheduleAtFixedRate(() -> {
             try {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(Thread.currentThread().getName() + "::statistics");
+                }
                 List<Long> requests = new ArrayList<>(requestFlows.size());
                 requests.addAll(requestFlows);
                 requestFlows.clear();
@@ -102,9 +111,9 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
 
                 // 当容量达到最大容量的90%时
                 if (flowDataQueue.size() >= ALERT_SIZE) {
-                    LOGGER.warn("流量监控本地容量超过" + ALERT_SIZE);
+                    LOGGER.warn(Thread.currentThread().getName() + "流量监控本地容量超过" + ALERT_SIZE);
                     while (flowDataQueue.size() >= NORMAL_SIZE)
-                        flowDataQueue.take();
+                        flowDataQueue.remove();
                 }
                 if (null != point) {
                     flowDataQueue.put(point);
@@ -118,10 +127,10 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
         schedulerExecutorService.scheduleAtFixedRate(() -> {
             try {
                 if (LOGGER.isDebugEnabled())
-                    LOGGER.debug("reminder is working.");
+                    LOGGER.debug(Thread.currentThread().getName() + "::reminder is working.");
                 signalLock.lock();
                 if (LOGGER.isDebugEnabled())
-                    LOGGER.debug("reminder has woke up the uploader");
+                    LOGGER.debug(Thread.currentThread().getName() + "::reminder has woke up the uploader");
                 signalCondition.signal();
             } finally {
                 signalLock.unlock();
@@ -134,12 +143,12 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
             while (true) {
                 try {
                     if (LOGGER.isDebugEnabled())
-                        LOGGER.debug("uploader is working.");
+                        LOGGER.debug(Thread.currentThread().getName() + "::uploader is working.");
                     signalLock.lock();
                     DataPoint point = flowDataQueue.peek();
                     if (null != point) {
                         try {
-                            LOGGER.debug("uploading submitPoint ");
+                            LOGGER.debug(Thread.currentThread().getName() + "::uploading submitPoint ");
                             SERVICE_CLIENT.submitPoint(point);
                             flowDataQueue.remove(point);
                         } catch (Throwable e) {
@@ -149,7 +158,7 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
                         }
                     } else {
                         if (LOGGER.isDebugEnabled())
-                            LOGGER.debug("no more tasks, uploader release the lock.");
+                            LOGGER.debug(Thread.currentThread().getName() + "::no more tasks, uploader release the lock.");
                         signalCondition.await();
                     }
                 } catch (InterruptedException e) {
