@@ -1,11 +1,14 @@
 package com.github.dapeng.impl.plugins.netty;
 
 import com.github.dapeng.core.SoaException;
+import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -29,6 +32,7 @@ import java.util.List;
  * @date 16/1/12
  */
 public class SoaFrameDecoder extends ByteToMessageDecoder {
+    private final static Logger LOGGER = LoggerFactory.getLogger(SoaFrameDecoder.class);
 
     public SoaFrameDecoder() {
         setSingleDecode(false);
@@ -59,7 +63,12 @@ public class SoaFrameDecoder extends ByteToMessageDecoder {
             return;
         }
 
+
         ByteBuf msg = in.slice(readerIndex, length + Integer.BYTES).retain();
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(getClass().getSimpleName() + "::request byteBuf:\n" + DumpUtil.dumpToStr(msg));
+        }
 
         /**
          * 将readerIndex放到报文尾，否则长连接收到第二次报文时会出现不可预料的错误
