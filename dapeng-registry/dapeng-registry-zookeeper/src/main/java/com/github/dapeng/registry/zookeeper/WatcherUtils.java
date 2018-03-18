@@ -1,7 +1,6 @@
 package com.github.dapeng.registry.zookeeper;
 
-import com.github.dapeng.registry.ConfigKey;
-import com.github.dapeng.registry.ServiceInfo;
+import com.github.dapeng.registry.*;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.ServiceInfo;
 import org.slf4j.Logger;
@@ -14,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
  * @author tangliu
  * @date 2016/8/8
  */
@@ -75,6 +73,65 @@ public class WatcherUtils {
         }
     }
 
+    /**
+     * new get config data
+     *
+     * @param data
+     * @param zkInfo
+     */
+    public static void processConfigDataNew(byte[] data, ServiceZKInfo zkInfo, boolean isGlobal) {
+        try {
+            //          timeout/800ms,createSupplier:100ms,modifySupplier:200ms;
+            //          loadbalance/LeastActive,createSupplier:Random,modifySupplier:RoundRobin;
+            String configData = new String(data, "utf-8");
+
+            String[] properties = configData.split(";");
+
+            for (String property : properties) {
+                String typeValue = property.split("/")[0];
+                if (typeValue.equals(ConfigKey.TimeOut.getValue())) {
+                    if (isGlobal) {
+                        String value = property.split("/")[1];
+                        zkInfo.timeConfig.globalConfig = timeHelper(value);
+                    } else {
+                        String[] keyValues = property.split(",");
+                        for (String keyValue : keyValues) {
+                            String[] props;
+                            if (keyValue.contains("/")) {
+                                props = keyValue.split("/");
+                            } else {
+                                props = keyValue.split(":");
+                            }
+                            zkInfo.timeConfig.serviceConfigs.put(props[0], timeHelper(props[1]));
+                        }
+                    }
+
+                } else if (typeValue.equals(ConfigKey.LoadBalance.getValue())) {
+
+                    if (isGlobal) {
+                        String value = property.split("/")[1];
+                        zkInfo.loadbalanceConfig.globalConfig = LoadBalanceStrategy.findByValue(value);
+                    } else {
+
+                        String[] keyValues = property.split(",");
+                        for (String keyValue : keyValues) {
+                            String[] props;
+                            if (keyValue.contains("/")) {
+                                props = keyValue.split("/");
+                            } else {
+                                props = keyValue.split(":");
+                            }
+                            zkInfo.loadbalanceConfig.serviceConfigs.put(props[0], LoadBalanceStrategy.findByValue(props[1]));
+                        }
+                    }
+                }
+            }
+            LOGGER.info("get config form {} with data [{}]");
+        } catch (UnsupportedEncodingException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
 
     /**
      * serviceName下子节点列表即可用服务地址列表
@@ -107,5 +164,10 @@ public class WatcherUtils {
             }
         }
         caches.put(serviceName, sinfos);
+    }
+
+    public static Long timeHelper(String number) {
+        number = number.replaceAll("[^(0-9)]", "");
+        return Long.valueOf(number);
     }
 }
