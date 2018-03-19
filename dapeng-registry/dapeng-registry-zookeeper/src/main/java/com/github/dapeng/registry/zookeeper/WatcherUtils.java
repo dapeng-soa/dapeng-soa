@@ -79,7 +79,7 @@ public class WatcherUtils {
      * @param data
      * @param zkInfo
      */
-    public static void processConfigDataNew(byte[] data, ServiceZKInfo zkInfo, boolean isGlobal) {
+    public static void  processConfigDataNew(byte[] data, ServiceZKInfo zkInfo, boolean isGlobal) {
         try {
             //          timeout/800ms,createSupplier:100ms,modifySupplier:200ms;
             //          loadbalance/LeastActive,createSupplier:Random,modifySupplier:RoundRobin;
