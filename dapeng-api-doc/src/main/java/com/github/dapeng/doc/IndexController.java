@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletRequest;
  * Created by tangliu on 2016/3/1.
  */
 @Controller
-@RequestMapping("/")
+@RequestMapping("/index")
 public class IndexController {
 
     @ModelAttribute
@@ -20,7 +20,7 @@ public class IndexController {
         model.addAttribute("tagName", "index");
     }
 
-    @RequestMapping(method = RequestMethod.GET)
+    @RequestMapping(path = "",method = RequestMethod.GET)
     public String index(HttpServletRequest request) {
         return "index";
     }
