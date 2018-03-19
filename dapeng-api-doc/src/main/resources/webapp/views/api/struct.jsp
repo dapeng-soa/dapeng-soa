@@ -5,7 +5,7 @@
 <head>
     <jsp:include page="../core/resource.jsp"/>
     <link rel="stylesheet" href="${basePath}/css/styles/monokai_sublime.css">
-    <script src="https://cdn.bootcss.com/highlight.js/8.8.0/highlight.min.js"></script>
+    <script src="${basePath}/js/highlight/8.8.0/highlight.min.js"></script>
     <script src="${basePath}/js/formatmarked.js"></script>
     <script src="${basePath}/js/api/model.js"></script>
     <script src="${basePath}/js/api/struct.js"></script>
