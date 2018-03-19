@@ -273,9 +273,10 @@ public class ZookeeperWatcher {
                 runtimeInstanceList.add(instance);
             }
             ServiceZKInfo zkInfo = new ServiceZKInfo(serviceName, runtimeInstanceList);
-            zkInfos.put(serviceName, zkInfo);
             // zkInfo config
             getConfigDataNew(serviceName, zkInfo);
+
+            zkInfos.put(serviceName, zkInfo);
             return zkInfo;
 
         } catch (Exception e) {
@@ -406,22 +407,27 @@ public class ZookeeperWatcher {
     private void getConfigDataNew(String configNodeName, ServiceZKInfo zkInfo) {
         //1.获取 globalConfig
         try {
-            byte[] globalData = zk.getData(CONFIG_PATH, configWatch, null);
+            byte[] globalData = zk.getData(CONFIG_PATH, watchedEvent -> {
+                if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                    LOGGER.info(watchedEvent.getPath() + "'s data changed, reset config in memory");
+                    getConfigDataNew(configNodeName, zkInfo);
+                }
+            }, null);
             WatcherUtils.processConfigDataNew(globalData, zkInfo, true);
 
         } catch (KeeperException e) {
-
             LOGGER.error(e.getMessage(), e);
         } catch (InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
         }
+
         // 2. 获取 service
         String configPath = CONFIG_PATH + "/" + configNodeName;
         try {
             byte[] serviceData = zk.getData(configPath, watchedEvent -> {
                 if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
                     LOGGER.info(watchedEvent.getPath() + "'s data changed, reset config in memory");
-                    getConfigData(configNodeName);
+                    getConfigDataNew(configNodeName, zkInfo);
                 }
             }, null);
             WatcherUtils.processConfigDataNew(serviceData, zkInfo, false);
@@ -436,15 +442,6 @@ public class ZookeeperWatcher {
         }
     }
 
-    /**
-     * config watch
-     */
-    private Watcher configWatch = (event) -> {
-        /*if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
-            LOGGER.info(watchedEvent.getPath() + "'s data changed, reset config in memory");
-            getConfigData(configNodeName);
-        }*/
-    };
 
     public static void main(String[] args) throws InterruptedException {
         ZookeeperWatcher zw = new ZookeeperWatcher(true);
