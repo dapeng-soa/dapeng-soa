@@ -52,9 +52,19 @@ public class ServiceProcessFilter implements InitializableFilter {
     private ReentrantLock signalLock = new ReentrantLock();
     private Condition signalCondition = signalLock.newCondition();
     /**
-     * 异常情况下，可以保留10小时的统计数据
+     * 异常情况本地可存储10小时的数据.
+     * 当本地容量达到90%时, 触发告警, 将会把部分消息丢弃, 降低到80%的水位
      */
-    private ArrayBlockingQueue<List<DataPoint>> serviceDataQueue = new ArrayBlockingQueue<>(60 * 60 * 10 / PERIOD);
+    private static final int MAX_SIZE = 60 * 60 * 10 / PERIOD;
+    /**
+     * 告警水位
+     */
+    private static final int ALERT_SIZE = (int) (MAX_SIZE * 0.9);
+    /**
+     * 正常水位
+     */
+    private static final int NORMAL_SIZE = (int) (MAX_SIZE * 0.8);
+    private ArrayBlockingQueue<List<DataPoint>> serviceDataQueue = new ArrayBlockingQueue<>(MAX_SIZE);
 
     @Override
     public void onEntry(FilterContext ctx, FilterChain next) throws SoaException {
@@ -152,9 +162,17 @@ public class ServiceProcessFilter implements InitializableFilter {
         schedulerExecutorService.scheduleAtFixedRate(() -> {
             shareLock.lock();
             try {
-                //todo check wether the queue size has reached 90%
                 List<DataPoint> dataList = serviceData2Points(System.currentTimeMillis(),
                         serviceProcessCallDatas, serviceElapses);
+
+                /**
+                 * 当超过警戒水位, 清空一部分老数据以降低到正常水位
+                 */
+                if (serviceDataQueue.size() >= ALERT_SIZE) {
+                    while (serviceDataQueue.size() >= NORMAL_SIZE) {
+                        serviceDataQueue.remove();
+                    }
+                }
 
                 if (!dataList.isEmpty()) {
                     serviceDataQueue.put(dataList);
