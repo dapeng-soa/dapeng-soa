@@ -144,7 +144,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 .collect(Collectors.toList());
 
         String serviceKey = service + "." + version + "." + method + ".consumer";
-        RuntimeInstance inst = loadbalance(serviceKey, compatibles);
+        RuntimeInstance inst = loadbalanceNew(serviceKey, version, method, compatibles);
 
         if (inst == null) {
             return null;
@@ -218,7 +218,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         LoadBalanceStrategy methodLB = serviceZKInfo.loadbalanceConfig.serviceConfigs.get(methodName);
         //服务配置
         LoadBalanceStrategy serviceLB = serviceZKInfo.loadbalanceConfig.serviceConfigs.get(ConfigKey.LoadBalance.getValue());
-
+        //全局
         LoadBalanceStrategy globalLB = serviceZKInfo.loadbalanceConfig.globalConfig;
 
         LoadBalanceStrategy balance;
@@ -365,7 +365,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     }
 
     /**
-     * new zk config
+     * new zk config         method level -> service level -> global level
      *
      * @param serviceName
      * @param version
@@ -380,7 +380,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         Long serviceTimeOUt = serviceZKInfo.timeConfig.serviceConfigs.get(ConfigKey.TimeOut.getValue());
 
         Long globalTimeOut = serviceZKInfo.timeConfig.globalConfig;
-
 
         if (methodTimeOut != null) {
 
