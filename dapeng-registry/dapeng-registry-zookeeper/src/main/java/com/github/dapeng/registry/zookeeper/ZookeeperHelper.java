@@ -2,6 +2,7 @@ package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.core.helper.MasterHelper;
+import com.github.dapeng.registry.ZkNodeConfigContext;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
@@ -102,7 +103,7 @@ public class ZookeeperHelper {
         for (int i = 1; i < paths.length - 1; i++) {
             createPath += paths[i];
             // 异步递归创建持久化节点
-            addPersistServerNodeAsync(createPath, "");
+            addPersistNode(createPath, "");
             createPath += "/";
         }
 
@@ -131,7 +132,7 @@ public class ZookeeperHelper {
 
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
-            // fixme
+            // fixme 如果这里没有父节点 path，会一直报错
             watchInstanceChange(path, serviceName, versionName, instancePath);
         }
 
@@ -144,7 +145,7 @@ public class ZookeeperHelper {
      * @param path
      * @param data
      */
-    private void addPersistServerNodeAsync(String path, String data) {
+    private void addPersistNode(String path, String data) {
         Stat stat = exists(path);
 
         if (stat == null) {
@@ -156,8 +157,7 @@ public class ZookeeperHelper {
         Stat stat = null;
         try {
             stat = zk.exists(path, false);
-        } catch (KeeperException e) {
-        } catch (InterruptedException e) {
+        } catch (KeeperException | InterruptedException e) {
         }
         return stat;
     }
@@ -169,7 +169,7 @@ public class ZookeeperHelper {
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 LOGGER.info("创建节点:{},连接断开，重新创建", path);
-                addPersistServerNodeAsync(path, (String) ctx);
+                addPersistNode(path, (String) ctx);
                 break;
             case OK:
                 LOGGER.info("创建节点:{},成功", path);
@@ -258,9 +258,9 @@ public class ZookeeperHelper {
 
         /**
          * 排序规则
-         * a: 192.168.100.1:9081:1.0.0-0000000022
-         * b: 192.168.100.1:9081:1.0.0-0000000014
-         * 根据 - 之后的数字进行排序，由小到大，每次取zk临时有序节点中的序列最小的节点作为master
+         * a: 192.168.100.1:9081:1.0.0:0000000022
+         * b: 192.168.100.1:9081:1.0.0:0000000014
+         * 根据 lastIndexOf :  之后的数字进行排序，由小到大，每次取zk临时有序节点中的序列最小的节点作为master
          */
         Collections.sort(children, (o1, o2) -> {
             Integer int1 = Integer.valueOf(o1.substring(o1.lastIndexOf(":") + 1));
@@ -286,5 +286,77 @@ public class ZookeeperHelper {
     private static final String CURRENT_CONTAINER_ADDR = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" +
             String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
 
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~config 配置~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    private final String GLOBLE_KEY = "services";
+
+
+    /**
+     * /soa/config/services/com.UserService
+     * "" soa config services com.UserService
+     * 0   1   2      3          4         length   5
+     * 传入path和configs，进行节点信息创建
+     *
+     * @param path
+     * @param config
+     */
+    public void addOrUpdateConfigNode(String path, ZkNodeConfigContext config) {
+        String[] paths = path.split("/");
+        String createPath = "/";
+        for (int i = 1; i < paths.length - 1; i++) {
+            createPath += paths[i];
+
+            if (paths[i].equals(GLOBLE_KEY)) {
+                addPersistNode(path, config.getGlobalConfig());
+                continue;
+            }
+
+            if (i == paths.length - 1) {
+                addPersistNode(path, config.getServiceConfig());
+            }
+
+            addPersistNode(path, "");
+        }
+        createEphemeralConfig(path, config);
+    }
+
+
+    /**
+     * 异步添加serverInfo,为临时有序节点，如果server挂了就木有了
+     */
+    public void createEphemeralConfig(String path, ZkNodeConfigContext config) {
+        zk.create(path, config.getInstanceConfig().getBytes(),
+                ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, instanceConfigCallback, config);
+    }
+
+
+    /**
+     * 异步添加serverInfo 临时节点 的回调处理
+     */
+    private AsyncCallback.StringCallback instanceConfigCallback = (rc, path, ctx, name) -> {
+        switch (KeeperException.Code.get(rc)) {
+            case CONNECTIONLOSS:
+                LOGGER.info("添加config instance info:{},连接断开，重新添加", path);
+
+                addOrUpdateConfigNode(path, (ZkNodeConfigContext) ctx);
+                break;
+            case OK:
+                LOGGER.info("添加config instance info :{},成功", path);
+                break;
+            case NODEEXISTS:
+                LOGGER.info("添加config instance info: {},已存在，删掉后重新添加", path);
+                try {
+                    //只删除了当前serviceInfo的节点
+                    zk.delete(path, -1);
+                } catch (Exception e) {
+                    LOGGER.error("删除serviceInfo:{} 失败:{}", path, e.getMessage());
+                }
+                addOrUpdateConfigNode(path, (ZkNodeConfigContext) ctx);
+                break;
+            default:
+                LOGGER.info("添加config instance info: {}，出错", path);
+        }
+    };
 
 }

@@ -273,6 +273,9 @@ public class ZookeeperWatcher {
                 runtimeInstanceList.add(instance);
             }
             ServiceZKInfo zkInfo = new ServiceZKInfo(serviceName, runtimeInstanceList);
+            // zkInfo config
+            getConfigDataNew(serviceName, zkInfo);
+
             zkInfos.put(serviceName, zkInfo);
             return zkInfo;
 
@@ -358,6 +361,7 @@ public class ZookeeperWatcher {
         }
     }
 
+    // 要进行缓存
     public Map<ConfigKey, Object> getConfigWithKey(String serviceKey) {
 
         if (config.containsKey(serviceKey)) {
@@ -397,9 +401,52 @@ public class ZookeeperWatcher {
         }
     }
 
+    /**
+     * @param configNodeName
+     */
+    private void getConfigDataNew(String configNodeName, ServiceZKInfo zkInfo) {
+        //1.获取 globalConfig
+        try {
+            byte[] globalData = zk.getData(CONFIG_PATH, watchedEvent -> {
+                if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                    LOGGER.info(watchedEvent.getPath() + "'s data changed, reset config in memory");
+                    getConfigDataNew(configNodeName, zkInfo);
+                }
+            }, null);
+            WatcherUtils.processConfigDataNew(globalData, zkInfo, true);
+
+        } catch (KeeperException e) {
+            LOGGER.error(e.getMessage(), e);
+        } catch (InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        // 2. 获取 service
+        String configPath = CONFIG_PATH + "/" + configNodeName;
+        try {
+            byte[] serviceData = zk.getData(configPath, watchedEvent -> {
+                if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                    LOGGER.info(watchedEvent.getPath() + "'s data changed, reset config in memory");
+                    getConfigDataNew(configNodeName, zkInfo);
+                }
+            }, null);
+            WatcherUtils.processConfigDataNew(serviceData, zkInfo, false);
+
+        } catch (KeeperException e) {
+            LOGGER.error(e.getMessage());
+            if (e instanceof KeeperException.NoNodeException) {
+                config.put(configNodeName, new HashMap<>());
+            }
+        } catch (InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
 
     public static void main(String[] args) throws InterruptedException {
         ZookeeperWatcher zw = new ZookeeperWatcher(true);
         zw.init();
     }
+
+
 }
