@@ -142,10 +142,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
                 .filter(rt -> checkVersion(version, rt.version))
                 .collect(Collectors.toList());
-
-        String serviceKey = service + "." + version + "." + method + ".consumer";
-//        RuntimeInstance inst = loadbalanceNew(serviceKey, version, method, compatibles);
-        RuntimeInstance inst = loadbalance(serviceKey, compatibles);
+        RuntimeInstance inst = loadbalanceNew(service, version, method, compatibles);
         if (inst == null) {
             return null;
         }
