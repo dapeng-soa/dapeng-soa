@@ -29,7 +29,7 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
     private static final String DATA_BASE = MonitorFilterProperties.SOA_MONITOR_INFLUXDB_DATABASE;
     private static final String NODE_IP = SoaSystemEnvProperties.SOA_CONTAINER_IP;
     private static final Integer NODE_PORT = SoaSystemEnvProperties.SOA_CONTAINER_PORT;
-    private final CounterService SERVICE_CLIENT = new CounterServiceClient();
+    private CounterService SERVICE_CLIENT = null;
     private Collection<Long> requestFlows = new ConcurrentLinkedQueue<>();
     private Collection<Long> responseFlows = new ConcurrentLinkedQueue<>();
     /**
@@ -149,6 +149,9 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
                     if (null != point) {
                         try {
                             LOGGER.debug(Thread.currentThread().getName() + "::uploading submitPoint ");
+                            if (SERVICE_CLIENT == null) {
+                                SERVICE_CLIENT = new CounterServiceClient();
+                            }
                             SERVICE_CLIENT.submitPoint(point);
                             flowDataQueue.remove(point);
                         } catch (Throwable e) {
