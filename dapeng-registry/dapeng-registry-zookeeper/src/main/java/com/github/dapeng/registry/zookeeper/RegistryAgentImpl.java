@@ -91,6 +91,7 @@ public class RegistryAgentImpl implements RegistryAgent {
             String path = RUNTIME_PATH + "/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
 //            zooKeeperClient.addOrUpdateServerInfo(path, data);
             zooKeeperClient.create(path, true);
+            zooKeeperClient.watchInstanceChange(RUNTIME_PATH + "/" + serverName,serverName,versionName,path);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
