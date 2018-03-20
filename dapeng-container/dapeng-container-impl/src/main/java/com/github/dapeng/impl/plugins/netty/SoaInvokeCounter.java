@@ -37,7 +37,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
     private static final String SUCCESS_CODE = SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
     private static final String SERVER_IP = SoaSystemEnvProperties.SOA_CONTAINER_IP;
     private static final Integer SERVER_PORT = SoaSystemEnvProperties.SOA_CONTAINER_PORT;
-    private final CounterService SERVICE_CLIENT = new CounterServiceClient();
+    private CounterService SERVICE_CLIENT = null;
     /**
      * 异常情况本地可存储10小时的数据.
      * 当本地容量达到90%时, 触发告警, 将会把部分消息丢弃, 降低到80%的水位
@@ -183,6 +183,9 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
                         try {
                             if (!points.isEmpty()) {
                                 LOGGER.debug("uploading submitPoints ");
+                                if (SERVICE_CLIENT == null) {
+                                    SERVICE_CLIENT = new CounterServiceClient();
+                                }
                                 SERVICE_CLIENT.submitPoints(points);
                             }
                             serviceDataQueue.remove(points);
