@@ -207,9 +207,7 @@ class ThriftCodeParser(var language: String) {
         dataType.setKind(DataType.KIND.STRUCT)
 
         val doc1 = if (scopePrefix != None) docCache(scopePrefix.get.name) else defaultDoc
-        val structController = new StructController(struct, false, getGenerator(doc1), getNameSpace(doc1, language))
-
-        dataType.setQualifiedName(structController.namespace + "." + structController.name)
+        dataType.setQualifiedName(doc1.namespace("java").get.fullName + "." + struct.originalName)
       case _: ListType =>
         dataType.setKind(DataType.KIND.LIST)
 

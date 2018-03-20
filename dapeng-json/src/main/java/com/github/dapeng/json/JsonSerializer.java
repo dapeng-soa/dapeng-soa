@@ -10,9 +10,7 @@ import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Stack;
+import java.util.*;
 import java.util.stream.Collectors;
 
 //import static com.github.dapeng.json.TJsonCompressProtocolUtil.readMapBegin;
@@ -248,7 +246,6 @@ public class JsonSerializer implements BeanSerializer<String> {
         /**
          * 压缩二进制编码下,集合的默认长度(占3字节)
          */
-        private final int COLLECTION_LENGTH_PLACEHOLDER = 65537;
         private final TProtocol oproto;
         private ParsePhase parsePhase = ParsePhase.INIT;
 
@@ -276,6 +273,11 @@ public class JsonSerializer implements BeanSerializer<String> {
              * the field name
              */
             final String fieldName;
+
+            /**
+             * if datatype is struct, all fields parsed will be add to this set
+             */
+            final Set<String> fields4Struct = new HashSet<>(32);
 
             /**
              * if dataType is a Collection(such as LIST, MAP, SET etc), elCount represents the size of the Collection.
@@ -447,6 +449,8 @@ public class JsonSerializer implements BeanSerializer<String> {
 
                     switch (current.dataType.kind) {
                         case STRUCT:
+                            validateStruct(current);
+
                             oproto.writeFieldStop();
                             oproto.writeStructEnd();
                             if (current.struct.name.equals(struct.name)) {
@@ -466,6 +470,26 @@ public class JsonSerializer implements BeanSerializer<String> {
                     break;
                 default:
                     logAndThrowTException();
+            }
+        }
+
+        private void validateStruct(StackNode current) throws TException {
+            /**
+             * 不在该Struct必填字段列表的字段列表
+             */
+            List<Field> mandatoryMissFileds = current.struct.fields.stream()
+                    .filter(field -> !field.isOptional())
+                    .filter(field -> !current.fields4Struct.contains(field.name))
+                    .collect(Collectors.toList());
+            if (!mandatoryMissFileds.isEmpty()) {
+                String fieldName = current.fieldName;
+                String struct = current.struct.name;
+                TException ex = new TException("JsonError, please check:"
+                        + struct + "." + fieldName
+                        + ", struct mandatory fields missing:"
+                        + mandatoryMissFileds.stream().map(field -> field.name + ", ").collect(Collectors.toList()));
+                logger.error(ex.getMessage(), ex);
+                throw ex;
             }
         }
 
@@ -578,6 +602,10 @@ public class JsonSerializer implements BeanSerializer<String> {
                             foundField = false;
                             logger.info("field(" + name + ") not found. just skip");
                             return;
+                        }
+
+                        if (current.dataType.kind == DataType.KIND.STRUCT) {
+                            current.fields4Struct.add(name);
                         }
 
                         int byteBufPositionBefore = requestByteBuf.writerIndex();
