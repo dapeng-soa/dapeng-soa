@@ -32,11 +32,11 @@ public class RegistryAgentImpl implements RegistryAgent {
     private final String RUNTIME_PATH = "/soa/runtime/services";
     private final String CONFIG_PATH = "/soa/config/services";
     private final boolean isClient;
-    private final ZookeeperHelper zooKeeperHelper = new ZookeeperHelper(this);
+    private final ZookeeperClient zooKeeperClient = new ZookeeperClient(this);
     /**
      * 灰度环境下访问生产环境的zk?
      */
-    private ZookeeperHelper zooKeeperMasterHelper = null;
+    private ZookeeperClient zooKeeperMasterClient = null;
 
     private ZookeeperWatcher siw, zkfbw;
 
@@ -54,13 +54,13 @@ public class RegistryAgentImpl implements RegistryAgent {
     public void start() {
 
         if (!isClient) {
-            zooKeeperHelper.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
-            zooKeeperHelper.connect();
+            zooKeeperClient.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
+            zooKeeperClient.connect();
 
             if (SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_ISCONFIG) {
-                zooKeeperMasterHelper = new ZookeeperHelper(this);
-                zooKeeperMasterHelper.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_HOST);
-                zooKeeperMasterHelper.connect();
+                zooKeeperMasterClient = new ZookeeperClient(this);
+                zooKeeperMasterClient.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_HOST);
+                zooKeeperMasterClient.connect();
             }
         }
         //todo why?
@@ -75,7 +75,7 @@ public class RegistryAgentImpl implements RegistryAgent {
 
     @Override
     public void stop() {
-        zooKeeperHelper.destroy();
+        zooKeeperClient.destroy();
         if (siw != null) {
             siw.destroy();
         }
@@ -89,8 +89,8 @@ public class RegistryAgentImpl implements RegistryAgent {
     public void registerService(String serverName, String versionName) {
         try {
             String path = RUNTIME_PATH + "/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
-            String data = "";
-            zooKeeperHelper.addOrUpdateServerInfo(path, data);
+//            zooKeeperClient.addOrUpdateServerInfo(path, data);
+            zooKeeperClient.create(path, true);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -197,7 +197,7 @@ public class RegistryAgentImpl implements RegistryAgent {
     public void registerConfig(ZkNodeConfigContext configs, String serverName, String versionName) {
         try {
             String path = CONFIG_PATH + "/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
-            zooKeeperHelper.addOrUpdateConfigNode(path, configs);
+            zooKeeperClient.addOrUpdateConfigNode(path, configs);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }

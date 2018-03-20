@@ -436,7 +436,7 @@ public class ZookeeperWatcher {
         } catch (KeeperException e) {
             LOGGER.error(e.getMessage());
             if (e instanceof KeeperException.NoNodeException) {
-                config.put(configNodeName, new HashMap<>());
+//                config.put(configNodeName, new HashMap<>());
             }
         } catch (InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
