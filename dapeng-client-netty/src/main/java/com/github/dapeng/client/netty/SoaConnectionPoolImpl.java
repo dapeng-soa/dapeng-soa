@@ -42,8 +42,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private Map<WeakReference<ClientInfo>, String> clientInfoRefs = new ConcurrentHashMap<>(16);
     private final ReferenceQueue<ClientInfo> referenceQueue = new ReferenceQueue<>();
 
-    // TODO connection idle process.
-
     Thread cleanThread = new Thread(() -> {
         while (true) {
             try {
@@ -64,9 +62,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
     }, "dapeng-zk-monitor-thread");
 
-
-    // clean idle connections;
-    // TODO ClientInfo clean.
 
     public SoaConnectionPoolImpl() {
         IdleConnectionManager connectionManager = new IdleConnectionManager();
@@ -149,7 +144,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 .collect(Collectors.toList());
 
         String serviceKey = service + "." + version + "." + method + ".consumer";
-        RuntimeInstance inst = loadbalance(serviceKey, compatibles);
+        RuntimeInstance inst = loadbalanceNew(serviceKey, version, method, compatibles);
 
         if (inst == null) {
             return null;
@@ -208,6 +203,57 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     }
 
     /**
+     * 根据zk 负载均衡配置解析，分为 全局/service级别/method级别
+     *
+     * @param serviceName
+     * @param version
+     * @param methodName
+     * @param compatibles
+     * @return
+     */
+    private RuntimeInstance loadbalanceNew(String serviceName, String version, String methodName, List<RuntimeInstance> compatibles) {
+
+        ServiceZKInfo serviceZKInfo = zkInfos.get(serviceName);
+        //方法级别
+        LoadBalanceStrategy methodLB = serviceZKInfo.loadbalanceConfig.serviceConfigs.get(methodName);
+        //服务配置
+        LoadBalanceStrategy serviceLB = serviceZKInfo.loadbalanceConfig.serviceConfigs.get(ConfigKey.LoadBalance.getValue());
+        //全局
+        LoadBalanceStrategy globalLB = serviceZKInfo.loadbalanceConfig.globalConfig;
+
+        LoadBalanceStrategy balance;
+
+        if (methodLB != null) {
+            balance = methodLB;
+        } else if (serviceLB != null) {
+            balance = serviceLB;
+        } else if (globalLB != null) {
+            balance = globalLB;
+        } else {
+            balance = LoadBalanceStrategy.Random;
+        }
+
+        RuntimeInstance instance = null;
+        switch (balance) {
+            case Random:
+                instance = LoadBalanceAlgorithm.random(compatibles);
+                break;
+            case RoundRobin:
+                instance = LoadBalanceAlgorithm.roundRobin(compatibles);
+                break;
+            case LeastActive:
+                instance = LoadBalanceAlgorithm.leastActive(compatibles);
+                break;
+            case ConsistentHash:
+                //TODO
+                break;
+            default:
+                // won't be here
+        }
+        return instance;
+    }
+
+    /**
      * 超时逻辑:
      * 1. 如果invocationContext有设置的话, 那么用invocationContext的(这个值每次调用都可能不一样)
      * 2. invocationContext没有的话, 就拿Option的(命令行或者环境变量)
@@ -231,7 +277,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         Optional<Long> envTimeout = SoaSystemEnvProperties.SOA_SERVICE_CLIENT_TIMEOUT.longValue() == 0 ?
                 Optional.empty() : Optional.of(SoaSystemEnvProperties.SOA_SERVICE_CLIENT_TIMEOUT.longValue());
 
-        Optional<Long> zkTimeout = getZkTimeout(service, version, method);
+        Optional<Long> zkTimeout = getZkTimeoutNew(service, version, method);
         Optional<Long> idlTimeout = getIdlTimeout(service, version, method);
 
         Optional<Long> timeout;
@@ -313,6 +359,37 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             Long timeoutConfig = (Long) configs.get(ConfigKey.ClientTimeout);
 
             return timeoutConfig == null ? Optional.empty() : Optional.of(timeoutConfig);
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * new zk config         method level -> service level -> global level
+     *
+     * @param serviceName
+     * @param version
+     * @param methodName
+     * @return
+     */
+    private Optional<Long> getZkTimeoutNew(String serviceName, String version, String methodName) {
+        ServiceZKInfo serviceZKInfo = zkInfos.get(serviceName);
+        //方法级别
+        Long methodTimeOut = serviceZKInfo.timeConfig.serviceConfigs.get(methodName);
+        //服务配置
+        Long serviceTimeOUt = serviceZKInfo.timeConfig.serviceConfigs.get(ConfigKey.TimeOut.getValue());
+
+        Long globalTimeOut = serviceZKInfo.timeConfig.globalConfig;
+
+        if (methodTimeOut != null) {
+
+            return Optional.of(methodTimeOut);
+        } else if (serviceTimeOUt != null) {
+
+            return Optional.of(serviceTimeOUt);
+        } else if (globalTimeOut != null) {
+
+            return Optional.of(globalTimeOut);
         } else {
             return Optional.empty();
         }

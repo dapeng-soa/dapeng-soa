@@ -17,7 +17,9 @@ public enum ConfigKey {
 
     FailOver("failover"),
 
-    Compatible("compatible");
+    Compatible("compatible"),
+
+    TimeOut("timeout");
 
     private final String value;
 
