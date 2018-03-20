@@ -20,17 +20,15 @@ package com.github.dapeng.basic.api.counter;
       private final String version;
 
       private SoaConnectionPool pool;
+      private final SoaConnectionPool.ClientInfo clientInfo;
 
       public CounterServiceAsyncClient() {
         this.serviceName = "com.github.dapeng.basic.api.counter.service.CounterService";
         this.version = "1.0.0";
 
         ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class);
-        for (SoaConnectionPoolFactory factory: factories) {
-          this.pool = factory.getPool();
-          break;
-        }
-        this.pool.registerClientInfo(serviceName,version);
+        this.pool = factories.iterator().next().getPool();
+        this.clientInfo = this.pool.registerClientInfo(serviceName,version);
       }
 
       
