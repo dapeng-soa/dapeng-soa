@@ -184,8 +184,9 @@ public class ZookeeperClient {
                     watchInstanceChange(path, serviceName, versionName, instancePath);
                 }
             });
-
-            checkIsMaster(children, MasterHelper.generateKey(serviceName, versionName), instancePath);
+            if (children.size() > 0) {
+                checkIsMaster(children, MasterHelper.generateKey(serviceName, versionName), instancePath);
+            }
 
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
