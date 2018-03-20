@@ -91,8 +91,6 @@ public class ZookeeperWatcher {
      */
     private void getRouteConfig(String path) {
 
-        tryCreateNode(path);
-
         zk.getData(path, watchedEvent -> {
 
             if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
@@ -144,69 +142,6 @@ public class ZookeeperWatcher {
     public List<Route> getRoutes() {
         return this.routes;
     }
-
-
-    private void tryCreateNode(String path) {
-
-        String[] paths = path.split("/");
-
-        String createPath = "/";
-        for (int i = 1; i < paths.length; i++) {
-            createPath += paths[i];
-            addPersistServerNode(createPath, path);
-            createPath += "/";
-        }
-    }
-
-    /**
-     * 添加持久化的节点
-     *
-     * @param path
-     * @param data
-     */
-    private void addPersistServerNode(String path, String data) {
-        Stat stat = exists(path);
-
-        if (stat == null) {
-            zk.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, nodeCreatedCallBack, data);
-        }
-    }
-
-    /**
-     * 判断节点是否存在
-     *
-     * @param path
-     * @return
-     */
-    private Stat exists(String path) {
-        Stat stat = null;
-        try {
-            stat = zk.exists(path, false);
-        } catch (KeeperException | InterruptedException e) {
-        }
-        return stat;
-    }
-
-    /**
-     * 异步添加serverName节点的回调处理
-     */
-    private AsyncCallback.StringCallback nodeCreatedCallBack = (rc, path, ctx, name) -> {
-        switch (KeeperException.Code.get(rc)) {
-            case CONNECTIONLOSS:
-                LOGGER.info("创建节点:{},连接断开，重新创建", path);
-                tryCreateNode((String) ctx); //每次创建都会从根节点开始尝试创建，避免根节点未创建而造成创建失败
-//                addPersistServerNode(path, (String) ctx);
-                break;
-            case OK:
-                LOGGER.info("创建节点:{},成功", path);
-                break;
-            case NODEEXISTS:
-                LOGGER.info("创建节点:{},已存在", path);
-                break;
-            default:
-                LOGGER.info("创建节点:{},失败", path);
-        }
-    };
 
 
     public void destroy() {
@@ -337,8 +272,8 @@ public class ZookeeperWatcher {
                     case SyncConnected:
                         semaphore.countDown();
                         LOGGER.info("{} Zookeeper Watcher 已连接 zookeeper Server", isClient ? "Client's" : "Server's");
-                        tryCreateNode(SERVICE_PATH);
-                        tryCreateNode(CONFIG_PATH);
+//                        tryCreateNode(SERVICE_PATH);
+//                        tryCreateNode(CONFIG_PATH);
 
                         caches.clear();
                         config.clear();
