@@ -231,6 +231,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
 
         RuntimeInstance instance = null;
+
+        logger.info("loadBalance strategy is " + balance);
         switch (balance) {
             case Random:
                 instance = LoadBalanceAlgorithm.random(compatibles);
@@ -378,6 +380,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         Long globalTimeOut = serviceZKInfo.timeConfig.globalConfig;
 
+        logger.info("methodTimeOut:{},serviceTimeOut:{},globalTimeOut:{}", methodTimeOut, serviceTimeOUt, globalTimeOut);
         if (methodTimeOut != null) {
 
             return Optional.of(methodTimeOut);

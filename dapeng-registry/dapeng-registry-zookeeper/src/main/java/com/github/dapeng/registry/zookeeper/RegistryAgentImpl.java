@@ -89,9 +89,12 @@ public class RegistryAgentImpl implements RegistryAgent {
     public void registerService(String serverName, String versionName) {
         try {
             String path = RUNTIME_PATH + "/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
-//            zooKeeperClient.addOrUpdateServerInfo(path, data);
-            zooKeeperClient.create(path, true);
-            zooKeeperClient.watchInstanceChange(RUNTIME_PATH + "/" + serverName,serverName,versionName,path);
+            String servicePath = RUNTIME_PATH + "/" + serverName;
+            String instanceInfo = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
+
+            RegisterContext registerContext = new RegisterContext(serverName, versionName, servicePath, instanceInfo);
+
+            zooKeeperClient.create(path, registerContext, true);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -198,7 +201,7 @@ public class RegistryAgentImpl implements RegistryAgent {
     public void registerConfig(ZkNodeConfigContext configs, String serverName, String versionName) {
         try {
             String path = CONFIG_PATH + "/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
-            zooKeeperClient.addOrUpdateConfigNode(path, configs);
+//            zooKeeperClient.addOrUpdateConfigNode(path, configs);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
