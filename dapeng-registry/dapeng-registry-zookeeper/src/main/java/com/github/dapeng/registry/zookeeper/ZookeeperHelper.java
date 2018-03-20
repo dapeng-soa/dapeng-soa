@@ -128,7 +128,7 @@ public class ZookeeperHelper {
                     watchInstanceChange(path, serviceName, versionName, instancePath);
                 }
             });
-            if(children.size()>0){
+            if (children.size() > 0) {
                 checkIsMaster(children, MasterHelper.generateKey(serviceName, versionName), instancePath);
             }
 
