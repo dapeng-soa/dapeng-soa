@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author tangliu
@@ -64,7 +65,7 @@ public class ZookeeperHelper {
                 }
             });
 
-            semaphore.await();
+            semaphore.await(10000, TimeUnit.MILLISECONDS);
 
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
