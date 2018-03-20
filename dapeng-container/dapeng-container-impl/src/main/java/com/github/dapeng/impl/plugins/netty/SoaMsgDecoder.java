@@ -37,6 +37,9 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List out) throws Exception {
         try {
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(getClass().getSimpleName() + "::decode");
+            }
             out.add(parseSoaMsg(msg));
         } catch (Throwable e) {
             SoaException soaException = convertToSoaException(e);
@@ -90,14 +93,18 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         }
         contentProtocol.readMessageEnd();
 
-        application.info(this.getClass(),
-                "request:"
-                        + soaHeader.getServiceName()
-                        + ":" + soaHeader.getVersionName()
-                        + ":" + soaHeader.getMethodName()
-                        + " operatorId:" + soaHeader.getOperatorId()
-                        + " operatorName:" + soaHeader.getOperatorName());
+        String infoLog = "request[seqId=" + context.getSeqid() + "]:"
+                + "service[" + soaHeader.getServiceName()
+                + "]:version[" + soaHeader.getVersionName()
+                + "]:method[" + soaHeader.getMethodName() + "]"
+                + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
+                + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
 
+        application.info(this.getClass(), infoLog);
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(getClass() + " " + infoLog + ", payload:\n" + args);
+        }
         return args;
     }
 }

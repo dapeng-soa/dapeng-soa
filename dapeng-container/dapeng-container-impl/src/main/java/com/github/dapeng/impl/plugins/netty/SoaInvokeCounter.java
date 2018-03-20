@@ -1,8 +1,11 @@
 package com.github.dapeng.impl.plugins.netty;
 
+import com.github.dapeng.api.Container;
 import com.github.dapeng.basic.api.counter.CounterServiceClient;
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
 import com.github.dapeng.basic.api.counter.service.CounterService;
+import com.github.dapeng.core.Application;
+import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.SoaHeader;
 import com.github.dapeng.core.TransactionContext;
 import com.github.dapeng.impl.plugins.monitor.ServiceProcessData;
@@ -26,6 +29,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * 统计服务调用次数和耗时，包括成功失败的次数
  * 不用 @ChannelHandler.Sharable
  * 避免seqid重复
+ *
  * @author with struy.
  * Create by 2018/3/8 15:37
  * email :yq1724555319@gmail.com
@@ -37,7 +41,6 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
     private static final String SUCCESS_CODE = SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
     private static final String SERVER_IP = SoaSystemEnvProperties.SOA_CONTAINER_IP;
     private static final Integer SERVER_PORT = SoaSystemEnvProperties.SOA_CONTAINER_PORT;
-    private CounterService SERVICE_CLIENT = null;
     /**
      * 异常情况本地可存储10小时的数据.
      * 当本地容量达到90%时, 触发告警, 将会把部分消息丢弃, 降低到80%的水位
@@ -66,8 +69,16 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
     private ReentrantLock signalLock = new ReentrantLock();
     private Condition signalCondition = signalLock.newCondition();
 
+    private static class CounterClientFactory {
+        private static CounterService COUNTER_CLIENT = new CounterServiceClient();
+    }
+
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace(getClass().getSimpleName() + "::read");
+        }
+
         TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
         Integer seqId = transactionContext.getSeqid();
         invokeStartPair.put(seqId, System.currentTimeMillis());
@@ -109,7 +120,14 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
             }
             serviceProcessCallDatas.put(basicInfo, newProcessData);
         }
-        LOGGER.info("当前seqid{} ==> service:{}:version[{}]:method:[{}] 耗时 ==>{} ms 响应状态码[{}]", seqId, basicInfo.getServiceName(), basicInfo.getMethodName(), basicInfo.getVersionName(), cost, soaHeader.getRespCode().get());
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(getClass().getName() + " response[seqId=" + context.getSeqid() + ", respCode=" + soaHeader.getRespCode().get()
+                    + "]:service[" + soaHeader.getServiceName()
+                    + "]:version[" + soaHeader.getVersionName()
+                    + "]:method[" + soaHeader.getMethodName() + "]"
+                    + "cost:" + cost + "ms");
+        }
 
         ctx.write(msg, promise);
     }
@@ -124,19 +142,22 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
 
         LOGGER.info("dapeng invoke Monitor started, upload interval:" + PERIOD + "s");
 
-        ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(2,
+        ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(1,
                 new ThreadFactoryBuilder()
                         .setDaemon(true)
-                        .setNameFormat("dapeng-monitor-scheduler-%d")
+                        .setNameFormat("dapeng-" + getClass().getName() + "-scheduler-%d")
                         .build());
         ExecutorService uploaderExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
                 .setDaemon(true)
-                .setNameFormat("dapeng-monitor-uploader")
+                .setNameFormat("dapeng-" + getClass().getName() + "-uploader")
                 .build());
 
         // 定时统计服务调用数据并加入到上送队列
         schedulerExecutorService.scheduleAtFixedRate(() -> {
             try {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(Thread.currentThread().getName() + ", deamon[" + Thread.currentThread().isDaemon() + "]::statistics");
+                }
                 List<DataPoint> dataList = serviceData2Points(System.currentTimeMillis(),
                         serviceProcessCallDatas, serviceElapses);
                 serviceProcessCallDatas.clear();
@@ -160,43 +181,48 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
         schedulerExecutorService.scheduleAtFixedRate(() -> {
             try {
                 if (LOGGER.isDebugEnabled())
-                    LOGGER.debug("reminder is working.");
+                    LOGGER.debug(Thread.currentThread().getName() + "::reminder is working.");
                 signalLock.lock();
                 if (LOGGER.isDebugEnabled())
-                    LOGGER.debug("reminder has woke up the uploader");
+                    LOGGER.debug(Thread.currentThread().getName() + "::reminder has woke up the uploader");
                 signalCondition.signal();
             } finally {
                 signalLock.unlock();
             }
 
-        }, initialDelay, PERIOD * 1000, TimeUnit.MILLISECONDS);
+        }, initialDelay + 50, PERIOD * 1000, TimeUnit.MILLISECONDS);
 
         // uploader point thread.
         uploaderExecutor.execute(() -> {
+            //单次循环上送的数据记录大小
+            int uploads = 0;
             while (true) {
                 try {
                     if (LOGGER.isDebugEnabled())
-                        LOGGER.debug("uploader is working.");
+                        LOGGER.debug(Thread.currentThread().getName() + "::uploader is working.");
                     signalLock.lock();
                     List<DataPoint> points = serviceDataQueue.peek();
                     if (points != null) {
                         try {
                             if (!points.isEmpty()) {
-                                LOGGER.debug("uploading submitPoints ");
-                                if (SERVICE_CLIENT == null) {
-                                    SERVICE_CLIENT = new CounterServiceClient();
-                                }
-                                SERVICE_CLIENT.submitPoints(points);
+                                LOGGER.debug(Thread.currentThread().getName() + "::uploading submitPoints ");
+
+                                CounterClientFactory.COUNTER_CLIENT.submitPoints(points);
+                                uploads += points.size();
                             }
                             serviceDataQueue.remove(points);
                         } catch (Throwable e) {
                             // 上送出错
                             LOGGER.error(e.getMessage(), e);
+                            if (LOGGER.isDebugEnabled())
+                                LOGGER.debug(Thread.currentThread().getName() + " has upload " + uploads + " points, now  release the lock.");
+                            uploads = 0;
                             signalCondition.await();
                         }
                     } else {
                         if (LOGGER.isDebugEnabled())
-                            LOGGER.debug("no more tasks, uploader release the lock.");
+                            LOGGER.debug(Thread.currentThread().getName() + " has upload " + uploads + " points, now  release the lock.");
+                        uploads = 0;
                         signalCondition.await();
                     }
                 } catch (InterruptedException e) {
@@ -224,6 +250,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
 
     /**
      * 将服务信息转换为Points
+     *
      * @param millis
      * @param spd
      * @param elapses

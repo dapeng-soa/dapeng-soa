@@ -130,4 +130,5 @@
         <appender-ref ref="DETAILFILE"/>
         <appender-ref ref="ERRORFILE"/>
     </root>
+    <jmxConfigurator />
 </configuration>

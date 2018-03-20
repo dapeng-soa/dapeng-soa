@@ -21,6 +21,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import static com.github.dapeng.util.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
 
@@ -43,11 +45,24 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext channelHandlerContext, Object msg) {
         final long invokeTime = System.currentTimeMillis();
         final TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
+
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace(getClass().getSimpleName() + "::read");
+        }
+
         try {
             SoaHeader soaHeader = transactionContext.getHeader();
             SoaServiceDefinition processor = container.getServiceProcessors().get(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
-            container.getDispatcher().execute(() -> {
+            Executor dispatcher = container.getDispatcher();
+
+            if (LOGGER.isDebugEnabled() && SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL) {
+                ThreadPoolExecutor poolExecutor = (ThreadPoolExecutor) dispatcher;
+                LOGGER.debug("BizThreadPoolInfo:\n"
+                        + " --activeCount/poolSize[" + poolExecutor.getActiveCount() + "/" + poolExecutor.getPoolSize() + "]"
+                        + " --taskCount[" + poolExecutor.getTaskCount() + "]");
+            }
+            dispatcher.execute(() -> {
                 try {
                     TransactionContext.Factory.setCurrentInstance(transactionContext);
                     processRequest(channelHandlerContext, processor, msg, transactionContext, invokeTime);
@@ -90,6 +105,17 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             final long waitingTime = System.currentTimeMillis() - invokeTime;
             long timeout = getTimeout(soaHeader);
             if (waitingTime > timeout) {
+                if (LOGGER.isDebugEnabled()) {
+                    Integer seqId = transactionContext.getSeqid();
+                    String infoLog = "request[seqId=" + seqId + ", waitingTime=" + waitingTime + "] timeout:"
+                            + "service[" + soaHeader.getServiceName()
+                            + "]:version[" + soaHeader.getVersionName()
+                            + "]:method[" + soaHeader.getMethodName() + "]"
+                            + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
+                            + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
+
+                    LOGGER.debug(getClass().getName() + " " + infoLog);
+                }
                 throw new SoaException(SoaCode.TimeOut, "服务端请求超时");
             }
 
