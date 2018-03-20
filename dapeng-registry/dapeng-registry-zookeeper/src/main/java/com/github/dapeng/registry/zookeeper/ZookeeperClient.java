@@ -10,26 +10,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author tangliu
- * @date 2016/2/29
- */
-public class ZookeeperHelper {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ZookeeperHelper.class);
+/**
+ * @author hz.lei
+ * @date 2018-03-20
+ */
+public class ZookeeperClient {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZookeeperClient.class);
 
     private String zookeeperHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
 
     private ZooKeeper zk;
     private RegistryAgent registryAgent;
 
-    public ZookeeperHelper(RegistryAgent registryAgent) {
+    public ZookeeperClient(RegistryAgent registryAgent) {
         this.registryAgent = registryAgent;
     }
 
@@ -43,13 +43,13 @@ public class ZookeeperHelper {
 
             zk = new ZooKeeper(zookeeperHost, 15000, watchedEvent -> {
                 if (watchedEvent.getState() == Watcher.Event.KeeperState.Expired) {
-                    LOGGER.info("ZookeeperHelper session timeout to  {} [Zookeeper]", zookeeperHost);
+                    LOGGER.info("ZookeeperClient session timeout to  {} [Zookeeper]", zookeeperHost);
                     destroy();
                     connect();
 
                 } else if (Watcher.Event.KeeperState.SyncConnected == watchedEvent.getState()) {
                     semaphore.countDown();
-                    LOGGER.info("ZookeeperHelper connected to  {} [Zookeeper]", zookeeperHost);
+                    LOGGER.info("ZookeeperClient connected to  {} [Zookeeper]", zookeeperHost);
                     if (registryAgent != null) {
                         registryAgent.registerAllServices();//重新注册服务
                     }
@@ -78,7 +78,7 @@ public class ZookeeperHelper {
     public void destroy() {
         if (zk != null) {
             try {
-                LOGGER.info("ZookeeperHelper closing connection to zookeeper {}", zookeeperHost);
+                LOGGER.info("ZookeeperClient closing connection to zookeeper {}", zookeeperHost);
                 zk.close();
                 zk = null;
             } catch (InterruptedException e) {
@@ -87,6 +87,55 @@ public class ZookeeperHelper {
         }
 
     }
+
+    /**
+     * 递归节点创建
+     */
+    public void create(String path, boolean ephemeral) {
+        /**
+         * master watch 需要关注的点
+         */
+        String[] paths = path.split("/");
+        String serviceName = paths[4];
+        String instancePath = paths[5];
+        String versionName = instancePath.substring(instancePath.lastIndexOf(":") + 1);
+
+        String watchPath = path.substring(0, path.lastIndexOf("/"));
+
+
+        int i = path.lastIndexOf("/");
+        if (i > 0) {
+            String parentPath = path.substring(0, i);
+            //判断父节点是否存在...
+            if (!checkExists(parentPath)) {
+                create(parentPath, false);
+            }
+        }
+        if (ephemeral) {
+            createEphemeral(path+":", "");
+            //添加 watch ，监听子节点变化
+            watchInstanceChange(watchPath, serviceName, versionName, instancePath);
+        } else {
+            createPersistent(path, "");
+
+        }
+    }
+
+    /**
+     * 检查节点是否存在
+     */
+    public boolean checkExists(String path) {
+        try {
+            Stat exists = zk.exists(path, false);
+            if (exists != null) {
+                return true;
+            }
+            return false;
+        } catch (Throwable t) {
+        }
+        return false;
+    }
+
 
     /**
      * @param path /soa/runtime/services/com.github.user.UserService/192.168.1.12:9081:1.0.0
@@ -104,12 +153,12 @@ public class ZookeeperHelper {
         for (int i = 1; i < paths.length - 1; i++) {
             createPath += paths[i];
             // 异步递归创建持久化节点
-            addPersistNode(createPath, "");
+            createPersistent(createPath, "");
             createPath += "/";
         }
 
 
-        addServerInfo(path + ":", data);
+        createEphemeral(path + ":", data);
         //添加 watch ，监听子节点变化
         watchInstanceChange(watchPath, serviceName, versionName, instancePath);
     }
@@ -146,7 +195,7 @@ public class ZookeeperHelper {
      * @param path
      * @param data
      */
-    private void addPersistNode(String path, String data) {
+    private void createPersistent(String path, String data) {
         Stat stat = exists(path);
 
         if (stat == null) {
@@ -170,7 +219,7 @@ public class ZookeeperHelper {
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 LOGGER.info("创建节点:{},连接断开，重新创建", path);
-                addPersistNode(path, (String) ctx);
+                createPersistent(path, (String) ctx);
                 break;
             case OK:
                 LOGGER.info("创建节点:{},成功", path);
@@ -188,7 +237,7 @@ public class ZookeeperHelper {
     /**
      * 异步添加serverInfo,为临时有序节点，如果server挂了就木有了
      */
-    public void addServerInfo(String path, String data) {
+    public void createEphemeral(String path, String data) {
         zk.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, serverInfoCreateCallback, data);
     }
 
@@ -309,15 +358,15 @@ public class ZookeeperHelper {
             createPath += paths[i];
 
             if (paths[i].equals(GLOBLE_KEY)) {
-                addPersistNode(path, config.getGlobalConfig());
+                createPersistent(path, config.getGlobalConfig());
                 continue;
             }
 
             if (i == paths.length - 1) {
-                addPersistNode(path, config.getServiceConfig());
+                createPersistent(path, config.getServiceConfig());
             }
 
-            addPersistNode(path, "");
+            createPersistent(path, "");
         }
         createEphemeralConfig(path, config);
     }
