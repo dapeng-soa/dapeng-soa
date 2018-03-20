@@ -144,8 +144,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 .collect(Collectors.toList());
 
         String serviceKey = service + "." + version + "." + method + ".consumer";
-        RuntimeInstance inst = loadbalanceNew(serviceKey, version, method, compatibles);
-
+//        RuntimeInstance inst = loadbalanceNew(serviceKey, version, method, compatibles);
+        RuntimeInstance inst = loadbalance(serviceKey, compatibles);
         if (inst == null) {
             return null;
         }
