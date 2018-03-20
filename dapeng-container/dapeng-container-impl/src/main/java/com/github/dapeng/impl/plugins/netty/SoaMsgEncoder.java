@@ -34,6 +34,10 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
     protected void encode(ChannelHandlerContext channelHandlerContext,
                           SoaResponseWrapper wrapper,
                           ByteBuf out) throws Exception {
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace(getClass().getSimpleName() + "::encode");
+        }
+
         TransactionContext transactionContext = wrapper.transactionContext;
         SoaHeader soaHeader = transactionContext.getHeader();
         Optional<String> respCode = soaHeader.getRespCode();
@@ -58,14 +62,17 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                 messageProcessor.writeMessageEnd();
                 transport.flush();
 
-                application.info(this.getClass(),
-                        "response:"
-                                + soaHeader.getServiceName()
-                                + ":" + soaHeader.getVersionName()
-                                + ":" + soaHeader.getMethodName()
-                                + " operatorId:" + soaHeader.getOperatorId()
-                                + " operatorName:" + soaHeader.getOperatorName());
+                String infoLog = "response[seqId=" + transactionContext.getSeqid() + ", respCode=" + respCode.get() + "):"
+                        + "service[" + soaHeader.getServiceName()
+                        + "]:version[" + soaHeader.getVersionName()
+                        + "]:method[" + soaHeader.getMethodName() + "]"
+                        + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
+                        + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
 
+                application.info(this.getClass(), infoLog);
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(getClass() + " " + infoLog + ", payload:\n" + result);
+                }
             } catch (Throwable e) {
                 SoaException soaException = ExceptionUtil.convertToSoaException(e);
 
@@ -123,11 +130,12 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             transport.flush();
 
             application.error(this.getClass(),
-                    soaHeader.getServiceName()
-                            + ":" + soaHeader.getVersionName()
-                            + ":" + soaHeader.getMethodName()
-                            + " operatorId:" + soaHeader.getOperatorId()
-                            + " operatorName:" + soaHeader.getOperatorName(),
+                    "response(" + soaHeader.getRespCode().get() + "):"
+                            + "service[" + soaHeader.getServiceName()
+                            + "]:version[" + soaHeader.getVersionName()
+                            + "]:method[" + soaHeader.getMethodName() + "]"
+                            + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
+                            + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : ""),
                     soaException);
         } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);

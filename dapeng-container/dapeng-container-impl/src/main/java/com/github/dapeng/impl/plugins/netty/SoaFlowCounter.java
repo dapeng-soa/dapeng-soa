@@ -10,6 +10,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
@@ -17,10 +18,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * 流量计数器,包括请求跟响应的流量
+ *
  * @author with struy.
  * Create by 2018/3/6 20:42
  * email :yq1724555319@gmail.com
- *
  */
 @ChannelHandler.Sharable
 public class SoaFlowCounter extends ChannelDuplexHandler {
@@ -29,7 +30,6 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
     private static final String DATA_BASE = MonitorFilterProperties.SOA_MONITOR_INFLUXDB_DATABASE;
     private static final String NODE_IP = SoaSystemEnvProperties.SOA_CONTAINER_IP;
     private static final Integer NODE_PORT = SoaSystemEnvProperties.SOA_CONTAINER_PORT;
-    private CounterService SERVICE_CLIENT = null;
     private Collection<Long> requestFlows = new ConcurrentLinkedQueue<>();
     private Collection<Long> responseFlows = new ConcurrentLinkedQueue<>();
     /**
@@ -55,10 +55,14 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
     private ReentrantLock signalLock = new ReentrantLock();
     private Condition signalCondition = signalLock.newCondition();
 
+    private static class CounterClientFactory {
+        private static CounterService COUNTER_CLIENT = new CounterServiceClient();
+    }
+
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(getClass().getSimpleName() + "::read");
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace(getClass().getSimpleName() + "::read");
         }
         Long requestFlow = (long) ((ByteBuf) msg).readableBytes();
         requestFlows.add(requestFlow);
@@ -67,8 +71,8 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(getClass().getSimpleName() + "::write");
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace(getClass().getSimpleName() + "::write");
         }
         Long responseFlow = (long) ((ByteBuf) msg).readableBytes();
         responseFlows.add(responseFlow);
@@ -84,21 +88,21 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
 
         LOGGER.info("dapeng flow Monitor started, upload interval:" + PERIOD + "s");
 
-        ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(2,
+        ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(1,
                 new ThreadFactoryBuilder()
                         .setDaemon(true)
-                        .setNameFormat("dapeng-monitor-scheduler-%d")
+                        .setNameFormat("dapeng-" + getClass().getName() + "-scheduler-%d")
                         .build());
         ExecutorService uploaderExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
                 .setDaemon(true)
-                .setNameFormat("dapeng-monitor-uploader-%d")
+                .setNameFormat("dapeng-" + getClass().getName() + "-uploader-%d")
                 .build());
 
         // 定时统计时间段内的流量值并加入到上送队列
         schedulerExecutorService.scheduleAtFixedRate(() -> {
             try {
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug(Thread.currentThread().getName() + "::statistics");
+                    LOGGER.debug(Thread.currentThread().getName() + ", deamon[" + Thread.currentThread().isDaemon() + "]::statistics");
                 }
                 List<Long> requests = new ArrayList<>(requestFlows.size());
                 requests.addAll(requestFlows);
@@ -136,10 +140,12 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
                 signalLock.unlock();
             }
 
-        }, initialDelay, PERIOD * 1000, TimeUnit.MILLISECONDS);
+        }, initialDelay + 50, PERIOD * 1000, TimeUnit.MILLISECONDS);
 
         // uploader point thread.
         uploaderExecutor.execute(() -> {
+            //单次循环上送的数据记录大小
+            int uploads = 0;
             while (true) {
                 try {
                     if (LOGGER.isDebugEnabled())
@@ -149,19 +155,22 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
                     if (null != point) {
                         try {
                             LOGGER.debug(Thread.currentThread().getName() + "::uploading submitPoint ");
-                            if (SERVICE_CLIENT == null) {
-                                SERVICE_CLIENT = new CounterServiceClient();
-                            }
-                            SERVICE_CLIENT.submitPoint(point);
+
+                            CounterClientFactory.COUNTER_CLIENT.submitPoint(point);
                             flowDataQueue.remove(point);
+                            uploads++;
                         } catch (Throwable e) {
                             // 上送出错
                             LOGGER.error(e.getMessage(), e);
+                            if (LOGGER.isDebugEnabled())
+                                LOGGER.debug(Thread.currentThread().getName() + " has upload " + uploads + " points, now release the lock.");
+                            uploads = 0;
                             signalCondition.await();
                         }
                     } else {
                         if (LOGGER.isDebugEnabled())
-                            LOGGER.debug(Thread.currentThread().getName() + "::no more tasks, uploader release the lock.");
+                            LOGGER.debug(Thread.currentThread().getName() + " has upload " + uploads + " points, now release the lock.");
+                        uploads = 0;
                         signalCondition.await();
                     }
                 } catch (InterruptedException e) {
@@ -175,6 +184,7 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
 
     /**
      * 将流量数据转换为Point
+     *
      * @param requestFlows
      * @param responseFlows
      * @return
