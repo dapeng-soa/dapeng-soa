@@ -841,7 +841,9 @@ package com.github.dapeng.basic.api.counter;
           public CompletableFuture<getServiceMetadata_result> apply(I iface, getServiceMetadata_args args) {
             getServiceMetadata_result result = new getServiceMetadata_result();
 
-           return CompletableFuture.supplyAsync(() -> {
+            //fake async method, to avoid using the JDK default ForkJoinPool.common, which will case heap-off OOM
+            CompletableFuture<getServiceMetadata_result> resultFuture = new CompletableFuture<>();
+
             try (InputStreamReader isr = new InputStreamReader(CounterServiceCodec.class.getClassLoader().getResourceAsStream("com.github.dapeng.basic.api.counter.service.CounterService.xml"));
             BufferedReader in = new BufferedReader(isr)) {
               int len = 0;
@@ -863,8 +865,8 @@ package com.github.dapeng.basic.api.counter;
               result.success = "";
             }
 
-            return result;
-          });
+            resultFuture.complete(result);
+            return resultFuture;
           }
 
         }
