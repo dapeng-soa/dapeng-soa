@@ -1,5 +1,6 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.registry.ChildListener;
 import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.core.helper.MasterHelper;
 import com.github.dapeng.registry.ZkNodeConfigContext;
@@ -12,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -28,6 +31,9 @@ public class ZookeeperClient {
 
     private ZooKeeper zk;
     private RegistryAgent registryAgent;
+
+    private final ConcurrentMap<String, ChildListener> zklisteners = new ConcurrentHashMap<>();
+
 
     public ZookeeperClient(RegistryAgent registryAgent) {
         this.registryAgent = registryAgent;
@@ -112,7 +118,8 @@ public class ZookeeperClient {
             }
         }
         if (ephemeral) {
-            createEphemeral(path+":", "");
+            createEphemeral(path + ":", "");
+
             //添加 watch ，监听子节点变化
             watchInstanceChange(watchPath, serviceName, versionName, instancePath);
         } else {
@@ -167,7 +174,7 @@ public class ZookeeperClient {
     /**
      * 监听服务节点下面的子节点（临时节点，实例信息）变化
      */
-    private void watchInstanceChange(String path, String serviceName, String versionName, String instancePath) {
+    public void watchInstanceChange(String path, String serviceName, String versionName, String instancePath) {
         try {
             List<String> children = zk.getChildren(path, event -> {
                 //Children发生变化，则重新获取最新的services列表
