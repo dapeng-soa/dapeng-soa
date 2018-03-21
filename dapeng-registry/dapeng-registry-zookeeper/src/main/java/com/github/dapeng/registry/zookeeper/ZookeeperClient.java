@@ -5,13 +5,11 @@ import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.RuntimeInstance;
 import com.github.dapeng.registry.ServiceInfo;
 import com.github.dapeng.route.Route;
-import com.github.dapeng.route.parse.RouteParser;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.zookeeper.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -137,7 +135,7 @@ public class ZookeeperClient {
             }
             ServiceZKInfo zkInfo = new ServiceZKInfo(serviceName, runtimeInstanceList);
             // zkInfo config
-            getConfigDataNew(serviceName, zkInfo);
+            getConfigData(serviceName, zkInfo);
 
             zkInfos.put(serviceName, zkInfo);
             return zkInfo;
@@ -228,13 +226,13 @@ public class ZookeeperClient {
     /**
      * @param configNodeName
      */
-    private void getConfigDataNew(String configNodeName, ServiceZKInfo zkInfo) {
+    private void getConfigData(String configNodeName, ServiceZKInfo zkInfo) {
         //1.获取 globalConfig
         try {
             byte[] globalData = zk.getData(CONFIG_PATH, watchedEvent -> {
                 if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
                     LOGGER.info(watchedEvent.getPath() + "'s data changed, reset config in memory");
-                    getConfigDataNew(configNodeName, zkInfo);
+                    getConfigData(configNodeName, zkInfo);
                 }
             }, null);
             WatcherUtils.processZkConfig(globalData, zkInfo, true);
@@ -251,7 +249,7 @@ public class ZookeeperClient {
             byte[] serviceData = zk.getData(configPath, watchedEvent -> {
                 if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
                     LOGGER.info(watchedEvent.getPath() + "'s data changed, reset config in memory");
-                    getConfigDataNew(configNodeName, zkInfo);
+                    getConfigData(configNodeName, zkInfo);
                 }
             }, null);
             WatcherUtils.processZkConfig(serviceData, zkInfo, false);
