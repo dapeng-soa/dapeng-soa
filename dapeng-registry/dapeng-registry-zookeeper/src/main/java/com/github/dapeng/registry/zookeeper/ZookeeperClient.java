@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,86 +59,13 @@ public class ZookeeperClient {
 
     public void init() {
         connect();
-        getRouteConfig(ROUTES_PATH);
-        setConfigWatcher();
     }
-
-
-    private void setConfigWatcher() {
-
-        try {
-            List<String> children = zk.getChildren(CONFIG_PATH, watchedEvent -> {
-                if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-                    LOGGER.info("{}子节点发生变化，重新获取信息", watchedEvent.getPath());
-                    setConfigWatcher();
-                }
-            });
-
-            children.stream().filter(key -> config.containsKey(key)).forEach(this::getConfigData);
-        } catch (KeeperException e) {
-            LOGGER.error("get children of config root error");
-            LOGGER.error(e.getMessage(), e);
-        } catch (InterruptedException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }
-
 
     /**
-     * 获取路由配置
+     * route 目前暂未实现
      *
-     * @param path
+     * @return
      */
-    private void getRouteConfig(String path) {
-
-        zk.getData(path, watchedEvent -> {
-
-            if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
-                LOGGER.info(watchedEvent.getPath() + "'s data changed, reset route config in memory");
-                getRouteConfig(watchedEvent.getPath());
-            } else if (watchedEvent.getType() == Watcher.Event.EventType.NodeDeleted) {
-                LOGGER.info(watchedEvent.getPath() + " is deleted, reset route config in memory");
-                routes.clear();
-                getRouteConfig(watchedEvent.getPath());
-            }
-        }, (rc, path1, ctx, data, stat) -> {
-            switch (KeeperException.Code.get(rc)) {
-                case CONNECTIONLOSS:
-                    getRouteConfig(path1);
-                    break;
-                case OK:
-                    processRouteDate(data);
-                    break;
-                default:
-                    LOGGER.error("Error when trying to get data of {}.", path1);
-            }
-        }, path);
-    }
-
-
-    /**
-     * 拿到路由配置信息，解析成Routes列表
-     *
-     * @param bytes
-     */
-    private void processRouteDate(byte[] bytes) {
-
-        try {
-            String data = new String(bytes, "utf-8");
-
-            if ("".equals(data.trim()) || ROUTES_PATH.equals(data)) {
-                routes.clear();
-                return;
-            }
-            synchronized (routes) {
-                routes.clear();
-                new RouteParser().parseAll(routes, data);
-            }
-        } catch (UnsupportedEncodingException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }
-
     public List<Route> getRoutes() {
         return this.routes;
     }
@@ -157,7 +83,7 @@ public class ZookeeperClient {
         }
     }
 
-    public List<ServiceInfo> getServiceInfo(String serviceName, String versionName, boolean compatible) {
+    public List<ServiceInfo> getServiceInfoCached(String serviceName, String versionName, boolean compatible) {
 
         List<ServiceInfo> serverList;
 
@@ -298,45 +224,6 @@ public class ZookeeperClient {
         }
     }
 
-    // 要进行缓存
-    public Map<ConfigKey, Object> getConfigWithKey(String serviceKey) {
-
-        if (config.containsKey(serviceKey)) {
-            return config.get(serviceKey);
-        } else {
-            getConfigData(serviceKey);
-            return config.get(serviceKey);
-        }
-    }
-
-
-    private void getConfigData(String configNodeName) {
-
-        String configPath = CONFIG_PATH + "/" + configNodeName;
-
-        try {
-            byte[] data = zk.getData(configPath, watchedEvent -> {
-                if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
-                    LOGGER.info(watchedEvent.getPath() + "'s data changed, reset config in memory");
-                    getConfigData(configNodeName);
-                }
-                if (watchedEvent.getType() == Watcher.Event.EventType.NodeDeleted) {
-                    LOGGER.info(watchedEvent.getPath() + " is deleted, remove config in memory");
-                    config.remove(configNodeName);
-                }
-            }, null);
-
-            WatcherUtils.processConfigData(configNodeName, data, config);
-
-        } catch (KeeperException e) {
-            LOGGER.error(e.getMessage());
-            if (e instanceof KeeperException.NoNodeException) {
-                config.put(configNodeName, new HashMap<>());
-            }
-        } catch (InterruptedException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }
 
     /**
      * @param configNodeName
@@ -350,7 +237,7 @@ public class ZookeeperClient {
                     getConfigDataNew(configNodeName, zkInfo);
                 }
             }, null);
-            WatcherUtils.processConfigDataNew(globalData, zkInfo, true);
+            WatcherUtils.processZkConfig(globalData, zkInfo, true);
 
         } catch (KeeperException e) {
             LOGGER.error(e.getMessage(), e);
@@ -367,7 +254,7 @@ public class ZookeeperClient {
                     getConfigDataNew(configNodeName, zkInfo);
                 }
             }, null);
-            WatcherUtils.processConfigDataNew(serviceData, zkInfo, false);
+            WatcherUtils.processZkConfig(serviceData, zkInfo, false);
 
         } catch (KeeperException e) {
             LOGGER.error(e.getMessage());

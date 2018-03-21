@@ -61,6 +61,7 @@ public class ZookeeperRegistry {
                         //创建根节点
                         create(SERVICE_PATH, null, false);
                         create(CONFIG_PATH, null, false);
+
                         LOGGER.info("ZookeeperRegistry connected to  {} [Zookeeper]", zookeeperHost);
                         if (registryAgent != null) {
                             registryAgent.registerAllServices();//重新注册服务
