@@ -25,7 +25,7 @@ public class ZkClientAgentImpl implements ZkClientAgent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ZkClientAgentImpl.class);
 
-    private ZookeeperWatcher siw, zkfbw;
+    private ZookeeperClient siw, zkfbw;
 
     public ZkClientAgentImpl() {
         start();
@@ -34,11 +34,11 @@ public class ZkClientAgentImpl implements ZkClientAgent {
     @Override
     public void start() {
 
-        siw = new ZookeeperWatcher(true, SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
+        siw = new ZookeeperClient(true, SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
         siw.init();
 
         if (SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_ISCONFIG) {
-            zkfbw = new ZookeeperWatcher(true, SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_HOST);
+            zkfbw = new ZookeeperClient(true, SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_HOST);
             zkfbw.init();
         }
     }

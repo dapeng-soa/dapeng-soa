@@ -32,13 +32,13 @@ public class RegistryAgentImpl implements RegistryAgent {
     private final String RUNTIME_PATH = "/soa/runtime/services";
     private final String CONFIG_PATH = "/soa/config/services";
     private final boolean isClient;
-    private final ZookeeperClient zooKeeperClient = new ZookeeperClient(this);
+    private final ZookeeperRegistry zooKeeperRegistry = new ZookeeperRegistry(this);
     /**
      * 灰度环境下访问生产环境的zk?
      */
-    private ZookeeperClient zooKeeperMasterClient = null;
+    private ZookeeperRegistry zooKeeperMasterClient = null;
 
-    private ZookeeperWatcher siw, zkfbw;
+    private ZookeeperClient siw, zkfbw;
 
     private Map<ProcessorKey, SoaServiceDefinition<?>> processorMap;
 
@@ -54,28 +54,28 @@ public class RegistryAgentImpl implements RegistryAgent {
     public void start() {
 
         if (!isClient) {
-            zooKeeperClient.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
-            zooKeeperClient.connect();
+            zooKeeperRegistry.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
+            zooKeeperRegistry.connect();
 
             if (SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_ISCONFIG) {
-                zooKeeperMasterClient = new ZookeeperClient(this);
+                zooKeeperMasterClient = new ZookeeperRegistry(this);
                 zooKeeperMasterClient.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_HOST);
                 zooKeeperMasterClient.connect();
             }
         }
         //todo why?
-        siw = new ZookeeperWatcher(isClient, SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
+        siw = new ZookeeperClient(isClient, SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
         siw.init();
 
         if (SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_ISCONFIG) {
-            zkfbw = new ZookeeperWatcher(isClient, SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_HOST);
+            zkfbw = new ZookeeperClient(isClient, SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_HOST);
             zkfbw.init();
         }
     }
 
     @Override
     public void stop() {
-        zooKeeperClient.destroy();
+        zooKeeperRegistry.destroy();
         if (siw != null) {
             siw.destroy();
         }
@@ -94,7 +94,7 @@ public class RegistryAgentImpl implements RegistryAgent {
 
             RegisterContext registerContext = new RegisterContext(serverName, versionName, servicePath, instanceInfo);
 
-            zooKeeperClient.create(path, registerContext, true);
+            zooKeeperRegistry.create(path, registerContext, true);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -201,7 +201,7 @@ public class RegistryAgentImpl implements RegistryAgent {
     public void registerConfig(ZkNodeConfigContext configs, String serverName, String versionName) {
         try {
             String path = CONFIG_PATH + "/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
-//            zooKeeperClient.addOrUpdateConfigNode(path, configs);
+//            zooKeeperRegistry.addOrUpdateConfigNode(path, configs);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
