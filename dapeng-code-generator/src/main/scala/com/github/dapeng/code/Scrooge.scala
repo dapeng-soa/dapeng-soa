@@ -114,6 +114,9 @@ object Scrooge {
       //3. 如果language == scala && scala文件没有生成过 => needUpdate
       //4. 如果language == java && java文件没有生成过 => needUpdate
       val resourcePath = new File(outDir + System.getProperty("file.separator") + "resources")
+      if (!resourcePath.isDirectory){
+        resourcePath.mkdir()
+      }
       val thriftFiles = resources.map(new File(_))
       val needUpdate = {
         val xmlFiles = resourcePath.listFiles().filter(_.getName.endsWith(".xml"))
