@@ -59,6 +59,7 @@ public class ZookeeperClient {
 
                     case SyncConnected:
                         semaphore.countDown();
+                        //创建根节点
                         create(SERVICE_PATH, null, false);
                         create(CONFIG_PATH, null, false);
                         LOGGER.info("ZookeeperClient connected to  {} [Zookeeper]", zookeeperHost);
