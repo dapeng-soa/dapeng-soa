@@ -63,8 +63,6 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
             List<ServiceInfo> serviceInfos = app.getServiceInfos();
             serviceInfos.forEach(serviceInfo -> {
                 registerService(serviceInfo.serviceName, serviceInfo.version);
-                //fixme 配置信息
-                registerConfigTimeOut(serviceInfo.serviceName, serviceInfo.version);
             });
         });
     }
@@ -88,17 +86,5 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
         LOGGER.warn("unRegister service: " + serviceName + " " + version);
         // TODO do something real?
     }
-
-    /**
-     * 注册配置信息
-     */
-    public void registerConfigTimeOut(String serviceName, String version) {
-        LOGGER.info("register time out config: " + serviceName + " " + version);
-        registryAgent.registerConfig(new ZkNodeConfigContext("", "", ""),
-                serviceName, version);
-
-
-    }
-
 
 }
