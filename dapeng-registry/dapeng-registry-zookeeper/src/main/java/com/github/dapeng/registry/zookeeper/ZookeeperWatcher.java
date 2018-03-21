@@ -8,7 +8,6 @@ import com.github.dapeng.route.Route;
 import com.github.dapeng.route.parse.RouteParser;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.zookeeper.*;
-import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -371,7 +370,6 @@ public class ZookeeperWatcher {
         } catch (KeeperException e) {
             LOGGER.error(e.getMessage());
             if (e instanceof KeeperException.NoNodeException) {
-//                config.put(configNodeName, new HashMap<>());
             }
         } catch (InterruptedException e) {
             LOGGER.error(e.getMessage(), e);

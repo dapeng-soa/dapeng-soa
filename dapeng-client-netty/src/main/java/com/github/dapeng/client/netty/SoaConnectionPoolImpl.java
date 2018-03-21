@@ -19,7 +19,6 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
@@ -142,7 +141,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
                 .filter(rt -> checkVersion(version, rt.version))
                 .collect(Collectors.toList());
-        RuntimeInstance inst = loadbalanceNew(service, version, method, compatibles);
+        RuntimeInstance inst = loadBalance(service, version, method, compatibles);
         if (inst == null) {
             return null;
         }
@@ -167,37 +166,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         return subPool.getConnection(connectionType);
     }
 
-    private RuntimeInstance loadbalance(String serviceKey, List<RuntimeInstance> compatibles) {
-
-        boolean usingFallbackZookeeper = SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_ISCONFIG;
-        LoadBalanceStrategy balance = LoadBalanceStrategy.Random;
-
-        Map<ConfigKey, Object> configs = zkAgent.getConfig(usingFallbackZookeeper, serviceKey);
-        if (null != configs) {
-            balance = LoadBalanceStrategy.findByValue((String) configs.get(ConfigKey.LoadBalance));
-        }
-
-        RuntimeInstance instance = null;
-        switch (balance) {
-            case Random:
-                instance = LoadBalanceAlgorithm.random(compatibles);
-                break;
-            case RoundRobin:
-                instance = LoadBalanceAlgorithm.roundRobin(compatibles);
-                break;
-            case LeastActive:
-                instance = LoadBalanceAlgorithm.leastActive(compatibles);
-                break;
-            case ConsistentHash:
-                //TODO
-                break;
-            default:
-                // won't be here
-        }
-
-        return instance;
-
-    }
 
     /**
      * 根据zk 负载均衡配置解析，分为 全局/service级别/method级别
@@ -208,7 +176,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * @param compatibles
      * @return
      */
-    private RuntimeInstance loadbalanceNew(String serviceName, String version, String methodName, List<RuntimeInstance> compatibles) {
+    private RuntimeInstance loadBalance(String serviceName, String version, String methodName, List<RuntimeInstance> compatibles) {
 
         ServiceZKInfo serviceZKInfo = zkInfos.get(serviceName);
         //方法级别
@@ -276,7 +244,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         Optional<Long> envTimeout = SoaSystemEnvProperties.SOA_SERVICE_CLIENT_TIMEOUT.longValue() == 0 ?
                 Optional.empty() : Optional.of(SoaSystemEnvProperties.SOA_SERVICE_CLIENT_TIMEOUT.longValue());
 
-        Optional<Long> zkTimeout = getZkTimeoutNew(service, version, method);
+        Optional<Long> zkTimeout = getZkTimeout(service, version, method);
         Optional<Long> idlTimeout = getIdlTimeout(service, version, method);
 
         Optional<Long> timeout;
@@ -345,33 +313,13 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     /**
      * 获取 zookeeper timeout config
+     * <p>
+     * method level -> service level -> global level
+     * <</p>
      *
-     * @param serviceName
-     * @param version
-     * @param methodName
      * @return
      */
     private Optional<Long> getZkTimeout(String serviceName, String version, String methodName) {
-        String serviceKey = serviceName + "." + version + "." + methodName + ".producer";
-        Map<ConfigKey, Object> configs = zkAgent.getConfig(false, serviceKey);
-        if (null != configs && configs.containsKey(ConfigKey.ClientTimeout)) {
-            Long timeoutConfig = (Long) configs.get(ConfigKey.ClientTimeout);
-
-            return timeoutConfig == null ? Optional.empty() : Optional.of(timeoutConfig);
-        } else {
-            return Optional.empty();
-        }
-    }
-
-    /**
-     * new zk config         method level -> service level -> global level
-     *
-     * @param serviceName
-     * @param version
-     * @param methodName
-     * @return
-     */
-    private Optional<Long> getZkTimeoutNew(String serviceName, String version, String methodName) {
         ServiceZKInfo serviceZKInfo = zkInfos.get(serviceName);
         //方法级别
         Long methodTimeOut = serviceZKInfo.timeConfig.serviceConfigs.get(methodName);
@@ -380,7 +328,10 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         Long globalTimeOut = serviceZKInfo.timeConfig.globalConfig;
 
-        logger.info("methodTimeOut:{},serviceTimeOut:{},globalTimeOut:{}", methodTimeOut, serviceTimeOUt, globalTimeOut);
+        logger.debug("request:serviceName:{},methodName:{}," +
+                        " methodTimeOut:{},serviceTimeOut:{},globalTimeOut:{}",
+                serviceName, methodName, methodTimeOut, serviceTimeOUt, globalTimeOut);
+
         if (methodTimeOut != null) {
 
             return Optional.of(methodTimeOut);

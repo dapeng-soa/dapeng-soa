@@ -7,12 +7,17 @@ package com.github.dapeng.registry.zookeeper;
  * @date 2018年03月20日 下午11:09
  */
 public class RegisterContext {
-
+    /**
+     * 服务名
+     */
     private String service;
+    /**
+     * 版本号
+     */
     private String version;
 
     /**
-     * /soa/runtime/services/com.api.UserService
+     * like /soa/runtime/services/com.api.UserService
      */
     private String servicePath;
     /**
