@@ -283,7 +283,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 //        Application application = ContainerFactory.getContainer().getApplication(new ProcessorKey(serviceName,version));
 //
 //        if (application != null) {
-//            Optional<ServiceInfo> serviceInfo = application.getServiceInfo(serviceName,version);
+//            Optional<ServiceInfo> serviceInfo = application.getServiceInfoCached(serviceName,version);
 //            if (serviceInfo.isPresent()) {
 //                Class<?> service = serviceInfo.get().ifaceClass;
 //                List<Method> methods =  Arrays.stream(service.getMethods()).filter(method ->
