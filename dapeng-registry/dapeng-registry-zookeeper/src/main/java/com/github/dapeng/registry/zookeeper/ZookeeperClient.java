@@ -1,81 +1,288 @@
 package com.github.dapeng.registry.zookeeper;
 
-import com.github.dapeng.registry.RegistryAgent;
-import com.github.dapeng.core.helper.MasterHelper;
-import com.github.dapeng.registry.ZkNodeConfigContext;
+import com.github.dapeng.core.version.Version;
+import com.github.dapeng.registry.ConfigKey;
+import com.github.dapeng.registry.RuntimeInstance;
+import com.github.dapeng.registry.ServiceInfo;
+import com.github.dapeng.route.Route;
+import com.github.dapeng.route.parse.RouteParser;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.zookeeper.*;
-import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
+import java.util.stream.Collectors;
 
 /**
- * @author hz.lei
- * @date 2018-03-20
+ * zookeeperClient 主要作用是 供 客户端 从zk获取服务实例
+ *
+ * @author tangliu
+ * @date 2016/2/29
  */
 public class ZookeeperClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ZookeeperClient.class);
 
-    private String zookeeperHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
-
-    private ZooKeeper zk;
-    private RegistryAgent registryAgent;
+    private final boolean isClient;
+    private final Map<String, List<ServiceInfo>> caches = new ConcurrentHashMap<>();
+    /**
+     * 其他配置信息
+     */
+    private final Map<String, Map<ConfigKey, Object>> config = new ConcurrentHashMap<>();
+    /**
+     * 路由配置信息
+     */
+    private final List<Route> routes = new ArrayList<>();
 
     private final static String SERVICE_PATH = "/soa/runtime/services";
     private final static String CONFIG_PATH = "/soa/config/service";
     private final static String ROUTES_PATH = "/soa/config/route";
 
-    public ZookeeperClient(RegistryAgent registryAgent) {
-        this.registryAgent = registryAgent;
+    private ZooKeeper zk;
+    private String zkHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
+
+    public ZookeeperClient(boolean isClient) {
+        this.isClient = isClient;
+    }
+
+    public ZookeeperClient(boolean isClient, String zkHost) {
+        this.isClient = isClient;
+        this.zkHost = zkHost;
+    }
+
+    public void init() {
+        connect();
+        getRouteConfig(ROUTES_PATH);
+        setConfigWatcher();
+    }
+
+
+    private void setConfigWatcher() {
+
+        try {
+            List<String> children = zk.getChildren(CONFIG_PATH, watchedEvent -> {
+                if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
+                    LOGGER.info("{}子节点发生变化，重新获取信息", watchedEvent.getPath());
+                    setConfigWatcher();
+                }
+            });
+
+            children.stream().filter(key -> config.containsKey(key)).forEach(this::getConfigData);
+        } catch (KeeperException e) {
+            LOGGER.error("get children of config root error");
+            LOGGER.error(e.getMessage(), e);
+        } catch (InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+
+    /**
+     * 获取路由配置
+     *
+     * @param path
+     */
+    private void getRouteConfig(String path) {
+
+        zk.getData(path, watchedEvent -> {
+
+            if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                LOGGER.info(watchedEvent.getPath() + "'s data changed, reset route config in memory");
+                getRouteConfig(watchedEvent.getPath());
+            } else if (watchedEvent.getType() == Watcher.Event.EventType.NodeDeleted) {
+                LOGGER.info(watchedEvent.getPath() + " is deleted, reset route config in memory");
+                routes.clear();
+                getRouteConfig(watchedEvent.getPath());
+            }
+        }, (rc, path1, ctx, data, stat) -> {
+            switch (KeeperException.Code.get(rc)) {
+                case CONNECTIONLOSS:
+                    getRouteConfig(path1);
+                    break;
+                case OK:
+                    processRouteDate(data);
+                    break;
+                default:
+                    LOGGER.error("Error when trying to get data of {}.", path1);
+            }
+        }, path);
+    }
+
+
+    /**
+     * 拿到路由配置信息，解析成Routes列表
+     *
+     * @param bytes
+     */
+    private void processRouteDate(byte[] bytes) {
+
+        try {
+            String data = new String(bytes, "utf-8");
+
+            if ("".equals(data.trim()) || ROUTES_PATH.equals(data)) {
+                routes.clear();
+                return;
+            }
+            synchronized (routes) {
+                routes.clear();
+                new RouteParser().parseAll(routes, data);
+            }
+        } catch (UnsupportedEncodingException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    public List<Route> getRoutes() {
+        return this.routes;
+    }
+
+
+    public void destroy() {
+        if (zk != null) {
+            try {
+                LOGGER.info("{} 关闭到zookeeper的连接", isClient ? "Client's" : "Server's");
+                zk.close();
+                zk = null;
+            } catch (InterruptedException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
+    }
+
+    public List<ServiceInfo> getServiceInfo(String serviceName, String versionName, boolean compatible) {
+
+        List<ServiceInfo> serverList;
+
+        if (caches.containsKey(serviceName)) {
+            serverList = caches.get(serviceName);
+        } else {
+            //get service Info and set up Watcher
+            getServiceInfoByServiceName(serviceName);
+            serverList = caches.get(serviceName);
+        }
+
+        List<ServiceInfo> usableList = new ArrayList<>();
+
+        if (serverList != null && serverList.size() > 0) {
+
+            if (!compatible) {
+                usableList.addAll(serverList.stream().filter(server -> server.versionName.equals(versionName)).collect(Collectors.toList()));
+            } else {
+                usableList.addAll(serverList.stream().filter(server -> Version.toVersion(versionName).compatibleTo(Version.toVersion(server.versionName))).collect(Collectors.toList()));
+            }
+        }
+        return usableList;
+    }
+
+    public ServiceZKInfo getServiceZkInfo(String serviceName, Map<String, ServiceZKInfo> zkInfos) {
+        String servicePath = SERVICE_PATH + "/" + serviceName;
+        try {
+            if (zk == null) {
+                init();
+            }
+
+            List<String> childrens = zk.getChildren(servicePath, watchedEvent -> {
+                if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
+                    LOGGER.info("{}子节点发生变化，重新获取信息", watchedEvent.getPath());
+                    if (zkInfos.containsKey(serviceName)) {
+                        getServiceZkInfo(serviceName, zkInfos);
+                    }
+                }
+            });
+
+            if (childrens.size() == 0) {
+                return null;
+            }
+            List<RuntimeInstance> runtimeInstanceList = new ArrayList<>();
+            LOGGER.info("获取{}的子节点成功", servicePath);
+            //child = 10.168.13.96:9085:1.0.0
+            for (String children : childrens) {
+                String[] infos = children.split(":");
+                RuntimeInstance instance = new RuntimeInstance(serviceName, infos[0], Integer.valueOf(infos[1]), infos[2]);
+                runtimeInstanceList.add(instance);
+            }
+            ServiceZKInfo zkInfo = new ServiceZKInfo(serviceName, runtimeInstanceList);
+            // zkInfo config
+            getConfigDataNew(serviceName, zkInfo);
+
+            zkInfos.put(serviceName, zkInfo);
+            return zkInfo;
+
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return null;
+    }
+
+
+    /**
+     * 根据serviceName节点的路径，获取下面的子节点，并监听子节点变化
+     *
+     * @param serviceName
+     */
+    private void getServiceInfoByServiceName(String serviceName) {
+
+        String servicePath = SERVICE_PATH + "/" + serviceName;
+        try {
+
+            if (zk == null) {
+                init();
+            }
+
+            List<String> children = zk.getChildren(servicePath, watchedEvent -> {
+                if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
+                    LOGGER.info("{}子节点发生变化，重新获取信息", watchedEvent.getPath());
+                    getServiceInfoByServiceName(serviceName);
+                }
+            });
+
+            LOGGER.info("获取{}的子节点成功", servicePath);
+            WatcherUtils.resetServiceInfoByName(serviceName, servicePath, children, caches);
+
+        } catch (KeeperException e) {
+            LOGGER.error(e.getMessage(), e);
+        } catch (InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
     }
 
     /**
-     * zk 客户端实例化
-     * 使用 CountDownLatch 门闩 锁，保证zk连接成功后才返回
+     * 连接zookeeper
      */
-    public void connect() {
+    private void connect() {
         try {
             CountDownLatch semaphore = new CountDownLatch(1);
 
-            zk = new ZooKeeper(zookeeperHost, 15000, watchedEvent -> {
-
-                switch (watchedEvent.getState()) {
-
+            // Fixme zk连接状态变化不应该引起本地runtime缓存的清除, 尤其是zk挂了之后, 不至于影响业务(本地缓存还存在于每个SoaConnectionPool中?)
+            zk = new ZooKeeper(zkHost, 15000, e -> {
+                switch (e.getState()) {
                     case Expired:
-                        LOGGER.info("ZookeeperClient session timeout to  {} [Zookeeper]", zookeeperHost);
-                        destroy();
-                        connect();
-                        break;
+                        LOGGER.info("{} 到zookeeper Server的session过期，重连", isClient ? "Client's" : "Server's");
 
+                        destroy();
+                        init();
+                        break;
                     case SyncConnected:
                         semaphore.countDown();
-                        //创建根节点
-                        create(SERVICE_PATH, null, false);
-                        create(CONFIG_PATH, null, false);
-                        LOGGER.info("ZookeeperClient connected to  {} [Zookeeper]", zookeeperHost);
-                        if (registryAgent != null) {
-                            registryAgent.registerAllServices();//重新注册服务
-                        }
+                        LOGGER.info("{} Zookeeper Watcher 已连接 zookeeper Server", isClient ? "Client's" : "Server's");
+//                        tryCreateNode(SERVICE_PATH);
+//                        tryCreateNode(CONFIG_PATH);
+
+                        caches.clear();
+                        config.clear();
                         break;
-
                     case Disconnected:
-                        //zookeeper重启或zookeeper实例重新创建
-                        LOGGER.error("Registry {} zookeeper 连接断开，可能是zookeeper重启或重建");
-
-                        isMaster.clear(); //断开连接后，认为，master应该失效，避免某个孤岛一直以为自己是master
-
+                        LOGGER.error("{}到zookeeper的连接被断开", isClient ? "Client's" : "Server's");
                         destroy();
-                        connect();
+                        init();
                         break;
                     case AuthFailed:
                         LOGGER.info("Zookeeper connection auth failed ...");
@@ -85,254 +292,97 @@ public class ZookeeperClient {
                         break;
                 }
             });
-            //hold 10 s
             semaphore.await(10000, TimeUnit.MILLISECONDS);
-
         } catch (Exception e) {
+            LOGGER.info(e.getMessage(), e);
+        }
+    }
+
+    // 要进行缓存
+    public Map<ConfigKey, Object> getConfigWithKey(String serviceKey) {
+
+        if (config.containsKey(serviceKey)) {
+            return config.get(serviceKey);
+        } else {
+            getConfigData(serviceKey);
+            return config.get(serviceKey);
+        }
+    }
+
+
+    private void getConfigData(String configNodeName) {
+
+        String configPath = CONFIG_PATH + "/" + configNodeName;
+
+        try {
+            byte[] data = zk.getData(configPath, watchedEvent -> {
+                if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                    LOGGER.info(watchedEvent.getPath() + "'s data changed, reset config in memory");
+                    getConfigData(configNodeName);
+                }
+                if (watchedEvent.getType() == Watcher.Event.EventType.NodeDeleted) {
+                    LOGGER.info(watchedEvent.getPath() + " is deleted, remove config in memory");
+                    config.remove(configNodeName);
+                }
+            }, null);
+
+            WatcherUtils.processConfigData(configNodeName, data, config);
+
+        } catch (KeeperException e) {
+            LOGGER.error(e.getMessage());
+            if (e instanceof KeeperException.NoNodeException) {
+                config.put(configNodeName, new HashMap<>());
+            }
+        } catch (InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
 
     /**
-     * 关闭 zk 连接
+     * @param configNodeName
      */
-    public void destroy() {
-        if (zk != null) {
-            try {
-                LOGGER.info("ZookeeperClient closing connection to zookeeper {}", zookeeperHost);
-                zk.close();
-                zk = null;
-            } catch (InterruptedException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-        }
-
-    }
-
-    //～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～
-    //                           that's begin                                      ～
-    //                                                                             ～
-    //～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～
-
-
-    /**
-     * 递归节点创建
-     */
-    public void create(String path, RegisterContext context, boolean ephemeral) {
-
-        int i = path.lastIndexOf("/");
-        if (i > 0) {
-            String parentPath = path.substring(0, i);
-            //判断父节点是否存在...
-            if (!checkExists(parentPath)) {
-                create(parentPath, null, false);
-            }
-        }
-        if (ephemeral) {
-            createEphemeral(path + ":", context);
-
-            //添加 watch ，监听子节点变化
-            watchInstanceChange(context);
-        } else {
-            createPersistent(path, "");
-
-        }
-    }
-
-    /**
-     * 检查节点是否存在
-     */
-    public boolean checkExists(String path) {
+    private void getConfigDataNew(String configNodeName, ServiceZKInfo zkInfo) {
+        //1.获取 globalConfig
         try {
-            Stat exists = zk.exists(path, false);
-            if (exists != null) {
-                return true;
-            }
-            return false;
-        } catch (Throwable t) {
-        }
-        return false;
-    }
-
-
-    /**
-     * 监听服务节点下面的子节点（临时节点，实例信息）变化
-     */
-    public void watchInstanceChange(RegisterContext context) {
-        String watchPath = context.getServicePath();
-        try {
-            List<String> children = zk.getChildren(watchPath, event -> {
-                //Children发生变化，则重新获取最新的services列表
-                if (event.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-                    LOGGER.info("{}子节点发生变化，重新获取子节点...", event.getPath());
-
-                    watchInstanceChange(context);
+            byte[] globalData = zk.getData(CONFIG_PATH, watchedEvent -> {
+                if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                    LOGGER.info(watchedEvent.getPath() + "'s data changed, reset config in memory");
+                    getConfigDataNew(configNodeName, zkInfo);
                 }
-            });
-            if (children.size() > 0) {
-                checkIsMaster(children, MasterHelper.generateKey(context.getService(), context.getVersion()), context.getInstanceInfo());
-            }
+            }, null);
+            WatcherUtils.processConfigDataNew(globalData, zkInfo, true);
 
-        } catch (KeeperException | InterruptedException e) {
+        } catch (KeeperException e) {
             LOGGER.error(e.getMessage(), e);
-            create(context.getServicePath() + "/" + context.getInstanceInfo(), context, true);
+        } catch (InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
         }
 
-    }
-
-
-    /**
-     * 异步添加持久化的节点
-     *
-     * @param path
-     * @param data
-     */
-    private void createPersistent(String path, String data) {
-        Stat stat = exists(path);
-
-        if (stat == null) {
-            zk.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, persistNodeCreateCallback, data);
-        }
-    }
-
-    private Stat exists(String path) {
-        Stat stat = null;
+        // 2. 获取 service
+        String configPath = CONFIG_PATH + "/" + configNodeName;
         try {
-            stat = zk.exists(path, false);
-        } catch (KeeperException | InterruptedException e) {
-        }
-        return stat;
-    }
-
-    /**
-     * 异步添加持久化节点回调方法
-     */
-    private AsyncCallback.StringCallback persistNodeCreateCallback = (rc, path, ctx, name) -> {
-        switch (KeeperException.Code.get(rc)) {
-            case CONNECTIONLOSS:
-                LOGGER.info("创建节点:{},连接断开，重新创建", path);
-                createPersistent(path, (String) ctx);
-                break;
-            case OK:
-                LOGGER.info("创建节点:{},成功", path);
-                break;
-            case NODEEXISTS:
-                LOGGER.info("创建节点:{},已存在", path);
-                updateServerInfo(path, (String) ctx);
-                break;
-            default:
-                LOGGER.info("创建节点:{},失败", path);
-        }
-    };
-
-
-    /**
-     * 异步添加serverInfo,为临时有序节点，如果server挂了就木有了
-     */
-    public void createEphemeral(String path, RegisterContext context) {
-        zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, serverInfoCreateCallback, context);
-    }
-
-    /**
-     * 异步添加serverInfo 临时节点 的回调处理
-     */
-    private AsyncCallback.StringCallback serverInfoCreateCallback = (rc, path, ctx, name) -> {
-        switch (KeeperException.Code.get(rc)) {
-            case CONNECTIONLOSS:
-                LOGGER.info("添加serviceInfo:{},连接断开，重新添加", path);
-                //重新调用
-                create(path, (RegisterContext) ctx, true);
-                break;
-            case OK:
-                LOGGER.info("添加serviceInfo:{},成功", path);
-                break;
-            case NODEEXISTS:
-                LOGGER.info("添加serviceInfo:{},已存在，删掉后重新添加", path);
-                try {
-                    //只删除了当前serviceInfo的节点
-                    zk.delete(path, -1);
-                } catch (Exception e) {
-                    LOGGER.error("删除serviceInfo:{} 失败:{}", path, e.getMessage());
+            byte[] serviceData = zk.getData(configPath, watchedEvent -> {
+                if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                    LOGGER.info(watchedEvent.getPath() + "'s data changed, reset config in memory");
+                    getConfigDataNew(configNodeName, zkInfo);
                 }
-                create(path, (RegisterContext) ctx, true);
-                break;
-            default:
-                LOGGER.info("添加serviceInfo:{}，出错", path);
-        }
-    };
+            }, null);
+            WatcherUtils.processConfigDataNew(serviceData, zkInfo, false);
 
-    /**
-     * 异步更新节点信息
-     */
-    private void updateServerInfo(String path, String data) {
-        zk.setData(path, data.getBytes(), -1, serverInfoUpdateCallback, data);
-    }
-
-    /**
-     * 异步更新节点信息的回调方法
-     */
-    private AsyncCallback.StatCallback serverInfoUpdateCallback = (rc, path1, ctx, stat) -> {
-        switch (KeeperException.Code.get(rc)) {
-            case CONNECTIONLOSS:
-                updateServerInfo(path1, (String) ctx);
-                return;
-            default:
-                //just skip
-        }
-    };
-
-    public void setZookeeperHost(String zookeeperHost) {
-        this.zookeeperHost = zookeeperHost;
-    }
-
-    //-----竞选master---
-    private static Map<String, Boolean> isMaster = MasterHelper.isMaster;
-
-    /**
-     * @param children     当前方法下的实例列表，        eg 127.0.0.1:9081:1.0.0,192.168.1.12:9081:1.0.0
-     * @param serviceKey   当前服务信息                eg com.github.user.UserService:1.0.0
-     * @param instanceInfo 当前服务节点实例信息         eg  192.168.10.17:9081:1.0.0
-     */
-    public void checkIsMaster(List<String> children, String serviceKey, String instanceInfo) {
-        if (children.size() <= 0) {
-            return;
-        }
-
-        /**
-         * 排序规则
-         * a: 192.168.100.1:9081:1.0.0:0000000022
-         * b: 192.168.100.1:9081:1.0.0:0000000014
-         * 根据 lastIndexOf :  之后的数字进行排序，由小到大，每次取zk临时有序节点中的序列最小的节点作为master
-         */
-        Collections.sort(children, (o1, o2) -> {
-            Integer int1 = Integer.valueOf(o1.substring(o1.lastIndexOf(":") + 1));
-            Integer int2 = Integer.valueOf(o2.substring(o2.lastIndexOf(":") + 1));
-            return int1 - int2;
-        });
-
-        String firstNode = children.get(0);
-        LOGGER.info("serviceInfo firstNode {}", firstNode);
-
-        String firstInfo = firstNode.replace(firstNode.substring(firstNode.lastIndexOf(":")), "");
-
-        if (firstInfo.equals(instanceInfo)) {
-            isMaster.put(serviceKey, true);
-            LOGGER.info("({})竞选master成功, master({})", serviceKey, CURRENT_CONTAINER_ADDR);
-        } else {
-            isMaster.put(serviceKey, false);
-            LOGGER.info("({})竞选master失败，当前节点为({})", serviceKey);
+        } catch (KeeperException e) {
+            LOGGER.error(e.getMessage());
+            if (e instanceof KeeperException.NoNodeException) {
+            }
+        } catch (InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
 
-    private static final String CURRENT_CONTAINER_ADDR = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" +
-            String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
-
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    //                           config 配置  that's begin                        ～
-    //                                                                            ～
-    //～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～
+    public static void main(String[] args) throws InterruptedException {
+        ZookeeperClient zw = new ZookeeperClient(true);
+        zw.init();
+    }
 
 
 }
