@@ -158,10 +158,16 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(Thread.currentThread().getName() + ", deamon[" + Thread.currentThread().isDaemon() + "]::statistics");
                 }
-                List<DataPoint> dataList = serviceData2Points(System.currentTimeMillis(),
-                        serviceProcessCallDatas, serviceElapses);
+                Map<ServiceBasicInfo, ServiceProcessData> tmpMap = new HashMap<>(serviceProcessCallDatas.size());
+                tmpMap.putAll(serviceProcessCallDatas);
                 serviceProcessCallDatas.clear();
+
+                List<Map<ServiceBasicInfo, Long>> tmpList = new ArrayList<>(serviceElapses.size());
+                tmpList.addAll(serviceElapses);
                 serviceElapses.clear();
+
+                List<DataPoint> dataList = serviceData2Points(System.currentTimeMillis(),
+                        tmpMap, tmpList);
                 invokeStartPair.clear();
                 // 当容量达到最大容量的90%时,丢弃头部数据，保留正常容量
                 if (serviceDataQueue.size() >= ALERT_SIZE) {
