@@ -91,11 +91,11 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
         ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(1,
                 new ThreadFactoryBuilder()
                         .setDaemon(true)
-                        .setNameFormat("dapeng-" + getClass().getName() + "-scheduler-%d")
+                        .setNameFormat("dapeng-" + getClass().getSimpleName() + "-scheduler-%d")
                         .build());
         ExecutorService uploaderExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
                 .setDaemon(true)
-                .setNameFormat("dapeng-" + getClass().getName() + "-uploader-%d")
+                .setNameFormat("dapeng-" + getClass().getSimpleName() + "-uploader-%d")
                 .build());
 
         // 定时统计时间段内的流量值并加入到上送队列

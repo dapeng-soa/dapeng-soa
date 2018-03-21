@@ -122,7 +122,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
         }
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(getClass().getName() + " response[seqId=" + context.getSeqid() + ", respCode=" + soaHeader.getRespCode().get()
+            LOGGER.debug(getClass().getSimpleName() + " response[seqId=" + context.getSeqid() + ", respCode=" + soaHeader.getRespCode().get()
                     + "]:service[" + soaHeader.getServiceName()
                     + "]:version[" + soaHeader.getVersionName()
                     + "]:method[" + soaHeader.getMethodName() + "]"
@@ -145,11 +145,11 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
         ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(1,
                 new ThreadFactoryBuilder()
                         .setDaemon(true)
-                        .setNameFormat("dapeng-" + getClass().getName() + "-scheduler-%d")
+                        .setNameFormat("dapeng-" + getClass().getSimpleName() + "-scheduler-%d")
                         .build());
         ExecutorService uploaderExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
                 .setDaemon(true)
-                .setNameFormat("dapeng-" + getClass().getName() + "-uploader")
+                .setNameFormat("dapeng-" + getClass().getSimpleName() + "-uploader")
                 .build());
 
         // 定时统计服务调用数据并加入到上送队列

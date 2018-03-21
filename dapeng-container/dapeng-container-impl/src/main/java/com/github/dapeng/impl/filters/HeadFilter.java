@@ -18,9 +18,13 @@ public class HeadFilter implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(HeadFilter.class);
 
     @Override
-    public void onEntry(FilterContext ctx, FilterChain next) {
+    public void onEntry(FilterContext filterContext, FilterChain next) {
         try {
-            next.onEntry(ctx);
+            if (LOGGER.isDebugEnabled()) {
+                TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
+                LOGGER.debug(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.getSeqid() + "], filterContext:" + filterContext);
+            }
+            next.onEntry(filterContext);
         } catch (TException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -33,9 +37,17 @@ public class HeadFilter implements Filter {
         TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
         ChannelHandlerContext channelHandlerContext = (ChannelHandlerContext) filterContext.getAttribute("channelHandlerContext");
 
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(getClass().getSimpleName()
+                    + "::onExit:[seqId:" + transactionContext.getSeqid()
+                    + ", execption:" + transactionContext.getSoaException()
+                    + ",\n result:" + filterContext.getAttribute("result") + "]\n"
+                    + "filterContext:" + filterContext);
+        }
+
         SoaResponseWrapper responseWrapper = new SoaResponseWrapper(transactionContext,
                 Optional.ofNullable(filterContext.getAttribute("result")),
-                Optional.ofNullable((BeanSerializer)filterContext.getAttribute("respSerializer")));
+                Optional.ofNullable((BeanSerializer) filterContext.getAttribute("respSerializer")));
         channelHandlerContext.writeAndFlush(responseWrapper);
     }
 }
