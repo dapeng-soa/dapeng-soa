@@ -58,5 +58,5 @@
         </if>
         <appender-ref ref="DETAILFILE"/>
     </root>
-
+    <jmxConfigurator />
 </configuration>
