@@ -10,6 +10,7 @@ import com.github.dapeng.impl.filters.HeadFilter;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.RegistryAgentProxy;
+import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.ExceptionUtil;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import io.netty.channel.ChannelHandler;
@@ -59,8 +60,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             if (LOGGER.isDebugEnabled() && SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL) {
                 ThreadPoolExecutor poolExecutor = (ThreadPoolExecutor) dispatcher;
                 LOGGER.debug("BizThreadPoolInfo:\n"
-                        + " --activeCount/poolSize[" + poolExecutor.getActiveCount() + "/" + poolExecutor.getPoolSize() + "]"
-                        + " --taskCount[" + poolExecutor.getTaskCount() + "]");
+                        + DumpUtil.dumpThreadPool(poolExecutor));
             }
             dispatcher.execute(() -> {
                 try {
@@ -114,7 +114,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
                             + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
 
-                    LOGGER.debug(getClass().getName() + " " + infoLog);
+                    LOGGER.debug(getClass().getSimpleName() + " " + infoLog);
                 }
                 throw new SoaException(SoaCode.TimeOut, "服务端请求超时");
             }
@@ -143,6 +143,11 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                 @Override
                 public void onEntry(FilterContext filterContext, FilterChain next) {
                     try {
+                        if (LOGGER.isDebugEnabled()) {
+                            TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
+                            LOGGER.debug(SoaServerHandler.class.getSimpleName() + "$dispatchFilter::onEntry[seqId:"
+                                    + transactionContext.getSeqid() + "], filterContext:" + filterContext);
+                        }
                         if (serviceDef.isAsync) {
                             SoaFunctionDefinition.Async asyncFunc = (SoaFunctionDefinition.Async) soaFunction;
                             CompletableFuture<RESP> future = (CompletableFuture<RESP>) asyncFunc.apply(iface, args);
@@ -169,9 +174,14 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                 }
 
                 @Override
-                public void onExit(FilterContext ctx, FilterChain prev) {
+                public void onExit(FilterContext filterContext, FilterChain prev) {
                     try {
-                        prev.onExit(ctx);
+                        if (LOGGER.isDebugEnabled()) {
+                            TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
+                            LOGGER.debug(SoaServerHandler.class.getSimpleName() + "$dispatchFilter::onExit[seqId:"
+                                    + transactionContext.getSeqid() + "], filterContext:" + filterContext);
+                        }
+                        prev.onExit(filterContext);
                     } catch (TException e) {
                         attachErrorInfo(transactionContext, ExceptionUtil.convertToSoaException(e));
                     }
