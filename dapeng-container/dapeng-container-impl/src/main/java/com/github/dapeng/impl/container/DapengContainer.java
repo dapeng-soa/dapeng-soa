@@ -12,7 +12,6 @@ import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.impl.filters.FilterLoader;
 import com.github.dapeng.impl.plugins.*;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
-import com.github.dapeng.message.consumer.container.KafkaMessagePlugin;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -56,7 +55,7 @@ public class DapengContainer implements Container {
 
     @Override
     public void registerApplication(Application app) {
-        LOGGER.info(getClass().getSimpleName() + ":: application[" + app.getClass().getSimpleName() + "] registered");
+        LOGGER.info(getClass().getSimpleName() + "::registerApplication application[" + app.getClass().getSimpleName() + "]");
         this.applications.add(app);
         this.appListeners.forEach(i -> {
             try {
@@ -69,7 +68,7 @@ public class DapengContainer implements Container {
 
     @Override
     public void unregisterApplication(Application app) {
-        LOGGER.info(getClass().getSimpleName() + ":: application[" + app.getClass().getSimpleName() + "] unregistered");
+        LOGGER.info(getClass().getSimpleName() + "::unregisterApplication application[" + app.getClass().getSimpleName() + "]");
         this.applications.remove(app);
         this.appListeners.forEach(i -> {
             try {
@@ -82,13 +81,13 @@ public class DapengContainer implements Container {
 
     @Override
     public void registerPlugin(Plugin plugin) {
-        LOGGER.info(getClass().getSimpleName() + ":: plugin[" + plugin.getClass().getSimpleName() + "] registered");
+        LOGGER.info(getClass().getSimpleName() + "::registerPlugin plugin[" + plugin.getClass().getSimpleName() + "]");
         this.plugins.add(plugin);
     }
 
     @Override
     public void unregisterPlugin(Plugin plugin) {
-        LOGGER.info(getClass().getSimpleName() + ":: plugin[" + plugin.getClass().getSimpleName() + "] unregistered");
+        LOGGER.info(getClass().getSimpleName() + "::unregisterPlugin plugin[" + plugin.getClass().getSimpleName() + "]");
         this.plugins.remove(plugin);
     }
 
@@ -129,7 +128,7 @@ public class DapengContainer implements Container {
 
         static Executor initExecutor() {
             LOGGER.info(DapengContainer.class.getName()
-                    + "业务线程池初始化, 是否使用线程池:"
+                    + "业务线程池初始化, 是否使用线程池[coreSize:" + SoaSystemEnvProperties.SOA_CORE_POOL_SIZE + "]:"
                     + SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL);
 
             if (!SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL) {
@@ -161,13 +160,13 @@ public class DapengContainer implements Container {
 
     @Override
     public void registerFilter(Filter filter) {
-        LOGGER.info(getClass().getSimpleName() + " plugin[" + filter.getClass().getSimpleName() + "] registered");
+        LOGGER.info(getClass().getSimpleName() + "::registerFilter filter[" + filter.getClass().getSimpleName() + "]");
         this.filters.add(filter);
     }
 
     @Override
     public void unregisterFilter(Filter filter) {
-        LOGGER.info(getClass().getSimpleName() + " plugin[" + filter.getClass().getSimpleName() + "] registered");
+        LOGGER.info(getClass().getSimpleName() + "::unregisterFilter filter[" + filter.getClass().getSimpleName() + "]");
         this.filters.remove(filter);
     }
 
@@ -226,7 +225,7 @@ public class DapengContainer implements Container {
         try {
             LOGGER.warn(getClass().getSimpleName() + "::startup end");
             SHUTDOWN_SIGNAL.await();
-            LOGGER.warn(getClass().getSimpleName() + "::quit");
+            LOGGER.warn(getClass().getSimpleName() + "::startup quit");
         } catch (InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
         }

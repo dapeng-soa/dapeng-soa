@@ -93,7 +93,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         }
         contentProtocol.readMessageEnd();
 
-        String infoLog = "request[seqId=" + context.getSeqid() + "]:"
+        String infoLog = "request[seqId:" + context.getSeqid() + "]:"
                 + "service[" + soaHeader.getServiceName()
                 + "]:version[" + soaHeader.getVersionName()
                 + "]:method[" + soaHeader.getMethodName() + "]"
@@ -103,7 +103,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         application.info(this.getClass(), infoLog);
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(getClass() + " " + infoLog + ", payload:\n" + args);
+            LOGGER.debug(getClass().getSimpleName() + "::decode " + infoLog + ", payload:\n" + args);
         }
         return args;
     }

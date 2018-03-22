@@ -122,7 +122,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
         }
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(getClass().getSimpleName() + " response[seqId=" + context.getSeqid() + ", respCode=" + soaHeader.getRespCode().get()
+            LOGGER.debug(getClass().getSimpleName() + "::write response[seqId=" + context.getSeqid() + ", respCode=" + soaHeader.getRespCode().get()
                     + "]:service[" + soaHeader.getServiceName()
                     + "]:version[" + soaHeader.getVersionName()
                     + "]:method[" + soaHeader.getMethodName() + "]"
