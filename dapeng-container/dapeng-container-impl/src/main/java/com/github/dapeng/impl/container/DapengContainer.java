@@ -56,7 +56,7 @@ public class DapengContainer implements Container {
 
     @Override
     public void registerApplication(Application app) {
-        LOGGER.info(getClass().getSimpleName() + " application[" + app.getClass().getSimpleName() + "] registered");
+        LOGGER.info(getClass().getSimpleName() + ":: application[" + app.getClass().getSimpleName() + "] registered");
         this.applications.add(app);
         this.appListeners.forEach(i -> {
             try {
@@ -69,7 +69,7 @@ public class DapengContainer implements Container {
 
     @Override
     public void unregisterApplication(Application app) {
-        LOGGER.info(getClass().getSimpleName() + " application[" + app.getClass().getSimpleName() + "] unregistered");
+        LOGGER.info(getClass().getSimpleName() + ":: application[" + app.getClass().getSimpleName() + "] unregistered");
         this.applications.remove(app);
         this.appListeners.forEach(i -> {
             try {
@@ -82,13 +82,13 @@ public class DapengContainer implements Container {
 
     @Override
     public void registerPlugin(Plugin plugin) {
-        LOGGER.info(getClass().getSimpleName() + " plugin[" + plugin.getClass().getSimpleName() + "] registered");
+        LOGGER.info(getClass().getSimpleName() + ":: plugin[" + plugin.getClass().getSimpleName() + "] registered");
         this.plugins.add(plugin);
     }
 
     @Override
     public void unregisterPlugin(Plugin plugin) {
-        LOGGER.info(getClass().getSimpleName() + " plugin[" + plugin.getClass().getSimpleName() + "] unregistered");
+        LOGGER.info(getClass().getSimpleName() + ":: plugin[" + plugin.getClass().getSimpleName() + "] unregistered");
         this.plugins.remove(plugin);
     }
 
