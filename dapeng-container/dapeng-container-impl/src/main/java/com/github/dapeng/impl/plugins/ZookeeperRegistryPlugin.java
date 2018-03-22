@@ -53,7 +53,9 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
     @Override
     public void start() {
         LOGGER.warn("Plugin::ZooKeeperRegistryPlugin start");
-
+        /**
+         * set RegistryAgentImpl ,SoaServerHandler 会用到
+         */
         RegistryAgentProxy.setCurrentInstance(RegistryAgentProxy.Type.Server, registryAgent);
 
         registryAgent.setProcessorMap(ContainerFactory.getContainer().getServiceProcessors());
