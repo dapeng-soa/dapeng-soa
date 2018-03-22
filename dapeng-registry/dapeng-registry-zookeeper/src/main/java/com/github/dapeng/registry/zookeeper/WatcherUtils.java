@@ -20,7 +20,7 @@ public class WatcherUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WatcherUtils.class);
 
-    public static void processConfigData(String configNode, byte[] data, Map<String, Map<ConfigKey, Object>> config) {
+    /*public static void processConfigData(String configNode, byte[] data, Map<String, Map<ConfigKey, Object>> config) {
         try {
             String propertiesStr = new String(data, "utf-8");
 
@@ -71,18 +71,21 @@ public class WatcherUtils {
         } catch (UnsupportedEncodingException e) {
             LOGGER.error(e.getMessage(), e);
         }
-    }
+    }*/
 
     /**
      * new get config data
      *
+     *              timeout/800ms,createSupplier:100ms,modifySupplier:200ms;
+                    loadbalance/LeastActive,createSupplier:Random,modifySupplier:RoundRobin;
+     *
+     *
      * @param data
      * @param zkInfo
      */
-    public static void  processConfigDataNew(byte[] data, ServiceZKInfo zkInfo, boolean isGlobal) {
+    public static void processZkConfig(byte[] data, ServiceZKInfo zkInfo, boolean isGlobal) {
         try {
-            //          timeout/800ms,createSupplier:100ms,modifySupplier:200ms;
-            //          loadbalance/LeastActive,createSupplier:Random,modifySupplier:RoundRobin;
+
             String configData = new String(data, "utf-8");
 
             String[] properties = configData.split(";");

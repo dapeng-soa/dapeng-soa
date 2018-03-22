@@ -5,16 +5,12 @@ import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.RuntimeInstance;
 import com.github.dapeng.registry.ServiceInfo;
 import com.github.dapeng.route.Route;
-import com.github.dapeng.route.parse.RouteParser;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.zookeeper.*;
-import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,12 +19,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
+ * zookeeperClient 主要作用是 供 客户端 从zk获取服务实例
+ *
  * @author tangliu
  * @date 2016/2/29
  */
-public class ZookeeperWatcher {
+public class ZookeeperClient {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ZookeeperWatcher.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZookeeperClient.class);
 
     private final boolean isClient;
     private final Map<String, List<ServiceInfo>> caches = new ConcurrentHashMap<>();
@@ -48,165 +46,27 @@ public class ZookeeperWatcher {
     private ZooKeeper zk;
     private String zkHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
 
-    public ZookeeperWatcher(boolean isClient) {
+    public ZookeeperClient(boolean isClient) {
         this.isClient = isClient;
     }
 
-    public ZookeeperWatcher(boolean isClient, String zkHost) {
+    public ZookeeperClient(boolean isClient, String zkHost) {
         this.isClient = isClient;
         this.zkHost = zkHost;
     }
 
     public void init() {
         connect();
-        getRouteConfig(ROUTES_PATH);
-        setConfigWatcher();
     }
-
-
-    private void setConfigWatcher() {
-
-        try {
-            List<String> children = zk.getChildren(CONFIG_PATH, watchedEvent -> {
-                if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-                    LOGGER.info("{}子节点发生变化，重新获取信息", watchedEvent.getPath());
-                    setConfigWatcher();
-                }
-            });
-
-            children.stream().filter(key -> config.containsKey(key)).forEach(this::getConfigData);
-        } catch (KeeperException e) {
-            LOGGER.error("get children of config root error");
-            LOGGER.error(e.getMessage(), e);
-        } catch (InterruptedException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }
-
 
     /**
-     * 获取路由配置
+     * route 目前暂未实现
      *
-     * @param path
+     * @return
      */
-    private void getRouteConfig(String path) {
-
-        tryCreateNode(path);
-
-        zk.getData(path, watchedEvent -> {
-
-            if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
-                LOGGER.info(watchedEvent.getPath() + "'s data changed, reset route config in memory");
-                getRouteConfig(watchedEvent.getPath());
-            } else if (watchedEvent.getType() == Watcher.Event.EventType.NodeDeleted) {
-                LOGGER.info(watchedEvent.getPath() + " is deleted, reset route config in memory");
-                routes.clear();
-                getRouteConfig(watchedEvent.getPath());
-            }
-        }, (rc, path1, ctx, data, stat) -> {
-            switch (KeeperException.Code.get(rc)) {
-                case CONNECTIONLOSS:
-                    getRouteConfig(path1);
-                    break;
-                case OK:
-                    processRouteDate(data);
-                    break;
-                default:
-                    LOGGER.error("Error when trying to get data of {}.", path1);
-            }
-        }, path);
-    }
-
-
-    /**
-     * 拿到路由配置信息，解析成Routes列表
-     *
-     * @param bytes
-     */
-    private void processRouteDate(byte[] bytes) {
-
-        try {
-            String data = new String(bytes, "utf-8");
-
-            if ("".equals(data.trim()) || ROUTES_PATH.equals(data)) {
-                routes.clear();
-                return;
-            }
-            synchronized (routes) {
-                routes.clear();
-                new RouteParser().parseAll(routes, data);
-            }
-        } catch (UnsupportedEncodingException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }
-
     public List<Route> getRoutes() {
         return this.routes;
     }
-
-
-    private void tryCreateNode(String path) {
-
-        String[] paths = path.split("/");
-
-        String createPath = "/";
-        for (int i = 1; i < paths.length; i++) {
-            createPath += paths[i];
-            addPersistServerNode(createPath, path);
-            createPath += "/";
-        }
-    }
-
-    /**
-     * 添加持久化的节点
-     *
-     * @param path
-     * @param data
-     */
-    private void addPersistServerNode(String path, String data) {
-        Stat stat = exists(path);
-
-        if (stat == null) {
-            zk.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, nodeCreatedCallBack, data);
-        }
-    }
-
-    /**
-     * 判断节点是否存在
-     *
-     * @param path
-     * @return
-     */
-    private Stat exists(String path) {
-        Stat stat = null;
-        try {
-            stat = zk.exists(path, false);
-        } catch (KeeperException | InterruptedException e) {
-        }
-        return stat;
-    }
-
-    /**
-     * 异步添加serverName节点的回调处理
-     */
-    private AsyncCallback.StringCallback nodeCreatedCallBack = (rc, path, ctx, name) -> {
-        switch (KeeperException.Code.get(rc)) {
-            case CONNECTIONLOSS:
-                LOGGER.info("创建节点:{},连接断开，重新创建", path);
-                tryCreateNode((String) ctx); //每次创建都会从根节点开始尝试创建，避免根节点未创建而造成创建失败
-//                addPersistServerNode(path, (String) ctx);
-                break;
-            case OK:
-                LOGGER.info("创建节点:{},成功", path);
-                break;
-            case NODEEXISTS:
-                LOGGER.info("创建节点:{},已存在", path);
-                break;
-            default:
-                LOGGER.info("创建节点:{},失败", path);
-        }
-    };
 
 
     public void destroy() {
@@ -221,7 +81,7 @@ public class ZookeeperWatcher {
         }
     }
 
-    public List<ServiceInfo> getServiceInfo(String serviceName, String versionName, boolean compatible) {
+    public List<ServiceInfo> getServiceInfoCached(String serviceName, String versionName, boolean compatible) {
 
         List<ServiceInfo> serverList;
 
@@ -275,7 +135,7 @@ public class ZookeeperWatcher {
             }
             ServiceZKInfo zkInfo = new ServiceZKInfo(serviceName, runtimeInstanceList);
             // zkInfo config
-            getConfigDataNew(serviceName, zkInfo);
+            getConfigData(serviceName, zkInfo);
 
             zkInfos.put(serviceName, zkInfo);
             return zkInfo;
@@ -337,8 +197,8 @@ public class ZookeeperWatcher {
                     case SyncConnected:
                         semaphore.countDown();
                         LOGGER.info("{} Zookeeper Watcher 已连接 zookeeper Server", isClient ? "Client's" : "Server's");
-                        tryCreateNode(SERVICE_PATH);
-                        tryCreateNode(CONFIG_PATH);
+//                        tryCreateNode(SERVICE_PATH);
+//                        tryCreateNode(CONFIG_PATH);
 
                         caches.clear();
                         config.clear();
@@ -362,59 +222,20 @@ public class ZookeeperWatcher {
         }
     }
 
-    // 要进行缓存
-    public Map<ConfigKey, Object> getConfigWithKey(String serviceKey) {
-
-        if (config.containsKey(serviceKey)) {
-            return config.get(serviceKey);
-        } else {
-            getConfigData(serviceKey);
-            return config.get(serviceKey);
-        }
-    }
-
-
-    private void getConfigData(String configNodeName) {
-
-        String configPath = CONFIG_PATH + "/" + configNodeName;
-
-        try {
-            byte[] data = zk.getData(configPath, watchedEvent -> {
-                if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
-                    LOGGER.info(watchedEvent.getPath() + "'s data changed, reset config in memory");
-                    getConfigData(configNodeName);
-                }
-                if (watchedEvent.getType() == Watcher.Event.EventType.NodeDeleted) {
-                    LOGGER.info(watchedEvent.getPath() + " is deleted, remove config in memory");
-                    config.remove(configNodeName);
-                }
-            }, null);
-
-            WatcherUtils.processConfigData(configNodeName, data, config);
-
-        } catch (KeeperException e) {
-            LOGGER.error(e.getMessage());
-            if (e instanceof KeeperException.NoNodeException) {
-                config.put(configNodeName, new HashMap<>());
-            }
-        } catch (InterruptedException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }
 
     /**
      * @param configNodeName
      */
-    private void getConfigDataNew(String configNodeName, ServiceZKInfo zkInfo) {
+    private void getConfigData(String configNodeName, ServiceZKInfo zkInfo) {
         //1.获取 globalConfig
         try {
             byte[] globalData = zk.getData(CONFIG_PATH, watchedEvent -> {
                 if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
                     LOGGER.info(watchedEvent.getPath() + "'s data changed, reset config in memory");
-                    getConfigDataNew(configNodeName, zkInfo);
+                    getConfigData(configNodeName, zkInfo);
                 }
             }, null);
-            WatcherUtils.processConfigDataNew(globalData, zkInfo, true);
+            WatcherUtils.processZkConfig(globalData, zkInfo, true);
 
         } catch (KeeperException e) {
             LOGGER.error(e.getMessage(), e);
@@ -428,15 +249,14 @@ public class ZookeeperWatcher {
             byte[] serviceData = zk.getData(configPath, watchedEvent -> {
                 if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
                     LOGGER.info(watchedEvent.getPath() + "'s data changed, reset config in memory");
-                    getConfigDataNew(configNodeName, zkInfo);
+                    getConfigData(configNodeName, zkInfo);
                 }
             }, null);
-            WatcherUtils.processConfigDataNew(serviceData, zkInfo, false);
+            WatcherUtils.processZkConfig(serviceData, zkInfo, false);
 
         } catch (KeeperException e) {
             LOGGER.error(e.getMessage());
             if (e instanceof KeeperException.NoNodeException) {
-                config.put(configNodeName, new HashMap<>());
             }
         } catch (InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
@@ -445,7 +265,7 @@ public class ZookeeperWatcher {
 
 
     public static void main(String[] args) throws InterruptedException {
-        ZookeeperWatcher zw = new ZookeeperWatcher(true);
+        ZookeeperClient zw = new ZookeeperClient(true);
         zw.init();
     }
 

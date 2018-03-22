@@ -52,7 +52,7 @@ public interface RegistryAgent {
      * @param compatible  是否兼容模式
      * @return
      */
-    ServiceInfos loadMatchedServices(String serviceName, String versionName, boolean compatible);
+//    ServiceInfos loadMatchedServices(String serviceName, String versionName, boolean compatible);
 
     /**
      * 获取配置
@@ -71,9 +71,6 @@ public interface RegistryAgent {
      */
     List<Route> getRoutes(boolean usingFallback);
 
-    // todo 完善
-    void registerConfig(ZkNodeConfigContext configs, String serverName, String versionName);
 
 
-    void registerAllConfig(ZkNodeConfigContext configs);
 }
