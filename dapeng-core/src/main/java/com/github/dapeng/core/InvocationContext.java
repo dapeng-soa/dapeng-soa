@@ -51,6 +51,10 @@ public interface InvocationContext {
 
     Optional<Integer> getOperatorId();
 
+    void setOperatorName(Optional<String> operatorName);
+
+    Optional<String> getOperatorName();
+
     void setCallerFrom(Optional<String> callerFrom);
 
     Optional<String> getCallerFrom();
@@ -70,6 +74,13 @@ public interface InvocationContext {
      * @return
      */
     Optional<Long> getTimeout();
+    void setSessionId(Optional<String>  sessionId);
+
+    Optional<String> getSessionId();
+
+    boolean isSoaTransactionProcess();
+
+    void setSoaTransactionProcess(Boolean isSoaTransactionProcess);
 
     void setTimeout(Optional<Long> timeout);
 
