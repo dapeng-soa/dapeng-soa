@@ -12,7 +12,6 @@ import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.impl.filters.FilterLoader;
 import com.github.dapeng.impl.plugins.*;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
-import com.github.dapeng.message.consumer.container.KafkaMessagePlugin;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -184,6 +183,7 @@ public class DapengContainer implements Container {
         Plugin zookeeperPlugin = new ZookeeperRegistryPlugin(this);
         Plugin taskSchedulePlugin = new TaskSchedulePlugin(this);
         Plugin nettyPlugin = new NettyPlugin(this);
+        Plugin mbeanAgentPlugin = new MbeanAgentPlugin();
         //add messagePlugin
 //        Plugin messagePlugin = new KafkaMessagePlugin();
         // TODO
@@ -196,6 +196,7 @@ public class DapengContainer implements Container {
         registerPlugin(springAppLoader);
         registerPlugin(taskSchedulePlugin);
         registerPlugin(nettyPlugin);
+        registerPlugin(mbeanAgentPlugin);
 
         //add messagePlugin
 //        registerPlugin(messagePlugin);
