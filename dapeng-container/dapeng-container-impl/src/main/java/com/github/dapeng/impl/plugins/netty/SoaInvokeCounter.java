@@ -75,13 +75,14 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace(getClass().getSimpleName() + "::read");
-        }
-
         TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
         Integer seqId = transactionContext.getSeqid();
         invokeStartPair.put(seqId, System.currentTimeMillis());
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(getClass().getSimpleName() + "::read response[seqId=" + transactionContext.getSeqid());
+        }
+
         ctx.fireChannelRead(msg);
     }
 
@@ -123,10 +124,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(getClass().getSimpleName() + "::write response[seqId=" + context.getSeqid() + ", respCode=" + soaHeader.getRespCode().get()
-                    + "]:service[" + soaHeader.getServiceName()
-                    + "]:version[" + soaHeader.getVersionName()
-                    + "]:method[" + soaHeader.getMethodName() + "]"
-                    + "cost:" + cost + "ms");
+                    + "] cost:" + cost + "ms");
         }
 
         ctx.write(msg, promise);
