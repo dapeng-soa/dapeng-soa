@@ -25,8 +25,8 @@ public class CommonZk {
 
 
     protected final static String SERVICE_PATH = "/soa/runtime/services";
-    protected final static String CONFIG_PATH = "/soa/config/service";
-    protected final static String ROUTES_PATH = "/soa/config/route";
+    protected final static String CONFIG_PATH = "/soa/config/services";
+    protected final static String ROUTES_PATH = "/soa/config/routes";
 
 
     protected ZooKeeper zk;
