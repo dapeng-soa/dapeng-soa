@@ -1,12 +1,8 @@
 package com.github.dapeng.registry.zookeeper;
 
-import com.github.dapeng.registry.LoadBalanceStrategy;
 import com.github.dapeng.registry.RuntimeInstance;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 
 /**
  * @author lihuimin
