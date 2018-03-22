@@ -106,7 +106,13 @@ public class RegistryAgentImpl implements RegistryAgent {
         return this.processorMap;
     }
 
-
+    /**
+     * 根据serviceKey拿到 zk config 信息
+     *
+     * @param usingFallback
+     * @param serviceKey
+     * @return
+     */
     @Override
     public Map<ConfigKey, Object> getConfig(boolean usingFallback, String serviceKey) {
         return null;
