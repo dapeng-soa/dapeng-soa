@@ -115,7 +115,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
                             + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
 
-                    LOGGER.debug(getClass().getSimpleName() + " " + infoLog);
+                    LOGGER.debug(getClass().getSimpleName() + "::processRequest " + infoLog);
                 }
                 throw new SoaException(SoaCode.TimeOut, "服务端请求超时");
             }
@@ -147,7 +147,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                         if (LOGGER.isDebugEnabled()) {
                             TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
                             LOGGER.debug(SoaServerHandler.class.getSimpleName() + "$dispatchFilter::onEntry[seqId:"
-                                    + transactionContext.getSeqid() + "], filterContext:" + filterContext);
+                                    + transactionContext.getSeqid() + ", async:" + serviceDef.isAsync + "]");
                         }
                         if (serviceDef.isAsync) {
                             SoaFunctionDefinition.Async asyncFunc = (SoaFunctionDefinition.Async) soaFunction;
@@ -180,7 +180,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                         if (LOGGER.isDebugEnabled()) {
                             TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
                             LOGGER.debug(SoaServerHandler.class.getSimpleName() + "$dispatchFilter::onExit[seqId:"
-                                    + transactionContext.getSeqid() + "], filterContext:" + filterContext);
+                                    + transactionContext.getSeqid() + "]");
                         }
                         prev.onExit(filterContext);
                     } catch (TException e) {
@@ -282,7 +282,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         String serviceKey = soaHeader.getServiceName();
         ZkConfigInfo configInfo = RegistryAgentProxy.getCurrentInstance(RegistryAgentProxy.Type.Server).getConfig(false, serviceKey);
 
-        long envTimeout = SoaSystemEnvProperties.SOA_SERVICE_SERVER_TIMEOUT.longValue();
+        long envTimeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT.longValue();
         if (null != configInfo) {
             //方法级别
             Long methodTimeOut = configInfo.timeConfig.serviceConfigs.get(soaHeader.getMethodName());
@@ -291,9 +291,10 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             //全局
             Long globalTimeOut = configInfo.timeConfig.globalConfig;
 
-            LOGGER.debug("request:serviceName:{},methodName:{}," +
-                            " methodTimeOut:{},serviceTimeOut:{},globalTimeOut:{}",
-                    soaHeader.getServiceName(), soaHeader.getMethodName(), methodTimeOut, serviceTimeOut, globalTimeOut);
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("request:serviceName:{},methodName:{}," +
+                                " methodTimeOut:{},serviceTimeOut:{},globalTimeOut:{}",
+                        soaHeader.getServiceName(), soaHeader.getMethodName(), methodTimeOut, serviceTimeOut, globalTimeOut);
 
             Long timeoutConfig;
 

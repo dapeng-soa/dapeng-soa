@@ -8,9 +8,12 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
+import io.netty.util.Attribute;
+import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.Optional;
 
 import static com.github.dapeng.util.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
@@ -38,6 +41,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             LOGGER.trace(getClass().getSimpleName() + "::encode");
         }
 
+
         TransactionContext transactionContext = wrapper.transactionContext;
         SoaHeader soaHeader = transactionContext.getHeader();
         Optional<String> respCode = soaHeader.getRespCode();
@@ -62,12 +66,16 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                 messageProcessor.writeMessageEnd();
                 transport.flush();
 
-                String infoLog = "response[seqId=" + transactionContext.getSeqid() + ", respCode=" + respCode.get() + "):"
+                Attribute<Long> requestTimestampAttr = channelHandlerContext.channel().attr(AttributeKey.valueOf(NettyChannelKeys.REQUEST_TIMESTAMP + transactionContext.getSeqid()));
+                Long requestTimestamp = requestTimestampAttr.getAndRemove();
+
+                String infoLog = "response[seqId:" + transactionContext.getSeqid() + ", respCode:" + respCode.get() + "]:"
                         + "service[" + soaHeader.getServiceName()
                         + "]:version[" + soaHeader.getVersionName()
                         + "]:method[" + soaHeader.getMethodName() + "]"
                         + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                        + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
+                        + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : ""
+                        + " cost:" + (System.currentTimeMillis() - requestTimestamp) + "ms");
 
                 application.info(this.getClass(), infoLog);
                 if (LOGGER.isDebugEnabled()) {
@@ -129,14 +137,17 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
 
             transport.flush();
 
-            application.error(this.getClass(),
-                    "response(" + soaHeader.getRespCode().get() + "):"
-                            + "service[" + soaHeader.getServiceName()
-                            + "]:version[" + soaHeader.getVersionName()
-                            + "]:method[" + soaHeader.getMethodName() + "]"
-                            + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                            + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : ""),
-                    soaException);
+            String infoLog = "response[seqId:" + transactionContext.getSeqid() + ", respCode:" + soaHeader.getRespCode().get() + "]:"
+                    + "service[" + soaHeader.getServiceName()
+                    + "]:version[" + soaHeader.getVersionName()
+                    + "]:method[" + soaHeader.getMethodName() + "]"
+                    + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
+                    + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
+            application.error(this.getClass(), infoLog, soaException);
+
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(getClass() + " " + infoLog + ", payload:\n" + soaException.getMessage());
+            }
         } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
         }
