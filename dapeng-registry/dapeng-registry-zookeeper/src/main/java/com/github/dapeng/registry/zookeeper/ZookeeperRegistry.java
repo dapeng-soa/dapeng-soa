@@ -2,7 +2,6 @@ package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.core.helper.MasterHelper;
-import com.github.dapeng.registry.ZkNodeConfigContext;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
@@ -10,26 +9,32 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author tangliu
- * @date 2016/2/29
- */
-public class ZookeeperHelper {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ZookeeperHelper.class);
+/**
+ * 服务端  zk 服务注册
+ *
+ * @author hz.lei
+ * @date 2018-03-20
+ */
+public class ZookeeperRegistry {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZookeeperRegistry.class);
 
     private String zookeeperHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
 
     private ZooKeeper zk;
     private RegistryAgent registryAgent;
 
-    public ZookeeperHelper(RegistryAgent registryAgent) {
+    private final static String SERVICE_PATH = "/soa/runtime/services";
+    private final static String CONFIG_PATH = "/soa/config/service";
+    private final static String ROUTES_PATH = "/soa/config/route";
+
+    public ZookeeperRegistry(RegistryAgent registryAgent) {
         this.registryAgent = registryAgent;
     }
 
@@ -42,29 +47,45 @@ public class ZookeeperHelper {
             CountDownLatch semaphore = new CountDownLatch(1);
 
             zk = new ZooKeeper(zookeeperHost, 15000, watchedEvent -> {
-                if (watchedEvent.getState() == Watcher.Event.KeeperState.Expired) {
-                    LOGGER.info("ZookeeperHelper session timeout to  {} [Zookeeper]", zookeeperHost);
-                    destroy();
-                    connect();
 
-                } else if (Watcher.Event.KeeperState.SyncConnected == watchedEvent.getState()) {
-                    semaphore.countDown();
-                    LOGGER.info("ZookeeperHelper connected to  {} [Zookeeper]", zookeeperHost);
-                    if (registryAgent != null) {
-                        registryAgent.registerAllServices();//重新注册服务
-                    }
+                switch (watchedEvent.getState()) {
 
-                } else if (Watcher.Event.KeeperState.Disconnected == watchedEvent.getState()) {
-                    //zookeeper重启或zookeeper实例重新创建
-                    LOGGER.error("Registry {} zookeeper 连接断开，可能是zookeeper重启或重建");
+                    case Expired:
+                        LOGGER.info("ZookeeperRegistry session timeout to  {} [Zookeeper]", zookeeperHost);
+                        destroy();
+                        connect();
+                        break;
 
-                    isMaster.clear(); //断开连接后，认为，master应该失效，避免某个孤岛一直以为自己是master
+                    case SyncConnected:
+                        semaphore.countDown();
+                        //创建根节点
+                        create(SERVICE_PATH, null, false);
+                        create(CONFIG_PATH, null, false);
 
-                    destroy();
-                    connect();
+                        LOGGER.info("ZookeeperRegistry connected to  {} [Zookeeper]", zookeeperHost);
+                        if (registryAgent != null) {
+                            registryAgent.registerAllServices();//重新注册服务
+                        }
+                        break;
+
+                    case Disconnected:
+                        //zookeeper重启或zookeeper实例重新创建
+                        LOGGER.error("Registry {} zookeeper 连接断开，可能是zookeeper重启或重建");
+
+                        isMaster.clear(); //断开连接后，认为，master应该失效，避免某个孤岛一直以为自己是master
+
+                        destroy();
+                        connect();
+                        break;
+                    case AuthFailed:
+                        LOGGER.info("Zookeeper connection auth failed ...");
+                        destroy();
+                        break;
+                    default:
+                        break;
                 }
             });
-
+            //hold 10 s
             semaphore.await(10000, TimeUnit.MILLISECONDS);
 
         } catch (Exception e) {
@@ -78,7 +99,7 @@ public class ZookeeperHelper {
     public void destroy() {
         if (zk != null) {
             try {
-                LOGGER.info("ZookeeperHelper closing connection to zookeeper {}", zookeeperHost);
+                LOGGER.info("ZookeeperRegistry closing connection to zookeeper {}", zookeeperHost);
                 zk.close();
                 zk = null;
             } catch (InterruptedException e) {
@@ -88,54 +109,73 @@ public class ZookeeperHelper {
 
     }
 
+    //～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～
+    //                           that's begin                                      ～
+    //                                                                             ～
+    //～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～
+
+
     /**
-     * @param path /soa/runtime/services/com.github.user.UserService/192.168.1.12:9081:1.0.0
-     * @param data
+     * 递归节点创建
      */
-    public void addOrUpdateServerInfo(String path, String data) {
-        String[] paths = path.split("/");
-        String serviceName = paths[4];
-        String instancePath = paths[5];
-        String versionName = instancePath.substring(instancePath.lastIndexOf(":") + 1);
+    public void create(String path, RegisterContext context, boolean ephemeral) {
 
-        String watchPath = path.substring(0, path.lastIndexOf("/"));
-
-        String createPath = "/";
-        for (int i = 1; i < paths.length - 1; i++) {
-            createPath += paths[i];
-            // 异步递归创建持久化节点
-            addPersistNode(createPath, "");
-            createPath += "/";
+        int i = path.lastIndexOf("/");
+        if (i > 0) {
+            String parentPath = path.substring(0, i);
+            //判断父节点是否存在...
+            if (!checkExists(parentPath)) {
+                create(parentPath, null, false);
+            }
         }
+        if (ephemeral) {
+            createEphemeral(path + ":", context);
 
+            //添加 watch ，监听子节点变化
+            watchInstanceChange(context);
+        } else {
+            createPersistent(path, "");
 
-        addServerInfo(path + ":", data);
-        //添加 watch ，监听子节点变化
-        watchInstanceChange(watchPath, serviceName, versionName, instancePath);
+        }
+    }
+
+    /**
+     * 检查节点是否存在
+     */
+    public boolean checkExists(String path) {
+        try {
+            Stat exists = zk.exists(path, false);
+            if (exists != null) {
+                return true;
+            }
+            return false;
+        } catch (Throwable t) {
+        }
+        return false;
     }
 
 
     /**
      * 监听服务节点下面的子节点（临时节点，实例信息）变化
      */
-    private void watchInstanceChange(String path, String serviceName, String versionName, String instancePath) {
+    public void watchInstanceChange(RegisterContext context) {
+        String watchPath = context.getServicePath();
         try {
-            List<String> children = zk.getChildren(path, event -> {
+            List<String> children = zk.getChildren(watchPath, event -> {
                 //Children发生变化，则重新获取最新的services列表
                 if (event.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
                     LOGGER.info("{}子节点发生变化，重新获取子节点...", event.getPath());
-                    // chekck
-                    watchInstanceChange(path, serviceName, versionName, instancePath);
+
+                    watchInstanceChange(context);
                 }
             });
             if (children.size() > 0) {
-                checkIsMaster(children, MasterHelper.generateKey(serviceName, versionName), instancePath);
+                checkIsMaster(children, MasterHelper.generateKey(context.getService(), context.getVersion()), context.getInstanceInfo());
             }
 
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
-            // fixme 如果这里没有父节点 path，会一直报错
-            watchInstanceChange(path, serviceName, versionName, instancePath);
+            create(context.getServicePath() + "/" + context.getInstanceInfo(), context, true);
         }
 
     }
@@ -147,7 +187,7 @@ public class ZookeeperHelper {
      * @param path
      * @param data
      */
-    private void addPersistNode(String path, String data) {
+    private void createPersistent(String path, String data) {
         Stat stat = exists(path);
 
         if (stat == null) {
@@ -171,7 +211,7 @@ public class ZookeeperHelper {
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 LOGGER.info("创建节点:{},连接断开，重新创建", path);
-                addPersistNode(path, (String) ctx);
+                createPersistent(path, (String) ctx);
                 break;
             case OK:
                 LOGGER.info("创建节点:{},成功", path);
@@ -189,8 +229,8 @@ public class ZookeeperHelper {
     /**
      * 异步添加serverInfo,为临时有序节点，如果server挂了就木有了
      */
-    public void addServerInfo(String path, String data) {
-        zk.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, serverInfoCreateCallback, data);
+    public void createEphemeral(String path, RegisterContext context) {
+        zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, serverInfoCreateCallback, context);
     }
 
     /**
@@ -200,8 +240,8 @@ public class ZookeeperHelper {
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 LOGGER.info("添加serviceInfo:{},连接断开，重新添加", path);
-
-                addOrUpdateServerInfo(path, (String) ctx);
+                //重新调用
+                create(path, (RegisterContext) ctx, true);
                 break;
             case OK:
                 LOGGER.info("添加serviceInfo:{},成功", path);
@@ -214,7 +254,7 @@ public class ZookeeperHelper {
                 } catch (Exception e) {
                     LOGGER.error("删除serviceInfo:{} 失败:{}", path, e.getMessage());
                 }
-                addOrUpdateServerInfo(path, (String) ctx);
+                create(path, (RegisterContext) ctx, true);
                 break;
             default:
                 LOGGER.info("添加serviceInfo:{}，出错", path);
@@ -249,11 +289,11 @@ public class ZookeeperHelper {
     private static Map<String, Boolean> isMaster = MasterHelper.isMaster;
 
     /**
-     * @param children    当前方法下的实例列表，        eg 127.0.0.1:9081:1.0.0,192.168.1.12:9081:1.0.0
-     * @param serviceKey  当前服务信息                eg com.github.user.UserService:1.0.0
-     * @param instanceKey 当前服务节点实例信息         eg  192.168.10.17:9081:1.0.0
+     * @param children     当前方法下的实例列表，        eg 127.0.0.1:9081:1.0.0,192.168.1.12:9081:1.0.0
+     * @param serviceKey   当前服务信息                eg com.github.user.UserService:1.0.0
+     * @param instanceInfo 当前服务节点实例信息         eg  192.168.10.17:9081:1.0.0
      */
-    public void checkIsMaster(List<String> children, String serviceKey, String instanceKey) {
+    public void checkIsMaster(List<String> children, String serviceKey, String instanceInfo) {
         if (children.size() <= 0) {
             return;
         }
@@ -275,7 +315,7 @@ public class ZookeeperHelper {
 
         String firstInfo = firstNode.replace(firstNode.substring(firstNode.lastIndexOf(":")), "");
 
-        if (firstInfo.equals(instanceKey)) {
+        if (firstInfo.equals(instanceInfo)) {
             isMaster.put(serviceKey, true);
             LOGGER.info("({})竞选master成功, master({})", serviceKey, CURRENT_CONTAINER_ADDR);
         } else {
@@ -289,76 +329,10 @@ public class ZookeeperHelper {
             String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
 
 
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~config 配置~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //                           config 配置  that's begin                        ～
+    //                                                                            ～
+    //～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～
 
-    private final String GLOBLE_KEY = "services";
-
-
-    /**
-     * /soa/config/services/com.UserService
-     * "" soa config services com.UserService
-     * 0   1   2      3          4         length   5
-     * 传入path和configs，进行节点信息创建
-     *
-     * @param path
-     * @param config
-     */
-    public void addOrUpdateConfigNode(String path, ZkNodeConfigContext config) {
-        String[] paths = path.split("/");
-        String createPath = "/";
-        for (int i = 1; i < paths.length - 1; i++) {
-            createPath += paths[i];
-
-            if (paths[i].equals(GLOBLE_KEY)) {
-                addPersistNode(path, config.getGlobalConfig());
-                continue;
-            }
-
-            if (i == paths.length - 1) {
-                addPersistNode(path, config.getServiceConfig());
-            }
-
-            addPersistNode(path, "");
-        }
-        createEphemeralConfig(path, config);
-    }
-
-
-    /**
-     * 异步添加serverInfo,为临时有序节点，如果server挂了就木有了
-     */
-    public void createEphemeralConfig(String path, ZkNodeConfigContext config) {
-        zk.create(path, config.getInstanceConfig().getBytes(),
-                ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL, instanceConfigCallback, config);
-    }
-
-
-    /**
-     * 异步添加serverInfo 临时节点 的回调处理
-     */
-    private AsyncCallback.StringCallback instanceConfigCallback = (rc, path, ctx, name) -> {
-        switch (KeeperException.Code.get(rc)) {
-            case CONNECTIONLOSS:
-                LOGGER.info("添加config instance info:{},连接断开，重新添加", path);
-
-                addOrUpdateConfigNode(path, (ZkNodeConfigContext) ctx);
-                break;
-            case OK:
-                LOGGER.info("添加config instance info :{},成功", path);
-                break;
-            case NODEEXISTS:
-                LOGGER.info("添加config instance info: {},已存在，删掉后重新添加", path);
-                try {
-                    //只删除了当前serviceInfo的节点
-                    zk.delete(path, -1);
-                } catch (Exception e) {
-                    LOGGER.error("删除serviceInfo:{} 失败:{}", path, e.getMessage());
-                }
-                addOrUpdateConfigNode(path, (ZkNodeConfigContext) ctx);
-                break;
-            default:
-                LOGGER.info("添加config instance info: {}，出错", path);
-        }
-    };
 
 }

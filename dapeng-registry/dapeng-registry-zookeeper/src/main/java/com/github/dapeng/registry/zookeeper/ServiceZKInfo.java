@@ -15,11 +15,17 @@ import java.util.Properties;
 public class ServiceZKInfo {
 
     final String service;
-
+    /**
+     * instances list
+     */
     private List<RuntimeInstance> runtimeInstances;
-    // timeout
+    /**
+     * timeout zk config
+     */
     public Config<Long> timeConfig = new Config<>();
-    //loadbalance config
+    /**
+     * loadBalance zk config
+     */
     public Config<LoadBalanceStrategy> loadbalanceConfig = new Config<>();
 
     public ServiceZKInfo(String service, List<RuntimeInstance> runtimeInstances) {
