@@ -147,7 +147,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                         if (LOGGER.isDebugEnabled()) {
                             TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
                             LOGGER.debug(SoaServerHandler.class.getSimpleName() + "$dispatchFilter::onEntry[seqId:"
-                                    + transactionContext.getSeqid() + ", async:" + serviceDef.isAsync + "], filterContext:" + filterContext);
+                                    + transactionContext.getSeqid() + ", async:" + serviceDef.isAsync + "]");
                         }
                         if (serviceDef.isAsync) {
                             SoaFunctionDefinition.Async asyncFunc = (SoaFunctionDefinition.Async) soaFunction;
@@ -180,7 +180,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                         if (LOGGER.isDebugEnabled()) {
                             TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
                             LOGGER.debug(SoaServerHandler.class.getSimpleName() + "$dispatchFilter::onExit[seqId:"
-                                    + transactionContext.getSeqid() + "], filterContext:" + filterContext);
+                                    + transactionContext.getSeqid() + "]");
                         }
                         prev.onExit(filterContext);
                     } catch (TException e) {
@@ -291,9 +291,10 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             //全局
             Long globalTimeOut = configInfo.timeConfig.globalConfig;
 
-            LOGGER.debug("request:serviceName:{},methodName:{}," +
-                            " methodTimeOut:{},serviceTimeOut:{},globalTimeOut:{}",
-                    soaHeader.getServiceName(), soaHeader.getMethodName(), methodTimeOut, serviceTimeOut, globalTimeOut);
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("request:serviceName:{},methodName:{}," +
+                                " methodTimeOut:{},serviceTimeOut:{},globalTimeOut:{}",
+                        soaHeader.getServiceName(), soaHeader.getMethodName(), methodTimeOut, serviceTimeOut, globalTimeOut);
 
             Long timeoutConfig;
 
