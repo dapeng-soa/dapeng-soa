@@ -18,6 +18,6 @@ public interface ZkClientAgent {
 
     void cancnelSyncService(String serviceName, Map<String, ZkServiceInfo> zkInfos);
 
-    Map<ConfigKey,Object> getConfig(boolean usingFallback, String serviceKey);
+    ZkConfigInfo getConfig(boolean usingFallback, String serviceKey);
 
 }
