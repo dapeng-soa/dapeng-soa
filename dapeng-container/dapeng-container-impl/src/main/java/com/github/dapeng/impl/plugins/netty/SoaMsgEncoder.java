@@ -8,9 +8,14 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
+import io.netty.util.Attribute;
+import io.netty.util.AttributeKey;
+import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static com.github.dapeng.util.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
@@ -38,9 +43,18 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             LOGGER.trace(getClass().getSimpleName() + "::encode");
         }
 
+
         TransactionContext transactionContext = wrapper.transactionContext;
         SoaHeader soaHeader = transactionContext.getHeader();
         Optional<String> respCode = soaHeader.getRespCode();
+
+
+        Attribute<Map<Integer, Long>> attr = channelHandlerContext.channel().attr(NettyChannel.NETTY_CHANNEL_KEY);
+        Map<Integer, Long> timeMap = attr.get();
+
+        Long beginTime = timeMap.get(transactionContext.getSeqid());
+        System.out.println("==========>decode:  seqId: " + transactionContext.getSeqid() + ": time  " + beginTime);
+
 
         Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
