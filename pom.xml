@@ -69,7 +69,7 @@
         <module>dapeng-transaction</module>
         <module>dapeng-json</module>
         <!--<module>dapeng-demo</module>-->
-        <!--<module>dapeng-counter</module>-->
+        <module>dapeng-counter</module>
     </modules>
 
     <properties>
