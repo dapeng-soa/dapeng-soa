@@ -22,7 +22,7 @@ public class LogbackPlugin implements Plugin {
 
     @Override
     public void start() {
-        LOGGER.warn("Plugin::LogbackPlugin start.");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
 
         try (InputStream logbackCnfgStream = new BufferedInputStream(DapengContainer.loadInputStreamInClassLoader("logback.xml"))) {
             LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -41,6 +41,7 @@ public class LogbackPlugin implements Plugin {
 
     @Override
     public void stop() {
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::stop");
     }
 
 }

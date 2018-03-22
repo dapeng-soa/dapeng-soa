@@ -44,7 +44,7 @@ public class NettyPlugin implements AppListener, Plugin {
 
     @Override
     public void start() {
-        LOGGER.warn("Plugin::NettyPlugin start");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
         LOGGER.info("Bind Local Port {} [Netty]", port);
         LOGGER.info("ByteBufAllocator:{}", SoaSystemEnvProperties.SOA_POOLED_BYTEBUF ? "pooled" : "unpooled");
 
@@ -113,18 +113,18 @@ public class NettyPlugin implements AppListener, Plugin {
 
     @Override
     public void stop() {
-        LOGGER.warn("Plugin::NettyPlugin stop");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::stop");
         workerGroup.shutdownGracefully();
         bossGroup.shutdownGracefully();
     }
 
     @Override
     public void appRegistered(AppEvent event) {
-
+        LOGGER.info(getClass().getSimpleName() + "::appRegistered event:[" + event.getSource() + "]");
     }
 
     @Override
     public void appUnRegistered(AppEvent event) {
-
+        LOGGER.info(getClass().getSimpleName() + "::appUnRegistered event:[" + event.getSource() + "]");
     }
 }

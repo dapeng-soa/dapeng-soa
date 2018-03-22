@@ -9,28 +9,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
  * @author lihuimin
  * @date 2017/12/8
  */
 public class FlowControlFilter implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(FlowControlFilter.class);
 
-    public void controlFlow(){}
+    public void controlFlow() {
+    }
 
     @Override
     public void onEntry(FilterContext filterContext, FilterChain next) throws SoaException {
         if (LOGGER.isDebugEnabled()) {
-            if (LOGGER.isDebugEnabled()) {
-                TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
-                LOGGER.debug(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.getSeqid() + "], filterContext:" + filterContext);
-            }
+            TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
+            LOGGER.debug(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.getSeqid() + "], filterContext:" + filterContext);
         }
         next.onEntry(filterContext);
     }
 
     @Override
-    public void onExit(FilterContext filterContext, FilterChain prev)  throws SoaException {
+    public void onExit(FilterContext filterContext, FilterChain prev) throws SoaException {
         if (LOGGER.isDebugEnabled()) {
             TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
             LOGGER.debug(getClass().getSimpleName() + "::onExit[seqId:" + transactionContext.getSeqid() + "], filterContext:" + filterContext);
