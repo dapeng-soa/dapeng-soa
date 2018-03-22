@@ -398,12 +398,15 @@ class JavaGenerator extends CodeGenerator {
             /**
             *{enumItem.getDoc}
             **/
-            {enumItem.label}({enumItem.value}){if(enumItem == enum.enumItems.get(enum.enumItems.size() - 1)) <div>;</div> else <div>,</div>}
+            {enumItem.label}({enumItem.value})<div>,</div>
           </div>
         }
         }
         }
-
+        /*
+        * 未定义的枚举类型
+        */
+        UNDEFINED(-1);
         private final int value;
 
         private {enum.name}(int value)<block>
@@ -425,6 +428,8 @@ class JavaGenerator extends CodeGenerator {
             }
             }
             }
+            case -1:
+              return UNDEFINED;
             default:
             return null;
           </block>
