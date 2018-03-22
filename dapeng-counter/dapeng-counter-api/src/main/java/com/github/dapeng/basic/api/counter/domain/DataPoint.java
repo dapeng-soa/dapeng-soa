@@ -37,12 +37,12 @@ package com.github.dapeng.basic.api.counter.domain;
  value会用于展示
 
             **/
-            public java.util.Map<String, String> values = new java.util.HashMap<>();
-            public java.util.Map<String, String> getValues(){ return this.values; }
-            public void setValues(java.util.Map<String, String> values){ this.values = values; }
+            public java.util.Map<String, Long> values = new java.util.HashMap<>();
+            public java.util.Map<String, Long> getValues(){ return this.values; }
+            public void setValues(java.util.Map<String, Long> values){ this.values = values; }
 
-            public java.util.Map<String, String> values(){ return this.values; }
-            public DataPoint values(java.util.Map<String, String> values){ this.values = values; return this; }
+            public java.util.Map<String, Long> values(){ return this.values; }
+            public DataPoint values(java.util.Map<String, Long> values){ this.values = values; return this; }
           
             /**
             *

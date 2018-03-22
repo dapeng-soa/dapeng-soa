@@ -14,7 +14,7 @@ struct DataPoint {
      * value支持的类型floats，integers，strings，booleans
      * value会用于展示
      */
-    2: map<string, string> values,
+    2: map<string, i64> values,
     3: i64 timestamp,
     /**
      * tag是可选的。不过写入数据时最好加上tag，因为它可以被索引。tag的类型只能是字符串。

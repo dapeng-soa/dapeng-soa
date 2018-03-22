@@ -224,15 +224,15 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
             tags.put("node_ip", NODE_IP);
             tags.put("node_port", String.valueOf(NODE_PORT));
             point.setTags(tags);
-            Map<String, String> fields = new HashMap<>(16);
-            fields.put("max_request_flow", String.valueOf(maxRequestFlow));
-            fields.put("min_request_flow", String.valueOf(minRequestFlow));
-            fields.put("sum_request_flow", String.valueOf(sumRequestFlow));
-            fields.put("avg_request_flow", String.valueOf(avgRequestFlow));
-            fields.put("max_response_flow", String.valueOf(minResponseFlow));
-            fields.put("min_response_flow", String.valueOf(maxResponseFlow));
-            fields.put("sum_response_flow", String.valueOf(sumResponseFlow));
-            fields.put("avg_response_flow", String.valueOf(avgResponseFlow));
+            Map<String, Long> fields = new HashMap<>(16);
+            fields.put("max_request_flow", maxRequestFlow);
+            fields.put("min_request_flow", minRequestFlow);
+            fields.put("sum_request_flow", sumRequestFlow);
+            fields.put("avg_request_flow", avgRequestFlow);
+            fields.put("max_response_flow", minResponseFlow);
+            fields.put("min_response_flow", maxResponseFlow);
+            fields.put("sum_response_flow", sumResponseFlow);
+            fields.put("avg_response_flow", avgResponseFlow);
             point.setValues(fields);
 
             return point;
