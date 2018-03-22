@@ -10,11 +10,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
-import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -49,12 +47,8 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         Optional<String> respCode = soaHeader.getRespCode();
 
 
-        Attribute<Map<Integer, Long>> attr = channelHandlerContext.channel().attr(NettyChannel.NETTY_CHANNEL_KEY);
-        Map<Integer, Long> timeMap = attr.get();
-
-        Long beginTime = timeMap.get(transactionContext.getSeqid());
-        System.out.println("==========>decode:  seqId: " + transactionContext.getSeqid() + ": time  " + beginTime);
-
+        Attribute<Long> requestTimestampAttr = channelHandlerContext.channel().attr(AttributeKey.valueOf(NettyChannelKeys.REQUEST_TIMESTAMP + transactionContext.getSeqid()));
+        Long requestTimestamp = requestTimestampAttr.getAndRemove();
 
         Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
@@ -81,7 +75,8 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                         + "]:version[" + soaHeader.getVersionName()
                         + "]:method[" + soaHeader.getMethodName() + "]"
                         + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                        + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
+                        + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : ""
+                        + " cost:" + (System.currentTimeMillis() - requestTimestamp) + "ms");
 
                 application.info(this.getClass(), infoLog);
                 if (LOGGER.isDebugEnabled()) {

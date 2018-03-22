@@ -15,13 +15,11 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
-import org.apache.kafka.common.protocol.types.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-import static com.github.dapeng.impl.plugins.netty.NettyChannel.NETTY_CHANNEL_KEY;
 import static com.github.dapeng.util.ExceptionUtil.convertToSoaException;
 
 /**
@@ -43,22 +41,14 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(getClass().getSimpleName() + "::decode");
             }
+
+            Object request = parseSoaMsg(msg);
+
             final TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
+            Attribute<Long> requestTimestampAttr = ctx.channel().attr(AttributeKey.valueOf(NettyChannelKeys.REQUEST_TIMESTAMP + transactionContext.getSeqid()));
+            requestTimestampAttr.set(System.currentTimeMillis());
 
-            //fixme  test only
-            Attribute<Map<Integer, Long>> attr = ctx.channel().attr(NettyChannel.NETTY_CHANNEL_KEY);
-            Map<Integer, Long> timeMap = attr.get();
-            if (timeMap == null) {
-                timeMap = new HashMap<>();
-            }
-            timeMap.put(transactionContext.getSeqid(), System.currentTimeMillis());
-
-            attr.set(timeMap);
-
-            System.out.println("==========>decode:  seqId: " + transactionContext.getSeqid() + ": time  " + System.currentTimeMillis());
-
-
-            out.add(parseSoaMsg(msg));
+            out.add(request);
         } catch (Throwable e) {
             SoaException soaException = convertToSoaException(e);
             TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
