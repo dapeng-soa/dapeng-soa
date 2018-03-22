@@ -15,10 +15,6 @@ public class ZkServiceInfo {
      * instances list
      */
     private List<RuntimeInstance> runtimeInstances;
-    /**
-     * zk service configInfo
-     */
-    private ZkConfigInfo configInfo;
 
     public ZkServiceInfo(String service, List<RuntimeInstance> runtimeInstances) {
 
@@ -38,11 +34,4 @@ public class ZkServiceInfo {
         return service;
     }
 
-    public ZkConfigInfo getConfigInfo() {
-        return configInfo;
-    }
-
-    public void setConfigInfo(ZkConfigInfo configInfo) {
-        this.configInfo = configInfo;
-    }
 }

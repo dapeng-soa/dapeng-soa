@@ -13,11 +13,12 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
+import io.netty.util.Attribute;
+import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.github.dapeng.util.ExceptionUtil.convertToSoaException;
 
@@ -40,7 +41,14 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(getClass().getSimpleName() + "::decode");
             }
-            out.add(parseSoaMsg(msg));
+
+            Object request = parseSoaMsg(msg);
+
+            final TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
+            Attribute<Long> requestTimestampAttr = ctx.channel().attr(AttributeKey.valueOf(NettyChannelKeys.REQUEST_TIMESTAMP + transactionContext.getSeqid()));
+            requestTimestampAttr.set(System.currentTimeMillis());
+
+            out.add(request);
         } catch (Throwable e) {
             SoaException soaException = convertToSoaException(e);
             TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
@@ -93,7 +101,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         }
         contentProtocol.readMessageEnd();
 
-        String infoLog = "request[seqId=" + context.getSeqid() + "]:"
+        String infoLog = "request[seqId:" + context.getSeqid() + "]:"
                 + "service[" + soaHeader.getServiceName()
                 + "]:version[" + soaHeader.getVersionName()
                 + "]:method[" + soaHeader.getMethodName() + "]"
@@ -103,7 +111,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         application.info(this.getClass(), infoLog);
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(getClass() + " " + infoLog + ", payload:\n" + args);
+            LOGGER.debug(getClass().getSimpleName() + "::decode " + infoLog + ", payload:\n" + args);
         }
         return args;
     }

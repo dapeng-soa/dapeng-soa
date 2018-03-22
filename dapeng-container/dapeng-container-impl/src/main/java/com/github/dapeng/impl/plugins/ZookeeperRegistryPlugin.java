@@ -30,7 +30,7 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
 
     @Override
     public void appRegistered(AppEvent event) {
-        LOGGER.info(getClass().getSimpleName() + "::appRegistered AppEvent[" + event.getClass().getSimpleName() + "]");
+        LOGGER.info(getClass().getSimpleName() + "::appRegistered AppEvent[" + event.getSource() + "]");
         DapengApplication application = (DapengApplication) event.getSource();
         //TODO: zookeeper注册是否允许部分失败？ 对于整个应用来说应该要保证完整性吧
         application.getServiceInfos().forEach(serviceInfo ->
@@ -43,7 +43,7 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
 
     @Override
     public void appUnRegistered(AppEvent event) {
-        LOGGER.info("Application unregistry..");
+        LOGGER.info(getClass().getSimpleName() + "::appUnRegistered AppEvent[" + event.getSource() + "]");
         DapengApplication application = (DapengApplication) event.getSource();
         application.getServiceInfos().forEach(serviceInfo ->
                 unRegisterService(serviceInfo.serviceName, serviceInfo.version)
@@ -52,7 +52,7 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
 
     @Override
     public void start() {
-        LOGGER.warn("Plugin::ZooKeeperRegistryPlugin start");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
         /**
          * set RegistryAgentImpl ,SoaServerHandler 会用到
          */
@@ -71,7 +71,7 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
 
     @Override
     public void stop() {
-        LOGGER.warn("Plugin::ZooKeeperRegistryPlugin stop");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::stop");
         container.getApplications().forEach(app -> {
             app.getServiceInfos()
                     .forEach(s -> unRegisterService(s.serviceName, s.version));
@@ -80,12 +80,12 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
     }
 
     public void registerService(String serviceName, String version) {
-        LOGGER.warn("register service: " + serviceName + " " + version);
+        LOGGER.info(getClass().getSimpleName() + "::appRegistered [serviceName:" + serviceName + ", version:" + version + "]");
         registryAgent.registerService(serviceName, version);
     }
 
     public void unRegisterService(String serviceName, String version) {
-        LOGGER.warn("unRegister service: " + serviceName + " " + version);
+        LOGGER.info(getClass().getSimpleName() + "::unRegisterService [serviceName:" + serviceName + ", version:" + version + "]");
         // TODO do something real?
     }
 

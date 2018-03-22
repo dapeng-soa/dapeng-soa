@@ -98,24 +98,9 @@ public class ZkClientAgentImpl implements ZkClientAgent {
 
 
     @Override
-    public Map<ConfigKey, Object> getConfig(boolean usingFallback, String serviceKey) {
+    public ZkConfigInfo getConfig(boolean usingFallback, String serviceKey) {
 
-        /*if (usingFallback) {
-            if (zkfbw.getConfigWithKey(serviceKey).entrySet().size() <= 0) {
-                return null;
-            } else {
-                return zkfbw.getConfigWithKey(serviceKey);
-            }
-
-        } else {
-
-            if (siw.getConfigWithKey(serviceKey).entrySet().size() <= 0) {
-                return null;
-            } else {
-                return siw.getConfigWithKey(serviceKey);
-            }
-        }*/
-        return null;
+        return siw.getConfigData(serviceKey);
 
     }
 }

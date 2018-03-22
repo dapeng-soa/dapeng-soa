@@ -32,8 +32,10 @@ public class SoaSystemEnvProperties {
     private static final String KEY_SOA_REMOTING_MODE = "soa.remoting.mode";
     private static final String KEY_SOA_MONITOR_ENABLE = "soa.monitor.enable";
     private static final String KEY_SOA_SERVICE_CALLERFROM = "soa.service.callerfrom";
-    private static final String KEY_SOA_SERVICE_CLIENT_TIMEOUT = "soa.service.client.timeout";
-    private static final String KEY_SOA_SERVICE_SERVER_TIMEOUT = "soa.service.server.timeout";
+//    private static final String KEY_SOA_SERVICE_CLIENT_TIMEOUT = "soa.service.client.timeout";
+//    private static final String KEY_SOA_SERVICE_SERVER_TIMEOUT = "soa.service.server.timeout";
+    private static final String KEY_SOA_SERVICE_TIMEOUT = "soa.service.timeout";
+
     private static final String KEY_SOA_CORE_POOL_SIZE = "soa.core.pool.size";
     private static final String KEY_SOA_MAX_READ_BUFFER_SIZE = "soa.max.read.buffer.size";
     private static final String KEY_SOA_LOCAL_HOST_NAME = "soa.local.host.name";
@@ -66,8 +68,10 @@ public class SoaSystemEnvProperties {
     public static final String SOA_REMOTING_MODE = get(KEY_SOA_REMOTING_MODE, "remote");
     public static final boolean SOA_MONITOR_ENABLE = Boolean.valueOf(get(KEY_SOA_MONITOR_ENABLE, "false"));
     public static final String SOA_SERVICE_CALLERFROM = get(KEY_SOA_SERVICE_CALLERFROM, "unknown");
-    public static final Long SOA_SERVICE_CLIENT_TIMEOUT = Long.valueOf(get(KEY_SOA_SERVICE_CLIENT_TIMEOUT, "0"));
-    public static final Long SOA_SERVICE_SERVER_TIMEOUT = Long.valueOf(get(KEY_SOA_SERVICE_SERVER_TIMEOUT, "0"));
+//    public static final Long SOA_SERVICE_CLIENT_TIMEOUT = Long.valueOf(get(KEY_SOA_SERVICE_CLIENT_TIMEOUT, "0"));
+//    public static final Long SOA_SERVICE_SERVER_TIMEOUT = Long.valueOf(get(KEY_SOA_SERVICE_SERVER_TIMEOUT, "0"));
+    public static final Long SOA_SERVICE_TIMEOUT = Long.valueOf(get(KEY_SOA_SERVICE_TIMEOUT, "0"));
+
     public static final long SOA_MAX_TIMEOUT = 60000L;
     public static final long SOA_DEFAULT_TIMEOUT = 1000L;
 

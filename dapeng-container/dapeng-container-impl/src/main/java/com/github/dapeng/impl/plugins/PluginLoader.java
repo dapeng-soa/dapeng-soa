@@ -13,7 +13,6 @@ public class PluginLoader implements Plugin{
     public void start() {
 
         for (Plugin plugin: plugins) {
-            System.out.println(" what the????");
             plugin.start();
         }
     }
