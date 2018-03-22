@@ -74,10 +74,9 @@ public class WatcherUtils {
 
     /**
      * new get config data
-     *
-     *              timeout/800ms,createSupplier:100ms,modifySupplier:200ms;
-                    loadbalance/LeastActive,createSupplier:Random,modifySupplier:RoundRobin;
-     *
+     * <p>
+     * timeout/800ms,createSupplier:100ms,modifySupplier:200ms;
+     * loadbalance/LeastActive,createSupplier:Random,modifySupplier:RoundRobin;
      *
      * @param data
      * @param zkInfo
@@ -168,6 +167,12 @@ public class WatcherUtils {
         caches.put(serviceName, sinfos);
     }
 
+    /**
+     * 将配置信息中的时间单位ms 字母替换掉  100ms -> 100
+     *
+     * @param number
+     * @return
+     */
     public static Long timeHelper(String number) {
         number = number.replaceAll("[^(0-9)]", "");
         return Long.valueOf(number);
