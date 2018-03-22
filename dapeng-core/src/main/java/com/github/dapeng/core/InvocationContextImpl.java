@@ -31,6 +31,8 @@ public class InvocationContextImpl implements  InvocationContext {
 
     private Optional<Integer> operatorId = Optional.empty();
 
+    private Optional<String> operatorName = Optional.empty();
+
     private Optional<Integer> customerId = Optional.empty();
 
     private Optional<String> customerName = Optional.empty();
@@ -38,6 +40,8 @@ public class InvocationContextImpl implements  InvocationContext {
     private Optional<Integer> transactionSequence = Optional.empty();
 
     private InvocationInfo invocationInfo;
+
+    private Optional<String> sessionId = Optional.empty();
 
     private Optional<Long> timeout;
 
@@ -49,6 +53,8 @@ public class InvocationContextImpl implements  InvocationContext {
 
     // readonly
     private int seqid;
+
+    private boolean isSoaTransactionProcess;
 
     @Override
     public Optional<Long> getTimeout() {
@@ -89,6 +95,26 @@ public class InvocationContextImpl implements  InvocationContext {
     @Override
     public InvocationInfo getLastInfo() {
         return this.invocationInfo;
+    }
+
+    @Override
+    public void setSessionId(Optional<String> sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    @Override
+    public Optional<String> getSessionId() {
+        return this.sessionId;
+    }
+
+    @Override
+    public boolean isSoaTransactionProcess() {
+      return this.isSoaTransactionProcess;
+    }
+
+    @Override
+    public void setSoaTransactionProcess(Boolean isSoaTransactionProcess) {
+        this.isSoaTransactionProcess = isSoaTransactionProcess;
     }
 
     @Override
@@ -134,6 +160,16 @@ public class InvocationContextImpl implements  InvocationContext {
     @Override
     public Optional<Integer> getOperatorId() {
         return this.operatorId;
+    }
+
+    @Override
+    public void setOperatorName(Optional<String> operatorName) {
+        this.operatorName = operatorName;
+    }
+
+    @Override
+    public Optional<String> getOperatorName() {
+        return this.operatorName;
     }
 
     @Override
@@ -207,6 +243,30 @@ public class InvocationContextImpl implements  InvocationContext {
     public static class Factory {
         private static ThreadLocal<InvocationContext> threadLocal = new ThreadLocal<>();
 
+        private static InvocationContextProxy invocationContextProxy;
+
+        public static interface InvocationContextProxy {
+
+            Optional<String> callerFrom();
+
+            Optional<Integer> customerId();
+
+            Optional<String> customerName();
+
+            Optional<Integer> operatorId();
+
+            Optional<String> operatorName();
+
+            Optional<String> sessionId();
+        }
+
+        public static void setInvocationContextProxy(InvocationContextProxy invocationContextProxy) {
+            Factory.invocationContextProxy = invocationContextProxy;
+        }
+
+        public static InvocationContextProxy getInvocationContextProxy() {
+            return invocationContextProxy;
+        }
         /**
          * must be invoked one time per thread before work begin
          * @return
