@@ -30,7 +30,7 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
 
     @Override
     public void appRegistered(AppEvent event) {
-        LOGGER.info("Application com.github.dapeng.registry.registry..");
+        LOGGER.info(getClass().getSimpleName() + "::appRegistered AppEvent[" + event.getClass().getSimpleName() + "]");
         DapengApplication application = (DapengApplication) event.getSource();
         //TODO: zookeeper注册是否允许部分失败？ 对于整个应用来说应该要保证完整性吧
         application.getServiceInfos().forEach(serviceInfo ->
