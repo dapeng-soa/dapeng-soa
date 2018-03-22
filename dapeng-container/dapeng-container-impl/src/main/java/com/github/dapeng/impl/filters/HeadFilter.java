@@ -22,7 +22,7 @@ public class HeadFilter implements Filter {
         try {
             if (LOGGER.isDebugEnabled()) {
                 TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
-                LOGGER.debug(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.getSeqid() + "], filterContext:" + filterContext);
+                LOGGER.debug(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.getSeqid() + "]");
             }
             next.onEntry(filterContext);
         } catch (TException e) {
@@ -41,8 +41,7 @@ public class HeadFilter implements Filter {
             LOGGER.debug(getClass().getSimpleName()
                     + "::onExit:[seqId:" + transactionContext.getSeqid()
                     + ", execption:" + transactionContext.getSoaException()
-                    + ",\n result:" + filterContext.getAttribute("result") + "]\n"
-                    + "filterContext:" + filterContext);
+                    + ",\n result:" + filterContext.getAttribute("result") + "]\n");
         }
 
         SoaResponseWrapper responseWrapper = new SoaResponseWrapper(transactionContext,
