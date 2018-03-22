@@ -175,7 +175,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      */
     private RuntimeInstance loadBalance(String serviceName, String version, String methodName, List<RuntimeInstance> compatibles) {
 
-        ZkConfigInfo configInfo = zkInfos.get(serviceName).getConfigInfo();
+        ZkConfigInfo configInfo = zkAgent.getConfig(false, serviceName);
         //方法级别
         LoadBalanceStrategy methodLB = configInfo.loadbalanceConfig.serviceConfigs.get(methodName);
         //服务配置
@@ -317,7 +317,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * @return
      */
     private Optional<Long> getZkTimeout(String serviceName, String version, String methodName) {
-        ZkConfigInfo configInfo = zkInfos.get(serviceName).getConfigInfo();
+        ZkConfigInfo configInfo = zkAgent.getConfig(false, serviceName);
         //方法级别
         Long methodTimeOut = configInfo.timeConfig.serviceConfigs.get(methodName);
         //服务配置

@@ -164,10 +164,6 @@ public class ClientZk extends CommonZk {
                 runtimeInstanceList.add(instance);
             }
             ZkServiceInfo zkInfo = new ZkServiceInfo(serviceName, runtimeInstanceList);
-            // zkInfo config
-            ZkConfigInfo configData = getConfigData(serviceName);
-
-            zkInfo.setConfigInfo(configData);
 
             zkInfos.put(serviceName, zkInfo);
             return zkInfo;
