@@ -30,7 +30,7 @@ public class SpringAppLoader implements Plugin {
 
     @Override
     public void start() {
-        LOGGER.warn("Plugin::SpringAppLoader start.");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
         String configPath = "META-INF/spring/services.xml";
 
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
@@ -91,7 +91,7 @@ public class SpringAppLoader implements Plugin {
 
     @Override
     public void stop() {
-        LOGGER.warn("Plugin:SpringAppLoader stop.");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::stop");
         LOGGER.warn("Gracefully shutdown not implemented yet");
         // TODO stop or close??
 //        springCtxs.forEach(springCtx -> {
