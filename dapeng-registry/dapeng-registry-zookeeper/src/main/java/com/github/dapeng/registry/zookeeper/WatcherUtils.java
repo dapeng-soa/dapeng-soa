@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -83,7 +82,7 @@ public class WatcherUtils {
      * @param data
      * @param zkInfo
      */
-    public static void processZkConfig(byte[] data, ServiceZKInfo zkInfo, boolean isGlobal) {
+    public static void processZkConfig(byte[] data, ZkConfigInfo zkInfo, boolean isGlobal) {
         try {
 
             String configData = new String(data, "utf-8");

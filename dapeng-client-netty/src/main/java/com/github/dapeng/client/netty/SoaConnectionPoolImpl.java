@@ -5,10 +5,7 @@ import com.github.dapeng.json.JsonSerializer;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.LoadBalanceStrategy;
 import com.github.dapeng.registry.RuntimeInstance;
-import com.github.dapeng.registry.zookeeper.LoadBalanceAlgorithm;
-import com.github.dapeng.registry.zookeeper.ServiceZKInfo;
-import com.github.dapeng.registry.zookeeper.ZkClientAgent;
-import com.github.dapeng.registry.zookeeper.ZkClientAgentImpl;
+import com.github.dapeng.registry.zookeeper.*;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +27,7 @@ import java.util.stream.Collectors;
  */
 public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private final Logger logger = LoggerFactory.getLogger(SoaConnectionPoolImpl.class);
-    private Map<String, ServiceZKInfo> zkInfos = new ConcurrentHashMap<>();
+    private Map<String, ZkServiceInfo> zkInfos = new ConcurrentHashMap<>();
     private Map<IpPort, SubPool> subPools = new ConcurrentHashMap<>();
     private ZkClientAgent zkAgent = new ZkClientAgentImpl();
 
@@ -132,7 +129,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                                          String version,
                                          String method,
                                          ConnectionType connectionType) {
-        ServiceZKInfo zkInfo = zkInfos.get(service);
+        ZkServiceInfo zkInfo = zkInfos.get(service);
 
         if (zkInfo == null) {
             return null;
@@ -178,13 +175,13 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      */
     private RuntimeInstance loadBalance(String serviceName, String version, String methodName, List<RuntimeInstance> compatibles) {
 
-        ServiceZKInfo serviceZKInfo = zkInfos.get(serviceName);
+        ZkConfigInfo configInfo = zkInfos.get(serviceName).getConfigInfo();
         //方法级别
-        LoadBalanceStrategy methodLB = serviceZKInfo.loadbalanceConfig.serviceConfigs.get(methodName);
+        LoadBalanceStrategy methodLB = configInfo.loadbalanceConfig.serviceConfigs.get(methodName);
         //服务配置
-        LoadBalanceStrategy serviceLB = serviceZKInfo.loadbalanceConfig.serviceConfigs.get(ConfigKey.LoadBalance.getValue());
+        LoadBalanceStrategy serviceLB = configInfo.loadbalanceConfig.serviceConfigs.get(ConfigKey.LoadBalance.getValue());
         //全局
-        LoadBalanceStrategy globalLB = serviceZKInfo.loadbalanceConfig.globalConfig;
+        LoadBalanceStrategy globalLB = configInfo.loadbalanceConfig.globalConfig;
 
         LoadBalanceStrategy balance;
 
@@ -320,24 +317,24 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * @return
      */
     private Optional<Long> getZkTimeout(String serviceName, String version, String methodName) {
-        ServiceZKInfo serviceZKInfo = zkInfos.get(serviceName);
+        ZkConfigInfo configInfo = zkInfos.get(serviceName).getConfigInfo();
         //方法级别
-        Long methodTimeOut = serviceZKInfo.timeConfig.serviceConfigs.get(methodName);
+        Long methodTimeOut = configInfo.timeConfig.serviceConfigs.get(methodName);
         //服务配置
-        Long serviceTimeOUt = serviceZKInfo.timeConfig.serviceConfigs.get(ConfigKey.TimeOut.getValue());
+        Long serviceTimeOut = configInfo.timeConfig.serviceConfigs.get(ConfigKey.TimeOut.getValue());
 
-        Long globalTimeOut = serviceZKInfo.timeConfig.globalConfig;
+        Long globalTimeOut = configInfo.timeConfig.globalConfig;
 
         logger.debug("request:serviceName:{},methodName:{}," +
                         " methodTimeOut:{},serviceTimeOut:{},globalTimeOut:{}",
-                serviceName, methodName, methodTimeOut, serviceTimeOUt, globalTimeOut);
+                serviceName, methodName, methodTimeOut, serviceTimeOut, globalTimeOut);
 
         if (methodTimeOut != null) {
 
             return Optional.of(methodTimeOut);
-        } else if (serviceTimeOUt != null) {
+        } else if (serviceTimeOut != null) {
 
-            return Optional.of(serviceTimeOUt);
+            return Optional.of(serviceTimeOut);
         } else if (globalTimeOut != null) {
 
             return Optional.of(globalTimeOut);
