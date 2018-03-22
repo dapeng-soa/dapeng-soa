@@ -62,7 +62,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                 messageProcessor.writeMessageEnd();
                 transport.flush();
 
-                String infoLog = "response[seqId=" + transactionContext.getSeqid() + ", respCode=" + respCode.get() + "):"
+                String infoLog = "response[seqId:" + transactionContext.getSeqid() + ", respCode:" + respCode.get() + "]:"
                         + "service[" + soaHeader.getServiceName()
                         + "]:version[" + soaHeader.getVersionName()
                         + "]:method[" + soaHeader.getMethodName() + "]"
@@ -129,14 +129,17 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
 
             transport.flush();
 
-            application.error(this.getClass(),
-                    "response(" + soaHeader.getRespCode().get() + "):"
-                            + "service[" + soaHeader.getServiceName()
-                            + "]:version[" + soaHeader.getVersionName()
-                            + "]:method[" + soaHeader.getMethodName() + "]"
-                            + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                            + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : ""),
-                    soaException);
+            String infoLog = "response[seqId:" + transactionContext.getSeqid() + ", respCode:" + soaHeader.getRespCode().get() + "]:"
+                    + "service[" + soaHeader.getServiceName()
+                    + "]:version[" + soaHeader.getVersionName()
+                    + "]:method[" + soaHeader.getMethodName() + "]"
+                    + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
+                    + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
+            application.error(this.getClass(), infoLog, soaException);
+
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(getClass() + " " + infoLog + ", payload:\n" + soaException.getMessage());
+            }
         } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
         }
