@@ -25,13 +25,13 @@ public class RegistryAgentImpl implements RegistryAgent {
     private static final Logger LOGGER = LoggerFactory.getLogger(RegistryAgentImpl.class);
 
     private final String RUNTIME_PATH = "/soa/runtime/services";
-    private final String CONFIG_PATH = "/soa/config/services";
+
     private final boolean isClient;
-    private final ZookeeperRegistry zooKeeperRegistry = new ZookeeperRegistry(this);
+    private final ServerZk serverZk = new ServerZk(this);
     /**
      * 灰度环境下访问生产环境的zk?
      */
-    private ZookeeperRegistry zooKeeperMasterClient = null;
+    private ServerZk zooKeeperMasterClient = null;
 
 
     private Map<ProcessorKey, SoaServiceDefinition<?>> processorMap;
@@ -48,11 +48,11 @@ public class RegistryAgentImpl implements RegistryAgent {
     public void start() {
 
         if (!isClient) {
-            zooKeeperRegistry.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
-            zooKeeperRegistry.connect();
+            serverZk.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
+            serverZk.connect();
 
             if (SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_ISCONFIG) {
-                zooKeeperMasterClient = new ZookeeperRegistry(this);
+                zooKeeperMasterClient = new ServerZk(this);
                 zooKeeperMasterClient.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_HOST);
                 zooKeeperMasterClient.connect();
             }
@@ -61,7 +61,7 @@ public class RegistryAgentImpl implements RegistryAgent {
 
     @Override
     public void stop() {
-        zooKeeperRegistry.destroy();
+        serverZk.destroy();
     }
 
     @Override
@@ -73,7 +73,7 @@ public class RegistryAgentImpl implements RegistryAgent {
 
             RegisterContext registerContext = new RegisterContext(serverName, versionName, servicePath, instanceInfo);
 
-            zooKeeperRegistry.create(path, registerContext, true);
+            serverZk.create(path, registerContext, true);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -114,8 +114,8 @@ public class RegistryAgentImpl implements RegistryAgent {
      * @return
      */
     @Override
-    public Map<ConfigKey, Object> getConfig(boolean usingFallback, String serviceKey) {
-        return null;
+    public ZkConfigInfo getConfig(boolean usingFallback, String serviceKey) {
+        return serverZk.getConfigData(serviceKey);
     }
 
     @Override
