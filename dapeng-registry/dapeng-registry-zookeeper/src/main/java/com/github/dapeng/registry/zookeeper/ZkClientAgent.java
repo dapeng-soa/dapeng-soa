@@ -14,9 +14,9 @@ public interface ZkClientAgent {
 
     void stop();
 
-    void syncService(String serviceName, Map<String, ServiceZKInfo> zkInfos);
+    void syncService(String serviceName, Map<String, ZkServiceInfo> zkInfos);
 
-    void cancnelSyncService(String serviceName, Map<String, ServiceZKInfo> zkInfos);
+    void cancnelSyncService(String serviceName, Map<String, ZkServiceInfo> zkInfos);
 
     Map<ConfigKey,Object> getConfig(boolean usingFallback, String serviceKey);
 

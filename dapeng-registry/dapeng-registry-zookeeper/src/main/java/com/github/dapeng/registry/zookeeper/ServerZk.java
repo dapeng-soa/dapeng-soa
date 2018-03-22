@@ -21,20 +21,14 @@ import java.util.concurrent.TimeUnit;
  * @author hz.lei
  * @date 2018-03-20
  */
-public class ZookeeperRegistry {
+public class ServerZk extends CommonZk {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ZookeeperRegistry.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServerZk.class);
 
-    private String zookeeperHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
-
-    private ZooKeeper zk;
     private RegistryAgent registryAgent;
 
-    private final static String SERVICE_PATH = "/soa/runtime/services";
-    private final static String CONFIG_PATH = "/soa/config/service";
-    private final static String ROUTES_PATH = "/soa/config/route";
 
-    public ZookeeperRegistry(RegistryAgent registryAgent) {
+    public ServerZk(RegistryAgent registryAgent) {
         this.registryAgent = registryAgent;
     }
 
@@ -46,12 +40,12 @@ public class ZookeeperRegistry {
         try {
             CountDownLatch semaphore = new CountDownLatch(1);
 
-            zk = new ZooKeeper(zookeeperHost, 15000, watchedEvent -> {
+            zk = new ZooKeeper(zkHost, 15000, watchedEvent -> {
 
                 switch (watchedEvent.getState()) {
 
                     case Expired:
-                        LOGGER.info("ZookeeperRegistry session timeout to  {} [Zookeeper]", zookeeperHost);
+                        LOGGER.info("ServerZk session timeout to  {} [Zookeeper]", zkHost);
                         destroy();
                         connect();
                         break;
@@ -61,8 +55,8 @@ public class ZookeeperRegistry {
                         //创建根节点
                         create(SERVICE_PATH, null, false);
                         create(CONFIG_PATH, null, false);
-
-                        LOGGER.info("ZookeeperRegistry connected to  {} [Zookeeper]", zookeeperHost);
+                        zkConfigMap.clear();
+                        LOGGER.info("ServerZk connected to  {} [Zookeeper]", zkHost);
                         if (registryAgent != null) {
                             registryAgent.registerAllServices();//重新注册服务
                         }
@@ -99,7 +93,7 @@ public class ZookeeperRegistry {
     public void destroy() {
         if (zk != null) {
             try {
-                LOGGER.info("ZookeeperRegistry closing connection to zookeeper {}", zookeeperHost);
+                LOGGER.info("ServerZk closing connection to zookeeper {}", zkHost);
                 zk.close();
                 zk = null;
             } catch (InterruptedException e) {
@@ -281,8 +275,8 @@ public class ZookeeperRegistry {
         }
     };
 
-    public void setZookeeperHost(String zookeeperHost) {
-        this.zookeeperHost = zookeeperHost;
+    public void setZookeeperHost(String zkHost) {
+        this.zkHost = zkHost;
     }
 
     //-----竞选master---
@@ -327,12 +321,6 @@ public class ZookeeperRegistry {
 
     private static final String CURRENT_CONTAINER_ADDR = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" +
             String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
-
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    //                           config 配置  that's begin                        ～
-    //                                                                            ～
-    //～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～
 
 
 }
