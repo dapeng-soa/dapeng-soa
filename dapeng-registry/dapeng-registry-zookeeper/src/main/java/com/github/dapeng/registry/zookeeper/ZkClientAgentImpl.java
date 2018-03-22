@@ -25,7 +25,7 @@ public class ZkClientAgentImpl implements ZkClientAgent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ZkClientAgentImpl.class);
 
-    private ZookeeperClient siw, zkfbw;
+    private ClientZk siw, zkfbw;
 
     public ZkClientAgentImpl() {
         start();
@@ -34,11 +34,11 @@ public class ZkClientAgentImpl implements ZkClientAgent {
     @Override
     public void start() {
 
-        siw = new ZookeeperClient(true, SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
+        siw = new ClientZk(SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
         siw.init();
 
         if (SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_ISCONFIG) {
-            zkfbw = new ZookeeperClient(true, SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_HOST);
+            zkfbw = new ClientZk(SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_HOST);
             zkfbw.init();
         }
     }
@@ -57,16 +57,16 @@ public class ZkClientAgentImpl implements ZkClientAgent {
     }
 
     @Override
-    public void cancnelSyncService(String serviceName, Map<String, ServiceZKInfo> zkInfos) {
+    public void cancnelSyncService(String serviceName, Map<String, ZkServiceInfo> zkInfos) {
         zkInfos.remove(serviceName);
     }
 
     @Override
-    public void syncService(String serviceName, Map<String, ServiceZKInfo> zkInfos) {
+    public void syncService(String serviceName, Map<String, ZkServiceInfo> zkInfos) {
 
         boolean usingFallbackZookeeper = SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_ISCONFIG;
 
-        ServiceZKInfo zkInfo = zkInfos.get(serviceName);
+        ZkServiceInfo zkInfo = zkInfos.get(serviceName);
         if (zkInfo == null) {
             zkInfo = siw.getServiceZkInfo(serviceName, zkInfos);
             if (zkInfo == null && usingFallbackZookeeper) {

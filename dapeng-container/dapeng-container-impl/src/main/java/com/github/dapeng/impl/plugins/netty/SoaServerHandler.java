@@ -10,6 +10,7 @@ import com.github.dapeng.impl.filters.HeadFilter;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.RegistryAgentProxy;
+import com.github.dapeng.registry.zookeeper.ZkConfigInfo;
 import com.github.dapeng.util.ExceptionUtil;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import io.netty.channel.ChannelHandler;
@@ -242,11 +243,37 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
      */
     private long getTimeout(SoaHeader soaHeader) {
         long timeout = 0L;
-        String serviceKey = soaHeader.getServiceName() + "." + soaHeader.getVersionName() + "." + soaHeader.getMethodName() + ".producer";
-        Map<ConfigKey, Object> configs = RegistryAgentProxy.getCurrentInstance(RegistryAgentProxy.Type.Server).getConfig(false, serviceKey);
+        String serviceKey = soaHeader.getServiceName();
+        ZkConfigInfo configInfo = RegistryAgentProxy.getCurrentInstance(RegistryAgentProxy.Type.Server).getConfig(false, serviceKey);
+
         long envTimeout = SoaSystemEnvProperties.SOA_SERVICE_SERVER_TIMEOUT.longValue();
-        if (null != configs) {
-            Long timeoutConfig = (Long) configs.get(ConfigKey.ServerTimeout);
+        if (null != configInfo) {
+            //方法级别
+            Long methodTimeOut = configInfo.timeConfig.serviceConfigs.get(soaHeader.getMethodName());
+            //服务配置
+            Long serviceTimeOut = configInfo.timeConfig.serviceConfigs.get(ConfigKey.TimeOut.getValue());
+            //全局
+            Long globalTimeOut = configInfo.timeConfig.globalConfig;
+
+            LOGGER.debug("request:serviceName:{},methodName:{}," +
+                            " methodTimeOut:{},serviceTimeOut:{},globalTimeOut:{}",
+                    soaHeader.getServiceName(), soaHeader.getMethodName(), methodTimeOut, serviceTimeOut, globalTimeOut);
+
+            Long timeoutConfig;
+
+            if (methodTimeOut != null) {
+
+                timeoutConfig = methodTimeOut;
+            } else if (serviceTimeOut != null) {
+
+                timeoutConfig = serviceTimeOut;
+            } else if (globalTimeOut != null) {
+
+                timeoutConfig = globalTimeOut;
+            } else {
+                timeoutConfig = null;
+            }
+
             timeout = (timeoutConfig != null) ? timeoutConfig.longValue() : envTimeout;
         }
         if (timeout == 0L) {
