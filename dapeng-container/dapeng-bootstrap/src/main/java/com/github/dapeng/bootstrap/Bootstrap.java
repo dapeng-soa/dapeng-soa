@@ -35,7 +35,7 @@ public class Bootstrap {
         startup(platformClassLoader, applicationCls,pluginClassLoaders);
     }
 
-    public static void sbtStartup(ClassLoader containerClassLoader, List<URL> applicationLibs,List<ClassLoader> pluginClassLoaders ) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public static void sbtStartup(ClassLoader containerClassLoader, List<URL> applicationLibs ) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         ClassLoader coreCL = containerClassLoader;
         ClassLoader containerCL = containerClassLoader;
@@ -47,7 +47,7 @@ public class Bootstrap {
         List<ClassLoader> applicationCLs = new ArrayList<>();
         applicationCLs.add(applicationCL);
 
-        startup(containerCL, applicationCLs,pluginClassLoaders);
+        startup(containerCL, applicationCLs,applicationCLs);
 
     }
 
