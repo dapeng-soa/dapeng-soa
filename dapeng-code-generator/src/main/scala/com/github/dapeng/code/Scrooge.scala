@@ -50,6 +50,7 @@ object Scrooge {
     var language: String = ""
     var version: String = null
     var generateAll: Boolean = false
+    var isDelete: Boolean = true
 
     try {
       for (index <- 0 until args.length) {
@@ -82,6 +83,7 @@ object Scrooge {
           case "-help" => println(help); return
           case "-v" => if (index + 1 < args.length) version = args(index + 1)
           case "-all" => generateAll = true
+          case "-notDel" => isDelete = false
           case _ =>
         }
       }
@@ -139,9 +141,10 @@ object Scrooge {
       }
 
       if (resources != null && language != "" && needUpdate) {
-        System.out.println("----------------need update")
         //删除文件再生成
-        fileDel(new File(outDir),language)
+        if (isDelete) {
+          fileDel(new File(outDir), language)
+        }
         val parserLanguage = if (language == "scala") "scala" else "java"
         val services = new ThriftCodeParser(parserLanguage).toServices(resources, version)
         val structs = if (generateAll) new ThriftCodeParser(parserLanguage).getAllStructs(resources) else null
