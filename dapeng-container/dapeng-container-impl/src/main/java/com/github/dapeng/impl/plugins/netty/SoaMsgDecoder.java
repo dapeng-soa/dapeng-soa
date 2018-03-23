@@ -45,8 +45,17 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             Object request = parseSoaMsg(msg);
 
             final TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
-            Attribute<Long> requestTimestampAttr = ctx.channel().attr(AttributeKey.valueOf(NettyChannelKeys.REQUEST_TIMESTAMP + transactionContext.getSeqid()));
-            requestTimestampAttr.set(System.currentTimeMillis());
+            /**
+             * use AttributeMap to share common data on different  ChannelHandlers
+             */
+            Attribute<Map<Integer, Long>> requestTimestampAttr = ctx.channel().attr(AttributeKey.valueOf(NettyChannelKeys.REQUEST_TIMESTAMP));
+            Map<Integer, Long> requestTimestampMap = requestTimestampAttr.get();
+            if (requestTimestampMap == null) {
+                requestTimestampMap = new HashMap<>(64);
+            }
+            requestTimestampMap.put(transactionContext.getSeqid(), System.currentTimeMillis());
+
+            requestTimestampAttr.set(requestTimestampMap);
 
             out.add(request);
         } catch (Throwable e) {
