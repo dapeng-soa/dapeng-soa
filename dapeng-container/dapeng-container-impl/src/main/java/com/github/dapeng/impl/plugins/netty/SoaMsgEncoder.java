@@ -84,7 +84,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
 
                 application.info(this.getClass(), infoLog);
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug(getClass() + " " + infoLog + ", payload:\n" + result);
+                    LOGGER.debug(getClass().getSimpleName() + "::encode " + infoLog + ", payload:\n" + result);
                 }
             } catch (Throwable e) {
                 SoaException soaException = ExceptionUtil.convertToSoaException(e);

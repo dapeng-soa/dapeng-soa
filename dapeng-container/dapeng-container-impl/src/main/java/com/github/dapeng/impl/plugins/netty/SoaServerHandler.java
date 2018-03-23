@@ -291,7 +291,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             Long globalTimeOut = configInfo.timeConfig.globalConfig;
 
             if (LOGGER.isDebugEnabled())
-                LOGGER.debug("request:serviceName:{},methodName:{}," +
+                LOGGER.debug(getClass().getSimpleName() + "::getTimeout request:serviceName:{},methodName:{}," +
                                 " methodTimeOut:{},serviceTimeOut:{},globalTimeOut:{}",
                         soaHeader.getServiceName(), soaHeader.getMethodName(), methodTimeOut, serviceTimeOut, globalTimeOut);
 
