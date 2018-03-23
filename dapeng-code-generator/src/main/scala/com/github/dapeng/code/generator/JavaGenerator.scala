@@ -164,6 +164,12 @@ class JavaGenerator extends CodeGenerator {
         structSerializerWriter.close()
       }}
 
+      println(s"生成SupperCodec:${service.name}SupperCodec.java")
+      val supperCodecTemplate = new StringTemplate(new JavaCodecGenerator().toSupperCodecTemplate(service, namespaces,structNamespaces))
+      val supperCodecWriter = new PrintWriter(new File(rootDir(outDir, service.namespace.substring(0, service.namespace.lastIndexOf("."))), s"${service.name}SupperCodec.java"), "UTF-8")
+      supperCodecWriter.write(supperCodecTemplate.toString())
+      supperCodecWriter.close()
+      println(s"生成SupperCodec:${service.name}SuperCodec.java 完成")
 
       println(s"生成Codec:${service.name}Codec.java")
       val codecTemplate = new StringTemplate(new JavaCodecGenerator().toCodecTemplate(service, namespaces,structNamespaces))
