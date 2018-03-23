@@ -66,13 +66,14 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                 messageProcessor.writeMessageEnd();
                 transport.flush();
 
+                /**
+                 * use AttributeMap to share common data on different  ChannelHandlers
+                 */
                 Attribute<Map<Integer, Long>> requestTimestampAttr = channelHandlerContext.channel().attr(AttributeKey.valueOf(NettyChannelKeys.REQUEST_TIMESTAMP));
-
                 Map<Integer, Long> requestTimestampMap = requestTimestampAttr.get();
-
                 Long requestTimestamp = requestTimestampMap.get(transactionContext.getSeqid());
+                //each per request take the time then remove it
                 requestTimestampMap.remove(transactionContext.getSeqid());
-
 
                 String infoLog = "response[seqId:" + transactionContext.getSeqid() + ", respCode:" + respCode.get() + "]:"
                         + "service[" + soaHeader.getServiceName()
