@@ -48,7 +48,8 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             /**
              * use AttributeMap to share common data on different  ChannelHandlers
              */
-            Attribute<Map<Integer, Long>> requestTimestampAttr = ctx.channel().attr(AttributeKey.valueOf(NettyChannelKeys.REQUEST_TIMESTAMP));
+            Attribute<Map<Integer, Long>> requestTimestampAttr = ctx.channel().attr(NettyChannelKeys.REQUEST_TIMESTAMP);
+
             Map<Integer, Long> requestTimestampMap = requestTimestampAttr.get();
             if (requestTimestampMap == null) {
                 requestTimestampMap = new HashMap<>(64);
@@ -59,6 +60,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
 
             out.add(request);
         } catch (Throwable e) {
+
             SoaException soaException = convertToSoaException(e);
             TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
 
@@ -86,6 +88,8 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         // parser.service, version, method, header, bodyProtocol
         SoaHeader soaHeader = parser.parseSoaMessage(context);
         context.setHeader(soaHeader);
+
+        updateTransactionCtx(context,soaHeader);
 
         Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
@@ -125,5 +129,14 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             LOGGER.debug(getClass().getSimpleName() + "::decode " + infoLog + ", payload:\n" + args);
         }
         return args;
+    }
+
+    private void updateTransactionCtx(TransactionContext ctx, SoaHeader soaHeader)  {
+        ctx.setCallerFrom(soaHeader.getCallerFrom());
+        ctx.setCallerIp(soaHeader.getCallerIp());
+        ctx.setCustomerId(soaHeader.getCustomerId());
+        ctx.setCustomerName(soaHeader.getCustomerName());
+        ctx.setOperatorId(soaHeader.getOperatorId());
+        ctx.setOperatorName(soaHeader.getOperatorName());
     }
 }
