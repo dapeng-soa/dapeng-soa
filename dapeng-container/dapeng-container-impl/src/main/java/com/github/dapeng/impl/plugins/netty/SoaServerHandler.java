@@ -57,6 +57,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             // parser.service, version, method, header, bodyProtocol
             SoaHeader soaHeader = parser.parseSoaMessage(context);
             context.setHeader(soaHeader);
+            updateTransactionCtx(context,soaHeader);
 
             SoaServiceDefinition processor = container.getServiceProcessors().get(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
@@ -331,5 +332,14 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             soaException = new SoaException(SoaCode.UnKnown.getCode(), ex.getMessage());
         }
         return soaException;
+    }
+
+    private void updateTransactionCtx(TransactionContext ctx, SoaHeader soaHeader)  {
+        ctx.setCallerFrom(soaHeader.getCallerFrom());
+        ctx.setCallerIp(soaHeader.getCallerIp());
+        ctx.setCustomerId(soaHeader.getCustomerId());
+        ctx.setCustomerName(soaHeader.getCustomerName());
+        ctx.setOperatorId(soaHeader.getOperatorId());
+        ctx.setOperatorName(soaHeader.getOperatorName());
     }
 }
