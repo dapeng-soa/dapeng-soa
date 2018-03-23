@@ -20,7 +20,6 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -282,7 +281,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         String serviceKey = soaHeader.getServiceName();
         ZkConfigInfo configInfo = RegistryAgentProxy.getCurrentInstance(RegistryAgentProxy.Type.Server).getConfig(false, serviceKey);
 
-        long envTimeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT.longValue();
+        long envTimeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT;
         if (null != configInfo) {
             //方法级别
             Long methodTimeOut = configInfo.timeConfig.serviceConfigs.get(soaHeader.getMethodName());
