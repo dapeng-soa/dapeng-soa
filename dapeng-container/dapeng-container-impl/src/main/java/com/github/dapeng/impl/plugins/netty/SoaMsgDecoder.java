@@ -62,6 +62,8 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
                     Optional.ofNullable(null),
                     Optional.ofNullable(null));
 
+            TransactionContext.Factory.removeCurrentInstance();
+
             ctx.writeAndFlush(responseWrapper);
         }
     }
