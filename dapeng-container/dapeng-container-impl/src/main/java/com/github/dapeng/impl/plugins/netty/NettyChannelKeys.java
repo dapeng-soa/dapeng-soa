@@ -1,5 +1,9 @@
 package com.github.dapeng.impl.plugins.netty;
 
+import io.netty.util.AttributeKey;
+
+import java.util.Map;
+
 /**
  * 描述:
  *
@@ -11,7 +15,7 @@ public class NettyChannelKeys {
     /**
      * 用于记录请求进来的时间戳
      */
-    public static final String REQUEST_TIMESTAMP = "dapeng_request_timestamp";
+    public static final AttributeKey<Map<Integer, Long>> REQUEST_TIMESTAMP = AttributeKey.valueOf("dapeng_request_timestamp");
 
 
 }

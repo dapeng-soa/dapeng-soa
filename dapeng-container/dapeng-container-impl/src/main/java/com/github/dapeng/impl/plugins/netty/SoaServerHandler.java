@@ -53,6 +53,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
         try {
             SoaHeader soaHeader = transactionContext.getHeader();
+
             SoaServiceDefinition processor = container.getServiceProcessors().get(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
             Executor dispatcher = container.getDispatcher();
