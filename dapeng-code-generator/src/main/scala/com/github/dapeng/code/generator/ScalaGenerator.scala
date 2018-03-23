@@ -162,6 +162,13 @@ class ScalaGenerator extends CodeGenerator {
       asyncClientWriter.close()
       println(s"生成client:${service.name}AsyncClient.scala 完成")
 
+      println(s"生成SupperCodec:${service.name}SupperCodec.scala")
+      val supperCodecTemplate = new StringTemplate(new ScalaCodecGenerator().toSupperCodecTemplate(service,structNamespaces, oriNamespaces.get(service).getOrElse("")))
+      val supperCodecWriter = new PrintWriter(new File(rootDir(outDir, service.namespace.substring(0, service.namespace.lastIndexOf("."))), s"${service.name}SupperCodec.scala"), "UTF-8")
+      supperCodecWriter.write(supperCodecTemplate.toString())
+      supperCodecWriter.close()
+      println(s"生成SupperCodec:${service.name}SupperCodec.scala 完成")
+
       println(s"生成Codec:${service.name}Codec.scala")
       val codecTemplate = new StringTemplate(new ScalaCodecGenerator().toCodecTemplate(service,structNamespaces, oriNamespaces.get(service).getOrElse("")))
       val codecWriter = new PrintWriter(new File(rootDir(outDir, service.namespace.substring(0, service.namespace.lastIndexOf("."))), s"${service.name}Codec.scala"), "UTF-8")
