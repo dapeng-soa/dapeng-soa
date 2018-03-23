@@ -59,7 +59,8 @@ public class NettyPlugin implements AppListener, Plugin {
                                     PooledByteBufAllocator.DEFAULT : UnpooledByteBufAllocator.DEFAULT;
 
                     //流量统计
-                    ChannelHandler flowCounter = new SoaFlowCounter();
+                    ChannelHandler flowCounter = null;
+                    if (MONITOR_ENABLE) flowCounter = new SoaFlowCounter();
                     //编解码器
                     ChannelHandler soaMsgDecoder = new SoaMsgDecoder(container);
                     ChannelHandler soaMsgEncoder = new SoaMsgEncoder(container);
@@ -67,6 +68,8 @@ public class NettyPlugin implements AppListener, Plugin {
                     ChannelHandler soaIdleHandler = new SoaIdleHandler();
                     //业务处理器
                     ChannelHandler soaServerHandler = new SoaServerHandler(container);
+                    ChannelHandler finalFlowCounter = flowCounter;
+
                     bootstrap.group(bossGroup, workerGroup)
                             .channel(NioServerSocketChannel.class)
                             .childHandler(new ChannelInitializer<SocketChannel>() {
@@ -74,8 +77,7 @@ public class NettyPlugin implements AppListener, Plugin {
                                 protected void initChannel(SocketChannel ch) throws Exception {
                                     ch.pipeline().addLast(new SoaFrameDecoder()); //粘包和断包处理
 
-                                    if (MONITOR_ENABLE)
-                                        ch.pipeline().addLast(flowCounter);
+                                    if (null != finalFlowCounter) ch.pipeline().addLast(finalFlowCounter);
 
                                     ch.pipeline().addLast(soaMsgDecoder, soaMsgEncoder);
                                     // 服务调用统计
