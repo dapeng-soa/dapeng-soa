@@ -66,8 +66,13 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                 messageProcessor.writeMessageEnd();
                 transport.flush();
 
-                Attribute<Long> requestTimestampAttr = channelHandlerContext.channel().attr(AttributeKey.valueOf(NettyChannelKeys.REQUEST_TIMESTAMP + transactionContext.getSeqid()));
-                Long requestTimestamp = requestTimestampAttr.getAndRemove();
+                Attribute<Map<Integer, Long>> requestTimestampAttr = channelHandlerContext.channel().attr(AttributeKey.valueOf(NettyChannelKeys.REQUEST_TIMESTAMP));
+
+                Map<Integer, Long> requestTimestampMap = requestTimestampAttr.get();
+
+                Long requestTimestamp = requestTimestampMap.get(transactionContext.getSeqid());
+                requestTimestampMap.remove(transactionContext.getSeqid());
+
 
                 String infoLog = "response[seqId:" + transactionContext.getSeqid() + ", respCode:" + respCode.get() + "]:"
                         + "service[" + soaHeader.getServiceName()
