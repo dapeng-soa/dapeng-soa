@@ -195,6 +195,10 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             balance = LoadBalanceStrategy.Random;
         }
 
+        if (logger.isDebugEnabled()) {
+            logger.debug("request loadBalance strategy is {}", balance);
+        }
+
         RuntimeInstance instance = null;
 
         switch (balance) {
