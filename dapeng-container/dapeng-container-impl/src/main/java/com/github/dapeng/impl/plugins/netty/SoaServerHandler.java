@@ -108,14 +108,14 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             if (waitingTime > timeout) {
                 if (LOGGER.isDebugEnabled()) {
                     Integer seqId = transactionContext.getSeqid();
-                    String infoLog = "request[seqId=" + seqId + ", waitingTime=" + waitingTime + "] timeout:"
+                    String debugLog = "request[seqId=" + seqId + ", waitingTime=" + waitingTime + "] timeout:"
                             + "service[" + soaHeader.getServiceName()
                             + "]:version[" + soaHeader.getVersionName()
                             + "]:method[" + soaHeader.getMethodName() + "]"
                             + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
                             + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
 
-                    LOGGER.debug(getClass().getSimpleName() + "::processRequest " + infoLog);
+                    LOGGER.debug(getClass().getSimpleName() + "::processRequest " + debugLog);
                 }
                 throw new SoaException(SoaCode.TimeOut, "服务端请求超时");
             }

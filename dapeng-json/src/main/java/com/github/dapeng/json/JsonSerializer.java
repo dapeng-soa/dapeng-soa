@@ -14,6 +14,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 //import static com.github.dapeng.json.TJsonCompressProtocolUtil.readMapBegin;
+import static com.github.dapeng.core.enums.CodecProtocol.CompressedBinary;
 import static com.github.dapeng.util.MetaDataUtil.*;
 
 /**
@@ -648,11 +649,19 @@ public class JsonSerializer implements BeanSerializer<String> {
                 return;
             }
 
+            String fieldName = current.fieldName;
             pop();
 
+            if (foundNull) {
+                if (current.dataType.kind == DataType.KIND.STRUCT) {
+                    current.fields4Struct.remove(fieldName);
+                }
+            }
             if (current.dataType.kind != DataType.KIND.MAP && !foundNull) {
                 oproto.writeFieldEnd();
             }
+
+            foundNull = false;
         }
 
         @Override
@@ -737,6 +746,9 @@ public class JsonSerializer implements BeanSerializer<String> {
                     foundNull = true;
                     //reset writerIndex, skip the field
                     requestByteBuf.writerIndex(current.byteBufPositionBefore);
+                    if (invocationCtx.getCodecProtocol() == CompressedBinary) {
+                        ((TCompactProtocol)oproto).resetLastFieldId();
+                    }
                     break;
                 default:
                     logAndThrowTException();
@@ -836,7 +848,7 @@ public class JsonSerializer implements BeanSerializer<String> {
             }
 
             if (current.dataType.kind == DataType.KIND.MAP
-                    && invocationCtx.getCodecProtocol() == CodecProtocol.CompressedBinary
+                    && invocationCtx.getCodecProtocol() == CompressedBinary
                     && elCount == 0) {
                 requestByteBuf.writerIndex(beginPosition + 1);
             } else {

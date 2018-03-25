@@ -118,6 +118,13 @@ public class TCompactProtocol extends TProtocol {
 
   private short lastFieldId_ = 0;
 
+  private ShortStack historyLastFieldId_ = new ShortStack(15);
+
+  public void resetLastFieldId() {
+    historyLastFieldId_.pop();
+    lastFieldId_ = historyLastFieldId_.peek();
+  }
+
   /**
    * If we encounter a boolean field begin, save the TField here so it can
    * have the value incorporated.
@@ -156,6 +163,8 @@ public class TCompactProtocol extends TProtocol {
     super(transport);
     this.stringLengthLimit_ = stringLengthLimit;
     this.containerLengthLimit_ = containerLengthLimit;
+
+    historyLastFieldId_.push(lastFieldId_);
   }
 
   /**
@@ -184,6 +193,9 @@ public class TCompactProtocol extends TProtocol {
   public void reset() {
     lastField_.clear();
     lastFieldId_ = 0;
+
+    historyLastFieldId_.clear();
+    historyLastFieldId_.push(lastFieldId_);
   }
 
   //
@@ -209,6 +221,9 @@ public class TCompactProtocol extends TProtocol {
   public void writeStructBegin(TStruct struct) throws TException {
     lastField_.push(lastFieldId_);
     lastFieldId_ = 0;
+
+    historyLastFieldId_.clear();
+    historyLastFieldId_.push(lastFieldId_);
   }
 
   /**
@@ -218,6 +233,8 @@ public class TCompactProtocol extends TProtocol {
    */
   public void writeStructEnd() throws TException {
     lastFieldId_ = lastField_.pop();
+    historyLastFieldId_.clear();
+    historyLastFieldId_.push(lastFieldId_);
   }
 
   /**
@@ -258,6 +275,8 @@ public class TCompactProtocol extends TProtocol {
 
     lastFieldId_ = field.id;
     // lastField_.push(field.id);
+
+    historyLastFieldId_.push(lastFieldId_);
   }
 
   /**
