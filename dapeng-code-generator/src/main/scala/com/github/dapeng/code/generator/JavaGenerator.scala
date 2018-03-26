@@ -94,19 +94,6 @@ class JavaGenerator extends CodeGenerator {
     for (index <- (0 until services.size())) {
 
       val service = services.get(index)
-      val oriMethods = service.methods
-      val nonVirtualMethods = service.methods.asScala.filter(i => {
-        val annotations = i.annotations
-        if (annotations != null) {
-          val virtualAnnotations = annotations.asScala.filter(a => a.key.equals("virtual") && a.value.equals("true"))
-          virtualAnnotations.isEmpty
-        } else {
-          true
-        }
-      })
-      service.setMethods(nonVirtualMethods.asJava)
-
-
       val t1 = System.currentTimeMillis();
       println("=========================================================")
       println(s"服务名称:${service.name}")
@@ -193,7 +180,6 @@ class JavaGenerator extends CodeGenerator {
 
 
       println(s"生成metadata:${service.namespace}.${service.name}.xml")
-      service.setMethods(oriMethods)
       new MetadataGenerator().generateXmlFile(service, resourceDir(outDir, service.namespace.substring(0, service.namespace.lastIndexOf("."))));
       println(s"生成metadata:${service.namespace}.${service.name}.xml 完成")
 
