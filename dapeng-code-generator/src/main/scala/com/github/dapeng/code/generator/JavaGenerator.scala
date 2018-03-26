@@ -164,11 +164,11 @@ class JavaGenerator extends CodeGenerator {
         structSerializerWriter.close()
       }}
 
-      println(s"生成SupperCodec:${service.name}SupperCodec.java")
-      val supperCodecTemplate = new StringTemplate(new JavaCodecGenerator().toSupperCodecTemplate(service, namespaces,structNamespaces))
-      val supperCodecWriter = new PrintWriter(new File(rootDir(outDir, service.namespace.substring(0, service.namespace.lastIndexOf("."))), s"${service.name}SupperCodec.java"), "UTF-8")
-      supperCodecWriter.write(supperCodecTemplate.toString())
-      supperCodecWriter.close()
+      println(s"生成SuperCodec:${service.name}SuperCodec.java")
+      val superCodecTemplate = new StringTemplate(new JavaCodecGenerator().toSuperCodecTemplate(service, namespaces,structNamespaces))
+      val superCodecWriter = new PrintWriter(new File(rootDir(outDir, service.namespace.substring(0, service.namespace.lastIndexOf("."))), s"${service.name}SuperCodec.java"), "UTF-8")
+      superCodecWriter.write(superCodecTemplate.toString())
+      superCodecWriter.close()
       println(s"生成SupperCodec:${service.name}SuperCodec.java 完成")
 
       println(s"生成Codec:${service.name}Codec.java")
@@ -207,6 +207,7 @@ class JavaGenerator extends CodeGenerator {
       import com.github.dapeng.org.apache.thrift.*;
       import java.util.ServiceLoader;
       import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "Codec.*"};
+      import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "SuperCodec.*"};
       import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + ".service." + service.name };
 
       /**
@@ -302,6 +303,7 @@ class JavaGenerator extends CodeGenerator {
       import java.util.concurrent.Future;
       import java.util.ServiceLoader;
       import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "AsyncCodec.*"};
+      import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "SuperCodec.*"};
       import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + ".service." + service.name }Async;
 
       /**

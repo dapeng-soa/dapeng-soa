@@ -162,12 +162,12 @@ class ScalaGenerator extends CodeGenerator {
       asyncClientWriter.close()
       println(s"生成client:${service.name}AsyncClient.scala 完成")
 
-      println(s"生成SupperCodec:${service.name}SupperCodec.scala")
-      val supperCodecTemplate = new StringTemplate(new ScalaCodecGenerator().toSupperCodecTemplate(service,structNamespaces, oriNamespaces.get(service).getOrElse("")))
-      val supperCodecWriter = new PrintWriter(new File(rootDir(outDir, service.namespace.substring(0, service.namespace.lastIndexOf("."))), s"${service.name}SupperCodec.scala"), "UTF-8")
-      supperCodecWriter.write(supperCodecTemplate.toString())
-      supperCodecWriter.close()
-      println(s"生成SupperCodec:${service.name}SupperCodec.scala 完成")
+      println(s"生成SuperCodec:${service.name}SuperCodec.scala")
+      val superCodecTemplate = new StringTemplate(new ScalaCodecGenerator().toSuperCodecTemplate(service,structNamespaces, oriNamespaces.get(service).getOrElse("")))
+      val superCodecWriter = new PrintWriter(new File(rootDir(outDir, service.namespace.substring(0, service.namespace.lastIndexOf("."))), s"${service.name}SuperCodec.scala"), "UTF-8")
+      superCodecWriter.write(superCodecTemplate.toString())
+      superCodecWriter.close()
+      println(s"生成SuperCodec:${service.name}SuperCodec.scala 完成")
 
       println(s"生成Codec:${service.name}Codec.scala")
       val codecTemplate = new StringTemplate(new ScalaCodecGenerator().toCodecTemplate(service,structNamespaces, oriNamespaces.get(service).getOrElse("")))
@@ -268,6 +268,7 @@ class ScalaGenerator extends CodeGenerator {
         import com.github.dapeng.org.apache.thrift._;
         import java.util.ServiceLoader;
         import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "Codec._"};
+        import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "SuperCodec._"};
         import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + ".service." + service.name };
 
         /**
@@ -346,6 +347,7 @@ class ScalaGenerator extends CodeGenerator {
         import java.util.ServiceLoader;
         import java.util.concurrent.CompletableFuture;
         import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "AsyncCodec._"};
+        import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "SuperCodec._"};
         import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + ".service." + service.name }Async;
         import scala.concurrent.duration._
         import scala.concurrent.<block>Future, Promise</block>
