@@ -11,6 +11,7 @@ import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.impl.filters.FilterLoader;
 import com.github.dapeng.impl.plugins.*;
+import com.github.dapeng.impl.plugins.deploy_agent.DeployAgentPlugin;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import com.google.common.collect.ImmutableList;
@@ -161,6 +162,10 @@ public class DapengContainer implements Container {
         Plugin zookeeperPlugin = new ZookeeperRegistryPlugin(this);
         Plugin taskSchedulePlugin = new TaskSchedulePlugin(this);
         Plugin nettyPlugin = new NettyPlugin(this);
+
+        //TODO: deployAgent plugin
+        Plugin deployAgentPlugin = new DeployAgentPlugin();
+        registerPlugin(deployAgentPlugin);
 
         // TODO
         if (!"plugin".equals(RUN_MODE)) {
