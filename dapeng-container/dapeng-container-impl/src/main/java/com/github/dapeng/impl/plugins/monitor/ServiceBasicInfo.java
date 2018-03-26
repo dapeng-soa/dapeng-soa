@@ -3,7 +3,7 @@ package com.github.dapeng.impl.plugins.monitor;
 import java.util.Objects;
 
 /**
- * author with struy.
+ * @author with struy.
  * Create by 2018/1/31 11:44
  * email :yq1724555319@gmail.com
  */
