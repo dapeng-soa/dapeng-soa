@@ -68,11 +68,9 @@ public class SoaSystemEnvProperties {
     public static final String SOA_REMOTING_MODE = get(KEY_SOA_REMOTING_MODE, "remote");
     public static final boolean SOA_MONITOR_ENABLE = Boolean.valueOf(get(KEY_SOA_MONITOR_ENABLE, "false"));
     public static final String SOA_SERVICE_CALLERFROM = get(KEY_SOA_SERVICE_CALLERFROM, "unknown");
-//    public static final Long SOA_SERVICE_CLIENT_TIMEOUT = Long.valueOf(get(KEY_SOA_SERVICE_CLIENT_TIMEOUT, "0"));
-//    public static final Long SOA_SERVICE_SERVER_TIMEOUT = Long.valueOf(get(KEY_SOA_SERVICE_SERVER_TIMEOUT, "0"));
     public static final Long SOA_SERVICE_TIMEOUT = Long.valueOf(get(KEY_SOA_SERVICE_TIMEOUT, "0"));
 
-    public static final long SOA_MAX_TIMEOUT = 60000L;
+    public static final long SOA_MAX_TIMEOUT = 300000L;
     public static final long SOA_DEFAULT_TIMEOUT = 1000L;
 
     public static final Integer SOA_CORE_POOL_SIZE = Integer.valueOf(get(KEY_SOA_CORE_POOL_SIZE, String.valueOf(Runtime.getRuntime().availableProcessors() * 2)));
