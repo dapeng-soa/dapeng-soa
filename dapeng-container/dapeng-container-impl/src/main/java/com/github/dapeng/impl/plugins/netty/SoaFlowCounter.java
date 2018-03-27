@@ -49,6 +49,11 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
     private ArrayBlockingQueue<DataPoint> flowDataQueue = new ArrayBlockingQueue<>(MAX_SIZE);
 
     /**
+     * 上送数据缓存队列,用于jmx数据监控
+     */
+    public static ArrayBlockingQueue<DataPoint> flowCacheQueue = new ArrayBlockingQueue<>(30);
+
+    /**
      * 信号锁, 用于提醒线程跟数据上送线程的同步
      * 避免因为上送失败引起的线程异常
      */
@@ -121,6 +126,12 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
                 }
                 if (null != point) {
                     flowDataQueue.put(point);
+
+                    // 默认保留最新30条,缓存流量统计数据,offer,poll防止阻塞
+                    if(!flowCacheQueue.offer(point)){
+                        flowCacheQueue.poll();
+                        flowCacheQueue.offer(point);
+                    }
                 }
             } catch (Exception e) {
                 LOGGER.error(e.getMessage(), e);
