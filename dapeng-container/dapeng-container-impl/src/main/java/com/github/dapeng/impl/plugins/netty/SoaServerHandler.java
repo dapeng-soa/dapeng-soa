@@ -180,8 +180,9 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                     }
                     catch (Throwable e) {
                         LOGGER.error(e.getMessage(), e);
+                        String errMsg = e.getCause() != null ? e.getCause().toString() : (e.getMessage() != null ? e.getMessage().toString() : e.toString());
                         writeErrorMessage(channelHandlerContext, context, new SoaException(SoaCode.UnKnown,
-                                e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage()));
+                                errMsg == null ? SoaCode.UnKnown.getMsg() : errMsg));
                         ctx.setAttribute("isSuccess",false);
                     }
                 }
