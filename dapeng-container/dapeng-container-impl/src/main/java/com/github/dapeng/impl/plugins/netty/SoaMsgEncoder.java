@@ -3,6 +3,7 @@ package com.github.dapeng.impl.plugins.netty;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.*;
+import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.ExceptionUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
@@ -92,6 +93,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                 application.info(this.getClass(), infoLog);
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(getClass().getSimpleName() + "::encode " + infoLog + ", payload:\n" + result);
+                    LOGGER.debug(getClass().getSimpleName() + "::encode " + DumpUtil.dumpToStr(out));
                 }
             } catch (Throwable e) {
                 SoaException soaException = ExceptionUtil.convertToSoaException(e);
