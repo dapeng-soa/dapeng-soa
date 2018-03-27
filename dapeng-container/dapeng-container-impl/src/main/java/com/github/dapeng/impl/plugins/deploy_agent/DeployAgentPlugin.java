@@ -4,12 +4,12 @@ import com.github.dapeng.api.Container;
 import com.github.dapeng.api.Plugin;
 import com.github.dapeng.bootstrap.classloader.ApplicationClassLoader;
 import com.github.dapeng.bootstrap.classloader.ClassLoaderFactory;
-import com.github.dapeng.bootstrap.classloader.CoreClassLoader;
 import com.github.dapeng.impl.container.DapengContainer;
+import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.ivy.Ivy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -33,11 +33,11 @@ public class DeployAgentPlugin implements Plugin{
     private static final String JAR_POSTFIX = ".*\\.jar";
 
     private boolean useivy = true; //fixme 先本地写死
-    private String organisation = "com.github.dapeng"; //fixme 先本地写死
-    private String serviceVersion = "0.1-SNAPSHOT";   //fixme 先本地写死 (服务版本号)
-    private String services = "stable-test_service_2.12"; //fixme 先本地写死     (服务名)
+    private String organisation = ""; //fixme 先本地写死
+    private String serviceVersion = "";   //fixme 先本地写死 (服务版本号)
+    private String serviceArtifactId = ""; //fixme 先本地写死     (服务名)
     private String ivysettings; //fixme 先本地写死 (为ivysettings.xml 的文件路径)
-    private String targetDir = "E:\\tmp\\apps\\";
+    private String targetDir = "";
     private String cache;
     private String local;
 
@@ -51,40 +51,62 @@ public class DeployAgentPlugin implements Plugin{
 
     @Override
     public void start() {
-        Set<URI> serviceUris;
-        try {
-            serviceUris = loadLibrary();
-
-            Iterator<URI> iterator = serviceUris.iterator();
-            while (iterator.hasNext()) {
-                URI uri = iterator.next();
-                System.out.println("path: " + uri.getPath());
-                System.out.println("fileName: " + uri.getPath().substring(uri.getPath().lastIndexOf("/") + 1));
-                String filepath = uri.getPath().replaceAll("\\/","\\\\\\\\").substring(2);
-                if (!new File(targetDir + "/" + uri.getPath().substring(uri.getPath().lastIndexOf("/") + 1)).exists()) {
-                    writeFile(filepath,uri.getPath().substring(uri.getPath().lastIndexOf("/") + 1),targetDir );
-                } else {
-                    LOGGER.info(" file: " + filepath);
+        if (SoaSystemEnvProperties.SOA_USE_IVY) {
+            Set<URI> serviceUris;
+            try {
+                organisation = SoaSystemEnvProperties.SOA_ORGANIZATION;
+                if (StringUtils.isEmpty(organisation)) {
+                    throw new Exception(" use ivy deploy must defined organization => soa.organization");
                 }
+
+                serviceArtifactId = SoaSystemEnvProperties.SOA_ARTIFACT_ID;
+                if (StringUtils.isEmpty(serviceArtifactId)) {
+                    throw new Exception(" use ivy deploy must defined serviceArtifactId => soa.artifact.id");
+                }
+
+                serviceVersion = SoaSystemEnvProperties.SOA_SERVICE_VERSION;
+                if (StringUtils.isEmpty(serviceVersion)) {
+                    throw new Exception(" use ivy deploy must defined serviceVersion => soa.service.version");
+                }
+
+                targetDir = SoaSystemEnvProperties.SOA_IVY_JARS_DIR;
+                LOGGER.info(" use " + targetDir + " as apps jars dir..........");
+
+                serviceUris = loadLibrary();
+
+                Iterator<URI> iterator = serviceUris.iterator();
+                while (iterator.hasNext()) {
+                    URI uri = iterator.next();
+                    System.out.println("path: " + uri.getPath());
+                    System.out.println("fileName: " + uri.getPath().substring(uri.getPath().lastIndexOf("/") + 1));
+                    if (!new File(targetDir + "/" + uri.getPath().substring(uri.getPath().lastIndexOf("/") + 1)).exists()) {
+                        writeFile(uri.toURL(),uri.getPath().substring(uri.getPath().lastIndexOf("/") + 1),targetDir );
+                    } else {
+                        LOGGER.info(" file: " + uri.getPath() + " already exists.....");
+                    }
+                }
+
+                List<URL> appUrls = serviceUris.stream().map(i -> {
+                    try {
+                        return i.toURL();
+                    } catch (Exception e) {
+                        return null;
+                    }
+                }).filter(i -> i != null).collect(Collectors.toList());
+
+                URL[] urls = new URL[(appUrls.size())];
+                appUrls.toArray(urls);
+
+                ApplicationClassLoader appLoader = new ApplicationClassLoader(urls, ClassLoaderFactory.getCoreClassLoader());
+                appClassLoaders.add(appLoader);
+
+            } catch (Exception e) {
+                LOGGER.error(" failed to load service url........." + e.getMessage());
             }
-
-            List<URL> appUrls = serviceUris.stream().map(i -> {
-                try {
-                    return i.toURL();
-                } catch (Exception e) {
-                    return null;
-                }
-            }).filter(i -> i != null).collect(Collectors.toList());
-
-            URL[] urls = new URL[(appUrls.size())];
-            appUrls.toArray(urls);
-
-            ApplicationClassLoader appLoader = new ApplicationClassLoader(urls, ClassLoaderFactory.getCoreClassLoader());
-            appClassLoaders.add(appLoader);
-
-        } catch (Exception e) {
-            LOGGER.error(" failed to load service url........." + e.getMessage());
+        } else {
+            LOGGER.warn(" Didn't use ivy to deploy apps...skip DeployAgentPlugin.........");
         }
+
     }
 
     @Override
@@ -99,11 +121,12 @@ public class DeployAgentPlugin implements Plugin{
      * @param targetFileName targetDirFile
      * @param targetDir targetDir
      */
-    private void writeFile(String fromUrl, String targetFileName, String targetDir)  {
+    private void writeFile(URL fromUrl, String targetFileName, String targetDir)  {
         BufferedInputStream inputStream = null;
         BufferedOutputStream outputStream = null;
         try {
-            inputStream = new BufferedInputStream(new FileInputStream(fromUrl));
+            inputStream = new BufferedInputStream(fromUrl.openStream());
+            //inputStream = new BufferedInputStream(new FileInputStream(fromUrl));
             outputStream = new BufferedOutputStream(new FileOutputStream(new File(targetDir + "/" + targetFileName)));
 
             while (inputStream.available() > 0) {
@@ -142,13 +165,13 @@ public class DeployAgentPlugin implements Plugin{
         if (useivy) {
             IvyGetJarUtil ivyGetJarUtil = new IvyGetJarUtil(getIvy());
             //TODO 目前platformUrl & containerUrl 暂时没用上
-//            plateformUrls.addAll(ivyGetJarUtil.getJars(organisation, services, serviceVersion,
+//            plateformUrls.addAll(ivyGetJarUtil.getJars(organisation, serviceArtifactId, serviceVersion,
 //                    new String[] { "master(*)", "compile(*)", "runtime(*)", "provided(*)" }));
 //			containerUrls.addAll(ivyGetJarUtil.getJars(organisation, "osp-container", ospVersion,
 //					new String[] { "master(*)", "compile(*)", "runtime(*)" }));
 
-            if (services != null) {
-                String[] temp = services.split(":");
+            if (serviceArtifactId != null) {
+                String[] temp = serviceArtifactId.split(":");
                 serviceUrls.addAll(
                         ivyGetJarUtil.getJars(organisation, temp[0], serviceVersion, new String[] { "master(*)", "compile(*)" }));
             }

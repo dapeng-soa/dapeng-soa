@@ -42,7 +42,12 @@ public class SoaSystemEnvProperties {
     private static final String KEY_SOA_FILTER_EXCLUDES = "soa.filter.excludes";
     private static final String KEY_SOA_FILTER_INCLUDES = "soa.filter.includes";
 
-    private static final String KEY_SOA_DAPENG_USEIVY = "soa.dapeng.useivy";
+    //ivy deploy agent config
+    private static final String KEY_SOA_ORGANIZATION = "soa.organization";
+    private static final String KEY_SOA_ARTIFACT_ID = "soa.artifact.id";
+    private static final String KEY_SOA_SERVICE_VERSION = "soa.service.version";
+    private static final String KEY_SOA_USE_IVY = "soa.use.ivy";
+    private static final String KEY_SOA_IVY_JARS_DIR = "soa.ivy.jars.dir";
 
 //    public static final String SOA_SERVICE_IP = get(KEY_SOA_SERVICE_IP, "127.0.0.1");
 //    public static final boolean SOA_SERVICE_IP_ISCONFIG = get(KEY_SOA_SERVICE_IP) != null;
@@ -80,7 +85,13 @@ public class SoaSystemEnvProperties {
     public static final String SOA_FILTER_EXCLUDES = get(KEY_SOA_FILTER_EXCLUDES,"");
     public static final String SOA_FILTER_INCLUDES = get(KEY_SOA_FILTER_INCLUDES,"");
 
-    public static final boolean SOA_DAPENG_USEIVY = Boolean.valueOf(get(KEY_SOA_DAPENG_USEIVY,"false"));
+    public static final String SOA_ORGANIZATION = get(KEY_SOA_ORGANIZATION, "");
+    public static final String SOA_ARTIFACT_ID = get(KEY_SOA_ARTIFACT_ID, "");
+    public static final String SOA_SERVICE_VERSION = get(KEY_SOA_SERVICE_VERSION, "");
+    public static final boolean SOA_USE_IVY = Boolean.valueOf(get(KEY_SOA_USE_IVY, "false"));
+    public static final String SOA_IVY_JARS_DIR = get(KEY_SOA_IVY_JARS_DIR, "/dapeng-container/apps/");
+
+
     /**
      * 正常返回的时候的response code
      */
