@@ -45,4 +45,32 @@ public interface ContainerRuntimeInfoMBean {
      */
     public String getSerivceBasicInfo();
 
+    /**
+     * 获取当前运行服务流量信息
+     * @return
+     */
+    public String getServiceFlow();
+
+    /**
+     * 获取当前服务调用信息
+     * @return
+     */
+    public String getServiceInvoke();
+
+    /**
+     * 获取当前运行服务流量信息 (指定条数)
+     * @param count 获取数据条数
+     * @return
+     */
+    public String getServiceFlow(int count);
+
+    /**
+     * 获取当前服务调用信息(指定条数)
+     * @param count 获取的数据条数
+     * @param methodName 方法名字
+     * @return
+     */
+    public String getServiceInvoke(int count,String methodName);
+
+
 }

@@ -28,7 +28,7 @@ public class MbeanAgentPlugin implements Plugin {
     @Override
     public void start() {
         try {
-            mName = new ObjectName("dapengContainerMBean:name=containerRuntimeInfo");
+            mName = new ObjectName("com.github.dapeng:name=containerRuntimeInfo");
             //create mbean and register mbean
             server.registerMBean(new ContainerRuntimeInfo(container), mName);
             LOGGER.info("::registerMBean dapengContainerMBean success");

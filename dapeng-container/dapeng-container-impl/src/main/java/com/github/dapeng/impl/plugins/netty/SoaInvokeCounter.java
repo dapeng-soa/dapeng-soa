@@ -1,11 +1,8 @@
 package com.github.dapeng.impl.plugins.netty;
 
-import com.github.dapeng.api.Container;
 import com.github.dapeng.basic.api.counter.CounterServiceClient;
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
 import com.github.dapeng.basic.api.counter.service.CounterService;
-import com.github.dapeng.core.Application;
-import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.SoaHeader;
 import com.github.dapeng.core.TransactionContext;
 import com.github.dapeng.impl.plugins.monitor.ServiceProcessData;
@@ -55,6 +52,11 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
      */
     private static final int NORMAL_SIZE = (int) (MAX_SIZE * 0.8);
     private ArrayBlockingQueue<List<DataPoint>> serviceDataQueue = new ArrayBlockingQueue<>(MAX_SIZE);
+
+    /**
+     * 上送数据缓存队列,用于jmx数据监控
+     */
+    public static ArrayBlockingQueue<List<DataPoint>> serviceCacheQueue = new ArrayBlockingQueue<>(30);
     /**
      * 请求的seqid信息与调用起时，匹配响应seqid做耗时运算
      */
@@ -175,6 +177,11 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
                 }
                 if (!dataList.isEmpty()) {
                     serviceDataQueue.put(dataList);
+                    // 默认保留最新30条,缓存调用数据,offer,poll防止阻塞
+                    if (!serviceCacheQueue.offer(dataList)){
+                        serviceCacheQueue.poll();
+                        serviceCacheQueue.offer(dataList);
+                    }
                 }
             } catch (Exception e) {
                 LOGGER.error(e.getMessage(), e);
