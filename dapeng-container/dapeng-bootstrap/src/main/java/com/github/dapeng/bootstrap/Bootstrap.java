@@ -1,9 +1,6 @@
 package com.github.dapeng.bootstrap;
 
-import com.github.dapeng.bootstrap.classloader.ApplicationClassLoader;
-import com.github.dapeng.bootstrap.classloader.ContainerClassLoader;
-import com.github.dapeng.bootstrap.classloader.CoreClassLoader;
-import com.github.dapeng.bootstrap.classloader.PluginClassLoader;
+import com.github.dapeng.bootstrap.classloader.*;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -19,10 +16,13 @@ public class Bootstrap {
 
 
     public static void main(String[] args) throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+
+
         List<URL> coreURLs = findJarURLs(new File(ENGINE_PATH, "lib"));
         List<URL> containerURLs = findJarURLs(new File(ENGINE_PATH, "bin/lib"));
         List<List<URL>> applicationURLs = getUrlList(new File(ENGINE_PATH, "apps"));
         List<List<URL>> pluginURLs = getUrlList(new File(ENGINE_PATH, "plugin"));
+
 
         CoreClassLoader coreClassLoader = new CoreClassLoader(coreURLs.toArray(new URL[coreURLs.size()]));
 
@@ -31,6 +31,11 @@ public class Bootstrap {
         List<ClassLoader> applicationCls = applicationURLs.stream().map(i -> new ApplicationClassLoader(i.toArray(new URL[i.size()]), coreClassLoader)).collect(Collectors.toList());
 
         List<ClassLoader> pluginClassLoaders = pluginURLs.stream().map(i -> new PluginClassLoader(i.toArray(new URL[i.size()]), coreClassLoader)).collect(Collectors.toList());
+
+        //fixme need to be enhanced
+        ClassLoaderFactory.setCoreClassLoader(coreClassLoader);
+        ClassLoaderFactory.setPlatformClassLoader(platformClassLoader);
+        ClassLoaderFactory.setPluginClassLoaders(pluginClassLoaders);
 
         startup(platformClassLoader, applicationCls);
     }

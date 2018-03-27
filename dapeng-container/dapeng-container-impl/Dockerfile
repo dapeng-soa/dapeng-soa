@@ -13,3 +13,4 @@ COPY target/dapeng-container /dapeng-container
 WORKDIR "$CONTAINER_HOME/bin"
 
 RUN chmod +x *.sh
+

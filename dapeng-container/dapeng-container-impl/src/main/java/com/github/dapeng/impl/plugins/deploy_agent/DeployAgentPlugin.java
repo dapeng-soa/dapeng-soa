@@ -2,10 +2,14 @@ package com.github.dapeng.impl.plugins.deploy_agent;
 
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.Plugin;
+import com.github.dapeng.bootstrap.classloader.ApplicationClassLoader;
+import com.github.dapeng.bootstrap.classloader.ClassLoaderFactory;
+import com.github.dapeng.bootstrap.classloader.CoreClassLoader;
 import com.github.dapeng.impl.container.DapengContainer;
 import org.apache.ivy.Ivy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -17,13 +21,14 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class DeployAgentPlugin implements Plugin{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DeployAgentPlugin.class);
 
-//    private final Container container;
-//    private final List<ClassLoader> appClassLoaders;
+    private final Container container;
+    private final List<ClassLoader> appClassLoaders;
 
     private static final String JAR_POSTFIX = ".*\\.jar";
 
@@ -32,40 +37,51 @@ public class DeployAgentPlugin implements Plugin{
     private String serviceVersion = "0.1-SNAPSHOT";   //fixme 先本地写死 (服务版本号)
     private String services = "stable-test_service_2.12"; //fixme 先本地写死     (服务名)
     private String ivysettings; //fixme 先本地写死 (为ivysettings.xml 的文件路径)
-    private String targetDir = "E:\\tmp\\";
+    private String targetDir = "E:\\tmp\\apps\\";
     private String cache;
     private String local;
 
     protected String servicesdir;
     protected String thirddir;
-    protected int port = -1;
-    protected int restport = -1;
 
-    //TODO 目前jmx 暂时没用
-    private static String action = "start";
-    private static String jmxHost = "127.0.0.1";
-    private static int jmxPort = 8060;
-    private static String jmxObject = "com.vip.hermes.core.reporter:type=Slf4jReporter";
-
-//    public DeployAgentPlugin(DapengContainer container, List<ClassLoader> appsCls) {
-//        this.container = container;
-//        this.appClassLoaders = appsCls;
-//    }
+    public DeployAgentPlugin(DapengContainer container, List<ClassLoader> appsCls) {
+        this.container = container;
+        this.appClassLoaders = appsCls;
+    }
 
     @Override
     public void start() {
-        Set<URI> serviceUri;
+        Set<URI> serviceUris;
         try {
-            serviceUri = loadLibrary();
+            serviceUris = loadLibrary();
 
-            Iterator<URI> iterator = serviceUri.iterator();
+            Iterator<URI> iterator = serviceUris.iterator();
             while (iterator.hasNext()) {
                 URI uri = iterator.next();
                 System.out.println("path: " + uri.getPath());
                 System.out.println("fileName: " + uri.getPath().substring(uri.getPath().lastIndexOf("/") + 1));
                 String filepath = uri.getPath().replaceAll("\\/","\\\\\\\\").substring(2);
-                writeFile(filepath,uri.getPath().substring(uri.getPath().lastIndexOf("/") + 1),targetDir );
+                if (!new File(targetDir + "/" + uri.getPath().substring(uri.getPath().lastIndexOf("/") + 1)).exists()) {
+                    writeFile(filepath,uri.getPath().substring(uri.getPath().lastIndexOf("/") + 1),targetDir );
+                } else {
+                    LOGGER.info(" file: " + filepath);
+                }
             }
+
+            List<URL> appUrls = serviceUris.stream().map(i -> {
+                try {
+                    return i.toURL();
+                } catch (Exception e) {
+                    return null;
+                }
+            }).filter(i -> i != null).collect(Collectors.toList());
+
+            URL[] urls = new URL[(appUrls.size())];
+            appUrls.toArray(urls);
+
+            ApplicationClassLoader appLoader = new ApplicationClassLoader(urls, ClassLoaderFactory.getCoreClassLoader());
+            appClassLoaders.add(appLoader);
+
         } catch (Exception e) {
             LOGGER.error(" failed to load service url........." + e.getMessage());
         }
@@ -125,8 +141,9 @@ public class DeployAgentPlugin implements Plugin{
 
         if (useivy) {
             IvyGetJarUtil ivyGetJarUtil = new IvyGetJarUtil(getIvy());
-            plateformUrls.addAll(ivyGetJarUtil.getJars(organisation, services, serviceVersion,
-                    new String[] { "master(*)", "compile(*)", "runtime(*)", "provided(*)" }));
+            //TODO 目前platformUrl & containerUrl 暂时没用上
+//            plateformUrls.addAll(ivyGetJarUtil.getJars(organisation, services, serviceVersion,
+//                    new String[] { "master(*)", "compile(*)", "runtime(*)", "provided(*)" }));
 //			containerUrls.addAll(ivyGetJarUtil.getJars(organisation, "osp-container", ospVersion,
 //					new String[] { "master(*)", "compile(*)", "runtime(*)" }));
 
@@ -137,7 +154,7 @@ public class DeployAgentPlugin implements Plugin{
             }
         } else {
             String enginePath = URLDecoder.decode(
-                    new File(OspEngine.class.getProtectionDomain().getCodeSource().getLocation().getFile()).getParent(),
+                    new File(DeployAgentPlugin.class.getProtectionDomain().getCodeSource().getLocation().getFile()).getParent(),
                     "UTF-8");
 
             File platformlib = new File(enginePath + "/platformlib");
@@ -203,8 +220,8 @@ public class DeployAgentPlugin implements Plugin{
     /**
      * list files in dir or file, filter by nameRegex.
      */
-    private static Set<URI> listFilesUrls(File file, String nameRegex) throws MalformedURLException {
-        Set<URI> urlSet = new HashSet<URI>();
+    private static Set<URI> listFilesUrls(File file, String nameRegex) {
+        Set<URI> urlSet = new HashSet<>();
 
         if (file == null || !file.exists()) {
             return urlSet;
@@ -246,7 +263,7 @@ public class DeployAgentPlugin implements Plugin{
 
         URL ivysettingsURL = null;
         if (ivysettings == null) {
-            ivysettingsURL = OspEngine.class.getClassLoader().getResource("ivysettings.xml");
+            ivysettingsURL = DeployAgentPlugin.class.getClassLoader().getResource("ivysettings.xml");
         } else {
             ivysettingsURL = new File(ivysettings).toURI().toURL();
         }

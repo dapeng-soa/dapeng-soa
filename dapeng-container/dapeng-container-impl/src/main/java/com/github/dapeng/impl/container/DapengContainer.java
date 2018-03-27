@@ -5,6 +5,7 @@ import com.github.dapeng.api.Container;
 import com.github.dapeng.api.Plugin;
 import com.github.dapeng.api.events.AppEvent;
 import com.github.dapeng.api.events.AppEventType;
+import com.github.dapeng.bootstrap.classloader.ClassLoaderFactory;
 import com.github.dapeng.core.Application;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
@@ -164,7 +165,7 @@ public class DapengContainer implements Container {
         Plugin nettyPlugin = new NettyPlugin(this);
 
         //TODO: deployAgent plugin
-        Plugin deployAgentPlugin = new DeployAgentPlugin();
+        Plugin deployAgentPlugin = new DeployAgentPlugin(this, applicationCls);
         registerPlugin(deployAgentPlugin);
 
         // TODO
