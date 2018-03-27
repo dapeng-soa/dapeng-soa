@@ -51,6 +51,7 @@ public class DeployAgentPlugin implements Plugin{
 
     @Override
     public void start() {
+        LOGGER.info(" check if use ivy to deploy apps:  " + SoaSystemEnvProperties.SOA_USE_IVY);
         if (SoaSystemEnvProperties.SOA_USE_IVY) {
             Set<URI> serviceUris;
             try {

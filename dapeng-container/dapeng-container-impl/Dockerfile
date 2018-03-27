@@ -14,3 +14,4 @@ WORKDIR "$CONTAINER_HOME/bin"
 
 RUN chmod +x *.sh
 
+CMD ${CONTAINER_HOME}/bin/startup.sh && tail -F ${CONTAINER_HOME}/bin/startup.sh
