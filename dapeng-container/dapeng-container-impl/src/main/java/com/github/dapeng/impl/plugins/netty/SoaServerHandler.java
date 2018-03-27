@@ -177,8 +177,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                         LOGGER.error(soaException.getMessage(),soaException);
                         writeErrorMessage(channelHandlerContext, context, soaException);
                         ctx.setAttribute("isSuccess",false);
-                    }
-                    catch (Throwable e) {
+                    } catch (Throwable e) {
                         LOGGER.error(e.getMessage(), e);
                         String errMsg = e.getCause() != null ? e.getCause().toString() : (e.getMessage() != null ? e.getMessage().toString() : e.toString());
                         writeErrorMessage(channelHandlerContext, context, new SoaException(SoaCode.UnKnown,
