@@ -431,8 +431,7 @@ class ScalaGenerator extends CodeGenerator {
             * {method.doc}
             **/
             def {method.name}({toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
-            <div>{nameAsId(field.name)}:{toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}
-            {if(method.getRequest.fields.size() > 0) <span>,</span>} timeout: Long = 5000) : Future[{toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)}] = <block>
+            <div>{nameAsId(field.name)}:{toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}) : Future[{toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)}] = <block>
 
             val context = InvocationContextImpl.Factory.getCurrentInstance
             context.setMethodName("{method.name}")
@@ -447,8 +446,7 @@ class ScalaGenerator extends CodeGenerator {
             }
             }}),
             new {method.request.name.charAt(0).toUpper + method.request.name.substring(1)}Serializer(),
-            new {method.response.name.charAt(0).toUpper + method.response.name.substring(1)}Serializer()
-            ,timeout).asInstanceOf[CompletableFuture[{method.response.name}]]
+            new {method.response.name.charAt(0).toUpper + method.response.name.substring(1)}Serializer() ).asInstanceOf[CompletableFuture[{method.response.name}]]
 
             {if(method.getResponse.getFields.get(0).getDataType.kind != DataType.KIND.VOID) <div>toScala(response)(_.success)</div> else <div>toScala(response)(null)</div>}
 
@@ -602,7 +600,7 @@ class ScalaGenerator extends CodeGenerator {
           def {method.name}(
           {toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
           <div>{nameAsId(field.name)}: {toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}
-        }}{if(method.getRequest.getFields().size()>0) ","} timeout : Long): Future[{if(method.getResponse.getFields().get(0).getDataType.kind.equals(KIND.VOID)) <div>Unit</div> else toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)}]
+        }}): Future[{if(method.getResponse.getFields().get(0).getDataType.kind.equals(KIND.VOID)) <div>Unit</div> else toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)}]
 
         </div>
       }
