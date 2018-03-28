@@ -465,8 +465,6 @@ class JavaGenerator extends CodeGenerator {
             }
             }
             }
-            case -1:
-              return UNDEFINED;
             default:
             return null;
           </block>
