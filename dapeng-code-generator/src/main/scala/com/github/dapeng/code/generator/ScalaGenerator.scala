@@ -485,9 +485,6 @@ class ScalaGenerator extends CodeGenerator {
       }
       }
       }
-      <div>val UNDEFINED = new {enum.name}(-1,"UNDEFINED") // undefined enum
-      </div>
-
       def findByValue(v: Int): {enum.name} = <block>
         v match <block>
           {toEnumItemArrayBuffer(enum.enumItems).map { (enumItem: EnumItem) => {
