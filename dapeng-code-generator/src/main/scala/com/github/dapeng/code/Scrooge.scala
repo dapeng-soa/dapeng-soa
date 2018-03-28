@@ -121,23 +121,25 @@ object Scrooge {
       }
       val thriftFiles = resources.map(new File(_))
       val needUpdate = {
-        val xmlFiles = resourcePath.listFiles().filter(_.getName.endsWith(".xml"))
-        val targetDirFiles = getFiles(outDir).filter(file => {
-          val fileName = file.getName
-          fileName.endsWith(".java") || fileName.endsWith(".scala")
-        })
+        if(resourcePath.isFile) {
+          val xmlFiles = resourcePath.listFiles().filter(_.getName.endsWith(".xml"))
+          val targetDirFiles = getFiles(outDir).filter(file => {
+            val fileName = file.getName
+            fileName.endsWith(".java") || fileName.endsWith(".scala")
+          })
 
-        if (xmlFiles.size <= 0) {
-          true
-        } else if ((xmlFiles.toList ++: targetDirFiles)
-          .exists(generatedFile => thriftFiles.exists(_.lastModified() > generatedFile.lastModified()))) {
-          true
-        } else {
-          language match {
-            case "java" => if (targetDirFiles.filter(_.getName.endsWith(".java")).size <= 0) true else false
-            case "scala" => if (targetDirFiles.filter(_.getName.endsWith(".scala")).size <= 0) true else false
+          if (xmlFiles.size <= 0) {
+            true
+          } else if ((xmlFiles.toList ++: targetDirFiles)
+            .exists(generatedFile => thriftFiles.exists(_.lastModified() > generatedFile.lastModified()))) {
+            true
+          } else {
+            language match {
+              case "java" => if (targetDirFiles.filter(_.getName.endsWith(".java")).size <= 0) true else false
+              case "scala" => if (targetDirFiles.filter(_.getName.endsWith(".scala")).size <= 0) true else false
+            }
           }
-        }
+        }else true
       }
 
       if (resources != null && language != "" && needUpdate) {
