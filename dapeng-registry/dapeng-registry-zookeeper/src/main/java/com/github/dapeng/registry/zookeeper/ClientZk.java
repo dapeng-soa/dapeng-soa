@@ -5,7 +5,6 @@ import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.RuntimeInstance;
 import com.github.dapeng.registry.ServiceInfo;
 import com.github.dapeng.route.Route;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.zookeeper.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,7 +135,7 @@ public class ClientZk extends CommonZk {
         return usableList;
     }
 
-    public ZkServiceInfo getServiceZkInfo(String serviceName, Map<String, ZkServiceInfo> zkInfos) {
+    public ZkServiceInfo syncServiceZkInfo(String serviceName, Map<String, ZkServiceInfo> zkInfos) {
         String servicePath = SERVICE_PATH + "/" + serviceName;
         try {
             if (zk == null) {
@@ -147,7 +146,7 @@ public class ClientZk extends CommonZk {
                 if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
                     LOGGER.info("{}子节点发生变化，重新获取信息", watchedEvent.getPath());
                     if (zkInfos.containsKey(serviceName)) {
-                        getServiceZkInfo(serviceName, zkInfos);
+                        syncServiceZkInfo(serviceName, zkInfos);
                     }
                 }
             });

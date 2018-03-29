@@ -77,19 +77,23 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     @Override
     public synchronized ClientInfo registerClientInfo(String serviceName, String version) {
         final String key = serviceName + ":" + version;
-        Optional<WeakReference<ClientInfo>> clientInfoRef = Optional.ofNullable(clientInfos.get(key));
 
-        WeakReference<ClientInfo> newClientInfoRef = clientInfoRef.orElse(new WeakReference<>(
-                new ClientInfo(serviceName, version), referenceQueue));
+        WeakReference<ClientInfo> clientInfoRef = clientInfos.get(key);
+        ClientInfo clientInfo = (clientInfoRef == null) ? null : clientInfoRef.get();
+        if(clientInfo != null) {
+            return clientInfo;
+        }
+        else {
+            clientInfo = new ClientInfo(serviceName, version);
+            clientInfoRef = new WeakReference<>(clientInfo, referenceQueue);
 
-        clientInfos.put(key, newClientInfoRef);
-        clientInfoRefs.put(newClientInfoRef, key);
+            clientInfos.put(key, clientInfoRef);
+            clientInfoRefs.put(clientInfoRef, key);
 
-        if (!clientInfoRef.isPresent()) {
             zkAgent.syncService(serviceName, zkInfos);
+            return clientInfo;
         }
 
-        return newClientInfoRef.get();
     }
 
     @Override
@@ -130,8 +134,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                                          String method,
                                          ConnectionType connectionType) {
         ZkServiceInfo zkInfo = zkInfos.get(service);
-
+//todo add log
         if (zkInfo == null) {
+            logger.error("");
             return null;
         }
 

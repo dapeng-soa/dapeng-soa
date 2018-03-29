@@ -61,6 +61,7 @@ public class ZkClientAgentImpl implements ZkClientAgent {
         zkInfos.remove(serviceName);
     }
 
+    // todo ZkServiceInfo 添加一个标志位, 标志是否取消监听
     @Override
     public void syncService(String serviceName, Map<String, ZkServiceInfo> zkInfos) {
 
@@ -68,9 +69,9 @@ public class ZkClientAgentImpl implements ZkClientAgent {
 
         ZkServiceInfo zkInfo = zkInfos.get(serviceName);
         if (zkInfo == null) {
-            zkInfo = siw.getServiceZkInfo(serviceName, zkInfos);
+            zkInfo = siw.syncServiceZkInfo(serviceName, zkInfos);
             if (zkInfo == null && usingFallbackZookeeper) {
-                zkInfo = zkfbw.getServiceZkInfo(serviceName, zkInfos);
+                zkInfo = zkfbw.syncServiceZkInfo(serviceName, zkInfos);
             }
         }
 
