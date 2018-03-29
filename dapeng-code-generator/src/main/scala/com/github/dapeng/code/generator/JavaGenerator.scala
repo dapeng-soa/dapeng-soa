@@ -215,7 +215,7 @@ class JavaGenerator extends CodeGenerator {
         this.serviceName = "{service.namespace + "." + service.name }";
         this.version = "{service.meta.version}";
 
-        ServiceLoader{lt}SoaConnectionPoolFactory{gt} factories = ServiceLoader.load(SoaConnectionPoolFactory.class);
+        ServiceLoader{lt}SoaConnectionPoolFactory{gt} factories = ServiceLoader.load(SoaConnectionPoolFactory.class,getClass().getClassLoader());
         this.pool = factories.iterator().next().getPool();
         this.clientInfo = this.pool.registerClientInfo(serviceName,version);
       </block>
@@ -308,7 +308,7 @@ class JavaGenerator extends CodeGenerator {
         this.serviceName = "{service.namespace + "." + service.name }";
         this.version = "{service.meta.version}";
 
-        ServiceLoader{lt}SoaConnectionPoolFactory{gt} factories = ServiceLoader.load(SoaConnectionPoolFactory.class);
+        ServiceLoader{lt}SoaConnectionPoolFactory{gt} factories = ServiceLoader.load(SoaConnectionPoolFactory.class,getClass().getClassLoader());
         this.pool = factories.iterator().next().getPool();
         this.clientInfo = this.pool.registerClientInfo(serviceName,version);
       </block>
