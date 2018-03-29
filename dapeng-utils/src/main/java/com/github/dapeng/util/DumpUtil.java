@@ -31,8 +31,6 @@ public class DumpUtil {
         int readerIndex = buffer.readerIndex();
         int availabe = buffer.readableBytes();
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
         StringBuilder sb = new StringBuilder();
 
         // XX XX XX XX XX XX XX XX  XX XX XX XX XX XX XX XX  ASCII....
