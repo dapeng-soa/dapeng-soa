@@ -7,7 +7,7 @@ import java.util.ServiceLoader;
 
 public class PluginLoader implements Plugin{
 
-    private ServiceLoader<Plugin> plugins = ServiceLoader.load(Plugin.class, PluginLoader.class.getClassLoader());
+    private ServiceLoader<Plugin> plugins = ServiceLoader.load(Plugin.class, getClass().getClassLoader());
 
     @Override
     public void start() {

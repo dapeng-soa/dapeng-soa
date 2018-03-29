@@ -11,6 +11,12 @@ import java.util.List;
 public class ZkServiceInfo {
 
     final String service;
+
+    /**
+     * 是否需要对zk上该服务节点的监听
+     */
+    boolean isCancel;
+
     /**
      * instances list
      */

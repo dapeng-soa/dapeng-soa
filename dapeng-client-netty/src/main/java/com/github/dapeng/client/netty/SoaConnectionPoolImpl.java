@@ -80,10 +80,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         WeakReference<ClientInfo> clientInfoRef = clientInfos.get(key);
         ClientInfo clientInfo = (clientInfoRef == null) ? null : clientInfoRef.get();
-        if(clientInfo != null) {
+        if (clientInfo != null) {
             return clientInfo;
-        }
-        else {
+        } else {
             clientInfo = new ClientInfo(serviceName, version);
             clientInfoRef = new WeakReference<>(clientInfo, referenceQueue);
 

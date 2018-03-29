@@ -28,7 +28,7 @@ public class BaseController {
         if (!SoaSystemEnvProperties.SOA_REMOTING_MODE.equals("local")) {
             try {
 
-                ServiceLoader<RegistryAgent> registryAgentLoader = ServiceLoader.load(RegistryAgent.class, BaseClient.class.getClassLoader());
+                ServiceLoader<RegistryAgent> registryAgentLoader = ServiceLoader.load(RegistryAgent.class, getClass().getClassLoader());
                 for (RegistryAgent registryAgent : registryAgentLoader) {
                     RegistryAgentProxy.setCurrentInstance(RegistryAgentProxy.Type.Client, registryAgent);
                     RegistryAgentProxy.getCurrentInstance(RegistryAgentProxy.Type.Client).start();

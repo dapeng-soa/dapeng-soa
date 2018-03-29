@@ -27,7 +27,7 @@ public class MetadataClient {
         this.serviceName = serviceName;
         this.version = version;
 
-        ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class);
+        ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class, getClass().getClassLoader());
         this.pool = factories.iterator().next().getPool();
         this.clientInfo = this.pool.registerClientInfo(serviceName, version);
 
