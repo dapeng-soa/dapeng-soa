@@ -58,7 +58,10 @@ public class ZkClientAgentImpl implements ZkClientAgent {
 
     @Override
     public void cancnelSyncService(String serviceName, Map<String, ZkServiceInfo> zkInfos) {
+        //fixme should remove the debug log
+        LOGGER.info("cancnelSyncService-before:[" + serviceName + ", zkInfo:" + zkInfos.get(serviceName));
         zkInfos.remove(serviceName);
+        LOGGER.info("cancnelSyncService-after:[" + serviceName + ", zkInfo:" + zkInfos.get(serviceName));
     }
 
     // todo ZkServiceInfo 添加一个标志位, 标志是否取消监听
@@ -69,6 +72,7 @@ public class ZkClientAgentImpl implements ZkClientAgent {
 
         ZkServiceInfo zkInfo = zkInfos.get(serviceName);
         if (zkInfo == null) {
+            LOGGER.info(getClass().getSimpleName() + "::syncService:zkInfo not found, now sync with zk");
             zkInfo = siw.syncServiceZkInfo(serviceName, zkInfos);
             if (zkInfo == null && usingFallbackZookeeper) {
                 zkInfo = zkfbw.syncServiceZkInfo(serviceName, zkInfos);
@@ -93,6 +97,9 @@ public class ZkClientAgentImpl implements ZkClientAgent {
             }
             zkInfo.setRuntimeInstances(runtimeList);
             zkInfos.put(serviceName, zkInfo);
+            LOGGER.info(getClass().getSimpleName() + "::syncService:zkInfo succeed");
+        } else {
+            LOGGER.info(getClass().getSimpleName() + "::syncService:zkInfo failed");
         }
 
     }
