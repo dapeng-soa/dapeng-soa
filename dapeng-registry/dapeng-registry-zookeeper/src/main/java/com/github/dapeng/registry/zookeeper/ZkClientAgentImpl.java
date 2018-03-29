@@ -72,7 +72,7 @@ public class ZkClientAgentImpl implements ZkClientAgent {
 
         ZkServiceInfo zkInfo = zkInfos.get(serviceName);
         if (zkInfo == null) {
-            LOGGER.info(getClass().getSimpleName() + "::syncService:zkInfo not found, now sync with zk");
+            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + serviceName + "]:zkInfo not found, now sync with zk");
             zkInfo = siw.syncServiceZkInfo(serviceName, zkInfos);
             if (zkInfo == null && usingFallbackZookeeper) {
                 zkInfo = zkfbw.syncServiceZkInfo(serviceName, zkInfos);
@@ -97,9 +97,9 @@ public class ZkClientAgentImpl implements ZkClientAgent {
             }
             zkInfo.setRuntimeInstances(runtimeList);
             zkInfos.put(serviceName, zkInfo);
-            LOGGER.info(getClass().getSimpleName() + "::syncService:zkInfo succeed");
+            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + serviceName + "]:zkInfo succeed");
         } else {
-            LOGGER.info(getClass().getSimpleName() + "::syncService:zkInfo failed");
+            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + serviceName + "]:zkInfo failed");
         }
 
     }
