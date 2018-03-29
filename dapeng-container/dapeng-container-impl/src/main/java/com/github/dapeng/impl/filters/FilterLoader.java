@@ -18,7 +18,7 @@ public class FilterLoader {
     public FilterLoader(Container container, List<ClassLoader> applicationCls) {
 
         // search container filters
-        ServiceLoader<Filter> containerFilters = ServiceLoader.load(Filter.class, FilterLoader.class.getClassLoader());
+        ServiceLoader<Filter> containerFilters = ServiceLoader.load(Filter.class, getClass().getClassLoader());
         for (Filter filter : containerFilters) {
             if (FilterLoaderUtil.included(filter)) {
                 container.registerFilter(filter);

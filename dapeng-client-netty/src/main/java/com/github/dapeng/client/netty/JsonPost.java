@@ -29,7 +29,7 @@ public class JsonPost {
     private final SoaConnectionPool.ClientInfo clientInfo;
 
     public JsonPost(String serviceName, String version) {
-        ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class);
+        ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class, getClass().getClassLoader());
         for (SoaConnectionPoolFactory factory : factories) {
             this.pool = factory.getPool();
             break;

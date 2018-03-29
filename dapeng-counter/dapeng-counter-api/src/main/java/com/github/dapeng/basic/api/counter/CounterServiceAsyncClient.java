@@ -26,7 +26,7 @@ package com.github.dapeng.basic.api.counter;
         this.serviceName = "com.github.dapeng.basic.api.counter.service.CounterService";
         this.version = "1.0.0";
 
-        ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class);
+        ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class, getClass().getClassLoader());
         this.pool = factories.iterator().next().getPool();
         this.clientInfo = this.pool.registerClientInfo(serviceName,version);
       }
