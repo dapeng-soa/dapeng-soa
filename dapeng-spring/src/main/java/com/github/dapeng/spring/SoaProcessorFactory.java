@@ -1,11 +1,8 @@
 package com.github.dapeng.spring;
 
-import com.github.dapeng.core.Processor;
-import com.github.dapeng.core.Service;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.Processor;
 import com.github.dapeng.core.Service;
-import com.github.dapeng.core.definition.SoaServiceDefinition;
 import org.springframework.beans.factory.FactoryBean;
 
 import java.lang.reflect.Constructor;
