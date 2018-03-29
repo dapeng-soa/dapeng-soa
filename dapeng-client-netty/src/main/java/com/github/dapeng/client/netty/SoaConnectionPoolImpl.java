@@ -81,6 +81,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         WeakReference<ClientInfo> clientInfoRef = clientInfos.get(key);
         ClientInfo clientInfo = (clientInfoRef == null) ? null : clientInfoRef.get();
         if(clientInfo != null) {
+            //fixme should remove the debug log
+            logger.info("registerClientInfo-0:[" + serviceName + ", version:"
+                    + version + ", zkInfo:" + zkInfos.get(serviceName));
             return clientInfo;
         }
         else {
@@ -91,6 +94,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             clientInfoRefs.put(clientInfoRef, key);
 
             zkAgent.syncService(serviceName, zkInfos);
+            //fixme should remove the debug log
+            logger.info("registerClientInfo-1:[" + serviceName + ", version:"
+                    + version + ", zkInfo:" + zkInfos.get(serviceName));
             return clientInfo;
         }
 
@@ -134,9 +140,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                                          String method,
                                          ConnectionType connectionType) {
         ZkServiceInfo zkInfo = zkInfos.get(service);
-//todo add log
+
         if (zkInfo == null) {
-            logger.error("");
+            logger.error(getClass().getSimpleName() + "::findConnection[service:" + service + "], zkInfo not found");
             return null;
         }
 
@@ -145,6 +151,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 .collect(Collectors.toList());
         RuntimeInstance inst = loadBalance(service, version, method, compatibles);
         if (inst == null) {
+            logger.error(getClass().getSimpleName() + "::findConnection[service:" + service + "], instance not found");
             return null;
         }
 
