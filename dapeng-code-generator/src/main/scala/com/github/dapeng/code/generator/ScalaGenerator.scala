@@ -276,7 +276,7 @@ class ScalaGenerator extends CodeGenerator {
         val serviceName = "{oriNamespace + "." + service.name }"
         val version = "{service.meta.version}"
         val pool = <block>
-          val serviceLoader = ServiceLoader.load(classOf[SoaConnectionPoolFactory])
+          val serviceLoader = ServiceLoader.load(classOf[SoaConnectionPoolFactory], getClass.getClassLoader)
           if (serviceLoader.iterator().hasNext) <block>
             val poolImpl = serviceLoader.iterator().next().getPool
             poolImpl.registerClientInfo(serviceName,version)
@@ -352,7 +352,7 @@ class ScalaGenerator extends CodeGenerator {
         val serviceName = "{oriNamespace + "." + service.name }"
         val version = "{service.meta.version}"
         val pool = <block>
-          val serviceLoader = ServiceLoader.load(classOf[SoaConnectionPoolFactory])
+          val serviceLoader = ServiceLoader.load(classOf[SoaConnectionPoolFactory],getClass.getClassLoader)
           if (serviceLoader.iterator().hasNext) <block>
             val poolImpl = serviceLoader.iterator().next().getPool
             poolImpl.registerClientInfo(serviceName,version)
