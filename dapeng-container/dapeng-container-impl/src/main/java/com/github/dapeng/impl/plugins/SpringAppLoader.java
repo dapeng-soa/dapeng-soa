@@ -129,8 +129,14 @@ public class SpringAppLoader implements Plugin {
             Service service = processor.ifaceClass.getAnnotation(Service.class);
             assert (service != null); // TODO
 
-            ServiceInfo serviceInfo = new ServiceInfo(service.name(), service.version(),
-                    "service", ifaceClass);
+            CustomConfig customConfig = processor.ifaceClass.getAnnotation(CustomConfig.class);
+
+            CustomConfigInfo customConfigInfo = new CustomConfigInfo(2000);
+
+            if (customConfig != null)customConfigInfo = new CustomConfigInfo(customConfig.timeout());
+
+            ServiceInfo serviceInfo = new ServiceInfo(service.name(), service.version(),customConfigInfo,
+                        "service", ifaceClass);
             serviceInfoMap.put(processorKey, serviceInfo);
         }
 
