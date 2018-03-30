@@ -25,6 +25,7 @@ public class RegistryAgentImpl implements RegistryAgent {
     private static final Logger LOGGER = LoggerFactory.getLogger(RegistryAgentImpl.class);
 
     private final String RUNTIME_PATH = "/soa/runtime/services";
+    private final String CONFIG_PATH = "/soa/config/services";
 
     private final boolean isClient;
     private final ServerZk serverZk = new ServerZk(this);
@@ -72,8 +73,12 @@ public class RegistryAgentImpl implements RegistryAgent {
             String instanceInfo = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
 
             RegisterContext registerContext = new RegisterContext(serverName, versionName, servicePath, instanceInfo);
-
+            // 注册服务 runtime 实例 到 zk
             serverZk.create(path, registerContext, true);
+
+            // 创建  zk  config 服务 持久节点  eg:  /soa/config/com.github.dapeng.soa.UserService
+            serverZk.create(CONFIG_PATH + "/" + serverName, null, false);
+
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
