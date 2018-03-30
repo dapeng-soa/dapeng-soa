@@ -52,7 +52,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 }
 
                 clientInfos.remove(serviceVersion);
-                zkAgent.cancnelSyncService(zkInfos.get(serviceVersion.split(":")[0]));
+                zkAgent.cancnelSyncService(zkInfos.remove(serviceVersion.split(":")[0]));
             } catch (Throwable e) {
                 logger.error(e.getMessage(), e);
             }
@@ -147,6 +147,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         ZkServiceInfo zkInfo = zkInfos.get(service);
 
         if (zkInfo == null) {
+            //todo should find out why zkInfo is null
             logger.error(getClass().getSimpleName() + "::findConnection-0[service: " + service + "], zkInfo not found, now reSyncService");
 
             zkInfo = new ZkServiceInfo(service, new ArrayList<>());
