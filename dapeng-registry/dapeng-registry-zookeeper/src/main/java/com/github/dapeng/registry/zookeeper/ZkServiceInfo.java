@@ -10,12 +10,13 @@ import java.util.List;
  */
 public class ZkServiceInfo {
 
+    public enum Status {
+
+        CREATED,ACTIVE,CANCELED,
+    }
     final String service;
 
-    /**
-     * 是否需要对zk上该服务节点的监听
-     */
-    boolean isCancel;
+    private Status status = Status.CREATED;
 
     /**
      * instances list
@@ -40,4 +41,11 @@ public class ZkServiceInfo {
         return service;
     }
 
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
 }

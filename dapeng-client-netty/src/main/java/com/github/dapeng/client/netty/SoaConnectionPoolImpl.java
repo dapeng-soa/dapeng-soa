@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,7 +52,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 }
 
                 clientInfos.remove(serviceVersion);
-                zkAgent.cancnelSyncService(serviceVersion.split(":")[0], zkInfos);
+                zkAgent.cancnelSyncService(zkInfos.get(serviceVersion.split(":")[0]));
             } catch (Throwable e) {
                 logger.error(e.getMessage(), e);
             }
@@ -92,8 +93,12 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             clientInfos.put(key, clientInfoRef);
             clientInfoRefs.put(clientInfoRef, key);
 
-            ZkServiceInfo zkInfo = new ZkServiceInfo(serviceName,);
-            zkAgent.syncService(serviceName, zkInfos);
+            ZkServiceInfo zkInfo = new ZkServiceInfo(serviceName, new ArrayList<>());
+            zkAgent.syncService(zkInfo);
+
+            if (zkInfo.getStatus() == ZkServiceInfo.Status.ACTIVE) {
+                zkInfos.put(serviceName, zkInfo);
+            }
             //fixme should remove the debug log
             logger.info("registerClientInfo-1:[" + serviceName + ", version:"
                     + version + ", zkInfo:" + zkInfos.get(serviceName));
@@ -144,12 +149,14 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         if (zkInfo == null) {
             logger.error(getClass().getSimpleName() + "::findConnection-0[service: " + service + "], zkInfo not found, now reSyncService");
 
-            zkAgent.syncService(service, zkInfos);
-            zkInfo = zkInfos.get(service);
-            if (zkInfo == null) {
+            zkInfo = new ZkServiceInfo(service, new ArrayList<>());
+            zkAgent.syncService(zkInfo);
+            if (zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
                 logger.error(getClass().getSimpleName() + "::findConnection-1[service: " + service + "], zkInfo not found");
                 return null;
             }
+
+            zkInfos.put(service, zkInfo);
         }
 
         List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
