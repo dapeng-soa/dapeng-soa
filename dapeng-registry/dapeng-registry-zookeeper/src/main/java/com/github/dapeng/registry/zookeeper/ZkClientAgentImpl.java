@@ -61,23 +61,22 @@ public class ZkClientAgentImpl implements ZkClientAgent {
     }
 
     @Override
-    public void cancnelSyncService(String serviceName, Map<String, ZkServiceInfo> zkInfos) {
+    public void cancnelSyncService(ZkServiceInfo zkInfo) {
         //fixme should remove the debug log
-        LOGGER.info("cancnelSyncService-before:[" + serviceName + ", zkInfo:" + zkInfos.get(serviceName));
-        zkInfos.remove(serviceName);
-        LOGGER.info("cancnelSyncService-after:[" + serviceName + ", zkInfo:" + zkInfos.get(serviceName));
+        LOGGER.info("cancnelSyncService:[" + zkInfo.service + "]");
+        zkInfo.setStatus(ZkServiceInfo.Status.CANCELED);
     }
 
-    // todo ZkServiceInfo 添加一个标志位, 标志是否取消监听
     @Override
-    public void syncService(String serviceName, Map<String, ZkServiceInfo> zkInfos) {
-        ZkServiceInfo zkInfo = zkInfos.get(serviceName);
-        if (zkInfo == null) {
-            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + serviceName + "]:zkInfo not found, now sync with zk");
-            zkInfo = masterZk.syncServiceZkInfo(serviceName, zkInfos);
-            if (zkInfo == null && usingFallbackZk) {
-                zkInfo = fallbackZk.syncServiceZkInfo(serviceName, zkInfos);
+    public void syncService(ZkServiceInfo zkInfo) {
+        if (zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
+            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo just created, now sync with zk");
+            masterZk.syncServiceZkInfo(zkInfo);
+            if (zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE && usingFallbackZk) {
+                fallbackZk.syncServiceZkInfo(zkInfo);
             }
+
+            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + ", status:" + zkInfo.getStatus() + "]");
         }
 
         //使用路由规则，过滤可用服务器
@@ -85,7 +84,7 @@ public class ZkClientAgentImpl implements ZkClientAgent {
         List<Route> routes = usingFallbackZk ? fallbackZk.getRoutes() : masterZk.getRoutes();
         List<RuntimeInstance> runtimeList = new ArrayList<>();
 
-        if (zkInfo != null && zkInfo.getRuntimeInstances() != null) {
+        if (zkInfo.getStatus() == ZkServiceInfo.Status.ACTIVE && zkInfo.getRuntimeInstances() != null) {
             for (RuntimeInstance instance : zkInfo.getRuntimeInstances()) {
                 try {
                     InetAddress inetAddress = InetAddress.getByName(instance.ip);
@@ -97,10 +96,9 @@ public class ZkClientAgentImpl implements ZkClientAgent {
                 }
             }
             zkInfo.setRuntimeInstances(runtimeList);
-            zkInfos.put(serviceName, zkInfo);
-            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + serviceName + "]:zkInfo succeed");
+            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo succeed");
         } else {
-            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + serviceName + "]:zkInfo failed");
+            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo failed");
         }
     }
 
