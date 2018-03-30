@@ -61,7 +61,7 @@ public class TestController {
 
         fillInvocationCtx(invocationCtx, req);
 
-        JsonPost jsonPost = new JsonPost(serviceName, methodName, true);
+        JsonPost jsonPost = new JsonPost(serviceName, versionName, true);
 
         try {
             return jsonPost.callServiceMethod(invocationCtx, jsonParameter, service);
