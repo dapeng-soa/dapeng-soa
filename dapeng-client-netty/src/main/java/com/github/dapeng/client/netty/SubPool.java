@@ -23,8 +23,12 @@ public class SubPool {
 
     /**
      * connection that used by json based httpClients.
+     * TODO unionfy with normalConnection
      */
     private SoaConnection jsonConnection;
+
+    //todo
+    // removeConnection
 
     SubPool(String ip, int port) {
         this.ip = ip;
@@ -35,7 +39,7 @@ public class SubPool {
      * @param connectionType
      * @return
      */
-    public SoaConnection getConnection(ConnectionType connectionType) {
+    public SoaConnection  getConnection(ConnectionType connectionType) {
         switch (connectionType) {
             case Json:
                 if (jsonConnection != null) return jsonConnection;
