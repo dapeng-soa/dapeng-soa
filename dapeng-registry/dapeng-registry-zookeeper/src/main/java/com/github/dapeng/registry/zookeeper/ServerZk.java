@@ -126,7 +126,7 @@ public class ServerZk extends CommonZk {
             createEphemeral(path + ":", context);
 
             //添加 watch ，监听子节点变化
-            watchInstanceChange(context);
+//            watchInstanceChange(context);
         } else {
             createPersistent(path, "");
 
@@ -238,7 +238,12 @@ public class ServerZk extends CommonZk {
                 create(path, (RegisterContext) ctx, true);
                 break;
             case OK:
-                LOGGER.info("添加serviceInfo:{},成功", path);
+                /**
+                 * callback 时 注册监听
+                 */
+                watchInstanceChange((RegisterContext) ctx);
+
+                LOGGER.info("添加serviceInfo:{},成功,注册实例监听watch watchInstanceChange", path);
                 break;
             case NODEEXISTS:
                 LOGGER.info("添加serviceInfo:{},已存在，删掉后重新添加", path);
