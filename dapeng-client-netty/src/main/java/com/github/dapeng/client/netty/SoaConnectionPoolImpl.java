@@ -77,19 +77,28 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     @Override
     public synchronized ClientInfo registerClientInfo(String serviceName, String version) {
         final String key = serviceName + ":" + version;
-        Optional<WeakReference<ClientInfo>> clientInfoRef = Optional.ofNullable(clientInfos.get(key));
 
-        WeakReference<ClientInfo> newClientInfoRef = clientInfoRef.orElse(new WeakReference<>(
-                new ClientInfo(serviceName, version), referenceQueue));
+        WeakReference<ClientInfo> clientInfoRef = clientInfos.get(key);
+        ClientInfo clientInfo = (clientInfoRef == null) ? null : clientInfoRef.get();
+        if (clientInfo != null) {
+            //fixme should remove the debug log
+            logger.info("registerClientInfo-0:[" + serviceName + ", version:"
+                    + version + ", zkInfo:" + zkInfos.get(serviceName));
+            return clientInfo;
+        } else {
+            clientInfo = new ClientInfo(serviceName, version);
+            clientInfoRef = new WeakReference<>(clientInfo, referenceQueue);
 
-        clientInfos.put(key, newClientInfoRef);
-        clientInfoRefs.put(newClientInfoRef, key);
+            clientInfos.put(key, clientInfoRef);
+            clientInfoRefs.put(clientInfoRef, key);
 
-        if (!clientInfoRef.isPresent()) {
             zkAgent.syncService(serviceName, zkInfos);
+            //fixme should remove the debug log
+            logger.info("registerClientInfo-1:[" + serviceName + ", version:"
+                    + version + ", zkInfo:" + zkInfos.get(serviceName));
+            return clientInfo;
         }
 
-        return newClientInfoRef.get();
     }
 
     @Override
@@ -132,7 +141,14 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         ZkServiceInfo zkInfo = zkInfos.get(service);
 
         if (zkInfo == null) {
-            return null;
+            logger.error(getClass().getSimpleName() + "::findConnection-0[service: " + service + "], zkInfo not found, now reSyncService");
+
+            zkAgent.syncService(service, zkInfos);
+            zkInfo = zkInfos.get(service);
+            if (zkInfo == null) {
+                logger.error(getClass().getSimpleName() + "::findConnection-1[service: " + service + "], zkInfo not found");
+                return null;
+            }
         }
 
         List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
@@ -140,6 +156,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 .collect(Collectors.toList());
         RuntimeInstance inst = loadBalance(service, version, method, compatibles);
         if (inst == null) {
+            logger.error(getClass().getSimpleName() + "::findConnection[service:" + service + "], instance not found");
             return null;
         }
 

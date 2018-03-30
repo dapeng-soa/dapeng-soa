@@ -24,8 +24,12 @@ import java.util.Map;
 public class ZkClientAgentImpl implements ZkClientAgent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ZkClientAgentImpl.class);
+    /**
+     * 是否使用 灰度 zk
+     */
+    private final boolean usingFallbackZk = SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_ISCONFIG;
 
-    private ClientZk siw, zkfbw;
+    private ClientZk masterZk, fallbackZk;
 
     public ZkClientAgentImpl() {
         start();
@@ -34,49 +38,51 @@ public class ZkClientAgentImpl implements ZkClientAgent {
     @Override
     public void start() {
 
-        siw = new ClientZk(SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
-        siw.init();
+        masterZk = new ClientZk(SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
+        masterZk.init();
 
         if (SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_ISCONFIG) {
-            zkfbw = new ClientZk(SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_HOST);
-            zkfbw.init();
+            fallbackZk = new ClientZk(SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_HOST);
+            fallbackZk.init();
         }
     }
 
     //todo 优雅退出的时候, 需要调用这个
     @Override
     public void stop() {
-        if (siw != null) {
-            siw.destroy();
+        if (masterZk != null) {
+            masterZk.destroy();
         }
 
-        if (zkfbw != null) {
-            zkfbw.destroy();
+        if (fallbackZk != null) {
+            fallbackZk.destroy();
         }
 
     }
 
     @Override
     public void cancnelSyncService(String serviceName, Map<String, ZkServiceInfo> zkInfos) {
+        //fixme should remove the debug log
+        LOGGER.info("cancnelSyncService-before:[" + serviceName + ", zkInfo:" + zkInfos.get(serviceName));
         zkInfos.remove(serviceName);
+        LOGGER.info("cancnelSyncService-after:[" + serviceName + ", zkInfo:" + zkInfos.get(serviceName));
     }
 
+    // todo ZkServiceInfo 添加一个标志位, 标志是否取消监听
     @Override
     public void syncService(String serviceName, Map<String, ZkServiceInfo> zkInfos) {
-
-        boolean usingFallbackZookeeper = SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_ISCONFIG;
-
         ZkServiceInfo zkInfo = zkInfos.get(serviceName);
         if (zkInfo == null) {
-            zkInfo = siw.getServiceZkInfo(serviceName, zkInfos);
-            if (zkInfo == null && usingFallbackZookeeper) {
-                zkInfo = zkfbw.getServiceZkInfo(serviceName, zkInfos);
+            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + serviceName + "]:zkInfo not found, now sync with zk");
+            zkInfo = masterZk.syncServiceZkInfo(serviceName, zkInfos);
+            if (zkInfo == null && usingFallbackZk) {
+                zkInfo = fallbackZk.syncServiceZkInfo(serviceName, zkInfos);
             }
         }
 
         //使用路由规则，过滤可用服务器
         InvocationContext context = InvocationContextImpl.Factory.getCurrentInstance();
-        List<Route> routes = usingFallbackZookeeper ? zkfbw.getRoutes() : siw.getRoutes();
+        List<Route> routes = usingFallbackZk ? fallbackZk.getRoutes() : masterZk.getRoutes();
         List<RuntimeInstance> runtimeList = new ArrayList<>();
 
         if (zkInfo != null && zkInfo.getRuntimeInstances() != null) {
@@ -92,15 +98,17 @@ public class ZkClientAgentImpl implements ZkClientAgent {
             }
             zkInfo.setRuntimeInstances(runtimeList);
             zkInfos.put(serviceName, zkInfo);
+            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + serviceName + "]:zkInfo succeed");
+        } else {
+            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + serviceName + "]:zkInfo failed");
         }
-
     }
 
 
     @Override
     public ZkConfigInfo getConfig(boolean usingFallback, String serviceKey) {
 
-        return siw.getConfigData(serviceKey);
+        return masterZk.getConfigData(serviceKey);
 
     }
 }

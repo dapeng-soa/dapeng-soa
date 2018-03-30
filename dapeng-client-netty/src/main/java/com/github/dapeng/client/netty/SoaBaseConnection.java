@@ -144,7 +144,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     responseBufFuture.whenComplete((realResult, ex) -> {
                         if (ex != null) {
                             SoaException soaException = convertToSoaException(ex);
-                            Result<RESP> result = new Result<>(null,soaException);
+                            Result<RESP> result = new Result<>(null, soaException);
                             ctx.setAttribute("result", result);
                         } else {
                             Result<RESP> result = processResponse(realResult, responseSerializer);
@@ -160,7 +160,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 } catch (Exception e) {
                     LOGGER.error(e.getMessage(), e);
                     SoaException soaException = convertToSoaException(e);
-                    Result<RESP> result = new Result<>(null,soaException);
+                    Result<RESP> result = new Result<>(null, soaException);
 
                     ctx.setAttribute("result", result);
                     onExit(ctx, getPrevChain(ctx));
@@ -214,7 +214,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
     private SoaException convertToSoaException(Throwable ex) {
         SoaException soaException = null;
         if (ex instanceof SoaException) {
-            soaException = (SoaException)ex;
+            soaException = (SoaException) ex;
         } else {
             soaException = new SoaException(SoaCode.UnKnown.getCode(), ex.getMessage());
         }
@@ -255,6 +255,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
     }
 
     private <RESP> Result<RESP> processResponse(ByteBuf responseBuf, BeanSerializer<RESP> responseSerializer) {
+        final int readerIndex = responseBuf.readerIndex();
         try {
             if (responseBuf == null) {
                 return new Result<>(null, new SoaException(SoaCode.TimeOut));
@@ -276,9 +277,11 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 }
 
             }
+        } catch (SoaException ex) {
+            return new Result<>(null, ex);
         } catch (TException ex) {
             LOGGER.error("通讯包解析出错:\n" + ex.getMessage(), ex);
-            LOGGER.error(DumpUtil.dumpToStr(responseBuf));
+            LOGGER.error(DumpUtil.dumpToStr(responseBuf.readerIndex(readerIndex)));
             return new Result<>(null,
                     new SoaException(SoaCode.UnKnown, "通讯包解析出错"));
         } finally {
