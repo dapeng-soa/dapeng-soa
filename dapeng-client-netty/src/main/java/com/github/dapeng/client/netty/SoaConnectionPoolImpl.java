@@ -116,7 +116,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         ConnectionType connectionType = getConnectionType(requestSerializer);
         SoaConnection connection = findConnection(service, version, method, connectionType);
         if (connection == null) {
-            throw new SoaException(SoaCode.NotConnected);
+            throw new SoaException(SoaCode.NotFoundServer);
         }
         long timeout = getTimeout(service, version, method);
         return connection.send(service, version, method, request, requestSerializer, responseSerializer, timeout);
@@ -134,7 +134,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         SoaConnection connection = findConnection(service, version,
                 method, connectionType);
         if (connection == null) {
-            throw new SoaException(SoaCode.NotConnected);
+            throw new SoaException(SoaCode.NotFoundServer);
         }
         long timeout = getTimeout(service, version, method);
         return connection.sendAsync(service, version, method, request, requestSerializer, responseSerializer, timeout);
@@ -148,6 +148,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         if (zkInfo == null) {
             //todo should find out why zkInfo is null
+            // 1. target service not exists
             logger.error(getClass().getSimpleName() + "::findConnection-0[service: " + service + "], zkInfo not found, now reSyncService");
 
             zkInfo = new ZkServiceInfo(service, new ArrayList<>());
