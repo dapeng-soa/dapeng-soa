@@ -514,7 +514,6 @@ class ScalaGenerator extends CodeGenerator {
         **/
         @Service(name ="{oriNamespace+"."+service.name}" , version = "{service.meta.version}")
         @Processor(className = "{service.namespace.substring(0, service.namespace.lastIndexOf("service"))}{service.name}Codec$Processor")
-
         {
         if (service.annotations != null) {
           import collection.JavaConverters._
@@ -526,11 +525,9 @@ class ScalaGenerator extends CodeGenerator {
               i.key.substring(i.key.lastIndexOf(".") + 1) + "=" + getInstanceTypeValue(i.value, methods.get(i.key).get)
             } else {""}
           }).mkString("(",",",")")
-
           <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
         }
         }
-
         trait {service.name} <block>
         {
         toMethodArrayBuffer(service.methods).map { (method: Method) =>
@@ -539,6 +536,7 @@ class ScalaGenerator extends CodeGenerator {
             /**
             * {method.doc}
             **/
+            {if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div>}
             {
             if (method.annotations != null) {
               import collection.JavaConverters._
@@ -550,12 +548,10 @@ class ScalaGenerator extends CodeGenerator {
                   i.key.substring(i.key.lastIndexOf(".") + 1) + "=" + getInstanceTypeValue(i.value, methods.get(i.key).get)
                 } else {""}
               }).mkString("(",",",")")
-
               <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
             }
             }
-            {if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div>}
-            <div>@throws[com.github.dapeng.core.SoaException]</div>
+            @throws[com.github.dapeng.core.SoaException]
             def {method.name}(
             {toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
             <div>{nameAsId(field.name)}: {toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}
@@ -592,13 +588,11 @@ class ScalaGenerator extends CodeGenerator {
         import collection.JavaConverters._
 
         val methods = classOf[CustomConfig].getDeclaredMethods.map(i => "core." + i.getName -> i.getReturnType.getName).toMap
-
         val annotationValue = service.annotations.asScala.map(i => {
           if (methods.contains(i.key)) {
             i.key.substring(i.key.lastIndexOf(".") + 1) + "=" + getInstanceTypeValue(i.value, methods.get(i.key).get)
           } else {""}
         }).mkString("(",",",")")
-
         <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
       }
       }
@@ -610,23 +604,22 @@ class ScalaGenerator extends CodeGenerator {
           /**
           * {method.doc}
           **/
-          {
-          if (method.annotations != null) {
-            import collection.JavaConverters._
-
-            val methods = classOf[CustomConfig].getDeclaredMethods.map(i => "core." + i.getName -> i.getReturnType.getName).toMap
-
-            val annotationValue = method.annotations.asScala.map(i => {
-              if (methods.contains(i.key)) {
-                i.key.substring(i.key.lastIndexOf(".") + 1) + "=" + getInstanceTypeValue(i.value, methods.get(i.key).get)
-              } else {""}
-            }).mkString("(",",",")")
-
-            <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
-          }
-          }
           {if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div>}
-          <div>@throws[com.github.dapeng.core.SoaException]</div>
+            {
+            if (method.annotations != null) {
+              import collection.JavaConverters._
+
+              val methods = classOf[CustomConfig].getDeclaredMethods.map(i => "core." + i.getName -> i.getReturnType.getName).toMap
+
+              val annotationValue = method.annotations.asScala.map(i => {
+                if (methods.contains(i.key)) {
+                  i.key.substring(i.key.lastIndexOf(".") + 1) + "=" + getInstanceTypeValue(i.value, methods.get(i.key).get)
+                } else {""}
+              }).mkString("(",",",")")
+              <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
+            }
+            }
+          @throws[com.github.dapeng.core.SoaException]
           def {method.name}(
           {toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
           <div>{nameAsId(field.name)}: {toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}
