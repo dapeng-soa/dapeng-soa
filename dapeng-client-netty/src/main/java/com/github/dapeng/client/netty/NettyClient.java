@@ -108,7 +108,10 @@ public class NettyClient {
         bootstrap.handler(new ChannelInitializer<SocketChannel>() {
             @Override
             public void initChannel(SocketChannel ch) throws Exception {
-                ch.pipeline().addLast(new IdleStateHandler(readerIdleTimeSeconds, writerIdleTimeSeconds, allIdleTimeSeconds), new SoaDecoder(), new SoaIdleHandler(), new SoaClientHandler(callBack));
+                ch.pipeline().addLast(new IdleStateHandler(readerIdleTimeSeconds, writerIdleTimeSeconds, allIdleTimeSeconds),
+                        new SoaFrameDecoder(), //粘包和断包处理
+                        new SoaIdleHandler(),
+                        new SoaClientHandler(callBack));
             }
         });
         return bootstrap;

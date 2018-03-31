@@ -8,9 +8,9 @@ import java.util.concurrent.Future;
  */
 public interface SoaConnectionPool {
 
-    public static class ClientInfo {
-        final String serviceName;
-        final String version;
+    class ClientInfo {
+        public final String serviceName;
+        public final String version;
 
         public ClientInfo(String serviceName, String version) {
             this.serviceName = serviceName;

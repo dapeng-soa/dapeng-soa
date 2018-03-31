@@ -4,18 +4,19 @@ import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
-import org.quartz.Job;
-import org.quartz.JobDataMap;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
+import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.naming.spi.StateFactory;
 import java.util.Map;
 
 /**
- * Created by tangliu on 2016/8/17.
+ * @author tangliu
+ * @date 2016/8/17
+ * @DisallowConcurrentExecution 的主要作用是quartz单个任务的串行机制
  */
+@DisallowConcurrentExecution
 public class ScheduledJob implements Job {
 
     private static final Logger logger = LoggerFactory.getLogger(TaskSchedulePlugin.class);
@@ -43,11 +44,11 @@ public class ScheduledJob implements Job {
 
         try {
             if (soaServiceDefinition.isAsync) {
-                SoaFunctionDefinition.Async<Object,Object, Object> functionDefinition = (SoaFunctionDefinition.Async<Object,Object, Object>) data.get("function");
-                functionDefinition.apply(iface,new Object());
+                SoaFunctionDefinition.Async<Object, Object, Object> functionDefinition = (SoaFunctionDefinition.Async<Object, Object, Object>) data.get("function");
+                functionDefinition.apply(iface, new Object());
             } else {
-                SoaFunctionDefinition.Sync<Object,Object, Object> functionDefinition = (SoaFunctionDefinition.Sync<Object,Object, Object>) data.get("function");
-                functionDefinition.apply(iface,null);
+                SoaFunctionDefinition.Sync<Object, Object, Object> functionDefinition = (SoaFunctionDefinition.Sync<Object, Object, Object>) data.get("function");
+                functionDefinition.apply(iface, null);
             }
             logger.info("定时任务({})执行完成", context.getJobDetail().getKey().getName());
         } catch (Exception e) {
