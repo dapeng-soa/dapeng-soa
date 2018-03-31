@@ -24,7 +24,7 @@
 
         <dependency>
             <groupId>com.github.dapeng</groupId>
-            <artifactId>dapeng-registry-zookeeper</artifactId>
+            <artifactId>dapeng-com.github.dapeng.registry.registry-zookeeper</artifactId>
             <version>${project.version}</version>
         </dependency>
 

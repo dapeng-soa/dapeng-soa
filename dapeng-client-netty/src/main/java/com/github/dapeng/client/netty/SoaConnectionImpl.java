@@ -29,6 +29,9 @@ public class SoaConnectionImpl extends SoaBaseConnection {
         final ByteBuf requestBuf = allocator.buffer(8192);
 
         SoaMessageBuilder<REQ> builder = new SoaMessageBuilder<>();
+//        if(requestSerializer instanceof SoaMessageBuilderAware) {
+//            requestSerializer.setMessageBuilder(builder);
+//        }
 
         SoaHeader header = buildHeader(service, version, method);
         try {

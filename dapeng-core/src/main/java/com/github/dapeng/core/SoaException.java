@@ -37,6 +37,13 @@ public class SoaException extends TException {
         this.msg = msg;
     }
 
+    public SoaException(String code, String msg, Throwable cause) {
+        super(cause);
+
+        this.code = code;
+        this.msg = msg;
+    }
+
     public String getCode() {
         return code;
     }

@@ -5,15 +5,23 @@ import com.github.dapeng.api.Plugin;
 
 import java.util.ServiceLoader;
 
-public class PluginLoader {
+public class PluginLoader implements Plugin{
 
-    public void startup() {
-        ServiceLoader<Plugin> plugins = ServiceLoader.load(Plugin.class, PluginLoader.class.getClassLoader());
+    private ServiceLoader<Plugin> plugins = ServiceLoader.load(Plugin.class, getClass().getClassLoader());
+
+    @Override
+    public void start() {
 
         for (Plugin plugin: plugins) {
-            System.out.println(" what the????");
             plugin.start();
         }
+    }
 
+    @Override
+    public void stop() {
+        for (Plugin plugin: plugins) {
+
+            plugin.stop();
+        }
     }
 }

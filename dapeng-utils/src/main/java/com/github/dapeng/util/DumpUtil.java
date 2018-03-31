@@ -2,18 +2,20 @@ package com.github.dapeng.util;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.UnpooledHeapByteBuf;
 
 import java.io.ByteArrayOutputStream;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- * Created by lihuimin on 2017/12/21.
+ *
+ * @author lihuimin
+ * @date 2017/12/21
  */
 public class DumpUtil {
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(35);
-        for(int i = 0; i<33; i++){
+        for (int i = 0; i < 33; i++) {
             buffer.writeByte('A' + i);
         }
         buffer.readerIndex(0);
@@ -29,8 +31,6 @@ public class DumpUtil {
         int readerIndex = buffer.readerIndex();
         int availabe = buffer.readableBytes();
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
         StringBuilder sb = new StringBuilder();
 
         // XX XX XX XX XX XX XX XX  XX XX XX XX XX XX XX XX  ASCII....
@@ -45,9 +45,9 @@ public class DumpUtil {
             if (i % 16 == 15) {
                 //int from = i - 15;
                 sb.append(' ');
-                for(int j = i - 15; j<=i; j++) {
+                for (int j = i - 15; j <= i; j++) {
                     char ch = (char) buffer.getByte(readerIndex + j);
-                    if( ch >= 0x20 && ch < 0x7F ) sb.append(ch);
+                    if (ch >= 0x20 && ch < 0x7F) sb.append(ch);
                     else sb.append('.');
                 }
                 sb.append("\n");
@@ -55,8 +55,8 @@ public class DumpUtil {
         }
         i -= 1;
         int from = i / 16 * 16;
-        if(i % 16 != 15) {
-            for(int j = i; j % 16 != 15; j++) sb.append("   ");
+        if (i % 16 != 15) {
+            for (int j = i; j % 16 != 15; j++) sb.append("   ");
             sb.append(' ');
             for (int j = from; j <= i; j++) {
                 char ch = (char) buffer.getByte(readerIndex + j);
@@ -67,6 +67,19 @@ public class DumpUtil {
         }
 
         return sb.toString();
+    }
+
+    /**
+     * 返回线程池的状况
+     * 包括:线程池状态/活动线程数/当前总线程数/当前完成任务数/总任务数
+     *
+     * @param poolExecutor
+     * @return
+     */
+    public static String dumpThreadPool(ThreadPoolExecutor poolExecutor) {
+        return " --shutdown/terminating/terminated[" + poolExecutor.isShutdown() + "/" + poolExecutor.isTerminating() + "/" + poolExecutor.isTerminated() + "]\n"
+                + " --activeCount/poolSize[" + poolExecutor.getActiveCount() + "/" + poolExecutor.getPoolSize() + "]\n"
+                + " --waitingTasks/completeTasks/totalTasks[" + poolExecutor.getQueue().size() + "/" + poolExecutor.getCompletedTaskCount() + "/" + poolExecutor.getTaskCount() + "]";
     }
 
     public static String formatToString(String msg) {
@@ -85,5 +98,4 @@ public class DumpUtil {
 
         return msg;
     }
-
 }

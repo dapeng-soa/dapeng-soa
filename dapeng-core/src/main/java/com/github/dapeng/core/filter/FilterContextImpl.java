@@ -48,5 +48,23 @@ public class FilterContextImpl implements FilterContext {
         return attachments.get(key);
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder(getClass().getSimpleName() + "[attachmentsWithFilter:[");
+        for (Filter filter: attachmentsWithFilter.keySet()) {
+            sb.append(filter.toString() + ":[" + map2str(attachmentsWithFilter.get(filter)) + "],");
+        }
+        sb.append("],attachments[").append(map2str(attachments)).append("]]");
+        return  sb.toString();
+    }
+
+    private String map2str(Map<String, Object> map) {
+        StringBuilder buffer = new StringBuilder();
+        for (String key : map.keySet()) {
+            buffer.append(key + ":" + map.get(key) + ",");
+        }
+
+        return buffer.toString();
+    }
 
 }
