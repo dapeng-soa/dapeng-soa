@@ -1,30 +1,36 @@
 package com.github.dapeng.core;
 
+import java.util.Map;
+import java.util.Optional;
+
 public class ServiceInfo {
 
     public final String serviceName;
     public final String version;
     //task, commonService. cron..etc.
     public final String serviceType;
-    public final CustomConfigInfo customConfigInfo;
 
+    public final Optional<CustomConfigInfo> configInfo;
+
+    public final Map<String, Optional<CustomConfigInfo>> methodsMap;
     /**
      * 用于Task 拿到对应的 class 类型
      * 方便查找 对应类型的信息
      */
     public final Class<?> ifaceClass;
 
-    public ServiceInfo(String serviceName, String version,CustomConfigInfo customConfigInfo,String serviceType, Class<?> ifaceClass){
+    public ServiceInfo(String serviceName, String version, String serviceType, Class<?> ifaceClass, Optional<CustomConfigInfo> configInfo, Map<String, Optional<CustomConfigInfo>> methodsMap) {
         this.serviceName = serviceName;
         this.version = version;
-        this.customConfigInfo = customConfigInfo;
         this.serviceType = serviceType;
         this.ifaceClass = ifaceClass;
+        this.configInfo = configInfo;
+        this.methodsMap = methodsMap;
     }
 
     @Override
     public String toString() {
-        return serviceName + ":" + version + "@" + serviceType + "-" + ifaceClass.getName() +"timeout:"+customConfigInfo.timeout;
+        return serviceName + ":" + version + "@" + serviceType + "-" + ifaceClass.getName();
     }
 
 }

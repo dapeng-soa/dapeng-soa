@@ -10,12 +10,12 @@ package com.github.dapeng.core;
 public class CustomConfigInfo {
     public long timeout = 2000;
 
-    public CustomConfigInfo(){}
+    public CustomConfigInfo() {
+    }
 
     public CustomConfigInfo(long timeout) {
         this.timeout = timeout;
     }
-
 
 
     @Override
