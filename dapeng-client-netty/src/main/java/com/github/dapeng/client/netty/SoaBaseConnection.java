@@ -307,8 +307,16 @@ public abstract class SoaBaseConnection implements SoaConnection {
     }
 
     private void checkChannel() throws SoaException {
-        if (channel == null || !channel.isActive())
+        if (channel == null) {
             connect(host, port);
+        } else if (!channel.isActive()) {
+            try {
+                channel.close();
+            } finally {
+                channel = null;
+                connect(host, port);
+            }
+        }
     }
 
 }
