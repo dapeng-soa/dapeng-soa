@@ -52,7 +52,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 }
 
                 clientInfos.remove(serviceVersion);
-                zkAgent.cancnelSyncService(zkInfos.remove(serviceVersion.split(":")[0]));
+                ZkServiceInfo zkServiceInfo = zkInfos.remove(serviceVersion.split(":")[0]);
+                zkAgent.cancnelSyncService(zkServiceInfo);
             } catch (Throwable e) {
                 logger.error(e.getMessage(), e);
             }
