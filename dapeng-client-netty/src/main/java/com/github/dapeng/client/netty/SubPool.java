@@ -20,9 +20,6 @@ public class SubPool {
      */
     private SoaConnection soaConnection;
 
-    //todo channel关闭后, 去掉connection
-    // removeConnection
-
     SubPool(String ip, int port) {
         this.ip = ip;
         this.port = port;
@@ -34,11 +31,15 @@ public class SubPool {
         try {
             connectionLock.lock();
             if (soaConnection == null) {
-                soaConnection = new SoaConnectionImpl(ip, port);
+                soaConnection = new SoaConnectionImpl(ip, port, this);
             }
         } finally {
             connectionLock.unlock();
         }
         return soaConnection;
     }
+
+//    public void removeConnection() {
+//        soaConnection = null;
+//    }
 }

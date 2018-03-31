@@ -60,17 +60,15 @@ public class SoaFrameDecoder extends ByteToMessageDecoder {
             return;
         }
 
-        // fixme not 02-..-03 discard this channel
         // length(4) stx(1) version(1) protocol(1) seqid(4) header(...) body(...) etx(1)
-        in.skipBytes(Integer.BYTES);
         byte stx = in.readByte();
         if (stx != STX) {
             ctx.close();
-            LOGGER.error(getClass().getSimpleName() + "::decode:通讯包开始符异常, 连接关闭");
+            LOGGER.error(getClass().getSimpleName() + "::decode:通讯包起始符异常, 连接关闭");
             return;
         }
 
-        in.skipBytes(length -1);
+        in.skipBytes(length -2);
         byte etx = in.readByte();
         if (etx != ETX) {
             ctx.close();

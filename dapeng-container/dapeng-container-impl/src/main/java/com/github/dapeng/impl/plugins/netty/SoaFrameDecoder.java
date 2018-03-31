@@ -12,6 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+import static com.github.dapeng.core.SoaProtocolConstants.ETX;
+import static com.github.dapeng.core.SoaProtocolConstants.STX;
+
 /**
  * A decoder that splits the received {@link ByteBuf}s by the number of bytes which takes the first 4 bytes.
  * For example, if you received the following four fragmented packets:
@@ -63,6 +66,23 @@ public class SoaFrameDecoder extends ByteToMessageDecoder {
             return;
         }
 
+        // length(4) stx(1) version(1) protocol(1) seqid(4) header(...) body(...) etx(1)
+        byte stx = in.readByte();
+        if (stx != STX) {
+            ctx.close();
+            LOGGER.error(getClass().getSimpleName() + "::decode:通讯包起始符异常, 连接关闭");
+            return;
+        }
+
+        in.skipBytes(length -2);
+        byte etx = in.readByte();
+        if (etx != ETX) {
+            ctx.close();
+            LOGGER.error(getClass().getSimpleName() + "::decode:通讯包结束符异常, 连接关闭");
+            return;
+        }
+
+        in.readerIndex(readerIndex);
 
         ByteBuf msg = in.slice(readerIndex, length + Integer.BYTES).retain();
 
