@@ -113,8 +113,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                                  BeanSerializer<REQ> requestSerializer,
                                  BeanSerializer<RESP> responseSerializer)
             throws SoaException {
-        ConnectionType connectionType = getConnectionType(requestSerializer);
-        SoaConnection connection = findConnection(service, version, method, connectionType);
+        SoaConnection connection = findConnection(service, version, method);
         if (connection == null) {
             throw new SoaException(SoaCode.NotFoundServer);
         }
@@ -130,9 +129,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                                               BeanSerializer<REQ> requestSerializer,
                                               BeanSerializer<RESP> responseSerializer) throws SoaException {
 
-        ConnectionType connectionType = getConnectionType(requestSerializer);
-        SoaConnection connection = findConnection(service, version,
-                method, connectionType);
+        SoaConnection connection = findConnection(service, version, method);
         if (connection == null) {
             throw new SoaException(SoaCode.NotFoundServer);
         }
@@ -142,8 +139,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     private SoaConnection findConnection(String service,
                                          String version,
-                                         String method,
-                                         ConnectionType connectionType) {
+                                         String method) {
         ZkServiceInfo zkInfo = zkInfos.get(service);
 
         if (zkInfo == null) {
@@ -187,7 +183,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             }
         }
 
-        return subPool.getConnection(connectionType);
+        return subPool.getConnection();
     }
 
 
@@ -371,11 +367,5 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         } else {
             return Optional.empty();
         }
-    }
-
-
-    private ConnectionType getConnectionType(BeanSerializer serializer) {
-        return (serializer instanceof JsonSerializer) ? ConnectionType.Json : ConnectionType.Common;
-
     }
 }
