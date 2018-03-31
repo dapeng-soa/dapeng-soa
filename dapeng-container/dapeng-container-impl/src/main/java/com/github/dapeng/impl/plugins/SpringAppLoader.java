@@ -4,8 +4,10 @@ import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.Plugin;
 import com.github.dapeng.core.*;
+import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.impl.container.DapengApplication;
+import org.apache.kafka.common.protocol.types.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,16 +129,21 @@ public class SpringAppLoader implements Plugin {
                     processor.iface.getClass());
 
             Service service = processor.ifaceClass.getAnnotation(Service.class);
-            assert (service != null); // TODO
+            // TODO
+            assert (service != null);
 
-            CustomConfig customConfig = processor.ifaceClass.getAnnotation(CustomConfig.class);
+            /**
+             * customConfig 封装到 ServiceInfo 中
+             */
+            Map<String, Optional<CustomConfigInfo>> methodsConfigMap = new HashMap<>();
 
-            CustomConfigInfo customConfigInfo = new CustomConfigInfo(2000);
+            processor.functions.forEach((key, function) -> {
+                methodsConfigMap.put(key, function.getCustomConfigInfo());
+            });
 
-            if (customConfig != null)customConfigInfo = new CustomConfigInfo(customConfig.timeout());
+            ServiceInfo serviceInfo = new ServiceInfo(service.name(), service.version(),
+                    "service", ifaceClass, processor.getConfigInfo(), methodsConfigMap);
 
-            ServiceInfo serviceInfo = new ServiceInfo(service.name(), service.version(),customConfigInfo,
-                        "service", ifaceClass);
             serviceInfoMap.put(processorKey, serviceInfo);
         }
 
