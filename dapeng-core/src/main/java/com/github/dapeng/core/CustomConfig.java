@@ -11,5 +11,8 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface CustomConfig {
-    long timeout() default 2000;
+    long timeout() default 1000L;
+
+    String loadBalance() default "random";
+
 }

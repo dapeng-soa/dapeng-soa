@@ -8,6 +8,7 @@ import com.github.dapeng.registry.LoadBalanceStrategy;
 import com.github.dapeng.registry.RuntimeInstance;
 import com.github.dapeng.registry.zookeeper.*;
 import com.github.dapeng.util.SoaSystemEnvProperties;
+import org.apache.zookeeper.Op;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -300,10 +301,12 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         if (application != null) {
             Optional<ServiceInfo> serviceInfo = application.getServiceInfo(serviceName, version);
             if (serviceInfo.isPresent()) {
+                // class config
                 Optional<CustomConfigInfo> classConfigInfo = serviceInfo.get().configInfo;
+                // method config map
                 Map<String, Optional<CustomConfigInfo>> methodsConfigMap = serviceInfo.get().methodsMap;
+                // detail method config
                 Optional<CustomConfigInfo> methodConfigInfo = methodsConfigMap.get(methodName);
-
                 //方法级别 配置
                 if (methodConfigInfo.isPresent()) {
                     timeout = Optional.of(methodConfigInfo.get().timeout);

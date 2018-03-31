@@ -33,7 +33,7 @@ public abstract class SoaFunctionDefinition<I, REQ, RESP> {
     public final String methodName;
     public final BeanSerializer<REQ> reqSerializer;
     public final BeanSerializer<RESP> respSerializer;
-    private Optional<CustomConfigInfo> customConfigInfo;
+    private Optional<CustomConfigInfo> customConfigInfo = Optional.empty();
 
     public Optional<CustomConfigInfo> getCustomConfigInfo() {
         return customConfigInfo;
