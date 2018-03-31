@@ -23,14 +23,16 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
     private final String host;
     private final int port;
+    private final SubPool parent;
     private Channel channel = null;
     private NettyClient client;
     private final static AtomicInteger seqidAtomic = new AtomicInteger(0);
 
-    public SoaBaseConnection(String host, int port) {
+    public SoaBaseConnection(String host, int port, SubPool parent) {
         this.client = NettyClientFactory.getNettyClient();
         this.host = host;
         this.port = port;
+        this.parent = parent;
         try {
             channel = connect(host, port);
         } catch (Exception e) {
@@ -312,6 +314,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
         } else if (!channel.isActive()) {
             try {
                 channel.close();
+//                parent.removeConnection();
             } finally {
                 channel = null;
                 connect(host, port);
