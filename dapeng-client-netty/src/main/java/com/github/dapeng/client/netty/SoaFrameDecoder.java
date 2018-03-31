@@ -1,10 +1,16 @@
 package com.github.dapeng.client.netty;
 
+import com.github.dapeng.util.DumpUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
+
+import static com.github.dapeng.core.SoaProtocolConstants.ETX;
+import static com.github.dapeng.core.SoaProtocolConstants.STX;
 
 /**
  * A decoder that splits the received {@link ByteBuf}s by the number of bytes which takes the first 4 bytes.
@@ -22,10 +28,14 @@ import java.util.List;
  * +-----+-----+-----+----+
  * </pre>
  *
+ * actually, here's the protocol for dapeng:
+ * length(4) stx(1) version(1) protocol(1) seqid(4) header(...) body(...) etx(1)
+ *
  * @author craneding
  * @date 16/1/12
  */
 public class SoaFrameDecoder extends ByteToMessageDecoder {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SoaFrameDecoder.class);
 
     public SoaFrameDecoder() {
         setSingleDecode(false);
@@ -49,6 +59,26 @@ public class SoaFrameDecoder extends ByteToMessageDecoder {
 
             return;
         }
+
+        // fixme not 02-..-03 discard this channel
+        // length(4) stx(1) version(1) protocol(1) seqid(4) header(...) body(...) etx(1)
+        in.skipBytes(Integer.BYTES);
+        byte stx = in.readByte();
+        if (stx != STX) {
+            ctx.close();
+            LOGGER.error(getClass().getSimpleName() + "::decode:通讯包开始符异常, 连接关闭");
+            return;
+        }
+
+        in.skipBytes(length -1);
+        byte etx = in.readByte();
+        if (etx != ETX) {
+            ctx.close();
+            LOGGER.error(getClass().getSimpleName() + "::decode:通讯包结束符异常, 连接关闭");
+            return;
+        }
+
+        in.readerIndex(readerIndex);
 
         ByteBuf msg = in.slice(readerIndex, length + Integer.BYTES).retain();
 

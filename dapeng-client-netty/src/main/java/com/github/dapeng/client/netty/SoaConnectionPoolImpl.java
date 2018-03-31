@@ -99,6 +99,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
             if (zkInfo.getStatus() == ZkServiceInfo.Status.ACTIVE) {
                 zkInfos.put(serviceName, zkInfo);
+            } else {
+                //todo ??
             }
             //fixme should remove the debug log
             logger.info("registerClientInfo-1:[" + serviceName + ", version:"
