@@ -67,7 +67,7 @@ fi
 
 JVM_OPTS="-Xms256m -Xmx256m -Xloggc:$logdir/gc.log -XX:+PrintGCDateStamps -XX:+PrintGCDetails -XX:+PrintGC -XX:+HeapDumpOnOutOfMemoryError"
 DEBUG_OPTS=""
-SOA_BASE="-Dsoa.base=$workdir/../ -Dsoa.run.mode=native -Dsoa.transactional.enable=true -Dsoa.monitor.enable=true -Dsoa.core.pool.size=100"
+SOA_BASE="-Dsoa.base=$workdir/../ -Dsoa.run.mode=native -Dsoa.transactional.enable=false -Dsoa.monitor.enable=true -Dsoa.core.pool.size=100"
 USER_OPTS=""
 
 nohup java $JVM_OPTS $SOA_BASE $DEBUG_OPTS $USER_OPTS -cp ./dapeng-bootstrap.jar com.github.dapeng.bootstrap.Bootstrap >> $logdir/console.log 2>&1 &
