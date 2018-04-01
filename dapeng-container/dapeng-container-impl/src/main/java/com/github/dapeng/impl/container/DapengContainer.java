@@ -123,38 +123,36 @@ public class DapengContainer implements Container {
         this.applicationMap.putAll(applicationMap);
     }
 
-    private static class ExectorFactory {
-        private static Executor exector = initExecutor();
+    private Executor exector = initExecutor();
 
-        static Executor initExecutor() {
-            LOGGER.info(DapengContainer.class.getName()
-                    + "业务线程池初始化, 是否使用线程池[coreSize:" + SoaSystemEnvProperties.SOA_CORE_POOL_SIZE + "]:"
-                    + SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL);
+    private Executor initExecutor() {
+        LOGGER.info(DapengContainer.class.getName()
+                + "业务线程池初始化, 是否使用线程池[coreSize:" + SoaSystemEnvProperties.SOA_CORE_POOL_SIZE + "]:"
+                + SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL);
 
-            if (!SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL) {
-                return command -> command.run();
-            } else {
-                ThreadPoolExecutor bizExector = (ThreadPoolExecutor)Executors.newFixedThreadPool(SoaSystemEnvProperties.SOA_CORE_POOL_SIZE,
-                        new ThreadFactoryBuilder()
-                                .setDaemon(true)
-                                .setNameFormat("dapeng-container-biz-pool-%d")
-                                .build());
-                if ("native".equals(RUN_MODE)) {
-                    //容器模式下,预热所有的业务线程
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug(DapengContainer.class.getName() + " 预热业务线程池[" + SoaSystemEnvProperties.SOA_CORE_POOL_SIZE + "]");
-                    }
-                    bizExector.prestartAllCoreThreads();
+        if (!SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL) {
+            return command -> command.run();
+        } else {
+            ThreadPoolExecutor bizExector = (ThreadPoolExecutor) Executors.newFixedThreadPool(SoaSystemEnvProperties.SOA_CORE_POOL_SIZE,
+                    new ThreadFactoryBuilder()
+                            .setDaemon(true)
+                            .setNameFormat("dapeng-container-biz-pool-%d")
+                            .build());
+            if ("native".equals(RUN_MODE)) {
+                //容器模式下,预热所有的业务线程
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(DapengContainer.class.getName() + " 预热业务线程池[" + SoaSystemEnvProperties.SOA_CORE_POOL_SIZE + "]");
                 }
-
-                return bizExector;
+                bizExector.prestartAllCoreThreads();
             }
+
+            return bizExector;
         }
     }
 
     @Override
     public Executor getDispatcher() {
-        return ExectorFactory.exector;
+        return exector;
     }
 
 
