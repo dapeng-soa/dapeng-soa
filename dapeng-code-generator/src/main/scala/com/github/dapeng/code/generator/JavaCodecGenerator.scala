@@ -426,7 +426,7 @@ class JavaCodecGenerator extends CodeGenerator {
         import java.util.Optional;
         import java.util.concurrent.CompletableFuture;
         import java.util.concurrent.Future;
-        import import {service.namespace.substring(0, service.namespace.lastIndexOf("."))}.{service.name}SuperCodec.*;
+        import {service.namespace.substring(0, service.namespace.lastIndexOf("."))}.{service.name}SuperCodec.*;
 
         import {service.namespace}.{service.name}Async;
         /**

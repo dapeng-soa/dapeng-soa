@@ -6,6 +6,7 @@ package com.github.dapeng.basic.api.counter;
       import java.util.concurrent.Future;
       import java.util.ServiceLoader;
       import com.github.dapeng.basic.api.counter.CounterServiceAsyncCodec.*;
+      import com.github.dapeng.basic.api.counter.CounterServiceSuperCodec.*;
       import com.github.dapeng.basic.api.counter.service.CounterServiceAsync;
 
       /**
@@ -26,7 +27,7 @@ package com.github.dapeng.basic.api.counter;
         this.serviceName = "com.github.dapeng.basic.api.counter.service.CounterService";
         this.version = "1.0.0";
 
-        ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class, getClass().getClassLoader());
+        ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class,getClass().getClassLoader());
         this.pool = factories.iterator().next().getPool();
         this.clientInfo = this.pool.registerClientInfo(serviceName,version);
       }
