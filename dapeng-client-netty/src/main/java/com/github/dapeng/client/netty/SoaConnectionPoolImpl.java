@@ -1,5 +1,6 @@
 package com.github.dapeng.client.netty;
 
+import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.*;
 import com.github.dapeng.json.JsonSerializer;
 import com.github.dapeng.registry.ConfigKey;
@@ -7,6 +8,7 @@ import com.github.dapeng.registry.LoadBalanceStrategy;
 import com.github.dapeng.registry.RuntimeInstance;
 import com.github.dapeng.registry.zookeeper.*;
 import com.github.dapeng.util.SoaSystemEnvProperties;
+import org.apache.zookeeper.Op;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -295,7 +297,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         return context.getTimeout() == null ? Optional.empty() : context.getTimeout();
     }
 
-    //TODO
 
     /**
      * 获取服务Idl timeout
@@ -305,36 +306,26 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private Optional<Long> getIdlTimeout(String serviceName, String version, String methodName) {
         Optional<Long> timeout = Optional.empty();
 
-        //todo
-//        Application application = ContainerFactory.getContainer().getApplication(new ProcessorKey(serviceName,version));
-//
-//        if (application != null) {
-//            Optional<ServiceInfo> serviceInfo = application.getServiceInfoCached(serviceName,version);
-//            if (serviceInfo.isPresent()) {
-//                Class<?> service = serviceInfo.get().ifaceClass;
-//                List<Method> methods =  Arrays.stream(service.getMethods()).filter(method ->
-//                        methodName.equals(method.getName())).collect(Collectors.toList());
-//                if (! methods.isEmpty()) {
-//                    //TODO: 自定义注解类 (Invocation(timeout=xxx))
-//                    Method method = methods.get(0);
-//                    try {
-//                        Class InvocationClass = service.getClassLoader().loadClass("com.github.dapeng.core.Invocation");
-//
-//                        if (method.isAnnotationPresent(InvocationClass)) {
-//                            Annotation annotation = method.getAnnotation(InvocationClass);
-//                            Long annotationTimeout = (Long) annotation.getClass().getDeclaredMethod("timeout").invoke(annotation);
-//                            timeout = Optional.of(annotationTimeout);
-//                        }
-//                    } catch (Exception e) {
-//                        logger.error(" Failed to get method: {}:{}:{} invocation Annotation. ", serviceName,version,method);
-//                    }
-//
-//                }
-//            }
-//        }
-
+        Application application = ContainerFactory.getContainer().getApplication(new ProcessorKey(serviceName, version));
+        if (application != null) {
+            Optional<ServiceInfo> serviceInfo = application.getServiceInfo(serviceName, version);
+            if (serviceInfo.isPresent()) {
+                // class config
+                Optional<CustomConfigInfo> classConfigInfo = serviceInfo.get().configInfo;
+                // method config map
+                Map<String, Optional<CustomConfigInfo>> methodsConfigMap = serviceInfo.get().methodsMap;
+                // detail method config
+                Optional<CustomConfigInfo> methodConfigInfo = methodsConfigMap.get(methodName);
+                //方法级别 配置
+                if (methodConfigInfo.isPresent()) {
+                    timeout = Optional.of(methodConfigInfo.get().timeout);
+                    //类级别配置
+                } else if (classConfigInfo.isPresent()) {
+                    timeout = Optional.of(classConfigInfo.get().timeout);
+                }
+            }
+        }
         return timeout;
-
     }
 
     /**
