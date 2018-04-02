@@ -75,7 +75,9 @@ public class NettyPlugin implements AppListener, Plugin {
                             .childHandler(new ChannelInitializer<SocketChannel>() {
                                 @Override
                                 protected void initChannel(SocketChannel ch) throws Exception {
-                                    ch.pipeline().addLast(new SoaFrameDecoder()); //粘包和断包处理
+                                    ch.pipeline().addLast(//超时设置
+                                            new IdleStateHandler(20, 0, 0),
+                                            new SoaFrameDecoder()); //粘包和断包处理
 
                                     if (null != finalFlowCounter) ch.pipeline().addLast(finalFlowCounter);
 
@@ -84,8 +86,6 @@ public class NettyPlugin implements AppListener, Plugin {
                                     if (MONITOR_ENABLE) ch.pipeline().addLast(new SoaInvokeCounter());
 
                                     ch.pipeline().addLast(
-                                            //超时设置
-                                            new IdleStateHandler(15, 0, 0),
                                             soaIdleHandler,
                                             soaServerHandler
                                     );

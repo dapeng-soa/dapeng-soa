@@ -65,6 +65,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
                 // TODO filter
                 checkChannel();
+
                 ByteBuf responseBuf = client.send(channel, seqid, requestBuf, timeout); //发送请求，返回结果
 
                 Result<RESP> result = processResponse(responseBuf, responseSerializer);

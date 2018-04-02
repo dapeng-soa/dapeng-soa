@@ -29,8 +29,8 @@ public class NettyClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NettyClient.class);
 
-    private final int readerIdleTimeSeconds = 15;
-    private final int writerIdleTimeSeconds = 10;
+    private final int readerIdleTimeSeconds = 45;
+    private final int writerIdleTimeSeconds = 15;
     private final int allIdleTimeSeconds = 0;
 
     private Bootstrap bootstrap = null;
