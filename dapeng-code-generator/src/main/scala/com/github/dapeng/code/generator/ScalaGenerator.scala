@@ -512,8 +512,6 @@ class ScalaGenerator extends CodeGenerator {
         {notice}
         * {service.doc}
         **/
-        @Service(name ="{oriNamespace+"."+service.name}" , version = "{service.meta.version}")
-        @Processor(className = "{service.namespace.substring(0, service.namespace.lastIndexOf("service"))}{service.name}Codec$Processor")
         {
         if (service.annotations != null) {
           import collection.JavaConverters._
@@ -528,6 +526,8 @@ class ScalaGenerator extends CodeGenerator {
           <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
         }
         }
+        @Service(name ="{oriNamespace+"."+service.name}" , version = "{service.meta.version}")
+        @Processor(className = "{service.namespace.substring(0, service.namespace.lastIndexOf("service"))}{service.name}Codec$Processor")
         trait {service.name} <block>
         {
         toMethodArrayBuffer(service.methods).map { (method: Method) =>
@@ -581,8 +581,6 @@ class ScalaGenerator extends CodeGenerator {
       {notice}
       * {service.doc}
       **/
-      @Service(name ="{oriNamespace+"."+service.name}" , version = "{service.meta.version}")
-      @Processor(className = "{service.namespace.substring(0, service.namespace.lastIndexOf("service"))}{service.name}AsyncCodec$Processor")
       {
       if (service.annotations != null) {
         import collection.JavaConverters._
@@ -596,6 +594,8 @@ class ScalaGenerator extends CodeGenerator {
         <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
       }
       }
+      @Service(name ="{oriNamespace+"."+service.name}" , version = "{service.meta.version}")
+      @Processor(className = "{service.namespace.substring(0, service.namespace.lastIndexOf("service"))}{service.name}AsyncCodec$Processor")
       trait {service.name}Async extends com.github.dapeng.core.definition.AsyncService <block>
       {
       toMethodArrayBuffer(service.methods).map { (method: Method) =>
