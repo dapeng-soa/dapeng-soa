@@ -497,22 +497,22 @@ class JavaGenerator extends CodeGenerator {
       {notice}
       * {service.doc}
       **/
+      {
+      if (service.annotations != null) {
+        import collection.JavaConverters._
+
+        val methods = classOf[CustomConfig].getDeclaredMethods.map(i => "core." + i.getName -> i.getReturnType.getName).toMap
+
+        val annotationValue = service.annotations.asScala.map(i => {
+          if (methods.contains(i.key)) {
+            i.key.substring(i.key.lastIndexOf(".") + 1) + "=" + getInstanceTypeValue(i.value, methods.get(i.key).get)
+          } else {""}
+        }).mkString("(",",",")")
+        <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
+      }
+      }
       @Service(name="{s"${service.namespace}.${service.name}"}",version = "{service.meta.version}")
       @Processor(className = "{service.namespace.substring(0, service.namespace.lastIndexOf("service"))}{service.name}Codec$Processor")
-      {
-        if (service.annotations != null) {
-          import collection.JavaConverters._
-
-          val methods = classOf[CustomConfig].getDeclaredMethods.map(i => "core." + i.getName -> i.getReturnType.getName).toMap
-
-          val annotationValue = service.annotations.asScala.map(i => {
-            if (methods.contains(i.key)) {
-                i.key.substring(i.key.lastIndexOf(".") + 1) + "=" + getInstanceTypeValue(i.value, methods.get(i.key).get)
-            } else {""}
-          }).mkString("(",",",")")
-          <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
-        }
-      }
       public interface {service.name} <block>
       {
       toMethodArrayBuffer(service.methods).map { (method: Method) =>
@@ -564,8 +564,6 @@ class JavaGenerator extends CodeGenerator {
         {notice}
         * {service.doc}
         **/
-        @Service(name="{s"${service.namespace}.${service.name}"}",version = "{service.meta.version}")
-        @Processor(className = "{service.namespace.substring(0, service.namespace.lastIndexOf("service"))}{service.name}AsyncCodec$Processor")
         {
         if (service.annotations != null) {
           import collection.JavaConverters._
@@ -580,6 +578,8 @@ class JavaGenerator extends CodeGenerator {
           <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
         }
         }
+        @Service(name="{s"${service.namespace}.${service.name}"}",version = "{service.meta.version}")
+        @Processor(className = "{service.namespace.substring(0, service.namespace.lastIndexOf("service"))}{service.name}AsyncCodec$Processor")
         public interface {service.name}Async  extends com.github.dapeng.core.definition.AsyncService <block>
         {
         toMethodArrayBuffer(service.methods).map { (method: Method) =>
