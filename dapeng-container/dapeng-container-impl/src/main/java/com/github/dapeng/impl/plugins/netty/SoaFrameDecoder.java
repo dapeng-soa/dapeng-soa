@@ -70,7 +70,7 @@ public class SoaFrameDecoder extends ByteToMessageDecoder {
         byte stx = in.readByte();
         if (stx != STX) {
             ctx.close();
-            LOGGER.error(getClass().getSimpleName() + "::decode:通讯包起始符异常, 连接关闭");
+            LOGGER.error(getClass().getSimpleName() + "::decode:通讯包起始符异常, 关闭连接:" + ctx.channel());
             return;
         }
 
@@ -78,7 +78,7 @@ public class SoaFrameDecoder extends ByteToMessageDecoder {
         byte etx = in.readByte();
         if (etx != ETX) {
             ctx.close();
-            LOGGER.error(getClass().getSimpleName() + "::decode:通讯包结束符异常, 连接关闭");
+            LOGGER.error(getClass().getSimpleName() + "::decode:通讯包结束符异常, 关闭连接:" + ctx.channel());
             return;
         }
 
