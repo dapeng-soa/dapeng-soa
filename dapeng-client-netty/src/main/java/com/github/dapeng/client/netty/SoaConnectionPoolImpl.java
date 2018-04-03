@@ -306,25 +306,25 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private Optional<Long> getIdlTimeout(String serviceName, String version, String methodName) {
         Optional<Long> timeout = Optional.empty();
 
-        Application application = ContainerFactory.getContainer().getApplication(new ProcessorKey(serviceName, version));
-        if (application != null) {
-            Optional<ServiceInfo> serviceInfo = application.getServiceInfo(serviceName, version);
-            if (serviceInfo.isPresent()) {
-                // class config
-                Optional<CustomConfigInfo> classConfigInfo = serviceInfo.get().configInfo;
-                // method config map
-                Map<String, Optional<CustomConfigInfo>> methodsConfigMap = serviceInfo.get().methodsMap;
-                // detail method config
-                Optional<CustomConfigInfo> methodConfigInfo = methodsConfigMap.get(methodName);
-                //方法级别 配置
-                if (methodConfigInfo.isPresent()) {
-                    timeout = Optional.of(methodConfigInfo.get().timeout);
-                    //类级别配置
-                } else if (classConfigInfo.isPresent()) {
-                    timeout = Optional.of(classConfigInfo.get().timeout);
-                }
-            }
-        }
+//        Application application = ContainerFactory.getContainer().getApplication(new ProcessorKey(serviceName, version));
+//        if (application != null) {
+//            Optional<ServiceInfo> serviceInfo = application.getServiceInfo(serviceName, version);
+//            if (serviceInfo.isPresent()) {
+//                // class config
+//                Optional<CustomConfigInfo> classConfigInfo = serviceInfo.get().configInfo;
+//                // method config map
+//                Map<String, Optional<CustomConfigInfo>> methodsConfigMap = serviceInfo.get().methodsMap;
+//                // detail method config
+//                Optional<CustomConfigInfo> methodConfigInfo = methodsConfigMap.get(methodName);
+//                //方法级别 配置
+//                if (methodConfigInfo.isPresent()) {
+//                    timeout = Optional.of(methodConfigInfo.get().timeout);
+//                    //类级别配置
+//                } else if (classConfigInfo.isPresent()) {
+//                    timeout = Optional.of(classConfigInfo.get().timeout);
+//                }
+//            }
+//        }
         return timeout;
     }
 
