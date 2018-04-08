@@ -111,9 +111,9 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     }
 
     @Override
-    public String getNettyChannelStatus() {
+    public String getNettyConnections() {
         StringBuilder sb = new StringBuilder();
-        sb.append("\nDapeng Netty Connections [ Active / Total /Inactive ] ==> [ ")
+        sb.append("\nDapeng Netty Connections [ Active / Total / Inactive ] ==> [ ")
                 .append(NettyConnectCounter.getActiveChannel())
                 .append(" / ")
                 .append(NettyConnectCounter.getTotalChannel())
