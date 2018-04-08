@@ -1,6 +1,6 @@
 package com.github.dapeng.registry.zookeeper;
 
-import com.github.dapeng.registry.LoadBalanceStrategy;
+import com.github.dapeng.core.enums.LoadBalanceStrategy;
 
 import java.util.HashMap;
 import java.util.Map;

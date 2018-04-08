@@ -5,7 +5,9 @@ import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TCompactProtocol;
 
 /**
- * Created by lihuimin on 2017/10/27.
+ *
+ * @author lihuimin
+ * @date 2017/10/27
  */
 public class BeanSerializerUtil {
 

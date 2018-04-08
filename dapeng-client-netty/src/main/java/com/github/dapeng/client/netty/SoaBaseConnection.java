@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -103,10 +104,11 @@ public abstract class SoaBaseConnection implements SoaConnection {
         Result<RESP> result = (Result<RESP>) filterContext.getAttribute("result");
         assert (result != null);
 
-        if (result.success != null)
+        if (result.success != null) {
             return result.success;
-        else
+        } else {
             throw result.exception;
+        }
     }
 
     @Override
@@ -224,22 +226,6 @@ public abstract class SoaBaseConnection implements SoaConnection {
         return soaException;
     }
 
-    protected SoaHeader buildHeader(String service, String version, String method) {
-        SoaHeader header = new SoaHeader();
-        header.setServiceName(service);
-        header.setVersionName(version);
-        header.setMethodName(method);
-
-        InvocationContext invocationContext = InvocationContextImpl.Factory.getCurrentInstance();
-        header.setCallerFrom(invocationContext.getCallerFrom());
-        header.setCallerIp(invocationContext.getCallerIp());
-        header.setCustomerId(invocationContext.getCustomerId());
-        header.setCustomerName(invocationContext.getCustomerName());
-        header.setOperatorId(invocationContext.getOperatorId());
-
-        return header;
-    }
-
     protected abstract <REQ> ByteBuf buildRequestBuf(String service, String version, String method, int seqid, REQ request, BeanSerializer<REQ> requestSerializer) throws SoaException;
 
     /**
@@ -299,8 +285,9 @@ public abstract class SoaBaseConnection implements SoaConnection {
      * 创建连接
      */
     private synchronized Channel connect(String host, int port) throws SoaException {
-        if (channel != null && channel.isActive())
+        if (channel != null && channel.isActive()) {
             return channel;
+        }
 
         try {
             return channel = this.client.connect(host, port);

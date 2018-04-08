@@ -1,14 +1,11 @@
 package com.github.dapeng.client.netty;
 
-import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.*;
-import com.github.dapeng.json.JsonSerializer;
+import com.github.dapeng.core.enums.LoadBalanceStrategy;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.ConfigKey;
-import com.github.dapeng.registry.LoadBalanceStrategy;
 import com.github.dapeng.registry.RuntimeInstance;
 import com.github.dapeng.registry.zookeeper.*;
-import com.github.dapeng.util.SoaSystemEnvProperties;
-import org.apache.zookeeper.Op;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -268,7 +265,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         long maxTimeout = SoaSystemEnvProperties.SOA_MAX_TIMEOUT;
         long defaultTimeout = SoaSystemEnvProperties.SOA_DEFAULT_TIMEOUT;
 
-        Optional<Long> invocationTimeout = getInvocationTimeout();
+        Optional<Integer> invocationTimeout = getInvocationTimeout();
         Optional<Long> envTimeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT.longValue() == 0 ?
                 Optional.empty() : Optional.of(SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT.longValue());
 
@@ -277,7 +274,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         Optional<Long> timeout;
         if (invocationTimeout.isPresent()) {
-            timeout = invocationTimeout;
+            timeout = invocationTimeout.map(Long::valueOf);
         } else if (envTimeout.isPresent()) {
             timeout = envTimeout;
         } else if (idlTimeout.isPresent()) {
@@ -292,9 +289,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     }
 
-    private Optional<Long> getInvocationTimeout() {
+    private Optional<Integer> getInvocationTimeout() {
         InvocationContext context = InvocationContextImpl.Factory.getCurrentInstance();
-        return context.getTimeout() == null ? Optional.empty() : context.getTimeout();
+        return context.timeout();
     }
 
 

@@ -6,6 +6,7 @@ import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.*;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.filters.HeadFilter;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.registry.ConfigKey;
@@ -13,7 +14,6 @@ import com.github.dapeng.registry.RegistryAgentProxy;
 import com.github.dapeng.registry.zookeeper.ZkConfigInfo;
 import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.ExceptionUtil;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -25,7 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import static com.github.dapeng.util.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
+import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
 
 /**
  * @author lihuimin
@@ -45,7 +45,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext channelHandlerContext, Object msg) {
         final long invokeTime = System.currentTimeMillis();
-        final TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
+        final TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
 
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(getClass().getSimpleName() + "::read");
@@ -65,7 +65,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             }
             dispatcher.execute(() -> {
                 try {
-                    TransactionContext.Factory.setCurrentInstance(transactionContext);
+                    TransactionContext.Factory.currentInstance(transactionContext);
                     processRequest(channelHandlerContext, processor, msg, transactionContext, invokeTime);
                 } catch (Throwable e) {
                     writeErrorMessage(channelHandlerContext,
@@ -157,7 +157,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                                     SoaException soaException = ExceptionUtil.convertToSoaException(ex);
                                     attachErrorInfo(transactionContext, soaException);
                                 } else {
-                                    TransactionContext.Factory.setCurrentInstance(transactionContext);
+                                    TransactionContext.Factory.currentInstance(transactionContext);
                                     processResult(channelHandlerContext, soaFunction, transactionContext, realResult, filterContext);
                                 }
                                 onExit(filterContext, getPrevChain(filterContext));
@@ -211,8 +211,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                                Object result,
                                FilterContext filterContext) {
         SoaHeader soaHeader = transactionContext.getHeader();
-        soaHeader.setRespCode(Optional.of(SOA_NORMAL_RESP_CODE));
-        soaHeader.setRespMessage(Optional.of("ok"));
+        soaHeader.setRespCode(SOA_NORMAL_RESP_CODE);
+        soaHeader.setRespMessage("ok");
         try {
             filterContext.setAttribute("reqSerializer", soaFunction.reqSerializer);
             filterContext.setAttribute("respSerializer", soaFunction.respSerializer);
@@ -239,7 +239,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         soaHeader.setRespCode(Optional.ofNullable(e.getCode()));
         soaHeader.setRespMessage(Optional.ofNullable(e.getMessage()));
 
-        transactionContext.setSoaException(e);
+        transactionContext.soaException(e);
     }
 
     /**
@@ -292,7 +292,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             Long globalTimeOut = configInfo.timeConfig.globalConfig;
 
             if (LOGGER.isDebugEnabled())
-                LOGGER.debug(getClass().getSimpleName() + "::getTimeout request:serviceName:{},methodName:{}," +
+                LOGGER.debug(getClass().getSimpleName() + "::timeout request:serviceName:{},methodName:{}," +
                                 " methodTimeOut:{},serviceTimeOut:{},globalTimeOut:{}",
                         soaHeader.getServiceName(), soaHeader.getMethodName(), methodTimeOut, serviceTimeOut, globalTimeOut);
 

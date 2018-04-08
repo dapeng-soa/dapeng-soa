@@ -1,6 +1,5 @@
 package com.github.dapeng.client.netty;
 
-import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.SoaConnectionPool;
 import com.github.dapeng.core.SoaConnectionPoolFactory;
 import com.github.dapeng.core.SoaException;
@@ -17,7 +16,9 @@ import java.util.stream.Collectors;
 
 
 /**
- * Created by tangliu on 2016/4/13.
+ *
+ * @author tangliu
+ * @date 2016/4/13
  */
 public class JsonPost {
 
@@ -27,8 +28,10 @@ public class JsonPost {
 
     private SoaConnectionPool pool;
     private final SoaConnectionPool.ClientInfo clientInfo;
+    private final String methodName;
 
-    public JsonPost(String serviceName, String version) {
+    public JsonPost(final String serviceName, final String version, final String methodName) {
+        this.methodName = methodName;
         ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class, getClass().getClassLoader());
         for (SoaConnectionPoolFactory factory : factories) {
             this.pool = factory.getPool();
@@ -37,34 +40,28 @@ public class JsonPost {
         this.clientInfo = this.pool.registerClientInfo(serviceName, version);
     }
 
-    public JsonPost(String serviceName, String version, boolean doNotThrowError) {
-        this(serviceName, version);
+    public JsonPost(String serviceName, String version, final String methodName, boolean doNotThrowError) {
+        this(serviceName, version, methodName);
         this.doNotThrowError = doNotThrowError;
     }
 
     /**
      * 调用远程服务
      *
-     * @param invocationContext
      * @param jsonParameter
      * @param service
      * @return
      * @throws Exception
      */
-    public String callServiceMethod(InvocationContext invocationContext,
-                                    String jsonParameter, Service service) throws Exception {
-
-        if (null == jsonParameter || "".equals(jsonParameter.trim())) {
-            jsonParameter = "{}" ;
-        }
-
+    public String callServiceMethod(final String jsonParameter,
+                                    final Service service) throws Exception {
         List<Method> targetMethods = service.getMethods().stream().filter(element ->
-                element.name.equals(invocationContext.getMethodName()))
+                element.name.equals(methodName))
                 .collect(Collectors.toList());
 
         if (targetMethods.isEmpty()) {
-            return "method:" + invocationContext.getMethodName() + " for service:"
-                    + invocationContext.getServiceName() + " not found" ;
+            return "method:" + methodName + " for service:"
+                    + clientInfo.serviceName + " not found" ;
         }
 
         Method method = targetMethods.get(0);
@@ -77,8 +74,8 @@ public class JsonPost {
 
         LOGGER.info("soa-request: " + jsonParameter);
 
-        String jsonResponse = post(invocationContext.getServiceName(), invocationContext.getVersionName(),
-                method.name, jsonParameter, jsonEncoder, jsonDecoder);
+        String jsonResponse = post(clientInfo.serviceName, clientInfo.version,
+                methodName, jsonParameter, jsonEncoder, jsonDecoder);
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("soa-response: " + jsonResponse + " cost:" + (System.currentTimeMillis() - beginTime) + "ms");
         } else {

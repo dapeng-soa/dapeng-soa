@@ -1,5 +1,6 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.registry.*;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.ServiceInfo;

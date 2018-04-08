@@ -77,7 +77,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
+        TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
         Integer seqId = transactionContext.getSeqid();
         invokeStartPair.put(seqId, System.currentTimeMillis());
 
@@ -91,7 +91,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         Long invokeEndTime = System.currentTimeMillis();
-        // 异步返回不能从通过 TransactionContext.Factory.getCurrentInstance() 去拿context
+        // 异步返回不能从通过 TransactionContext.Factory.currentInstance() 去拿context
         SoaResponseWrapper wrapper = (SoaResponseWrapper) msg;
         TransactionContext context = wrapper.transactionContext;
         SoaHeader soaHeader = context.getHeader();

@@ -10,7 +10,6 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.util.Attribute;
-import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,7 +100,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                 soaHeader.setRespCode(Optional.ofNullable(soaException.getCode()));
                 soaHeader.setRespMessage(Optional.ofNullable(soaException.getMessage()));
 
-                transactionContext.setSoaException(soaException);
+                transactionContext.soaException(soaException);
                 writeErrorResponse(transactionContext, application, out);
             }
         }
@@ -130,11 +129,11 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                                     Application application,
                                     ByteBuf out) {
         SoaHeader soaHeader = transactionContext.getHeader();
-        SoaException soaException = transactionContext.getSoaException();
+        SoaException soaException = transactionContext.soaException();
         if (soaException == null) {
             soaException = new SoaException(soaHeader.getRespCode().get(),
                     soaHeader.getRespMessage().orElse(SoaCode.UnKnown.getMsg()));
-            transactionContext.setSoaException(soaException);
+            transactionContext.soaException(soaException);
         }
 
         //Reuse the byteBuf

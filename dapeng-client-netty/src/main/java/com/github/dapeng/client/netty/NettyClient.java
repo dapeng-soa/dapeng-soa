@@ -2,7 +2,7 @@ package com.github.dapeng.client.netty;
 
 import com.github.dapeng.core.SoaCode;
 import com.github.dapeng.core.SoaException;
-import com.github.dapeng.util.SoaSystemEnvProperties;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.AbstractByteBufAllocator;
 import io.netty.buffer.ByteBuf;
