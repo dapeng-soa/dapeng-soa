@@ -175,19 +175,19 @@ public class RouteExecutor {
     public static Object checkFieldMatcher(InvocationContext ctx, Matcher matcher) {
         Id id = matcher.getId();
         if ("operatorId".equals(id.getName())) {
-            return ctx.getOperatorId().orElse(null);
-        } else if ("callerFrom".equals(id.getName())) {
-            return ctx.getCallerFrom().orElse(null);
+            return ctx.operatorId().orElse(null);
+        } else if ("callerMid".equals(id.getName())) {
+            return ctx.callerMid().orElse(null);
         } else if ("ip".equals(id.getName())) {
-            return ctx.getCallerIp().orElse(null);
-        } else if ("customerId".equals(id.getName())) {
-            return ctx.getCustomerId().orElse(null);
+            return ctx.userIp();
+        } else if ("userId".equals(id.getName())) {
+            return ctx.userId().orElse(null);
         } else if ("service".equals(id.getName())) {
-            return ctx.getServiceName();
+            return ctx.serviceName();
         } else if ("method".equals(id.getName())) {
-            return ctx.getMethodName();
+            return ctx.methodName();
         } else if ("version".equals(id.getName())) {
-            return ctx.getVersionName();
+            return ctx.versionName();
         } else {
             throw new AssertionError("not support Field: " + id.getName());
         }

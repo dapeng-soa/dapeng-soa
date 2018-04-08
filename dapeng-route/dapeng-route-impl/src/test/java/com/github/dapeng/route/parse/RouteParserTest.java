@@ -24,7 +24,7 @@ public class RouteParserTest {
         String source = "      operatorId match ~%'1024n+0..9' => ~ip'1.2.3.4'\n" +
                 "      operatorId match n'10|11|12|13' => ~ip'1.2.3.4'\n" +
                 "      operatorId match ~n'10..20' => ~ip'1.2.3.4'\n" +
-                "      callerFrom match s'app|oss' => ~ip'1.2.3/24'\n" +
+                "      callerMid match s'app|oss' => ~ip'1.2.3/24'\n" +
                 "      ip match ~ip'1.2.3.0/24|192.168.3.39' => ~ip'1.2.3.4|192.168.1.39/32'\n";
 
 //        String str = "operatorId match %'1024n+0..9' and ip match ip'192.168.3/24' => ~ip'1.2.3.4|192.168.1.1/24'";
@@ -41,9 +41,9 @@ public class RouteParserTest {
 
         InvocationContext ctx = new InvocationContextImpl();
         SoaHeader soaHeader = new SoaHeader();
-        soaHeader.setOperatorId(Optional.of(1024));
-        soaHeader.setCallerIp(Optional.of("192.168.3.39"));
-        soaHeader.setCallerFrom(Optional.of("app"));
+        soaHeader.setOperatorId(Optional.of(1024L));
+        soaHeader.setUserIp(Optional.of("192.168.3.39"));
+        soaHeader.setCallerMid(Optional.of("app"));
 
         soaHeader.setServiceName("com.github.dapeng.soa.user.service.UserService");
         soaHeader.setVersionName("1.0.0");

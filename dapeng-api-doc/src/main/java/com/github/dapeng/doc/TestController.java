@@ -4,10 +4,10 @@ import com.github.dapeng.client.netty.JsonPost;
 import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.SoaException;
-import com.github.dapeng.core.enums.CodecProtocol;
+import com.github.dapeng.core.helper.DapengUtil;
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.doc.cache.ServiceCache;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +19,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -55,18 +53,17 @@ public class TestController {
         Service service = serviceCache.getService(serviceName, versionName);
 
         InvocationContext invocationCtx = InvocationContextImpl.Factory.createNewInstance();
-        invocationCtx.setServiceName(serviceName);
-        invocationCtx.setVersionName(versionName);
-        invocationCtx.setMethodName(methodName);
-        invocationCtx.setCallerFrom(Optional.of("JsonCaller"));
-        invocationCtx.setCodecProtocol(CodecProtocol.CompressedBinary);
-
+        invocationCtx.sessionTid(DapengUtil.generateTid());
         fillInvocationCtx(invocationCtx, req);
 
-        JsonPost jsonPost = new JsonPost(serviceName, versionName, true);
+        JsonPost jsonPost = new JsonPost(serviceName, versionName, methodName, true);
+
+        if (null == jsonParameter || "".equals(jsonParameter.trim())) {
+            jsonParameter = "{}";
+        }
 
         try {
-            return jsonPost.callServiceMethod(invocationCtx, jsonParameter, service);
+            return jsonPost.callServiceMethod(jsonParameter, service);
         } catch (SoaException e) {
 
             LOGGER.error(e.getMsg());
@@ -82,33 +79,24 @@ public class TestController {
     }
 
     private void fillInvocationCtx(InvocationContext invocationCtx, HttpServletRequest req) {
+        invocationCtx.callerMid(req.getRequestURI());
+        invocationCtx.userIp(req.getRemoteAddr());
+        invocationCtx.callerIp(IPUtils.getCallerIp());
         Set<String> parameters = req.getParameterMap().keySet();
         if (parameters.contains("calleeIp")) {
-            invocationCtx.setCalleeIp(Optional.of(req.getParameter("calleeIp")));
+            invocationCtx.calleeIp(req.getParameter("calleeIp"));
         }
 
         if (parameters.contains("calleePort")) {
-            invocationCtx.setCalleePort(Optional.of(Integer.valueOf(req.getParameter("calleePort"))));
-        }
-
-        if (parameters.contains("callerIp")) {
-            invocationCtx.setCallerIp(Optional.of(req.getParameter("callerIp")));
-        }
-
-        if (parameters.contains("callerFrom")) {
-            invocationCtx.setCallerFrom(Optional.of(req.getParameter("callerFrom")));
-        }
-
-        if (parameters.contains("customerName")) {
-            invocationCtx.setCustomerName(Optional.of(req.getParameter("customerName")));
-        }
-
-        if (parameters.contains("customerId")) {
-            invocationCtx.setCustomerId(Optional.of(Integer.valueOf(req.getParameter("customerId"))));
+            invocationCtx.calleePort(Integer.valueOf(req.getParameter("calleePort")));
         }
 
         if (parameters.contains("operatorId")) {
-            invocationCtx.setOperatorId(Optional.of(Integer.valueOf(req.getParameter("operatorId"))));
+            invocationCtx.operatorId(Long.valueOf(req.getParameter("operatorId")));
+        }
+
+        if (parameters.contains("userId")) {
+            invocationCtx.userId(Long.valueOf(req.getParameter("userId")));
         }
     }
 }

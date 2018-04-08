@@ -6,7 +6,6 @@ import com.github.dapeng.core.BeanSerializer;
 import com.github.dapeng.core.SoaHeader;
 import com.github.dapeng.core.SoaHeaderSerializer;
 import com.github.dapeng.core.TransactionContext;
-import com.github.dapeng.core.enums.CodecProtocol;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TBinaryProtocol;
 import com.github.dapeng.org.apache.thrift.protocol.TCompactProtocol;
@@ -68,10 +67,10 @@ public class SoaMessageProcessor {
 
         headerProtocol.writeByte(STX);
         headerProtocol.writeByte(VERSION);
-        headerProtocol.writeByte(context.getCodecProtocol().getCode());
+        headerProtocol.writeByte(context.codecProtocol().getCode());
         headerProtocol.writeI32(context.getSeqid());
 
-        switch (context.getCodecProtocol()) {
+        switch (context.codecProtocol()) {
             case Binary:
                 contentProtocol = new TBinaryProtocol(transport);
                 break;
@@ -115,8 +114,8 @@ public class SoaMessageProcessor {
         }
 
         byte protocol = headerProtocol.readByte();
-        context.setCodecProtocol(toCodecProtocol(protocol));
-        switch (context.getCodecProtocol()) {
+        context.codecProtocol(toCodecProtocol(protocol));
+        switch (context.codecProtocol()) {
             case Binary:
                 contentProtocol = new TBinaryProtocol(getTransport());
                 break;

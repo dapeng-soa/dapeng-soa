@@ -14,11 +14,13 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import io.netty.util.Attribute;
-import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static com.github.dapeng.util.ExceptionUtil.convertToSoaException;
 
@@ -44,7 +46,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
 
             Object request = parseSoaMsg(msg);
 
-            final TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
+            final TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
             /**
              * use AttributeMap to share common data on different  ChannelHandlers
              */
@@ -62,13 +64,13 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         } catch (Throwable e) {
 
             SoaException soaException = convertToSoaException(e);
-            TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
+            TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
 
             SoaHeader soaHeader = transactionContext.getHeader();
-            soaHeader.setRespCode(Optional.ofNullable(soaException.getCode()));
-            soaHeader.setRespMessage(Optional.ofNullable(soaException.getMessage()));
+            soaHeader.setRespCode(soaException.getCode());
+            soaHeader.setRespMessage(soaException.getMessage());
 
-            transactionContext.setSoaException(soaException);
+            transactionContext.soaException(soaException);
             SoaResponseWrapper responseWrapper = new SoaResponseWrapper(transactionContext,
                     Optional.ofNullable(null),
                     Optional.ofNullable(null));
@@ -132,11 +134,11 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
     }
 
     private void updateTransactionCtx(TransactionContext ctx, SoaHeader soaHeader)  {
-        ctx.setCallerFrom(soaHeader.getCallerFrom());
-        ctx.setCallerIp(soaHeader.getCallerIp());
-        ctx.setCustomerId(soaHeader.getCustomerId());
-        ctx.setCustomerName(soaHeader.getCustomerName());
-        ctx.setOperatorId(soaHeader.getOperatorId());
-        ctx.setOperatorName(soaHeader.getOperatorName());
+        ctx.callerMid(soaHeader.getCallerMid());
+        ctx.callerIp(soaHeader.getCallerIp());
+        ctx.customerId(soaHeader.getCustomerId());
+        ctx.customerName(soaHeader.getCustomerName());
+        ctx.operatorId(soaHeader.getOperatorId());
+        ctx.operatorName(soaHeader.getOperatorName());
     }
 }

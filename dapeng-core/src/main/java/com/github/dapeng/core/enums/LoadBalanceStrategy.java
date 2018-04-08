@@ -1,4 +1,4 @@
-package com.github.dapeng.registry;
+package com.github.dapeng.core.enums;
 
 /**
  * Load Balance Stratage strategy

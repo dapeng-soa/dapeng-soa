@@ -60,8 +60,8 @@ public class SoaMessageBuilder<T> {
         InvocationContext invocationCtx = InvocationContextImpl.Factory.getCurrentInstance();
 
         //buildHeader
-        protocol = protocol == null ? (invocationCtx.getCodecProtocol() == null ? CodecProtocol.CompressedBinary
-                : invocationCtx.getCodecProtocol()) : protocol;
+        protocol = protocol == null ? (invocationCtx.codecProtocol() == null ? CodecProtocol.CompressedBinary
+                : invocationCtx.codecProtocol()) : protocol;
         TSoaTransport transport = new TSoaTransport(buffer);
         TBinaryProtocol headerProtocol = new TBinaryProtocol(transport);
         headerProtocol.writeByte(STX);

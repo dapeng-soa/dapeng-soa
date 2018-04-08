@@ -1,10 +1,7 @@
 package com.github.dapeng.metadata;
 
-import com.github.dapeng.client.netty.SoaConnectionImpl;
-import com.github.dapeng.client.netty.SoaConnectionImpl;
 import com.github.dapeng.core.SoaConnectionPool;
 import com.github.dapeng.core.SoaConnectionPoolFactory;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 
 import java.util.ServiceLoader;
 

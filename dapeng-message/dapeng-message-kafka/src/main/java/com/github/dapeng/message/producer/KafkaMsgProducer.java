@@ -1,7 +1,7 @@
 package com.github.dapeng.message.producer;
 
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.message.config.KafkaConfigBuilder;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.LongSerializer;

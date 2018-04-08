@@ -1,11 +1,8 @@
 package com.github.dapeng.message.consumer.kafka;
 
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.message.consumer.api.context.ConsumerContext;
-import com.github.dapeng.util.SoaSystemEnvProperties;
-import com.github.dapeng.core.definition.SoaFunctionDefinition;
-import com.github.dapeng.message.consumer.api.context.ConsumerContext;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.serialization.ByteBufferDeserializer;
