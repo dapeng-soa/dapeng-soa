@@ -56,67 +56,83 @@ public class TransactionContext {
 
     private SoaException soaException;
 
+    /**
+     * 服务会话ID, 在某次服务调用中会一直蔓延至本次服务调用引发的所有服务调用
+     */
+    private Optional<String> sessionTid = Optional.empty();
+    /**
+     * 服务会话发起人Id, 特指前台用户
+     */
+    private Optional<Long> userId = Optional.empty();
+    /**
+     * 服务会话发起人Ip
+     */
+    private Optional<String> userIp = Optional.empty();
+    /**
+     * 服务会话发起操作人Id, 特指后台用户
+     */
+    private Optional<Long> operatorId = Optional.empty();
+
+
+    private Optional<String> callerTid = Optional.empty();
+
+    private Optional<Integer> timeout = Optional.empty();
+    /**
+     * 调用源
+     */
     private Optional<String> callerMid = Optional.empty();
 
-    private Optional<String> callerIp = Optional.empty();
+    /**
+     * 调用者ip
+     */
+    private String callerIp;
+    /**
+     * 调用者port
+     */
+    private Optional<Integer> callerPort = Optional.empty();
 
-    private Optional<Integer> operatorId = Optional.empty();
-
-    private Optional<Integer> userId = Optional.empty();
-
-
+    private String calleeTid;
 
 
     public Optional<String> callerMid() {
         return callerMid;
     }
 
-    public void callerMid(String callerMid) {
+    public TransactionContext callerMid(String callerMid) {
         this.callerMid = Optional.ofNullable(callerMid);
+        return this;
     }
 
-    public Optional<String> callerIp() {
+    public String callerIp() {
         return callerIp;
     }
 
-    public void callerIp(Optional<String> callerIp) {
+    public TransactionContext callerIp(String callerIp) {
         this.callerIp = callerIp;
+        return this;
     }
 
-    public Optional<Integer> operatorId() {
+    public Optional<Long> operatorId() {
         return operatorId;
     }
 
-    public void operatorId(Optional<Integer> operatorId) {
-        this.operatorId = operatorId;
+    public TransactionContext operatorId(Long operatorId) {
+        this.operatorId = Optional.ofNullable(operatorId);
+        return this;
     }
 
-    public Optional<String> operatorName() {
-        return operatorName;
-    }
-
-    public void operatorName(Optional<String> operatorName) {
-        this.operatorName = operatorName;
-    }
-
-    public Optional<Integer> customerId() {
+    public Optional<Long> userId() {
         return userId;
     }
 
-    public void customerId(Optional<Integer> customerId) {
-        this.userId = customerId;
+    public TransactionContext userId(Long userId) {
+        this.userId = Optional.ofNullable(userId);
+        return this;
     }
 
-    public Optional<String> customerName() {
-        return customerName;
-    }
-
-    public void customerName(Optional<String> customerName) {
-        this.customerName = customerName;
-    }
-
-    public void codecProtocol(CodecProtocol codecProtocol) {
+    public TransactionContext codecProtocol(CodecProtocol codecProtocol) {
         this.codecProtocol = codecProtocol;
+        return this;
     }
 
     public CodecProtocol codecProtocol() {
@@ -127,48 +143,108 @@ public class TransactionContext {
         return header;
     }
 
-    public void setHeader(SoaHeader header) {
+    public TransactionContext setHeader(SoaHeader header) {
         this.header = header;
+        return  this;
     }
 
     public Integer getSeqid() {
         return seqid;
     }
 
-    public void setSeqid(Integer seqid) {
+    public TransactionContext setSeqid(Integer seqid) {
         this.seqid = seqid;
+        return this;
     }
 
     public boolean isSoaGlobalTransactional() {
         return isSoaGlobalTransactional;
     }
 
-    public void setSoaGlobalTransactional(boolean soaGlobalTransactional) {
+    public TransactionContext setSoaGlobalTransactional(boolean soaGlobalTransactional) {
         isSoaGlobalTransactional = soaGlobalTransactional;
+        return this;
     }
 
     public Integer currentTransactionSequence() {
         return currentTransactionSequence;
     }
 
-    public void currentTransactionSequence(Integer currentTransactionSequence) {
+    public TransactionContext currentTransactionSequence(Integer currentTransactionSequence) {
         this.currentTransactionSequence = currentTransactionSequence;
+        return this;
     }
 
     public Integer currentTransactionId() {
         return currentTransactionId;
     }
 
-    public void currentTransactionId(Integer currentTransactionId) {
+    public TransactionContext currentTransactionId(Integer currentTransactionId) {
         this.currentTransactionId = currentTransactionId;
+        return this;
     }
 
     public SoaException soaException() {
         return soaException;
     }
 
-    public void soaException(SoaException soaException) {
+    public TransactionContext soaException(SoaException soaException) {
         this.soaException = soaException;
+        return this;
+    }
+
+    public Optional<Integer> callerPort() {
+        return callerPort;
+    }
+
+    public TransactionContext callerPort(Integer callerPort) {
+        this.callerPort = Optional.ofNullable(callerPort);
+        return this;
+    }
+
+    public Optional<String> sessionTid() {
+        return sessionTid;
+    }
+
+    public TransactionContext sessionTid(String sessionTid) {
+        this.sessionTid = Optional.ofNullable(sessionTid);
+        return this;
+    }
+
+    public Optional<String> userIp() {
+        return userIp;
+    }
+
+    public TransactionContext userIp(String userIp) {
+        this.userIp = Optional.ofNullable(userIp);
+        return this;
+    }
+
+    public Optional<String> callerTid() {
+        return callerTid;
+    }
+
+    public TransactionContext callerTid(String callerTid) {
+        this.callerTid = Optional.ofNullable(callerTid);
+        return this;
+    }
+
+    public Optional<Integer> timeout() {
+        return timeout;
+    }
+
+    public TransactionContext timeout(Integer timeout) {
+        this.timeout = Optional.ofNullable(timeout);
+        return this;
+    }
+
+    public String calleeTid() {
+        return calleeTid;
+    }
+
+    public TransactionContext calleeTid(String calleeTid) {
+        this.calleeTid = calleeTid;
+        return this;
     }
 
     public static class Factory {

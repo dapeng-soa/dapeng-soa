@@ -260,20 +260,20 @@ public class GlobalTransactionManager {
         }
 
         //获取服务的ip和端口
-        JsonPost jsonPost = new JsonPost(process.getServiceName(), process.getVersionName());
+        JsonPost jsonPost = new JsonPost(process.getServiceName(), process.getVersionName(), process.getMethodName());
 
         InvocationContext invocationContext = InvocationContextImpl.Factory.getCurrentInstance();
-        invocationContext.setServiceName(process.getServiceName());
-        invocationContext.setVersionName(process.getVersionName());
-        invocationContext.setMethodName(rollbackOrForward ? process.getRollbackMethodName() : process.getMethodName());
-        invocationContext.setCallerFrom(Optional.of("GlobalTransactionManager"));
-        invocationContext.setTransactionId(Optional.of(process.getTransactionId()));
-        invocationContext.setTransactionSequence(Optional.of(process.getTransactionSequence()));
+        invocationContext.serviceName(process.getServiceName());
+        invocationContext.versionName(process.getVersionName());
+        invocationContext.methodName(rollbackOrForward ? process.getRollbackMethodName() : process.getMethodName());
+        invocationContext.callerMid("GlobalTransactionManager");
+        invocationContext.transactionId(process.getTransactionId());
+        invocationContext.transactionSequence(process.getTransactionSequence());
 
         if (rollbackOrForward) {
-            responseJson = jsonPost.callServiceMethod(invocationContext, "", service);
+            responseJson = jsonPost.callServiceMethod("{}", service);
         } else {
-            responseJson = jsonPost.callServiceMethod(invocationContext, process.getRequestJson(), service);
+            responseJson = jsonPost.callServiceMethod(process.getRequestJson(), service);
         }
 
         return responseJson;

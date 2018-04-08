@@ -5,6 +5,7 @@ import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
+import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocolException;
@@ -91,7 +92,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         SoaHeader soaHeader = parser.parseSoaMessage(context);
         context.setHeader(soaHeader);
 
-        updateTransactionCtx(context,soaHeader);
+        updateTransactionCtx(context, soaHeader);
 
         Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
@@ -123,7 +124,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
                 + "]:version[" + soaHeader.getVersionName()
                 + "]:method[" + soaHeader.getMethodName() + "]"
                 + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
+                + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
 
         application.info(this.getClass(), infoLog);
 
@@ -133,12 +134,25 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         return args;
     }
 
-    private void updateTransactionCtx(TransactionContext ctx, SoaHeader soaHeader)  {
-        ctx.callerMid(soaHeader.getCallerMid());
+    private void updateTransactionCtx(TransactionContext ctx, SoaHeader soaHeader) {
+        if (soaHeader.getCallerMid().isPresent()) {
+            ctx.callerMid(soaHeader.getCallerMid().get());
+        }
         ctx.callerIp(soaHeader.getCallerIp());
-        ctx.customerId(soaHeader.getCustomerId());
-        ctx.customerName(soaHeader.getCustomerName());
-        ctx.operatorId(soaHeader.getOperatorId());
-        ctx.operatorName(soaHeader.getOperatorName());
+        if (soaHeader.getUserId().isPresent()) {
+            ctx.userId(soaHeader.getUserId().get());
+        }
+        if (soaHeader.getCallerPort().isPresent()) {
+            ctx.callerPort(soaHeader.getCallerPort().get());
+        }
+        if (soaHeader.getOperatorId().isPresent()) {
+            ctx.operatorId(soaHeader.getOperatorId().get());
+        }
+        if (soaHeader.getCallerTid().isPresent()) {
+            ctx.callerTid(soaHeader.getCallerTid().get());
+        }
+
+        ctx.calleeTid(DapengUtil.generateTid());
+        ctx.sessionTid(soaHeader.getSessionTid().orElse(ctx.calleeTid()));
     }
 }

@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 
-//import static com.github.dapeng.json.TJsonCompressProtocolUtil.readMapBegin;
 import static com.github.dapeng.core.enums.CodecProtocol.CompressedBinary;
 import static com.github.dapeng.util.MetaDataUtil.*;
 
@@ -444,7 +443,9 @@ public class JsonSerializer implements BeanSerializer<String> {
                     if (!foundField) {
                         skipFieldsStack--;
                         return;
-                    } else assert skipFieldsStack == 0;
+                    } else {
+                        assert skipFieldsStack == 0;
+                    }
 
                     assert current.dataType.kind == DataType.KIND.STRUCT || current.dataType.kind == DataType.KIND.MAP;
 
@@ -688,6 +689,54 @@ public class JsonSerializer implements BeanSerializer<String> {
 
         @Override
         public void onNumber(double value) throws TException {
+            switch (parsePhase) {
+                case HEADER:
+                    fillIntToInvocationCtx((int) value);
+                    break;
+                case BODY:
+                    DataType.KIND currentType = current.dataType.kind;
+
+                    if (!foundField) {
+                        return;
+                    }
+
+                    if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
+                        peek().increaseElement();
+                    }
+
+                    switch (currentType) {
+                        case SHORT:
+                            oproto.writeI16((short) value);
+                            break;
+                        case INTEGER:
+                        case ENUM:
+                            oproto.writeI32((int) value);
+                            break;
+                        case LONG:
+                            oproto.writeI64((long) value);
+                            break;
+                        case DOUBLE:
+                            oproto.writeDouble(value);
+                            break;
+                        case BIGDECIMAL:
+                            //TODO ??
+                            oproto.writeDouble(value);
+                            break;
+                        case BYTE:
+                            oproto.writeByte((byte) value);
+                            break;
+                        default:
+                            throw new TException("Field:" + current.fieldName + ", DataType(" + current.dataType.kind + ") for " + current.dataType.qualifiedName + " is not a Number");
+
+                    }
+                    break;
+                default:
+                    logger.warn("skip number(" + value + ")@pase:" + parsePhase + " Field:" + current.fieldName);
+            }
+        }
+
+        @Override
+        public void onNumber(long value) throws TException {
             switch (parsePhase) {
                 case HEADER:
                     fillIntToInvocationCtx((int) value);
@@ -1130,7 +1179,9 @@ class TJsonCompressProtocolUtil {
      * @throws TException
      */
     private static void writeFixedLengthVarint32(int count, ByteBuf byteBuf) throws TException {
-        for (int i = 0; i < count; i++) writeByteDirect((byte) 0, byteBuf);
+        for (int i = 0; i < count; i++) {
+            writeByteDirect((byte) 0, byteBuf);
+        }
     }
 
     /**
@@ -1146,7 +1197,9 @@ class TJsonCompressProtocolUtil {
     private static void reWriteVarint32(int n, ByteBuf byteBuf) throws TException {
         int idx = 0;
         while (true) {
-            if (idx >= i32buf.length) throw new TException("Too long:" + n);
+            if (idx >= i32buf.length) {
+                throw new TException("Too long:" + n);
+            }
 
             if ((n & ~0x7F) == 0) {
                 i32buf[idx++] = (byte) n;
@@ -1168,7 +1221,8 @@ class TJsonCompressProtocolUtil {
             byteBuf.writeByte((byte) 0x80);
         }
 
-        if (idx < i32buf.length)
+        if (idx < i32buf.length) {
             byteBuf.writeByte((byte) 0x00);
+        }
     }
 }
