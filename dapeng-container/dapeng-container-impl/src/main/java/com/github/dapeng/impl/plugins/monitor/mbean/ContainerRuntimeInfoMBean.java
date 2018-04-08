@@ -67,6 +67,6 @@ public interface ContainerRuntimeInfoMBean {
      * 获取Netty连接数信息
      * @return
      */
-    String getNettyChannelStatus();
+    String getNettyConnections();
 
 }
