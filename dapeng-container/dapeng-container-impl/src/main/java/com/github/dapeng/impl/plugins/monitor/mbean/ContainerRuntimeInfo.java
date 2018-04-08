@@ -1,10 +1,10 @@
 package com.github.dapeng.impl.plugins.monitor.mbean;
 
 import com.github.dapeng.api.Container;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.plugins.netty.SoaFlowCounter;
 import com.github.dapeng.impl.plugins.netty.SoaInvokeCounter;
 import com.github.dapeng.util.DumpUtil;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 
 import java.util.concurrent.ThreadPoolExecutor;
 

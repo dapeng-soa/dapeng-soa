@@ -113,7 +113,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             + "]:version[" + soaHeader.getVersionName()
                             + "]:method[" + soaHeader.getMethodName() + "]"
                             + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                            + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
+                            + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
 
                     LOGGER.debug(getClass().getSimpleName() + "::processRequest " + debugLog);
                 }
@@ -236,8 +236,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
         SoaHeader soaHeader = transactionContext.getHeader();
 
-        soaHeader.setRespCode(Optional.ofNullable(e.getCode()));
-        soaHeader.setRespMessage(Optional.ofNullable(e.getMessage()));
+        soaHeader.setRespCode(e.getCode());
+        soaHeader.setRespMessage(e.getMessage());
 
         transactionContext.soaException(e);
     }
@@ -299,13 +299,10 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             Long timeoutConfig;
 
             if (methodTimeOut != null) {
-
                 timeoutConfig = methodTimeOut;
             } else if (serviceTimeOut != null) {
-
                 timeoutConfig = serviceTimeOut;
             } else if (globalTimeOut != null) {
-
                 timeoutConfig = globalTimeOut;
             } else {
                 timeoutConfig = null;

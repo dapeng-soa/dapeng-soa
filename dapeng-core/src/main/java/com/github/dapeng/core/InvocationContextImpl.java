@@ -29,7 +29,7 @@ public class InvocationContextImpl implements InvocationContext {
      */
     private String versionName;
     private Optional<String> sessionTid = Optional.empty();
-    private final String callerTid = DapengUtil.generateTid();
+    private String callerTid = DapengUtil.generateTid();
     private Optional<Long> userId = Optional.empty();
     private Optional<String> userIp = Optional.empty();
 
@@ -193,6 +193,12 @@ public class InvocationContextImpl implements InvocationContext {
     }
 
     @Override
+    public InvocationContext callerTid(String callerTid) {
+        this.callerTid = callerTid;
+        return this;
+    }
+
+    @Override
     public String callerTid() {
         return this.callerTid;
     }
@@ -258,19 +264,9 @@ public class InvocationContextImpl implements InvocationContext {
         Optional<String> sessionTid();
 
         Optional<String> userIp();
-        Optional<Integer> userId();
-        Optional<Integer> operatorId();
+        Optional<Long> userId();
+        Optional<Long> operatorId();
         Optional<String> callerMid();
-
-        Optional<String> callerIp();
-        Optional<String> callerPort();
-
-        Optional<CodecProtocol> codecProtocol();
-
-        Optional<String> calleeIp();
-        Optional<Integer> calleePort();
-        Optional<LoadBalanceStrategy> loadBalanceStrategy();
-        Optional<Integer> timeout();
     }
 
     public static class Factory {

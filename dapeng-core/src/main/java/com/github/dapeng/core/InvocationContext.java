@@ -54,6 +54,7 @@ public interface InvocationContext {
      * 调用端tid
      * @return
      */
+    InvocationContext callerTid(final String callerTid);
     String callerTid();
 
     /**

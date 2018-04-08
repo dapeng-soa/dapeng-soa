@@ -32,7 +32,7 @@ public class SoaSystemEnvProperties {
     private static final String KEY_SOA_REMOTING_MODE = "soa.remoting.mode";
     private static final String KEY_SOA_MONITOR_ENABLE = "soa.monitor.enable";
     private static final String KEY_SOA_SERVICE_CALLERFROM = "soa.service.callerfrom";
-//    private static final String KEY_SOA_SERVICE_CLIENT_TIMEOUT = "soa.service.client.timeout";
+    //    private static final String KEY_SOA_SERVICE_CLIENT_TIMEOUT = "soa.service.client.timeout";
 //    private static final String KEY_SOA_SERVICE_SERVER_TIMEOUT = "soa.service.server.timeout";
     private static final String KEY_SOA_SERVICE_TIMEOUT = "soa.service.timeout";
 
@@ -44,7 +44,10 @@ public class SoaSystemEnvProperties {
     private static final String KEY_SOA_FILTER_EXCLUDES = "soa.filter.excludes";
     private static final String KEY_SOA_FILTER_INCLUDES = "soa.filter.includes";
     private static final String KEY_SOA_EVENT_MESSAGE_TOPIC = "soa.event.topic";
-
+    /**
+     * 消息总线 定时间隔
+     */
+    private static final String KEY_SOA_EVENTBUS_PERIOD = "soa.eventbus.publish.period";
 
     //    public static final String SOA_SERVICE_IP = get(KEY_SOA_SERVICE_IP, "127.0.0.1");
 //    public static final boolean SOA_SERVICE_IP_ISCONFIG = get(KEY_SOA_SERVICE_IP) != null;
@@ -85,6 +88,8 @@ public class SoaSystemEnvProperties {
     public static final String SOA_FILTER_INCLUDES = get(KEY_SOA_FILTER_INCLUDES, "");
 
     public static final String SOA_EVENT_MESSAGE_TOPIC = get(KEY_SOA_EVENT_MESSAGE_TOPIC, "");
+
+    public static final String SOA_EVENTBUS_PERIOD = get(KEY_SOA_EVENTBUS_PERIOD, "1000");
 
 
     /**

@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.github.dapeng.util.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
+import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
 
 /**
  * 响应消息编码器
@@ -86,7 +86,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                         + "]:version[" + soaHeader.getVersionName()
                         + "]:method[" + soaHeader.getMethodName() + "]"
                         + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                        + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : ""
+                        + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : ""
                         + " cost:" + (System.currentTimeMillis() - requestTimestamp) + "ms");
 
                 application.info(this.getClass(), infoLog);
@@ -97,8 +97,8 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             } catch (Throwable e) {
                 SoaException soaException = ExceptionUtil.convertToSoaException(e);
 
-                soaHeader.setRespCode(Optional.ofNullable(soaException.getCode()));
-                soaHeader.setRespMessage(Optional.ofNullable(soaException.getMessage()));
+                soaHeader.setRespCode(soaException.getCode());
+                soaHeader.setRespMessage(soaException.getMessage());
 
                 transactionContext.soaException(soaException);
                 writeErrorResponse(transactionContext, application, out);
@@ -155,7 +155,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     + "]:version[" + soaHeader.getVersionName()
                     + "]:method[" + soaHeader.getMethodName() + "]"
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                    + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
+                    + (soaHeader.getUserId().isPresent() ? " operatorName:" + soaHeader.getUserId().get() : "");
             application.error(this.getClass(), infoLog, soaException);
 
             if (LOGGER.isDebugEnabled()) {

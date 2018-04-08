@@ -1,6 +1,6 @@
 package com.github.dapeng.counter.util;
 
-import com.github.dapeng.util.SoaSystemEnvProperties;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 
 /**
  * @author with struy.

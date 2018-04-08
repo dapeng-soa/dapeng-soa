@@ -40,7 +40,7 @@ public class JsonPost {
         this.clientInfo = this.pool.registerClientInfo(serviceName, version);
     }
 
-    public JsonPost(String serviceName, String version, final String methodName, boolean doNotThrowError) {
+    public JsonPost(final String serviceName, final String version, final String methodName, boolean doNotThrowError) {
         this(serviceName, version, methodName);
         this.doNotThrowError = doNotThrowError;
     }
