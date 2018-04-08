@@ -1,6 +1,7 @@
 package com.github.dapeng.impl.plugins.monitor.mbean;
 
 import com.github.dapeng.api.Container;
+import com.github.dapeng.impl.plugins.netty.NettyConnectCounter;
 import com.github.dapeng.impl.plugins.netty.SoaFlowCounter;
 import com.github.dapeng.impl.plugins.netty.SoaInvokeCounter;
 import com.github.dapeng.util.DumpUtil;
@@ -18,14 +19,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     private final static String METHOD_NAME_KEY = "method_name";
     private final Container container;
-    public ContainerRuntimeInfo(Container container){
+
+    public ContainerRuntimeInfo(Container container) {
         super();
         this.container = container;
-    }
-    @Override
-    public boolean stopContainer() {
-        // TODO
-        return false;
     }
 
     @Override
@@ -42,6 +39,7 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
 
     @Override
     public String setLoggerLevel(String level) {
+        // TODO
         return level;
     }
 
@@ -53,14 +51,15 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
 
     @Override
     public String getSerivceBasicInfo() {
+        // TODO
         return null;
     }
 
     @Override
     public String getServiceFlow() {
         StringBuilder sb = new StringBuilder();
-        sb.append("\nServiceFlow data count ==> [ ").append(5).append(" ]");
-        SoaFlowCounter.flowCacheQueue.forEach(x ->{
+        sb.append("\nServiceFlow data ==> ");
+        SoaFlowCounter.getFlowCacheQueue().forEach(x -> {
             sb.append("\n").append(x.toString()).append("\n");
         });
         return sb.toString();
@@ -70,10 +69,10 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     public String getServiceInvoke() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("\nServiceInvoke data count ==> [ ").append(5).append(" ]");
-        SoaInvokeCounter.serviceCacheQueue.forEach(x ->{
+        sb.append("\nServiceInvoke data ==> ");
+        SoaInvokeCounter.getServiceCacheQueue().forEach(x -> {
             sb.append("\n");
-            x.forEach(y->sb.append(y.toString()));
+            x.forEach(y -> sb.append(y.toString()));
             sb.append("\n");
         });
         return sb.toString();
@@ -83,10 +82,10 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     public String getServiceFlow(int count) {
         StringBuilder sb = new StringBuilder();
         sb.append("\nServiceFlow data count ==> [ ")
-                .append(SoaFlowCounter.flowCacheQueue.size())
+                .append(SoaFlowCounter.getFlowCacheQueue().size())
                 .append("/")
                 .append(count).append(" ]");
-        SoaFlowCounter.flowCacheQueue.forEach(x ->{
+        SoaFlowCounter.getFlowCacheQueue().forEach(x -> {
             sb.append("\n").append(x.toString()).append("\n");
         });
         return sb.toString();
@@ -96,18 +95,31 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     public String getServiceInvoke(int count, String methodName) {
         StringBuilder sb = new StringBuilder();
         sb.append("\nServiceInvoke data count ==> [ ")
-                .append(SoaInvokeCounter.serviceCacheQueue.size())
+                .append(SoaInvokeCounter.getServiceCacheQueue().size())
                 .append("/")
                 .append(count).append(" ]");
-        SoaInvokeCounter.serviceCacheQueue.forEach(x ->{
+        SoaInvokeCounter.getServiceCacheQueue().forEach(x -> {
             sb.append("\n");
-            x.forEach(y->{
-                if (methodName.equals(y.getTags().get(METHOD_NAME_KEY))){
+            x.forEach(y -> {
+                if (methodName.equals(y.getTags().get(METHOD_NAME_KEY))) {
                     sb.append(y.toString());
                 }
             });
             sb.append("\n");
         });
+        return sb.toString();
+    }
+
+    @Override
+    public String getNettyChannelStatus() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\nDapeng Netty Connections [ Active / Total /Inactive ] ==> [ ")
+                .append(NettyConnectCounter.getActiveChannel())
+                .append(" / ")
+                .append(NettyConnectCounter.getTotalChannel())
+                .append(" / ")
+                .append(NettyConnectCounter.getInactiveChannel())
+                .append(" ]");
         return sb.toString();
     }
 }
