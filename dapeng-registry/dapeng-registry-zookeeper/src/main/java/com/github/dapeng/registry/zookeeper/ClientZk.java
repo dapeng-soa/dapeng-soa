@@ -67,7 +67,6 @@ public class ClientZk extends CommonZk {
                         LOGGER.info("Client's host: {}  已连接 zookeeper Server", zkHost);
                         caches.clear();
                         config.clear();
-                        zkConfigMap.clear();
                         break;
                     case Disconnected:
                         LOGGER.error("Client's host: {} 到zookeeper的连接被断开", zkHost);
@@ -110,6 +109,63 @@ public class ClientZk extends CommonZk {
     }
 
 
+    /**
+     * 客户端 同步zk 服务信息  syncServiceZkInfo
+     *
+     * @param zkInfo
+     */
+    public void syncServiceZkInfo(ZkServiceInfo zkInfo) {
+        try {
+            // sync runtimeList
+            syncZkRuntimeInfo(zkInfo);
+            //syncService config
+            syncZkConfigInfo(zkInfo);
+
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        zkInfo.setStatus(ZkServiceInfo.Status.ACTIVE);
+    }
+
+    private void syncZkRuntimeInfo(ZkServiceInfo zkInfo) {
+        syncZkRuntimeInfo(zkInfo);
+        String servicePath = SERVICE_PATH + "/" + zkInfo.service;
+        try {
+            if (zk == null) {
+                LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:zk is null, now init()");
+                init();
+            }
+
+            List<String> childrens = zk.getChildren(servicePath, watchedEvent -> {
+                if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
+                    if (zkInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
+                        LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:{}子节点发生变化，重新获取信息", watchedEvent.getPath());
+                        syncZkRuntimeInfo(zkInfo);
+                    }
+                }
+            });
+
+            if (childrens.size() == 0) {
+                LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:no service instances found");
+                return;
+            }
+            List<RuntimeInstance> runtimeInstanceList = zkInfo.getRuntimeInstances();
+            LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "], 获取{}的子节点成功", servicePath);
+            //child = 10.168.13.96:9085:1.0.0
+            for (String children : childrens) {
+                String[] infos = children.split(":");
+                RuntimeInstance instance = new RuntimeInstance(zkInfo.service, infos[0], Integer.valueOf(infos[1]), infos[2]);
+                runtimeInstanceList.add(instance);
+            }
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    //～～～～～～～～～～～～～～～～～～
+    //      目前暂时没有用到的方法
+    //～～～～～～～～～～～～～～～
+
     public List<ServiceInfo> getServiceInfoCached(String serviceName, String versionName, boolean compatible) {
 
         List<ServiceInfo> serverList;
@@ -134,49 +190,6 @@ public class ClientZk extends CommonZk {
         }
         return usableList;
     }
-
-    /**
-     * 客户端 同步zk 服务信息  syncServiceZkInfo
-     *
-     * @param zkInfo
-     */
-    public void syncServiceZkInfo(ZkServiceInfo zkInfo) {
-        String servicePath = SERVICE_PATH + "/" + zkInfo.service;
-        try {
-            if (zk == null) {
-                LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[" + zkInfo.service + "]:zk is null, now init()");
-                init();
-            }
-
-            List<String> childrens = zk.getChildren(servicePath, watchedEvent -> {
-                if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-                    if (zkInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
-                        LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[" + zkInfo.service + "]:{}子节点发生变化，重新获取信息", watchedEvent.getPath());
-                        syncServiceZkInfo(zkInfo);
-                    }
-                }
-            });
-
-            if (childrens.size() == 0) {
-                LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[" + zkInfo.service + "]:no service instances found");
-                return;
-            }
-            List<RuntimeInstance> runtimeInstanceList = zkInfo.getRuntimeInstances();
-            LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[" + zkInfo.service + "], 获取{}的子节点成功", servicePath);
-            //child = 10.168.13.96:9085:1.0.0
-            for (String children : childrens) {
-                String[] infos = children.split(":");
-                RuntimeInstance instance = new RuntimeInstance(zkInfo.service, infos[0], Integer.valueOf(infos[1]), infos[2]);
-                runtimeInstanceList.add(instance);
-            }
-
-            zkInfo.setStatus(ZkServiceInfo.Status.ACTIVE);
-
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }
-
 
     /**
      * 根据serviceName节点的路径，获取下面的子节点，并监听子节点变化
@@ -208,6 +221,5 @@ public class ClientZk extends CommonZk {
             LOGGER.error(e.getMessage(), e);
         }
     }
-
 
 }

@@ -7,9 +7,6 @@ import org.apache.zookeeper.ZooKeeper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 /**
  * 描述:
  *
@@ -30,69 +27,43 @@ public class CommonZk {
 
 
     protected ZooKeeper zk;
-    /**
-     * zk 配置 缓存 ，根据 serivceName + versionName 作为 key
-     */
-    protected ConcurrentMap<String, ZkConfigInfo> zkConfigMap = new ConcurrentHashMap();
 
-    /**
-     * 获取zk 配置信息，封装到 ZkConfigInfo
-     *
-     * @param serviceName
-     * @return
-     */
-    protected ZkConfigInfo getConfigData(String serviceName) {
-        ZkConfigInfo info = zkConfigMap.get(serviceName);
-        if (info != null) {
-            return info;
-        }
 
-        ZkConfigInfo configInfo = new ZkConfigInfo();
-
+    protected void syncZkConfigInfo(ZkServiceInfo zkInfo) {
         //1.获取 globalConfig
         try {
             byte[] globalData = zk.getData(CONFIG_PATH, watchedEvent -> {
-
                 if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
-                    logger.info(watchedEvent.getPath() + "'s data changed, reset config in memory");
-                    zkConfigMap.clear();
-                    getConfigData(serviceName);
+
+                    if (zkInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
+                        logger.info(getClass().getSimpleName() + "::syncZkConfigInfo[" + zkInfo.service + "]: {} 节点内容发生变化，重新获取配置信息", watchedEvent.getPath());
+                        syncZkConfigInfo(zkInfo);
+                    }
                 }
             }, null);
-
-            WatcherUtils.processZkConfig(globalData, configInfo, true);
-
-        } catch (KeeperException e) {
-            logger.error(e.getMessage(), e);
-        } catch (InterruptedException e) {
+            WatcherUtils.processZkConfig(globalData, zkInfo, true);
+        } catch (KeeperException | InterruptedException e) {
             logger.error(e.getMessage(), e);
         }
 
         // 2. 获取 service
-        String configPath = CONFIG_PATH + "/" + serviceName;
+        String configPath = CONFIG_PATH + "/" + zkInfo.service;
 
         try {
-            byte[] serviceData = zk.getData(configPath, watchedEvent -> {
-                if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
-                    logger.info(watchedEvent.getPath() + "'s data changed, reset zkConfigMap in memory");
-                    zkConfigMap.clear();
-
-                    getConfigData(serviceName);
-                }
-            }, null);
-            WatcherUtils.processZkConfig(serviceData, configInfo, false);
-
-        } catch (KeeperException e) {
-            logger.error(e.getMessage());
-            if (e instanceof KeeperException.NoNodeException) {
+            // zk config 有具体的service节点存在时，才会进行下一步
+            if (zk.exists(configPath, false) != null) {
+                byte[] serviceData = zk.getData(configPath, watchedEvent -> {
+                    if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                        logger.info(watchedEvent.getPath() + "'s data changed, reset zkConfigMap in memory");
+                        syncZkConfigInfo(zkInfo);
+                    }
+                }, null);
+                WatcherUtils.processZkConfig(serviceData, zkInfo, false);
             }
-        } catch (InterruptedException e) {
-            logger.error(e.getMessage(), e);
+        } catch (KeeperException | InterruptedException e) {
+            logger.error(e.getMessage());
         }
-
-        zkConfigMap.put(serviceName, configInfo);
-
-        return configInfo;
     }
+
 
 }

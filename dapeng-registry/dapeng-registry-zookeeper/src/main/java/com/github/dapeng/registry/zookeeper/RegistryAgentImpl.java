@@ -37,6 +37,7 @@ public class RegistryAgentImpl implements RegistryAgent {
 
     private Map<ProcessorKey, SoaServiceDefinition<?>> processorMap;
 
+
     public RegistryAgentImpl() {
         this(true);
     }
@@ -119,7 +120,7 @@ public class RegistryAgentImpl implements RegistryAgent {
      * @return
      */
     @Override
-    public ZkConfigInfo getConfig(boolean usingFallback, String serviceKey) {
+    public ZkServiceInfo getConfig(boolean usingFallback, String serviceKey) {
         return serverZk.getConfigData(serviceKey);
     }
 

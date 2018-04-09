@@ -15,7 +15,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author lihuimin
@@ -101,13 +100,5 @@ public class ZkClientAgentImpl implements ZkClientAgent {
         } else {
             LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo failed");
         }
-    }
-
-
-    @Override
-    public ZkConfigInfo getConfig(boolean usingFallback, String serviceKey) {
-
-        return masterZk.getConfigData(serviceKey);
-
     }
 }

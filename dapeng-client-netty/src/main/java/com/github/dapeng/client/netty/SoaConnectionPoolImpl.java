@@ -203,13 +203,22 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      */
     private RuntimeInstance loadBalance(String serviceName, String version, String methodName, List<RuntimeInstance> compatibles) {
 
-        ZkConfigInfo configInfo = zkAgent.getConfig(false, serviceName);
+        ZkServiceInfo zkServiceInfo = zkInfos.get(serviceName);
         //方法级别
-        LoadBalanceStrategy methodLB = configInfo.loadbalanceConfig.serviceConfigs.get(methodName);
+        LoadBalanceStrategy methodLB = null;
         //服务配置
-        LoadBalanceStrategy serviceLB = configInfo.loadbalanceConfig.serviceConfigs.get(ConfigKey.LoadBalance.getValue());
+        LoadBalanceStrategy serviceLB = null;
         //全局
-        LoadBalanceStrategy globalLB = configInfo.loadbalanceConfig.globalConfig;
+        LoadBalanceStrategy globalLB = null;
+
+        if (zkServiceInfo != null) {
+            //方法级别
+            methodLB = zkServiceInfo.loadbalanceConfig.serviceConfigs.get(methodName);
+            //服务配置
+            serviceLB = zkServiceInfo.loadbalanceConfig.serviceConfigs.get(ConfigKey.LoadBalance.getValue());
+            //全局
+            globalLB = zkServiceInfo.loadbalanceConfig.globalConfig;
+        }
 
         LoadBalanceStrategy balance;
 
@@ -337,13 +346,22 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * @return
      */
     private Optional<Long> getZkTimeout(String serviceName, String version, String methodName) {
-        ZkConfigInfo configInfo = zkAgent.getConfig(false, serviceName);
+        ZkServiceInfo configInfo = zkInfos.get(serviceName);
         //方法级别
-        Long methodTimeOut = configInfo.timeConfig.serviceConfigs.get(methodName);
+        Long methodTimeOut = null;
         //服务配置
-        Long serviceTimeOut = configInfo.timeConfig.serviceConfigs.get(ConfigKey.TimeOut.getValue());
+        Long serviceTimeOut = null;
 
-        Long globalTimeOut = configInfo.timeConfig.globalConfig;
+        Long globalTimeOut = null;
+
+        if (configInfo != null) {
+            //方法级别
+            methodTimeOut = configInfo.timeConfig.serviceConfigs.get(methodName);
+            //服务配置
+            serviceTimeOut = configInfo.timeConfig.serviceConfigs.get(ConfigKey.TimeOut.getValue());
+
+            globalTimeOut = configInfo.timeConfig.globalConfig;
+        }
 
         logger.debug("request:serviceName:{},methodName:{}," +
                         " methodTimeOut:{},serviceTimeOut:{},globalTimeOut:{}",
