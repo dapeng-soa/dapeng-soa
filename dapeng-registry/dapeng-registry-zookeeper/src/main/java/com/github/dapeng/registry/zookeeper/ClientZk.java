@@ -165,6 +165,10 @@ public class ClientZk extends CommonZk {
 
         } catch (Exception e) {
             //fixme 如果出错，为了保证watcher 机制生效，会重新执行当前方法...
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e1) {
+            }
             syncZkRuntimeInfo(zkInfo);
             LOGGER.error(e.getMessage(), e);
         }
