@@ -1,14 +1,11 @@
 package com.github.dapeng.client.netty;
 
-import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.*;
-import com.github.dapeng.json.JsonSerializer;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.LoadBalanceStrategy;
 import com.github.dapeng.registry.RuntimeInstance;
 import com.github.dapeng.registry.zookeeper.*;
 import com.github.dapeng.util.SoaSystemEnvProperties;
-import org.apache.zookeeper.Op;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +52,10 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
                 clientInfos.remove(serviceVersion);
                 ZkServiceInfo zkServiceInfo = zkInfos.remove(serviceVersion.split(":")[0]);
-                zkAgent.cancnelSyncService(zkServiceInfo);
+
+                if (zkServiceInfo != null) {
+                    zkAgent.cancelSyncService(zkServiceInfo);
+                }
             } catch (Throwable e) {
                 logger.error(e.getMessage(), e);
             }
