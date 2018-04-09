@@ -145,6 +145,9 @@ public class ClientZk extends CommonZk {
             });
 
             if (childrens.size() == 0) {
+                zkInfo.setStatus(ZkServiceInfo.Status.CANCELED);
+                zkInfo.getRuntimeInstances().clear();
+                LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[" + zkInfo.service + "]:no service instances found");
                 LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:no service instances found");
                 return;
             }
@@ -156,6 +159,9 @@ public class ClientZk extends CommonZk {
                 RuntimeInstance instance = new RuntimeInstance(zkInfo.service, infos[0], Integer.valueOf(infos[1]), infos[2]);
                 runtimeInstanceList.add(instance);
             }
+
+            zkInfo.setStatus(ZkServiceInfo.Status.ACTIVE);
+
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
