@@ -31,7 +31,7 @@ public class SoaConnectionImpl extends SoaBaseConnection {
 
         SoaMessageBuilder<REQ> builder = new SoaMessageBuilder<>();
 
-        SoaHeader header = SoaHeaderHelper.buildHeader();
+        SoaHeader header = SoaHeaderHelper.buildHeader(service, version, method);
         try {
             ByteBuf buf = builder.buffer(requestBuf)
                     .header(header)

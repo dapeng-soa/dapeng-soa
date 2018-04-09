@@ -165,15 +165,6 @@ public interface InvocationContext {
 
     InvocationContext transactionSequence(Integer currentTransactionSequence);
 
-    InvocationContext serviceName(String serviceName);
-    String serviceName();
-
-    InvocationContext methodName(String methodName);
-    String methodName();
-
-    InvocationContext versionName(String versionName);
-    String versionName();
-
     InvocationContext seqId(Integer seqId);
     Integer seqId();
 

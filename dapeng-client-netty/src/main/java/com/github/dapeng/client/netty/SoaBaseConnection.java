@@ -54,10 +54,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
         int seqid = seqidAtomic.getAndIncrement();
 
         InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
-        invocationContext.seqId(seqid)
-//                .serviceName(service)
-                .versionName(version)
-                .methodName(method);
+        invocationContext.seqId(seqid);
 
         Filter dispatchFilter = new Filter() {
             private FilterChain getPrevChain(FilterContext ctx) {
@@ -150,8 +147,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
         int seqid = seqidAtomic.getAndIncrement();
 
         InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
-        invocationContext.seqId(seqid).serviceName(service)
-                .versionName(version).methodName(method);
+        invocationContext.seqId(seqid);
 
         Filter dispatchFilter = new Filter() {
             private FilterChain getPrevChain(FilterContext ctx) {
