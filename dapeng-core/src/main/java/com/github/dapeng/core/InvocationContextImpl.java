@@ -62,33 +62,6 @@ public class InvocationContextImpl implements InvocationContext {
     private Integer seqId;
 
     @Override
-    public String serviceName() {
-        return serviceName;
-    }
-
-    @Override
-    public InvocationContext serviceName(String serviceName) {
-        this.serviceName = serviceName;
-        return this;
-    }
-
-    @Override
-    public String methodName() {
-        return methodName;
-    }
-
-    @Override
-    public InvocationContext methodName(String methodName) {
-        this.methodName = methodName;
-        return this;
-    }
-
-    @Override
-    public String versionName() {
-        return versionName;
-    }
-
-    @Override
     public InvocationContext seqId(Integer seqId) {
         this.seqId = seqId;
         return this;
@@ -97,12 +70,6 @@ public class InvocationContextImpl implements InvocationContext {
     @Override
     public Integer seqId() {
         return seqId;
-    }
-
-    @Override
-    public InvocationContext versionName(String versionName) {
-        this.versionName = versionName;
-        return this;
     }
 
     @Override

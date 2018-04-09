@@ -45,16 +45,16 @@ public class SoaHeaderHelper {
         }
     }
 
-    public static SoaHeader buildHeader() {
+    public static SoaHeader buildHeader(String serviceName, String version, String methodName) {
         InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
 
         InvocationContextImpl.InvocationContextProxy invocationCtxProxy = InvocationContextImpl.Factory.getInvocationContextProxy();
 
         SoaHeader header = new SoaHeader();
 
-        header.setServiceName(invocationContext.serviceName());
-        header.setVersionName(invocationContext.versionName());
-        header.setMethodName(invocationContext.methodName());
+        header.setServiceName(serviceName);
+        header.setVersionName(version);
+        header.setMethodName(methodName);
 
         header.setCallerIp(invocationContext.callerIp());
         header.setCallerPort(invocationContext.callerPort());
