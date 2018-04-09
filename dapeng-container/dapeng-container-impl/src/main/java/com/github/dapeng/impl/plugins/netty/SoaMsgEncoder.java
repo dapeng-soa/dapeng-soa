@@ -155,7 +155,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     + "]:version[" + soaHeader.getVersionName()
                     + "]:method[" + soaHeader.getMethodName() + "]"
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                    + (soaHeader.getUserId().isPresent() ? " operatorName:" + soaHeader.getUserId().get() : "");
+                    + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
             application.error(this.getClass(), infoLog, soaException);
 
             if (LOGGER.isDebugEnabled()) {

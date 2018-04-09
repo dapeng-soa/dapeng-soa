@@ -226,6 +226,12 @@ public interface InvocationContext {
          * @return
          */
         Integer serviceTime();
+
+        /**
+         * 负载均衡策略
+         * @return
+         */
+        LoadBalanceStrategy loadBalanceStrategy();
     }
 
 

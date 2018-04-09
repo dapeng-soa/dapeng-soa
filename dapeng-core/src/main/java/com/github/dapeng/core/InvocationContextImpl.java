@@ -4,6 +4,7 @@ import com.github.dapeng.core.enums.CodecProtocol;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.IPUtils;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 
 import java.util.Map;
 import java.util.Optional;
@@ -44,7 +45,7 @@ public class InvocationContextImpl implements InvocationContext {
 
     private Optional<String> calleeIp = Optional.empty();
 
-    private Optional<Integer> calleePort = Optional.empty();
+    private Optional<Integer> calleePort = Optional.of(9090);
 
     private Optional<String> callerMid = Optional.empty();
 
