@@ -134,7 +134,7 @@ public class InvocationContextImpl implements  InvocationContext {
 
     @Override
     public void setCustomerId(Optional<Integer> customerId) {
-
+        this.customerId = customerId;
     }
 
     @Override
