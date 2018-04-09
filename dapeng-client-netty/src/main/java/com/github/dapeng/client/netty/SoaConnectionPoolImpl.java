@@ -147,7 +147,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                                          String method) {
         ZkServiceInfo zkInfo = zkInfos.get(service);
 
-        if (zkInfo == null) {
+        if (zkInfo == null || zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
             //todo should find out why zkInfo is null
             // 1. target service not exists
             logger.error(getClass().getSimpleName() + "::findConnection-0[service: " + service + "], zkInfo not found, now reSyncService");
