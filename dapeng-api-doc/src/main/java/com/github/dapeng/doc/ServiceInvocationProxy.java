@@ -5,6 +5,8 @@ import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.IPUtils;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -24,6 +26,11 @@ public class ServiceInvocationProxy implements InvocationContextImpl.InvocationC
     @Override
     public Optional<String> callerMid() {
         return Optional.of("documentSite");
+    }
+
+    @Override
+    public Map<String, String> cookies() {
+        return new HashMap<>(16);
     }
 
     @Override

@@ -51,22 +51,6 @@ public interface InvocationContext {
     Optional<String> sessionTid();
 
     /**
-     * 调用端tid
-     * @return
-     */
-    InvocationContext callerTid(final String callerTid);
-    String callerTid();
-
-    /**
-     * 设置调用端moudleId
-     *
-     * @param callerMid
-     * @return
-     */
-    InvocationContext callerMid(final String callerMid);
-    Optional<String> callerMid();
-
-    /**
      * 设置服务会话发起人Id, 特指前台用户,可用于频率控制
      *
      * @param userId
@@ -110,6 +94,15 @@ public interface InvocationContext {
     CodecProtocol codecProtocol();
 
     /**
+     * 设置负载均衡策略
+     *
+     * @param loadBalanceStrategy
+     * @return
+     */
+    InvocationContext loadBalanceStrategy(final LoadBalanceStrategy loadBalanceStrategy);
+    Optional<LoadBalanceStrategy> loadBalanceStrategy();
+
+    /**
      * 设置服务IP
      *
      * @param calleeIp
@@ -128,30 +121,20 @@ public interface InvocationContext {
     Optional<Integer> calleePort();
 
     /**
-     * 调用端Ip
-     * @param callerIp
+     * 调用端tid
      * @return
      */
-    InvocationContext callerIp(String callerIp);
-    String callerIp();
+    InvocationContext callerTid(final String callerTid);
+    String callerTid();
 
     /**
-     * 调用端端口
-     * @param callerPort
-     * @return
-     */
-    InvocationContext callerPort(Integer callerPort);
-    Optional<Integer> callerPort();
-
-
-    /**
-     * 设置负载均衡策略
+     * 设置调用端moudleId
      *
-     * @param loadBalanceStrategy
+     * @param callerMid
      * @return
      */
-    InvocationContext loadBalanceStrategy(final LoadBalanceStrategy loadBalanceStrategy);
-    Optional<LoadBalanceStrategy> loadBalanceStrategy();
+    InvocationContext callerMid(final String callerMid);
+    Optional<String> callerMid();
 
     /**
      * 供服务提供方返回时填写, 例如耗时, calleeIp等
@@ -161,12 +144,23 @@ public interface InvocationContext {
     InvocationContext lastInvocationInfo(InvocationInfo invocationInfo);
     InvocationInfo lastInvocationInfo();
 
-    InvocationContext transactionId(Integer currentTransactionId);
 
-    InvocationContext transactionSequence(Integer currentTransactionSequence);
-
+    /**
+     * 用于日志信息...
+     * todo
+     * @param seqId
+     * @return
+     */
     InvocationContext seqId(Integer seqId);
     Integer seqId();
+
+    /**
+     * 兼容目前的全局事务实现
+     * @param currentTransactionId
+     * @return
+     */
+    InvocationContext transactionId(Integer currentTransactionId);
+    InvocationContext transactionSequence(Integer currentTransactionSequence);
 
     @Deprecated
     String serviceName();

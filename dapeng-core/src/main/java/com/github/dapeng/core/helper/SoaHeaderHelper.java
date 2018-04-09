@@ -56,8 +56,7 @@ public class SoaHeaderHelper {
         header.setVersionName(version);
         header.setMethodName(methodName);
 
-        header.setCallerIp(invocationContext.callerIp());
-        header.setCallerPort(invocationContext.callerPort());
+        header.setCallerIp(IPUtils.getCallerIp());
         header.setCallerTid(Optional.ofNullable(invocationContext.callerTid()));
 
 
@@ -71,6 +70,8 @@ public class SoaHeaderHelper {
             header.setOperatorId(invocationCtxProxy.operatorId());
 
             header.setCallerMid(invocationCtxProxy.callerMid());
+
+            header.addCookies(invocationCtxProxy.cookies());
         }
 
         if (!header.getCallerMid().isPresent()) {
@@ -111,6 +112,8 @@ public class SoaHeaderHelper {
             // 传递tid
             header.setSessionTid(transactionContext.sessionTid());
             invocationContext.callerTid(transactionContext.calleeTid());
+
+            header.setCallerPort(Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
         }
         return header;
     }

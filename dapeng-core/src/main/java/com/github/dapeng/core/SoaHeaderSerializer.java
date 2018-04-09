@@ -191,7 +191,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                             elem0.put(elem1, elem2);
                         }
                         iprot.readMapEnd();
-                        bean.setAttachments(elem0);
+                        bean.setCookies(elem0);
                     } else {
                         com.github.dapeng.org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
                     }
@@ -327,8 +327,8 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
             oprot.writeFieldEnd();
         }
 
-        oprot.writeFieldBegin(new com.github.dapeng.org.apache.thrift.protocol.TField("attachments", com.github.dapeng.org.apache.thrift.protocol.TType.MAP, (short) 23));
-        java.util.Map<String, String> attachments = bean.getAttachments();
+        oprot.writeFieldBegin(new com.github.dapeng.org.apache.thrift.protocol.TField("cookies", com.github.dapeng.org.apache.thrift.protocol.TType.MAP, (short) 23));
+        java.util.Map<String, String> attachments = bean.getCookies();
         oprot.writeMapBegin(new com.github.dapeng.org.apache.thrift.protocol.TMap(TType.STRING, TType.STRING, attachments.size()));
         for (java.util.Map.Entry<String, String> attachment : attachments.entrySet()) {
 
