@@ -151,6 +151,8 @@ public class ClientZk extends CommonZk {
                 return;
             }
             List<RuntimeInstance> runtimeInstanceList = zkInfo.getRuntimeInstances();
+            //这里要clear掉，因为接下来会重新将实例信息放入list中，不清理会导致重复...
+            runtimeInstanceList.clear();
             LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "], 获取{}的子节点成功", servicePath);
             //child = 10.168.13.96:9085:1.0.0
             for (String children : childrens) {
@@ -162,6 +164,8 @@ public class ClientZk extends CommonZk {
             zkInfo.setStatus(ZkServiceInfo.Status.ACTIVE);
 
         } catch (Exception e) {
+            //fixme 如果出错，为了保证watcher 机制生效，会重新执行当前方法...
+            syncZkRuntimeInfo(zkInfo);
             LOGGER.error(e.getMessage(), e);
         }
     }
