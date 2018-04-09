@@ -1,8 +1,5 @@
 package com.github.dapeng.registry.zookeeper;
 
-import com.github.dapeng.registry.ConfigKey;
-
-import java.util.Map;
 
 /**
  * @author lihuimin
@@ -18,6 +15,5 @@ public interface ZkClientAgent {
 
     void cancelSyncService(ZkServiceInfo zkInfo);
 
-    ZkConfigInfo getConfig(boolean usingFallback, String serviceKey);
 
 }

@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -27,6 +29,10 @@ public class ServerZk extends CommonZk {
 
     private RegistryAgent registryAgent;
 
+    /**
+     * zk 配置 缓存 ，根据 serivceName + versionName 作为 key
+     */
+    public final ConcurrentMap<String, ZkServiceInfo> zkConfigMap = new ConcurrentHashMap();
 
     public ServerZk(RegistryAgent registryAgent) {
         this.registryAgent = registryAgent;
@@ -333,4 +339,20 @@ public class ServerZk extends CommonZk {
             String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
 
 
+    /**
+     * 获取zk 配置信息，封装到 ZkConfigInfo
+     *
+     * @param serviceName
+     * @return
+     */
+    protected ZkServiceInfo getConfigData(String serviceName) {
+        ZkServiceInfo info = zkConfigMap.get(serviceName);
+        if (info != null) {
+            return info;
+        }
+        info = new ZkServiceInfo(serviceName);
+        syncZkConfigInfo(info);
+        zkConfigMap.put(serviceName, info);
+        return info;
+    }
 }

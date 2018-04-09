@@ -81,7 +81,7 @@ public class WatcherUtils {
      * @param data
      * @param zkInfo
      */
-    public static void processZkConfig(byte[] data, ZkConfigInfo zkInfo, boolean isGlobal) {
+    public static void processZkConfig(byte[] data, ZkServiceInfo zkInfo, boolean isGlobal) {
         try {
 
             String configData = new String(data, "utf-8");
