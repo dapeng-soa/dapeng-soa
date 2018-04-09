@@ -79,7 +79,7 @@ public class ZkClientAgentImpl implements ZkClientAgent {
 
         //使用路由规则，过滤可用服务器
         // fixme 在runtime跟config变化的时候才需要计算可用节点信息
-        InvocationContext context = InvocationContextImpl.Factory.getCurrentInstance();
+        InvocationContext context = InvocationContextImpl.Factory.currentInstance();
         List<Route> routes = usingFallbackZk ? fallbackZk.getRoutes() : masterZk.getRoutes();
         List<RuntimeInstance> runtimeList = new ArrayList<>();
 

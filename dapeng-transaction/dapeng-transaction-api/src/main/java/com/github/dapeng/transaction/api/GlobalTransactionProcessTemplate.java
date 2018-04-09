@@ -36,7 +36,7 @@ public class GlobalTransactionProcessTemplate<REQ> {
         T result = null;
 
         try {
-            InvocationContext invocationContext = InvocationContextImpl.Factory.getCurrentInstance();
+            InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
             TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
 
             transactionContext.currentTransactionSequence(transactionContext.currentTransactionSequence() + 1);

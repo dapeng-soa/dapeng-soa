@@ -19,7 +19,6 @@ import javax.xml.bind.JAXB;
 import java.io.StringReader;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.stream.Collectors.toList;
@@ -262,7 +261,7 @@ public class GlobalTransactionManager {
         //获取服务的ip和端口
         JsonPost jsonPost = new JsonPost(process.getServiceName(), process.getVersionName(), process.getMethodName());
 
-        InvocationContext invocationContext = InvocationContextImpl.Factory.getCurrentInstance();
+        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
         invocationContext.serviceName(process.getServiceName());
         invocationContext.versionName(process.getVersionName());
         invocationContext.methodName(rollbackOrForward ? process.getRollbackMethodName() : process.getMethodName());
