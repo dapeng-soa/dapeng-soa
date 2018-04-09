@@ -168,6 +168,21 @@ public interface InvocationContext {
     InvocationContext seqId(Integer seqId);
     Integer seqId();
 
+    @Deprecated
+    String serviceName();
+    @Deprecated
+    InvocationContext serviceName(String serviceName);
+
+    @Deprecated
+    String methodName();
+    @Deprecated
+    InvocationContext methodName(String methodName);
+
+    @Deprecated
+    String versionName();
+    @Deprecated
+    InvocationContext versionName(String versionName);
+
     interface InvocationInfo {
         /**
          * 服务提供方的tid
