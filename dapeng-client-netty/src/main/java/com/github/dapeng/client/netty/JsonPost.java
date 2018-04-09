@@ -67,8 +67,8 @@ public class JsonPost {
         Method method = targetMethods.get(0);
 
 
-        JsonSerializer jsonEncoder = new JsonSerializer(service, method, method.request);
-        JsonSerializer jsonDecoder = new JsonSerializer(service, method, method.response);
+        JsonSerializer jsonEncoder = new JsonSerializer(service, method, clientInfo.version, method.request);
+        JsonSerializer jsonDecoder = new JsonSerializer(service, method, clientInfo.version, method.response);
 
         final long beginTime = System.currentTimeMillis();
 

@@ -26,12 +26,14 @@ public class JsonSerializer implements BeanSerializer<String> {
     private ByteBuf requestByteBuf;
     private final Service service;
     private final Method method;
+    private final String version;
     private final InvocationContext invocationCtx = InvocationContextImpl.Factory.currentInstance();
 
-    public JsonSerializer(Service service, Method method, Struct struct) {
+    public JsonSerializer(Service service, Method method, String version, Struct struct) {
         this.struct = struct;
         this.service = service;
         this.method = method;
+        this.version = version;
     }
 
     // thrift -> json
@@ -123,7 +125,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                 if (!skip) {
                     String subStructName = fieldDataType.qualifiedName;
                     Struct subStruct = findStruct(subStructName, service);
-                    new JsonSerializer(service, method, subStruct).read(iproto, writer);
+                    new JsonSerializer(service, method, version, subStruct).read(iproto, writer);
                 } else {
                     TProtocolUtil.skip(iproto, TType.STRUCT);
                 }
@@ -201,7 +203,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                 readField(iproto, metadataType, elemType, writer, false);
             } else {
                 if (struct != null) {
-                    new JsonSerializer(service, method, struct).read(iproto, writer);
+                    new JsonSerializer(service, method, version, struct).read(iproto, writer);
                 } else if (isCollectionKind(metadataType.kind)) {
                     //处理List<list<>>
                     TList list = iproto.readListBegin();
@@ -377,7 +379,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                 case HEADER_END:
                     break;
                 case BODY_BEGIN:
-                    new SoaHeaderSerializer().write(SoaHeaderHelper.buildHeader(), new TBinaryProtocol(oproto.getTransport()));
+                    new SoaHeaderSerializer().write(SoaHeaderHelper.buildHeader(service.name, version, method.name), new TBinaryProtocol(oproto.getTransport()));
 
                     //初始化当前数据节点
                     DataType initDataType = new DataType();
@@ -971,8 +973,6 @@ public class JsonSerializer implements BeanSerializer<String> {
                 invocationCtx.calleeIp(value);
             } else if ("callerMid".equals(currentHeaderName)) {
                 invocationCtx.callerMid(value);
-            } else if ("callerIp".equals(currentHeaderName)) {
-                invocationCtx.callerIp(value);
             } else {
                 logger.warn("skip field(" + currentHeaderName + ")@pase:" + parsePhase);
             }

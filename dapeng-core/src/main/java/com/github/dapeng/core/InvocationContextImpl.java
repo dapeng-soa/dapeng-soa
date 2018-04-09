@@ -5,6 +5,7 @@ import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.IPUtils;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -29,13 +30,11 @@ public class InvocationContextImpl implements InvocationContext {
      * 版本号
      */
     private String versionName;
+
     private Optional<String> sessionTid = Optional.empty();
     private String callerTid = DapengUtil.generateTid();
     private Optional<Long> userId = Optional.empty();
     private Optional<String> userIp = Optional.empty();
-
-    private String callerIp = IPUtils.getCallerIp();
-    private Optional<Integer> callerPort = Optional.empty();
 
     private Optional<Integer> timeout = Optional.empty();
 
@@ -136,28 +135,6 @@ public class InvocationContextImpl implements InvocationContext {
     @Override
     public Optional<Integer> calleePort() {
         return this.calleePort;
-    }
-
-    @Override
-    public InvocationContext callerIp(String callerIp) {
-        this.callerIp = callerIp;
-        return this;
-    }
-
-    @Override
-    public String callerIp() {
-        return this.callerIp;
-    }
-
-    @Override
-    public InvocationContext callerPort(Integer callerPort) {
-        this.callerPort = calleePort;
-        return this;
-    }
-
-    @Override
-    public Optional<Integer> callerPort() {
-        return this.callerPort;
     }
 
     @Override
@@ -274,15 +251,40 @@ public class InvocationContextImpl implements InvocationContext {
     }
 
     public interface InvocationContextProxy {
+        /**
+         * 服务会话Id
+         * @return
+         */
         Optional<String> sessionTid();
 
+        /**
+         * 服务会话发起者Ip
+         * @return
+         */
         Optional<String> userIp();
 
+        /**
+         * 服务会话发起者id, 特指前台用户
+         * @return
+         */
         Optional<Long> userId();
 
+        /**
+         * 服务会话发起者id, 特指后台用户
+         * @return
+         */
         Optional<Long> operatorId();
 
+        /**
+         * 调用源
+         * @return
+         */
         Optional<String> callerMid();
+
+        /**
+         * 自定义信息
+         */
+        Map<String, String> cookies();
     }
 
     public static class Factory {
@@ -353,8 +355,6 @@ public class InvocationContextImpl implements InvocationContext {
         sb.append("\"").append("transactionSequence").append("\":\"").append(this.transactionSequence.isPresent() ? this.transactionSequence.get() : null).append("\",");
         sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid).append("\",");
         sb.append("\"").append("callerMid").append("\":\"").append(this.callerMid.isPresent() ? this.callerMid.get() : null).append("\",");
-        sb.append("\"").append("callerIp").append("\":\"").append(this.callerIp).append("\",");
-        sb.append("\"").append("callerPort").append("\":\"").append(this.callerPort).append("\",");
         sb.append("\"").append("operatorId").append("\":").append(this.operatorId.isPresent() ? this.operatorId.get() : null).append(",");
         sb.append("\"").append("calleeIp").append("\":\"").append(this.calleeIp.isPresent() ? this.calleeIp.get() : null).append("\",");
         sb.append("\"").append("calleePort").append("\":\"").append(this.calleePort.isPresent() ? this.calleePort.get() : null).append("\",");

@@ -83,7 +83,7 @@ public class SoaHeader {
      */
     private String callerIp;
     /**
-     * 调用者port
+     * 调用者port, 只有在dapeng容器内才需要设置这个值
      */
     private Optional<Integer> callerPort = Optional.empty();
 
@@ -126,20 +126,21 @@ public class SoaHeader {
         sb.append("\"").append("sessionTid").append("\":\"").append(this.sessionTid.isPresent() ? this.sessionTid.get() : null).append("\",");
         sb.append("\"").append("userId").append("\":\"").append(this.userId.isPresent() ? this.userId.get() : null).append("\",");
         sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? this.userIp.get() : null).append("\",");
+        sb.append("\"").append("operatorId").append("\":").append(this.operatorId.isPresent() ? this.operatorId.get() : null).append(",");
         sb.append("\"").append("timeout").append("\":\"").append(this.timeout.isPresent() ? this.timeout.get() : null).append("\",");
-        sb.append("\"").append("transactionId").append("\":\"").append(this.transactionId.isPresent() ? this.transactionId.get() : null).append("\",");
-        sb.append("\"").append("transactionSequence").append("\":\"").append(this.transactionSequence.isPresent() ? this.transactionSequence.get() : null).append("\",");
         sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid.isPresent() ? this.callerTid.get() : null).append("\",");
         sb.append("\"").append("callerMid").append("\":\"").append(this.callerMid.isPresent() ? this.callerMid.get() : null).append("\",");
         sb.append("\"").append("callerIp").append("\":\"").append(this.callerIp).append("\",");
         sb.append("\"").append("callerPort").append("\":\"").append(this.callerPort).append("\",");
-        sb.append("\"").append("operatorId").append("\":").append(this.operatorId.isPresent() ? this.operatorId.get() : null).append(",");
         sb.append("\"").append("calleeTid").append("\":\"").append(this.calleeTid.isPresent() ? this.calleeTid.get() : null).append("\",");
         sb.append("\"").append("calleeMid").append("\":\"").append(this.calleeMid.isPresent() ? this.calleeMid.get() : null).append("\",");
         sb.append("\"").append("calleeIp").append("\":\"").append(this.calleeIp.isPresent() ? this.calleeIp.get() : null).append("\",");
         sb.append("\"").append("calleePort").append("\":\"").append(this.calleePort.isPresent() ? this.calleePort.get() : null).append("\",");
         sb.append("\"").append("calleeTime1").append("\":\"").append(this.calleeTime1.isPresent() ? this.calleeTime1.get() : null).append("\",");
         sb.append("\"").append("calleeTime2").append("\":\"").append(this.calleeTime2.isPresent() ? this.calleeTime2.get() : null).append("\",");
+        sb.append("\"").append("transactionId").append("\":\"").append(this.transactionId.isPresent() ? this.transactionId.get() : null).append("\",");
+        sb.append("\"").append("transactionSequence").append("\":\"").append(this.transactionSequence.isPresent() ? this.transactionSequence.get() : null).append("\",");
+        sb.append("\"").append("cookies").append("\":\"").append(this.cookies).append("\",");
         sb.append("\"").append("respCode").append("\":\"").append(this.respCode.isPresent() ? this.respCode.get() : null).append("\",");
         sb.append("\"").append("respMessage").append("\":\"").append(this.respMessage.isPresent() ? this.respMessage.get() : null).append("\",");
 
@@ -328,51 +329,51 @@ public class SoaHeader {
     /**
      * 添加备用字段，可以自定义传递消息
      */
-    private Map<String, String> attachments;
+    private Map<String, String> cookies;
 
-    public void setAttachment(String key, String value) {
-        if (attachments == null) {
-            attachments = new HashMap<>(16);
+    public void addCookie(String key, String value) {
+        if (cookies == null) {
+            cookies = new HashMap<>(16);
         }
-        attachments.put(key, value);
+        cookies.put(key, value);
     }
 
-    public void setAttachments(Map<String, String> attachments) {
-        this.attachments = attachments == null ? new HashMap<>(16) : attachments;
+    public void setCookies(Map<String, String> cookies) {
+        this.cookies = cookies == null ? new HashMap<>(16) : cookies;
     }
 
-    public void addAttachments(Map<String, String> attachments) {
-        if (attachments == null) {
+    public void addCookies(Map<String, String> cookies) {
+        if (cookies == null) {
             return;
         }
-        if (this.attachments == null) {
-            this.attachments = new HashMap<>(16);
+        if (this.cookies == null) {
+            this.cookies = new HashMap<>(16);
         }
-        this.attachments.putAll(attachments);
+        this.cookies.putAll(cookies);
     }
 
-    public String getAttachment(String key) {
-        if (attachments == null) {
+    public String getCookie(String key) {
+        if (cookies == null) {
             return null;
         }
-        return attachments.get(key);
+        return cookies.get(key);
     }
 
-    public String getAttachment(String key, String defaultValue) {
-        if (attachments == null) {
+    public String getCookie(String key, String defaultValue) {
+        if (cookies == null) {
             return defaultValue;
         }
-        String value = attachments.get(key);
+        String value = cookies.get(key);
         if (value == null || value.length() == 0) {
             return defaultValue;
         }
         return value;
     }
 
-    public Map<String, String> getAttachments() {
-        if (attachments == null) {
-            attachments = new HashMap<>(16);
+    public Map<String, String> getCookies() {
+        if (cookies == null) {
+            cookies = new HashMap<>(16);
         }
-        return attachments;
+        return cookies;
     }
 }

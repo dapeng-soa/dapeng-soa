@@ -33,7 +33,7 @@ import java.util.Optional;
  *   6.5 calleeTime2,//服务提供方消耗时间（从开始处理请求到处理请求完成）,单位毫秒
  * </pre>
  * <p>
- * TransactionContext 用于在服务提供方设置一些改变服务调用行为的属性.
+ * TransactionContext 用于在服务提供方保存一些服务调用信息.
  * 对应服务调用方的类为{@code InvocationContext}.
  * 服务端上下文
  *
@@ -43,18 +43,6 @@ import java.util.Optional;
 public class TransactionContext {
 
     private CodecProtocol codecProtocol = CodecProtocol.CompressedBinary;
-
-    private SoaHeader header;
-
-    private Integer seqid;
-
-    private boolean isSoaGlobalTransactional;
-
-    private Integer currentTransactionSequence = 0;
-
-    private Integer currentTransactionId = 0;
-
-    private SoaException soaException;
 
     /**
      * 服务会话ID, 在某次服务调用中会一直蔓延至本次服务调用引发的所有服务调用
@@ -73,25 +61,49 @@ public class TransactionContext {
      */
     private Optional<Long> operatorId = Optional.empty();
 
-
+    /**
+     * 调用者Tid
+     */
     private Optional<String> callerTid = Optional.empty();
+    /**
+     * 调用者ip
+     */
+    private String callerIp;
+    /**
+     * 调用者port, 只有dapeng服务作为调用者的时候才有这个值
+     */
+    private Optional<Integer> callerPort = Optional.empty();
 
+    /**
+     * 客户端指定的超时
+     */
     private Optional<Integer> timeout = Optional.empty();
     /**
      * 调用源
      */
     private Optional<String> callerMid = Optional.empty();
 
-    /**
-     * 调用者ip
-     */
-    private String callerIp;
-    /**
-     * 调用者port
-     */
-    private Optional<Integer> callerPort = Optional.empty();
 
+    /**
+     * 用于服务调用传递. 当本服务作为调用者调用其它服务时, callerTid=calleeTid
+     */
     private String calleeTid;
+
+
+    private SoaHeader header;
+
+    private Integer seqid;
+
+    private SoaException soaException;
+
+    /**
+     * 全局事务相关信息
+     */
+    private boolean isSoaGlobalTransactional;
+
+    private Integer currentTransactionSequence = 0;
+
+    private Integer currentTransactionId = 0;
 
 
     public Optional<String> callerMid() {
