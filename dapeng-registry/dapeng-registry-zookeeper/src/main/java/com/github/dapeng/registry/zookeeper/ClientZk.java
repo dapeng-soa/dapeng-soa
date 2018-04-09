@@ -147,7 +147,6 @@ public class ClientZk extends CommonZk {
             if (childrens.size() == 0) {
                 zkInfo.setStatus(ZkServiceInfo.Status.CANCELED);
                 zkInfo.getRuntimeInstances().clear();
-                LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[" + zkInfo.service + "]:no service instances found");
                 LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:no service instances found");
                 return;
             }
@@ -205,7 +204,6 @@ public class ClientZk extends CommonZk {
 
         String servicePath = SERVICE_PATH + "/" + serviceName;
         try {
-
             if (zk == null) {
                 init();
             }
@@ -220,9 +218,7 @@ public class ClientZk extends CommonZk {
             LOGGER.info("获取{}的子节点成功", servicePath);
             WatcherUtils.resetServiceInfoByName(serviceName, servicePath, children, caches);
 
-        } catch (KeeperException e) {
-            LOGGER.error(e.getMessage(), e);
-        } catch (InterruptedException e) {
+        } catch (KeeperException | InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
