@@ -19,6 +19,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -65,6 +66,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             }
             dispatcher.execute(() -> {
                 try {
+                    MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().orElse("unknow"));
                     TransactionContext.Factory.currentInstance(transactionContext);
                     processRequest(channelHandlerContext, processor, msg, transactionContext, invokeTime);
                 } catch (Throwable e) {
@@ -73,6 +75,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             ExceptionUtil.convertToSoaException(e));
                 } finally {
                     TransactionContext.Factory.removeCurrentInstance();
+                    MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
                 }
             });
         } catch (Throwable ex) {
@@ -157,6 +160,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                                     SoaException soaException = ExceptionUtil.convertToSoaException(ex);
                                     attachErrorInfo(transactionContext, soaException);
                                 } else {
+                                    MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().orElse("unknow"));
                                     TransactionContext.Factory.currentInstance(transactionContext);
                                     processResult(channelHandlerContext, soaFunction, transactionContext, realResult, filterContext);
                                 }
@@ -222,6 +226,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             attachErrorInfo(transactionContext, ExceptionUtil.convertToSoaException(e));
         } finally {
             TransactionContext.Factory.removeCurrentInstance();
+            MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         }
     }
 

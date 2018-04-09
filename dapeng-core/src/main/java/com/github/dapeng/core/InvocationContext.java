@@ -174,6 +174,8 @@ public interface InvocationContext {
     InvocationContext versionName(String versionName);
     String versionName();
 
+    InvocationContext seqId(Integer seqId);
+    Integer seqId();
 
     interface InvocationInfo {
         /**

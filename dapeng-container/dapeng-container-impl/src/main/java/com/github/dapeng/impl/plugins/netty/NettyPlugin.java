@@ -81,7 +81,7 @@ public class NettyPlugin implements AppListener, Plugin {
 
                                     if (null != finalFlowCounter) ch.pipeline().addLast(finalFlowCounter);
 
-                                    ch.pipeline().addLast(soaMsgDecoder, soaMsgEncoder);
+                                    ch.pipeline().addLast(soaMsgEncoder, soaMsgDecoder);
                                     // 服务调用统计
                                     if (MONITOR_ENABLE) ch.pipeline().addLast(new SoaInvokeCounter());
 

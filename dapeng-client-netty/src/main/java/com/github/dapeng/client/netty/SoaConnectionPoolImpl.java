@@ -82,9 +82,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         WeakReference<ClientInfo> clientInfoRef = clientInfos.get(key);
         ClientInfo clientInfo = (clientInfoRef == null) ? null : clientInfoRef.get();
         if (clientInfo != null) {
-            //fixme should remove the debug log
-            logger.info("registerClientInfo-0:[" + serviceName + ", version:"
-                    + version + ", zkInfo:" + zkInfos.get(serviceName));
             return clientInfo;
         } else {
             clientInfo = new ClientInfo(serviceName, version);
@@ -101,9 +98,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             } else {
                 //todo ??
             }
-            //fixme should remove the debug log
-            logger.info("registerClientInfo-1:[" + serviceName + ", version:"
-                    + version + ", zkInfo:" + zkInfos.get(serviceName));
             return clientInfo;
         }
 
@@ -290,7 +284,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     }
 
     private Optional<Integer> getInvocationTimeout() {
-        InvocationContext context = InvocationContextImpl.Factory.getCurrentInstance();
+        InvocationContext context = InvocationContextImpl.Factory.currentInstance();
         return context.timeout();
     }
 

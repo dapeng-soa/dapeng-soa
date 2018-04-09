@@ -17,6 +17,7 @@ public class SoaSystemEnvProperties {
     private static final String KEY_SOA_KAFKA_HOST = "soa.kafka.host";
     private static final String KEY_SOA_BYTEBUF_ALLOCATOR = "soa.bytebuf.allocator";
 
+    public static final String KEY_LOGGER_SESSION_TID = "sessionTid";
     /**
      * 可指定主从竞选master
      */

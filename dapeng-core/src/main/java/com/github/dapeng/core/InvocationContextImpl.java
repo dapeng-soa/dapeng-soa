@@ -3,6 +3,7 @@ package com.github.dapeng.core;
 import com.github.dapeng.core.enums.CodecProtocol;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.helper.DapengUtil;
+import com.github.dapeng.core.helper.IPUtils;
 
 import java.util.Optional;
 
@@ -33,8 +34,8 @@ public class InvocationContextImpl implements InvocationContext {
     private Optional<Long> userId = Optional.empty();
     private Optional<String> userIp = Optional.empty();
 
-    private String callerIp;
-    private Optional<Integer> callerPort;
+    private String callerIp = IPUtils.getCallerIp();
+    private Optional<Integer> callerPort = Optional.empty();
 
     private Optional<Integer> timeout = Optional.empty();
 
@@ -58,6 +59,7 @@ public class InvocationContextImpl implements InvocationContext {
      * 包含服务提供端返回来的一些信息, 例如calleeIp, 服务耗时等信息
      */
     private InvocationInfo lastInvocationInfo;
+    private Integer seqId;
 
     @Override
     public String serviceName() {
@@ -84,6 +86,17 @@ public class InvocationContextImpl implements InvocationContext {
     @Override
     public String versionName() {
         return versionName;
+    }
+
+    @Override
+    public InvocationContext seqId(Integer seqId) {
+        this.seqId = seqId;
+        return this;
+    }
+
+    @Override
+    public Integer seqId() {
+        return seqId;
     }
 
     @Override
@@ -264,8 +277,11 @@ public class InvocationContextImpl implements InvocationContext {
         Optional<String> sessionTid();
 
         Optional<String> userIp();
+
         Optional<Long> userId();
+
         Optional<Long> operatorId();
+
         Optional<String> callerMid();
     }
 
@@ -296,13 +312,19 @@ public class InvocationContextImpl implements InvocationContext {
             return context;
         }
 
-        public static InvocationContext getCurrentInstance() {
+        public static InvocationContext currentInstance() {
             InvocationContext context = threadLocal.get();
 
             //客户端可能不手动创建上下文.
             if (context == null) {
                 context = createNewInstance();
             }
+
+            return context;
+        }
+
+        public static InvocationContext currentInstance(InvocationContext context) {
+            threadLocal.set(context);
 
             return context;
         }
@@ -315,6 +337,32 @@ public class InvocationContextImpl implements InvocationContext {
         public static void removeCurrentInstance() {
             threadLocal.remove();
         }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("{");
+        sb.append("\"").append("serviceName").append("\":\"").append(this.serviceName).append("\",");
+        sb.append("\"").append("methodName").append("\":\"").append(this.methodName).append("\",");
+        sb.append("\"").append("versionName").append("\":\"").append(this.versionName).append("\",");
+        sb.append("\"").append("sessionTid").append("\":\"").append(this.sessionTid.isPresent() ? this.sessionTid.get() : null).append("\",");
+        sb.append("\"").append("userId").append("\":\"").append(this.userId.isPresent() ? this.userId.get() : null).append("\",");
+        sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? this.userIp.get() : null).append("\",");
+        sb.append("\"").append("timeout").append("\":\"").append(this.timeout.isPresent() ? this.timeout.get() : null).append("\",");
+        sb.append("\"").append("transactionId").append("\":\"").append(this.transactionId.isPresent() ? this.transactionId.get() : null).append("\",");
+        sb.append("\"").append("transactionSequence").append("\":\"").append(this.transactionSequence.isPresent() ? this.transactionSequence.get() : null).append("\",");
+        sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid).append("\",");
+        sb.append("\"").append("callerMid").append("\":\"").append(this.callerMid.isPresent() ? this.callerMid.get() : null).append("\",");
+        sb.append("\"").append("callerIp").append("\":\"").append(this.callerIp).append("\",");
+        sb.append("\"").append("callerPort").append("\":\"").append(this.callerPort).append("\",");
+        sb.append("\"").append("operatorId").append("\":").append(this.operatorId.isPresent() ? this.operatorId.get() : null).append(",");
+        sb.append("\"").append("calleeIp").append("\":\"").append(this.calleeIp.isPresent() ? this.calleeIp.get() : null).append("\",");
+        sb.append("\"").append("calleePort").append("\":\"").append(this.calleePort.isPresent() ? this.calleePort.get() : null).append("\",");
+
+        sb.deleteCharAt(sb.lastIndexOf(","));
+        sb.append("}");
+
+        return sb.toString();
     }
 
 

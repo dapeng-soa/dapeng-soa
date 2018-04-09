@@ -46,11 +46,20 @@ public class SoaHeaderHelper {
     }
 
     public static SoaHeader buildHeader() {
-        InvocationContext invocationContext = InvocationContextImpl.Factory.getCurrentInstance();
+        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
 
         InvocationContextImpl.InvocationContextProxy invocationCtxProxy = InvocationContextImpl.Factory.getInvocationContextProxy();
 
         SoaHeader header = new SoaHeader();
+
+        header.setServiceName(invocationContext.serviceName());
+        header.setVersionName(invocationContext.versionName());
+        header.setMethodName(invocationContext.methodName());
+
+        header.setCallerIp(invocationContext.callerIp());
+        header.setCallerPort(invocationContext.callerPort());
+        header.setCallerTid(Optional.ofNullable(invocationContext.callerTid()));
+
 
         /**
          * 如果有invocationCtxProxy(一般在web或者三方系统)
@@ -64,14 +73,10 @@ public class SoaHeaderHelper {
             header.setCallerMid(invocationCtxProxy.callerMid());
         }
 
-        header.setServiceName(invocationContext.serviceName());
-        header.setVersionName(invocationContext.versionName());
-        header.setMethodName(invocationContext.methodName());
+        if (!header.getCallerMid().isPresent()) {
+            header.setCallerMid(invocationContext.callerMid());
+        }
 
-        header.setCallerMid(invocationContext.callerMid());
-        header.setCallerIp(invocationContext.callerIp());
-        header.setCallerPort(invocationContext.callerPort());
-        header.setCallerTid(Optional.ofNullable(invocationContext.callerTid()));
 
         if (!header.getOperatorId().isPresent()) {
             header.setOperatorId(invocationContext.operatorId());

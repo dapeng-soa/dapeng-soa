@@ -26,7 +26,7 @@ public class JsonSerializer implements BeanSerializer<String> {
     private ByteBuf requestByteBuf;
     private final Service service;
     private final Method method;
-    private final InvocationContext invocationCtx = InvocationContextImpl.Factory.getCurrentInstance();
+    private final InvocationContext invocationCtx = InvocationContextImpl.Factory.currentInstance();
 
     public JsonSerializer(Service service, Method method, Struct struct) {
         this.struct = struct;

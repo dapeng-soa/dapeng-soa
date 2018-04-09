@@ -57,7 +57,7 @@ public class SoaMessageBuilder<T> {
     }
 
     public ByteBuf build() throws TException {
-        InvocationContext invocationCtx = InvocationContextImpl.Factory.getCurrentInstance();
+        InvocationContext invocationCtx = InvocationContextImpl.Factory.currentInstance();
 
         //buildHeader
         protocol = protocol == null ? (invocationCtx.codecProtocol() == null ? CodecProtocol.CompressedBinary
