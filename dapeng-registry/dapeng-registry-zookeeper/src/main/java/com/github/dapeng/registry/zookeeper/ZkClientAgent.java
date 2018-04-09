@@ -16,7 +16,7 @@ public interface ZkClientAgent {
 
     void syncService(ZkServiceInfo zkInfo);
 
-    void cancnelSyncService(ZkServiceInfo zkInfo);
+    void cancelSyncService(ZkServiceInfo zkInfo);
 
     ZkConfigInfo getConfig(boolean usingFallback, String serviceKey);
 
