@@ -158,6 +158,8 @@ public class ClientZk extends CommonZk {
             });
 
             if (childrens.size() == 0) {
+                zkInfo.setStatus(ZkServiceInfo.Status.CANCELED);
+                zkInfo.getRuntimeInstances().clear();
                 LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[" + zkInfo.service + "]:no service instances found");
                 return;
             }
