@@ -128,7 +128,6 @@ public class ClientZk extends CommonZk {
     }
 
     private void syncZkRuntimeInfo(ZkServiceInfo zkInfo) {
-        syncZkRuntimeInfo(zkInfo);
         String servicePath = SERVICE_PATH + "/" + zkInfo.service;
         try {
             if (zk == null) {
