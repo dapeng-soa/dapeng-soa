@@ -135,6 +135,11 @@ public class ClientZk extends CommonZk {
         return usableList;
     }
 
+    /**
+     * 客户端 同步zk 服务信息  syncServiceZkInfo
+     *
+     * @param zkInfo
+     */
     public void syncServiceZkInfo(ZkServiceInfo zkInfo) {
         String servicePath = SERVICE_PATH + "/" + zkInfo.service;
         try {
