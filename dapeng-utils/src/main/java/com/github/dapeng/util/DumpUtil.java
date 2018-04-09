@@ -77,9 +77,9 @@ public class DumpUtil {
      * @return
      */
     public static String dumpThreadPool(ThreadPoolExecutor poolExecutor) {
-        return " --shutdown/terminating/terminated[" + poolExecutor.isShutdown() + "/" + poolExecutor.isTerminating() + "/" + poolExecutor.isTerminated() + "]\n"
-                + " --activeCount/poolSize[" + poolExecutor.getActiveCount() + "/" + poolExecutor.getPoolSize() + "]\n"
-                + " --waitingTasks/completeTasks/totalTasks[" + poolExecutor.getQueue().size() + "/" + poolExecutor.getCompletedTaskCount() + "/" + poolExecutor.getTaskCount() + "]";
+        return " \n--shutdown / terminating / terminated[" + poolExecutor.isShutdown() + " / " + poolExecutor.isTerminating() + " / " + poolExecutor.isTerminated() + "]\n"
+                + " --activeCount / poolSize[" + poolExecutor.getActiveCount() + " / " + poolExecutor.getPoolSize() + "]\n"
+                + " --waitingTasks / completeTasks / totalTasks[" + poolExecutor.getQueue().size() + " / " + poolExecutor.getCompletedTaskCount() + " / " + poolExecutor.getTaskCount() + "]";
     }
 
     public static String formatToString(String msg) {
