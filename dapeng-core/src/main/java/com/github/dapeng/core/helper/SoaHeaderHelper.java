@@ -23,7 +23,7 @@ public class SoaHeaderHelper {
 
         if (context.getHeader() == null) {
             SoaHeader header = new SoaHeader();
-            context.setHeader(header);
+            ((TransactionContextImpl)context).setHeader(header);
         }
 
         if (setDefaultIfEmpty) {
@@ -74,21 +74,21 @@ public class SoaHeaderHelper {
             header.addCookies(invocationCtxProxy.cookies());
         }
 
-        if (!header.getCallerMid().isPresent()) {
+        if (invocationContext.callerMid().isPresent()) {
             header.setCallerMid(invocationContext.callerMid());
         }
 
 
-        if (!header.getOperatorId().isPresent()) {
+        if (invocationContext.operatorId().isPresent()) {
             header.setOperatorId(invocationContext.operatorId());
         }
-        if (!header.getUserId().isPresent()) {
+        if (invocationContext.userId().isPresent()) {
             header.setUserId(invocationContext.userId());
         }
-        if (!header.getUserIp().isPresent()) {
+        if (invocationContext.userIp().isPresent()) {
             header.setUserIp(invocationContext.userIp());
         }
-        if (!header.getSessionTid().isPresent()) {
+        if (invocationContext.sessionTid().isPresent()) {
             header.setSessionTid(invocationContext.sessionTid());
         }
 

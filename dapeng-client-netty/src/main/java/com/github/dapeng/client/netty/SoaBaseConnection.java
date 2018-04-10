@@ -53,11 +53,11 @@ public abstract class SoaBaseConnection implements SoaConnection {
             throws SoaException {
         int seqid = seqidAtomic.getAndIncrement();
 
-        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
-        invocationContext.seqId(seqid)
-                .serviceName(service)
-                .versionName(version)
-                .methodName(method);
+        InvocationContextImpl invocationContext = (InvocationContextImpl)InvocationContextImpl.Factory.currentInstance();
+        invocationContext.seqId(seqid);
+        invocationContext.serviceName(service);
+        invocationContext.versionName(version);
+        invocationContext.methodName(method);
 
         Filter dispatchFilter = new Filter() {
             private FilterChain getPrevChain(FilterContext ctx) {
@@ -76,7 +76,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 checkChannel();
 
                 try {
-                    MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().orElse("unknow"));
+                    MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().orElse("0"));
 
                     String infoLog = "request[seqId:" + seqid + ", server:" + host + ":" + port + "]:"
                             + "service[" + service
@@ -149,8 +149,11 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         int seqid = seqidAtomic.getAndIncrement();
 
-        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
+        InvocationContextImpl invocationContext = (InvocationContextImpl)InvocationContextImpl.Factory.currentInstance();
         invocationContext.seqId(seqid);
+        invocationContext.serviceName(service);
+        invocationContext.versionName(version);
+        invocationContext.methodName(method);
 
         Filter dispatchFilter = new Filter() {
             private FilterChain getPrevChain(FilterContext ctx) {
@@ -192,7 +195,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                             Result<RESP> result = new Result<>(null, soaException);
                             ctx.setAttribute("result", result);
                         } else {
-                            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().orElse("unknow"));
+                            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().orElse("0"));
                             InvocationContextImpl.Factory.currentInstance(invocationContext);
 
                             Result<RESP> result = processResponse(realResult, responseSerializer);

@@ -250,9 +250,12 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
             oprot.writeString(bean.getUserIp().get());
             oprot.writeFieldEnd();
         }
-        oprot.writeFieldBegin(new TField("callerIp", TType.STRING, (short) 8));
-        oprot.writeString(bean.getCallerIp());
-        oprot.writeFieldEnd();
+
+        if (bean.getCallerIp().isPresent()) {
+            oprot.writeFieldBegin(new TField("callerIp", TType.STRING, (short) 8));
+            oprot.writeString(bean.getCallerIp().get());
+            oprot.writeFieldEnd();
+        }
 
         if (bean.getCallerPort().isPresent()) {
             oprot.writeFieldBegin(new TField("callerPort", TType.I32, (short) 9));
@@ -359,9 +362,6 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
         }
         if (bean.getVersionName() == null) {
             throw new SoaException(SoaCode.NotNull, "versionName字段不允许为空");
-        }
-        if (bean.getCallerIp() == null) {
-            throw new SoaException(SoaCode.NotNull, "callerIp字段不允许为空");
         }
     }
 

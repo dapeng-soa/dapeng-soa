@@ -963,13 +963,7 @@ public class JsonSerializer implements BeanSerializer<String> {
         }
 
         private void fillStringToInvocationCtx(String value) {
-            if ("serviceName".equals(currentHeaderName)) {
-                invocationCtx.serviceName(value);
-            } else if ("methodName".equals(currentHeaderName)) {
-                invocationCtx.methodName(value);
-            } else if ("versionName".equals(currentHeaderName)) {
-                invocationCtx.versionName(value);
-            } else if ("calleeIp".equals(currentHeaderName)) {
+            if ("calleeIp".equals(currentHeaderName)) {
                 invocationCtx.calleeIp(value);
             } else if ("callerMid".equals(currentHeaderName)) {
                 invocationCtx.callerMid(value);

@@ -1,12 +1,14 @@
 package com.github.dapeng.core;
 
+import com.github.dapeng.core.enums.LoadBalanceStrategy;
+
 /**
  * <pre>
  * web	service1	service2	service3	service4
  *  |_____m1()
- *  |__________________m2()
- *  |                  |_______________________m4()
- *  |_______________________________m3()
+ *         |___________m2()
+ *         |           |_______________________m4()
+ *         |_______________________m3()
  *
  * 1. 服务session: 如上图是一次完整的服务会话过程,由服务发起者(web)一次服务调用引发的一系列服务调用
  * 2. 服务调用者: 单次服务调用的调用端,对应信息有caller的相关字段
@@ -33,16 +35,17 @@ package com.github.dapeng.core;
 public class InvocationInfoImpl implements InvocationContext.InvocationInfo {
     private final String calleeTid;
     private final String calleeIp;
-    private final Integer calleePort;
+    private final int calleePort;
     private final String calleeMid;
-    private final Integer calleeTime1;
-    private final Integer calleeTime2;
-    private final Integer serviceTime;
+    private final int calleeTime1;
+    private final int calleeTime2;
+    private final int serviceTime;
+    private final LoadBalanceStrategy loadBalanceStrategy;
 
     public InvocationInfoImpl(String calleeTid, String calleeIp,
-                              Integer calleePort, String calleeMid,
-                              Integer calleeTime1, Integer calleeTime2,
-                              Integer serviceTime) {
+                              int calleePort, String calleeMid,
+                              int calleeTime1, int calleeTime2,
+                              int serviceTime, LoadBalanceStrategy loadBalanceStrategy) {
         this.calleeTid = calleeTid;
         this.calleeIp = calleeIp;
         this.calleePort = calleePort;
@@ -50,6 +53,7 @@ public class InvocationInfoImpl implements InvocationContext.InvocationInfo {
         this.calleeTime1 = calleeTime1;
         this.calleeTime2 = calleeTime2;
         this.serviceTime = serviceTime;
+        this.loadBalanceStrategy = loadBalanceStrategy;
     }
 
 
@@ -64,7 +68,7 @@ public class InvocationInfoImpl implements InvocationContext.InvocationInfo {
     }
 
     @Override
-    public Integer calleePort() {
+    public int calleePort() {
         return calleePort;
     }
 
@@ -74,17 +78,22 @@ public class InvocationInfoImpl implements InvocationContext.InvocationInfo {
     }
 
     @Override
-    public Integer calleeTime1() {
+    public int calleeTime1() {
         return calleeTime1;
     }
 
     @Override
-    public Integer calleeTime2() {
+    public int calleeTime2() {
         return calleeTime2;
     }
 
     @Override
-    public Integer serviceTime() {
+    public int serviceTime() {
         return serviceTime;
+    }
+
+    @Override
+    public LoadBalanceStrategy loadBalanceStrategy() {
+        return loadBalanceStrategy;
     }
 }

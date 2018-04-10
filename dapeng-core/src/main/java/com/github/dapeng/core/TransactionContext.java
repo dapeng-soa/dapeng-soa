@@ -8,14 +8,11 @@ import java.util.Optional;
  * <pre>
  * web	service1	service2	service3	service4
  *  |_____m1()
- *  |__________________m2()
- *  |                  |_______________________m4()
- *  |_______________________________m3()
+ *         |___________m2()
+ *         |            |______________________m4()
+ *         |_______________________m3()
  *
- * 1. 服务session: 如上图是三个服务会话,由服务发起者(web)三次服务调用引发的一系列服务调用:
- *  1.1 web->m1
- *  1.2 web->m2->m4
- *  1.3 web->m3
+ * 1. 服务session: 如上图是一个服务会话,由服务发起者(web)一次服务调用引发的一系列服务调用
  * 2. 服务调用者: 单次服务调用的调用端(例如对于1.2的服务会话中, web以及service2都是服务调用端),对应信息有caller的相关字段
  * 3. 服务发起者: 服务调用的最初发起者, 发起者也是调用者, 但是它调用的服务可能引发一连串的服务调用(也就是一次服务会话), 从而产生若干服务调用者. 上图三个服务会话的发起者都是web层, 对应信息有userId,userIp
  * 4. caller信息:
@@ -40,226 +37,55 @@ import java.util.Optional;
  * @author craneding
  * @date 15/9/24
  */
-public class TransactionContext {
+public interface TransactionContext {
 
-    private CodecProtocol codecProtocol = CodecProtocol.CompressedBinary;
+    Optional<String> callerMid();
 
-    /**
-     * 服务会话ID, 在某次服务调用中会一直蔓延至本次服务调用引发的所有服务调用
-     */
-    private Optional<String> sessionTid = Optional.empty();
-    /**
-     * 服务会话发起人Id, 特指前台用户
-     */
-    private Optional<Long> userId = Optional.empty();
-    /**
-     * 服务会话发起人Ip
-     */
-    private Optional<String> userIp = Optional.empty();
-    /**
-     * 服务会话发起操作人Id, 特指后台用户
-     */
-    private Optional<Long> operatorId = Optional.empty();
+    Optional<String> callerIp();
 
-    /**
-     * 调用者Tid
-     */
-    private Optional<String> callerTid = Optional.empty();
-    /**
-     * 调用者ip
-     */
-    private String callerIp;
-    /**
-     * 调用者port, 只有dapeng服务作为调用者的时候才有这个值
-     */
-    private Optional<Integer> callerPort = Optional.empty();
+    Optional<Long> operatorId();
 
-    /**
-     * 客户端指定的超时
-     */
-    private Optional<Integer> timeout = Optional.empty();
-    /**
-     * 调用源
-     */
-    private Optional<String> callerMid = Optional.empty();
+    Optional<Long> userId();
 
+    TransactionContext codecProtocol(CodecProtocol codecProtocol);
 
-    /**
-     * 用于服务调用传递. 当本服务作为调用者调用其它服务时, callerTid=calleeTid
-     */
-    private String calleeTid;
+    CodecProtocol codecProtocol();
 
+    SoaHeader getHeader();
 
-    private SoaHeader header;
+    int getSeqid();
 
-    private Integer seqid;
+    boolean isSoaGlobalTransactional();
 
-    private SoaException soaException;
+    TransactionContext setSoaGlobalTransactional(boolean soaGlobalTransactional);
 
-    /**
-     * 全局事务相关信息
-     */
-    private boolean isSoaGlobalTransactional;
+    int currentTransactionSequence();
 
-    private Integer currentTransactionSequence = 0;
+    TransactionContext currentTransactionSequence(int currentTransactionSequence);
 
-    private Integer currentTransactionId = 0;
+    int currentTransactionId();
 
+    TransactionContext currentTransactionId(int currentTransactionId);
 
-    public Optional<String> callerMid() {
-        return callerMid;
-    }
+    SoaException soaException();
 
-    public TransactionContext callerMid(String callerMid) {
-        this.callerMid = Optional.ofNullable(callerMid);
-        return this;
-    }
+    TransactionContext soaException(SoaException soaException);
 
-    public String callerIp() {
-        return callerIp;
-    }
+    Optional<Integer> callerPort();
 
-    public TransactionContext callerIp(String callerIp) {
-        this.callerIp = callerIp;
-        return this;
-    }
+    Optional<String> sessionTid();
 
-    public Optional<Long> operatorId() {
-        return operatorId;
-    }
+    Optional<String> userIp();
 
-    public TransactionContext operatorId(Long operatorId) {
-        this.operatorId = Optional.ofNullable(operatorId);
-        return this;
-    }
+    Optional<String> callerTid();
 
-    public Optional<Long> userId() {
-        return userId;
-    }
+    Optional<Integer> timeout();
 
-    public TransactionContext userId(Long userId) {
-        this.userId = Optional.ofNullable(userId);
-        return this;
-    }
+    String calleeTid();
 
-    public TransactionContext codecProtocol(CodecProtocol codecProtocol) {
-        this.codecProtocol = codecProtocol;
-        return this;
-    }
+    TransactionContext calleeTid(String calleeTid);
 
-    public CodecProtocol codecProtocol() {
-        return codecProtocol;
-    }
-
-    public SoaHeader getHeader() {
-        return header;
-    }
-
-    public TransactionContext setHeader(SoaHeader header) {
-        this.header = header;
-        return  this;
-    }
-
-    public Integer getSeqid() {
-        return seqid;
-    }
-
-    public TransactionContext setSeqid(Integer seqid) {
-        this.seqid = seqid;
-        return this;
-    }
-
-    public boolean isSoaGlobalTransactional() {
-        return isSoaGlobalTransactional;
-    }
-
-    public TransactionContext setSoaGlobalTransactional(boolean soaGlobalTransactional) {
-        isSoaGlobalTransactional = soaGlobalTransactional;
-        return this;
-    }
-
-    public Integer currentTransactionSequence() {
-        return currentTransactionSequence;
-    }
-
-    public TransactionContext currentTransactionSequence(Integer currentTransactionSequence) {
-        this.currentTransactionSequence = currentTransactionSequence;
-        return this;
-    }
-
-    public Integer currentTransactionId() {
-        return currentTransactionId;
-    }
-
-    public TransactionContext currentTransactionId(Integer currentTransactionId) {
-        this.currentTransactionId = currentTransactionId;
-        return this;
-    }
-
-    public SoaException soaException() {
-        return soaException;
-    }
-
-    public TransactionContext soaException(SoaException soaException) {
-        this.soaException = soaException;
-        return this;
-    }
-
-    public Optional<Integer> callerPort() {
-        return callerPort;
-    }
-
-    public TransactionContext callerPort(Integer callerPort) {
-        this.callerPort = Optional.ofNullable(callerPort);
-        return this;
-    }
-
-    public Optional<String> sessionTid() {
-        return sessionTid;
-    }
-
-    public TransactionContext sessionTid(String sessionTid) {
-        this.sessionTid = Optional.ofNullable(sessionTid);
-        return this;
-    }
-
-    public Optional<String> userIp() {
-        return userIp;
-    }
-
-    public TransactionContext userIp(String userIp) {
-        this.userIp = Optional.ofNullable(userIp);
-        return this;
-    }
-
-    public Optional<String> callerTid() {
-        return callerTid;
-    }
-
-    public TransactionContext callerTid(String callerTid) {
-        this.callerTid = Optional.ofNullable(callerTid);
-        return this;
-    }
-
-    public Optional<Integer> timeout() {
-        return timeout;
-    }
-
-    public TransactionContext timeout(Integer timeout) {
-        this.timeout = Optional.ofNullable(timeout);
-        return this;
-    }
-
-    public String calleeTid() {
-        return calleeTid;
-    }
-
-    public TransactionContext calleeTid(String calleeTid) {
-        this.calleeTid = calleeTid;
-        return this;
-    }
-
-    public static class Factory {
+    class Factory {
         private static ThreadLocal<TransactionContext> threadLocal = new ThreadLocal<>();
 
         /**
@@ -270,7 +96,7 @@ public class TransactionContext {
         public static TransactionContext createNewInstance() {
             assert (threadLocal.get() == null);
 
-            TransactionContext context = new TransactionContext();
+            TransactionContext context = new TransactionContextImpl();
             threadLocal.set(context);
             return context;
         }
@@ -304,7 +130,7 @@ public class TransactionContext {
      *
      * @return
      */
-    public static boolean hasCurrentInstance() {
-        return Factory.threadLocal.get() != null;
+    static boolean hasCurrentInstance() {
+        return TransactionContext.Factory.threadLocal.get() != null;
     }
 }
