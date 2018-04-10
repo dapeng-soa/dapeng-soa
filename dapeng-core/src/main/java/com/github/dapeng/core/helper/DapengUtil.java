@@ -4,39 +4,52 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.github.dapeng.core.helper.IPUtils.ipToInt;
+import static com.github.dapeng.core.helper.IPUtils.localIpAsInt;
+
 /**
  * @author ever
  * @date 20180406
  */
 public class DapengUtil {
     private static AtomicInteger seqId = new AtomicInteger(0);
-
+    private static int processId = getProcessId() << 16;
+    private static int localIp = localIpAsInt();
     /**
      * 生成TransactionId. 这是一个长度为12的16进制字符串,
      * 可用于sessionTid, callerTid, calleeTid
-     * byte[0-3] ip^ pid<<16  byte[4-5] sequenceno顺序递增, 65535重置
+     * byte[0-3] ip^ pid<<16  byte[4-7] sequenceno顺序递增, Integer.MAX_VALUE重置
      *
      * @return
      */
     public static String generateTid() {
-        int intIp = ipToInt(IPUtils.localIp());
-        int processId = getProcessId() << 16;
-        int heigh = intIp ^ processId;
+        int high = localIp ^ processId;
         int low = seqId.getAndIncrement();
         if (low == Integer.MAX_VALUE) {
             seqId.set(0);
         }
 
-        String heighBytes = Integer.toHexString(heigh);
-        while (heighBytes.length() < 8) {
-            heighBytes = "0" + heighBytes;
-        }
+        StringBuilder sb = new StringBuilder();
 
-        String lowBytes = Integer.toHexString(low);
-        while (lowBytes.length() < 4) {
-            lowBytes = "0" + lowBytes;
-        }
-        return heighBytes + lowBytes;
+        append(sb, (byte) ((high >> 24) & 0xFF));
+        append(sb, (byte) ((high >> 16) & 0xFF));
+        append(sb, (byte) ((high >> 8) & 0xFF));
+        append(sb, (byte) ((high) & 0xFF));
+
+        append(sb, (byte) ((low >> 24) & 0xFF));
+        append(sb, (byte) ((low >> 16) & 0xFF));
+        append(sb, (byte) ((low >> 8) & 0xFF));
+        append(sb, (byte) ((low) & 0xFF));
+
+        return sb.toString();
+    }
+
+    static void append(StringBuilder buffer, byte b) {
+        int h = (b & 0xFF) >> 4;
+        int l = b & 0x0F;
+
+        buffer.append(h >= 10 ? (char)(h - 10 + 'a') : (char)(h + '0'));
+        buffer.append(l >= 10 ? (char)(l - 10 + 'a') : (char)(l + '0'));
     }
 
     /**
@@ -48,33 +61,5 @@ public class DapengUtil {
         RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
         return Integer.valueOf(runtimeMXBean.getName().split("@")[0])
                 .intValue();
-    }
-
-
-    /**
-     * @param strIp
-     * @return
-     */
-    public static int ipToInt(String strIp) {
-        String[] ipArr = strIp.split("\\.");
-        if (ipArr.length != 4) {
-            return 0;
-        }
-        int[] ip = new int[4];
-        // 先找到IP地址字符串中.的位置
-        // 将每个.之间的字符串转换成整型
-        ip[0] = Integer.parseInt(ipArr[0]);
-        ip[1] = Integer.parseInt(ipArr[1]);
-        ip[2] = Integer.parseInt(ipArr[2]);
-        ip[3] = Integer.parseInt(ipArr[3]);
-        return (ip[0] << 24) + (ip[1] << 16) + (ip[2] << 8) + ip[3];
-    }
-
-    public  static void main(String[] args) {
-        long begin = System.currentTimeMillis();
-        for (int i = 0; i < 65536; i++) {
-            generateTid();
-        }
-        System.out.print("cost:" + (System.currentTimeMillis() - begin));
     }
 }

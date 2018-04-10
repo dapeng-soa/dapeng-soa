@@ -50,4 +50,15 @@ public class IPUtils {
             return "unknown";
         }
     }
+
+    public static int localIpAsInt() {
+        try {
+            byte[] ip4address = InetAddress.getLocalHost().getAddress();
+            return ((ip4address[0] & 0xff) << 24) | ((ip4address[1] & 0xff) << 16)
+                    | ((ip4address[2] & 0xff) << 8) | (ip4address[3] & 0xff);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
 }
