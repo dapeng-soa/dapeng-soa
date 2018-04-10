@@ -379,7 +379,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                 case HEADER_END:
                     break;
                 case BODY_BEGIN:
-                    new SoaHeaderSerializer().write(SoaHeaderHelper.buildHeader(service.name, version, method.name), new TBinaryProtocol(oproto.getTransport()));
+                    new SoaHeaderSerializer().write(SoaHeaderHelper.buildHeader(service.namespace + "." + service.name, version, method.name), new TBinaryProtocol(oproto.getTransport()));
 
                     //初始化当前数据节点
                     DataType initDataType = new DataType();
