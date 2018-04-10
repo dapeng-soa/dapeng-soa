@@ -124,7 +124,10 @@ public class ClientZk extends CommonZk {
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
-        zkInfo.setStatus(ZkServiceInfo.Status.ACTIVE);
+        //判断,runtimeList size
+        if (zkInfo.getRuntimeInstances().size() > 0) {
+            zkInfo.setStatus(ZkServiceInfo.Status.ACTIVE);
+        }
     }
 
     private void syncZkRuntimeInfo(ZkServiceInfo zkInfo) {
@@ -161,10 +164,13 @@ public class ClientZk extends CommonZk {
                 runtimeInstanceList.add(instance);
             }
 
+            StringBuilder logBuffer = new StringBuilder();
+            zkInfo.getRuntimeInstances().forEach(info -> logBuffer.append(info.toString()));
+            LOGGER.info("<-> syncZkRuntimeInfo 触发服务实例同步，目前服务实例列表:" + zkInfo.service + " -> " + logBuffer);
             zkInfo.setStatus(ZkServiceInfo.Status.ACTIVE);
 
-        } catch (Exception e) {
-            //fixme 如果出错，为了保证watcher 机制生效，会重新执行当前方法...
+        } catch (KeeperException | InterruptedException e) {
+            //fixme 是否需要等待
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e1) {
@@ -172,7 +178,21 @@ public class ClientZk extends CommonZk {
             syncZkRuntimeInfo(zkInfo);
             LOGGER.error(e.getMessage(), e);
         }
+
     }
+
+
+    private Watcher runtimeWatcher(ZkServiceInfo zkInfo) {
+        return watchedEvent -> {
+            if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
+                if (zkInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
+                    LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:{}子节点发生变化，重新获取信息", watchedEvent.getPath());
+                    syncZkRuntimeInfo(zkInfo);
+                }
+            }
+        };
+    }
+
 
     //～～～～～～～～～～～～～～～～～～
     //      目前暂时没有用到的方法

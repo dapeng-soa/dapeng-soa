@@ -127,7 +127,7 @@ public class WatcherUtils {
                     }
                 }
             }
-            LOGGER.info("get config form {} with data [{}]");
+            LOGGER.info("get config from {} with data [{}]", zkInfo.service, configData);
         } catch (UnsupportedEncodingException e) {
             LOGGER.error(e.getMessage(), e);
         }
