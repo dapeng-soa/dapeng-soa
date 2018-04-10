@@ -47,37 +47,39 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
         container.registerAppListener(this);
     }
 
-
     @Override
     public void appRegistered(AppEvent event) {
-        Application application = (Application) event.getSource();
-
-        List<ServiceInfo> serviceInfos = application.getServiceInfos().stream()
-                .filter(serviceInfo ->
-                        serviceInfo.ifaceClass.isAnnotationPresent(ScheduledTask.class))
-                .collect(Collectors.toList());
-
-        serviceInfos.forEach(serviceInfo -> runTask(serviceInfo));
+        LOGGER.warn(getClass().getSimpleName() + "::appRegistered, event[" + event.getSource() + "]");
+//        Application application = (Application) event.getSource();
+//        todo
+//        List<ServiceInfo> serviceInfos = application.getServiceInfos().stream()
+//                .filter(serviceInfo ->
+//                        serviceInfo.ifaceClass.isAnnotationPresent(ScheduledTask.class))
+//                .collect(Collectors.toList());
+//
+//        serviceInfos.forEach(serviceInfo -> runTask(serviceInfo));
     }
 
     @Override
     public void appUnRegistered(AppEvent event) {
-        Application application = (Application) event.getSource();
+        LOGGER.warn(getClass().getSimpleName() + "::appUnRegistered, event[" + event.getSource() + "]");
+//        Application application = (Application) event.getSource();
+//
+//        List<ServiceInfo> serviceInfos = application.getServiceInfos().stream()
+//                .filter(serviceInfo ->
+//                        serviceInfo.ifaceClass.isAnnotationPresent(ScheduledTask.class))
+//                .collect(Collectors.toList());
 
-        List<ServiceInfo> serviceInfos = application.getServiceInfos().stream()
-                .filter(serviceInfo ->
-                        serviceInfo.ifaceClass.isAnnotationPresent(ScheduledTask.class))
-                .collect(Collectors.toList());
-        serviceInfos.forEach(i -> stopTask(i));
+//        serviceInfos.forEach(i -> stopTask(i));
     }
 
     @Override
     public void start() {
-        LOGGER.warn("Plugin::TaskSchedulePlugin start");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
         container.getApplications().forEach(application -> {
             List<ServiceInfo> serviceInfos = application.getServiceInfos().stream()
                     .filter(serviceInfo ->
-                    serviceInfo.ifaceClass.isAnnotationPresent(ScheduledTask.class))
+                            serviceInfo.ifaceClass.isAnnotationPresent(ScheduledTask.class))
                     .collect(Collectors.toList());
             serviceInfos.forEach(serviceInfo -> runTask(serviceInfo));
         });
@@ -85,7 +87,7 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
 
     @Override
     public void stop() {
-        LOGGER.warn("Plugin::TaskSchedulePlugin stop");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::stop");
         container.getApplications().forEach(application -> {
             List<ServiceInfo> serviceInfos = application.getServiceInfos().stream()
                     .filter(serviceInfo ->

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-
+    <contextName>container</contextName>
     <!-- 控制台日志打印 -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
@@ -13,7 +13,7 @@
     </appender>
 
     <appender name="SIMPLEFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <prudent>true</prudent>
+        <prudent>false</prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${soa.base}/logs/simple-dapeng-container.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
@@ -24,7 +24,7 @@
     </appender>
 
     <appender name="SLOWTIMEFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <prudent>true</prudent>
+        <prudent>false</prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${soa.base}/logs/slowtime-dapeng-container.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
@@ -35,7 +35,7 @@
     </appender>
 
     <appender name="DETAILFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <prudent>true</prudent>
+        <prudent>false</prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${soa.base}/logs/detail-dapeng-container.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
@@ -46,7 +46,7 @@
     </appender>
 
     <appender name="ERRORFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <prudent>true</prudent>
+        <prudent>false</prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${soa.base}/logs/error-dapeng-container.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
@@ -60,7 +60,7 @@
     </appender>
 
     <appender name="GBTRANSACTIONFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <prudent>true</prudent>
+        <prudent>false</prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${soa.base}/logs/transaction-dapeng-container.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
@@ -85,7 +85,7 @@
     <!--</appender>-->
 
     <appender name="SCHEDULEDTASK" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <prudent>true</prudent>
+        <prudent>false</prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${soa.base}/logs/scheduled-task.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
@@ -130,4 +130,5 @@
         <appender-ref ref="DETAILFILE"/>
         <appender-ref ref="ERRORFILE"/>
     </root>
+    <jmxConfigurator />
 </configuration>

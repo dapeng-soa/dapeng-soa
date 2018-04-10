@@ -15,4 +15,16 @@ public class ContainerClassLoader extends URLClassLoader {
         super(urls, coreClassLoader);
     }
 
+    @Override
+    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+        Class clz =  super.loadClass(name, resolve);
+
+        if (name.startsWith("com.github.dapeng.client.netty.SoaConnectionPoolImpl")) {
+            System.out.println("||==" + clz.getClassLoader());
+            System.out.println("||==" + clz.getProtectionDomain().getCodeSource().getLocation());
+        }
+
+        return clz;
+    }
+
 }

@@ -24,6 +24,8 @@ public class TransactionContext {
 
     private Integer currentTransactionId = 0;
 
+    private SoaException soaException;
+
     private Optional<String> callerFrom = Optional.empty();
 
     private Optional<String> callerIp = Optional.empty();
@@ -130,6 +132,14 @@ public class TransactionContext {
 
     public void setCurrentTransactionId(Integer currentTransactionId) {
         this.currentTransactionId = currentTransactionId;
+    }
+
+    public SoaException getSoaException() {
+        return soaException;
+    }
+
+    public void setSoaException(SoaException soaException) {
+        this.soaException = soaException;
     }
 
     public static class Factory {

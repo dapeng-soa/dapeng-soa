@@ -17,12 +17,12 @@ public class SoaConnectionImpl extends SoaBaseConnection {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SoaConnectionImpl.class);
 
-    public SoaConnectionImpl(String host, int port) {
-        super(host, port);
+    public SoaConnectionImpl(String host, int port, SubPool parent) {
+        super(host, port, parent);
     }
 
     @Override
-    protected  <REQ> ByteBuf buildRequestBuf(String service, String version, String method, int seqid, REQ request, BeanSerializer<REQ> requestSerializer) throws SoaException {
+    protected <REQ> ByteBuf buildRequestBuf(String service, String version, String method, int seqid, REQ request, BeanSerializer<REQ> requestSerializer) throws SoaException {
         AbstractByteBufAllocator allocator =
                 SoaSystemEnvProperties.SOA_POOLED_BYTEBUF ?
                         PooledByteBufAllocator.DEFAULT : UnpooledByteBufAllocator.DEFAULT;
