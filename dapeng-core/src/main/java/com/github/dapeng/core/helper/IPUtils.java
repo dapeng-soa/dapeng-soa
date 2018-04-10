@@ -37,12 +37,12 @@ public class IPUtils {
         }
     }
 
-    public static String localIp() {
+    public static String containerIp() {
         return (SoaSystemEnvProperties.SOA_LOCAL_HOST_NAME != null && !SoaSystemEnvProperties.SOA_LOCAL_HOST_NAME.trim().isEmpty()) ? SoaSystemEnvProperties.SOA_LOCAL_HOST_NAME : inetAddress.getHostAddress();
     }
 
 
-    public static String getCallerIp() {
+    public static String localIp() {
         try {
             return InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {

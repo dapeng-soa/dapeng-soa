@@ -50,7 +50,7 @@ public class ServiceInvocationProxy implements InvocationContextImpl.InvocationC
 
     @Override
     public Optional<String> userIp() {
-        return Optional.ofNullable(IPUtils.getCallerIp());
+        return Optional.ofNullable(IPUtils.localIp());
     }
 }
 

@@ -56,7 +56,7 @@ public class SoaHeaderHelper {
         header.setVersionName(version);
         header.setMethodName(methodName);
 
-        header.setCallerIp(IPUtils.getCallerIp());
+        header.setCallerIp(IPUtils.localIp());
         header.setCallerTid(Optional.ofNullable(invocationContext.callerTid()));
 
 
