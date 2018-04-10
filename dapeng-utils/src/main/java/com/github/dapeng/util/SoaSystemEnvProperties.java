@@ -75,7 +75,7 @@ public class SoaSystemEnvProperties {
     public static final Long SOA_MAX_READ_BUFFER_SIZE = Long.valueOf(get(KEY_SOA_MAX_READ_BUFFER_SIZE, String.valueOf(1024 * 1024 * 5)));// 5M
 
     public static final String SOA_LOCAL_HOST_NAME = get(KEY_SOA_LOCAL_HOST_NAME);
-    public static final boolean SOA_TRANSACTIONAL_ENABLE = Boolean.valueOf(get(KEY_SOA_TRANSACTIONAL_ENABLE, "false"));
+    public static final boolean SOA_TRANSACTIONAL_ENABLE = Boolean.valueOf(get(KEY_SOA_TRANSACTIONAL_ENABLE, "true"));
     public static final boolean SOA_LOG_FORMAT_ENABLE = Boolean.valueOf(get(KEY_SOA_LOG_FORMAT_ENABLE, "true"));
 
 
