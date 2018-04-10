@@ -57,91 +57,91 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     break;
                 case 5:
                     if (schemeField.type == TType.STRING) {
-                        bean.setSessionTid(Optional.of(iprot.readString()));
-                    } else {
-                        TProtocolUtil.skip(iprot, schemeField.type);
-                    }
-                    break;
-                case 6:
-                    if (schemeField.type == TType.I64) {
-                        bean.setUserId(Optional.of(iprot.readI64()));
-                    } else {
-                        TProtocolUtil.skip(iprot, schemeField.type);
-                    }
-                    break;
-                case 7:
-                    if (schemeField.type == TType.STRING) {
-                        bean.setUserIp(Optional.of(iprot.readString()));
-                    } else {
-                        TProtocolUtil.skip(iprot, schemeField.type);
-                    }
-                    break;
-                case 8:
-                    if (schemeField.type == TType.STRING) {
                         bean.setCallerIp(iprot.readString());
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
                     break;
-                case 9:
+                case 6:
                     if (schemeField.type == TType.I32) {
                         bean.setCallerPort(Optional.of(iprot.readI32()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
                     break;
-                case 10:
-                    if (schemeField.type == TType.I64) {
-                        bean.setOperatorId(Optional.of(iprot.readI64()));
+                case 7:
+                    if (schemeField.type == TType.STRING) {
+                        bean.setSessionTid(Optional.of(iprot.readString()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
                     break;
-                case 11:
+                case 8:
+                    if (schemeField.type == TType.STRING) {
+                        bean.setUserIp(Optional.of(iprot.readString()));
+                    } else {
+                        TProtocolUtil.skip(iprot, schemeField.type);
+                    }
+                    break;
+                case 9:
                     if (schemeField.type == TType.STRING) {
                         bean.setCallerTid(Optional.of(iprot.readString()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
                     break;
-                case 12:
+                case 10:
                     if (schemeField.type == TType.I32) {
                         bean.setTimeout(Optional.of(iprot.readI32()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
                     break;
-                case 13:
+                case 11:
                     if (schemeField.type == TType.STRING) {
                         bean.setRespCode(iprot.readString());
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
                     break;
-                case 14:
+                case 12:
                     if (schemeField.type == TType.STRING) {
                         bean.setRespMessage(iprot.readString());
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
                     break;
-                case 15:
+                case 13:
                     if (schemeField.type == TType.STRING) {
                         bean.setCalleeTid(iprot.readString());
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
                     break;
-                case 16:
+                case 14:
                     if (schemeField.type == TType.STRING) {
                         bean.setCalleeIp(Optional.of(iprot.readString()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
                     break;
-                case 17:
+                case 15:
+                    if (schemeField.type == TType.I64) {
+                        bean.setOperatorId(Optional.of(iprot.readI64()));
+                    } else {
+                        TProtocolUtil.skip(iprot, schemeField.type);
+                    }
+                    break;
+                case 16:
                     if (schemeField.type == TType.I32) {
                         bean.setCalleePort(Optional.of(iprot.readI32()));
+                    } else {
+                        TProtocolUtil.skip(iprot, schemeField.type);
+                    }
+                    break;
+                case 17:
+                    if (schemeField.type == TType.I64) {
+                        bean.setUserId(Optional.of(iprot.readI64()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
@@ -235,72 +235,69 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
             oprot.writeString(bean.getCallerMid().get());
             oprot.writeFieldEnd();
         }
-        if (bean.getSessionTid().isPresent()) {
-            oprot.writeFieldBegin(new TField("sessionTid", TType.STRING, (short) 5));
-            oprot.writeString(bean.getSessionTid().get());
-            oprot.writeFieldEnd();
-        }
-        if (bean.getUserId().isPresent()) {
-            oprot.writeFieldBegin(new TField("userId", TType.I64, (short) 6));
-            oprot.writeI64(bean.getUserId().get());
-            oprot.writeFieldEnd();
-        }
-        if (bean.getUserIp().isPresent()) {
-            oprot.writeFieldBegin(new TField("userIp", TType.STRING, (short) 7));
-            oprot.writeString(bean.getUserIp().get());
-            oprot.writeFieldEnd();
-        }
-
         if (bean.getCallerIp().isPresent()) {
-            oprot.writeFieldBegin(new TField("callerIp", TType.STRING, (short) 8));
+            oprot.writeFieldBegin(new TField("callerIp", TType.STRING, (short) 5));
             oprot.writeString(bean.getCallerIp().get());
             oprot.writeFieldEnd();
         }
-
         if (bean.getCallerPort().isPresent()) {
-            oprot.writeFieldBegin(new TField("callerPort", TType.I32, (short) 9));
+            oprot.writeFieldBegin(new TField("callerPort", TType.I32, (short) 6));
             oprot.writeI32(bean.getCallerPort().get());
             oprot.writeFieldEnd();
         }
-        if (bean.getOperatorId().isPresent()) {
-            oprot.writeFieldBegin(new TField("operatorId", TType.I64, (short) 10));
-            oprot.writeI64(bean.getOperatorId().get());
+        if (bean.getSessionTid().isPresent()) {
+            oprot.writeFieldBegin(new TField("sessionTid", TType.STRING, (short) 7));
+            oprot.writeString(bean.getSessionTid().get());
+            oprot.writeFieldEnd();
+        }
+        if (bean.getUserIp().isPresent()) {
+            oprot.writeFieldBegin(new TField("userIp", TType.STRING, (short) 8));
+            oprot.writeString(bean.getUserIp().get());
             oprot.writeFieldEnd();
         }
         if (bean.getCallerTid().isPresent()) {
-            oprot.writeFieldBegin(new TField("callerTid", TType.STRING, (short) 11));
+            oprot.writeFieldBegin(new TField("callerTid", TType.STRING, (short) 9));
             oprot.writeString(bean.getCallerTid().get());
             oprot.writeFieldEnd();
         }
         if (bean.getTimeout().isPresent()) {
-            oprot.writeFieldBegin(new TField("timeout", TType.I32, (short) 12));
+            oprot.writeFieldBegin(new TField("timeout", TType.I32, (short) 10));
             oprot.writeI32(bean.getTimeout().get());
             oprot.writeFieldEnd();
         }
         if (bean.getRespCode().isPresent()) {
-            oprot.writeFieldBegin(new TField("respCode", TType.STRING, (short) 13));
+            oprot.writeFieldBegin(new TField("respCode", TType.STRING, (short) 11));
             oprot.writeString(bean.getRespCode().get());
             oprot.writeFieldEnd();
         }
         if (bean.getRespMessage().isPresent()) {
-            oprot.writeFieldBegin(new TField("respMessage", TType.STRING, (short) 14));
+            oprot.writeFieldBegin(new TField("respMessage", TType.STRING, (short) 12));
             oprot.writeString(bean.getRespMessage().get());
             oprot.writeFieldEnd();
         }
-
         if (bean.getCalleeTid().isPresent()) {
-            oprot.writeFieldBegin(new TField("calleeTid", TType.STRING, (short) 15));
+            oprot.writeFieldBegin(new TField("calleeTid", TType.STRING, (short) 13));
             oprot.writeString(bean.getCalleeTid().get());
             oprot.writeFieldEnd();
         }
         if (bean.getCalleeIp().isPresent()) {
-            oprot.writeFieldBegin(new TField("calleeIp", TType.STRING, (short) 16));
+            oprot.writeFieldBegin(new TField("calleeIp", TType.STRING, (short) 14));
             oprot.writeString(bean.getCalleeIp().get());
             oprot.writeFieldEnd();
         }
+        if (bean.getOperatorId().isPresent()) {
+            oprot.writeFieldBegin(new TField("operatorId", TType.I64, (short) 15));
+            oprot.writeI64(bean.getOperatorId().get());
+            oprot.writeFieldEnd();
+        }
         if (bean.getCalleePort().isPresent()) {
-            oprot.writeFieldBegin(new TField("calleePort", TType.I32, (short) 17));
+            oprot.writeFieldBegin(new TField("calleePort", TType.I32, (short) 16));
             oprot.writeI32(bean.getCalleePort().get());
+            oprot.writeFieldEnd();
+        }
+        if (bean.getUserId().isPresent()) {
+            oprot.writeFieldBegin(new TField("userId", TType.I64, (short) 17));
+            oprot.writeI64(bean.getUserId().get());
             oprot.writeFieldEnd();
         }
         if (bean.getCalleeMid().isPresent()) {
