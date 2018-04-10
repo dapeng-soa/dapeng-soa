@@ -3,7 +3,9 @@ package com.github.dapeng.client.netty;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Created by tangliu on 2016/6/3.
+ *
+ * @author tangliu
+ * @date 2016/6/3
  */
 public class AsyncRequestWithTimeout {
 

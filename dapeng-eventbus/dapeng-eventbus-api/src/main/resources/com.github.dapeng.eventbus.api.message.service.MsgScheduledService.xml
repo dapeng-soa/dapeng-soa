@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<service namespace="com.github.dapeng.eventbus.api.message.service" name="MsgScheduledService">
+    <meta>
+        <version>1.0.0</version>
+        <timeout>30000</timeout>
+    </meta>
+    <methods>
+        <method name="fetchMessage">
+            <doc>
+
+## 定时消息轮询任务
+</doc>
+            <request name="fetchMessage_args">
+                <fields/>
+            </request>
+            <response name="fetchMessage_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+    </methods>
+    <structs/>
+    <enums/>
+</service>

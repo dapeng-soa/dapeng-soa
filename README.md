@@ -54,9 +54,9 @@ dapeng-container/target/dapeng-container
 |   |   |-- dapeng-monitor-api         监控模块api工程
 |   |   |-- dapeng-monitor-druid       druid的监控工具
 |   |   |-- dapeng-monitor-influxdb    监控模块api实现工程(influxdb版本)
-|   |-- dapeng-registry
-|   |   |-- dapeng-registry-api        注册模块api工程
-|   |   |-- dapeng-registry-zookeeper  注册模块api实现工程(zookeeper版本)
+|   |-- dapeng-com.github.dapeng.registry.registry
+|   |   |-- dapeng-com.github.dapeng.registry.registry-api        注册模块api工程
+|   |   |-- dapeng-com.github.dapeng.registry.registry-zookeeper  注册模块api实现工程(zookeeper版本)
 |   |-- dapeng-remoting
 |   |   |-- dapeng-remoting-api        客户端通讯模块api工程
 |   |   |-- dapeng-remoting-netty      客户端通讯模块api实现工程(netty版本)
@@ -122,12 +122,12 @@ service HelloService {
 
 > 打包服务接口代码工程(`dapeng-code-generator`): `mvn clean package`
 >
-> 输出的可执行jar包目录: `dapeng-code-generator/target/dapeng-code-generator-1.2.2-jar-with-dependencies.jar`
+> 输出的可执行jar包目录: `dapeng-code-generator/target/dapeng-code-generator-2.0.0-jar-with-dependencies.jar`
 
 打印帮助命令
 
 ```
-java -jar dapeng-code-generator-1.2.2-jar-with-dependencies.jar
+java -jar dapeng-code-generator-2.0.0-jar-with-dependencies.jar
 
 -----------------------------------------------------------------------
  args: -gen metadata,js,json file
@@ -152,7 +152,7 @@ java -jar dapeng-code-generator-1.2.2-jar-with-dependencies.jar
 生成thrift idl 定义服务接口代码
 
 ```
-java -jar dapeng-code-generator-1.2.2-jar-with-dependencies.jar -gen java -out F:\hello F:\hello\hello_domain.thrift,F:\hello\hello_service.thrift
+java -jar dapeng-code-generator-2.0.0-jar-with-dependencies.jar -gen java -out F:\hello F:\hello\hello_domain.thrift,F:\hello\hello_service.thrift
 
 # 说明：
 # 1. `-gen java` 表示生成java代码； 
@@ -171,7 +171,7 @@ java -jar dapeng-code-generator-1.2.2-jar-with-dependencies.jar -gen java -out F
 <dependency>
     <groupId>com.github.dapeng</groupId>
     <artifactId>dapeng-remoting-api</artifactId>
-    <version>1.2.2</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
@@ -196,7 +196,7 @@ java -jar dapeng-code-generator-1.2.2-jar-with-dependencies.jar -gen java -out F
 <dependency>
     <groupId>com.github.dapeng</groupId>
     <artifactId>dapeng-spring</artifactId>
-    <version>1.2.2</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
@@ -292,7 +292,7 @@ mvn compile dapeng:run -Dsoa.remoting.mode=local
 
 # 第二种
 cd hello-service
-mvn compile com.github.dapeng:dapeng-maven-plugin:1.2.2:run -Dsoa.remoting.mode=local
+mvn compile com.github.dapeng:dapeng-maven-plugin:2.0.0:run -Dsoa.remoting.mode=local
 ```
 
 * 远程模式(需要启动zookeeper)
@@ -307,7 +307,7 @@ mvn compile dapeng:run
 
 # 第二种
 cd hello-service
-mvn compile com.github.dapeng:dapeng-maven-plugin:1.2.2:run
+mvn compile com.github.dapeng:dapeng-maven-plugin:2.0.0:run
 ```
 
 * 启动可选参数
@@ -322,7 +322,7 @@ mvn compile com.github.dapeng:dapeng-maven-plugin:1.2.2:run
 
 ##### 依赖配置
 
-客户端要依赖`hello-api`,`dapeng-registry-zookeeper`和`dapeng-remoting-netty`
+客户端要依赖`hello-api`,`dapeng-com.github.dapeng.registry.registry-zookeeper`和`dapeng-remoting-netty`
 ```
 <dependency>
     <groupId>com.github.dapeng</groupId>
@@ -331,13 +331,13 @@ mvn compile com.github.dapeng:dapeng-maven-plugin:1.2.2:run
 </dependency>
 <dependency>
     <groupId>com.github.dapeng</groupId>
-    <artifactId>dapeng-registry-zookeeper</artifactId>
-    <version>1.2.2</version>
+    <artifactId>dapeng-com.github.dapeng.registry.registry-zookeeper</artifactId>
+    <version>2.0.0</version>
 </dependency>
 <dependency>
     <groupId>com.github.dapeng</groupId>
     <artifactId>dapeng-remoting-netty</artifactId>
-    <version>1.2.2</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 

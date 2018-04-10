@@ -278,46 +278,49 @@ class ThriftCodeParser(var language: String) {
     results
   }
 
-  private def findStructs(doc0: Document, generator: ApacheJavaGenerator): List[metadata.Struct] =
+  private def findStructs(doc0: Document, generator: ApacheJavaGenerator): List[metadata.Struct] = {
     doc0.structs.toList.map { (struct: StructLike) =>
       val controller = new StructController(struct, false, generator, getNameSpace(doc0, language))
 
-      new metadata.Struct {
-        //this.setNamespace(if (controller.has_non_nullable_fields) controller.namespace else null)
-        this.setNamespace(controller.namespace)
-        this.setName(controller.name)
-        this.setDoc(toDocString(struct.docstring))
-
-        if (struct.annotations.size > 0)
-          this.setAnnotations(struct.annotations.map { case (key, value) => new Annotation(key, value) }.toList)
-
-        val fields0 = controller.allFields.zip(controller.fields).toList.map { case (field, fieldController) =>
-          val tag0 = field.index.toString.toInt
-          val name0 = field.originalName
-          //val optional0 = fieldController.optional_or_nullable.toString.toBoolean
-          val optional0 = field.requiredness.isOptional
-          val docSrting0 = toDocString(field.docstring)
-          var dataType0: DataType = null
-
-          dataType0 = toDataType(field.fieldType, doc0, docSrting0)
-
-          new metadata.Field {
-            this.setTag(tag0)
-            this.setName(name0)
-            this.setOptional(optional0)
-            this.setDoc(docSrting0)
-            this.setDataType(dataType0)
-            this.setPrivacy(false)
-
-            if (field.fieldAnnotations.size > 0)
-              this.setAnnotations(field.fieldAnnotations.map { case (key, value) => new Annotation(key, value) }.toList)
-
-          }
-        }
-
-        this.setFields(fields0)
+      val domStruct = new metadata.Struct
+      domStruct.setNamespace(controller.namespace)
+      domStruct.setName(controller.name)
+      domStruct.setDoc(toDocString(struct.docstring))
+      if (struct.annotations.size > 0) {
+        domStruct.setAnnotations(struct.annotations.map { case (key, value) => new Annotation(key, value) }.toList)
       }
+
+      val fields0 = controller.allFields.zip(controller.fields).toList.map { case (field, fieldController) =>
+        val tag0 = field.index.toString.toInt
+        val name0 = field.originalName
+        //val optional0 = fieldController.optional_or_nullable.toString.toBoolean
+        val optional0 = field.requiredness.isOptional
+        val docSrting0 = toDocString(field.docstring)
+        var dataType0: DataType = null
+
+        dataType0 = toDataType(field.fieldType, doc0, docSrting0)
+
+        val domField = new metadata.Field
+        domField.setTag(tag0)
+        domField.setName(name0)
+        domField.setOptional(optional0)
+        domField.setDoc(docSrting0)
+        domField.setDataType(dataType0)
+        domField.setPrivacy(false)
+
+        if (field.fieldAnnotations.size > 0) {
+          domField.setAnnotations(field.fieldAnnotations.map { case (key, value) => new Annotation(key, value) }.toList)
+        }
+        domField
+      }
+
+      domStruct.setFields(fields0)
+
+      domStruct
     }
+
+  }
+
 
 
   private def findServices(doc: Document, generator: ApacheJavaGenerator): util.List[metadata.Service] = {
@@ -482,6 +485,11 @@ class ThriftCodeParser(var language: String) {
           getAllStructs(field.getDataType, structSet)
           getAllEnums(field.getDataType, enumSet, loadedStructs)
         }
+
+        if (method.annotations != null) {
+          method.annotations.foreach(annotation => getAllStructByAnnotation(annotation.getValue,structSet))
+        }
+
       }
       service.setStructDefinitions(structSet.toList)
       service.setEnumDefinitions(enumSet.toList)
@@ -526,6 +534,28 @@ class ThriftCodeParser(var language: String) {
       getAllStructs(dataType.getKeyType, structSet)
       getAllStructs(dataType.getValueType, structSet)
     }
+  }
+
+  /**
+    * qualifiedName:
+    * @param annoValue
+    * @param structSet
+    * @return
+    */
+  def getAllStructByAnnotation(annoValue: String, structSet: java.util.HashSet[metadata.Struct]) = {
+    annoValue.split(",").foreach(qualifiedName => {
+      val finalQualifiedName = if (language.equals("scala")) {
+        if (qualifiedName.contains(".")) {
+          toScalaNamespace(qualifiedName,1)
+        } else qualifiedName
+      } else {
+        qualifiedName
+      }
+      val struct = mapStructCache.get(finalQualifiedName);
+      if (struct != null && !structSet.contains(struct)) {
+        structSet.add(struct)
+      }
+    })
   }
 
   /**
