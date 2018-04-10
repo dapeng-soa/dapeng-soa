@@ -51,7 +51,7 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
     /**
      * 上送数据缓存队列,用于jmx数据监控
      */
-    public static ArrayBlockingQueue<DataPoint> flowCacheQueue = new ArrayBlockingQueue<>(30);
+    private static ArrayBlockingQueue<DataPoint> flowCacheQueue = new ArrayBlockingQueue<>(30);
 
     /**
      * 信号锁, 用于提醒线程跟数据上送线程的同步
@@ -62,6 +62,10 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
 
     private static class CounterClientFactory {
         private static CounterService COUNTER_CLIENT = new CounterServiceClient();
+    }
+
+    public static ArrayBlockingQueue<DataPoint> getFlowCacheQueue() {
+        return flowCacheQueue;
     }
 
     @Override

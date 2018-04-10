@@ -11,7 +11,7 @@ import com.github.dapeng.impl.filters.HeadFilter;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.RegistryAgentProxy;
-import com.github.dapeng.registry.zookeeper.ZkConfigInfo;
+import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
 import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.ExceptionUtil;
 import io.netty.channel.ChannelHandler;
@@ -107,6 +107,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
             //check if request expired
             final long waitingTime = System.currentTimeMillis() - invokeTime;
+            //fixme if zk down ?
             long timeout = getTimeout(soaHeader);
             if (waitingTime > timeout) {
                 if (LOGGER.isDebugEnabled()) {
@@ -288,7 +289,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     private long getTimeout(SoaHeader soaHeader) {
         long timeout = 0L;
         String serviceKey = soaHeader.getServiceName();
-        ZkConfigInfo configInfo = RegistryAgentProxy.getCurrentInstance(RegistryAgentProxy.Type.Server).getConfig(false, serviceKey);
+        ZkServiceInfo configInfo = RegistryAgentProxy.getCurrentInstance(RegistryAgentProxy.Type.Server).getConfig(false, serviceKey);
 
         long envTimeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT;
         if (null != configInfo) {

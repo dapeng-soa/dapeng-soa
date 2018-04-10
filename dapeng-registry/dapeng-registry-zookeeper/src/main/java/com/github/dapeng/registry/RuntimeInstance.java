@@ -33,6 +33,7 @@ public class RuntimeInstance {
 
     /**
      * 调用计数+1
+     *
      * @return 操作后的计数值
      */
     public int increaseActiveCount() {
@@ -41,9 +42,15 @@ public class RuntimeInstance {
 
     /**
      * 调用计数-1
+     *
      * @return 操作后的计数值
      */
     public int decreaseActiveCount() {
         return activeCount.decrementAndGet();
+    }
+
+    @Override
+    public String toString() {
+        return "IP:【" + ip + ":" + port + '】';
     }
 }

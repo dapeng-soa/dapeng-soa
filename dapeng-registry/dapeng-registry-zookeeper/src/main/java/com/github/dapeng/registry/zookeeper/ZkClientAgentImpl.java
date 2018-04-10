@@ -59,9 +59,9 @@ public class ZkClientAgentImpl implements ZkClientAgent {
     }
 
     @Override
-    public void cancnelSyncService(ZkServiceInfo zkInfo) {
+    public void cancelSyncService(ZkServiceInfo zkInfo) {
         //fixme should remove the debug log
-        LOGGER.info("cancnelSyncService:[" + zkInfo.service + "]");
+        LOGGER.info("cancelSyncService:[" + zkInfo.service + "]");
         zkInfo.setStatus(ZkServiceInfo.Status.CANCELED);
     }
 
@@ -99,13 +99,5 @@ public class ZkClientAgentImpl implements ZkClientAgent {
         } else {
             LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo failed");
         }
-    }
-
-
-    @Override
-    public ZkConfigInfo getConfig(boolean usingFallback, String serviceKey) {
-
-        return masterZk.getConfigData(serviceKey);
-
     }
 }
