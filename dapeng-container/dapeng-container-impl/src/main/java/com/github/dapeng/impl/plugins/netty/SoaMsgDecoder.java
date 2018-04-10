@@ -6,6 +6,7 @@ import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.DapengUtil;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocolException;
@@ -91,11 +92,11 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
 
         // parser.service, version, method, header, bodyProtocol
         SoaHeader soaHeader = parser.parseSoaMessage(context);
-        context.setHeader(soaHeader);
+        ((TransactionContextImpl)context).setHeader(soaHeader);
 
-        updateTransactionCtx(context, soaHeader);
+        updateTransactionCtx((TransactionContextImpl)context, soaHeader);
 
-        MDC.put("sessionTid", context.sessionTid().orElse("unknow"));
+        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, context.sessionTid().orElse("0"));
 
         Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
@@ -137,11 +138,11 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         return args;
     }
 
-    private void updateTransactionCtx(TransactionContext ctx, SoaHeader soaHeader) {
+    private void updateTransactionCtx(TransactionContextImpl ctx, SoaHeader soaHeader) {
         if (soaHeader.getCallerMid().isPresent()) {
             ctx.callerMid(soaHeader.getCallerMid().get());
         }
-        ctx.callerIp(soaHeader.getCallerIp());
+        ctx.callerIp(soaHeader.getCallerIp().orElse(null));
         if (soaHeader.getUserId().isPresent()) {
             ctx.userId(soaHeader.getUserId().get());
         }

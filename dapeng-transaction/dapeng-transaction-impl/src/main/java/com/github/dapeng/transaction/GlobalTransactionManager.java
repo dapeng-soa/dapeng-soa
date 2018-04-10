@@ -261,7 +261,7 @@ public class GlobalTransactionManager {
         //获取服务的ip和端口
         JsonPost jsonPost = new JsonPost(process.getServiceName(), process.getVersionName(), process.getMethodName());
 
-        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
+        InvocationContextImpl invocationContext = (InvocationContextImpl)InvocationContextImpl.Factory.currentInstance();
         invocationContext.serviceName(process.getServiceName());
         invocationContext.versionName(process.getVersionName());
         invocationContext.methodName(rollbackOrForward ? process.getRollbackMethodName() : process.getMethodName());

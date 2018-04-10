@@ -8,11 +8,11 @@ import java.util.Optional;
  * <pre>
  * web	service1	service2	service3	service4
  *  |_____m1()
- *  |__________________m2()
- *  |                  |_______________________m4()
- *  |_______________________________m3()
+ *         |___________m2()
+ *         |            |______________________m4()
+ *         |_______________________m3()
  *
- * 1. 服务session: 如上图是一次完整的服务会话过程,由服务发起者(web)一次服务调用引发的一系列服务调用
+ * 1. 服务session: 如上图是一个服务会话,由服务发起者(web)一次服务调用引发的一系列服务调用
  * 2. 服务调用者: 单次服务调用的调用端,对应信息有caller的相关字段
  * 3. 服务发起者: 服务调用的最初发起者, 发起者也是调用者, 但是它调用的服务可能引发一连串的服务调用(也就是一次服务会话), 从而产生若干服务调用者. 一般是web层, 对应信息有userId,userIp
  * 4. caller信息:
@@ -81,7 +81,7 @@ public class SoaHeader {
     /**
      * 调用者ip
      */
-    private String callerIp;
+    private Optional<String> callerIp = Optional.empty();
     /**
      * 调用者port, 只有在dapeng容器内才需要设置这个值
      */
@@ -277,7 +277,7 @@ public class SoaHeader {
         this.calleeMid = Optional.ofNullable(calleeMid);
     }
 
-    public String getCallerIp() {
+    public Optional<String> getCallerIp() {
         return this.callerIp;
     }
 
@@ -302,7 +302,7 @@ public class SoaHeader {
     }
 
     public void setCallerIp(String callerIp) {
-        this.callerIp = callerIp;
+        this.callerIp = Optional.ofNullable(callerIp);
     }
 
     public void setCallerPort(Optional<Integer> callerPort) {

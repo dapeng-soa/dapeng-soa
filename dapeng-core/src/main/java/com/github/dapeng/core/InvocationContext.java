@@ -3,20 +3,18 @@ package com.github.dapeng.core;
 import com.github.dapeng.core.enums.CodecProtocol;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
  * <pre>
  * web	service1	service2	service3	service4
  *  |_____m1()
- *  |__________________m2()
- *  |                  |_______________________m4()
- *  |_______________________________m3()
+ *         |___________m2()
+ *         |            |______________________m4()
+ *         |_______________________m3()
  *
- * 1. 服务session: 如上图是三个服务会话,由服务发起者(web)三次服务调用引发的一系列服务调用:
- *  1.1 web->m1
- *  1.2 web->m2->m4
- *  1.3 web->m3
+ * 1. 服务session: 如上图是一个服务会话,由服务发起者(web)一次服务调用引发的一系列服务调用
  * 2. 服务调用者: 单次服务调用的调用端(例如对于1.2的服务会话中, web以及service2都是服务调用端),对应信息有caller的相关字段
  * 3. 服务发起者: 服务调用的最初发起者, 发起者也是调用者, 但是它调用的服务可能引发一连串的服务调用(也就是一次服务会话), 从而产生若干服务调用者. 上图三个服务会话的发起者都是web层, 对应信息有userId,userIp
  * 4. caller信息:
@@ -139,20 +137,15 @@ public interface InvocationContext {
     /**
      * 供服务提供方返回时填写, 例如耗时, calleeIp等
      *
-     * @param invocationInfo
      */
-    InvocationContext lastInvocationInfo(InvocationInfo invocationInfo);
     InvocationInfo lastInvocationInfo();
 
 
     /**
      * 用于日志信息...
-     * todo
-     * @param seqId
      * @return
      */
-    InvocationContext seqId(Integer seqId);
-    Integer seqId();
+    int seqId();
 
     /**
      * 兼容目前的全局事务实现
@@ -164,18 +157,12 @@ public interface InvocationContext {
 
     @Deprecated
     String serviceName();
-    @Deprecated
-    InvocationContext serviceName(String serviceName);
 
     @Deprecated
     String methodName();
-    @Deprecated
-    InvocationContext methodName(String methodName);
 
     @Deprecated
     String versionName();
-    @Deprecated
-    InvocationContext versionName(String versionName);
 
     interface InvocationInfo {
         /**
@@ -197,7 +184,7 @@ public interface InvocationContext {
          *
          * @return
          */
-        Integer calleePort();
+        int calleePort();
 
         /**
          * 服务提供方MoudleId
@@ -211,27 +198,64 @@ public interface InvocationContext {
          *
          * @return
          */
-        Integer calleeTime1();
+        int calleeTime1();
 
         /**
          * 服务提供方消耗时间（从开始处理请求到处理请求完成）,单位毫秒
          *
          * @return
          */
-        Integer calleeTime2();
+        int calleeTime2();
 
         /**
          * 从发起请求到收到响应所消耗的时间,单位毫秒
          *
          * @return
          */
-        Integer serviceTime();
+        int serviceTime();
 
         /**
          * 负载均衡策略
          * @return
          */
         LoadBalanceStrategy loadBalanceStrategy();
+    }
+
+    interface InvocationContextProxy {
+        /**
+         * 服务会话Id
+         * @return
+         */
+        Optional<String> sessionTid();
+
+        /**
+         * 服务会话发起者Ip
+         * @return
+         */
+        Optional<String> userIp();
+
+        /**
+         * 服务会话发起者id, 特指前台用户
+         * @return
+         */
+        Optional<Long> userId();
+
+        /**
+         * 服务会话发起者id, 特指后台用户
+         * @return
+         */
+        Optional<Long> operatorId();
+
+        /**
+         * 调用源
+         * @return
+         */
+        Optional<String> callerMid();
+
+        /**
+         * 自定义信息
+         */
+        Map<String, String> cookies();
     }
 
 

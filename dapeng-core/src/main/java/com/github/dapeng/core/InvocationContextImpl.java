@@ -66,7 +66,7 @@ public class InvocationContextImpl implements InvocationContext {
         return serviceName;
     }
 
-    @Override
+    @Deprecated
     public InvocationContext serviceName(String serviceName) {
         this.serviceName = serviceName;
         return this;
@@ -77,7 +77,7 @@ public class InvocationContextImpl implements InvocationContext {
         return methodName;
     }
 
-    @Override
+    @Deprecated
     public InvocationContext methodName(String methodName) {
         this.methodName = methodName;
         return this;
@@ -88,18 +88,18 @@ public class InvocationContextImpl implements InvocationContext {
         return versionName;
     }
 
-    @Override
+    @Deprecated
     public InvocationContext seqId(Integer seqId) {
         this.seqId = seqId;
         return this;
     }
 
     @Override
-    public Integer seqId() {
+    public int seqId() {
         return seqId;
     }
 
-    @Override
+    @Deprecated
     public InvocationContext versionName(String versionName) {
         this.versionName = versionName;
         return this;
@@ -194,7 +194,6 @@ public class InvocationContextImpl implements InvocationContext {
         return this.callerTid;
     }
 
-    @Override
     public InvocationContext lastInvocationInfo(InvocationInfo lastInvocationInfo) {
         this.lastInvocationInfo = lastInvocationInfo;
         return this;
@@ -249,43 +248,6 @@ public class InvocationContextImpl implements InvocationContext {
     public InvocationContext codecProtocol(CodecProtocol codecProtocol) {
         this.codecProtocol = codecProtocol;
         return this;
-    }
-
-    public interface InvocationContextProxy {
-        /**
-         * 服务会话Id
-         * @return
-         */
-        Optional<String> sessionTid();
-
-        /**
-         * 服务会话发起者Ip
-         * @return
-         */
-        Optional<String> userIp();
-
-        /**
-         * 服务会话发起者id, 特指前台用户
-         * @return
-         */
-        Optional<Long> userId();
-
-        /**
-         * 服务会话发起者id, 特指后台用户
-         * @return
-         */
-        Optional<Long> operatorId();
-
-        /**
-         * 调用源
-         * @return
-         */
-        Optional<String> callerMid();
-
-        /**
-         * 自定义信息
-         */
-        Map<String, String> cookies();
     }
 
     public static class Factory {

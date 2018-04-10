@@ -66,7 +66,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             }
             dispatcher.execute(() -> {
                 try {
-                    MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().orElse("unknow"));
+                    MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().orElse("0"));
                     TransactionContext.Factory.currentInstance(transactionContext);
                     processRequest(channelHandlerContext, processor, msg, transactionContext, invokeTime);
                 } catch (Throwable e) {
@@ -81,7 +81,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         } catch (Throwable ex) {
             if (transactionContext.getHeader() == null) {
                 LOGGER.error("should not come here. soaHeader is null");
-                transactionContext.setHeader(new SoaHeader());
+                ((TransactionContextImpl)transactionContext).setHeader(new SoaHeader());
             }
             writeErrorMessage(channelHandlerContext, transactionContext, new SoaException(SoaCode.UnKnown.getCode(), "读请求异常", ex));
         } finally {
@@ -156,15 +156,21 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             SoaFunctionDefinition.Async asyncFunc = (SoaFunctionDefinition.Async) soaFunction;
                             CompletableFuture<RESP> future = (CompletableFuture<RESP>) asyncFunc.apply(iface, args);
                             future.whenComplete((realResult, ex) -> {
-                                if (ex != null) {
-                                    SoaException soaException = ExceptionUtil.convertToSoaException(ex);
-                                    attachErrorInfo(transactionContext, soaException);
-                                } else {
-                                    MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().orElse("unknow"));
+                                try {
+                                    MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().orElse("0"));
                                     TransactionContext.Factory.currentInstance(transactionContext);
-                                    processResult(channelHandlerContext, soaFunction, transactionContext, realResult, filterContext);
+
+                                    if (ex != null) {
+                                        SoaException soaException = ExceptionUtil.convertToSoaException(ex);
+                                        attachErrorInfo(transactionContext, soaException);
+                                    } else {
+                                        processResult(channelHandlerContext, soaFunction, transactionContext, realResult, filterContext);
+                                    }
+                                    onExit(filterContext, getPrevChain(filterContext));
+                                } finally {
+                                    MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+                                    TransactionContext.Factory.removeCurrentInstance();
                                 }
-                                onExit(filterContext, getPrevChain(filterContext));
                             });
                         } else {
                             SoaFunctionDefinition.Sync syncFunction = (SoaFunctionDefinition.Sync) soaFunction;
@@ -224,9 +230,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
         } catch (Throwable e) {
             attachErrorInfo(transactionContext, ExceptionUtil.convertToSoaException(e));
-        } finally {
-            TransactionContext.Factory.removeCurrentInstance();
-            MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         }
     }
 

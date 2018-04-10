@@ -3,6 +3,7 @@ package com.github.dapeng.impl.plugins.netty;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.*;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.ExceptionUtil;
 import io.netty.buffer.ByteBuf;
@@ -12,6 +13,7 @@ import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.util.Attribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.util.Map;
 import java.util.Optional;
@@ -41,68 +43,72 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             LOGGER.trace(getClass().getSimpleName() + "::encode");
         }
 
+        try {
 
-        TransactionContext transactionContext = wrapper.transactionContext;
-        SoaHeader soaHeader = transactionContext.getHeader();
-        Optional<String> respCode = soaHeader.getRespCode();
+            TransactionContext transactionContext = wrapper.transactionContext;
+            SoaHeader soaHeader = transactionContext.getHeader();
+            Optional<String> respCode = soaHeader.getRespCode();
 
-        Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
+            Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
 
-        if (respCode.isPresent() && !respCode.get().equals(SOA_NORMAL_RESP_CODE)) {
-            writeErrorResponse(transactionContext, application, out);
-        } else {
-            try {
-                BeanSerializer serializer = wrapper.serializer.get();
-                Object result = wrapper.result.get();
-
-                TSoaTransport transport = new TSoaTransport(out);
-                SoaMessageProcessor messageProcessor = new SoaMessageProcessor(transport);
-
-                messageProcessor.writeHeader(transactionContext);
-                if (serializer != null && result != null) {
-                    messageProcessor.writeBody(serializer, result);
-                }
-                messageProcessor.writeMessageEnd();
-                transport.flush();
-
-                /**
-                 * use AttributeMap to share common data on different  ChannelHandlers
-                 */
-                Attribute<Map<Integer, Long>> requestTimestampAttr = channelHandlerContext.channel().attr(NettyChannelKeys.REQUEST_TIMESTAMP);
-                Map<Integer, Long> requestTimestampMap = requestTimestampAttr.get();
-
-                Long requestTimestamp = 0L;
-                if (requestTimestampMap != null) {
-                    requestTimestamp = requestTimestampMap.getOrDefault(transactionContext.getSeqid(), requestTimestamp);
-                    //each per request take the time then remove it
-                    requestTimestampMap.remove(transactionContext.getSeqid());
-                } else {
-                    LOGGER.warn(getClass().getSimpleName() + "::encode no requestTimestampMap found!");
-                }
-
-                String infoLog = "response[seqId:" + transactionContext.getSeqid() + ", respCode:" + respCode.get() + "]:"
-                        + "service[" + soaHeader.getServiceName()
-                        + "]:version[" + soaHeader.getVersionName()
-                        + "]:method[" + soaHeader.getMethodName() + "]"
-                        + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                        + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : ""
-                        + " cost:" + (System.currentTimeMillis() - requestTimestamp) + "ms");
-
-                application.info(this.getClass(), infoLog);
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug(getClass().getSimpleName() + "::encode " + infoLog + ", payload:\n" + result);
-                    LOGGER.debug(getClass().getSimpleName() + "::encode " + DumpUtil.dumpToStr(out));
-                }
-            } catch (Throwable e) {
-                SoaException soaException = ExceptionUtil.convertToSoaException(e);
-
-                soaHeader.setRespCode(soaException.getCode());
-                soaHeader.setRespMessage(soaException.getMessage());
-
-                transactionContext.soaException(soaException);
+            if (respCode.isPresent() && !respCode.get().equals(SOA_NORMAL_RESP_CODE)) {
                 writeErrorResponse(transactionContext, application, out);
+            } else {
+                try {
+                    BeanSerializer serializer = wrapper.serializer.get();
+                    Object result = wrapper.result.get();
+
+                    TSoaTransport transport = new TSoaTransport(out);
+                    SoaMessageProcessor messageProcessor = new SoaMessageProcessor(transport);
+
+                    messageProcessor.writeHeader(transactionContext);
+                    if (serializer != null && result != null) {
+                        messageProcessor.writeBody(serializer, result);
+                    }
+                    messageProcessor.writeMessageEnd();
+                    transport.flush();
+
+                    /**
+                     * use AttributeMap to share common data on different  ChannelHandlers
+                     */
+                    Attribute<Map<Integer, Long>> requestTimestampAttr = channelHandlerContext.channel().attr(NettyChannelKeys.REQUEST_TIMESTAMP);
+                    Map<Integer, Long> requestTimestampMap = requestTimestampAttr.get();
+
+                    Long requestTimestamp = 0L;
+                    if (requestTimestampMap != null) {
+                        requestTimestamp = requestTimestampMap.getOrDefault(transactionContext.getSeqid(), requestTimestamp);
+                        //each per request take the time then remove it
+                        requestTimestampMap.remove(transactionContext.getSeqid());
+                    } else {
+                        LOGGER.warn(getClass().getSimpleName() + "::encode no requestTimestampMap found!");
+                    }
+
+                    String infoLog = "response[seqId:" + transactionContext.getSeqid() + ", respCode:" + respCode.get() + "]:"
+                            + "service[" + soaHeader.getServiceName()
+                            + "]:version[" + soaHeader.getVersionName()
+                            + "]:method[" + soaHeader.getMethodName() + "]"
+                            + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
+                            + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : ""
+                            + " cost:" + (System.currentTimeMillis() - requestTimestamp) + "ms");
+
+                    application.info(this.getClass(), infoLog);
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug(getClass().getSimpleName() + "::encode " + infoLog + ", payload:\n" + result);
+                        LOGGER.debug(getClass().getSimpleName() + "::encode " + DumpUtil.dumpToStr(out));
+                    }
+                } catch (Throwable e) {
+                    SoaException soaException = ExceptionUtil.convertToSoaException(e);
+
+                    soaHeader.setRespCode(soaException.getCode());
+                    soaHeader.setRespMessage(soaException.getMessage());
+
+                    transactionContext.soaException(soaException);
+                    writeErrorResponse(transactionContext, application, out);
+                }
             }
+        } finally {
+            MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         }
     }
 
