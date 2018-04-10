@@ -82,7 +82,7 @@ public class WatcherUtils {
      * @param data
      * @param zkInfo
      */
-    public static void processZkConfig(byte[] data, ZkConfigInfo zkInfo, boolean isGlobal) {
+    public static void processZkConfig(byte[] data, ZkServiceInfo zkInfo, boolean isGlobal) {
         try {
 
             String configData = new String(data, "utf-8");
@@ -128,7 +128,7 @@ public class WatcherUtils {
                     }
                 }
             }
-            LOGGER.info("get config form {} with data [{}]");
+            LOGGER.info("get config from {} with data [{}]", zkInfo.service, configData);
         } catch (UnsupportedEncodingException e) {
             LOGGER.error(e.getMessage(), e);
         }

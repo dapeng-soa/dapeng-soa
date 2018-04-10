@@ -4,11 +4,9 @@ import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * 描述:
@@ -30,69 +28,104 @@ public class CommonZk {
 
 
     protected ZooKeeper zk;
-    /**
-     * zk 配置 缓存 ，根据 serivceName + versionName 作为 key
-     */
-    protected ConcurrentMap<String, ZkConfigInfo> zkConfigMap = new ConcurrentHashMap();
 
-    /**
-     * 获取zk 配置信息，封装到 ZkConfigInfo
-     *
-     * @param serviceName
-     * @return
-     */
-    protected ZkConfigInfo getConfigData(String serviceName) {
-        ZkConfigInfo info = zkConfigMap.get(serviceName);
-        if (info != null) {
-            return info;
-        }
 
-        ZkConfigInfo configInfo = new ZkConfigInfo();
+    protected void syncZkConfigInfo(ZkServiceInfo zkInfo) {
+        //1.获取 globalConfig  异步模式
+        zk.getData(CONFIG_PATH, watchedEvent -> {
+            if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
 
-        //1.获取 globalConfig
-        try {
-            byte[] globalData = zk.getData(CONFIG_PATH, watchedEvent -> {
-
-                if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
-                    logger.info(watchedEvent.getPath() + "'s data changed, reset config in memory");
-                    zkConfigMap.clear();
-                    getConfigData(serviceName);
+                if (zkInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
+                    logger.info(getClass().getSimpleName() + "::syncZkConfigInfo[" + zkInfo.service + "]: {} 节点内容发生变化，重新获取配置信息", watchedEvent.getPath());
+                    syncZkConfigInfo(zkInfo);
                 }
-            }, null);
+            }
+        }, globalConfigDataCb, zkInfo);
 
-            WatcherUtils.processZkConfig(globalData, configInfo, true);
-
-        } catch (KeeperException e) {
-            logger.error(e.getMessage(), e);
-        } catch (InterruptedException e) {
-            logger.error(e.getMessage(), e);
-        }
+        //异步监听子节点变动
+        watchConfigServiceNodeChange();
 
         // 2. 获取 service
-        String configPath = CONFIG_PATH + "/" + serviceName;
+        String configPath = CONFIG_PATH + "/" + zkInfo.service;
 
-        try {
-            byte[] serviceData = zk.getData(configPath, watchedEvent -> {
-                if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
-                    logger.info(watchedEvent.getPath() + "'s data changed, reset zkConfigMap in memory");
-                    zkConfigMap.clear();
-
-                    getConfigData(serviceName);
-                }
-            }, null);
-            WatcherUtils.processZkConfig(serviceData, configInfo, false);
-
-        } catch (KeeperException e) {
-            logger.error(e.getMessage());
-            if (e instanceof KeeperException.NoNodeException) {
+        // zk config 有具体的service节点存在时，这一步在异步callback中进行判断
+        zk.getData(configPath, watchedEvent -> {
+            if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                logger.info(watchedEvent.getPath() + "'s data changed, reset zkConfigMap in memory");
+                syncZkConfigInfo(zkInfo);
             }
-        } catch (InterruptedException e) {
-            logger.error(e.getMessage(), e);
-        }
-
-        zkConfigMap.put(serviceName, configInfo);
-
-        return configInfo;
+        }, serviceConfigDataCb, zkInfo);
     }
+
+
+    /**
+     * 监听 "/soa/config/services" 下的子节点变动
+     */
+    private void watchConfigServiceNodeChange() {
+        zk.exists(CONFIG_PATH, event -> {
+            if (event.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
+                logger.info("{}子节点发生变化，重新获取子节点...", event.getPath());
+            }
+        }, nodeChildrenCb, null);
+
+    }
+
+
+    private AsyncCallback.StatCallback nodeChildrenCb = (rc, path, ctx, name) -> {
+        switch (KeeperException.Code.get(rc)) {
+            case CONNECTIONLOSS:
+                logger.info("监听配置子节点时，session超时，重新监听", path);
+                watchConfigServiceNodeChange();
+                break;
+            case OK:
+                logger.info("watch 监听配置子节点成功", path);
+                break;
+            case NODEEXISTS:
+                logger.info("watch监听配置子节点存在", path);
+                break;
+            default:
+                logger.info("创建节点:{},失败", path);
+        }
+    };
+
+    /**
+     * 全局配置异步getData
+     */
+    private AsyncCallback.DataCallback globalConfigDataCb = (rc, path, ctx, data, stat) -> {
+        switch (KeeperException.Code.get(rc)) {
+            case CONNECTIONLOSS:
+                logger.error("读取配置节点data时连接丢失，重新获取!");
+                syncZkConfigInfo((ZkServiceInfo) ctx);
+                break;
+            case NONODE:
+                logger.error("全局配置节点不存在");
+                break;
+            case OK:
+                WatcherUtils.processZkConfig(data, (ZkServiceInfo) ctx, true);
+                break;
+            default:
+                break;
+        }
+    };
+
+    /**
+     * service级别异步 getData
+     */
+    private AsyncCallback.DataCallback serviceConfigDataCb = (rc, path, ctx, data, stat) -> {
+        switch (KeeperException.Code.get(rc)) {
+            case CONNECTIONLOSS:
+                syncZkConfigInfo((ZkServiceInfo) ctx);
+                break;
+            case NONODE:
+                logger.error("服务 [{}] 的service配置节点不存在，无法获取service级配置信息 ", ((ZkServiceInfo) ctx).service);
+                break;
+            case OK:
+                WatcherUtils.processZkConfig(data, (ZkServiceInfo) ctx, false);
+
+                break;
+            default:
+                break;
+        }
+    };
 
 }

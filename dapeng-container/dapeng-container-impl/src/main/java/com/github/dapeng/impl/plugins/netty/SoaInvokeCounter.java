@@ -56,7 +56,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
     /**
      * 上送数据缓存队列,用于jmx数据监控
      */
-    public static ArrayBlockingQueue<List<DataPoint>> serviceCacheQueue = new ArrayBlockingQueue<>(30);
+    private static ArrayBlockingQueue<List<DataPoint>> serviceCacheQueue = new ArrayBlockingQueue<>(30);
     /**
      * 请求的seqid信息与调用起时，匹配响应seqid做耗时运算
      */
@@ -73,6 +73,10 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
 
     private static class CounterClientFactory {
         private static CounterService COUNTER_CLIENT = new CounterServiceClient();
+    }
+
+    public static ArrayBlockingQueue<List<DataPoint>> getServiceCacheQueue() {
+        return serviceCacheQueue;
     }
 
     @Override

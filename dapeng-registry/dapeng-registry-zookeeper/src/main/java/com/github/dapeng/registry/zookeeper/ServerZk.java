@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -27,6 +29,10 @@ public class ServerZk extends CommonZk {
 
     private RegistryAgent registryAgent;
 
+    /**
+     * zk 配置 缓存 ，根据 serivceName + versionName 作为 key
+     */
+    public final ConcurrentMap<String, ZkServiceInfo> zkConfigMap = new ConcurrentHashMap();
 
     public ServerZk(RegistryAgent registryAgent) {
         this.registryAgent = registryAgent;
@@ -297,29 +303,34 @@ public class ServerZk extends CommonZk {
             return;
         }
 
+
         /**
          * 排序规则
          * a: 192.168.100.1:9081:1.0.0:0000000022
          * b: 192.168.100.1:9081:1.0.0:0000000014
          * 根据 lastIndexOf :  之后的数字进行排序，由小到大，每次取zk临时有序节点中的序列最小的节点作为master
          */
-        Collections.sort(children, (o1, o2) -> {
-            Integer int1 = Integer.valueOf(o1.substring(o1.lastIndexOf(":") + 1));
-            Integer int2 = Integer.valueOf(o2.substring(o2.lastIndexOf(":") + 1));
-            return int1 - int2;
-        });
+        try {
+            Collections.sort(children, (o1, o2) -> {
+                Integer int1 = Integer.valueOf(o1.substring(o1.lastIndexOf(":") + 1));
+                Integer int2 = Integer.valueOf(o2.substring(o2.lastIndexOf(":") + 1));
+                return int1 - int2;
+            });
 
-        String firstNode = children.get(0);
-        LOGGER.info("serviceInfo firstNode {}", firstNode);
+            String firstNode = children.get(0);
+            LOGGER.info("serviceInfo firstNode {}", firstNode);
 
-        String firstInfo = firstNode.replace(firstNode.substring(firstNode.lastIndexOf(":")), "");
+            String firstInfo = firstNode.replace(firstNode.substring(firstNode.lastIndexOf(":")), "");
 
-        if (firstInfo.equals(instanceInfo)) {
-            isMaster.put(serviceKey, true);
-            LOGGER.info("({})竞选master成功, master({})", serviceKey, CURRENT_CONTAINER_ADDR);
-        } else {
-            isMaster.put(serviceKey, false);
-            LOGGER.info("({})竞选master失败，当前节点为({})", serviceKey);
+            if (firstInfo.equals(instanceInfo)) {
+                isMaster.put(serviceKey, true);
+                LOGGER.info("({})竞选master成功, master({})", serviceKey, CURRENT_CONTAINER_ADDR);
+            } else {
+                isMaster.put(serviceKey, false);
+                LOGGER.info("({})竞选master失败，当前节点为({})", serviceKey);
+            }
+        } catch (NumberFormatException e) {
+            LOGGER.error("临时节点格式不正确,请使用新版，正确格式为 etc. 192.168.100.1:9081:1.0.0:0000000022");
         }
     }
 
@@ -328,4 +339,20 @@ public class ServerZk extends CommonZk {
             String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
 
 
+    /**
+     * 获取zk 配置信息，封装到 ZkConfigInfo
+     *
+     * @param serviceName
+     * @return
+     */
+    protected ZkServiceInfo getConfigData(String serviceName) {
+        ZkServiceInfo info = zkConfigMap.get(serviceName);
+        if (info != null) {
+            return info;
+        }
+        info = new ZkServiceInfo(serviceName);
+        syncZkConfigInfo(info);
+        zkConfigMap.put(serviceName, info);
+        return info;
+    }
 }
