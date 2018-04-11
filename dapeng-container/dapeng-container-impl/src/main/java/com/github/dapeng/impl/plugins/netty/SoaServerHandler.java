@@ -189,11 +189,11 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                         } else {
                             SoaFunctionDefinition.Sync syncFunction = (SoaFunctionDefinition.Sync) soaFunction;
 
-                            switchMdcToAppClassLoader(mdcPutMethodCache, "put", SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid());
+                            switchMdcToAppClassLoader(mdcPutMethodCache, "put", transactionContext.sessionTid());
 
                             RESP result = (RESP) syncFunction.apply(iface, args);
 
-                            switchMdcToAppClassLoader(mdcRemoveMethodCache, "remove", SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+                            switchMdcToAppClassLoader(mdcRemoveMethodCache, "remove", transactionContext.sessionTid());
 
                             processResult(channelHandlerContext, soaFunction, transactionContext, result, filterContext);
                             onExit(filterContext, getPrevChain(filterContext));
@@ -218,17 +218,27 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                     }
                 }
 
-                private void switchMdcToAppClassLoader(Map<ClassLoader, Pair<Method, Class<?>>> mdcCache, String methodName, Object... params) {
+                private void switchMdcToAppClassLoader(Map<ClassLoader, Pair<Method, Class<?>>> mdcCache, String methodName, String sessionTid) {
                     ClassLoader appClassLoader = iface.getClass().getClassLoader();
 
                     try {
-                        Pair<Method, Class<?>> putPair = mdcCache.get(appClassLoader);
-                        if (putPair == null) {
+                        Pair<Method, Class<?>> pair = mdcCache.get(appClassLoader);
+                        if (pair == null) {
                             Class<?> mdcClass = appClassLoader.loadClass(MDC.class.getName());
-                            putPair = new Pair<>(mdcClass.getMethod(methodName, String.class, String.class), mdcClass);
-                            mdcCache.put(appClassLoader, putPair);
+                            if (methodName.equals("put")) {
+                                pair = new Pair<>(mdcClass.getMethod(methodName, String.class, String.class), mdcClass);
+                            } else {
+                                pair = new Pair<>(mdcClass.getMethod(methodName, String.class), mdcClass);
+                            }
+
+                            mdcCache.put(appClassLoader, pair);
                         }
-                        putPair.first.invoke(putPair.second, params);
+                        if (methodName.equals("put")) {
+                            pair.first.invoke(pair.second, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
+                        } else {
+                            pair.first.invoke(pair.second, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+                        }
+
                     } catch (ClassNotFoundException | NoSuchMethodException
                             | IllegalAccessException | InvocationTargetException e) {
                         LOGGER.error(getClass().getSimpleName() + "::switchMdcToAppClassLoader," + e.getMessage(), e);
