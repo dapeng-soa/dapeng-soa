@@ -4,7 +4,6 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.github.dapeng.core.helper.IPUtils.ipToInt;
 import static com.github.dapeng.core.helper.IPUtils.localIpAsInt;
 
 /**
