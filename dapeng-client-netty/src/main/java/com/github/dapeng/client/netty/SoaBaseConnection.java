@@ -86,7 +86,6 @@ public abstract class SoaBaseConnection implements SoaConnection {
         ServiceLoader<Filter> filterLoader = ServiceLoader.load(Filter.class, this.getClass().getClassLoader());
         List<Filter> filters = new ArrayList<>();
         for (Filter filter : filterLoader) {
-            System.out.println("client filter:"+filter.getClass().getName());
             filters.add(filter);
         }
 
@@ -198,8 +197,14 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 }
             }
         };
+
+        ServiceLoader<Filter> filterLoader = ServiceLoader.load(Filter.class, this.getClass().getClassLoader());
+        List<Filter> filters = new ArrayList<>();
+        for (Filter filter : filterLoader) {
+            filters.add(filter);
+        }
         // Head, LoadBalance, .. dispatch
-        SharedChain sharedChain = new SharedChain(headFilter, new ArrayList<>(), dispatchFilter, 0);
+        SharedChain sharedChain = new SharedChain(headFilter, filters, dispatchFilter, 0);
 
         FilterContextImpl filterContext = new FilterContextImpl();
         filterContext.setAttach(dispatchFilter, "chain", sharedChain);
