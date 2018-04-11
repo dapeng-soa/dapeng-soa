@@ -29,9 +29,9 @@ public class LogFilter implements Filter {
                 if (TransactionContext.hasCurrentInstance()
                         && TransactionContext.Factory.currentInstance().sessionTid().isPresent()) {
                     invocationContext.sessionTid(TransactionContext.Factory.currentInstance().sessionTid().get());
+                } else {
+                    invocationContext.sessionTid(DapengUtil.generateTid());
                 }
-            } else {
-                invocationContext.sessionTid(DapengUtil.generateTid());
             }
 
             MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().orElse("0"));
