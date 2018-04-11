@@ -27,31 +27,41 @@ import java.util.stream.Collectors;
  */
 public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private final Logger logger = LoggerFactory.getLogger(SoaConnectionPoolImpl.class);
+
+    class ClientInfoWeakRef extends WeakReference<SoaConnectionPool.ClientInfo> {
+        final String serviceName;
+        final String version;
+        public ClientInfoWeakRef(SoaConnectionPool.ClientInfo referent,
+                                 ReferenceQueue<? super SoaConnectionPool.ClientInfo> q) {
+            super(referent, q);
+            this.serviceName = referent.serviceName;
+            this.version = referent.version;
+        }
+    }
+
     private Map<String, ZkServiceInfo> zkInfos = new ConcurrentHashMap<>();
     private Map<IpPort, SubPool> subPools = new ConcurrentHashMap<>();
     private ZkClientAgent zkAgent = new ZkClientAgentImpl();
 
     private ReentrantLock subPoolLock = new ReentrantLock();
 
-
-    private Map<String, WeakReference<ClientInfo>> clientInfos = new ConcurrentHashMap<>(16);
-    private Map<WeakReference<ClientInfo>, String> clientInfoRefs = new ConcurrentHashMap<>(16);
+    private Map<String, ClientInfoWeakRef> clientInfos = new ConcurrentHashMap<>(16);
     private final ReferenceQueue<ClientInfo> referenceQueue = new ReferenceQueue<>();
 
     Thread cleanThread = new Thread(() -> {
         while (true) {
             try {
-                Reference<ClientInfo> clientInfoRef = (Reference<ClientInfo>) referenceQueue.remove(1000);
+                ClientInfoWeakRef clientInfoRef = (ClientInfoWeakRef) referenceQueue.remove(1000);
                 if (clientInfoRef == null) continue;
 
-                String serviceVersion = clientInfoRefs.remove(clientInfoRef);
+                final String key = clientInfoRef.serviceName + ":" + clientInfoRef.version;
 
                 if (logger.isDebugEnabled()) {
-                    logger.debug("client for service:" + serviceVersion + " is gone.");
+                    logger.debug("client for service:" + key + " is gone.");
                 }
 
-                clientInfos.remove(serviceVersion);
-                ZkServiceInfo zkServiceInfo = zkInfos.remove(serviceVersion.split(":")[0]);
+                clientInfos.remove(key);
+                ZkServiceInfo zkServiceInfo = zkInfos.remove(clientInfoRef.serviceName);
 
                 if (zkServiceInfo != null) {
                     zkAgent.cancelSyncService(zkServiceInfo);
@@ -82,16 +92,15 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     public synchronized ClientInfo registerClientInfo(String serviceName, String version) {
         final String key = serviceName + ":" + version;
 
-        WeakReference<ClientInfo> clientInfoRef = clientInfos.get(key);
+        ClientInfoWeakRef clientInfoRef = clientInfos.get(key);
         ClientInfo clientInfo = (clientInfoRef == null) ? null : clientInfoRef.get();
         if (clientInfo != null) {
             return clientInfo;
         } else {
             clientInfo = new ClientInfo(serviceName, version);
-            clientInfoRef = new WeakReference<>(clientInfo, referenceQueue);
+            clientInfoRef = new ClientInfoWeakRef(clientInfo, referenceQueue);
 
             clientInfos.put(key, clientInfoRef);
-            clientInfoRefs.put(clientInfoRef, key);
 
             ZkServiceInfo zkInfo = new ZkServiceInfo(serviceName, new ArrayList<>());
             zkAgent.syncService(zkInfo);
