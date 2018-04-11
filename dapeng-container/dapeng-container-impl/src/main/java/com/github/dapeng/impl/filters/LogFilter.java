@@ -108,11 +108,7 @@ public class LogFilter implements Filter {
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
                     + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : ""
                     + " cost:" + cost + "ms");
-            //异步返回
-            boolean isAsync = (Boolean) filterContext.getAttribute("isAsync");
-            if (isAsync) {
-                switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().orElse("0"));
-            }
+            switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().orElse("0"));
 
             soaHeader.setCalleeTime1(cost.intValue());
             application.info(this.getClass(), infoLog);
