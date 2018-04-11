@@ -123,17 +123,14 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         }
         contentProtocol.readMessageEnd();
 
-        String infoLog = "request[seqId:" + context.getSeqid() + "]:"
-                + "service[" + soaHeader.getServiceName()
-                + "]:version[" + soaHeader.getVersionName()
-                + "]:method[" + soaHeader.getMethodName() + "]"
-                + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
-
-        application.info(this.getClass(), infoLog);
-
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(getClass().getSimpleName() + "::decode " + infoLog + ", payload:\n" + args);
+            String debugLog = "request[seqId:" + context.getSeqid() + "]:"
+                    + "service[" + soaHeader.getServiceName()
+                    + "]:version[" + soaHeader.getVersionName()
+                    + "]:method[" + soaHeader.getMethodName() + "]"
+                    + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
+                    + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
+            LOGGER.debug(getClass().getSimpleName() + "::decode " + debugLog + ", payload:\n" + args);
         }
         return args;
     }
