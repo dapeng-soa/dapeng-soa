@@ -6,6 +6,7 @@ import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.*;
+import com.github.dapeng.core.helper.Pair;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.filters.HeadFilter;
 import com.github.dapeng.org.apache.thrift.TException;
@@ -21,8 +22,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -38,6 +43,9 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(SoaServerHandler.class);
 
     private final Container container;
+
+    private Map<ClassLoader, Pair<Method, Class<?>>> mdcPutMethodCache = new ConcurrentHashMap<>(16);
+    private Map<ClassLoader, Pair<Method, Class<?>>> mdcRemoveMethodCache = new ConcurrentHashMap<>(16);
 
     SoaServerHandler(Container container) {
         this.container = container;
@@ -81,7 +89,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         } catch (Throwable ex) {
             if (transactionContext.getHeader() == null) {
                 LOGGER.error("should not come here. soaHeader is null");
-                ((TransactionContextImpl)transactionContext).setHeader(new SoaHeader());
+                ((TransactionContextImpl) transactionContext).setHeader(new SoaHeader());
             }
             writeErrorMessage(channelHandlerContext, transactionContext, new SoaException(SoaCode.UnKnown.getCode(), "读请求异常", ex));
         } finally {
@@ -155,7 +163,12 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                         }
                         if (serviceDef.isAsync) {
                             SoaFunctionDefinition.Async asyncFunc = (SoaFunctionDefinition.Async) soaFunction;
+
+                            switchMdcToAppClassLoader(mdcPutMethodCache, "put", SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid());
+
                             CompletableFuture<RESP> future = (CompletableFuture<RESP>) asyncFunc.apply(iface, args);
+
+                            switchMdcToAppClassLoader(mdcRemoveMethodCache, "remove", SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
                             future.whenComplete((realResult, ex) -> {
                                 try {
                                     MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().orElse("0"));
@@ -175,7 +188,13 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             });
                         } else {
                             SoaFunctionDefinition.Sync syncFunction = (SoaFunctionDefinition.Sync) soaFunction;
+
+                            switchMdcToAppClassLoader(mdcPutMethodCache, "put", SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid());
+
                             RESP result = (RESP) syncFunction.apply(iface, args);
+
+                            switchMdcToAppClassLoader(mdcRemoveMethodCache, "remove", SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+
                             processResult(channelHandlerContext, soaFunction, transactionContext, result, filterContext);
                             onExit(filterContext, getPrevChain(filterContext));
                         }
@@ -198,6 +217,25 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                         attachErrorInfo(transactionContext, ExceptionUtil.convertToSoaException(e));
                     }
                 }
+
+                private void switchMdcToAppClassLoader(Map<ClassLoader, Pair<Method, Class<?>>> mdcCache, String methodName, Object... params) {
+                    ClassLoader appClassLoader = iface.getClass().getClassLoader();
+
+                    try {
+                        Pair<Method, Class<?>> putPair = mdcCache.get(appClassLoader);
+                        if (putPair == null) {
+                            Class<?> mdcClass = appClassLoader.loadClass(MDC.class.getName());
+                            putPair = new Pair<>(mdcClass.getMethod(methodName, String.class, String.class), mdcClass);
+                            mdcCache.put(appClassLoader, putPair);
+                        }
+                        putPair.first.invoke(putPair.second, params);
+                    } catch (ClassNotFoundException | NoSuchMethodException
+                            | IllegalAccessException | InvocationTargetException e) {
+                        LOGGER.error(getClass().getSimpleName() + "::switchMdcToAppClassLoader," + e.getMessage(), e);
+                    }
+
+                }
+
             };
             SharedChain sharedChain = new SharedChain(headFilter, container.getFilters(), dispatchFilter, 0);
 
