@@ -1,5 +1,6 @@
 package com.github.dapeng.client.netty;
 
+import com.github.dapeng.client.filter.LogFilter;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.filter.*;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -76,16 +78,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 checkChannel();
 
                 try {
-                    MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().orElse("0"));
-
-                    String infoLog = "request[seqId:" + seqid + ", server:" + host + ":" + port + "]:"
-                            + "service[" + service
-                            + "]:version[" + version
-                            + "]:method[" + method + "],"
-                            + "invocationContext:\n" + invocationContext;
-
-                    LOGGER.info("SoaBaseConnection::send::dispatchFilter::onEntry," + infoLog);
-                    ByteBuf responseBuf = client.send(channel, seqid, requestBuf, timeout); //发送请求，返回结果
+                    ByteBuf responseBuf = client.send(channel, seqid, requestBuf, timeout);
 
                     Result<RESP> result = processResponse(responseBuf, responseSerializer);
                     ctx.setAttribute("result", result);
@@ -93,7 +86,6 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     onExit(ctx, getPrevChain(ctx));
                 } finally {
                     InvocationContextImpl.Factory.removeCurrentInstance();
-                    MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
                 }
             }
 
@@ -121,11 +113,15 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 }
             }
         };
-        //todo shareFilter
-        SharedChain sharedChain = new SharedChain(headerFilter, new ArrayList<>(), dispatchFilter, 0);
+
+        List<Filter> shareFilters = new ArrayList<>();
+        shareFilters.add(new LogFilter());
+        SharedChain sharedChain = new SharedChain(headerFilter, shareFilters, dispatchFilter, 0);
 
         FilterContextImpl filterContext = new FilterContextImpl();
         filterContext.setAttach(dispatchFilter, "chain", sharedChain);
+        filterContext.setAttribute("context", invocationContext);
+        filterContext.setAttribute("serverInfo", host + ":" + port);
 
         sharedChain.onEntry(filterContext);
 
@@ -167,19 +163,10 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
                     ByteBuf requestBuf = buildRequestBuf(service, version, method, seqid, request, requestSerializer);
 
-                    CompletableFuture<ByteBuf> responseBufFuture = null;
+                    CompletableFuture<ByteBuf> responseBufFuture;
                     try {
                         checkChannel();
-
-                        String infoLog = "request[seqId:" + seqid + ", server: " + host + ":" + port + "]:"
-                                + "service[" + service
-                                + "]:version[" + version
-                                + "]:method[" + method + "],"
-                                + "invocationContext:\n" + invocationContext;
-
-                        LOGGER.info("SoaBaseConnection::sendAsync::dispatchFilter::onEntry," + infoLog);
-
-                        responseBufFuture = client.sendAsync(channel, seqid, requestBuf, timeout); //发送请求，返回结果
+                        responseBufFuture = client.sendAsync(channel, seqid, requestBuf, timeout);
                     } catch (Exception e) {
                         LOGGER.error(e.getMessage(), e);
                         Result<RESP> result = new Result<>(null,
@@ -190,12 +177,12 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     }
 
                     responseBufFuture.whenComplete((realResult, ex) -> {
+                        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().orElse("0"));
                         if (ex != null) {
                             SoaException soaException = convertToSoaException(ex);
                             Result<RESP> result = new Result<>(null, soaException);
                             ctx.setAttribute("result", result);
                         } else {
-                            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().orElse("0"));
                             InvocationContextImpl.Factory.currentInstance(invocationContext);
 
                             Result<RESP> result = processResponse(realResult, responseSerializer);
@@ -251,10 +238,15 @@ public abstract class SoaBaseConnection implements SoaConnection {
             }
         };
         // Head, LoadBalance, .. dispatch
-        SharedChain sharedChain = new SharedChain(headFilter, new ArrayList<>(), dispatchFilter, 0);
+        List<Filter> shareFilters = new ArrayList<>();
+        shareFilters.add(new LogFilter());
+
+        SharedChain sharedChain = new SharedChain(headFilter, shareFilters, dispatchFilter, 0);
 
         FilterContextImpl filterContext = new FilterContextImpl();
         filterContext.setAttach(dispatchFilter, "chain", sharedChain);
+        filterContext.setAttribute("context", invocationContext);
+        filterContext.setAttribute("serverInfo", host + ":" + port);
 
         try {
             sharedChain.onEntry(filterContext);
@@ -304,20 +296,11 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 SoaMessageParser parser = new SoaMessageParser(responseBuf, responseSerializer).parseHeader();
                 // TODO fill InvocationContext.lastInfo from response.Header
                 SoaHeader respHeader = parser.getHeader();
-                InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
 
                 if ("0000".equals(respHeader.getRespCode().get())) {
                     parser.parseBody();
                     RESP resp = (RESP) parser.getBody();
                     assert (resp != null);
-                    String infoLog = "response[seqId:" + invocationContext.seqId() + ", server: " + host + ":" + port + "]:"
-                            + "service[" + respHeader.getServiceName()
-                            + "]:version[" + respHeader.getVersionName()
-                            + "]:method[" + respHeader.getMethodName() + "],"
-                            + "invocationContext:\n" + invocationContext;
-
-                    LOGGER.info(getClass().getSimpleName() + "::processResponse," + infoLog);
-
                     return new Result<>(resp, null);
                 } else {
                     return new Result<>(null, new SoaException(
