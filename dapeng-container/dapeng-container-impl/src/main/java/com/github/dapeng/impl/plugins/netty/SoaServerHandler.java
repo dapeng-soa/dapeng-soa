@@ -66,7 +66,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             }
             dispatcher.execute(() -> {
                 try {
-                    MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().orElse("0"));
                     TransactionContext.Factory.currentInstance(transactionContext);
                     processRequest(channelHandlerContext, processor, msg, transactionContext, invokeTime);
                 } catch (Throwable e) {
@@ -75,7 +74,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             ExceptionUtil.convertToSoaException(e));
                 } finally {
                     TransactionContext.Factory.removeCurrentInstance();
-                    MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
                 }
             });
         } catch (Throwable ex) {
@@ -86,6 +84,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             writeErrorMessage(channelHandlerContext, transactionContext, new SoaException(SoaCode.UnKnown.getCode(), "读请求异常", ex));
         } finally {
             TransactionContext.Factory.removeCurrentInstance();
+            MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         }
     }
 
@@ -257,7 +256,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         private final SoaServiceDefinition<I> serviceDef;
         private final REQ args;
         private final SoaFunctionDefinition<I, REQ, RESP> soaFunction;
-        private final TransactionContext transactionContext;
 
         DispatchFilter(SoaServiceDefinition<I> serviceDef,
                               SoaFunctionDefinition<I, REQ, RESP> soaFunction,
@@ -266,7 +264,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             this.serviceDef = serviceDef;
             this.args = args;
             this.soaFunction = soaFunction;
-            transactionContext = TransactionContext.Factory.currentInstance();
         }
 
         private FilterChain getPrevChain(FilterContext ctx) {
@@ -278,9 +275,10 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         public void onEntry(FilterContext filterContext, FilterChain next) {
 
             I iface = serviceDef.iface;
+            TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
+
             try {
                 if (LOGGER.isDebugEnabled()) {
-                    TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
                     LOGGER.debug(SoaServerHandler.class.getSimpleName() + "$dispatchFilter::onEntry[seqId:"
                             + transactionContext.getSeqid() + ", async:" + serviceDef.isAsync + "]");
                 }
@@ -322,9 +320,10 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
         @Override
         public void onExit(FilterContext filterContext, FilterChain prev) {
+            TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
+
             try {
                 if (LOGGER.isDebugEnabled()) {
-                    TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
                     LOGGER.debug(SoaServerHandler.class.getSimpleName() + "$dispatchFilter::onExit[seqId:"
                             + transactionContext.getSeqid() + "]");
                 }
