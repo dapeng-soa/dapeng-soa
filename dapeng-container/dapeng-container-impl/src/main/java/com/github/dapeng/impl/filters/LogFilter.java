@@ -80,6 +80,11 @@ public class LogFilter implements Filter {
         boolean isAsync = (Boolean) filterContext.getAttribute("isAsync");
 
         try {
+            if (isAsync) {
+                MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().orElse("0"));
+                switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().orElse("0"));
+            }
+
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(getClass().getSimpleName()
                         + "::onExit:[seqId:" + transactionContext.getSeqid()
@@ -115,9 +120,6 @@ public class LogFilter implements Filter {
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
                     + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : ""
                     + " cost:" + cost + "ms");
-            if (isAsync) {
-                switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().orElse("0"));
-            }
 
             soaHeader.setCalleeTime1(cost.intValue());
             application.info(this.getClass(), infoLog);
@@ -129,10 +131,7 @@ public class LogFilter implements Filter {
             } finally {
                 switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), transactionContext.sessionTid().orElse("0"));
 
-                //如果是异步调用, 那么在DispatchFilter中已经remove了.
-                if (!isAsync) {
-                    MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
-                }
+                MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
             }
         }
     }
