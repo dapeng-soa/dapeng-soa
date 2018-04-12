@@ -75,7 +75,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         ConnectionType connectionType = getConnectionType(requestSerializer);
         SoaConnection connection = findConnection(service, version, method, connectionType);
         if (connection == null) {
-            throw new SoaException(SoaCode.NotConnected);
+            throw new SoaException(SoaCode.NotFoundServer);
         }
         long timeout = getTimeout(service, version, method);
         return connection.send(service, version, method, request, requestSerializer, responseSerializer, timeout);
@@ -93,7 +93,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         SoaConnection connection = findConnection(service, version,
                 method, connectionType);
         if (connection == null) {
-            throw new SoaException(SoaCode.NotConnected);
+            throw new SoaException(SoaCode.NotFoundServer);
         }
         long timeout = getTimeout(service, version, method);
         return connection.sendAsync(service, version, method, request, requestSerializer, responseSerializer, timeout);
@@ -105,6 +105,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                                          ConnectionType connectionType) {
         ServiceZKInfo zkInfo = zkInfos.get(service);
 
+        if (zkInfo == null || zkInfo.getRuntimeInstances() == null){
+            return null;
+        }
         List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
                 .filter(rt -> checkVersion(version, rt.version))
                 .collect(Collectors.toList());
