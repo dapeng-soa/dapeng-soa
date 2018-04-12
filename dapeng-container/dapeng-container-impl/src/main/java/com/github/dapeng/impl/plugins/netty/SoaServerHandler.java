@@ -289,7 +289,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
                     future.whenComplete((realResult, ex) -> {
                         try {
-                            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().orElse("0"));
                             TransactionContext.Factory.currentInstance(transactionContext);
 
                             if (ex != null) {
@@ -300,7 +299,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             }
                             onExit(filterContext, getPrevChain(filterContext));
                         } finally {
-                            MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
                             TransactionContext.Factory.removeCurrentInstance();
                         }
                     });
