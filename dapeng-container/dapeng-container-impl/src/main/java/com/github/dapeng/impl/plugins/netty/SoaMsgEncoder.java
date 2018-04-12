@@ -39,13 +39,14 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
     protected void encode(ChannelHandlerContext channelHandlerContext,
                           SoaResponseWrapper wrapper,
                           ByteBuf out) throws Exception {
+        TransactionContext transactionContext = wrapper.transactionContext;
+        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().orElse("0"));
+
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(getClass().getSimpleName() + "::encode");
         }
 
         try {
-
-            TransactionContext transactionContext = wrapper.transactionContext;
             SoaHeader soaHeader = transactionContext.getHeader();
             Optional<String> respCode = soaHeader.getRespCode();
 
