@@ -79,6 +79,7 @@ public class SoaHeader {
     private Optional<String> callerMid = Optional.empty();
 
     /**
+     * todo 用int类型传输ip
      * 调用者ip
      */
     private Optional<String> callerIp = Optional.empty();
@@ -99,6 +100,7 @@ public class SoaHeader {
     private Optional<String> respMessage = Optional.empty();
 
     private Optional<String> calleeTid = Optional.empty();
+    //todo 用int类型传输IP
     private Optional<String> calleeIp = Optional.empty();
     private Optional<Integer> calleePort = Optional.empty();
     private Optional<String> calleeMid = Optional.empty();
