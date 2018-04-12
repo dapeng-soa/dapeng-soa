@@ -183,12 +183,9 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
      * @param e
      */
     private void attachErrorInfo(TransactionContext transactionContext, SoaException e) {
-
         SoaHeader soaHeader = transactionContext.getHeader();
-
         soaHeader.setRespCode(e.getCode());
-        soaHeader.setRespMessage(e.getMessage());
-
+        soaHeader.setRespMessage(e.getMsg());
         transactionContext.soaException(e);
     }
 
