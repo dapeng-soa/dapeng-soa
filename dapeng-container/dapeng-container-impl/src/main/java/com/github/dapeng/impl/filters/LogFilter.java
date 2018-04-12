@@ -34,7 +34,12 @@ public class LogFilter implements Filter {
         TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
         Application application = (Application) filterContext.getAttribute("application");
 
+
         try {
+            // 容器的IO线程MDC以及应用的MDC(不同classLoader)设置
+            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().orElse("0"));
+            switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().orElse("0"));
+
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.getSeqid() + "]");
             }
@@ -49,7 +54,6 @@ public class LogFilter implements Filter {
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
                     + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
 
-            switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().orElse("0"));
 
             application.info(this.getClass(), infoLog);
         } finally {
@@ -60,6 +64,7 @@ public class LogFilter implements Filter {
             } finally {
                 boolean isAsync = (Boolean) filterContext.getAttribute("isAsync");
                 if (isAsync) {
+                    MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
                     switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), transactionContext.sessionTid().orElse("0"));
                 }
             }
@@ -71,6 +76,8 @@ public class LogFilter implements Filter {
         TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
         ChannelHandlerContext channelHandlerContext = (ChannelHandlerContext) filterContext.getAttribute("channelHandlerContext");
         Application application = (Application) filterContext.getAttribute("application");
+
+        boolean isAsync = (Boolean) filterContext.getAttribute("isAsync");
 
         try {
             if (LOGGER.isTraceEnabled()) {
@@ -108,7 +115,9 @@ public class LogFilter implements Filter {
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
                     + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : ""
                     + " cost:" + cost + "ms");
-            switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().orElse("0"));
+            if (isAsync) {
+                switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().orElse("0"));
+            }
 
             soaHeader.setCalleeTime1(cost.intValue());
             application.info(this.getClass(), infoLog);
@@ -119,6 +128,11 @@ public class LogFilter implements Filter {
                 LOGGER.error(e.getMessage(), e);
             } finally {
                 switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), transactionContext.sessionTid().orElse("0"));
+
+                //如果是异步调用, 那么在DispatchFilter中已经remove了.
+                if (!isAsync) {
+                    MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+                }
             }
         }
     }
