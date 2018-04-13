@@ -130,55 +130,66 @@ public class ClientZk extends CommonZk {
         }
     }
 
+    /**
+     * 保证zk watch机制，出现异常循环执行5次
+     *
+     * @param zkInfo
+     */
     private void syncZkRuntimeInfo(ZkServiceInfo zkInfo) {
         String servicePath = SERVICE_PATH + "/" + zkInfo.service;
-        try {
-            if (zk == null) {
-                LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:zk is null, now init()");
-                init();
-            }
-
-            List<String> childrens = zk.getChildren(servicePath, watchedEvent -> {
-                if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-                    if (zkInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
-                        LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:{}子节点发生变化，重新获取信息", watchedEvent.getPath());
-                        syncZkRuntimeInfo(zkInfo);
-                    }
-                }
-            });
-
-            if (childrens.size() == 0) {
-                zkInfo.setStatus(ZkServiceInfo.Status.CANCELED);
-                zkInfo.getRuntimeInstances().clear();
-                LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:no service instances found");
-                return;
-            }
-            List<RuntimeInstance> runtimeInstanceList = zkInfo.getRuntimeInstances();
-            //这里要clear掉，因为接下来会重新将实例信息放入list中，不清理会导致重复...
-            runtimeInstanceList.clear();
-            LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "], 获取{}的子节点成功", servicePath);
-            //child = 10.168.13.96:9085:1.0.0
-            for (String children : childrens) {
-                String[] infos = children.split(":");
-                RuntimeInstance instance = new RuntimeInstance(zkInfo.service, infos[0], Integer.valueOf(infos[1]), infos[2]);
-                runtimeInstanceList.add(instance);
-            }
-
-            StringBuilder logBuffer = new StringBuilder();
-            zkInfo.getRuntimeInstances().forEach(info -> logBuffer.append(info.toString()));
-            LOGGER.info("<-> syncZkRuntimeInfo 触发服务实例同步，目前服务实例列表:" + zkInfo.service + " -> " + logBuffer);
-            zkInfo.setStatus(ZkServiceInfo.Status.ACTIVE);
-
-        } catch (KeeperException | InterruptedException e) {
-            //fixme 是否需要等待
+        int retry = 5;
+        do {
             try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e1) {
-            }
-            syncZkRuntimeInfo(zkInfo);
-            LOGGER.error(e.getMessage(), e);
-        }
+                if (zk == null) {
+                    LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:zk is null, now init()");
+                    init();
+                }
 
+                List<String> childrens;
+                try {
+                    childrens = zk.getChildren(servicePath, watchedEvent -> {
+                        if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
+                            if (zkInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
+                                LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:{}子节点发生变化，重新获取信息", watchedEvent.getPath());
+                                syncZkRuntimeInfo(zkInfo);
+                            }
+                        }
+                    });
+                } catch (KeeperException.NoNodeException e) {
+                    LOGGER.error("sync service:  {} zk node is not exist,", zkInfo.service);
+                    return;
+                }
+
+                if (childrens.size() == 0) {
+                    zkInfo.setStatus(ZkServiceInfo.Status.CANCELED);
+                    zkInfo.getRuntimeInstances().clear();
+                    LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:no service instances found");
+                    return;
+                }
+                List<RuntimeInstance> runtimeInstanceList = zkInfo.getRuntimeInstances();
+                //这里要clear掉，因为接下来会重新将实例信息放入list中，不清理会导致重复...
+                runtimeInstanceList.clear();
+                LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "], 获取{}的子节点成功", servicePath);
+                //child = 10.168.13.96:9085:1.0.0
+                for (String children : childrens) {
+                    String[] infos = children.split(":");
+                    RuntimeInstance instance = new RuntimeInstance(zkInfo.service, infos[0], Integer.valueOf(infos[1]), infos[2]);
+                    runtimeInstanceList.add(instance);
+                }
+
+                StringBuilder logBuffer = new StringBuilder();
+                zkInfo.getRuntimeInstances().forEach(info -> logBuffer.append(info.toString()));
+                LOGGER.info("<-> syncZkRuntimeInfo 触发服务实例同步，目前服务实例列表:" + zkInfo.service + " -> " + logBuffer);
+                zkInfo.setStatus(ZkServiceInfo.Status.ACTIVE);
+                return;
+            } catch (KeeperException | InterruptedException e) {
+                LOGGER.error(e.getMessage(), e);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e1) {
+                }
+            }
+        } while (retry-- > 0);
     }
 
 
