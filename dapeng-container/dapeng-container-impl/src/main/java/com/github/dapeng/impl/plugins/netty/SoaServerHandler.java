@@ -47,6 +47,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         final long invokeTime = System.currentTimeMillis();
         ByteBuf reqMessage = (ByteBuf) msg;
+        Integer requestFlow = getRequestLength(reqMessage) + Integer.BYTES;
         ByteBuf reqMirror = reqMessage.slice(); // only used for debug packet
 
         TSoaTransport inputSoaTransport = new TSoaTransport(reqMessage);
@@ -63,7 +64,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             container.getDispatcher().execute(() -> {
                 try {
                     TransactionContext.Factory.setCurrentInstance(context);
-                    processRequest(ctx, parser.getContentProtocol(), processor, reqMirror, context, invokeTime);
+                    processRequest(ctx, parser.getContentProtocol(), processor, reqMirror, context, invokeTime,requestFlow);
                 } catch (Throwable e) {
                     LOGGER.error(e.getMessage(), e);
                     writeErrorMessage(ctx, context, new SoaException(SoaCode.UnKnown, e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage()));
@@ -99,7 +100,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                                                SoaServiceDefinition<I> serviceDef,
                                                ByteBuf reqMirror,
                                                TransactionContext context,
-                                               long invokeTime) throws TException {
+                                               long invokeTime,Integer requestFlow) throws TException {
 
         try {
             SoaHeader soaHeader = context.getHeader();
@@ -202,6 +203,9 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             filterContext.setAttach(dispatchFilter, "chain", sharedChain);
             filterContext.setAttribute("serviceDef",serviceDef);
             filterContext.setAttribute("soaHeader",soaHeader);
+            filterContext.setAttribute("waitingTime",waitingTime);
+            filterContext.setAttribute("startTime",invokeTime);
+            filterContext.setAttribute("requestFlow",requestFlow);
             sharedChain.onEntry(filterContext);
         } catch (SoaException e) {
             LOGGER.error(e.getMsg(), e);
@@ -342,4 +346,11 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         }
         return soaException;
     }
+    private int getRequestLength(ByteBuf inputBuf) {
+        int readerIndex = inputBuf.readerIndex();
+        int requestLength = inputBuf.readInt();
+        inputBuf.readerIndex(readerIndex);
+        return requestLength;
+    }
 }
+
