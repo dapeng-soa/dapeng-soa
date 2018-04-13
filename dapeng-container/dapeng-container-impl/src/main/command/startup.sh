@@ -70,6 +70,7 @@ DEBUG_OPTS=""
 SOA_BASE="-Dsoa.base=$workdir/../ -Dsoa.run.mode=native -Dsoa.transactional.enable=false -Dsoa.monitor.enable=true -Dsoa.core.pool.size=100"
 USER_OPTS=""
 
+nohup /opt/fluent-bit/fluent-bit -c /opt/fluent-bit/etc/fluent-bit.conf
 nohup java $JAVA_OPTS $JVM_OPTS $SOA_BASE $DEBUG_OPTS $USER_OPTS  $E_JAVA_OPTS -cp ./dapeng-bootstrap.jar com.github.dapeng.bootstrap.Bootstrap >> $logdir/console.log 2>&1 &
 
 echo $! > $logdir/pid.txt
