@@ -36,18 +36,19 @@ public class RouteParserTest {
         parser.parseAll(routes, str);
 
         List<String> servers = new ArrayList<>();
-        servers.add("1.2.3.4");
-        servers.add("1.2.3.5");
+        servers.add("192.168.3.38");
+        servers.add("192.168.3.39");
+        servers.add("192.168.3.40");
 
-        InvocationContext ctx = new InvocationContextImpl();
-        SoaHeader soaHeader = new SoaHeader();
-        soaHeader.setOperatorId(Optional.of(1024L));
-        soaHeader.setUserIp(Optional.of("192.168.3.39"));
-        soaHeader.setCallerMid(Optional.of("app"));
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
 
-        soaHeader.setServiceName("com.github.dapeng.soa.user.service.UserService");
-        soaHeader.setVersionName("1.0.0");
-        soaHeader.setMethodName("getArticleDetail");
+        ctx.operatorId(1024L);
+        ctx.userIp("192.168.3.39");
+        ctx.callerMid("app");
+
+        ctx.serviceName("com.github.dapeng.soa.user.service.UserService");
+        ctx.versionName("1.0.0");
+        ctx.methodName("getArticleDetail");
 
         Set<InetAddress> serverResult = RouteExecutor.execute(ctx, routes, servers);
 
