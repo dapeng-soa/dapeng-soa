@@ -187,7 +187,7 @@ class JavaGenerator extends CodeGenerator {
 
 
       println(s"生成metadata:${service.namespace}.${service.name}.xml")
-      new MetadataGenerator().generateXmlFile(service, resourceDir(outDir, service.namespace.substring(0, service.namespace.lastIndexOf("."))));
+      new MetadataGenerator().generateXmlFile(service, resourceDir(outDir, service.namespace.substring(0, service.namespace.lastIndexOf("."))),0);
       println(s"生成metadata:${service.namespace}.${service.name}.xml 完成")
 
       println("==========================================================")
