@@ -190,14 +190,14 @@ class ScalaGenerator extends CodeGenerator {
       //scala & java client should use the same xml
       if (!service.namespace.contains("scala")) {
         println(s"生成metadata:${service.namespace}.${service.name}.xml")
-        new MetadataGenerator().generateXmlFile(service, resourceDir(outDir, service.namespace.substring(0, service.namespace.lastIndexOf("."))));
+        new MetadataGenerator().generateXmlFile(service, resourceDir(outDir, service.namespace.substring(0, service.namespace.lastIndexOf("."))),0)
         println(s"生成metadata:${service.namespace}.${service.name}.xml 完成")
       } else {
         val nonScalaNameSpace = service.namespace.replace(".scala","")
         val xmlFile = new File(resourceDir(outDir, nonScalaNameSpace.substring(0, nonScalaNameSpace.lastIndexOf("."))) + s"${nonScalaNameSpace}.${service.name}.xml")
         if (!xmlFile.exists()) {
           service.setNamespace(nonScalaNameSpace)
-          new MetadataGenerator().generateXmlFile(service, resourceDir(outDir, nonScalaNameSpace.substring(0, nonScalaNameSpace.lastIndexOf("."))));
+          new MetadataGenerator().generateXmlFile(service, resourceDir(outDir, nonScalaNameSpace.substring(0, nonScalaNameSpace.lastIndexOf("."))),0)
         } else {
           println(" skip *.scala.metadata.xml generate....")
         }
