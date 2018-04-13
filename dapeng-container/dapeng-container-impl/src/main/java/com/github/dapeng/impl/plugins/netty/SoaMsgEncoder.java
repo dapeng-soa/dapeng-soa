@@ -49,6 +49,30 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
 
         Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
+        /**
+         * use AttributeMap to share common data on different  ChannelHandlers
+         */
+        Attribute<Map<Integer, Long>> requestTimestampAttr = channelHandlerContext.channel().attr(NettyChannelKeys.REQUEST_TIMESTAMP);
+        Map<Integer, Long> requestTimestampMap = requestTimestampAttr.get();
+
+        Long requestTimestamp = 0L;
+        if (requestTimestampMap != null) {
+            requestTimestamp = requestTimestampMap.getOrDefault(transactionContext.getSeqid(), requestTimestamp);
+            //each per request take the time then remove it
+            requestTimestampMap.remove(transactionContext.getSeqid());
+        } else {
+            LOGGER.warn(getClass().getSimpleName() + "::encode no requestTimestampMap found!");
+        }
+
+        String infoLog = "response[seqId:" + transactionContext.getSeqid() + ", respCode:" + respCode.get() + "]:"
+                + "service[" + soaHeader.getServiceName()
+                + "]:version[" + soaHeader.getVersionName()
+                + "]:method[" + soaHeader.getMethodName() + "]"
+                + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
+                + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : ""
+                + " cost:" + (System.currentTimeMillis() - requestTimestamp) + "ms");
+
+        application.info(this.getClass(), infoLog);
 
         if (respCode.isPresent() && !respCode.get().equals(SOA_NORMAL_RESP_CODE)) {
             writeErrorResponse(transactionContext, application, out);
@@ -56,6 +80,11 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             try {
                 BeanSerializer serializer = wrapper.serializer.get();
                 Object result = wrapper.result.get();
+
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(getClass().getSimpleName() + "::encode " + infoLog + ", payload:\n" + result);
+                    LOGGER.debug(getClass().getSimpleName() + "::encode " + DumpUtil.dumpToStr(out));
+                }
 
                 TSoaTransport transport = new TSoaTransport(out);
                 SoaMessageProcessor messageProcessor = new SoaMessageProcessor(transport);
@@ -66,35 +95,6 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                 }
                 messageProcessor.writeMessageEnd();
                 transport.flush();
-
-                /**
-                 * use AttributeMap to share common data on different  ChannelHandlers
-                 */
-                Attribute<Map<Integer, Long>> requestTimestampAttr = channelHandlerContext.channel().attr(NettyChannelKeys.REQUEST_TIMESTAMP);
-                Map<Integer, Long> requestTimestampMap = requestTimestampAttr.get();
-
-                Long requestTimestamp = 0L;
-                if (requestTimestampMap != null) {
-                    requestTimestamp = requestTimestampMap.getOrDefault(transactionContext.getSeqid(), requestTimestamp);
-                    //each per request take the time then remove it
-                    requestTimestampMap.remove(transactionContext.getSeqid());
-                } else {
-                    LOGGER.warn(getClass().getSimpleName() + "::encode no requestTimestampMap found!");
-                }
-
-                String infoLog = "response[seqId:" + transactionContext.getSeqid() + ", respCode:" + respCode.get() + "]:"
-                        + "service[" + soaHeader.getServiceName()
-                        + "]:version[" + soaHeader.getVersionName()
-                        + "]:method[" + soaHeader.getMethodName() + "]"
-                        + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                        + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : ""
-                        + " cost:" + (System.currentTimeMillis() - requestTimestamp) + "ms");
-
-                application.info(this.getClass(), infoLog);
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug(getClass().getSimpleName() + "::encode " + infoLog + ", payload:\n" + result);
-                    LOGGER.debug(getClass().getSimpleName() + "::encode " + DumpUtil.dumpToStr(out));
-                }
             } catch (Throwable e) {
                 SoaException soaException = ExceptionUtil.convertToSoaException(e);
 
