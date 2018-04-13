@@ -13,7 +13,7 @@ public class ExceptionUtil {
             soaException = (SoaException) ex;
         } else {
             soaException = new SoaException(SoaCode.UnKnown.getCode(),
-                    ex.getMessage() == null ? SoaCode.UnKnown.getMsg() : ex.getMessage(), ex);
+                    ex.getCause() != null ? ex.getCause().toString() : (ex.getMessage() == null ? SoaCode.UnKnown.getMsg() : ex.getMessage()), ex);
         }
         return soaException;
     }
