@@ -155,67 +155,6 @@ public class RoutesExecutor {
         }
     }
 
-
-    /**
-     * 过滤服务器
-     *
-     * @param thenIp
-     * @param servers
-     */
-    private static void filterServer(List<ThenIp> thenIp, List<String> servers) {
-        List<InetAddress> inetAddresses = new ArrayList<>();
-        for (String server : servers) {
-            try {
-                InetAddress inetAddress = InetAddress.getByName(server);
-                if (matched(inetAddress, thenIp, true)) {
-                    inetAddresses.add(inetAddress);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-//                LOGGER.error(e.getMessage(), e);
-            }
-        }
-    }
-
-    public static boolean matched(InetAddress address, List<ThenIp> thenIp, boolean inOrNot) {
-        for (ThenIp ip : thenIp) {
-            if (matched(address, ip)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * 判断ip地址是否符合规则
-     *
-     * @param address
-     * @param ipPattern
-     * @return
-     */
-    private static boolean matched(InetAddress address, ThenIp ipPattern) {
-        InetAddress ip = null;
-        try {
-            ip = InetAddress.getByName(ipPattern.ip);
-        } catch (Exception e) {
-//            LOGGER.error(e.getMessage(), e);
-            e.printStackTrace();
-            return false;
-        }
-        byte[] bytes = ip.getAddress();
-        int ipInt = ((bytes[0] & 0xFF) << 24) | ((bytes[1] & 0xFF) << 16) | ((bytes[2] & 0xFF) << 8) | ((bytes[3] & 0xFF));
-        int mask2 = 32 - ipPattern.mask;  // 8
-        int mask2Flag = (1 << mask2) - 1;
-        int mask1Flag = -1 & (~mask2Flag);
-
-        byte[] addressBytes = address.getAddress();
-        int addressInt = ((addressBytes[0] & 0xFF) << 24) | ((addressBytes[1] & 0xFF) << 16) | ((addressBytes[2] & 0xFF) << 8) | ((addressBytes[3] & 0xFF));
-
-        return (addressInt & mask1Flag) == (ipInt & mask1Flag);
-
-    }
-
-
     /**
      * match on Matcher.id
      *
@@ -266,38 +205,5 @@ public class RoutesExecutor {
             return value.matches(regex);
         }
         return false;
-    }
-
-    private boolean isMatchStringRegex(String pattern, String value) {
-
-
-        if (".*".equals(pattern))
-            return true;
-        if ((pattern == null || pattern.length() == 0)
-                && (value == null || value.length() == 0))
-            return true;
-        if ((pattern == null || pattern.length() == 0)
-                || (value == null || value.length() == 0))
-            return false;
-
-        int i = pattern.lastIndexOf('*');
-        // doesn't find "*"
-        if (i == -1) {
-            return value.equals(pattern);
-        }
-        // "*" is at the end
-        else if (i == pattern.length() - 1) {
-            return value.startsWith(pattern.substring(0, i));
-        }
-        // "*" is at the beginning
-        else if (i == 0) {
-            return value.endsWith(pattern.substring(i + 1));
-        }
-        // "*" is in the middle
-        else {
-            String prefix = pattern.substring(0, i);
-            String suffix = pattern.substring(i + 1);
-            return value.startsWith(prefix) && value.endsWith(suffix);
-        }
     }
 }
