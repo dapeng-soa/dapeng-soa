@@ -11,6 +11,7 @@ import com.github.dapeng.impl.plugins.monitor.ServiceBasicInfo;
 import com.github.dapeng.impl.plugins.monitor.config.MonitorFilterProperties;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import org.slf4j.Logger;
@@ -70,6 +71,17 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
      */
     private ReentrantLock signalLock = new ReentrantLock();
     private Condition signalCondition = signalLock.newCondition();
+
+
+    private ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(1,
+            new ThreadFactoryBuilder()
+                    .setDaemon(true)
+                    .setNameFormat("dapeng-" + getClass().getSimpleName() + "-scheduler-%d")
+                    .build());
+    private ExecutorService uploaderExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
+            .setDaemon(true)
+            .setNameFormat("dapeng-" + getClass().getSimpleName() + "-uploader")
+            .build());
 
     private static class CounterClientFactory {
         private static CounterService COUNTER_CLIENT = new CounterServiceClient();
@@ -146,15 +158,6 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
 
         LOGGER.info("dapeng invoke Monitor started, upload interval:" + PERIOD + "s");
 
-        ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(1,
-                new ThreadFactoryBuilder()
-                        .setDaemon(true)
-                        .setNameFormat("dapeng-" + getClass().getSimpleName() + "-scheduler-%d")
-                        .build());
-        ExecutorService uploaderExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
-                .setDaemon(true)
-                .setNameFormat("dapeng-" + getClass().getSimpleName() + "-uploader")
-                .build());
 
         // 定时统计服务调用数据并加入到上送队列
         schedulerExecutorService.scheduleAtFixedRate(() -> {
@@ -182,7 +185,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
                 if (!dataList.isEmpty()) {
                     serviceDataQueue.put(dataList);
                     // 默认保留最新30条,缓存调用数据,offer,poll防止阻塞
-                    if (!serviceCacheQueue.offer(dataList)){
+                    if (!serviceCacheQueue.offer(dataList)) {
                         serviceCacheQueue.poll();
                         serviceCacheQueue.offer(dataList);
                     }
@@ -318,5 +321,17 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
         });
 
         return points;
+    }
+
+    /**
+     * 停止上送线程
+     *
+     * @return
+     */
+    public void destory() {
+        LOGGER.info(" stop InvokeCounter upload !");
+        schedulerExecutorService.shutdown();
+        uploaderExecutor.shutdown();
+        LOGGER.info(" InvokeCounter is shutdown");
     }
 }
