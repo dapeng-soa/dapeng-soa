@@ -61,6 +61,7 @@ public class ServerZk extends CommonZk {
                         //创建根节点
                         create(SERVICE_PATH, null, false);
                         create(CONFIG_PATH, null, false);
+                        create(ROUTES_PATH, null, false);
                         zkConfigMap.clear();
                         LOGGER.info("ServerZk connected to  {} [Zookeeper]", zkHost);
                         if (registryAgent != null) {

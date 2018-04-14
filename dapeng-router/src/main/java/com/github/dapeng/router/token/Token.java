@@ -63,7 +63,7 @@ public interface Token {
     int KV = 11;
 
     /**
-     * mode
+     * mode  %
      */
     int MODE = 12;
     /**

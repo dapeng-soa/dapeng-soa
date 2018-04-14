@@ -1,4 +1,4 @@
-package com.github.dapeng.registry;
+package com.github.dapeng.core;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

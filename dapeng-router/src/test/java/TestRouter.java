@@ -44,8 +44,9 @@ public class TestRouter {
 
     @Test
     public void testRouterOneMatch() throws UnknownHostException {
-        String onePattern_oneMatcher = "method match 'get.*ById'  => ip'192.168.1.101/23' , ip'192.168.1.103/24' ";
-        List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
+        String pattern = "  method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip\"192.168.1.101/23\"";
+//        String onePattern_oneMatcher = "method match 'get.*ById'  => ip'192.168.1.101/23' , ip'192.168.1.103/24' ";
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         ctx.serviceName("getSkuById");
         ctx.versionName("1.0.0");
