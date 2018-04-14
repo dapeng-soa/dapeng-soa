@@ -186,6 +186,8 @@ public class RoutesParser {
      * s'getFoo'
      * <p>
      * s'setFoo'
+     * <p>
+     * s'getFoo*'
      *
      * @return
      */
@@ -199,9 +201,12 @@ public class RoutesParser {
                 return new NotPattern(it);
             case STRING:
                 // getFoo
-                StringToken st = (StringToken) lexer.next(STRING);
+                StringToken st = (StringToken) lexer.next(Token.STRING);
                 return new StringPattern(st.content);
             case Token.REGEXP:
+                // get.*
+                RegexpToken regexp = (RegexpToken) lexer.next(Token.REGEXP);
+                return new RegexpPattern(regexp.regexp);
             case Token.RANGE:
             case Token.NUMBER:
             case Token.IP:

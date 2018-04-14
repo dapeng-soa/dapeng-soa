@@ -5,10 +5,7 @@ import com.github.dapeng.router.condition.Condition;
 import com.github.dapeng.router.condition.Matcher;
 import com.github.dapeng.router.condition.Matchers;
 import com.github.dapeng.router.condition.Otherwise;
-import com.github.dapeng.router.pattern.IpPattern;
-import com.github.dapeng.router.pattern.NotPattern;
-import com.github.dapeng.router.pattern.Pattern;
-import com.github.dapeng.router.pattern.StringPattern;
+import com.github.dapeng.router.pattern.*;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -66,7 +63,7 @@ public class RoutesExecutor {
         Matchers matcherCondition = (Matchers) left;
         List<Matcher> matchers = matcherCondition.macthers;
         for (Matcher matcher : matchers) {
-            Object value = matchMatcher(ctx, matcher);
+            String value = matchMatcher(ctx, matcher);
             List<Pattern> patterns = matcher.getPatterns();
 
             boolean isMatch = false;
@@ -225,7 +222,7 @@ public class RoutesExecutor {
      * @param ctx
      * @param matcher
      */
-    private static Object matchMatcher(InvocationContextImpl ctx, Matcher matcher) {
+    private static String matchMatcher(InvocationContextImpl ctx, Matcher matcher) {
         // IdToken name
         String id = matcher.getId();
         String context;
@@ -251,7 +248,7 @@ public class RoutesExecutor {
      * @param value
      * @return
      */
-    private static boolean matcherPattern(Pattern pattern, Object value) {
+    private static boolean matcherPattern(Pattern pattern, String value) {
         if (pattern instanceof StringPattern) {
             String content = ((StringPattern) pattern).content;
             if (content.equals(value)) {
@@ -264,7 +261,43 @@ public class RoutesExecutor {
         } else if (pattern instanceof IpPattern) {
             //todo
             return false;
+        } else if (pattern instanceof RegexpPattern) {
+            String regex = ((RegexpPattern) pattern).regex;
+            return value.matches(regex);
         }
         return false;
+    }
+
+    private boolean isMatchStringRegex(String pattern, String value) {
+
+
+        if (".*".equals(pattern))
+            return true;
+        if ((pattern == null || pattern.length() == 0)
+                && (value == null || value.length() == 0))
+            return true;
+        if ((pattern == null || pattern.length() == 0)
+                || (value == null || value.length() == 0))
+            return false;
+
+        int i = pattern.lastIndexOf('*');
+        // doesn't find "*"
+        if (i == -1) {
+            return value.equals(pattern);
+        }
+        // "*" is at the end
+        else if (i == pattern.length() - 1) {
+            return value.startsWith(pattern.substring(0, i));
+        }
+        // "*" is at the beginning
+        else if (i == 0) {
+            return value.endsWith(pattern.substring(i + 1));
+        }
+        // "*" is in the middle
+        else {
+            String prefix = pattern.substring(0, i);
+            String suffix = pattern.substring(i + 1);
+            return value.startsWith(prefix) && value.endsWith(suffix);
+        }
     }
 }
