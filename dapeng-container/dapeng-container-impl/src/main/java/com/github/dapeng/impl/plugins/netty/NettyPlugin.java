@@ -70,28 +70,28 @@ public class NettyPlugin implements AppListener, Plugin {
                     ChannelHandler soaIdleHandler = new SoaIdleHandler();
                     //业务处理器
                     ChannelHandler soaServerHandler = new SoaServerHandler(container);
-                    ChannelHandler finalFlowCounter = flowCounter;
+                    ChannelHandler soaFlowCounter = flowCounter;
 
                     bootstrap.group(bossGroup, workerGroup)
                             .channel(NioServerSocketChannel.class)
                             .childHandler(new ChannelInitializer<SocketChannel>() {
                                 @Override
                                 protected void initChannel(SocketChannel ch) throws Exception {
-                                    ch.pipeline().addLast(channelCounter);
-                                    ch.pipeline().addLast(//超时设置
-                                            new IdleStateHandler(20, 0, 0),
-                                            new SoaFrameDecoder()); //粘包和断包处理
-
-                                    if (null != finalFlowCounter) ch.pipeline().addLast(finalFlowCounter);
-
-                                    ch.pipeline().addLast(soaMsgEncoder, soaMsgDecoder);
+                                    ch.pipeline().addLast(HandlerConstants.SOA_CHANNEL_COUNTER_HANDLER, channelCounter);
+                                    // 超时设置
+                                    ch.pipeline().addLast(HandlerConstants.IDLE_STATE_HANDLER, new IdleStateHandler(20, 0, 0));
+                                    //粘包和断包处理
+                                    ch.pipeline().addLast(HandlerConstants.SOA_FRAME_DECODER_HANDLER, new SoaFrameDecoder());
+                                    // 流量统计
+                                    if (null != soaFlowCounter)
+                                        ch.pipeline().addLast(HandlerConstants.SOA_FLOW_COUNTER_HANDLER, soaFlowCounter);
+                                    ch.pipeline().addLast(HandlerConstants.SOA_MSG_ENCODER_HANDLER, soaMsgEncoder);
+                                    ch.pipeline().addLast(HandlerConstants.SOA_MSG_DECODER_HANDLER, soaMsgDecoder);
                                     // 服务调用统计
-                                    if (MONITOR_ENABLE) ch.pipeline().addLast(new SoaInvokeCounter());
-
-                                    ch.pipeline().addLast(
-                                            soaIdleHandler,
-                                            soaServerHandler
-                                    );
+                                    if (MONITOR_ENABLE)
+                                        ch.pipeline().addLast(HandlerConstants.SOA_INVOKE_COUNTER_HANDLER, new SoaInvokeCounter());
+                                    ch.pipeline().addLast(HandlerConstants.SOA_IDLE_HANDLER, soaIdleHandler);
+                                    ch.pipeline().addLast(HandlerConstants.SOA_SERVER_HANDLER, soaServerHandler);
                                 }
                             })
                             .option(ChannelOption.SO_BACKLOG, 1024)

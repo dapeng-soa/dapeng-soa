@@ -60,6 +60,17 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
     private ReentrantLock signalLock = new ReentrantLock();
     private Condition signalCondition = signalLock.newCondition();
 
+
+    private ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(1,
+            new ThreadFactoryBuilder()
+                    .setDaemon(true)
+                    .setNameFormat("dapeng-" + getClass().getSimpleName() + "-scheduler-%d")
+                    .build());
+    private ExecutorService uploaderExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
+            .setDaemon(true)
+            .setNameFormat("dapeng-" + getClass().getSimpleName() + "-uploader-%d")
+            .build());
+
     private static class CounterClientFactory {
         private static CounterService COUNTER_CLIENT = new CounterServiceClient();
     }
@@ -97,15 +108,6 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
 
         LOGGER.info("dapeng flow Monitor started, upload interval:" + PERIOD + "s");
 
-        ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(1,
-                new ThreadFactoryBuilder()
-                        .setDaemon(true)
-                        .setNameFormat("dapeng-" + getClass().getSimpleName() + "-scheduler-%d")
-                        .build());
-        ExecutorService uploaderExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
-                .setDaemon(true)
-                .setNameFormat("dapeng-" + getClass().getSimpleName() + "-uploader-%d")
-                .build());
 
         // 定时统计时间段内的流量值并加入到上送队列
         schedulerExecutorService.scheduleAtFixedRate(() -> {
@@ -132,7 +134,7 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
                     flowDataQueue.put(point);
 
                     // 默认保留最新30条,缓存流量统计数据,offer,poll防止阻塞
-                    if(!flowCacheQueue.offer(point)){
+                    if (!flowCacheQueue.offer(point)) {
                         flowCacheQueue.poll();
                         flowCacheQueue.offer(point);
                     }
@@ -255,5 +257,17 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
         } else {
             return null;
         }
+    }
+
+    /**
+     * 停止上送线程
+     *
+     * @return
+     */
+    public void destory() {
+        LOGGER.info(" stop flowCounter upload !");
+        schedulerExecutorService.shutdown();
+        uploaderExecutor.shutdown();
+        LOGGER.info(" flowCounter is shutdown");
     }
 }
