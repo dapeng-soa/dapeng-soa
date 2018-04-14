@@ -1,10 +1,11 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.version.Version;
 import com.github.dapeng.registry.ConfigKey;
-import com.github.dapeng.registry.RuntimeInstance;
 import com.github.dapeng.registry.ServiceInfo;
-import com.github.dapeng.route.Route;
+import com.github.dapeng.router.Route;
+import com.github.dapeng.router.RoutesExecutor;
 import org.apache.zookeeper.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,9 +106,28 @@ public class ClientZk extends CommonZk {
      * @return
      */
     public List<Route> getRoutes() {
+        if (routes.size() == 0) {
+            try {
+                byte[] data = zk.getData(ROUTES_PATH, event -> {
+                    if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                        LOGGER.info("routes 节点 data 发现变更，重新获取信息");
+                        routes.clear();
+                        getRoutes();
+                    }
+                }, null);
+                try {
+                    String routeData = new String(data, "utf-8");
+                    List<Route> zkRoutes = RoutesExecutor.parseAll(routeData);
+                    routes.addAll(zkRoutes);
+                } catch (Exception e) {
+                    LOGGER.error("parser routes 信息 失败，请检查路由规则写法是否正确!");
+                }
+            } catch (KeeperException | InterruptedException e) {
+                LOGGER.error("get route data failed ");
+            }
+        }
         return this.routes;
     }
-
 
     /**
      * 客户端 同步zk 服务信息  syncServiceZkInfo

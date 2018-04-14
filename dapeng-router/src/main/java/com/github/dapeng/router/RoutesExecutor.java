@@ -1,18 +1,19 @@
 package com.github.dapeng.router;
 
 import com.github.dapeng.core.InvocationContextImpl;
+import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.router.condition.Condition;
 import com.github.dapeng.router.condition.Matcher;
 import com.github.dapeng.router.condition.Matchers;
 import com.github.dapeng.router.condition.Otherwise;
 import com.github.dapeng.router.pattern.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 描述:
@@ -21,6 +22,8 @@ import java.util.Set;
  * @date 2018年04月13日 下午10:02
  */
 public class RoutesExecutor {
+
+    private static Logger logger = LoggerFactory.getLogger(RoutesExecutor.class);
 
     /**
      * @param content
@@ -46,6 +49,26 @@ public class RoutesExecutor {
             }
         }
         return result;
+    }
+
+
+    /**
+     * product
+     */
+    public static List<RuntimeInstance> executeRoutes(InvocationContextImpl ctx, List<Route> routes, List<RuntimeInstance> instances) {
+        logger.info("开始过滤： " + instances.size());
+        for (Route route : routes) {
+            boolean isMatched = matchCondition(ctx, route.getLeft());
+            // 匹配成功，执行右边逻辑
+
+            if (isMatched) {
+                instances = matchActionsProducet(instances, route);
+                logger.info("过滤结果：" + instances.size());
+            } else {
+                logger.info("路由没有过滤" + instances.size());
+            }
+        }
+        return instances;
     }
 
 
@@ -113,6 +136,27 @@ public class RoutesExecutor {
         return addresses;
     }
 
+    /**
+     * 匹配右边重载
+     *
+     * @param instances
+     * @param route
+     * @return
+     */
+    private static List<RuntimeInstance> matchActionsProducet(List<RuntimeInstance> instances, Route route) {
+        List<ThenIp> actions = route.getActions();
+        MatchPair pair = new MatchPair();
+        actions.forEach(ip -> {
+            if (ip.not) {
+                pair.notMatches.add(ip);
+            } else {
+                pair.matches.add(ip);
+            }
+        });
+        List<RuntimeInstance> filters = instances.stream().filter(inst -> pair.isMatch(inst.ip)).collect(Collectors.toList());
+        return filters;
+    }
+
 
     private static final class MatchPair {
         final Set<ThenIp> matches = new HashSet<>();
@@ -166,8 +210,11 @@ public class RoutesExecutor {
         String id = matcher.getId();
         String context;
         switch (id) {
-            case "method":
+            case "service":
                 context = ctx.serviceName();
+                break;
+            case "method":
+                context = ctx.methodName();
                 break;
             case "version":
                 context = ctx.versionName();

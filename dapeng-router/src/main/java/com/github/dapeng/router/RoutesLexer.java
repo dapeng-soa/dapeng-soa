@@ -2,9 +2,6 @@ package com.github.dapeng.router;
 
 import com.github.dapeng.router.token.*;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
  * 描述: 词法解析
  *
@@ -31,6 +28,8 @@ public class RoutesLexer {
     public static SimpleToken Token_EOF = new SimpleToken(Token.EOF);
     public static SimpleToken Token_SEMI_COLON = new SimpleToken(Token.SEMI_COLON);
     public static SimpleToken Token_COMMA = new SimpleToken(Token.COMMA);
+
+    public static SimpleToken Token_MODE = new SimpleToken(Token.MODE);
 
 //    private static Pattern STRING_PATTERN = Pattern.compile("([\"\'])([a-zA-Z0-9*.]+)([\"\'])");
 
@@ -70,9 +69,16 @@ public class RoutesLexer {
         }
         char ch;
         do {
+            if (pos == content.length()) {
+                return Token_EOF;
+            }
+
             ch = content.charAt(pos++);
             if (ch == '~') {
                 return Token_NOT;
+            }
+            if (ch == '%') {
+                return Token_MODE;
             }
         }
         while (Character.isWhitespace(ch));
@@ -81,6 +87,9 @@ public class RoutesLexer {
 
         do {
             sb.append(ch);
+            if (pos == content.length()) {
+                break;
+            }
             ch = content.charAt(pos++);
         } while (!Character.isWhitespace(ch));
 
