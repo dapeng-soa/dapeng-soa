@@ -50,7 +50,7 @@ public class NettyConnectCounter extends ChannelInboundHandlerAdapter {
                     }
                 }
                 LOGGER.info("未启用流量监控，现在启用");
-                ctx.pipeline().addAfter(HandlerConstants.SOA_FRAME_DECODER_HANDLER,
+                ctx.pipeline().addBefore(HandlerConstants.SOA_MSG_ENCODER_HANDLER,
                         HandlerConstants.SOA_FLOW_COUNTER_HANDLER, flowCounter);
             }
             // 调用监控
@@ -58,7 +58,7 @@ public class NettyConnectCounter extends ChannelInboundHandlerAdapter {
                 LOGGER.debug("调用监控已在启用状态");
             } else {
                 LOGGER.info("未启用调用监控，现在启用");
-                ctx.pipeline().addBefore(HandlerConstants.SOA_MSG_DECODER_HANDLER,
+                ctx.pipeline().addAfter(HandlerConstants.SOA_MSG_DECODER_HANDLER,
                         HandlerConstants.SOA_INVOKE_COUNTER_HANDLER, new SoaInvokeCounter());
             }
 
