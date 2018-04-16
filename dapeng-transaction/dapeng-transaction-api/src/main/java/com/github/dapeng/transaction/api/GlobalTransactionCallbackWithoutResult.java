@@ -12,7 +12,6 @@ public abstract class GlobalTransactionCallbackWithoutResult implements GlobalTr
 
     @Override
     public boolean doInTransaction() throws TException {
-        doInTransactionWithResult();
 
         return doInTransactionWithResult();
     }
