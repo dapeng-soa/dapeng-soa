@@ -103,7 +103,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
         try {
             SoaHeader soaHeader = context.getHeader();
-
             //check if request expired
             final long waitingTime = System.currentTimeMillis() - invokeTime;
             long timeout = getTimeout(soaHeader);
@@ -136,12 +135,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             I iface = serviceDef.iface;
             //log request //TODO 需要改成filter
             boolean logFormatEnable = SoaSystemEnvProperties.SOA_LOG_FORMAT_ENABLE;
-            application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} request body:{}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.getOperatorId(), soaHeader.getOperatorName(), logFormatEnable? formatToString(soaFunction.reqSerializer.toString(args)):soaFunction.reqSerializer.toString(args));
-            //log request
-            application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} request body:{}",
-                    soaHeader.getServiceName(), soaHeader.getVersionName(),
-                    soaHeader.getMethodName(), soaHeader.getOperatorId(),
-                    soaHeader.getOperatorName(), formatToString(soaFunction.reqSerializer.toString(args)));
+            application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} request body:{}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.getOperatorId(), soaHeader.getOperatorName(), logFormatEnable ? formatToString(soaFunction.reqSerializer.toString(args)) : soaFunction.reqSerializer.toString(args));
 
             HeadFilter headFilter = new HeadFilter();
             Filter dispatchFilter = new Filter() {
@@ -173,16 +167,18 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             processResult(channelHandlerContext, soaFunction, context, result, application, ctx);
                             onExit(ctx, getPrevChain(ctx));
                         }
-                    }catch (SoaException soaException){
-                        LOGGER.error(soaException.getMessage(),soaException);
-                        writeErrorMessage(channelHandlerContext, context, soaException);
-                        ctx.setAttribute("isSuccess",false);
+                    } catch (SoaException soaException) {
+                        LOGGER.error(soaException.getMessage(), soaException);
+                        ctx.setAttribute("isSuccess", false);
+                        writeErrorMessage(channelHandlerContext, context, ctx,soaException);
+                        onExit(ctx,getPrevChain(ctx));
                     } catch (Throwable e) {
                         LOGGER.error(e.getMessage(), e);
+                        ctx.setAttribute("isSuccess", false);
                         String errMsg = e.getCause() != null ? e.getCause().toString() : (e.getMessage() != null ? e.getMessage().toString() : e.toString());
-                        writeErrorMessage(channelHandlerContext, context, new SoaException(SoaCode.UnKnown,
+                        writeErrorMessage(channelHandlerContext, context, ctx ,new SoaException(SoaCode.UnKnown,
                                 errMsg == null ? SoaCode.UnKnown.getMsg() : errMsg));
-                        ctx.setAttribute("isSuccess",false);
+                        onExit(ctx,getPrevChain(ctx));
                     }
                 }
 
@@ -192,7 +188,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                         prev.onExit(ctx);
                     } catch (SoaException e) {
                         LOGGER.error(e.getMessage(), e);
-                        ctx.setAttribute("isSuccess",false);
+                        ctx.setAttribute("isSuccess", false);
                     }
                 }
             };
@@ -200,8 +196,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
             FilterContextImpl filterContext = new FilterContextImpl();
             filterContext.setAttach(dispatchFilter, "chain", sharedChain);
-            filterContext.setAttribute("serviceDef",serviceDef);
-            filterContext.setAttribute("soaHeader",soaHeader);
+            filterContext.setAttribute("serviceDef", serviceDef);
+            filterContext.setAttribute("soaHeader", soaHeader);
             sharedChain.onEntry(filterContext);
         } catch (SoaException e) {
             LOGGER.error(e.getMsg(), e);
@@ -222,7 +218,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         try {
             //TODO 需要改成filter
             boolean logFormatEnable = SoaSystemEnvProperties.SOA_LOG_FORMAT_ENABLE;
-            application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} response body:{}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.getOperatorId(), soaHeader.getOperatorName(), logFormatEnable?formatToString(soaFunction.respSerializer.toString(result)):soaFunction.respSerializer.toString(result));
+            application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} response body:{}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.getOperatorId(), soaHeader.getOperatorName(), logFormatEnable ? formatToString(soaFunction.respSerializer.toString(result)) : soaFunction.respSerializer.toString(result));
 
             filterContext.setAttribute("channelHandlerContext", channelHandlerContext);
             filterContext.setAttribute("context", context);
