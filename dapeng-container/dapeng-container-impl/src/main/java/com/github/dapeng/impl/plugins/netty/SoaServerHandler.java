@@ -342,4 +342,14 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         }
         return soaException;
     }
+
+
+
+    private int getRequestLength(ByteBuf inputBuf) {
+        int readerIndex = inputBuf.readerIndex();
+        int requestLength = inputBuf.readInt();
+        inputBuf.readerIndex(readerIndex);
+        return requestLength;
+    }
+
 }
