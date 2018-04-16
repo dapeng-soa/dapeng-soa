@@ -2,6 +2,10 @@ package com.github.dapeng.router;
 
 import com.github.dapeng.router.token.*;
 
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * 描述: 词法解析
  *
@@ -15,23 +19,25 @@ public class RoutesLexer {
 
     //常量
     public static final String C_NOT = "~";
-    public static final String C_EOL = System.getProperty("line.separator");
     public static final char C_MARKS = '\'';
     public static final char C_DOUBLE_MARKS = '\"';
 
-
-    public static SimpleToken Token_EOL = new SimpleToken(Token.EOL);
-    public static SimpleToken Token_THEN = new SimpleToken(Token.THEN);
-    public static SimpleToken Token_OTHERWISE = new SimpleToken(Token.OTHERWISE);
-    public static SimpleToken Token_MATCH = new SimpleToken(Token.MATCH);
-    public static SimpleToken Token_NOT = new SimpleToken(Token.NOT);
-    public static SimpleToken Token_EOF = new SimpleToken(Token.EOF);
-    public static SimpleToken Token_SEMI_COLON = new SimpleToken(Token.SEMI_COLON);
-    public static SimpleToken Token_COMMA = new SimpleToken(Token.COMMA);
+    static SimpleToken Token_EOL = new SimpleToken(Token.EOL);
+    static SimpleToken Token_THEN = new SimpleToken(Token.THEN);
+    static SimpleToken Token_OTHERWISE = new SimpleToken(Token.OTHERWISE);
+    static SimpleToken Token_MATCH = new SimpleToken(Token.MATCH);
+    static SimpleToken Token_NOT = new SimpleToken(Token.NOT);
+    static SimpleToken Token_EOF = new SimpleToken(Token.EOF);
+    static SimpleToken Token_SEMI_COLON = new SimpleToken(Token.SEMI_COLON);
+    static SimpleToken Token_COMMA = new SimpleToken(Token.COMMA);
 
     public static SimpleToken Token_MODE = new SimpleToken(Token.MODE);
 
-//    private static Pattern STRING_PATTERN = Pattern.compile("([\"\'])([a-zA-Z0-9*.]+)([\"\'])");
+    //    private static Pattern STRING_PATTERN = Pattern.compile("([\"\'])([a-zA-Z0-9*.]+)([\"\'])");
+
+    private static Pattern rangerPattern = Pattern.compile("[0-9]+..[0-9]+");
+
+    private static Pattern modePattern = Pattern.compile("%\"([0-9]+)n\\+(([0-9]+)..)?([0-9]+)\"");
 
     public RoutesLexer(String content) {
         this.content = content;
@@ -77,8 +83,11 @@ public class RoutesLexer {
             if (ch == '~') {
                 return Token_NOT;
             }
-            if (ch == '%') {
+            /*if (ch == '%') {
                 return Token_MODE;
+            }*/
+            if (ch == '\n') {
+                return Token_EOL;
             }
         }
         while (Character.isWhitespace(ch));
@@ -111,9 +120,10 @@ public class RoutesLexer {
             return Token_COMMA;
         }
 
-        if (token.equals(C_EOL)) {
-            return Token_EOL;
+        if (token.equals("otherwise")) {
+            return Token_OTHERWISE;
         }
+
 
         token.replaceAll("\"", "\'");
         if (token.length() > 1 && token.charAt(0) == C_MARKS) {
@@ -135,6 +145,26 @@ public class RoutesLexer {
             String[] split = ips.split("/");
             String ip = split[0];
             return new IpToken(ip, Integer.valueOf(split[1]));
+        }
+        if (rangerPattern.matcher(token).matches()) {
+            int from = Integer.parseInt(token.substring(0, token.indexOf(".")));
+            int to = Integer.parseInt(token.substring(token.lastIndexOf(".") + 1));
+            return new RangeToken(from, to);
+        }
+
+        if (modePattern.matcher(token).matches()) {
+            Matcher matcher = modePattern.matcher(token);
+            while (matcher.find()) {
+                String base = matcher.group(1);
+                String from = matcher.group(3);
+                String to = matcher.group(4);
+
+                if (from == null) {
+                    return new ModeToken(Long.parseLong(base), Optional.empty(), Long.parseLong(to));
+                } else {
+                    return new ModeToken(Long.parseLong(base), Optional.of(Long.parseLong(from)), Long.parseLong(to));
+                }
+            }
         }
 
         //....

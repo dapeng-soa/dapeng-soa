@@ -7,6 +7,7 @@ import com.github.dapeng.router.condition.Matcher;
 import com.github.dapeng.router.condition.Matchers;
 import com.github.dapeng.router.condition.Otherwise;
 import com.github.dapeng.router.pattern.*;
+import com.github.dapeng.router.token.RangeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +45,8 @@ public class RoutesExecutor {
             if (isMatched) {
                 List<InetAddress> addresses = matchActions(servers, route);
                 result.addAll(addresses);
+                //匹配到规则后，即跳出循环，因此 route 会有优先级
+                break;
             } else {
                 // otherwise ?
             }
@@ -219,6 +222,13 @@ public class RoutesExecutor {
             case "version":
                 context = ctx.versionName();
                 break;
+            case "userId":
+                try {
+                    context = ctx.userId().get().toString();
+                } catch (NoSuchElementException e) {
+                    context = "";
+                }
+                break;
             default:
                 context = null;
                 break;
@@ -250,7 +260,40 @@ public class RoutesExecutor {
         } else if (pattern instanceof RegexpPattern) {
             String regex = ((RegexpPattern) pattern).regex;
             return value.matches(regex);
+        } else if (pattern instanceof RangeToken) {
+            RangePattern range = ((RangePattern) pattern);
+            long userId = Long.parseLong(value);
+            long from = range.from;
+            long to = range.to;
+            if (userId <= to && userId >= from) {
+                return true;
+            }
+            return false;
+        } else if (pattern instanceof ModePattern) {
+            ModePattern mode = ((ModePattern) pattern);
+            try {
+                long userId = Long.valueOf(value);
+                long result = userId % mode.base;
+                Optional<Long> from = mode.from;
+                long to = mode.to;
+
+                if (from.isPresent()) {
+                    if (result >= from.get() && result <= to) {
+                        return true;
+                    }
+                } else {
+                    if (result == to) {
+                        return true;
+                    }
+                }
+                return false;
+
+            } catch (NumberFormatException e) {
+                logger.error("输入参数 value 应为数字类型的id ，but get {}", value);
+            }
+            return false;
         }
+
         return false;
     }
 }

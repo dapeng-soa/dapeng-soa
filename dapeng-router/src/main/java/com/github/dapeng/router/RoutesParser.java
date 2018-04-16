@@ -1,11 +1,5 @@
 package com.github.dapeng.router;
 
-/**
- * 描述: 语法, 路由规则解析
- *
- * @author hz.lei
- * @date 2018年04月13日 下午9:34
- */
 
 import com.github.dapeng.router.condition.*;
 import com.github.dapeng.router.pattern.*;
@@ -40,6 +34,13 @@ import static com.github.dapeng.router.token.Token.STRING;
  * rightPattern : '~' rightPattern
  * | ip
  */
+
+/**
+ * 描述: 语法, 路由规则解析
+ *
+ * @author hz.lei
+ * @date 2018年04月13日 下午9:34
+ */
 public class RoutesParser {
 
     private RoutesLexer lexer;
@@ -49,21 +50,21 @@ public class RoutesParser {
     }
 
     /**
-     * 第一步： 多行路由规则，根据回车符进行split  do while 解析
+     * 第一步： 多行路由规则，根据回车符 ' \n '  进行split  do while 解析
      */
     public List<Route> routes() {
         List<Route> routes = new ArrayList<>();
         Token token = lexer.peek();
         switch (token.id()) {
             case Token.EOL:
-
             case Token.OTHERWISE:
             case Token.ID:
-                do {
-                    Route route = route();
-                    routes.add(route);
-//                    lexer.peek(EOL);
-                } while (lexer.peek() != Token_EOF);
+                Route route = route();
+                routes.add(route);
+                while (lexer.peek() == Token_EOL) {
+                    lexer.next(Token.EOL);
+                    routes.add(route());
+                }
                 break;
 
             default:
@@ -208,10 +209,15 @@ public class RoutesParser {
                 RegexpToken regexp = (RegexpToken) lexer.next(Token.REGEXP);
                 return new RegexpPattern(regexp.regexp);
             case Token.RANGE:
+                // getFoo
+                RangeToken rt = (RangeToken) lexer.next(Token.RANGE);
+                return new RangePattern(rt.from, rt.to);
             case Token.NUMBER:
             case Token.IP:
             case Token.KV:
             case Token.MODE:
+                ModeToken modeToken = (ModeToken) lexer.next(Token.MODE);
+                return new ModePattern(modeToken.base, modeToken.from, modeToken.to);
             default:
                 return null;
         }

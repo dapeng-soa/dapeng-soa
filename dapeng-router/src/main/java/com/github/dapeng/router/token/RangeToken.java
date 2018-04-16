@@ -8,10 +8,10 @@ package com.github.dapeng.router.token;
  */
 public class RangeToken extends SimpleToken {
 
-    public final int from;
-    public final int to;
+    public final long from;
+    public final long to;
 
-    public RangeToken(int from, int to) {
+    public RangeToken(long from, long to) {
         super(RANGE);
         this.from = from;
         this.to = to;
