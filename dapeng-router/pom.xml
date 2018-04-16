@@ -10,7 +10,6 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>dapeng-router</artifactId>
     <packaging>jar</packaging>
-    <version>2.0.2-SNAPSHOT</version>
     <name>dapeng-router</name>
     <url>http://maven.apache.org</url>
 
@@ -41,7 +40,6 @@
             <version>RELEASE</version>
             <scope>test</scope>
         </dependency>
-        
     </dependencies>
 
 </project>
