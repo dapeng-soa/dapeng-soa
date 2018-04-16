@@ -7,4 +7,11 @@ package com.github.dapeng.router.pattern;
  * @date 2018年04月13日 下午9:40
  */
 public class RangePattern implements Pattern {
+    public final long from;
+    public final long to;
+
+    public RangePattern(long from, long to) {
+        this.from = from;
+        this.to = to;
+    }
 }

@@ -44,7 +44,9 @@ public class TestRouter {
 
     @Test
     public void testRouterOneMatch() throws UnknownHostException {
-        String pattern = "  method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip\"192.168.1.101/23\"";
+        String pattern = "  method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip\"192.168.1.101/23\" " +
+                System.getProperty("line.separator") + "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip\"192.168.1.101/23\"";
+
 //        String onePattern_oneMatcher = "method match 'get.*ById'  => ip'192.168.1.101/23' , ip'192.168.1.103/24' ";
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
@@ -91,11 +93,55 @@ public class TestRouter {
 
     }
 
+    @Test
+    public void testRouterOneMatch3() throws UnknownHostException {
+        String pattern = "  method match 'get1' , 'setFoo' ; version match '1.0.0' => ip\"192.168.1.101/23\" " +
+                System.getProperty("line.separator") + " otherwise => ip\"192.168.1.101/23\" , ip\"192.168.1.103/23\"";
+
+//        String onePattern_oneMatcher = "method match 'get.*ById'  => ip'192.168.1.101/23' , ip'192.168.1.103/24' ";
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.serviceName("getSkuById");
+        ctx.versionName("1.0.0");
+        Set<InetAddress> prepare = prepare(ctx, routes);
+
+
+        List<String> ips = new ArrayList<>();
+        ips.add("192.168.1.101");
+        ips.add("192.168.1.103");
+
+        Assert.assertArrayEquals(expectResult(ips).toArray(), prepare.toArray());
+    }
+
+    /**
+     * 取模测试
+     *
+     * @throws UnknownHostException
+     */
+    @Test
+    public void testRouterOneMatch4() throws UnknownHostException {
+        String pattern = "  userId match %\"1024n+2..4\" ; version match '1.0.0' => ip\"192.168.1.101/23\" ";
+
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.serviceName("getSkuById");
+        ctx.versionName("1.0.0");
+        ctx.userId(2052L);
+        Set<InetAddress> prepare = prepare(ctx, routes);
+
+
+        List<String> ips = new ArrayList<>();
+        ips.add("192.168.1.101");
+//        ips.add("192.168.1.103");
+
+        Assert.assertArrayEquals(expectResult(ips).toArray(), prepare.toArray());
+    }
+
 
     public static void main(String[] args) {
-        String pattern = "get.*Id";
-        boolean matches = "getSkuById".matches(pattern);
-        System.out.println(matches);
+        String s = "";
+        int i = Integer.parseInt(s);
+        System.out.println(i);
 
 
     }
