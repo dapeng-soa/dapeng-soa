@@ -100,8 +100,11 @@ public class ClientZk extends CommonZk {
         }
     }
 
+
+
+
     /**
-     * route 目前暂未实现
+     * route 根据给定路由规则对可运行实例进行过滤
      *
      * @return
      */
@@ -115,18 +118,25 @@ public class ClientZk extends CommonZk {
                         getRoutes();
                     }
                 }, null);
-                try {
-                    String routeData = new String(data, "utf-8");
-                    List<Route> zkRoutes = RoutesExecutor.parseAll(routeData);
-                    routes.addAll(zkRoutes);
-                } catch (Exception e) {
-                    LOGGER.error("parser routes 信息 失败，请检查路由规则写法是否正确!");
-                }
+                processRouteData(data);
             } catch (KeeperException | InterruptedException e) {
                 LOGGER.error("get route data failed ");
             }
         }
         return this.routes;
+    }
+
+    /**
+     * process zk data 解析route 信息
+     */
+    public void processRouteData(byte[] data) {
+        try {
+            String routeData = new String(data, "utf-8");
+            List<Route> zkRoutes = RoutesExecutor.parseAll(routeData);
+            routes.addAll(zkRoutes);
+        } catch (Exception e) {
+            LOGGER.error("parser routes 信息 失败，请检查路由规则写法是否正确!");
+        }
     }
 
     /**
@@ -282,4 +292,34 @@ public class ClientZk extends CommonZk {
         }
     }
 
+
+    /*
+
+    public void getRoutesAsync() {
+        zk.getData(ROUTES_PATH, event -> {
+            if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                LOGGER.info("routes 节点 data 发现变更，重新获取信息");
+                routes.clear();
+                getRoutesAsync();
+            }
+        }, routeDataCb, null);
+    }
+
+    private AsyncCallback.DataCallback routeDataCb = (rc, path, ctx, data, stat) -> {
+        switch (KeeperException.Code.get(rc)) {
+            case CONNECTIONLOSS:
+                getRoutesAsync();
+                break;
+            case NONODE:
+                LOGGER.error("服务 [{}] 的service配置节点不存在，无法获取service级配置信息 ", ((ZkServiceInfo) ctx).service);
+                break;
+            case OK:
+                processRouteData(data);
+                break;
+            default:
+                break;
+        }
+    };
+
+    */
 }
