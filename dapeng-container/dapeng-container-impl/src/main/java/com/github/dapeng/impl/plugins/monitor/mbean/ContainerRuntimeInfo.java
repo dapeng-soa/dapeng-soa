@@ -41,18 +41,6 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     }
 
     @Override
-    public String getLoggerLevel() {
-        // TODO
-        return "DEBUG";
-    }
-
-    @Override
-    public String setLoggerLevel(String level) {
-        // TODO
-        return level;
-    }
-
-    @Override
     public String getTheardPoolStatus() {
         ThreadPoolExecutor poolExecutor = (ThreadPoolExecutor) container.getDispatcher();
         return DumpUtil.dumpThreadPool(poolExecutor);
