@@ -33,13 +33,7 @@ public class ApplicationClassLoader extends URLClassLoader {
             return coreClassLoader.loadClass(name);
         }
 
-
         Class clz =  super.loadClass(name, resolve);
-
-        if (name.startsWith("com.github.dapeng.client.netty.SoaConnectionPoolImpl")) {
-            System.out.println("==||" + clz.getClassLoader());
-            System.out.println("==||" + clz.getProtectionDomain().getCodeSource().getLocation());
-        }
 
         return clz;
     }

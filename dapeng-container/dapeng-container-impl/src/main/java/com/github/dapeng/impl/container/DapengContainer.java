@@ -138,11 +138,9 @@ public class DapengContainer implements Container {
                             .setDaemon(true)
                             .setNameFormat("dapeng-container-biz-pool-%d")
                             .build());
-            if ("native".equals(RUN_MODE)) {
-                //容器模式下,预热所有的业务线程
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug(DapengContainer.class.getName() + " 预热业务线程池[" + SoaSystemEnvProperties.SOA_CORE_POOL_SIZE + "]");
-                }
+            //预热所有的业务线程
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(DapengContainer.class.getName() + " 预热业务线程池[" + SoaSystemEnvProperties.SOA_CORE_POOL_SIZE + "]");
                 bizExector.prestartAllCoreThreads();
             }
 
