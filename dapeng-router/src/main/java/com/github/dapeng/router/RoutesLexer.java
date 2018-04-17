@@ -42,7 +42,7 @@ public class RoutesLexer {
     private static Pattern modePattern = Pattern.compile("%(\"|\')([0-9]+)n\\+(([0-9]+)..)?([0-9]+)(\"|\')");
 
 
-    private static char[] keyWords = {',', ';', '\n'};
+    private static char[] keyWords = {',', ';', '\n','='};
 
     public RoutesLexer(String content) {
         this.content = content;
@@ -244,14 +244,10 @@ public class RoutesLexer {
 
     private boolean breakCondition(char ch) {
         if (Character.isWhitespace(ch)) {
-            /*if (ch == '\n') {
-                return false;
-            }*/
             return true;
         }
         for (char key : keyWords) {
             if (ch == key) {
-//                pos--;
                 return true;
             }
         }
