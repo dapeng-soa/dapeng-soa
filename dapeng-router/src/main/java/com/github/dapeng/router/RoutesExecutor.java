@@ -260,7 +260,7 @@ public class RoutesExecutor {
         } else if (pattern instanceof RegexpPattern) {
             String regex = ((RegexpPattern) pattern).regex;
             return value.matches(regex);
-        } else if (pattern instanceof RangeToken) {
+        } else if (pattern instanceof RangePattern) {
             RangePattern range = ((RangePattern) pattern);
             long userId = Long.parseLong(value);
             long from = range.from;

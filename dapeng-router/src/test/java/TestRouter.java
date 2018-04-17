@@ -44,8 +44,8 @@ public class TestRouter {
 
     @Test
     public void testRouterOneMatch() throws UnknownHostException {
-        String pattern = "  method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip\"192.168.1.101/23\" " +
-                System.getProperty("line.separator") + "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip\"192.168.1.101/23\"";
+        String pattern = "  method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip\"192.168.1.101/23\"" +
+                System.getProperty("line.separator") + " method match 'getFoo1' , 'setFoo' ; version match '1.0.0' => ip\"192.168.1.101/23\"";
 
 //        String onePattern_oneMatcher = "method match 'get.*ById'  => ip'192.168.1.101/23' , ip'192.168.1.103/24' ";
         List<Route> routes = RoutesExecutor.parseAll(pattern);
@@ -56,8 +56,10 @@ public class TestRouter {
 
 
         List<String> ips = new ArrayList<>();
-        ips.add("192.168.1.101");
-        ips.add("192.168.1.103");
+//        ips.add("192.168.1.101");
+//        ips.add("192.168.1.102");
+//        ips.add("192.168.1.103");
+//        ips.add("192.168.1.104");
 
         Assert.assertArrayEquals(expectResult(ips).toArray(), prepare.toArray());
     }
@@ -67,7 +69,7 @@ public class TestRouter {
         String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip'192.168.1.101/23' , ip'192.168.1.103/24' ";
         List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-        ctx.serviceName("getFoo");
+        ctx.methodName("getFoo");
         ctx.versionName("1.0.0");
 
         Set<InetAddress> prepare = prepare(ctx, routes);
@@ -80,35 +82,41 @@ public class TestRouter {
     }
 
     @Test
-    public void testRouter2() {
-        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip'192.168.1.101/23' , ip'192.168.1.103/24' ";
+    public void testRouter2() throws UnknownHostException {
+        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo.*' ; version match '1.0.0' => ip'192.168.1.101/23' , ip'192.168.1.103/24' ";
         List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-        ctx.serviceName("setFoo");
+        ctx.methodName("setFooById");
         ctx.versionName("1.0.0");
 
         Set<InetAddress> prepare = prepare(ctx, routes);
 
-        System.out.println(prepare);
+
+        Set<InetAddress> expect = new HashSet<>();
+        expect.add(InetAddress.getByName("192.168.1.101"));
+        expect.add(InetAddress.getByName("192.168.1.103"));
+
+        Assert.assertArrayEquals(expect.toArray(), prepare.toArray());
 
     }
 
     @Test
     public void testRouterOneMatch3() throws UnknownHostException {
-        String pattern = "  method match 'get1' , 'setFoo' ; version match '1.0.0' => ip\"192.168.1.101/23\" " +
+        String pattern = "  method match 'get.*' , 'setFoo' ; version match '1.0.0' => ~ip\"192.168.1.101/23\"" +
                 System.getProperty("line.separator") + " otherwise => ip\"192.168.1.101/23\" , ip\"192.168.1.103/23\"";
 
 //        String onePattern_oneMatcher = "method match 'get.*ById'  => ip'192.168.1.101/23' , ip'192.168.1.103/24' ";
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-        ctx.serviceName("getSkuById");
+        ctx.methodName("getSkuById");
         ctx.versionName("1.0.0");
         Set<InetAddress> prepare = prepare(ctx, routes);
 
 
         List<String> ips = new ArrayList<>();
-        ips.add("192.168.1.101");
+        ips.add("192.168.1.102");
         ips.add("192.168.1.103");
+        ips.add("192.168.1.104");
 
         Assert.assertArrayEquals(expectResult(ips).toArray(), prepare.toArray());
     }
@@ -120,7 +128,7 @@ public class TestRouter {
      */
     @Test
     public void testRouterOneMatch4() throws UnknownHostException {
-        String pattern = "  userId match %\"1024n+2..4\" ; version match '1.0.0' => ip\"192.168.1.101/23\" ";
+        String pattern = "  userId match %\"1024n+2..4\"; version match '1.0.0' => ip\"192.168.1.101/23\" ";
 
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
@@ -137,12 +145,85 @@ public class TestRouter {
         Assert.assertArrayEquals(expectResult(ips).toArray(), prepare.toArray());
     }
 
+    /**
+     * otherwise 支持，这一条应该放在最后
+     *
+     * @throws UnknownHostException
+     */
+    @Test
+    public void testRouterOtherwise() throws UnknownHostException {
+        String pattern = "  otherwise => ~ip\"192.168.1.104/23\" ";
 
-    public static void main(String[] args) {
-        String s = "";
-        int i = Integer.parseInt(s);
-        System.out.println(i);
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        Set<InetAddress> prepare = prepare(ctx, routes);
 
+        List<String> ips = new ArrayList<>();
+        ips.add("192.168.1.101");
+        ips.add("192.168.1.102");
+        ips.add("192.168.1.103");
 
+        Assert.assertArrayEquals(expectResult(ips).toArray(), prepare.toArray());
     }
+
+
+    @Test
+    public void testRouterMode() throws UnknownHostException {
+
+        String pattern = "  userId match %'1024n+1..2' => ~ip\"192.168.1.104/23\" ";
+
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+
+        ctx.userId(1025L);
+//        ctx.userId(1026L);
+        Set<InetAddress> prepare = prepare(ctx, routes);
+
+        List<String> ips = new ArrayList<>();
+        ips.add("192.168.1.101");
+        ips.add("192.168.1.102");
+        ips.add("192.168.1.103");
+
+        Assert.assertArrayEquals(expectResult(ips).toArray(), prepare.toArray());
+    }
+
+    @Test
+    public void testRouterMode1() throws UnknownHostException {
+
+        String pattern = "  userId match %'1024n+3' => ~ip\"192.168.1.104/23\" ";
+
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+
+        ctx.userId(1027L);
+        Set<InetAddress> prepare = prepare(ctx, routes);
+
+        List<String> ips = new ArrayList<>();
+        ips.add("192.168.1.101");
+        ips.add("192.168.1.102");
+        ips.add("192.168.1.103");
+
+        Assert.assertArrayEquals(expectResult(ips).toArray(), prepare.toArray());
+    }
+
+    @Test
+    public void testRouterRanger() throws UnknownHostException {
+
+        String pattern = "  userId match 10..30 => ~ip\"192.168.1.104/23\" ";
+
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+
+        ctx.userId(25L);
+        Set<InetAddress> prepare = prepare(ctx, routes);
+
+        List<String> ips = new ArrayList<>();
+        ips.add("192.168.1.101");
+        ips.add("192.168.1.102");
+        ips.add("192.168.1.103");
+
+        Assert.assertArrayEquals(expectResult(ips).toArray(), prepare.toArray());
+    }
+
+
 }

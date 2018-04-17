@@ -55,7 +55,7 @@ public class ClientZk extends CommonZk {
             CountDownLatch semaphore = new CountDownLatch(1);
 
             // Fixme zk连接状态变化不应该引起本地runtime缓存的清除, 尤其是zk挂了之后, 不至于影响业务(本地缓存还存在于每个SoaConnectionPool中?)
-            zk = new ZooKeeper(zkHost, 15000, e -> {
+            zk = new ZooKeeper(zkHost, 30000, e -> {
                 switch (e.getState()) {
                     case Expired:
                         LOGGER.info("Client's host: {} 到zookeeper Server的session过期，重连", zkHost);
@@ -101,14 +101,12 @@ public class ClientZk extends CommonZk {
     }
 
 
-
-
     /**
      * route 根据给定路由规则对可运行实例进行过滤
      *
      * @return
      */
-    public List<Route> getRoutes() {
+    public synchronized List<Route> getRoutes() {
         if (routes.size() == 0) {
             try {
                 byte[] data = zk.getData(ROUTES_PATH, event -> {

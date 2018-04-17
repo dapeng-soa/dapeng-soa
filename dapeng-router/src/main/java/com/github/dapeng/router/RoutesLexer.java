@@ -1,6 +1,8 @@
 package com.github.dapeng.router;
 
 import com.github.dapeng.router.token.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -14,13 +16,10 @@ import java.util.regex.Pattern;
  */
 public class RoutesLexer {
 
+    private static Logger logger = LoggerFactory.getLogger(RoutesLexer.class);
+
     private String content;
     private int pos;
-
-    //常量
-    public static final String C_NOT = "~";
-    public static final char C_MARKS = '\'';
-    public static final char C_DOUBLE_MARKS = '\"';
 
     static SimpleToken Token_EOL = new SimpleToken(Token.EOL);
     static SimpleToken Token_THEN = new SimpleToken(Token.THEN);
@@ -31,13 +30,19 @@ public class RoutesLexer {
     static SimpleToken Token_SEMI_COLON = new SimpleToken(Token.SEMI_COLON);
     static SimpleToken Token_COMMA = new SimpleToken(Token.COMMA);
 
-    public static SimpleToken Token_MODE = new SimpleToken(Token.MODE);
+    /**
+     * regex
+     */
+    private static Pattern ipPattern = Pattern.compile("ip(\"|\')([0-9.]+)(/[0-9]+)?(\"|\')");
 
-    //    private static Pattern STRING_PATTERN = Pattern.compile("([\"\'])([a-zA-Z0-9*.]+)([\"\'])");
+    private static Pattern stringPattern = Pattern.compile("(\"|\')([A-Za-z0-9.*]+)(\"|\')");
 
-    private static Pattern rangerPattern = Pattern.compile("[0-9]+..[0-9]+");
+    private static Pattern rangerPattern = Pattern.compile("([0-9]+)..([0-9]+)");
 
-    private static Pattern modePattern = Pattern.compile("%\"([0-9]+)n\\+(([0-9]+)..)?([0-9]+)\"");
+    private static Pattern modePattern = Pattern.compile("%(\"|\')([0-9]+)n\\+(([0-9]+)..)?([0-9]+)(\"|\')");
+
+
+    private static char[] keyWords = {',', ';', '\n'};
 
     public RoutesLexer(String content) {
         this.content = content;
@@ -59,20 +64,208 @@ public class RoutesLexer {
      * @param type
      */
     public Token peek(int type) {
-        int temPos = pos;
+        try {
+            int temPos = pos;
+            Token nextToken = next();
+            pos = temPos;
+            if (nextToken.id() != type) {
+                throw new IllegalArgumentException("expect type: " + type + ", but got " + nextToken.id());
+            }
+
+            return nextToken;
+        } catch (Exception e) {
+            logger.error("parse peek error: " + e.getMessage(), e);
+        }
+        return null;
+    }
+
+    public Token next() {
+        // content length
+        if (pos == content.length()) {
+            // 第一次 需要 return ，因为 是从 第一个字符开始解析的，如果判断第一个为EOF，即结束
+            return Token_EOF;
+        }
+        //get one
+        char ch = content.charAt(pos);
+
+        if (ch == '\n') {
+            pos++;
+            return Token_EOL;
+        }
+
+        while (Character.isWhitespace(ch)) {
+            pos++;
+            if (ch == '\n') {
+                return Token_EOL;
+            }
+            if (pos == content.length()) {
+                return Token_EOF;
+            }
+            ch = content.charAt(pos);
+        }
+        // 判断 ch 是否为 separators ？
+        Token sepToken = matchSeparators(ch);
+        if (sepToken != null) {
+            pos++;
+            return sepToken;
+        }
+        StringBuilder buffer = new StringBuilder();
+        do {
+            buffer.append(ch);
+            pos++;
+            if (pos == content.length()) {
+                //  第二次不能 return Token_EOF , 考虑如下情形："method" ，解析道了这句话末尾，应该拿到 method ,如果 return 将返回 EOF
+                break;
+            }
+            ch = content.charAt(pos);
+        } while (!breakCondition(ch));
+
+        String value = buffer.toString();
+
+        Token keyToken = matchKeyWords(value);
+
+        return keyToken;
+
+    }
+
+
+    /**
+     * 下一个token的id 必须为给定的type，不然报错
+     * 回车符， 路由自然换行
+     *
+     * @param type
+     */
+    public Token next(int type) {
         Token nextToken = next();
-        pos = temPos;
         if (nextToken.id() != type) {
-            throw new IllegalArgumentException("expect type: " + type + ", but got " + nextToken.id());
+            throw new IllegalArgumentException("");
         }
         return nextToken;
     }
 
 
-    public Token next() {
+    /**
+     * 关键字匹配
+     *
+     * @param value
+     * @return
+     */
+    private Token matchKeyWords(String value) {
+        switch (value) {
+            case "=>":
+                return Token_THEN;
+            case "match":
+                return Token_MATCH;
+            case "otherwise":
+                return Token_OTHERWISE;
+            default:
+                break;
+        }
+
+        // 字符串
+        if (stringPattern.matcher(value).matches()) {
+            Matcher matcher = stringPattern.matcher(value);
+            while (matcher.find()) {
+                String content = matcher.group(2);
+                if (content.contains(".*")) {
+                    return new RegexpToken(content);
+                }
+                return new StringToken(content);
+            }
+        }
+        // ip
+        if (ipPattern.matcher(value).matches()) {
+            Matcher matcher = ipPattern.matcher(value);
+            while (matcher.find()) {
+                String ip = matcher.group(2);
+                String masks = matcher.group(3);
+
+                if (masks != null) {
+                    int mask = Integer.parseInt(masks.substring(1));
+                    return new IpToken(ip, mask);
+                } else {
+                    // 默认值，mask
+                    return new IpToken(ip, 24);
+                }
+            }
+        }
+        // 范围
+        if (rangerPattern.matcher(value).matches()) {
+            Matcher matcher = rangerPattern.matcher(value);
+            while (matcher.find()) {
+                int from = Integer.parseInt(matcher.group(1));
+                int to = Integer.parseInt(matcher.group(2));
+                return new RangeToken(from, to);
+            }
+        }
+        // 取模
+        if (modePattern.matcher(value).matches()) {
+            Matcher matcher = modePattern.matcher(value);
+            while (matcher.find()) {
+                String base = matcher.group(2);
+                String from = matcher.group(4);
+                String to = matcher.group(5);
+
+                if (from == null) {
+                    return new ModeToken(Long.parseLong(base), Optional.empty(), Long.parseLong(to));
+                } else {
+                    return new ModeToken(Long.parseLong(base), Optional.of(Long.parseLong(from)), Long.parseLong(to));
+                }
+            }
+        }
+        // id
+        if (peek(Token.MATCH) != null) {
+            return new IdToken(value);
+        }
+
+        logger.error("no suitable token found ");
+        return null;
+    }
+
+    /**
+     * 判断 是否为分隔符
+     *
+     * @param ch
+     * @return
+     */
+    private Token matchSeparators(char ch) {
+        switch (ch) {
+            case ',':
+                return Token_COMMA;
+            case ';':
+                return Token_SEMI_COLON;
+            case '~':
+                return Token_NOT;
+            default:
+                break;
+        }
+        return null;
+    }
+
+    private boolean breakCondition(char ch) {
+        if (Character.isWhitespace(ch)) {
+            /*if (ch == '\n') {
+                return false;
+            }*/
+            return true;
+        }
+        for (char key : keyWords) {
+            if (ch == key) {
+//                pos--;
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    //~~~~~~~～～～～～～～～～
+    /*public Token nextOld() {
         if (pos == content.length()) {
             return Token_EOF;
         }
+
+
         char ch;
         do {
             if (pos == content.length()) {
@@ -83,9 +276,9 @@ public class RoutesLexer {
             if (ch == '~') {
                 return Token_NOT;
             }
-            /*if (ch == '%') {
+            *//*if (ch == '%') {
                 return Token_MODE;
-            }*/
+            }*//*
             if (ch == '\n') {
                 return Token_EOL;
             }
@@ -94,13 +287,15 @@ public class RoutesLexer {
 
         StringBuilder sb = new StringBuilder();
 
+
         do {
             sb.append(ch);
             if (pos == content.length()) {
                 break;
             }
             ch = content.charAt(pos++);
-        } while (!Character.isWhitespace(ch));
+        } while (!breakCondition(ch));
+
 
         String token = sb.toString();
 
@@ -146,6 +341,8 @@ public class RoutesLexer {
             String ip = split[0];
             return new IpToken(ip, Integer.valueOf(split[1]));
         }
+
+
         if (rangerPattern.matcher(token).matches()) {
             int from = Integer.parseInt(token.substring(0, token.indexOf(".")));
             int to = Integer.parseInt(token.substring(token.lastIndexOf(".") + 1));
@@ -171,26 +368,12 @@ public class RoutesLexer {
         peek(Token.MATCH);
         return new IdToken(token);
 
-    }
-
-    /**
-     * 下一个token的id 必须为给定的type，不然报错
-     * 回车符， 路由自然换行
-     *
-     * @param type
-     */
-    public Token next(int type) {
-        Token nextToken = next();
-        if (nextToken.id() != type) {
-            throw new IllegalArgumentException("");
-        }
-        return nextToken;
-    }
+    }*/
 
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         String property = System.getProperty("line.separator");
         System.out.println(property.length());
 
-    }
+    }*/
 }
