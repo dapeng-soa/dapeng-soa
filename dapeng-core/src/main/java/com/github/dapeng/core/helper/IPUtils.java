@@ -61,4 +61,28 @@ public class IPUtils {
             return 0;
         }
     }
+
+
+    public static int transferIp(String ipStr) throws UnknownHostException {
+        byte[] address = Inet4Address.getByName(ipStr).getAddress();
+
+        return ((address[0] & 0xff) << 24) | ((address[1] & 0xff) << 16)
+                | ((address[2] & 0xff) << 8) | (address[3] & 0xff);
+    }
+
+    public static void main(String[] args) throws UnknownHostException {
+        String destination = "1.2.3/24";
+
+        int mask = 24;
+
+        String tagetIpSeg = "1.2.3.0";
+
+        String callerIp = "1.2.3.128";
+        String serverIp = "1.2.3.64";
+
+        int maskIp = (0xFFFFFFFF << (32 - mask));
+
+        System.out.println((transferIp(serverIp) & maskIp) == (transferIp(callerIp) & maskIp));
+
+    }
 }

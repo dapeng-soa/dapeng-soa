@@ -102,7 +102,7 @@ public class TestRouter {
 
     @Test
     public void testRouterOneMatch3() throws UnknownHostException {
-        String pattern = "  method match 'get.*' , 'setFoo' ; version match '1.0.0' => ~ip\"192.168.1.101/23\"" +
+        String pattern = "  method match 'get.*' , 'setFoo' ; version match '1.0.0' => ~ip\"192.168.1.101/23\"  " +
                 System.getProperty("line.separator") + " otherwise => ip\"192.168.1.101/23\" , ip\"192.168.1.103/23\"";
 
 //        String onePattern_oneMatcher = "method match 'get.*ById'  => ip'192.168.1.101/23' , ip'192.168.1.103/24' ";
