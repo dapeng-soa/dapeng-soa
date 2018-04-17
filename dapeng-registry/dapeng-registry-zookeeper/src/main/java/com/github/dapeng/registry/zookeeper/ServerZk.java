@@ -46,7 +46,7 @@ public class ServerZk extends CommonZk {
         try {
             CountDownLatch semaphore = new CountDownLatch(1);
 
-            zk = new ZooKeeper(zkHost, 15000, watchedEvent -> {
+            zk = new ZooKeeper(zkHost, 30000, watchedEvent -> {
 
                 switch (watchedEvent.getState()) {
 
