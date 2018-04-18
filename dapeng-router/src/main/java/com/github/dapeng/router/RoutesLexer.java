@@ -185,7 +185,7 @@ public class RoutesLexer {
                     return new IpToken(ip, mask);
                 } else {
                     // 默认值，mask
-                    return new IpToken(ip, 24);
+                    return new IpToken(ip, 0);
                 }
             }
         }
