@@ -121,7 +121,7 @@ object Scrooge {
       }
       val thriftFiles = resources.map(new File(_))
       val needUpdate = {
-        if(resourcePath.isFile) {
+        if(resourcePath.isDirectory) {
           val xmlFiles = resourcePath.listFiles().filter(_.getName.endsWith(".xml"))
           val targetDirFiles = getFiles(outDir).filter(file => {
             val fileName = file.getName
