@@ -3,13 +3,15 @@
 /// <reference path="model.ts"/>
 var api;
 (function (api) {
-    var MethodAction = (function () {
+    var MethodAction = /** @class */ (function () {
         function MethodAction() {
         }
-        MethodAction.prototype.findMethod = function (serviceName, version, methodName) {
+        MethodAction.prototype.findMethod = function (serviceName, version, methodName, isModel) {
+            if (isModel === void 0) { isModel = false; }
             this.serviceName = serviceName;
             this.version = version;
             this.methodName = methodName;
+            this.isModel = isModel;
             var url = window.basePath + "/api/findmethod/" + serviceName + "/" + version + "/" + methodName + ".htm";
             var settings = { type: "get", url: url, dataType: "json" };
             var self = this;
@@ -50,11 +52,21 @@ var api;
                 case api.model.KIND.SET:
                     return "Set&lt;" + this.dataTypeToHTML(dataType.valueType) + "&gt;";
                 case api.model.KIND.ENUM:
-                    var enumurl = window.basePath + "/api/enum/" + this.serviceName + "/" + this.version + "/" + dataType.qualifiedName + ".htm";
-                    return "<a href='" + enumurl + "'>" + dataType.qualifiedName.substring(dataType.qualifiedName.lastIndexOf(".") + 1) + "</a>";
+                    if (this.isModel) {
+                        return "\n                    <a href=\"javascript:void(0)\"\n                       onclick=getEnumDetail1('" + this.serviceName + "','" + this.version + "','" + dataType.qualifiedName + "')>\n                       " + dataType.qualifiedName.substring(dataType.qualifiedName.lastIndexOf(".") + 1) + "\n                   </a>\n                    ";
+                    }
+                    else {
+                        var enumurl = window.basePath + "/api/enum/" + this.serviceName + "/" + this.version + "/" + dataType.qualifiedName + ".htm";
+                        return "<a href='" + enumurl + "'>" + dataType.qualifiedName.substring(dataType.qualifiedName.lastIndexOf(".") + 1) + "</a>";
+                    }
                 case api.model.KIND.STRUCT:
-                    var structurl = window.basePath + "/api/struct/" + this.serviceName + "/" + this.version + "/" + dataType.qualifiedName + ".htm";
-                    return "<a href='" + structurl + "'>" + dataType.qualifiedName.substring(dataType.qualifiedName.lastIndexOf(".") + 1) + "</a>";
+                    if (this.isModel) {
+                        return "\n                            <a href=\"javascript:void(0)\"\n                               onclick=getStructDetail1('" + this.serviceName + "','" + this.version + "','" + dataType.qualifiedName + "')>\n                               " + dataType.qualifiedName.substring(dataType.qualifiedName.lastIndexOf(".") + 1) + "\n                           </a>\n                        ";
+                    }
+                    else {
+                        var structurl = window.basePath + "/api/struct/" + this.serviceName + "/" + this.version + "/" + dataType.qualifiedName + ".htm";
+                        return "<a href='" + structurl + "'>" + dataType.qualifiedName.substring(dataType.qualifiedName.lastIndexOf(".") + 1) + "</a>";
+                    }
                 case api.model.KIND.DATE:
                     return "Date";
                 case api.model.KIND.BIGDECIMAL:
@@ -64,7 +76,6 @@ var api;
             }
         };
         return MethodAction;
-    })();
+    }());
     api.MethodAction = MethodAction;
 })(api || (api = {}));
-//# sourceMappingURL=method.js.map
