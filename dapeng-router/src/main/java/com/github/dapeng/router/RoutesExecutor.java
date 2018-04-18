@@ -59,17 +59,16 @@ public class RoutesExecutor {
      * product
      */
     public static List<RuntimeInstance> executeRoutes(InvocationContextImpl ctx, List<Route> routes, List<RuntimeInstance> instances) {
-        logger.info("开始过滤： " + instances.size());
+        logger.debug("开始过滤：过滤前 size  {}", instances.size());
         for (Route route : routes) {
             boolean isMatched = matchCondition(ctx, route.getLeft());
             // 匹配成功，执行右边逻辑
-
             if (isMatched) {
-                instances = matchActionsProducet(instances, route);
-                logger.info("过滤结果：" + instances.size());
+                instances = matchActionThenIp(instances, route);
+                logger.debug("过滤结果 size: {}", instances.size());
                 break;
             } else {
-                logger.info("路由没有过滤" + instances.size());
+                logger.debug("路由没有过滤, size {}", instances.size());
             }
         }
         return instances;
@@ -146,13 +145,13 @@ public class RoutesExecutor {
     }
 
     /**
-     * 匹配右边重载
+     * matchActionThenIp  传入 RuntimeInstance 进行match
      *
      * @param instances
      * @param route
      * @return
      */
-    private static List<RuntimeInstance> matchActionsProducet(List<RuntimeInstance> instances, Route route) {
+    private static List<RuntimeInstance> matchActionThenIp(List<RuntimeInstance> instances, Route route) {
         List<ThenIp> actions = route.getActions();
         MatchPair pair = new MatchPair();
         actions.forEach(ip -> {
