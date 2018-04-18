@@ -54,6 +54,7 @@
     </script>
 </head>
 <body>
+<jsp:include page="../core/scroll-top.jsp"/>
 <jsp:include page="../core/header.jsp"/>
 
 <div class="bs-docs-content container">
@@ -147,6 +148,10 @@
                         <a href="#requestSample" id="requestSample-tab" role="tab" data-toggle="tab"
                            aria-controls="requestSample">示范报文</a>
                     </li>
+                    <li role="presentation">
+                        <a href="#requestPaste" id="requestPaste-tab" role="tab" data-toggle="tab"
+                           aria-controls="requestPaste">json请求</a>
+                    </li>
                 </ul>
 
                 <div id="myTabContent" class="tab-content" style="height:330px;overflow-y:auto;">
@@ -156,6 +161,13 @@
                     </div>
                     <div role="tabpane1" class="tab-pane fade" id="requestSample" aria-labelledby="requestData-tab">
                         <div id="requestSampleData"></div>
+                    </div>
+                    <div role="tabpane1" class="tab-pane fade" id="requestPaste" aria-labelledby="requestData-tab">
+                        <div id="requestPasteData">
+                            <p style="color: red">tip：粘贴或者书写请求json提交请求</p>
+                            <textarea style="width: 100%;height: 240px;resize: none;" id="pasteJsonBox"></textarea>
+                            <button type="button" class="btn btn-success" onclick=applyTestForJsonStr('${service.namespace}.${service.name}','${service.meta.version}','${method.name}')>提交请求</button>
+                        </div>
                     </div>
                 </div>
             </div>
