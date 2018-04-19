@@ -7,6 +7,7 @@ import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.router.Route;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.List;
 
 /**
@@ -96,11 +97,11 @@ public class ZkClientAgentImpl implements ZkClientAgent {
     }
 
     @Override
-    public List<Route> getRoutes() {
+    public List<Route> getRoutes(String service) {
 //        List<Route> routes1 = masterZk.getRoutes();
 //        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip'192.168.1.101/23' , ip'192.168.1.103/24' ";
 //        List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
 
-        return masterZk.getRoutes();
+        return masterZk.getRoutes(service);
     }
 }

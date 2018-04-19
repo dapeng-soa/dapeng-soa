@@ -209,7 +209,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      */
     private List<RuntimeInstance> router(String service, String method, String version, List<RuntimeInstance> compatibles) {
         InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-        List<Route> routes = zkAgent.getRoutes();
+        List<Route> routes = zkAgent.getRoutes(service);
         context.serviceName(service);
         context.methodName(method);
         context.versionName(version);
