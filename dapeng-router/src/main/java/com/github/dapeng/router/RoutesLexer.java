@@ -41,7 +41,7 @@ public class RoutesLexer {
 
     private static Pattern modePattern = Pattern.compile("%(\"|\')([0-9]+)n\\+(([0-9]+)..)?([0-9]+)(\"|\')");
 
-
+    // name match "wang,zx"
     private static char[] keyWords = {',', ';', '\n','='};
 
     public RoutesLexer(String content) {

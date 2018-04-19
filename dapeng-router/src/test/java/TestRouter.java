@@ -83,7 +83,7 @@ public class TestRouter {
 
     @Test
     public void testRouter2() throws UnknownHostException {
-        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo.*' ; version match '1.0.0' => ip'192.168.1.101' , ip'192.168.1.103' ";
+        String onePattern_oneMatcher = "method match 'getFoo' , r'setFoo.*' ; version match '1.0.0' => ip'192.168.1.101' , ip'192.168.1.103' ";
         List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         ctx.methodName("setFooById");
@@ -102,7 +102,7 @@ public class TestRouter {
 
     @Test
     public void testRouterOneMatch3() throws UnknownHostException {
-        String pattern = "  method match 'get.*' , 'setFoo' ; version match '1.0.0' => ~ip\"192.168.1.101\"  " +
+        String pattern = "  method match r'get.*' , 'setFoo' ; version match '1.0.0' => ~ip\"192.168.1.101\"  " +
                 System.getProperty("line.separator") + " otherwise => ip\"192.168.1.101\" , ip\"192.168.1.103\"";
 
 //        String onePattern_oneMatcher = "method match 'get.*ById'  => ip'192.168.1.101/23' , ip'192.168.1.103/24' ";
