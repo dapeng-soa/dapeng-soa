@@ -36,7 +36,7 @@ public class ClientZk extends CommonZk {
     /**
      * 路由配置信息
      */
-    private final List<Route> routes = new ArrayList<>();
+    private final Map<String, List<Route>> routesMap = new ConcurrentHashMap<>(16);
 
 
     public ClientZk(String zkHost) {
@@ -106,32 +106,32 @@ public class ClientZk extends CommonZk {
      *
      * @return
      */
-    public synchronized List<Route> getRoutes() {
-        if (routes.size() == 0) {
+    public synchronized List<Route> getRoutes(String service) {
+        if (routesMap.get(service) == null) {
             try {
                 byte[] data = zk.getData(ROUTES_PATH, event -> {
                     if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
                         LOGGER.info("routes 节点 data 发现变更，重新获取信息");
-                        routes.clear();
-                        getRoutes();
+                        routesMap.clear(); // fixme
+                        getRoutes(service);
                     }
                 }, null);
-                processRouteData(data);
+                processRouteData(service, data);
             } catch (KeeperException | InterruptedException e) {
                 LOGGER.error("get route data failed ");
             }
         }
-        return this.routes;
+        return this.routesMap.get(service);
     }
 
     /**
      * process zk data 解析route 信息
      */
-    public void processRouteData(byte[] data) {
+    public void processRouteData(String service, byte[] data) {
         try {
             String routeData = new String(data, "utf-8");
             List<Route> zkRoutes = RoutesExecutor.parseAll(routeData);
-            routes.addAll(zkRoutes);
+            routesMap.put(service, zkRoutes);
         } catch (Exception e) {
             LOGGER.error("parser routes 信息 失败，请检查路由规则写法是否正确!");
         }

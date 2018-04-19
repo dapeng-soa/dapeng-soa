@@ -273,6 +273,14 @@ public class RoutesExecutor {
                     context = "";
                 }
                 break;
+
+            case "calleeIp":
+                try {
+                    context = ctx.calleeIp().get();
+                } catch (NoSuchElementException e) {
+                    context = "";
+                }
+                break;
             default:
                 context = null;
                 break;

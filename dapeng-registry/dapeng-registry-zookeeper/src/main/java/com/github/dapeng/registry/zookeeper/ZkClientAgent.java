@@ -20,6 +20,6 @@ public interface ZkClientAgent {
     void cancelSyncService(ZkServiceInfo zkInfo);
 
 
-    List<Route> getRoutes();
+    List<Route> getRoutes(String service);
 
 }
