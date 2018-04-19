@@ -31,7 +31,7 @@ public class RoutesExecutor {
      * @return
      */
     public static List<Route> parseAll(String content) {
-        RoutesParser parser = new RoutesParser(new RoutesLexer(content));
+        RoutesParser parser = new RoutesParser(new RoutesLexer1(content));
         List<Route> routes = parser.routes();
         return routes;
     }
