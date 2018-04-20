@@ -125,6 +125,34 @@ public class RoutesLexer1 {
     }
 
     /**
+     * 下一个token的id 必须为给定的type，不然报错
+     * 回车符， 路由自然换行
+     *
+     * @param type
+     */
+    public Token next(int type) {
+        Token nextToken = next();
+        if (nextToken.id() != type) {
+            throw new IllegalArgumentException("");
+        }
+        return nextToken;
+    }
+
+    /**
+     * exception
+     */
+    public static class ParsingException extends RuntimeException {
+        private final String summary;
+        private final String detail;
+
+        public ParsingException(String summary, String detail) {
+            super(summary + ":" + detail);
+            this.summary = summary;
+            this.detail = detail;
+        }
+    }
+
+    /**
      * 解析 正则 token
      *
      * @return
@@ -335,34 +363,6 @@ public class RoutesLexer1 {
         }
         logger.debug("require char: " + expects.toString() + " but actual char: " + actual);
         return false;
-    }
-
-    /**
-     * 下一个token的id 必须为给定的type，不然报错
-     * 回车符， 路由自然换行
-     *
-     * @param type
-     */
-    public Token next(int type) {
-        Token nextToken = next();
-        if (nextToken.id() != type) {
-            throw new IllegalArgumentException("");
-        }
-        return nextToken;
-    }
-
-    /**
-     * exception
-     */
-    public static class ParsingException extends RuntimeException {
-        private final String summary;
-        private final String detail;
-
-        public ParsingException(String summary, String detail) {
-            super(summary + ":" + detail);
-            this.summary = summary;
-            this.detail = detail;
-        }
     }
 
 
