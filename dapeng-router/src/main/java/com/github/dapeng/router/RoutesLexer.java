@@ -134,7 +134,8 @@ public class RoutesLexer {
     public Token next(int type) {
         Token nextToken = next();
         if (nextToken.id() != type) {
-            throw new IllegalArgumentException("");
+            throw new ParsingException("[Not expected token]",
+                    "Expect:" + type + ", actually:" + nextToken.id());
         }
         return nextToken;
     }
@@ -152,6 +153,9 @@ public class RoutesLexer {
         char ch = nextChar();
         StringBuilder sb = new StringBuilder(16);
         do {
+            if (ch == EOI || ch == EOF) {
+                throw new ParsingException("[RegexEx]", "parse regex failed,check the regex express:" + sb.toString());
+            }
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
         String value = sb.toString();
@@ -205,6 +209,9 @@ public class RoutesLexer {
         char quotation = currentChar();
         char ch = nextChar();
         do {
+            if (ch == EOI || ch == EOF) {
+                throw new ParsingException("[StringEx]", "parse string failed,check the string express:" + sb.toString());
+            }
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
         return new StringToken(sb.toString());
@@ -218,8 +225,7 @@ public class RoutesLexer {
         char ch = currentChar();
         do {
             sb.append(ch);
-        }
-        while (Character.isDigit(ch = nextChar()) || ch == '.');
+        } while (Character.isDigit(ch = nextChar()) || ch == '.');
         String value = sb.toString();
         try {
             if (value.contains("..")) {
@@ -250,6 +256,9 @@ public class RoutesLexer {
         StringBuilder sb = new StringBuilder(16);
 
         do {
+            if (ch == EOI || ch == EOF) {
+                throw new ParsingException("[ModeEx]", "parse mode failed,check the mode express:" + sb.toString());
+            }
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
 
@@ -277,6 +286,9 @@ public class RoutesLexer {
 
         StringBuilder sb = new StringBuilder(16);
         do {
+            if (ch == EOI || ch == EOF) {
+                throw new ParsingException("[IpEx]", "parse ip failed,check the ip express:" + sb.toString());
+            }
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
 
