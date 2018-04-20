@@ -18,7 +18,7 @@ import static com.github.dapeng.router.token.Token.EOF;
  */
 public class RoutesLexer1 {
 
-    public static final char EOI = '\uFFFF';
+    private static final char EOI = '\uFFFF';
 
     private StringBuilder sb = new StringBuilder(64);
 
@@ -38,7 +38,7 @@ public class RoutesLexer1 {
     static SimpleToken Token_COMMA = new SimpleToken(Token.COMMA);
 
     /**
-     * regex
+     * regex fixme 更加严谨的正则
      */
     private static Pattern ipPattern = Pattern.compile("([0-9.]+)(/[0-9]+)?");
 
@@ -296,31 +296,19 @@ public class RoutesLexer1 {
     /**
      * nextChar ()
      */
-    public char nextChar() {
-        pos += 1;
-        if (pos < content.length()) {
-            return content.charAt(pos);
-        } else {
-            return EOI;
-        }
-
+    private char nextChar() {
+        return ++pos < content.length() ? content.charAt(pos) : EOI;
     }
 
-    public char currentChar() {
-
-        if (pos < content.length()) {
-            return content.charAt(pos);
-        } else {
-            return EOI;
-        }
-
+    private char currentChar() {
+        return pos < content.length() ? content.charAt(pos) : EOI;
     }
 
 
     /**
      * 跳过 white space  但是不包括 \n 回车换行符
      */
-    void ws() {
+    private void ws() {
         char ws;
         do {
             ws = nextChar();
@@ -335,7 +323,7 @@ public class RoutesLexer1 {
      * @param isThrow
      * @return
      */
-    public boolean require(char[] expects, boolean isThrow) {
+    private boolean require(char[] expects, boolean isThrow) {
         char actual = nextChar();
         for (char expect : expects) {
             if (expect == actual) {
