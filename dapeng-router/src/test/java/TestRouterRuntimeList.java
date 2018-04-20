@@ -221,4 +221,24 @@ public class TestRouterRuntimeList {
         Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
 
+    @Test
+    public void testRouterNumber() {
+
+        String pattern = "  userId match 10 => ~ip\"192.168.1.104/30\" ";
+
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+
+        ctx.userId(10L);
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        expectInstances.add(runtimeInstance1);
+        expectInstances.add(runtimeInstance2);
+        expectInstances.add(runtimeInstance3);
+
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+    }
+
 }
