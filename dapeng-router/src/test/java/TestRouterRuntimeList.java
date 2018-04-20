@@ -194,7 +194,7 @@ public class TestRouterRuntimeList {
     @Test
     public void testRouterOneMatch5() {
         //TODO
-        String pattern = "  userId match %\"0n+2..4\"; version match '1.0.0' => ip\"192.168.1.101\" ";
+        String pattern = "  userId match %\"0n+2..4\"; version match '1.0.0' => ip\"192.168.1.101\' ";
 
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
