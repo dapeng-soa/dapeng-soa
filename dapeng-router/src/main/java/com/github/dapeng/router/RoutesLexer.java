@@ -179,9 +179,8 @@ public class RoutesLexer {
             case "otherwise":
                 return Token_OTHERWISE;
             default:
-                break;
+                return new IdToken(value);
         }
-        return new IdToken(sb.toString());
     }
 
     /**
