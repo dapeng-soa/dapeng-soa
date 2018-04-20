@@ -1,11 +1,9 @@
 package com.github.dapeng.router;
 
-import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.router.token.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.UnknownHostException;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -124,6 +122,34 @@ public class RoutesLexer1 {
     }
 
     /**
+     * 下一个token的id 必须为给定的type，不然报错
+     * 回车符， 路由自然换行
+     *
+     * @param type
+     */
+    public Token next(int type) {
+        Token nextToken = next();
+        if (nextToken.id() != type) {
+            throw new IllegalArgumentException("");
+        }
+        return nextToken;
+    }
+
+    /**
+     * exception
+     */
+    public static class ParsingException extends RuntimeException {
+        private final String summary;
+        private final String detail;
+
+        public ParsingException(String summary, String detail) {
+            super(summary + ":" + detail);
+            this.summary = summary;
+            this.detail = detail;
+        }
+    }
+
+    /**
      * 解析 正则 token
      *
      * @return
@@ -139,6 +165,8 @@ public class RoutesLexer1 {
         while (ch != quotation);
         String value = sb.toString();
         return new RegexpToken(value);
+
+
     }
 
 
@@ -337,31 +365,37 @@ public class RoutesLexer1 {
         return false;
     }
 
-    /**
-     * 下一个token的id 必须为给定的type，不然报错
-     * 回车符， 路由自然换行
-     *
-     * @param type
-     */
-    public Token next(int type) {
-        Token nextToken = next();
-        if (nextToken.id() != type) {
-            throw new IllegalArgumentException("");
-        }
-        return nextToken;
-    }
 
-    /**
-     * exception
-     */
-    public static class ParsingException extends RuntimeException {
-        private final String summary;
-        private final String detail;
 
-        public ParsingException(String summary, String detail) {
-            super(summary + ":" + detail);
-            this.summary = summary;
-            this.detail = detail;
-        }
-    }
+    /*public static void main(String[] args) {
+        String context = "  method match \'大佬好\',\"setFoo\", 'getFoo' => ip\"192.168.1.123\" ";
+//        String context = "  method match %\'1024n+8\'  ,\"setFoo\", 'getFoo' => ip\"192.168.1.123\" ";
+//        String context = "  iUserId match r\"setFoo.*\" => ip\"192.168.1.123\" ";
+        RoutesLexer1 lexer = new RoutesLexer1(context);
+        IdToken token = (IdToken) lexer.next();
+
+        int id = token.id();
+        System.out.println(token.name);
+
+        Token token1 = lexer.next();
+        System.out.println(token1.id());
+
+        Token token2 = lexer.next();
+        System.out.println(token2.id());
+
+        Token token3 = lexer.next();
+        System.out.println(token3.id());
+
+        Token token4 = lexer.next();
+        System.out.println(token4.id());
+
+        Token token5 = lexer.next();
+        System.out.println(token5.id());
+
+        Token token6 = lexer.next();
+        System.out.println(token6.id());
+
+
+    }*/
+
 }
