@@ -74,6 +74,8 @@ public class RoutesLexer {
         switch (ch) {
             case EOI:
                 return Token_EOF;
+            case '\r':
+                require(new char[]{'\n'}, false);
             case '\n':
                 return Token_EOL;
             case ',':
@@ -139,6 +141,9 @@ public class RoutesLexer {
 
     /**
      * 解析 正则 token
+     * <p>
+     * r"get.*"
+     * r'get.*'
      *
      * @return
      */
@@ -148,13 +153,9 @@ public class RoutesLexer {
         StringBuilder sb = new StringBuilder(16);
         do {
             sb.append(ch);
-            ch = nextChar();
-        }
-        while (ch != quotation);
+        } while ((ch = nextChar()) != quotation);
         String value = sb.toString();
         return new RegexpToken(value);
-
-
     }
 
 
@@ -168,8 +169,7 @@ public class RoutesLexer {
         char ch = currentChar();
         do {
             sb.append(ch);
-            ch = nextChar();
-        } while (isLetterOrDigit(ch));
+        } while (isLetterOrDigit(ch = nextChar()));
         pos--;
 
         String value = sb.toString();
@@ -207,9 +207,7 @@ public class RoutesLexer {
         char ch = nextChar();
         do {
             sb.append(ch);
-            ch = nextChar();
-        }
-        while (ch != quotation);
+        } while ((ch = nextChar()) != quotation);
         return new StringToken(sb.toString());
     }
 
@@ -221,9 +219,8 @@ public class RoutesLexer {
         char ch = currentChar();
         do {
             sb.append(ch);
-            ch = nextChar();
         }
-        while (Character.isDigit(ch) || ch == '.');
+        while (Character.isDigit(ch = nextChar()) || ch == '.');
         String value = sb.toString();
         try {
             if (value.contains("..")) {
@@ -252,31 +249,27 @@ public class RoutesLexer {
         char quotation = currentChar();
         char ch = nextChar();
         StringBuilder sb = new StringBuilder(16);
+
         do {
             sb.append(ch);
-            ch = nextChar();
-        }
-        while (ch != quotation);
+        } while ((ch = nextChar()) != quotation);
+
         String value = sb.toString();
 
         try {
-            if (modePattern.matcher(value).matches()) {
-                Matcher matcher = modePattern.matcher(value);
-                while (matcher.find()) {
-                    String base = matcher.group(1);
-                    String from = matcher.group(3);
-                    String to = matcher.group(4);
-                    if (from == null) {
-                        return new ModeToken(Long.parseLong(base), Optional.empty(), Long.parseLong(to));
-                    } else {
-                        return new ModeToken(Long.parseLong(base), Optional.of(Long.parseLong(from)), Long.parseLong(to));
-                    }
-                }
+            Matcher matcher = modePattern.matcher(value);
+            if (matcher.matches()) {
+                String base = matcher.group(1);
+                Optional<String> from = Optional.ofNullable(matcher.group(3));
+                String to = matcher.group(4);
+
+                return new ModeToken(Long.parseLong(base), from.map(Long::valueOf), Long.parseLong(to));
             }
-        } catch (Exception e) {
-            throw new ParsingException("[ModeEx]", "mode regex parse failed , check the mode expression again");
+        } catch (Throwable e) {
+            throw new ParsingException("[ModeEx]", "mode regex parse failed , check the mode expression again:" + value);
         }
-        throw new ParsingException("[ModeEx]", "mode regex parse failed , check the mode expression again");
+
+        throw new ParsingException("[ModeEx]", "unknown exception, check the mode expression again:" + value);
     }
 
     private IpToken processIp() {
@@ -286,12 +279,10 @@ public class RoutesLexer {
         StringBuilder sb = new StringBuilder(16);
         do {
             sb.append(ch);
-            ch = nextChar();
-        }
-        while (ch != quotation);
+        } while ((ch = nextChar()) != quotation);
 
         Matcher matcher = ipPattern.matcher(sb.toString());
-        while (matcher.find()) {
+        if (matcher.matches()) {
             String ipStr = matcher.group(1);
             int ip;
             ip = IPUtils.transferIp(ipStr);
@@ -326,10 +317,9 @@ public class RoutesLexer {
      */
     private void ws() {
         char ws;
-        do {
-            ws = nextChar();
-
-        } while (((1L << ws) & ((ws - 64) >> 31) & 0x100002600L) != 0L && ws != '\n');
+        while (((1L << (ws = nextChar())) & ((ws - 64) >> 31) & 0x100002600L) != 0L
+                && ws != '\n'
+                && ws != '\r') ;
         pos--;
     }
 
