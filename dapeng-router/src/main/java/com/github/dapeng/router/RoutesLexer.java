@@ -1,6 +1,7 @@
 package com.github.dapeng.router;
 
 import com.github.dapeng.core.helper.IPUtils;
+import com.github.dapeng.router.exception.ParsingException;
 import com.github.dapeng.router.token.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -134,20 +135,6 @@ public class RoutesLexer {
             throw new IllegalArgumentException("");
         }
         return nextToken;
-    }
-
-    /**
-     * exception
-     */
-    public static class ParsingException extends RuntimeException {
-        private final String summary;
-        private final String detail;
-
-        public ParsingException(String summary, String detail) {
-            super(summary + ":" + detail);
-            this.summary = summary;
-            this.detail = detail;
-        }
     }
 
     /**
