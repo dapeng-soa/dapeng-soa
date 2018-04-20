@@ -289,6 +289,16 @@ public class RoutesExecutor {
                 logger.error("输入参数 value 应为数字类型的id ，but get {}", value);
             }
             return false;
+
+        } else if (pattern instanceof NumberPattern) {
+            RangePattern range = ((RangePattern) pattern);
+            long userId = Long.parseLong(value);
+            long from = range.from;
+            long to = range.to;
+            if (userId <= to && userId >= from) {
+                return true;
+            }
+            return false;
         }
 
         return false;

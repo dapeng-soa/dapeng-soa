@@ -213,7 +213,11 @@ public class RoutesParser {
                 RangeToken rt = (RangeToken) lexer.next(Token.RANGE);
                 return new RangePattern(rt.from, rt.to);
             case Token.NUMBER:
+                NumberToken nt = (NumberToken) lexer.next(Token.NUMBER);
+                return new NumberPattern(nt.number);
             case Token.IP:
+                IpToken ipToken = (IpToken) lexer.next(Token.IP);
+                return new IpPattern(ipToken.ip, ipToken.mask);
             case Token.KV:
             case Token.MODE:
                 ModeToken modeToken = (ModeToken) lexer.next(Token.MODE);
