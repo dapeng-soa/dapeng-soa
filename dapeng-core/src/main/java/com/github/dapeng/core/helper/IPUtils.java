@@ -54,8 +54,7 @@ public class IPUtils {
     public static int localIpAsInt() {
         try {
             byte[] ip4address = InetAddress.getLocalHost().getAddress();
-            return ((ip4address[0] & 0xff) << 24) | ((ip4address[1] & 0xff) << 16)
-                    | ((ip4address[2] & 0xff) << 8) | (ip4address[3] & 0xff);
+            return ipv4AsInt(ip4address);
         } catch (UnknownHostException e) {
             e.printStackTrace();
             return 0;
@@ -63,11 +62,20 @@ public class IPUtils {
     }
 
 
-    public static int transferIp(String ipStr) throws UnknownHostException {
-        byte[] address = Inet4Address.getByName(ipStr).getAddress();
+    public static int transferIp(String ipStr) {
+        try {
+            byte[] address = Inet4Address.getByName(ipStr).getAddress();
 
-        return ((address[0] & 0xff) << 24) | ((address[1] & 0xff) << 16)
-                | ((address[2] & 0xff) << 8) | (address[3] & 0xff);
+            return ipv4AsInt(address);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    private static int ipv4AsInt(byte[] ip4address) {
+        return ((ip4address[0] & 0xff) << 24) | ((ip4address[1] & 0xff) << 16)
+                | ((ip4address[2] & 0xff) << 8) | (ip4address[3] & 0xff);
     }
 
     public static void main(String[] args) throws UnknownHostException {
