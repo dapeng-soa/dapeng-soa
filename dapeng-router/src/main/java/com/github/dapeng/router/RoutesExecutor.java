@@ -36,25 +36,6 @@ public class RoutesExecutor {
         return routes;
     }
 
-    public static Set<InetAddress> execute(InvocationContextImpl ctx, List<Route> routes, List<String> servers) {
-        Set<InetAddress> result = new HashSet<>();
-        for (Route route : routes) {
-
-            boolean isMatched = matchCondition(ctx, route.getLeft());
-            // 匹配成功，执行右边逻辑
-            if (isMatched) {
-                List<InetAddress> addresses = matchActions(servers, route);
-                result.addAll(addresses);
-                //匹配到规则后，即跳出循环，因此 route 会有优先级
-                break;
-            } else {
-                // otherwise ?
-            }
-        }
-        return result;
-    }
-
-
     /**
      * product
      */
@@ -106,42 +87,6 @@ public class RoutesExecutor {
         }
         return true;
 
-    }
-
-    /**
-     * 匹配 右边
-     *
-     * @param servers
-     * @param route
-     */
-    private static List<InetAddress> matchActions(List<String> servers, Route route) {
-        List<ThenIp> actions = route.getActions();
-        MatchPair pair = new MatchPair();
-        List<InetAddress> addresses = new ArrayList<>();
-        actions.forEach(ip -> {
-            if (ip.not) {
-                pair.notMatches.add(ip);
-            } else {
-                pair.matches.add(ip);
-            }
-        });
-
-        for (String server : servers) {
-            boolean isMatch = false;
-            try {
-                isMatch = pair.isMatch(server);
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            }
-            if (isMatch) {
-                try {
-                    addresses.add(InetAddress.getByName(server));
-                } catch (UnknownHostException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return addresses;
     }
 
     /**
