@@ -5,7 +5,7 @@ import com.github.dapeng.router.condition.Condition;
 import java.util.List;
 
 /**
- * 描述:
+ * 描述: 代表 每一条路由表达式解析出来的内容
  *
  * @author hz.lei
  * @date 2018年04月13日 下午9:45

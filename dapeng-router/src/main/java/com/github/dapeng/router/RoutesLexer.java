@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 import static com.github.dapeng.router.token.Token.EOF;
 
 /**
- * 描述: 词法解析 -- 最新
+ * 描述: 路由规则 词法解析器
  *
  * @author hz.lei
  * @date 2018年04月13日 下午9:04
@@ -39,6 +39,9 @@ public class RoutesLexer {
     /**
      * regex fixme 更加严谨的正则
      */
+
+//    private static String regex = "(^(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|[1-9])\\." + "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\." + "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\." + "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d))" + "(/(\\d{2}))?$";
+
     private static Pattern ipPattern = Pattern.compile("([0-9.]+)(/[0-9]+)?");
 
     private static Pattern modePattern = Pattern.compile("([0-9]+)n\\+(([0-9]+)..)?([0-9]+)");
