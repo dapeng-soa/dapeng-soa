@@ -191,6 +191,24 @@ public class TestRouterRuntimeList {
         Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
 
+    @Test
+    public void testRouterOneMatch5() {
+        //TODO
+        String pattern = "  userId match %\"0n+2..4\"; version match '1.0.0' => ip\"192.168.1.101\" ";
+
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.serviceName("getSkuById");
+        ctx.versionName("1.0.0");
+        ctx.userId(2052L);
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        expectInstances.add(runtimeInstance1);
+
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+    }
+
     /**
      * otherwise 支持，这一条应该放在最后
      */
