@@ -291,11 +291,10 @@ public class RoutesExecutor {
             return false;
 
         } else if (pattern instanceof NumberPattern) {
-            RangePattern range = ((RangePattern) pattern);
+            NumberPattern number = ((NumberPattern) pattern);
             long userId = Long.parseLong(value);
-            long from = range.from;
-            long to = range.to;
-            if (userId <= to && userId >= from) {
+            long from = number.number;
+            if (userId == from) {
                 return true;
             }
             return false;
