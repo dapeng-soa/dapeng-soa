@@ -179,10 +179,17 @@ public class RoutesExecutor {
             return false;
         }
 
+
         /**
          * 子网掩码支持
+         *
+         * @param targetIpSeq 输入ip 去匹配的 ip表达式
+         * @param serverIpSeq 输入ip ，即当前服务节点 ip
+         * @param mask        子网掩码
+         * @return
+         * @throws UnknownHostException
          */
-        private boolean matchMask(String targetIpSeq, String serverIpSeq, int mask) throws UnknownHostException {
+        public static boolean matchMask(String targetIpSeq, String serverIpSeq, int mask) throws UnknownHostException {
             int serverIp = IPUtils.transferIp(serverIpSeq);
             int targetIp = IPUtils.transferIp(targetIpSeq);
             int maskIp = (0xFFFFFFFF << (32 - mask));
@@ -221,7 +228,7 @@ public class RoutesExecutor {
 
             case "calleeIp":
                 try {
-                    context = ctx.calleeIp().get();
+                    context = ctx.calleeIp().get().trim();
                 } catch (NoSuchElementException e) {
                     context = "";
                 }
@@ -252,7 +259,20 @@ public class RoutesExecutor {
             boolean result = matcherPattern(pattern1, value);
             return !result;
         } else if (pattern instanceof IpPattern) {
-            //todo
+
+            IpPattern ipPattern = ((IpPattern) pattern);
+            //掩码支持
+            if (ipPattern.mask != 0) {
+                try {
+                    return MatchPair.matchMask(ipPattern.ip, value, ipPattern.mask);
+                } catch (Exception e) {
+                    logger.error("callIp or routes express is not true ,please check: \n " + e.getMessage(), e);
+                }
+                return false;
+            }
+            if (ipPattern.ip.equals(value)) {
+                return true;
+            }
             return false;
         } else if (pattern instanceof RegexpPattern) {
             String regex = ((RegexpPattern) pattern).regex;
@@ -302,6 +322,4 @@ public class RoutesExecutor {
 
         return false;
     }
-
-
 }

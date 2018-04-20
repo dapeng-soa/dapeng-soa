@@ -224,12 +224,12 @@ public class TestRouterRuntimeList {
     @Test
     public void testRouterNumber() {
 
-        String pattern = "  userId match 10 => ~ip\"192.168.1.104/30\" ";
+        String pattern = "  userId match 11 => ~ip\"192.168.1.104/30\" ";
 
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
 
-        ctx.userId(10L);
+        ctx.userId(11L);
         List<RuntimeInstance> prepare = prepare(ctx, routes);
 
 
@@ -238,6 +238,43 @@ public class TestRouterRuntimeList {
         expectInstances.add(runtimeInstance2);
         expectInstances.add(runtimeInstance3);
 
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+    }
+
+
+    /**
+     * 测试黑名单 -> 可以根据 掩码来
+     */
+    @Test
+    public void testRouterIp() {
+        String pattern = "  calleeIp match ip'192.168.1.101/24' => ip\"192.168.2.105/30\" ";
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+
+
+//        ctx.calleeIp("192.168.1.97   ");
+        ctx.calleeIp("192.168.1.101   ");
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+    }
+
+    /**
+     * 测试服务降级
+     */
+    @Test
+    public void testRouterServiceDown() {
+        String pattern = "  otherwise => ip\"192.168.2.105/30\" ";
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+
+
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
         Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
 
