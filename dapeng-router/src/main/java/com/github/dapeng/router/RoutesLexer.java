@@ -37,13 +37,12 @@ public class RoutesLexer {
     static SimpleToken Token_COMMA = new SimpleToken(Token.COMMA);
 
     /**
-     * regex fixme 更加严谨的正则
+     * regex  严谨的ip正则
      */
+    private static String regex = "(^(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|[1-9])\\.(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\."
+            + "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\.(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d))(/(\\d{2}))?$";
 
-//    private static String regex = "(^(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|[1-9])\\." + "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\." + "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\." + "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d))" + "(/(\\d{2}))?$";
-
-    private static Pattern ipPattern = Pattern.compile("([0-9.]+)(/[0-9]+)?");
-
+    private static Pattern ipPattern = Pattern.compile(regex);
     private static Pattern modePattern = Pattern.compile("([0-9]+)n\\+(([0-9]+)..)?([0-9]+)");
 
     public RoutesLexer(String content) {
@@ -289,7 +288,7 @@ public class RoutesLexer {
             int ip;
             ip = IPUtils.transferIp(ipStr);
 
-            String masks = matcher.group(2);
+            String masks = matcher.group(7);
             if (masks != null) {
                 int mask = Integer.parseInt(masks.substring(1));
                 return new IpToken(ip, mask);
