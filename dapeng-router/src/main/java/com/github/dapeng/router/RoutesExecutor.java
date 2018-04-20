@@ -11,7 +11,6 @@ import com.github.dapeng.router.pattern.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -108,8 +107,10 @@ public class RoutesExecutor {
         });
         List<RuntimeInstance> filters = instances.stream().filter(inst -> {
             try {
-                return pair.isMatch(inst.ip);
-            } catch (UnknownHostException e) {
+                return pair.isMatch(IPUtils.transferIp(inst.ip));
+
+                //todo
+            } catch (Exception e) {
                 logger.error("ip host is unKnown");
             }
             return false;
@@ -122,15 +123,11 @@ public class RoutesExecutor {
         final Set<ThenIp> matches = new HashSet<>();
         final Set<ThenIp> notMatches = new HashSet<>();
 
-        private boolean isMatch(String value) throws UnknownHostException {
+        private boolean isMatch(int value) {
             if (!matches.isEmpty() && notMatches.isEmpty()) {
                 for (ThenIp match : matches) {
-                    //掩码支持
-                    if (match.mask != 0) {
-                        return matchMask(match.ip, value, match.mask);
-                    }
-
-                    if (match.ip.equals(value)) {
+                    boolean result = matchMask(match.ip, value, match.mask);
+                    if (result) {
                         return true;
                     }
                 }
@@ -138,39 +135,30 @@ public class RoutesExecutor {
             }
 
             if (!matches.isEmpty() && !notMatches.isEmpty()) {
-                //when both notmatches and matches contain the same value, then using notmatches first
+                //when both not matches and matches contain the same value, then using notmatches first
                 for (ThenIp notMatch : notMatches) {
 
-                    //掩码支持
-                    if (notMatch.mask != 0) {
-                        return !matchMask(notMatch.ip, value, notMatch.mask);
-                    }
-
-                    if (notMatch.ip.equals(value)) {
+                    boolean result = matchMask(notMatch.ip, value, notMatch.mask);
+                    if (result) {
                         return false;
                     }
                 }
-                for (ThenIp match : matches) {
-                    //掩码支持
-                    if (match.mask != 0) {
-                        return matchMask(match.ip, value, match.mask);
-                    }
+                return true;
 
-                    if (match.ip.equals(value)) {
+                /*for (ThenIp match : matches) {
+                    boolean matchResult = matchMask(match.ip, value, match.mask);
+                    if (matchResult) {
                         return true;
                     }
                 }
-                return false;
+                return false;*/
             }
 
             if (!notMatches.isEmpty() && matches.isEmpty()) {
                 for (ThenIp notMatch : notMatches) {
                     //掩码支持
-                    if (notMatch.mask != 0) {
-                        return !matchMask(notMatch.ip, value, notMatch.mask);
-                    }
-
-                    if (notMatch.ip.equals(value)) {
+                    boolean result = matchMask(notMatch.ip, value, notMatch.mask);
+                    if (result) {
                         return false;
                     }
                 }
@@ -183,17 +171,14 @@ public class RoutesExecutor {
         /**
          * 子网掩码支持
          *
-         * @param targetIpSeq 输入ip 去匹配的 ip表达式
-         * @param serverIpSeq 输入ip ，即当前服务节点 ip
-         * @param mask        子网掩码
+         * @param targetIp 输入ip 去匹配的 ip表达式
+         * @param serverIp 输入ip ，即当前服务节点 ip
+         * @param mask     子网掩码
          * @return
          * @throws UnknownHostException
          */
-        public static boolean matchMask(String targetIpSeq, String serverIpSeq, int mask) throws UnknownHostException {
-            int serverIp = IPUtils.transferIp(serverIpSeq);
-            int targetIp = IPUtils.transferIp(targetIpSeq);
+        public static boolean matchMask(int targetIp, int serverIp, int mask) {
             int maskIp = (0xFFFFFFFF << (32 - mask));
-
             return (serverIp & maskIp) == (targetIp & maskIp);
         }
     }
@@ -259,21 +244,15 @@ public class RoutesExecutor {
             boolean result = matcherPattern(pattern1, value);
             return !result;
         } else if (pattern instanceof IpPattern) {
-
             IpPattern ipPattern = ((IpPattern) pattern);
             //掩码支持
-            if (ipPattern.mask != 0) {
-                try {
-                    return MatchPair.matchMask(ipPattern.ip, value, ipPattern.mask);
-                } catch (Exception e) {
-                    logger.error("callIp or routes express is not true ,please check: \n " + e.getMessage(), e);
-                }
-                return false;
-            }
-            if (ipPattern.ip.equals(value)) {
-                return true;
+            try {
+                return MatchPair.matchMask(ipPattern.ip, IPUtils.transferIp(value), ipPattern.mask);
+            } catch (Exception e) {
+                logger.error("callIp or routes express is not true ,please check: \n " + e.getMessage(), e);
             }
             return false;
+
         } else if (pattern instanceof RegexpPattern) {
             String regex = ((RegexpPattern) pattern).regex;
             return value.matches(regex);

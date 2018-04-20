@@ -1,9 +1,11 @@
 package com.github.dapeng.router;
 
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.router.token.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.UnknownHostException;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,9 +21,6 @@ import static com.github.dapeng.router.token.Token.EOF;
 public class RoutesLexer1 {
 
     private static final char EOI = '\uFFFF';
-
-    private StringBuilder sb = new StringBuilder(64);
-
 
     private static Logger logger = LoggerFactory.getLogger(RoutesLexer1.class);
 
@@ -140,8 +139,6 @@ public class RoutesLexer1 {
         while (ch != quotation);
         String value = sb.toString();
         return new RegexpToken(value);
-
-
     }
 
 
@@ -279,14 +276,17 @@ public class RoutesLexer1 {
 
         Matcher matcher = ipPattern.matcher(sb.toString());
         while (matcher.find()) {
-            String ip = matcher.group(1);
+            String ipStr = matcher.group(1);
+            int ip;
+            ip = IPUtils.transferIp(ipStr);
+
             String masks = matcher.group(2);
             if (masks != null) {
                 int mask = Integer.parseInt(masks.substring(1));
                 return new IpToken(ip, mask);
             } else {
                 // 默认值，mask
-                return new IpToken(ip, 0);
+                return new IpToken(ip, 32);
             }
         }
         throw new ParsingException("[IpEx]", "parse ip failed,check the ip express");
@@ -364,38 +364,4 @@ public class RoutesLexer1 {
             this.detail = detail;
         }
     }
-
-
-
-    /*public static void main(String[] args) {
-        String context = "  method match \'大佬好\',\"setFoo\", 'getFoo' => ip\"192.168.1.123\" ";
-//        String context = "  method match %\'1024n+8\'  ,\"setFoo\", 'getFoo' => ip\"192.168.1.123\" ";
-//        String context = "  iUserId match r\"setFoo.*\" => ip\"192.168.1.123\" ";
-        RoutesLexer1 lexer = new RoutesLexer1(context);
-        IdToken token = (IdToken) lexer.next();
-
-        int id = token.id();
-        System.out.println(token.name);
-
-        Token token1 = lexer.next();
-        System.out.println(token1.id());
-
-        Token token2 = lexer.next();
-        System.out.println(token2.id());
-
-        Token token3 = lexer.next();
-        System.out.println(token3.id());
-
-        Token token4 = lexer.next();
-        System.out.println(token4.id());
-
-        Token token5 = lexer.next();
-        System.out.println(token5.id());
-
-        Token token6 = lexer.next();
-        System.out.println(token6.id());
-
-
-    }*/
-
 }

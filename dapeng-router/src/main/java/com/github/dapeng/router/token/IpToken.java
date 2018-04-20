@@ -8,10 +8,10 @@ package com.github.dapeng.router.token;
  */
 public class IpToken extends SimpleToken {
 
-    public final String ip;
+    public final int ip;
     public final int mask;
 
-    public IpToken(String ip, int mask) {
+    public IpToken(int ip, int mask) {
         super(IP);
         this.ip = ip;
         this.mask = mask;
