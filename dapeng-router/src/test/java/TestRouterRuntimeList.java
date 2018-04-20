@@ -61,9 +61,14 @@ public class TestRouterRuntimeList {
         Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
 
+
+    /**
+     * 测试 匹配 成功 路由多个 ip
+     * 如果配置了 not ip ~103 它的优先级最高， 如果再配置 普通规则， 也以非为优先
+     */
     @Test
     public void testRouter() {
-        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip'192.168.1.101' , ip'192.168.1.103' ";
+        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip'192.168.1.101' , ~ip'192.168.1.103' ";
         List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         ctx.methodName("getFoo");
@@ -74,7 +79,53 @@ public class TestRouterRuntimeList {
 
         List<RuntimeInstance> expectInstances = new ArrayList<>();
         expectInstances.add(runtimeInstance1);
+        expectInstances.add(runtimeInstance2);
+        expectInstances.add(runtimeInstance4);
+
+
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+    }
+
+    /**
+     * 测试 匹配 成功 路由多个 ip  非ip ～
+     */
+    @Test
+    public void testRouterNot() {
+        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ~ip'192.168.1.101' , ~ip'192.168.1.103' ";
+        List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.methodName("getFoo");
+        ctx.versionName("1.0.0");
+
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        expectInstances.add(runtimeInstance2);
+        expectInstances.add(runtimeInstance4);
+
+
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+    }
+
+    /**
+     * 匹配非 规则 ， 一个 not
+     */
+    @Test
+    public void testRouterNotOne() {
+        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ~ip'192.168.1.101' ";
+        List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.methodName("getFoo");
+        ctx.versionName("1.0.0");
+
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        expectInstances.add(runtimeInstance2);
         expectInstances.add(runtimeInstance3);
+        expectInstances.add(runtimeInstance4);
 
 
         Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());

@@ -9,10 +9,10 @@ package com.github.dapeng.router;
 public class ThenIp {
 
     public final boolean not;
-    public final String ip;
+    public final int ip;
     public final int mask;
 
-    ThenIp(boolean not, String ip, int mask) {
+    ThenIp(boolean not, int ip, int mask) {
         this.not = not;
         this.ip = ip;
         this.mask = mask;
