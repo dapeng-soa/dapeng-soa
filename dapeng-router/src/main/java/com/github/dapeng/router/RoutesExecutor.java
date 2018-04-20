@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 描述:
+ * 描述:  按指定路由规则多可用服务实例进行过滤
  *
  * @author hz.lei
  * @date 2018年04月13日 下午10:02

@@ -1,7 +1,7 @@
 package com.github.dapeng.router.token;
 
 /**
- * 描述:
+ * 描述: string 字符串, 词法解析单元
  *
  * @author hz.lei
  * @date 2018年04月13日 下午9:06

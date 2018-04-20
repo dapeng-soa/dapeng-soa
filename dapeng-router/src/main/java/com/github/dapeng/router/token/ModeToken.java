@@ -3,7 +3,7 @@ package com.github.dapeng.router.token;
 import java.util.Optional;
 
 /**
- * 描述:
+ * 描述: 取模  词法解析单元
  *
  * @author hz.lei
  * @date 2018年04月13日 下午9:09
