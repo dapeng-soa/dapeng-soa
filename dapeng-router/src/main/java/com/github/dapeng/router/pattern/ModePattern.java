@@ -3,7 +3,7 @@ package com.github.dapeng.router.pattern;
 import java.util.Optional;
 
 /**
- * 描述:
+ * 描述: 取模 条件表达式
  *
  * @author hz.lei
  * @date 2018年04月13日 下午9:41

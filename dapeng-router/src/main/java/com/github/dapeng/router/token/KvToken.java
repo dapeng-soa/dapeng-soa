@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * 描述: key-value token
+ * 描述: key-value  词法解析单元
  *
  * @author hz.lei
  * @date 2018年04月13日 下午9:09
