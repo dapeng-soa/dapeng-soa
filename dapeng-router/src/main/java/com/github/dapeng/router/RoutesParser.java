@@ -8,7 +8,7 @@ import com.github.dapeng.router.token.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.github.dapeng.router.RoutesLexer1.*;
+import static com.github.dapeng.router.RoutesLexer.*;
 import static com.github.dapeng.router.token.Token.STRING;
 
 /**
@@ -43,9 +43,9 @@ import static com.github.dapeng.router.token.Token.STRING;
  */
 public class RoutesParser {
 
-    private RoutesLexer1 lexer;
+    private RoutesLexer lexer;
 
-    public RoutesParser(RoutesLexer1 lexer) {
+    public RoutesParser(RoutesLexer lexer) {
         this.lexer = lexer;
     }
 

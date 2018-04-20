@@ -1,5 +1,6 @@
 package com.github.dapeng.router;
 
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.router.token.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,11 +17,11 @@ import static com.github.dapeng.router.token.Token.EOF;
  * @author hz.lei
  * @date 2018年04月13日 下午9:04
  */
-public class RoutesLexer1 {
+public class RoutesLexer {
 
     private static final char EOI = '\uFFFF';
 
-    private static Logger logger = LoggerFactory.getLogger(RoutesLexer1.class);
+    private static Logger logger = LoggerFactory.getLogger(RoutesLexer.class);
 
     private String content;
     private int pos;
@@ -41,7 +42,7 @@ public class RoutesLexer1 {
 
     private static Pattern modePattern = Pattern.compile("([0-9]+)n\\+(([0-9]+)..)?([0-9]+)");
 
-    public RoutesLexer1(String content) {
+    public RoutesLexer(String content) {
         this.content = content;
         this.pos = -1;
     }
@@ -202,7 +203,7 @@ public class RoutesLexer1 {
      * @param ch
      * @return
      */
-    public boolean isLetterOrDigit(char ch) {
+    private boolean isLetterOrDigit(char ch) {
         boolean letter = Character.isLetter(ch);
         boolean digit = Character.isDigit(ch);
 
@@ -364,38 +365,4 @@ public class RoutesLexer1 {
         logger.debug("require char: " + expects.toString() + " but actual char: " + actual);
         return false;
     }
-
-
-
-    /*public static void main(String[] args) {
-        String context = "  method match \'大佬好\',\"setFoo\", 'getFoo' => ip\"192.168.1.123\" ";
-//        String context = "  method match %\'1024n+8\'  ,\"setFoo\", 'getFoo' => ip\"192.168.1.123\" ";
-//        String context = "  iUserId match r\"setFoo.*\" => ip\"192.168.1.123\" ";
-        RoutesLexer1 lexer = new RoutesLexer1(context);
-        IdToken token = (IdToken) lexer.next();
-
-        int id = token.id();
-        System.out.println(token.name);
-
-        Token token1 = lexer.next();
-        System.out.println(token1.id());
-
-        Token token2 = lexer.next();
-        System.out.println(token2.id());
-
-        Token token3 = lexer.next();
-        System.out.println(token3.id());
-
-        Token token4 = lexer.next();
-        System.out.println(token4.id());
-
-        Token token5 = lexer.next();
-        System.out.println(token5.id());
-
-        Token token6 = lexer.next();
-        System.out.println(token6.id());
-
-
-    }*/
-
 }
