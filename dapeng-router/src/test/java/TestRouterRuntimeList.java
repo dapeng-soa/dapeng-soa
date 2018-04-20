@@ -191,10 +191,11 @@ public class TestRouterRuntimeList {
         Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
 
+
     @Test
-    public void testRouterOneMatch5() {
+    public void testRouterMode2() {
         //TODO
-        String pattern = "  userId match %\"0n+2..4\"; version match '1.0.0' => ip\"192.168.1.101\" ";
+        String pattern = "  userId match %\"1025n+2..4\"; version match '1.0.0' => ip\"192.168.1.101\" ";
 
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
@@ -293,12 +294,12 @@ public class TestRouterRuntimeList {
     @Test
     public void testRouterNumber() {
 
-        String pattern = "  userId match 11 => ~ip\"192.168.1.104/30\" ";
+        String pattern = "  userId match ~11 => ~ip\"192.168.1.104/30\" ";
 
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
 
-        ctx.userId(11L);
+        ctx.userId(12L);
         List<RuntimeInstance> prepare = prepare(ctx, routes);
 
 

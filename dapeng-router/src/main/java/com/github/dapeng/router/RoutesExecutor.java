@@ -7,6 +7,7 @@ import com.github.dapeng.router.condition.Condition;
 import com.github.dapeng.router.condition.Matcher;
 import com.github.dapeng.router.condition.Matchers;
 import com.github.dapeng.router.condition.Otherwise;
+import com.github.dapeng.router.exception.ParsingException;
 import com.github.dapeng.router.pattern.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -268,6 +269,9 @@ public class RoutesExecutor {
         } else if (pattern instanceof ModePattern) {
             ModePattern mode = ((ModePattern) pattern);
             try {
+                if (mode.base == 0) {
+                    throw new ParsingException("[ByZeroEx]", "取模被除数不能为0");
+                }
                 long userId = Long.valueOf(value);
                 long result = userId % mode.base;
                 Optional<Long> from = mode.from;
@@ -283,7 +287,6 @@ public class RoutesExecutor {
                     }
                 }
                 return false;
-
             } catch (NumberFormatException e) {
                 logger.error("输入参数 value 应为数字类型的id ，but get {}", value);
             }
