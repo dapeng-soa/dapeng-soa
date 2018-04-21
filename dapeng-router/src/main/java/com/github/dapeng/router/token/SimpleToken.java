@@ -19,4 +19,8 @@ public class SimpleToken implements Token {
         return this.id;
     }
 
+    @Override
+    public String toString() {
+        return "SimpleToken[id:" + id + "]";
+    }
 }

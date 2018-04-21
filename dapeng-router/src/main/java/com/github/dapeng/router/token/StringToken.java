@@ -14,4 +14,9 @@ public class StringToken extends SimpleToken {
         super(STRING);
         this.content = content;
     }
+
+    @Override
+    public String toString() {
+        return "StringToken[id:" + id + ", content:" + content + "]";
+    }
 }

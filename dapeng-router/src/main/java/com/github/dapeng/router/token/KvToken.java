@@ -17,4 +17,9 @@ public class KvToken extends SimpleToken {
         super(KV);
         this.kv = Collections.unmodifiableMap(kv);
     }
+
+    @Override
+    public String toString() {
+        return "KvToken[id:" + id + "]";
+    }
 }

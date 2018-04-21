@@ -16,4 +16,9 @@ public class RangeToken extends SimpleToken {
         this.from = from;
         this.to = to;
     }
+
+    @Override
+    public String toString() {
+        return "RangeToken[id:" + id + ", range:" + from + ".." + to + "]";
+    }
 }

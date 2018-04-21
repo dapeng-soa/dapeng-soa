@@ -14,4 +14,9 @@ public class RegexpToken extends SimpleToken {
         super(REGEXP);
         this.regexp = regexp;
     }
+
+    @Override
+    public String toString() {
+        return "RegexpToken[id:" + id + ", regexp:" + regexp + "]";
+    }
 }
