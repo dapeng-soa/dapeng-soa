@@ -39,7 +39,7 @@ public class InvocationInfoImpl implements InvocationContext.InvocationInfo {
     private final String calleeMid;
     private final int calleeTime1;
     private final int calleeTime2;
-    private final int serviceTime;
+    private int serviceTime;
     private final LoadBalanceStrategy loadBalanceStrategy;
 
     public InvocationInfoImpl(String calleeTid, String calleeIp,
@@ -95,5 +95,23 @@ public class InvocationInfoImpl implements InvocationContext.InvocationInfo {
     @Override
     public LoadBalanceStrategy loadBalanceStrategy() {
         return loadBalanceStrategy;
+    }
+
+    public void serviceTime(int serviceTime){
+        this.serviceTime=serviceTime;
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "calleeIp->%s,calleeMid->%s,calleePort->%s,calleeTid->%s,calleeTime1->%s,calleeTime2->%s,loadBalanceStrategy->%s,serviceTime->%s",
+                this.calleeIp,
+                this.calleeMid,
+                this.calleePort,
+                this.calleeTid,
+                this.calleeTime1,
+                this.calleeTime2,
+                this.loadBalanceStrategy,
+                this.serviceTime);
     }
 }

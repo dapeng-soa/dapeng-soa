@@ -10,6 +10,7 @@ import com.github.dapeng.core.filter.FilterContext;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.plugins.netty.NettyChannelKeys;
 import com.github.dapeng.org.apache.thrift.TException;
+import com.google.common.base.Joiner;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.Attribute;
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ import org.slf4j.MDC;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -103,7 +105,7 @@ public class LogFilter implements Filter {
             Long requestTimestamp = 0L;
             if (requestTimestampMap != null) {
                 //each per request take the time then remove it
-                requestTimestamp = requestTimestampMap.remove(transactionContext.getSeqid());
+                requestTimestamp = requestTimestampMap.get(transactionContext.getSeqid());
 
                 if (requestTimestamp == null) {
                     requestTimestamp = 0L;
@@ -120,7 +122,6 @@ public class LogFilter implements Filter {
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
                     + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : ""
                     + " cost:" + cost + "ms");
-
             soaHeader.setCalleeTime1(cost.intValue());
             application.info(this.getClass(), infoLog);
         } finally {
