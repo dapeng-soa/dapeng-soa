@@ -7,13 +7,14 @@ import com.github.dapeng.router.condition.Condition;
 import com.github.dapeng.router.condition.Matcher;
 import com.github.dapeng.router.condition.Matchers;
 import com.github.dapeng.router.condition.Otherwise;
-import com.github.dapeng.router.exception.ParsingException;
 import com.github.dapeng.router.pattern.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.github.dapeng.core.helper.IPUtils.matchIpWithMask;
 
 /**
  * 描述:  按指定路由规则多可用服务实例进行过滤
@@ -45,10 +46,10 @@ public class RoutesExecutor {
             // 匹配成功，执行右边逻辑
             if (isMatched) {
                 instances = matchActionThenIp(instances, route);
-                logger.debug("过滤结果 size: {}", instances.size());
+                logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes过滤结果 size: {}", instances.size());
                 break;
             } else {
-                logger.debug("路由没有过滤, size {}", instances.size());
+                logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes路由没有过滤, size {}", instances.size());
             }
         }
         return instances;
@@ -68,8 +69,15 @@ public class RoutesExecutor {
         }
         Matchers matcherCondition = (Matchers) left;
         List<Matcher> matchers = matcherCondition.macthers;
+        /**
+         * left = matcher(;matcher)*
+         * matcher = id match patterns
+         * patterns = pattern(,pattern)*
+         * matcher之间是与的关系
+         * pattern之间是或的关系
+         */
         for (Matcher matcher : matchers) {
-            String actuallyConditionValue = matchContextValue(ctx, matcher);
+            String actuallyConditionValue = getValueFromInvocationCtx(ctx, matcher);
             List<Pattern> patterns = matcher.getPatterns();
 
             boolean isMatch = false;
@@ -97,89 +105,63 @@ public class RoutesExecutor {
      */
     private static List<RuntimeInstance> matchActionThenIp(List<RuntimeInstance> instances, Route route) {
         List<ThenIp> actions = route.getActions();
-        MatchPair pair = new MatchPair();
+        Set<ThenIp> ips = new HashSet<>(16);
+        Set<ThenIp> notIps = new HashSet<>(16);
+
         actions.forEach(ip -> {
             if (ip.not) {
-                pair.notMatches.add(ip);
+                notIps.add(ip);
             } else {
-                pair.matches.add(ip);
+                ips.add(ip);
             }
         });
-        List<RuntimeInstance> filters = instances.stream().filter(inst -> {
-            try {
-                return pair.isMatch(IPUtils.transferIp(inst.ip));
-
-                //todo
-            } catch (Exception e) {
-                logger.error("ip host is unKnown");
-            }
-            return false;
-        }).collect(Collectors.toList());
+        List<RuntimeInstance> filters = instances.stream().filter(inst ->
+                ipMatch(ips, notIps, IPUtils.transferIp(inst.ip))).collect(Collectors.toList());
         return filters;
     }
 
 
-    private static final class MatchPair {
-        final Set<ThenIp> matches = new HashSet<>();
-        final Set<ThenIp> notMatches = new HashSet<>();
-
-        private boolean isMatch(int value) {
-            if (!matches.isEmpty() && notMatches.isEmpty()) {
-                for (ThenIp match : matches) {
-                    boolean result = matchMask(match.ip, value, match.mask);
-                    if (result) {
-                        return true;
-                    }
+    private static boolean ipMatch(Set<ThenIp> ips, Set<ThenIp> notIps, int value) {
+        if (!ips.isEmpty() && notIps.isEmpty()) {
+            for (ThenIp ip : ips) {
+                boolean result = matchIpWithMask(ip.ip, value, ip.mask);
+                if (result) {
+                    return true;
                 }
-                return false;
-            }
-
-            if (!matches.isEmpty() && !notMatches.isEmpty()) {
-                //when both not matches and matches contain the same value, then using notmatches first
-                for (ThenIp notMatch : notMatches) {
-
-                    boolean result = matchMask(notMatch.ip, value, notMatch.mask);
-                    if (result) {
-                        return false;
-                    }
-                }
-                return true;
-
-                /*for (ThenIp match : matches) {
-                    boolean matchResult = matchMask(match.ip, value, match.mask);
-                    if (matchResult) {
-                        return true;
-                    }
-                }
-                return false;*/
-            }
-
-            if (!notMatches.isEmpty() && matches.isEmpty()) {
-                for (ThenIp notMatch : notMatches) {
-                    //掩码支持
-                    boolean result = matchMask(notMatch.ip, value, notMatch.mask);
-                    if (result) {
-                        return false;
-                    }
-                }
-                return true;
             }
             return false;
         }
 
+        // TODO 逻辑??
+        if (!ips.isEmpty() && !notIps.isEmpty()) {
+            //when both not matches and matches contain the same value, then using notmatches first
+            for (ThenIp notMatch : notIps) {
 
-        /**
-         * 子网掩码支持
-         *
-         * @param targetIp 输入ip 去匹配的 ip表达式
-         * @param serverIp 输入ip ，即当前服务节点 ip
-         * @param mask     子网掩码
-         * @return
-         */
-        private static boolean matchMask(int targetIp, int serverIp, int mask) {
-            int maskIp = (0xFFFFFFFF << (32 - mask));
-            return (serverIp & maskIp) == (targetIp & maskIp);
+                boolean result = matchIpWithMask(notMatch.ip, value, notMatch.mask);
+                if (result) {
+                    return false;
+                }
+            }
+
+            for (ThenIp match : ips) {
+                boolean matchResult = matchIpWithMask(match.ip, value, match.mask);
+                if (matchResult) {
+                    return true;
+                }
+            }
+            return false;
         }
+
+        if (!notIps.isEmpty() && ips.isEmpty()) {
+            for (ThenIp notMatch : notIps) {
+                boolean result = matchIpWithMask(notMatch.ip, value, notMatch.mask);
+                if (result) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -188,32 +170,32 @@ public class RoutesExecutor {
      * @param ctx
      * @param matcher
      */
-    private static String matchContextValue(InvocationContextImpl ctx, Matcher matcher) {
+    private static String getValueFromInvocationCtx(InvocationContextImpl ctx, Matcher matcher) {
         // IdToken name
         String id = matcher.getId();
-        String context;
+        String ctxValue;
         switch (id) {
             case "service":
-                context = ctx.serviceName();
+                ctxValue = ctx.serviceName();
                 break;
             case "method":
-                context = ctx.methodName();
+                ctxValue = ctx.methodName();
                 break;
             case "version":
-                context = ctx.versionName();
+                ctxValue = ctx.versionName();
                 break;
             case "userId":
-                context = ctx.userId().map(userId -> userId.toString()).orElse("");
+                ctxValue = ctx.userId().map(userId -> userId.toString()).orElse("");
                 break;
             case "calleeIp":
-                context = ctx.calleeIp().orElse("");
+                ctxValue = ctx.calleeIp().orElse("");
                 break;
             default:
-                context = null;
+                ctxValue = null;
                 break;
 
         }
-        return context;
+        return ctxValue;
     }
 
     /**
@@ -232,7 +214,7 @@ public class RoutesExecutor {
             return !matcherPattern(pattern1, value);
         } else if (pattern instanceof IpPattern) {
             IpPattern ipPattern = ((IpPattern) pattern);
-            return MatchPair.matchMask(ipPattern.ip, IPUtils.transferIp(value), ipPattern.mask);
+            return matchIpWithMask(ipPattern.ip, IPUtils.transferIp(value), ipPattern.mask);
         } else if (pattern instanceof RegexPattern) {
             String regex = ((RegexPattern) pattern).regex;
             return value.matches(regex);
@@ -245,8 +227,8 @@ public class RoutesExecutor {
         } else if (pattern instanceof ModePattern) {
             ModePattern mode = ((ModePattern) pattern);
             try {
-                long userId = Long.valueOf(value);
-                long result = userId % mode.base;
+                long valueAsLong = Long.valueOf(value);
+                long result = valueAsLong % mode.base;
                 Optional<Long> from = mode.from;
                 long to = mode.to;
 
@@ -259,12 +241,11 @@ public class RoutesExecutor {
                 logger.error("输入参数 value 应为数字类型的id ，but get {}", value);
             }
             return false;
-
         } else if (pattern instanceof NumberPattern) {
             NumberPattern number = ((NumberPattern) pattern);
-            long userId = Long.parseLong(value);
-            long from = number.number;
-            return userId == from;
+            long valueAsLong = Long.parseLong(value);
+            long numberLong = number.number;
+            return valueAsLong == numberLong;
         }
 
         return false;

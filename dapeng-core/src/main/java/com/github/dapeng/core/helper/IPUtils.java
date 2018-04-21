@@ -74,6 +74,19 @@ public class IPUtils {
     }
 
     /**
+     * 在子网掩码下, 两个ip是否一致
+     *
+     * @param ip1
+     * @param ip2
+     * @param mask     子网掩码
+     * @return
+     */
+    public static boolean matchIpWithMask(int ip1, int ip2, int mask) {
+        int maskIp = (0xFFFFFFFF << (32 - mask));
+        return (ip1 & maskIp) == (ip2 & maskIp);
+    }
+
+    /**
      * transfer ip from int to human-readable format,
      * for example:
      * -1062729086 ==> 192.168.10.130
