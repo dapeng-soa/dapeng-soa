@@ -5,6 +5,8 @@ import com.github.dapeng.router.condition.*;
 import com.github.dapeng.router.exception.ParsingException;
 import com.github.dapeng.router.pattern.*;
 import com.github.dapeng.router.token.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +45,8 @@ import static com.github.dapeng.router.token.Token.STRING;
  * @date 2018年04月13日 下午9:34
  */
 public class RoutesParser {
+
+    private static Logger logger = LoggerFactory.getLogger(RoutesParser.class);
 
     private RoutesLexer lexer;
 
@@ -279,9 +283,9 @@ public class RoutesParser {
         }
     }
 
-    private void error(String s) {
 
+    private void error(String errorInfo) {
+        logger.error(errorInfo);
     }
-
 
 }
