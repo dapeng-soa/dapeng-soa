@@ -2,6 +2,7 @@ package com.github.dapeng.router;
 
 
 import com.github.dapeng.router.condition.*;
+import com.github.dapeng.router.exception.ParsingException;
 import com.github.dapeng.router.pattern.*;
 import com.github.dapeng.router.token.*;
 
@@ -174,7 +175,7 @@ public class RoutesParser {
 
         Pattern p = pattern();
         patterns.add(p);
-        while (lexer.peek() == Token_COMMA && lexer.peek() != Token_SEMI_COLON && lexer.peek() != Token_THEN) {
+        while (lexer.peek() == Token_COMMA) {
             lexer.next(Token.COMMA);
             patterns.add(pattern());
         }
@@ -219,11 +220,13 @@ public class RoutesParser {
                 IpToken ipToken = (IpToken) lexer.next(Token.IP);
                 return new IpPattern(ipToken.ip, ipToken.mask);
             case Token.KV:
+                //todo not implemented
+                throw new ParsingException("[KV]", "KV pattern not implemented yet");
             case Token.MODE:
                 ModeToken modeToken = (ModeToken) lexer.next(Token.MODE);
                 return new ModePattern(modeToken.base, modeToken.from, modeToken.to);
             default:
-                return null;
+                throw new ParsingException("[UNKNOWN TOKEN]", "UnKnown token:" + token);
         }
     }
 

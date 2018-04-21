@@ -20,4 +20,8 @@ public class ModeToken extends SimpleToken {
         this.to = to;
     }
 
+    @Override
+    public String toString() {
+        return "ModeToken[id:" + id + ", mode:" + base + "n+" + (from.isPresent() ? (from + ".." + to) : to) + "]";
+    }
 }

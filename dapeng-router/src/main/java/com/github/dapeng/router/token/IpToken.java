@@ -1,5 +1,7 @@
 package com.github.dapeng.router.token;
 
+import com.github.dapeng.core.helper.IPUtils;
+
 /**
  * 描述: Ip 词法解析单元
  *
@@ -15,5 +17,10 @@ public class IpToken extends SimpleToken {
         super(IP);
         this.ip = ip;
         this.mask = mask;
+    }
+
+    @Override
+    public String toString() {
+        return "IpToken[id:" + id + ", ip:" + IPUtils.transferIp(ip) + "/" + mask + "]";
     }
 }

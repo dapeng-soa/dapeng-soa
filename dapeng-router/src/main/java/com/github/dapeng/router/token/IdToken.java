@@ -20,4 +20,8 @@ public class IdToken extends SimpleToken {
         this.name = name;
     }
 
+    @Override
+    public String toString() {
+        return "IdToken[id:" + id + ", name:" + name + "]";
+    }
 }

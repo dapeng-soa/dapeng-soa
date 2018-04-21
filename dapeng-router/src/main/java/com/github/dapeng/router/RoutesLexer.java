@@ -37,13 +37,19 @@ public class RoutesLexer {
     static SimpleToken Token_COMMA = new SimpleToken(Token.COMMA);
 
     /**
-     * regex  严谨的ip正则
+     * IP_REGEX
+     * todo: 暂时只支持全格式IP(加掩码), 对于192.168.10/24这种不支持
      */
-    private static String regex = "(^(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|[1-9])\\.(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\."
+    private static final String IP_REGEX = "(^(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|[1-9])\\.(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\."
             + "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\.(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d))(/(\\d{2}))?$";
+    private static final Pattern IP_PATTERN = Pattern.compile(IP_REGEX);
+    private static final int DEFAULT_MASK = 32;
 
-    private static Pattern ipPattern = Pattern.compile(regex);
-    private static Pattern modePattern = Pattern.compile("([0-9]+)n\\+(([0-9]+)..)?([0-9]+)");
+    /**
+     * 求模正则, 例如 1024n+0-8
+     */
+    private static final Pattern MODE_PATTERN = Pattern.compile("([0-9]+)n\\+(([0-9]+)..)?([0-9]+)");
+
 
     public RoutesLexer(String content) {
         this.content = content;
@@ -135,10 +141,9 @@ public class RoutesLexer {
      */
     public Token next(int type) {
         Token nextToken = next();
-        if (nextToken.id() != type) {
-            throw new ParsingException("[Not expected token]",
-                    "Expect:" + type + ", actually:" + nextToken.id());
-        }
+        throwExWithCondition(nextToken.id() != type,
+                "[Not expected token]",
+                "Expect:" + type + ", actually:" + nextToken.id());
         return nextToken;
     }
 
@@ -155,9 +160,8 @@ public class RoutesLexer {
         char ch = nextChar();
         StringBuilder sb = new StringBuilder(16);
         do {
-            if (ch == EOI || ch == EOF) {
-                throw new ParsingException("[RegexEx]", "parse regex failed,check the regex express:" + sb.toString());
-            }
+            throwExWithCondition(ch == EOI || ch == EOF,
+                    "[RegexEx]", "parse IP_REGEX failed,check the IP_REGEX express:" + sb.toString());
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
         String value = sb.toString();
@@ -196,10 +200,7 @@ public class RoutesLexer {
      * @return
      */
     private boolean isLetterOrDigit(char ch) {
-        boolean letter = Character.isLetter(ch);
-        boolean digit = Character.isDigit(ch);
-
-        return letter || digit;
+        return Character.isLetter(ch) || Character.isDigit(ch);
     }
 
 
@@ -211,9 +212,8 @@ public class RoutesLexer {
         char quotation = currentChar();
         char ch = nextChar();
         do {
-            if (ch == EOI || ch == EOF) {
-                throw new ParsingException("[StringEx]", "parse string failed,check the string express:" + sb.toString());
-            }
+            throwExWithCondition(ch == EOI || ch == EOF,
+                    "[StringEx]", "parse string failed,check the string express:" + sb.toString());
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
         return new StringToken(sb.toString());
@@ -258,16 +258,15 @@ public class RoutesLexer {
         StringBuilder sb = new StringBuilder(16);
 
         do {
-            if (ch == EOI || ch == EOF) {
-                throw new ParsingException("[ModeEx]", "parse mode failed,check the mode express:" + sb.toString());
-            }
+            throwExWithCondition(ch == EOI || ch == EOF,
+                    "[ModeEx]", "parse mode failed,check the mode express:" + sb.toString());
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
 
         String value = sb.toString();
 
         try {
-            Matcher matcher = modePattern.matcher(value);
+            Matcher matcher = MODE_PATTERN.matcher(value);
             if (matcher.matches()) {
                 String base = matcher.group(1);
                 Optional<String> from = Optional.ofNullable(matcher.group(3));
@@ -276,7 +275,7 @@ public class RoutesLexer {
                 return new ModeToken(Long.parseLong(base), from.map(Long::valueOf), Long.parseLong(to));
             }
         } catch (Throwable e) {
-            throw new ParsingException("[ModeEx]", "mode regex parse failed , check the mode expression again:" + value);
+            throw new ParsingException("[ModeEx]", "mode IP_REGEX parse failed , check the mode expression again:" + value);
         }
 
         throw new ParsingException("[ModeEx]", "unknown exception, check the mode expression again:" + value);
@@ -288,30 +287,34 @@ public class RoutesLexer {
 
         StringBuilder sb = new StringBuilder(16);
         do {
-            if (ch == EOI || ch == EOF) {
-                throw new ParsingException("[IpEx]", "parse ip failed,check the ip express:" + sb.toString());
-            }
+            throwExWithCondition(ch == EOI || ch == EOF,
+                    "[IpEx]", "parse ip failed,check the ip express:" + sb.toString());
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
 
-        Matcher matcher = ipPattern.matcher(sb.toString());
+        Matcher matcher = IP_PATTERN.matcher(sb.toString());
         if (matcher.matches()) {
             String ipStr = matcher.group(1);
-            int ip;
-            ip = IPUtils.transferIp(ipStr);
+            int ip = IPUtils.transferIp(ipStr);
 
             String masks = matcher.group(7);
             if (masks != null) {
-                int mask = Integer.parseInt(masks.substring(1));
+                int mask = Integer.parseInt(masks);
                 return new IpToken(ip, mask);
             } else {
                 // 默认值，mask
-                return new IpToken(ip, 32);
+                return new IpToken(ip, DEFAULT_MASK);
             }
         }
         throw new ParsingException("[IpEx]", "parse ip failed,check the ip express");
     }
 
+
+    private void throwExWithCondition(boolean condition, String summary, String detail) {
+        if (condition) {
+            throw new ParsingException(summary, detail);
+        }
+    }
 
     /**
      * nextChar ()
@@ -332,7 +335,7 @@ public class RoutesLexer {
         char ws;
         while (((1L << (ws = nextChar())) & ((ws - 64) >> 31) & 0x100002600L) != 0L
                 && ws != '\n'
-                && ws != '\r') ;
+                && ws != '\r');
         pos--;
     }
 
@@ -349,9 +352,8 @@ public class RoutesLexer {
                 return true;
             }
         }
-        if (isThrow) {
-            throw new ParsingException("[RequireEx]", "require char: " + expects.toString() + " but actual char: " + actual);
-        }
+        throwExWithCondition(isThrow,
+                "[RequireEx]", "require char: " + expects.toString() + " but actual char: " + actual);
         logger.debug("require char: " + expects.toString() + " but actual char: " + actual);
         return false;
     }
