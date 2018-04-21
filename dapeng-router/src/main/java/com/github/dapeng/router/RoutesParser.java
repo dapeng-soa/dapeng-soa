@@ -208,7 +208,7 @@ public class RoutesParser {
             case Token.REGEXP:
                 // get.*
                 RegexpToken regexp = (RegexpToken) lexer.next(Token.REGEXP);
-                return new RegexpPattern(regexp.regexp);
+                return new RegexPattern(regexp.regexp);
             case Token.RANGE:
                 // getFoo
                 RangeToken rt = (RangeToken) lexer.next(Token.RANGE);

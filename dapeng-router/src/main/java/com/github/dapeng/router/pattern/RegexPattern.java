@@ -9,11 +9,11 @@ package com.github.dapeng.router.pattern;
  * @author hz.lei
  * @date 2018年04月13日 下午9:40
  */
-public class RegexpPattern implements Pattern {
+public class RegexPattern implements Pattern {
 
     public final String regex;
 
-    public RegexpPattern(String regex) {
+    public RegexPattern(String regex) {
 
         this.regex = regex;
     }

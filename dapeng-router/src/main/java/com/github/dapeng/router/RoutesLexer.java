@@ -268,11 +268,14 @@ public class RoutesLexer {
         try {
             Matcher matcher = MODE_PATTERN.matcher(value);
             if (matcher.matches()) {
-                String base = matcher.group(1);
+                Long base = Long.parseLong(matcher.group(1));
+                if (base == 0) {
+                    throw new ParsingException("[ByZeroEx]", "取模被除数不能为0");
+                }
                 Optional<String> from = Optional.ofNullable(matcher.group(3));
                 String to = matcher.group(4);
 
-                return new ModeToken(Long.parseLong(base), from.map(Long::valueOf), Long.parseLong(to));
+                return new ModeToken(base, from.map(Long::valueOf), Long.parseLong(to));
             }
         } catch (Throwable e) {
             throw new ParsingException("[ModeEx]", "mode IP_REGEX parse failed , check the mode expression again:" + value);
