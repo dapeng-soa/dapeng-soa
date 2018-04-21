@@ -106,6 +106,7 @@ public class RoutesExecutor {
      * @return
      */
     private static List<RuntimeInstance> matchThenRouteIp(List<RuntimeInstance> instances, Route route) {
+        // 获取 路由规则 then 之后 指向的 ip list
         List<ThenIp> thenRouteIps = route.getThenRouteIps();
         Set<ThenIp> ips = new HashSet<>(16);
         Set<ThenIp> notIps = new HashSet<>(16);
