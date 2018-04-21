@@ -12,7 +12,6 @@ import com.github.dapeng.router.pattern.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,7 +39,7 @@ public class RoutesExecutor {
      * product
      */
     public static List<RuntimeInstance> executeRoutes(InvocationContextImpl ctx, List<Route> routes, List<RuntimeInstance> instances) {
-        logger.debug("开始过滤：过滤前 size  {}", instances.size());
+        logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes$开始过滤：过滤前 size  {}", instances.size());
         for (Route route : routes) {
             boolean isMatched = matchCondition(ctx, route.getLeft());
             // 匹配成功，执行右边逻辑
@@ -70,12 +69,12 @@ public class RoutesExecutor {
         Matchers matcherCondition = (Matchers) left;
         List<Matcher> matchers = matcherCondition.macthers;
         for (Matcher matcher : matchers) {
-            String value = matchContextValue(ctx, matcher);
+            String actuallyConditionValue = matchContextValue(ctx, matcher);
             List<Pattern> patterns = matcher.getPatterns();
 
             boolean isMatch = false;
             for (Pattern pattern : patterns) {
-                boolean result = matcherPattern(pattern, value);
+                boolean result = matcherPattern(pattern, actuallyConditionValue);
                 if (result) {
                     isMatch = true;
                     break;
@@ -176,9 +175,8 @@ public class RoutesExecutor {
          * @param serverIp 输入ip ，即当前服务节点 ip
          * @param mask     子网掩码
          * @return
-         * @throws UnknownHostException
          */
-        public static boolean matchMask(int targetIp, int serverIp, int mask) {
+        private static boolean matchMask(int targetIp, int serverIp, int mask) {
             int maskIp = (0xFFFFFFFF << (32 - mask));
             return (serverIp & maskIp) == (targetIp & maskIp);
         }
@@ -205,19 +203,10 @@ public class RoutesExecutor {
                 context = ctx.versionName();
                 break;
             case "userId":
-                try {
-                    context = ctx.userId().get().toString();
-                } catch (NoSuchElementException e) {
-                    context = "";
-                }
+                context = ctx.userId().map(userId -> userId.toString()).orElse("");
                 break;
-
             case "calleeIp":
-                try {
-                    context = ctx.calleeIp().get().trim();
-                } catch (NoSuchElementException e) {
-                    context = "";
-                }
+                context = ctx.calleeIp().orElse("");
                 break;
             default:
                 context = null;
@@ -237,56 +226,35 @@ public class RoutesExecutor {
     private static boolean matcherPattern(Pattern pattern, String value) {
         if (pattern instanceof StringPattern) {
             String content = ((StringPattern) pattern).content;
-            if (content.equals(value)) {
-                return true;
-            }
+            return content.equals(value);
         } else if (pattern instanceof NotPattern) {
             Pattern pattern1 = ((NotPattern) pattern).pattern;
-            boolean result = matcherPattern(pattern1, value);
-            return !result;
+            return !matcherPattern(pattern1, value);
         } else if (pattern instanceof IpPattern) {
             IpPattern ipPattern = ((IpPattern) pattern);
-            //掩码支持
-            try {
-                return MatchPair.matchMask(ipPattern.ip, IPUtils.transferIp(value), ipPattern.mask);
-            } catch (Exception e) {
-                logger.error("callIp or routes express is not true ,please check: \n " + e.getMessage(), e);
-            }
-            return false;
-
-        } else if (pattern instanceof RegexpPattern) {
-            String regex = ((RegexpPattern) pattern).regex;
+            return MatchPair.matchMask(ipPattern.ip, IPUtils.transferIp(value), ipPattern.mask);
+        } else if (pattern instanceof RegexPattern) {
+            String regex = ((RegexPattern) pattern).regex;
             return value.matches(regex);
         } else if (pattern instanceof RangePattern) {
             RangePattern range = ((RangePattern) pattern);
-            long userId = Long.parseLong(value);
+            long valueAsLong = Long.parseLong(value);
             long from = range.from;
             long to = range.to;
-            if (userId <= to && userId >= from) {
-                return true;
-            }
-            return false;
+            return valueAsLong <= to && valueAsLong >= from;
         } else if (pattern instanceof ModePattern) {
             ModePattern mode = ((ModePattern) pattern);
             try {
-                if (mode.base == 0) {
-                    throw new ParsingException("[ByZeroEx]", "取模被除数不能为0");
-                }
                 long userId = Long.valueOf(value);
                 long result = userId % mode.base;
                 Optional<Long> from = mode.from;
                 long to = mode.to;
 
                 if (from.isPresent()) {
-                    if (result >= from.get() && result <= to) {
-                        return true;
-                    }
+                    return result >= from.get() && result <= to;
                 } else {
-                    if (result == to) {
-                        return true;
-                    }
+                    return result == to;
                 }
-                return false;
             } catch (NumberFormatException e) {
                 logger.error("输入参数 value 应为数字类型的id ，but get {}", value);
             }
@@ -296,10 +264,7 @@ public class RoutesExecutor {
             NumberPattern number = ((NumberPattern) pattern);
             long userId = Long.parseLong(value);
             long from = number.number;
-            if (userId == from) {
-                return true;
-            }
-            return false;
+            return userId == from;
         }
 
         return false;
