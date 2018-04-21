@@ -206,6 +206,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      */
     private RuntimeInstance loadBalance(String serviceName, String version, String methodName, List<RuntimeInstance> compatibles) {
 
+        InvocationContextImpl invocationContext = (InvocationContextImpl)InvocationContextImpl.Factory.currentInstance();
         ZkServiceInfo zkServiceInfo = zkInfos.get(serviceName);
         //方法级别
         LoadBalanceStrategy methodLB = null;
@@ -243,16 +244,20 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         switch (balance) {
             case Random:
+                invocationContext.loadBalanceStrategy(LoadBalanceStrategy.Random);
                 instance = LoadBalanceAlgorithm.random(compatibles);
                 break;
             case RoundRobin:
+                invocationContext.loadBalanceStrategy(LoadBalanceStrategy.RoundRobin);
                 instance = LoadBalanceAlgorithm.roundRobin(compatibles);
                 break;
             case LeastActive:
+                invocationContext.loadBalanceStrategy(LoadBalanceStrategy.LeastActive);
                 instance = LoadBalanceAlgorithm.leastActive(compatibles);
                 break;
             case ConsistentHash:
                 //TODO
+                invocationContext.loadBalanceStrategy(LoadBalanceStrategy.ConsistentHash);
                 break;
             default:
                 // won't be here

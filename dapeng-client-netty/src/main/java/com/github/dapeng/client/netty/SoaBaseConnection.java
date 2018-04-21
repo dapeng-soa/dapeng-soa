@@ -2,6 +2,7 @@ package com.github.dapeng.client.netty;
 
 import com.github.dapeng.client.filter.LogFilter;
 import com.github.dapeng.core.*;
+import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.filter.*;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.org.apache.thrift.TException;
@@ -15,6 +16,7 @@ import org.slf4j.MDC;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -53,6 +55,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
             BeanSerializer<RESP> responseSerializer,
             long timeout)
             throws SoaException {
+        Long startTime =System.currentTimeMillis();
         int seqid = seqidAtomic.getAndIncrement();
 
         InvocationContextImpl invocationContext = (InvocationContextImpl)InvocationContextImpl.Factory.currentInstance();
@@ -127,7 +130,8 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         Result<RESP> result = (Result<RESP>) filterContext.getAttribute("result");
         assert (result != null);
-
+        Long serviceTime = System.currentTimeMillis()-startTime;
+        logLastInvocation(serviceTime,invocationContext);
         if (result.success != null) {
             return result.success;
         } else {
@@ -143,6 +147,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
             BeanSerializer<RESP> responseSerializer,
             long timeout) throws SoaException {
 
+        Long startTime = System.currentTimeMillis();
         int seqid = seqidAtomic.getAndIncrement();
 
         InvocationContextImpl invocationContext = (InvocationContextImpl)InvocationContextImpl.Factory.currentInstance();
@@ -255,10 +260,15 @@ public abstract class SoaBaseConnection implements SoaConnection {
         }
         CompletableFuture<RESP> resultFuture = (CompletableFuture<RESP>) filterContext.getAttach(headFilter, "future");
 
+        Long serviceTime = System.currentTimeMillis()-startTime;
+
+        logLastInvocation(serviceTime,invocationContext);
         assert (resultFuture != null);
+
 
         return resultFuture;
     }
+
 
     private SoaException convertToSoaException(Throwable ex) {
         SoaException soaException = null;
@@ -296,6 +306,14 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 SoaMessageParser parser = new SoaMessageParser(responseBuf, responseSerializer).parseHeader();
                 // TODO fill InvocationContext.lastInfo from response.Header
                 SoaHeader respHeader = parser.getHeader();
+                InvocationContextImpl invocationContext = (InvocationContextImpl)InvocationContextImpl.Factory.currentInstance();
+                InvocationContext.InvocationInfo info = new InvocationInfoImpl(
+                        respHeader.getCallerTid().orElse(""),respHeader.getCalleeIp().orElse(""),
+                        respHeader.getCalleePort().orElse(0),respHeader.getCalleeMid().orElse(""),
+                        respHeader.getCalleeTime1().orElse(0),respHeader.getCalleeTime2().orElse(0),
+                        0,invocationContext.loadBalanceStrategy().orElse(LoadBalanceStrategy.Random)
+                );
+                invocationContext.lastInvocationInfo(info);
 
                 if ("0000".equals(respHeader.getRespCode().get())) {
                     parser.parseBody();
@@ -350,6 +368,12 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 connect(host, port);
             }
         }
+    }
+
+    private void logLastInvocation(Long serviceTime, InvocationContextImpl invocationContext) {
+        InvocationInfoImpl info =(InvocationInfoImpl)invocationContext.lastInvocationInfo();
+        info.serviceTime(serviceTime.intValue());
+        LOGGER.info("[lastInvocationInfo]:{0}",info);
     }
 
 }

@@ -6,6 +6,7 @@ import com.github.dapeng.core.*;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.ExceptionUtil;
+import com.google.common.base.Joiner;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -62,7 +63,27 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
 
                     TSoaTransport transport = new TSoaTransport(out);
                     SoaMessageProcessor messageProcessor = new SoaMessageProcessor(transport);
+                    Attribute<Map<Integer, Long>> requestTimestampAttr = channelHandlerContext.channel().attr(NettyChannelKeys.REQUEST_TIMESTAMP);
+                    Map<Integer, Long> requestTimestampMap = requestTimestampAttr.get();
 
+                    Long requestTimestamp = 0L;
+                    if (requestTimestampMap != null) {
+                        //each per request take the time then remove it
+                        requestTimestamp = requestTimestampMap.remove(transactionContext.getSeqid());
+
+                        if (requestTimestamp == null) {
+                            requestTimestamp = 0L;
+                        }
+                    } else {
+                        LOGGER.warn(getClass().getSimpleName() + "::encode no requestTimestampMap found!");
+                    }
+                    Long cost = System.currentTimeMillis() - requestTimestamp;
+                    soaHeader.setCalleeTime2(cost.intValue());
+                    soaHeader.setCalleeIp(Optional.ofNullable(SoaSystemEnvProperties.SOA_CONTAINER_IP));
+                    soaHeader.setCalleePort(Optional.ofNullable(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
+                    Joiner joiner = Joiner.on(":");
+                    soaHeader.setCalleeMid(joiner.join(soaHeader.getServiceName(),soaHeader.getMethodName(),soaHeader.getVersionName()));
+                    soaHeader.setCalleeTid(transactionContext.calleeTid());
                     messageProcessor.writeHeader(transactionContext);
                     if (serializer != null && result != null) {
                         messageProcessor.writeBody(serializer, result);
