@@ -141,9 +141,9 @@ public class RoutesLexer {
      */
     public Token next(int type) {
         Token nextToken = next();
-        throwExWithCondition(nextToken.id() != type,
+        throwExWithCondition(nextToken.type() != type,
                 "[Not expected token]",
-                "Expect:" + type + ", actually:" + nextToken.id());
+                "Expect:" + type + ", actually:" + nextToken.type());
         return nextToken;
     }
 
@@ -165,7 +165,7 @@ public class RoutesLexer {
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
         String value = sb.toString();
-        return new RegexpToken(value);
+        return new RegexToken(value);
     }
 
 

@@ -17,6 +17,6 @@ public class NumberToken extends SimpleToken {
 
     @Override
     public String toString() {
-        return "NumberToken[id:" + id + ", number:" + number + "]";
+        return "NumberToken[type:" + type + ", number:" + number + "]";
     }
 }

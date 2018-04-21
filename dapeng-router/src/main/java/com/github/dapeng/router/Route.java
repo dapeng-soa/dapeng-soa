@@ -13,18 +13,18 @@ import java.util.List;
 public class Route {
 
     private Condition left;
-    private List<ThenIp> actions;
+    private List<ThenIp> thenRouteIps;
 
-    public Route(Condition left, List<ThenIp> actions) {
+    public Route(Condition left, List<ThenIp> thenRouteIps) {
         this.left = left;
-        this.actions = actions;
+        this.thenRouteIps = thenRouteIps;
     }
 
     public Condition getLeft() {
         return left;
     }
 
-    public List<ThenIp> getActions() {
-        return actions;
+    public List<ThenIp> getThenRouteIps() {
+        return thenRouteIps;
     }
 }

@@ -20,6 +20,6 @@ public class KvToken extends SimpleToken {
 
     @Override
     public String toString() {
-        return "KvToken[id:" + id + "]";
+        return "KvToken[type:" + type + "]";
     }
 }

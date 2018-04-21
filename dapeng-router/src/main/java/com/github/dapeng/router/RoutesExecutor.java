@@ -27,6 +27,8 @@ public class RoutesExecutor {
     private static Logger logger = LoggerFactory.getLogger(RoutesExecutor.class);
 
     /**
+     * 解析 路由规则
+     *
      * @param content
      * @return
      */
@@ -37,7 +39,7 @@ public class RoutesExecutor {
     }
 
     /**
-     * product
+     * 执行 路由规则 匹配， 返回 经过路由后的 实例列表
      */
     public static List<RuntimeInstance> executeRoutes(InvocationContextImpl ctx, List<Route> routes, List<RuntimeInstance> instances) {
         logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes$开始过滤：过滤前 size  {}", instances.size());
@@ -45,7 +47,7 @@ public class RoutesExecutor {
             boolean isMatched = matchCondition(ctx, route.getLeft());
             // 匹配成功，执行右边逻辑
             if (isMatched) {
-                instances = matchActionThenIp(instances, route);
+                instances = matchThenRouteIp(instances, route);
                 logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes过滤结果 size: {}", instances.size());
                 break;
             } else {
@@ -97,18 +99,18 @@ public class RoutesExecutor {
     }
 
     /**
-     * matchActionThenIp  传入 RuntimeInstance 进行match
+     * matchThenRouteIp  传入 RuntimeInstance 进行match
      *
      * @param instances
      * @param route
      * @return
      */
-    private static List<RuntimeInstance> matchActionThenIp(List<RuntimeInstance> instances, Route route) {
-        List<ThenIp> actions = route.getActions();
+    private static List<RuntimeInstance> matchThenRouteIp(List<RuntimeInstance> instances, Route route) {
+        List<ThenIp> thenRouteIps = route.getThenRouteIps();
         Set<ThenIp> ips = new HashSet<>(16);
         Set<ThenIp> notIps = new HashSet<>(16);
 
-        actions.forEach(ip -> {
+        thenRouteIps.forEach(ip -> {
             if (ip.not) {
                 notIps.add(ip);
             } else {
@@ -120,7 +122,14 @@ public class RoutesExecutor {
         return filters;
     }
 
-
+    /**
+     * 传入 runtime instance ip 和 路由规则 right 端定义的ip 进行匹配
+     *
+     * @param ips    路由规则定义路由到的 ip 列表
+     * @param notIps 路由规则定义 非 路由到的 ip 列表
+     * @param value  传入的 instance ip
+     * @return
+     */
     private static boolean ipMatch(Set<ThenIp> ips, Set<ThenIp> notIps, int value) {
         if (!ips.isEmpty() && notIps.isEmpty()) {
             for (ThenIp ip : ips) {
@@ -132,11 +141,14 @@ public class RoutesExecutor {
             return false;
         }
 
-        // TODO 逻辑??
+        /**
+         * right 同时存在 撇配 ip 和 非 匹配 ip 模式时。
+         * 1.先对非匹配ip模式进行 match判断，如果 instances ip 匹配上， 则 返回 false ，因为这里是 非匹配模式
+         * 2。 如果非匹配模式里的ip 没有和 instance ip 匹配上，则进入下一步
+         * 3,  instance ip 和 正常 匹配模式进行匹配 ，如果 匹配上 返回 true ,如果 都没匹配上，则返回 false
+         */
         if (!ips.isEmpty() && !notIps.isEmpty()) {
-            //when both not matches and matches contain the same value, then using notmatches first
             for (ThenIp notMatch : notIps) {
-
                 boolean result = matchIpWithMask(notMatch.ip, value, notMatch.mask);
                 if (result) {
                     return false;
@@ -214,11 +226,14 @@ public class RoutesExecutor {
             return !matcherPattern(pattern1, value);
         } else if (pattern instanceof IpPattern) {
             IpPattern ipPattern = ((IpPattern) pattern);
-            return matchIpWithMask(ipPattern.ip, IPUtils.transferIp(value), ipPattern.mask);
+            return matchIpWithMask(ipPattern.ip, IPUtils.transferIp(value.trim()), ipPattern.mask);
         } else if (pattern instanceof RegexPattern) {
-            // fixme 预编译正则
-            String regex = ((RegexPattern) pattern).regex;
-            return value.matches(regex);
+            /**
+             * 使用缓存好的 pattern 进行 正则 匹配
+             */
+            java.util.regex.Pattern regex = ((RegexPattern) pattern).pattern;
+            return regex.matcher(value).matches();
+
         } else if (pattern instanceof RangePattern) {
             RangePattern range = ((RangePattern) pattern);
             long valueAsLong = Long.parseLong(value);
