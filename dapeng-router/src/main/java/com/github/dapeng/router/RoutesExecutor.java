@@ -216,6 +216,7 @@ public class RoutesExecutor {
             IpPattern ipPattern = ((IpPattern) pattern);
             return matchIpWithMask(ipPattern.ip, IPUtils.transferIp(value), ipPattern.mask);
         } else if (pattern instanceof RegexPattern) {
+            // fixme 预编译正则
             String regex = ((RegexPattern) pattern).regex;
             return value.matches(regex);
         } else if (pattern instanceof RangePattern) {
