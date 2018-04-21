@@ -22,6 +22,6 @@ public class IdToken extends SimpleToken {
 
     @Override
     public String toString() {
-        return "IdToken[id:" + id + ", name:" + name + "]";
+        return "IdToken[type:" + type + ", name:" + name + "]";
     }
 }

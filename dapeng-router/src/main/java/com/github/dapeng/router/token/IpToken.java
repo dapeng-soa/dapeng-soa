@@ -21,6 +21,6 @@ public class IpToken extends SimpleToken {
 
     @Override
     public String toString() {
-        return "IpToken[id:" + id + ", ip:" + IPUtils.transferIp(ip) + "/" + mask + "]";
+        return "IpToken[type:" + type + ", ip:" + IPUtils.transferIp(ip) + "/" + mask + "]";
     }
 }

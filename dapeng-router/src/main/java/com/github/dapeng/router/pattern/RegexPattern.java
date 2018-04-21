@@ -11,10 +11,10 @@ package com.github.dapeng.router.pattern;
  */
 public class RegexPattern implements Pattern {
 
-    public final String regex;
+    public final java.util.regex.Pattern pattern;
 
-    public RegexPattern(String regex) {
+    public RegexPattern(java.util.regex.Pattern pattern) {
 
-        this.regex = regex;
+        this.pattern = pattern;
     }
 }

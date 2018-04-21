@@ -7,21 +7,20 @@ package com.github.dapeng.router.exception;
  * @date 2018年04月20日 下午1:07
  */
 public class ParsingException extends RuntimeException {
-    private String code;
-    private String msg;
+    private String summary;
+    private String detail;
 
-    public ParsingException(String code, String msg) {
-        super(code + ":" + msg);
-        this.code = code;
-        this.msg = msg;
+    public ParsingException(String summary, String detail) {
+        super(summary + ":" + detail);
+        this.summary = summary;
+        this.detail = detail;
     }
 
-    public String getCode() {
-
-        return code;
+    public String getSummary() {
+        return summary;
     }
 
-    public String getMsg() {
-        return msg;
+    public String getDetail() {
+        return detail;
     }
 }

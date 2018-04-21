@@ -87,8 +87,10 @@ public interface Token {
     int COMMA = 15;
 
     /**
-     * token id
+     * token 类型 type
+     *
+     * @return
      */
-    int id();
+    int type();
 
 }

@@ -56,7 +56,7 @@ public class RoutesParser {
     public List<Route> routes() {
         List<Route> routes = new ArrayList<>();
         Token token = lexer.peek();
-        switch (token.id()) {
+        switch (token.type()) {
             case Token.EOL:
             case Token.OTHERWISE:
             case Token.ID:
@@ -82,7 +82,7 @@ public class RoutesParser {
      */
     public Route route() {
         Token token = lexer.peek();
-        switch (token.id()) {
+        switch (token.type()) {
             case Token.OTHERWISE:
             case Token.ID:
                 Condition left = left();
@@ -112,7 +112,7 @@ public class RoutesParser {
     public Condition left() {
         Matchers matchers = new Matchers();
         Token token = lexer.peek();
-        switch (token.id()) {
+        switch (token.type()) {
             case Token.OTHERWISE:
                 lexer.next();
                 return new Otherwise();
@@ -196,7 +196,7 @@ public class RoutesParser {
     public Pattern pattern() {
         // s'getFoo'
         Token token = lexer.peek();
-        switch (token.id()) {
+        switch (token.type()) {
             case Token.NOT:
                 lexer.next(Token.NOT);
                 Pattern it = pattern();
@@ -207,8 +207,8 @@ public class RoutesParser {
                 return new StringPattern(st.content);
             case Token.REGEXP:
                 // get.*
-                RegexpToken regexp = (RegexpToken) lexer.next(Token.REGEXP);
-                return new RegexPattern(regexp.regexp);
+                RegexToken regex = (RegexToken) lexer.next(Token.REGEXP);
+                return new RegexPattern(regex.pattern);
             case Token.RANGE:
                 // getFoo
                 RangeToken rt = (RangeToken) lexer.next(Token.RANGE);
@@ -239,7 +239,7 @@ public class RoutesParser {
         List<ThenIp> thenIps = new ArrayList<>();
 
         Token token = lexer.peek();
-        switch (token.id()) {
+        switch (token.type()) {
             case Token.NOT:
             case Token.IP:
                 ThenIp it = rightPattern();
@@ -263,7 +263,7 @@ public class RoutesParser {
      */
     public ThenIp rightPattern() {
         Token token = lexer.peek();
-        switch (token.id()) {
+        switch (token.type()) {
             case Token.NOT: {
                 lexer.next(Token.NOT);
                 ThenIp it = rightPattern();

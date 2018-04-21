@@ -6,12 +6,8 @@ import com.github.dapeng.router.exception.ParsingException;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * 描述:
@@ -66,10 +62,34 @@ public class TestRouterRuntimeList {
     /**
      * 测试 匹配 成功 路由多个 ip
      * 如果配置了 not ip ~103 它的优先级最高， 如果再配置 普通规则， 也以非为优先
+     * <p>
+     * 既存在 ~  又存在 ip ，  先过滤 ~ 再过滤 正常的。 如下结果应该是 102
      */
     @Test
     public void testRouter() {
-        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip'192.168.1.101' , ~ip'192.168.1.103' ";
+        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip'192.168.1.102' , ~ip'192.168.1.101' ";
+        List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.methodName("getFoo");
+        ctx.versionName("1.0.0");
+
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        expectInstances.add(runtimeInstance2);
+
+
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+    }
+
+    /**
+     * 测试 匹配 成功 路由多个 ip
+     * 如果配置了 not ip ~103 它的优先级最高， 如果再配置 普通规则， 也以非为优先
+     */
+    @Test
+    public void testRouterOne() {
+        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ~ip'192.168.1.103' ";
         List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         ctx.methodName("getFoo");
@@ -133,11 +153,34 @@ public class TestRouterRuntimeList {
     }
 
     @Test
-    public void testRouter2() {
+    public void testRouterRegex1() {
         String onePattern_oneMatcher = "method match 'getFoo' , r'setFoo.*' ; version match '1.0.0' => ip'192.168.1.101' , ip'192.168.1.103' ";
         List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         ctx.methodName("setFooById");
+        ctx.versionName("1.0.0");
+
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        expectInstances.add(runtimeInstance1);
+        expectInstances.add(runtimeInstance3);
+
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+
+    }
+
+
+    /**
+     * 正则 匹配 测试
+     */
+    @Test
+    public void testRouterRegex2() {
+        String onePattern_oneMatcher = "method match 'getFoo' , r'[a-zA-Z]{3}[0-9]{2}id' ; version match '1.0.0' => ip'192.168.1.101' , ip'192.168.1.103' ";
+        List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.methodName("sat22id");
         ctx.versionName("1.0.0");
 
         List<RuntimeInstance> prepare = prepare(ctx, routes);
