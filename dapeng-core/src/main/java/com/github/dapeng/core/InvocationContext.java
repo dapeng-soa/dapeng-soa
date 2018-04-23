@@ -212,7 +212,7 @@ public interface InvocationContext {
          *
          * @return
          */
-        int serviceTime();
+        long serviceTime();
 
         /**
          * 负载均衡策略
