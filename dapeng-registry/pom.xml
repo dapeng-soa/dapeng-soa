@@ -38,6 +38,13 @@
                 <artifactId>dapeng-utils</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.github.dapeng</groupId>
+                <artifactId>dapeng-router</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+
         </dependencies>
     </dependencyManagement>
 </project>

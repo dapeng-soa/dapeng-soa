@@ -46,7 +46,7 @@ public class ServerZk extends CommonZk {
         try {
             CountDownLatch semaphore = new CountDownLatch(1);
 
-            zk = new ZooKeeper(zkHost, 15000, watchedEvent -> {
+            zk = new ZooKeeper(zkHost, 30000, watchedEvent -> {
 
                 switch (watchedEvent.getState()) {
 
@@ -61,6 +61,7 @@ public class ServerZk extends CommonZk {
                         //创建根节点
                         create(SERVICE_PATH, null, false);
                         create(CONFIG_PATH, null, false);
+                        create(ROUTES_PATH, null, false);
                         zkConfigMap.clear();
                         LOGGER.info("ServerZk connected to  {} [Zookeeper]", zkHost);
                         if (registryAgent != null) {

@@ -26,6 +26,7 @@ public class RegistryAgentImpl implements RegistryAgent {
 
     private final String RUNTIME_PATH = "/soa/runtime/services";
     private final String CONFIG_PATH = "/soa/config/services";
+    private final static String ROUTES_PATH = "/soa/config/routes";
 
     private final boolean isClient;
     private final ServerZk serverZk = new ServerZk(this);
@@ -79,6 +80,9 @@ public class RegistryAgentImpl implements RegistryAgent {
 
             // 创建  zk  config 服务 持久节点  eg:  /soa/config/com.github.dapeng.soa.UserService
             serverZk.create(CONFIG_PATH + "/" + serverName, null, false);
+
+            // 创建路由节点
+            serverZk.create(ROUTES_PATH + "/" + serverName, null, false);
 
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
