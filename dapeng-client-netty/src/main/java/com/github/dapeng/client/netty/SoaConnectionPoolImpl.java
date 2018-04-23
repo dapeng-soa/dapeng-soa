@@ -4,12 +4,12 @@ import com.github.dapeng.core.*;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.ConfigKey;
-import com.github.dapeng.registry.RuntimeInstance;
 import com.github.dapeng.registry.zookeeper.*;
+import com.github.dapeng.router.Route;
+import com.github.dapeng.router.RoutesExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -170,7 +170,10 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
                 .filter(rt -> checkVersion(version, rt.version))
                 .collect(Collectors.toList());
-        RuntimeInstance inst = loadBalance(service, version, method, compatibles);
+        // router
+        List<RuntimeInstance> byRouter = router(service, method, version, compatibles);
+
+        RuntimeInstance inst = loadBalance(service, version, method, byRouter);
         if (inst == null) {
             logger.error(getClass().getSimpleName() + "::findConnection[service:" + service + "], instance not found");
             return null;
@@ -194,6 +197,25 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
 
         return subPool.getConnection();
+    }
+
+    /**
+     * 服务路由
+     *
+     * @param service
+     * @param method
+     * @param version
+     * @param compatibles
+     * @return
+     */
+    private List<RuntimeInstance> router(String service, String method, String version, List<RuntimeInstance> compatibles) {
+        InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        List<Route> routes = zkAgent.getRoutes(service);
+        context.serviceName(service);
+        context.methodName(method);
+        context.versionName(version);
+        List<RuntimeInstance> runtimeInstances = RoutesExecutor.executeRoutes(context, routes, compatibles);
+        return runtimeInstances;
     }
 
 

@@ -1,7 +1,7 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
-import com.github.dapeng.registry.RuntimeInstance;
 
 import java.util.HashMap;
 import java.util.List;

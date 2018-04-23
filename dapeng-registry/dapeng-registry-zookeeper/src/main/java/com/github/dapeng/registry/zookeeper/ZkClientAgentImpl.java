@@ -4,15 +4,10 @@ package com.github.dapeng.registry.zookeeper;
 import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.github.dapeng.registry.RuntimeInstance;
-import com.github.dapeng.route.Route;
-import com.github.dapeng.route.RouteExecutor;
+import com.github.dapeng.router.Route;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -80,11 +75,11 @@ public class ZkClientAgentImpl implements ZkClientAgent {
         //使用路由规则，过滤可用服务器
         // fixme 在runtime跟config变化的时候才需要计算可用节点信息
         InvocationContext context = InvocationContextImpl.Factory.currentInstance();
-        List<Route> routes = usingFallbackZk ? fallbackZk.getRoutes() : masterZk.getRoutes();
-        List<RuntimeInstance> runtimeList = new ArrayList<>();
+//        List<Route> routes = usingFallbackZk ? fallbackZk.getRoutes() : masterZk.getRoutes();
+//        List<RuntimeInstance> runtimeList = new ArrayList<>();
 
         if (zkInfo.getStatus() == ZkServiceInfo.Status.ACTIVE && zkInfo.getRuntimeInstances() != null) {
-            for (RuntimeInstance instance : zkInfo.getRuntimeInstances()) {
+            /*for (RuntimeInstance instance : zkInfo.getRuntimeInstances()) {
                 try {
                     InetAddress inetAddress = InetAddress.getByName(instance.ip);
                     if (RouteExecutor.isServerMatched(context, routes, inetAddress)) {
@@ -93,11 +88,20 @@ public class ZkClientAgentImpl implements ZkClientAgent {
                 } catch (UnknownHostException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
-            }
-            zkInfo.setRuntimeInstances(runtimeList);
+            }*/
+//            zkInfo.setRuntimeInstances(runtimeList);
             LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo succeed");
         } else {
             LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo failed");
         }
+    }
+
+    @Override
+    public List<Route> getRoutes(String service) {
+//        List<Route> routes1 = masterZk.getRoutes();
+//        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip'192.168.1.101/23' , ip'192.168.1.103/24' ";
+//        List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
+
+        return masterZk.getRoutes(service);
     }
 }
