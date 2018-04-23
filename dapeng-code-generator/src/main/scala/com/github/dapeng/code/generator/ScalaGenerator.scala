@@ -474,6 +474,13 @@ class ScalaGenerator extends CodeGenerator {
       def apply(v: Int) = findByValue(v)
       def unapply(v: {enum.name}): Option[Int] = Some(v.id)
 
+      def isUndefined(v: Int) = <block>
+        v match <block>
+          case {toEnumItemArrayBuffer(enum.enumItems).map(_.value).mkString(" | ")} => false
+          case _ => true
+        </block>
+      </block>
+
     </block>
     </div>
   }
