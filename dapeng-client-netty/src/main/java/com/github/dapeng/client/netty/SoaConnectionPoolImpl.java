@@ -27,10 +27,12 @@ import java.util.stream.Collectors;
  */
 public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private final Logger logger = LoggerFactory.getLogger(SoaConnectionPoolImpl.class);
+    private final LoadBalanceStrategy DEFAULT_LB_STRATEGY = LoadBalanceStrategy.Random;
 
     class ClientInfoWeakRef extends WeakReference<SoaConnectionPool.ClientInfo> {
         final String serviceName;
         final String version;
+
         public ClientInfoWeakRef(SoaConnectionPool.ClientInfo referent,
                                  ReferenceQueue<? super SoaConnectionPool.ClientInfo> q) {
             super(referent, q);
@@ -223,16 +225,20 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             globalLB = zkServiceInfo.loadbalanceConfig.globalConfig;
         }
 
-        LoadBalanceStrategy balance;
+        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
+        LoadBalanceStrategy balance = invocationContext.loadBalanceStrategy().orElse(null);
 
-        if (methodLB != null) {
-            balance = methodLB;
-        } else if (serviceLB != null) {
-            balance = serviceLB;
-        } else if (globalLB != null) {
-            balance = globalLB;
-        } else {
-            balance = LoadBalanceStrategy.Random;
+        if (balance == null) {
+            if (methodLB != null) {
+                balance = methodLB;
+            } else if (serviceLB != null) {
+                balance = serviceLB;
+            } else if (globalLB != null) {
+                balance = globalLB;
+            } else {
+                balance = DEFAULT_LB_STRATEGY;
+                invocationContext.loadBalanceStrategy(balance);
+            }
         }
 
         if (logger.isDebugEnabled()) {

@@ -373,6 +373,6 @@ public abstract class SoaBaseConnection implements SoaConnection {
         info.calleeMid(respHeader.getCalleeMid().orElse(""));
         info.calleeTime1(respHeader.getCalleeTime1().orElse(0));
         info.calleeTime2(respHeader.getCalleeTime2().orElse(0));
-        info.loadBalanceStrategy(invocationContext.loadBalanceStrategy().orElse(LoadBalanceStrategy.Random));
+        info.loadBalanceStrategy(invocationContext.loadBalanceStrategy().orElse(null));
     }
 }
