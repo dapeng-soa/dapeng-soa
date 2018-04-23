@@ -1,8 +1,11 @@
 package com.github.dapeng.client.filter;
 
 
+import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
+import com.github.dapeng.core.InvocationInfoImpl;
 import com.github.dapeng.core.TransactionContext;
+import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.filter.FilterChain;
 import com.github.dapeng.core.filter.FilterContext;
@@ -23,7 +26,11 @@ public class LogFilter implements Filter {
     @Override
     public void onEntry(FilterContext filterContext, FilterChain next) {
         try {
+            Long startTime =System.currentTimeMillis();
             InvocationContextImpl invocationContext = (InvocationContextImpl) filterContext.getAttribute("context");
+            InvocationInfoImpl invocationInfo = new InvocationInfoImpl();
+            invocationInfo.serviceTime(startTime);
+            invocationContext.lastInvocationInfo(invocationInfo);
 
             if (!invocationContext.sessionTid().isPresent()) {
                 if (TransactionContext.hasCurrentInstance()
@@ -55,6 +62,10 @@ public class LogFilter implements Filter {
     public void onExit(FilterContext filterContext, FilterChain prev) {
         try {
             InvocationContextImpl invocationContext = (InvocationContextImpl) filterContext.getAttribute("context");
+            InvocationInfoImpl invocationInfo = (InvocationInfoImpl)invocationContext.lastInvocationInfo();
+            long serviceTime = System.currentTimeMillis()-invocationInfo.serviceTime();
+            invocationInfo.serviceTime(serviceTime);
+            LOGGER.info("[lastInvocationInfo]:{0}",invocationInfo);
 
             String infoLog = "response[seqId:" + invocationContext.seqId() + ", server: " + filterContext.getAttribute("serverInfo") + "]:"
                     + "service[" + invocationContext.serviceName()
