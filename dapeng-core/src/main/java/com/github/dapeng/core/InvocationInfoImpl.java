@@ -33,19 +33,19 @@ import com.github.dapeng.core.enums.LoadBalanceStrategy;
  * @date 2017/12/22
  */
 public class InvocationInfoImpl implements InvocationContext.InvocationInfo {
-    private final String calleeTid;
-    private final String calleeIp;
-    private final int calleePort;
-    private final String calleeMid;
-    private final int calleeTime1;
-    private final int calleeTime2;
-    private int serviceTime;
-    private final LoadBalanceStrategy loadBalanceStrategy;
+    private  String calleeTid;
+    private  String calleeIp;
+    private  int calleePort;
+    private  String calleeMid;
+    private  int calleeTime1;
+    private  int calleeTime2;
+    private long serviceTime;
+    private  LoadBalanceStrategy loadBalanceStrategy;
 
     public InvocationInfoImpl(String calleeTid, String calleeIp,
                               int calleePort, String calleeMid,
                               int calleeTime1, int calleeTime2,
-                              int serviceTime, LoadBalanceStrategy loadBalanceStrategy) {
+                              long serviceTime, LoadBalanceStrategy loadBalanceStrategy) {
         this.calleeTid = calleeTid;
         this.calleeIp = calleeIp;
         this.calleePort = calleePort;
@@ -56,6 +56,37 @@ public class InvocationInfoImpl implements InvocationContext.InvocationInfo {
         this.loadBalanceStrategy = loadBalanceStrategy;
     }
 
+    public void calleeTid(String calleeTid) {
+        this.calleeTid = calleeTid;
+    }
+
+    public void calleeIp(String calleeIp) {
+        this.calleeIp = calleeIp;
+    }
+
+    public void calleePort(int calleePort) {
+        this.calleePort = calleePort;
+    }
+
+    public void calleeMid(String calleeMid) {
+        this.calleeMid = calleeMid;
+    }
+
+    public void calleeTime1(int calleeTime1) {
+        this.calleeTime1 = calleeTime1;
+    }
+
+    public void calleeTime2(int calleeTime2) {
+        this.calleeTime2 = calleeTime2;
+    }
+
+    public void loadBalanceStrategy(LoadBalanceStrategy loadBalanceStrategy) {
+        this.loadBalanceStrategy = loadBalanceStrategy;
+    }
+
+    public InvocationInfoImpl(){
+
+    }
 
     @Override
     public String calleeTid() {
@@ -88,7 +119,7 @@ public class InvocationInfoImpl implements InvocationContext.InvocationInfo {
     }
 
     @Override
-    public int serviceTime() {
+    public long serviceTime() {
         return serviceTime;
     }
 
@@ -97,7 +128,7 @@ public class InvocationInfoImpl implements InvocationContext.InvocationInfo {
         return loadBalanceStrategy;
     }
 
-    public void serviceTime(int serviceTime){
+    public void serviceTime(long serviceTime){
         this.serviceTime=serviceTime;
     }
 
