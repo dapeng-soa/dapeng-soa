@@ -68,7 +68,6 @@
         <module>dapeng-json</module>
         <!--<module>dapeng-demo</module>-->
         <module>dapeng-counter</module>
-        <module>dapeng-router</module>
     </modules>
 
     <properties>
