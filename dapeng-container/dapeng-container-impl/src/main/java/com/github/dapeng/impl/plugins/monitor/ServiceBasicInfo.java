@@ -8,7 +8,7 @@ import java.util.Objects;
  * email :yq1724555319@gmail.com
  */
 
-public class ServiceBasicInfo {
+public final class ServiceBasicInfo {
     private final String serviceName;
     private final String methodName;
     private final String versionName;
@@ -36,7 +36,7 @@ public class ServiceBasicInfo {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (o == null || !(o instanceof ServiceBasicInfo)) {
             return false;
         }
         ServiceBasicInfo that = (ServiceBasicInfo) o;
