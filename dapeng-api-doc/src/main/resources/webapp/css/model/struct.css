@@ -1,0 +1,73 @@
+#struct-model{
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.2);
+    position: fixed;
+    z-index: 1333;
+    overflow-x:hidden;
+    overflow-y: hidden;
+}
+#struct-model .struct-model-container{
+    width: 80%;
+    height: 72%;
+    max-width: 1200px;
+    background: #fff;
+    position: relative;
+    z-index: 1334;
+    margin: 0 auto;
+    top: 47%;
+    padding: 10px;
+    overflow-x:hidden;
+    border-radius: 3px;
+    -webkit-transform: translateY(-50%);
+    -o-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+.back-to-previous{
+    display: inline-block;
+    width: 55px;
+    height: 30px;
+    font-size: 16px;
+    position: absolute;
+    z-index: 1400;
+    top:10px;
+    text-align: center;
+    text-decoration: none;
+}
+.model-close{
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    font-size: 22px;
+    position: absolute;
+    z-index: 1400;
+    right:  20px;
+    top:10px;
+    text-align: center;
+    text-decoration: none;
+}
+.back-to-previous:hover,
+.back-to-previous:focus,
+.model-close:focus,
+.model-close:hover{
+    text-decoration: none;
+    outline: none;
+}
+#struct-model .struct-model-context{
+    height: 100%;
+    overflow-x:hidden;
+    overflow-y: scroll;
+}
+
+
+/*add by struy on 2018.2.11*/
+.toggle-json-str{
+    color: #333 !important;
+}
+.toggle-json-str:hover,
+.toggle-json-str:focus{
+    text-decoration: none;
+    border-bottom: 1px solid #333;
+    color: #333;
+}
