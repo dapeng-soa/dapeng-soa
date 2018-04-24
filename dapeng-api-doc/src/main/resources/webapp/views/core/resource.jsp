@@ -29,17 +29,17 @@
 <meta name="format-detection" content="email=no">
 
 <!-- 新 Bootstrap 核心 CSS 文件 -->
-<link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<link rel="stylesheet" href="${basePath}/css/bootstrap/3.3.5/bootstrap.min.css">
 <!-- 可选的Bootstrap主题文件（一般不用引入） -->
-<link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+<link rel="stylesheet" href="${basePath}/css/bootstrap/3.3.5/bootstrap.min.css">
 <link rel="stylesheet" href="${basePath}/css/default.css" type="text/css"/>
 <link rel="stylesheet" href="${basePath}/css/comment.css" type="text/css"/>
 <!-- jQuery文件。务必在bootstrap.min.js 之前引入 -->
-<script src="//cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
+<script src="${basePath}/js/jquery/1.11.3/jquery.min.js"></script>
 <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
-<script src="//cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script src="${basePath}/js/bootstrap/3.3.5/bootstrap.min.js"></script>
 <!-- marked -->
-<script src="//cdn.bootcss.com/marked/0.3.5/marked.min.js"></script>
+<script src="${basePath}/js/marked/0.3.5/marked.min.js"></script>
 <script>
     window.basePath = "${basePath}";
 </script>

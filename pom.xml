@@ -7,7 +7,7 @@
     <groupId>com.github.dapeng</groupId>
     <artifactId>dapeng-parent</artifactId>
     <packaging>pom</packaging>
-    <version>2.0.0</version>
+    <version>2.0.1</version>
 
     <name>dapeng</name>
     <description>一个简单、易用、多特性的SOA框架</description>
@@ -39,6 +39,10 @@
             <name>ever</name>
             <email>439674061@qq.com</email>
         </developer>
+        <developer>
+            <name>maple</name>
+            <email>295482300@qq.com</email>
+        </developer>
     </developers>
 
     <scm>
@@ -58,15 +62,14 @@
         <module>dapeng-route</module>
         <!--<module>dapeng-tools</module>-->
         <module>dapeng-message</module>
+        <!--<module>dapeng-service-invoke</module>-->
         <module>dapeng-container</module>
         <module>dapeng-utils</module>
         <module>dapeng-client-netty</module>
         <module>dapeng-transaction</module>
         <module>dapeng-json</module>
         <!--<module>dapeng-demo</module>-->
-        <!--<module>dapeng-monitor-filter</module>-->
         <module>dapeng-counter</module>
-        <module>dapeng-service-invoke</module>
     </modules>
 
     <properties>
@@ -156,13 +159,13 @@
                 <repository>
                     <id>nexus-releases</id>
                     <name>Nexus Releases Repository</name>
-                    <url>http://nexus.oa.isuwang.com/repository/maven-releases/</url>
+                    <url>http://nexus.oa.dapeng.com/repository/maven-releases/</url>
                 </repository>
 
                 <snapshotRepository>
                     <id>nexus-snapshots</id>
                     <name>Nexus Snapshots Repository</name>
-                    <url>http://nexus.oa.isuwang.com/repository/maven-snapshots/</url>
+                    <url>http://nexus.oa.dapeng.com/repository/maven-snapshots/</url>
                 </snapshotRepository>
             </distributionManagement>
 
@@ -207,7 +210,7 @@
     <repositories>
         <repository>
             <id>maven-dapeng-com</id>
-            <url>http://nexus.oa.isuwang.com/repository/maven-public/</url>
+            <url>http://nexus.oa.dapeng.com/repository/maven-public/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
@@ -319,6 +322,35 @@
                     <verbose>false</verbose>
                     <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
+            </plugin>
+            <!--源码打包插件-->
+            <!--<plugin>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.1</version>
+                <configuration>
+                    <attach>true</attach>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.4</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>

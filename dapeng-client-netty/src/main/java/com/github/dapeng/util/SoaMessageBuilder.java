@@ -4,6 +4,7 @@ import com.github.dapeng.core.*;
 import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.SoaHeaderSerializer;
 import com.github.dapeng.core.enums.CodecProtocol;
+import com.github.dapeng.json.JsonSerializer;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TBinaryProtocol;
 import com.github.dapeng.org.apache.thrift.protocol.TCompactProtocol;
@@ -67,7 +68,15 @@ public class SoaMessageBuilder<T> {
         headerProtocol.writeByte(VERSION);
         headerProtocol.writeByte(protocol.getCode());
         headerProtocol.writeI32(seqid);
-        new SoaHeaderSerializer().write(header, headerProtocol);
+
+        boolean isStreamProcessor = bodySerializer instanceof JsonSerializer;
+
+        if (isStreamProcessor) {
+            //如果是流式序列化器, 那么延后写入header信息
+            ((JsonSerializer) bodySerializer).setRequestByteBuf(buffer);
+        } else {
+            new SoaHeaderSerializer().write(header, headerProtocol);
+        }
 
         //writer body
         TProtocol bodyProtocol = null;

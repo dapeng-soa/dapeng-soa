@@ -43,7 +43,7 @@ public class TCompactProtocol extends TProtocol {
   private final static TStruct ANONYMOUS_STRUCT = new TStruct("");
   private final static TField TSTOP = new TField("", TType.STOP, (short)0);
 
-  private final static byte[] ttypeToCompactType = new byte[16];
+  public final static byte[] ttypeToCompactType = new byte[16];
 
   static {
     ttypeToCompactType[TType.STOP] = TType.STOP;
@@ -118,6 +118,13 @@ public class TCompactProtocol extends TProtocol {
 
   private short lastFieldId_ = 0;
 
+  private ShortStack historyLastFieldId_ = new ShortStack(15);
+
+  public void resetLastFieldId() {
+    historyLastFieldId_.pop();
+    lastFieldId_ = historyLastFieldId_.peek();
+  }
+
   /**
    * If we encounter a boolean field begin, save the TField here so it can
    * have the value incorporated.
@@ -156,6 +163,8 @@ public class TCompactProtocol extends TProtocol {
     super(transport);
     this.stringLengthLimit_ = stringLengthLimit;
     this.containerLengthLimit_ = containerLengthLimit;
+
+    historyLastFieldId_.push(lastFieldId_);
   }
 
   /**
@@ -184,6 +193,9 @@ public class TCompactProtocol extends TProtocol {
   public void reset() {
     lastField_.clear();
     lastFieldId_ = 0;
+
+    historyLastFieldId_.clear();
+    historyLastFieldId_.push(lastFieldId_);
   }
 
   //
@@ -209,6 +221,9 @@ public class TCompactProtocol extends TProtocol {
   public void writeStructBegin(TStruct struct) throws TException {
     lastField_.push(lastFieldId_);
     lastFieldId_ = 0;
+
+    historyLastFieldId_.clear();
+    historyLastFieldId_.push(lastFieldId_);
   }
 
   /**
@@ -218,6 +233,8 @@ public class TCompactProtocol extends TProtocol {
    */
   public void writeStructEnd() throws TException {
     lastFieldId_ = lastField_.pop();
+    historyLastFieldId_.clear();
+    historyLastFieldId_.push(lastFieldId_);
   }
 
   /**
@@ -258,6 +275,8 @@ public class TCompactProtocol extends TProtocol {
 
     lastFieldId_ = field.id;
     // lastField_.push(field.id);
+
+    historyLastFieldId_.push(lastFieldId_);
   }
 
   /**
@@ -780,7 +799,7 @@ public class TCompactProtocol extends TProtocol {
       while (true) {
         byte b = readByte();
         result |= (int) (b & 0x7f) << shift;
-        if ((b & 0x80) != 0x80) break;
+        if ((b & 0x80) != 0x80) break;//如果后续没有字节了(首位为0),那么跳出
         shift += 7;
       }
     }
@@ -865,7 +884,7 @@ public class TCompactProtocol extends TProtocol {
    * Given a TCompactProtocol.Types constant, convert it to its corresponding
    * TType value.
    */
-  private byte getTType(byte type) throws TProtocolException {
+  public static byte getTType(byte type) throws TProtocolException {
     switch ((byte)(type & 0x0f)) {
       case TType.STOP:
         return TType.STOP;

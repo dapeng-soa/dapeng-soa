@@ -1,5 +1,8 @@
 package com.github.dapeng.core;
 
+import java.util.Map;
+import java.util.Optional;
+
 public class ServiceInfo {
 
     public final String serviceName;
@@ -7,18 +10,22 @@ public class ServiceInfo {
     //task, commonService. cron..etc.
     public final String serviceType;
 
+    public final Optional<CustomConfigInfo> configInfo;
+
+    public final Map<String, Optional<CustomConfigInfo>> methodsMap;
     /**
      * 用于Task 拿到对应的 class 类型
      * 方便查找 对应类型的信息
      */
     public final Class<?> ifaceClass;
 
-    public ServiceInfo(String serviceName, String version, String serviceType, Class<?> ifaceClass){
+    public ServiceInfo(String serviceName, String version, String serviceType, Class<?> ifaceClass, Optional<CustomConfigInfo> configInfo, Map<String, Optional<CustomConfigInfo>> methodsMap) {
         this.serviceName = serviceName;
         this.version = version;
-
         this.serviceType = serviceType;
         this.ifaceClass = ifaceClass;
+        this.configInfo = configInfo;
+        this.methodsMap = methodsMap;
     }
 
     @Override

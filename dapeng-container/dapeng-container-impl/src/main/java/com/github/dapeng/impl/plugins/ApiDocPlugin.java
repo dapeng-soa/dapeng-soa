@@ -31,17 +31,17 @@ public class ApiDocPlugin implements AppListener, Plugin {
     @Override
     public void appRegistered(AppEvent event) {
         //TODO:
-        LOGGER.info(" ApiDocPlugin received appRegistered event.....");
+        LOGGER.info(getClass().getSimpleName() + "::appRegistered event:[" + event.getSource() + "]");
     }
 
     @Override
     public void appUnRegistered(AppEvent event) {
-        LOGGER.info(" ApiDocPlugin received appUnregistered event.....");
+        LOGGER.info(getClass().getSimpleName() + "::appUnRegistered event:[" + event.getSource() + "]");
     }
 
     @Override
     public void start() {
-        LOGGER.warn("Plugin::ApiDocPlugin start");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
         Thread thread = new Thread("api-doc-thread") {
             @Override
             public void run() {
@@ -64,7 +64,7 @@ public class ApiDocPlugin implements AppListener, Plugin {
 
     @Override
     public void stop() {
-        LOGGER.warn("Plugin::ApiDocPlugin stop");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::stop");
         try {
             server.stop();
         } catch (Exception e) {

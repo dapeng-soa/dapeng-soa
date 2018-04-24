@@ -2,6 +2,8 @@ package com.github.dapeng.core;
 
 import com.github.dapeng.core.enums.CodecProtocol;
 
+import java.util.Optional;
+
 /**
  * 服务端上下文
  *
@@ -21,6 +23,68 @@ public class TransactionContext {
     private Integer currentTransactionSequence = 0;
 
     private Integer currentTransactionId = 0;
+
+    private SoaException soaException;
+
+    private Optional<String> callerFrom = Optional.empty();
+
+    private Optional<String> callerIp = Optional.empty();
+
+    private Optional<Integer> operatorId = Optional.empty();
+
+    private Optional<String> operatorName = Optional.empty();
+
+    private Optional<Integer> customerId = Optional.empty();
+
+    private Optional<String> customerName = Optional.empty();
+
+    public Optional<String> getCallerFrom() {
+        return callerFrom;
+    }
+
+    public void setCallerFrom(Optional<String> callerFrom) {
+        this.callerFrom = callerFrom;
+    }
+
+    public Optional<String> getCallerIp() {
+        return callerIp;
+    }
+
+    public void setCallerIp(Optional<String> callerIp) {
+        this.callerIp = callerIp;
+    }
+
+    public Optional<Integer> getOperatorId() {
+        return operatorId;
+    }
+
+    public void setOperatorId(Optional<Integer> operatorId) {
+        this.operatorId = operatorId;
+    }
+
+    public Optional<String> getOperatorName() {
+        return operatorName;
+    }
+
+    public void setOperatorName(Optional<String> operatorName) {
+        this.operatorName = operatorName;
+    }
+
+    public Optional<Integer> getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(Optional<Integer> customerId) {
+        this.customerId = customerId;
+    }
+
+    public Optional<String> getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(Optional<String> customerName) {
+        this.customerName = customerName;
+    }
 
     public void setCodecProtocol(CodecProtocol codecProtocol) {
         this.codecProtocol = codecProtocol;
@@ -68,6 +132,14 @@ public class TransactionContext {
 
     public void setCurrentTransactionId(Integer currentTransactionId) {
         this.currentTransactionId = currentTransactionId;
+    }
+
+    public SoaException getSoaException() {
+        return soaException;
+    }
+
+    public void setSoaException(SoaException soaException) {
+        this.soaException = soaException;
     }
 
     public static class Factory {

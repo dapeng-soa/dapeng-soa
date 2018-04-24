@@ -44,11 +44,13 @@ public class DapengApplication implements Application {
 
     @Override
     public void addServiceInfos(List<ServiceInfo> serviceInfos) {
+        LOGGER.info(getClass().getSimpleName() + "::addServiceInfos serviceInfos[" + serviceInfos + "]");
         this.serviceInfos.addAll(serviceInfos);
     }
 
     @Override
     public void addServiceInfo(ServiceInfo serviceInfo) {
+        LOGGER.info(getClass().getSimpleName() + "::addServiceInfo serviceInfo[" + serviceInfo + "]");
         this.serviceInfos.add(serviceInfo);
     }
 

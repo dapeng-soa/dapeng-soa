@@ -5,14 +5,19 @@ import com.github.dapeng.core.enums.CodecProtocol;
 import java.util.Optional;
 
 /**
- * Created by lihuimin on 2017/12/21.
+ * todo
+ * 对上层应用暴露的接口, 非必要不需要提供setter方法
+ * @author lihuimin
+ * @date 2017/12/21
  */
 public interface InvocationContext {
 
+    @Deprecated
     void setServiceName(String serviceName);
 
     String getServiceName();
 
+    @Deprecated
     void setMethodName(String methodName);
 
     String getMethodName();
@@ -35,6 +40,7 @@ public interface InvocationContext {
 
     Optional<Integer> getTransactionId();
 
+    @Deprecated
     void setTransactionId(Optional<Integer> transactionId);
 
     void setCustomerId(Optional<Integer> customerId);
@@ -61,8 +67,13 @@ public interface InvocationContext {
 
     Optional<String> getCallerIp();
 
+    @Deprecated
     void setTransactionSequence(Optional<Integer>transactionSequence);
 
+    /**
+     * 共callee返回时填写, 例如耗时, calleeIp等
+     * @param invocationInfo
+     */
     void setLastInfo(InvocationInfo invocationInfo);
 
     InvocationInfo getLastInfo();
@@ -82,6 +93,7 @@ public interface InvocationContext {
     // seqid
     // tid
     interface InvocationInfo {
+
     }
 
 //    interface Set {

@@ -26,14 +26,15 @@ public class JsonPost {
     private boolean doNotThrowError = false;
 
     private SoaConnectionPool pool;
+    private final SoaConnectionPool.ClientInfo clientInfo;
 
     public JsonPost(String serviceName, String version) {
-        ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class);
+        ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class, getClass().getClassLoader());
         for (SoaConnectionPoolFactory factory : factories) {
             this.pool = factory.getPool();
             break;
         }
-        this.pool.registerClientInfo(serviceName, version);
+        this.clientInfo = this.pool.registerClientInfo(serviceName, version);
     }
 
     public JsonPost(String serviceName, String version, boolean doNotThrowError) {
@@ -69,10 +70,12 @@ public class JsonPost {
         Method method = targetMethods.get(0);
 
 
-        JsonSerializer jsonEncoder = new JsonSerializer(service, method, method.request, jsonParameter);
+        JsonSerializer jsonEncoder = new JsonSerializer(service, method, method.request);
         JsonSerializer jsonDecoder = new JsonSerializer(service, method, method.response);
 
         final long beginTime = System.currentTimeMillis();
+
+        LOGGER.info("soa-request: " + jsonParameter);
 
         String jsonResponse = post(invocationContext.getServiceName(), invocationContext.getVersionName(),
                 method.name, jsonParameter, jsonEncoder, jsonDecoder);
