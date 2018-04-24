@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 workdir=`pwd`
 dirname $0|grep "^/" >/dev/null

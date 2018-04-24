@@ -21,9 +21,9 @@ public class InvocationContextImpl implements  InvocationContext {
 
     private CodecProtocol codecProtocol = CodecProtocol.CompressedBinary;
 
-    private Optional<String> calleeIp;
+    private Optional<String> calleeIp = Optional.empty();
 
-    private Optional<Integer> calleePort;
+    private Optional<Integer> calleePort = Optional.empty();
 
     private Optional<String> callerFrom = Optional.empty();
 
@@ -43,7 +43,7 @@ public class InvocationContextImpl implements  InvocationContext {
 
     private Optional<String> sessionId = Optional.empty();
 
-    private Optional<Long> timeout;
+    private Optional<Long> timeout = Optional.empty();
 
 
     /**

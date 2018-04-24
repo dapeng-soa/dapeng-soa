@@ -33,7 +33,7 @@ public class TransactionPlugin implements Plugin {
     @Override
     public void start() {
         if (SoaSystemEnvProperties.SOA_TRANSACTIONAL_ENABLE) {
-            System.out.println(" Start to initialize transaction plugin......");
+            LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
             String configPath = System.getProperty(SPRING_CONFIG);
             if (configPath == null || configPath.length() <= 0) {
                 configPath = DEFAULT_SPRING_CONFIG;
@@ -77,6 +77,7 @@ public class TransactionPlugin implements Plugin {
 
     @Override
     public void stop() {
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::stop");
         if (context != null) {
             context.stop();
         }

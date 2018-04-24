@@ -15,6 +15,7 @@ import com.github.dapeng.impl.plugins.*;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
 import com.github.dapeng.util.SoaSystemEnvProperties;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,10 +24,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 public class DapengContainer implements Container {
 
@@ -61,6 +59,7 @@ public class DapengContainer implements Container {
 
     @Override
     public void registerApplication(Application app) {
+        LOGGER.info(getClass().getSimpleName() + "::registerApplication application[" + app.getClass().getSimpleName() + "]");
         this.applications.add(app);
         this.appListeners.forEach(i -> {
             try {
@@ -73,6 +72,7 @@ public class DapengContainer implements Container {
 
     @Override
     public void unregisterApplication(Application app) {
+        LOGGER.info(getClass().getSimpleName() + "::unregisterApplication application[" + app.getClass().getSimpleName() + "]");
         this.applications.remove(app);
         this.appListeners.forEach(i -> {
             try {
@@ -85,11 +85,13 @@ public class DapengContainer implements Container {
 
     @Override
     public void registerPlugin(Plugin plugin) {
+        LOGGER.info(getClass().getSimpleName() + "::registerPlugin plugin[" + plugin.getClass().getSimpleName() + "]");
         this.plugins.add(plugin);
     }
 
     @Override
     public void unregisterPlugin(Plugin plugin) {
+        LOGGER.info(getClass().getSimpleName() + "::unregisterPlugin plugin[" + plugin.getClass().getSimpleName() + "]");
         this.plugins.remove(plugin);
     }
 
@@ -134,31 +136,46 @@ public class DapengContainer implements Container {
         this.applicationMap.putAll(applicationMap);
     }
 
-    private static class ExectorFactory {
-        private static Executor exector = initExecutor();
+    private Executor exector = initExecutor();
 
-        static Executor initExecutor() {
-            if (!SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL) {
-                return command -> command.run();
-            } else {
-                return Executors.newFixedThreadPool(SoaSystemEnvProperties.SOA_CORE_POOL_SIZE);
+    private Executor initExecutor() {
+        LOGGER.info(DapengContainer.class.getName()
+                + "业务线程池初始化, 是否使用线程池[coreSize:" + SoaSystemEnvProperties.SOA_CORE_POOL_SIZE + "]:"
+                + SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL);
+
+        if (!SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL) {
+            return command -> command.run();
+        } else {
+            ThreadPoolExecutor bizExector = (ThreadPoolExecutor) Executors.newFixedThreadPool(SoaSystemEnvProperties.SOA_CORE_POOL_SIZE,
+                    new ThreadFactoryBuilder()
+                            .setDaemon(true)
+                            .setNameFormat("dapeng-container-biz-pool-%d")
+                            .build());
+            //预热所有的业务线程
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(DapengContainer.class.getName() + " 预热业务线程池[" + SoaSystemEnvProperties.SOA_CORE_POOL_SIZE + "]");
+                bizExector.prestartAllCoreThreads();
             }
+
+            return bizExector;
         }
     }
 
     @Override
     public Executor getDispatcher() {
-        return ExectorFactory.exector;
+        return exector;
     }
 
 
     @Override
     public void registerFilter(Filter filter) {
+        LOGGER.info(getClass().getSimpleName() + "::registerFilter filter[" + filter.getClass().getSimpleName() + "]");
         this.filters.add(filter);
     }
 
     @Override
     public void unregisterFilter(Filter filter) {
+        LOGGER.info(getClass().getSimpleName() + "::unregisterFilter filter[" + filter.getClass().getSimpleName() + "]");
         this.filters.remove(filter);
     }
 
@@ -169,6 +186,7 @@ public class DapengContainer implements Container {
 
     @Override
     public void startup() {
+        LOGGER.info(getClass().getSimpleName() + "::startup begin");
         //3. 初始化appLoader,dapengPlugin 应该用serviceLoader的方式去加载
         Plugin springAppLoader = new SpringAppLoader(this, applicationCls);
         Plugin zookeeperPlugin = new ZookeeperRegistryPlugin(this);
@@ -176,6 +194,7 @@ public class DapengContainer implements Container {
         Plugin nettyPlugin = new NettyPlugin(this);
 
         PluginLoader pluginLoader = new PluginLoader(pluginClassLoaders);
+        Plugin mbeanAgentPlugin = new MbeanAgentPlugin(this);
         // TODO
         if (!"plugin".equals(RUN_MODE)) {
             Plugin logbackPlugin = new LogbackPlugin();
@@ -198,6 +217,7 @@ public class DapengContainer implements Container {
         registerPlugin(taskSchedulePlugin);
         registerPlugin(nettyPlugin);
         registerPlugin(pluginLoader);
+        registerPlugin(mbeanAgentPlugin);
 
 
         if ("plugin".equals(RUN_MODE)) {
@@ -212,7 +232,7 @@ public class DapengContainer implements Container {
         new FilterLoader(this, applicationCls);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            LOGGER.warn("Container gracefule shutdown begin.");
+            LOGGER.warn("Container graceful shutdown begin.");
             getPlugins().forEach(Plugin::stop);
             try {
                 Thread.sleep(10000);
@@ -220,11 +240,13 @@ public class DapengContainer implements Container {
                 LOGGER.error(e.getMessage(), e);
             }
             SHUTDOWN_SIGNAL.countDown();
-            LOGGER.warn("Container gracefule shutdown end.");
+            LOGGER.warn("Container graceful shutdown end.");
         }));
 
         try {
+            LOGGER.warn(getClass().getSimpleName() + "::startup end");
             SHUTDOWN_SIGNAL.await();
+            LOGGER.warn(getClass().getSimpleName() + "::startup quit");
         } catch (InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
         }

@@ -510,6 +510,10 @@ public class JsonParser {
             public void onNumber(double value) {
                 System.out.println("onNumber:" + value);
             }
+            @Override
+            public void onNumber(long value) {
+                System.out.println("onNumber:" + value);
+            }
 
             @Override
             public void onNull() {

@@ -11,13 +11,13 @@ import java.util.Arrays;
  */
 public class TCommonTransport extends TTransport {
 
-    enum Type {
+    public enum Type {
         Read, Write
     }
 
     private Type type;
-    private byte[] byteBuf;
-    private int pos;    // the next read/write position
+    protected byte[] byteBuf;
+    protected int pos;    // the next read/write position
 
     public TCommonTransport(byte[] byteBuf, Type type) {
         this.byteBuf = byteBuf;
@@ -53,11 +53,11 @@ public class TCommonTransport extends TTransport {
         if (type == Type.Write)
             throw new TTransportException("try to read from write-only transport");
 
-        int remain = byteBuf.length-pos;
+        int remain = byteBuf.length - pos;
         int amtToRead = (len > remain ? remain : len);
-        if(amtToRead>0){
+        if (amtToRead > 0) {
             System.arraycopy(byteBuf, pos, buf, off, amtToRead);
-            pos+=amtToRead;
+            pos += amtToRead;
         }
 
         return amtToRead;
@@ -71,7 +71,7 @@ public class TCommonTransport extends TTransport {
                 ((off + len) - buf.length > 0)) {
             throw new IndexOutOfBoundsException();
         }
-        if(byteBuf.length-pos < len){
+        if (byteBuf.length - pos < len) {
             grow(pos + 1 + len);
         }
         System.arraycopy(buf, off, byteBuf, pos, len);
@@ -79,14 +79,13 @@ public class TCommonTransport extends TTransport {
 
     }
 
-    public byte[] getByteBuf(){
-        if(type == Type.Read) return byteBuf;
-        else if(type == Type.Write) {
+    public byte[] getByteBuf() {
+        if (type == Type.Read) return byteBuf;
+        else if (type == Type.Write) {
             byte[] array = new byte[pos];
             System.arraycopy(byteBuf, 0, array, 0, pos);
             return array;
-        }
-        else throw new IllegalStateException();
+        } else throw new IllegalStateException();
     }
 
     private void grow(int minCapacity) {
