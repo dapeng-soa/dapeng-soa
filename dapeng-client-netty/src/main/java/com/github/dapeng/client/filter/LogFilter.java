@@ -27,6 +27,9 @@ public class LogFilter implements Filter {
             InvocationContextImpl invocationContext = (InvocationContextImpl) filterContext.getAttribute("context");
             filterContext.setAttribute("startTime", System.currentTimeMillis());
 
+            InvocationInfoImpl invocationInfo = new InvocationInfoImpl();
+            invocationContext.lastInvocationInfo(invocationInfo);
+
             if (!invocationContext.sessionTid().isPresent()) {
                 if (TransactionContext.hasCurrentInstance()
                         && TransactionContext.Factory.currentInstance().sessionTid().isPresent()) {
@@ -58,9 +61,8 @@ public class LogFilter implements Filter {
         try {
             InvocationContextImpl invocationContext = (InvocationContextImpl) filterContext.getAttribute("context");
             Long startTime = (Long)filterContext.getAttribute("startTime");
-            InvocationInfoImpl invocationInfo = new InvocationInfoImpl();
+            InvocationInfoImpl invocationInfo = (InvocationInfoImpl)invocationContext.lastInvocationInfo();
             invocationInfo.serviceTime(System.currentTimeMillis() - startTime);
-            invocationContext.lastInvocationInfo(invocationInfo);
 
             String infoLog = "response[seqId:" + invocationContext.seqId() + ", server: " + filterContext.getAttribute("serverInfo") + "]:"
                     + "service[" + invocationContext.serviceName()
