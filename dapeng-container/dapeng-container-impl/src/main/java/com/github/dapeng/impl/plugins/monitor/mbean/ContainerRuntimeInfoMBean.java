@@ -13,18 +13,6 @@ public interface ContainerRuntimeInfoMBean {
     boolean enableMonitor(boolean enable);
 
     /**
-     * 获取日志级别
-     * @return
-     */
-    String getLoggerLevel();
-
-    /**
-     * 修改日志级别
-     * @return
-     */
-    String setLoggerLevel(String level);
-
-    /**
      * 获取业务线程池情况
      * @return
      */

@@ -1,0 +1,43 @@
+.right-menu-list{
+    display: block;
+    position: fixed;
+    right: 40px;
+    top: 40%;
+    color: #918e8e;
+}
+.right-menu-list a,
+.right-menu-list a:hover,
+.right-menu-list a:focus{
+    color: #918e8e;
+}
+
+.right-menu-list ul li{
+    line-height: 200%;
+    list-style: none;
+}
+
+.copy-but{
+    text-decoration: none;
+    display: inline-block;
+    position: absolute;
+    width: 60px;
+    height: 30px;
+    color: #FFF;
+    background: rgba(0,0,0,0.3);
+    left: 0;
+    border-bottom-right-radius: 10px;
+    text-align: center;
+    line-height: 200%;
+}
+.copy-but:hover,
+.copy-but:focus{
+    text-decoration: none;
+    color: #FFF;
+}
+.json-str-text{
+    width: 0;
+    height: 0;
+    left: -2000px;
+    position: absolute;
+    z-index: -1000;
+}

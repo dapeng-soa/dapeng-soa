@@ -10,6 +10,7 @@
     <script src="${basePath}/js/api/model.js"></script>
 </head>
 <body>
+<jsp:include page="../core/scroll-top.jsp"/>
 <jsp:include page="../core/header.jsp"/>
 
 <div class="bs-docs-content container">
@@ -26,7 +27,7 @@
             <div class="list-group">
                 <c:forEach var="e" items="${enums}">
                     <a class="list-group-item ${e == anEnum ? 'active' : ''}" href="${basePath}/api/enum/${service.name}/${service.meta.version}/${e.namespace}.${e.name}.htm">
-                        <span class="glyphicon glyphicon-tree-deciduous"></span>
+                        <span class="glyphicon glyphicon-chevron-right"></span>
                         <c:out value="${e.name}"/>
                     </a>
                 </c:forEach>
@@ -41,7 +42,7 @@
             <h3>坐标</h3>
             <table class="table table-bordered">
                 <thead>
-                <tr>
+                <tr class="breadcrumb">
                     <th>服务名</th>
                     <th>版本号</th>
                     <th>结构体全限定名</th>
@@ -59,7 +60,7 @@
             <h3>枚举成员</h3>
             <table class="table table-bordered">
                 <thead>
-                <tr>
+                <tr class="breadcrumb">
                     <th>#</th>
                     <th>名称</th>
                     <th>值</th>
