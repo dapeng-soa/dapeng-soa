@@ -184,6 +184,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                             Result<RESP> result = new Result<>(null, soaException);
                             ctx.setAttribute("result", result);
                         } else {
+                            //fixme do it in filter
                             InvocationContextImpl.Factory.currentInstance(invocationContext);
 
                             Result<RESP> result = processResponse(realResult, responseSerializer);
