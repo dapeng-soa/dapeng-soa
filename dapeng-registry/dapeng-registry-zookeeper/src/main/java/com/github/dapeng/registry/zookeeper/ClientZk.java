@@ -106,35 +106,42 @@ public class ClientZk extends CommonZk {
      *
      * @return
      */
-    public synchronized List<Route> getRoutes(String service) {
+    public List<Route> getRoutes(String service) {
         if (routesMap.get(service) == null) {
             try {
-                byte[] data = zk.getData(ROUTES_PATH, event -> {
+                byte[] data = zk.getData(ROUTES_PATH + "/" + service, event -> {
                     if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
                         LOGGER.info("routes 节点 data 发现变更，重新获取信息");
-                        routesMap.clear(); // fixme
+                        routesMap.remove(service);
                         getRoutes(service);
                     }
                 }, null);
-                processRouteData(service, data);
+                List<Route> routes = processRouteData(service, data);
+                return routes;
             } catch (KeeperException | InterruptedException e) {
-                LOGGER.error("get route data failed ");
+                LOGGER.error("获取route service 节点: {} 出现异常", service);
             }
+        } else {
+            LOGGER.debug("获取route信息, service: {} , route size {}", service, routesMap.get(service).size());
+            return this.routesMap.get(service);
         }
-        return this.routesMap.get(service);
+        return null;
     }
 
     /**
      * process zk data 解析route 信息
      */
-    public void processRouteData(String service, byte[] data) {
+    public List<Route> processRouteData(String service, byte[] data) {
+        List<Route> zkRoutes;
         try {
             String routeData = new String(data, "utf-8");
-            List<Route> zkRoutes = RoutesExecutor.parseAll(routeData);
+            zkRoutes = RoutesExecutor.parseAll(routeData);
             routesMap.put(service, zkRoutes);
         } catch (Exception e) {
+            zkRoutes = new ArrayList<>(16);
             LOGGER.error("parser routes 信息 失败，请检查路由规则写法是否正确!");
         }
+        return zkRoutes;
     }
 
     /**
