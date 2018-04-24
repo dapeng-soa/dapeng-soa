@@ -211,11 +211,16 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private List<RuntimeInstance> router(String service, String method, String version, List<RuntimeInstance> compatibles) {
         InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         List<Route> routes = zkAgent.getRoutes(service);
-        context.serviceName(service);
-        context.methodName(method);
-        context.versionName(version);
-        List<RuntimeInstance> runtimeInstances = RoutesExecutor.executeRoutes(context, routes, compatibles);
-        return runtimeInstances;
+        if (routes == null || routes.size() == 0) {
+            logger.debug("router 获取 路由信息为空或size为0,跳过router,服务实例数：{}", compatibles.size());
+            return compatibles;
+        } else {
+            context.serviceName(service);
+            context.methodName(method);
+            context.versionName(version);
+            List<RuntimeInstance> runtimeInstances = RoutesExecutor.executeRoutes(context, routes, compatibles);
+            return runtimeInstances;
+        }
     }
 
 

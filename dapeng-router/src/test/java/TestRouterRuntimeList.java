@@ -417,4 +417,21 @@ public class TestRouterRuntimeList {
         Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
 
+    /**
+     * 测试空字符串
+     */
+    @Test
+    public void testRouterBlank() {
+        String pattern = "";
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+
+
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+    }
+
 }
