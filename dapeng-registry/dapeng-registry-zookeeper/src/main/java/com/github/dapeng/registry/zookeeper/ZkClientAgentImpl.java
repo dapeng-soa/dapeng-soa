@@ -5,10 +5,14 @@ import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.router.Route;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author lihuimin
@@ -23,6 +27,12 @@ public class ZkClientAgentImpl implements ZkClientAgent {
     private final boolean usingFallbackZk = SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_ISCONFIG;
 
     private ClientZk masterZk, fallbackZk;
+
+    /**
+     * 路由配置信息
+     */
+    private final Map<String, List<Route>> routesMap = new ConcurrentHashMap<>(16);
+
 
     public ZkClientAgentImpl() {
         start();
@@ -79,17 +89,7 @@ public class ZkClientAgentImpl implements ZkClientAgent {
 //        List<RuntimeInstance> runtimeList = new ArrayList<>();
 
         if (zkInfo.getStatus() == ZkServiceInfo.Status.ACTIVE && zkInfo.getRuntimeInstances() != null) {
-            /*for (RuntimeInstance instance : zkInfo.getRuntimeInstances()) {
-                try {
-                    InetAddress inetAddress = InetAddress.getByName(instance.ip);
-                    if (RouteExecutor.isServerMatched(context, routes, inetAddress)) {
-                        runtimeList.add(instance);
-                    }
-                } catch (UnknownHostException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-            }*/
-//            zkInfo.setRuntimeInstances(runtimeList);
+
             LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo succeed");
         } else {
             LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo failed");
@@ -98,10 +98,6 @@ public class ZkClientAgentImpl implements ZkClientAgent {
 
     @Override
     public List<Route> getRoutes(String service) {
-//        List<Route> routes1 = masterZk.getRoutes();
-//        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip'192.168.1.101/23' , ip'192.168.1.103/24' ";
-//        List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
-
         return masterZk.getRoutes(service);
     }
 }
