@@ -99,7 +99,7 @@
                     <label for="serviceName" class="col-sm-2 control-label">服务名</label>
 
                     <div class="col-sm-10">
-                        <input type="text" class="form-control" id="serviceName" value="${service.name}"
+                        <input type="text" class="form-control" id="serviceName" value="${service.namespace}.${service.name}"
                                disabled="disabled">
                     </div>
                 </div>
