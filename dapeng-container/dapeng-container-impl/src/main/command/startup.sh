@@ -72,4 +72,6 @@ USER_OPTS=""
 
 nohup java $JAVA_OPTS $JVM_OPTS $SOA_BASE $DEBUG_OPTS $USER_OPTS  $E_JAVA_OPTS -cp ./dapeng-bootstrap.jar com.github.dapeng.bootstrap.Bootstrap >> $logdir/console.log 2>&1 &
 
+nohup sh /opt/fluent-bit/fluent-bit.sh >> $logdir/fluent-bit.log 2>&1 &
+
 echo $! > $logdir/pid.txt
