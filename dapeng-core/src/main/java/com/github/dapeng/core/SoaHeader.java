@@ -32,6 +32,8 @@ import java.util.Optional;
  *
  * SoaHeader用于包装需传递到服务提供方的信息
  *
+ * //fixme IP用Int来传输
+ *
  * @author tangliu
  * @date 2016/1/11
  */

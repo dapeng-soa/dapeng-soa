@@ -115,6 +115,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
 
         ServiceBasicInfo basicInfo = new ServiceBasicInfo(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName());
         ServiceProcessData processData = serviceProcessCallDatas.get(basicInfo);
+
         Long invokeStartTime = invokeStartPair.remove(seqId);
         Long cost = invokeEndTime - invokeStartTime;
         Map<ServiceBasicInfo, Long> map = new ConcurrentHashMap<>(1);
