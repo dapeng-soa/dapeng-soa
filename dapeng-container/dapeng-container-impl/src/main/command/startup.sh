@@ -1,74 +1,42 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-#
-# 发布脚本
-# @author craneding
-# @date 2016年02月01日13:00:00
-# @description Copyright (c) 2015, github.com/dapeng-soa All Rights Reserved.
-#
+export JVM_HOME='/opt/jdk1.8.0_51'
+export PATH=$JVM_HOME/bin:$PATH
 
-workdir=`pwd`
+PRGNAME=soa-service
+ADATE=`date +%Y%m%d%H%M%S`
+PRGDIR=`pwd`
 dirname $0|grep "^/" >/dev/null
 if [ $? -eq 0 ];then
-   workdir=`dirname $0`
+   PRGDIR=`dirname $0`
 else
     dirname $0|grep "^\." >/dev/null
     retval=$?
     if [ $retval -eq 0 ];then
-        workdir=`dirname $0|sed "s#^.#$workdir#"`
+        PRGDIR=`dirname $0|sed "s#^.#$PRGDIR#"`
     else
-        workdir=`dirname $0|sed "s#^#$workdir/#"`
+        PRGDIR=`dirname $0|sed "s#^#$PRGDIR/#"`
     fi
 fi
 
-cd $workdir
-
-
-# config log dir
-logdir=$workdir/../logs
-if [ ! -d "$logdir" ]; then
-	mkdir "$logdir"
+LOGDIR=$PRGDIR/../logs
+if [ ! -d "$LOGDIR" ]; then
+        mkdir "$LOGDIR"
 fi
 
-# config java home
-# export JAVA_HOME=""
-# export PATH="$JAVA_HOME/bin:$PATH"
+CLASSPATH=$PRGDIR/classes
 
-# env option(priority than vm option)
-# soa_container_port (default: 9090)
-# soa_zookeeper_host (default: 127.0.0.1:2181)
-# soa_monitor_enable (default: false)
-# soa_container_usethreadpool (default: true)
-# soa_core_pool_size (default: Runtime.getRuntime().availableProcessors() * 2)
-# soa_remoting_mode (default: remote [remote/local])
-# soa_max_read_buffer_size (defalut: 1024 * 1024 * 5)
-# soa_local_host_name (default: null)
+filelist=`find $PRGDIR/lib/* -type f -name "*.jar"`
+for filename in $filelist
+do
+  CLASSPATH=$CLASSPATH:$filename
+done
 
-# vm option
-# soa.container.port (default: 9090)
-# soa.zookeeper.host (default: 127.0.0.1:2181)
-# soa.monitor.enable (default: false)
-# soa.container.usethreadpool (default: true)
-# soa.core.pool.size (default: Runtime.getRuntime().availableProcessors() * 2)
-# soa.remoting.mode (default: remote [remote/local])
-# soa.max.read.buffer.size (defalut: 1024 * 1024 * 5)
-# soa.local.host.name (default: null)
+DEBUG="-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9997"
+JMX="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=1091 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
+GCOPTS="-Dfile.encoding=UTF-8 -Dsun.jun.encoding=UTF-8 -Dname=$PRGNAME -Xms512M -Xmx1024M -XX:PermSize=512M -XX:MaxPermSize=512M -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDateStamps -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintGCDetails -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+UseParallelGC -XX:+UseParallelOldGC -Dlog.dir=$PRGDIR/.."
+SOA_BASE="-Dsoa.base=$PRGDIR/../ -Dsoa.run.mode=native"
 
-# netty option
-# default : one thread cache is about 1MB
-# io.netty.allocator.tinyCacheSize (default: 512)
-# io.netty.allocator.smallCacheSize (default: 256)
-# io.netty.allocator.normalCacheSize (default: 64)
-# io.netty.allocator.maxCachedBufferCapacity (default: 32768)
+nohup java $PINPOINT -server $GCOPTS $E_JAVA_OPTS $SOA_BASE -cp ./dapeng-bootstrap.jar com.github.dapeng.bootstrap.Bootstrap >> $LOGDIR/catalina.out 2>&1 &
 
-# JVM_OPTS=""
-# DEBUG_OPTS="-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5000"
-# USER_OPTS="-Dsoa.container.port=9090 -Dsoa.zookeeper.host=127.0.0.1:2181 -Dio.netty.leakDetectionLevel=advanced -XX:MaxDirectMemorySize=128M -Dsoa.monitor.enable=false -Dsoa.core.pool.size=100"
-
-JVM_OPTS="-Xms256m -Xmx256m -Xloggc:$logdir/gc.log -XX:+PrintGCDateStamps -XX:+PrintGCDetails -XX:+PrintGC -XX:+HeapDumpOnOutOfMemoryError"
-DEBUG_OPTS=""
-SOA_BASE="-Dsoa.base=$workdir/../ -Dsoa.run.mode=native -Dsoa.transactional.enable=true -Dsoa.monitor.enable=true -Dsoa.core.pool.size=100"
-USER_OPTS=""
-
-nohup java $JVM_OPTS $SOA_BASE $DEBUG_OPTS $USER_OPTS -cp ./dapeng-bootstrap.jar com.github.dapeng.bootstrap.Bootstrap >> $logdir/catalina.out 2>&1 &
-echo $! > $logdir/pid.txt
+echo $! > $LOGDIR/pid.txt
