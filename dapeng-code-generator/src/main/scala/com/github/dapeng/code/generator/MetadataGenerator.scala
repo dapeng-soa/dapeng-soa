@@ -45,11 +45,12 @@ class MetadataGenerator extends CodeGenerator {
 
   def generateXmlFile(service: Service, outDir: String, tryCount: Int): Unit = {
     val reGenCount = tryCount +1
-    JAXB.marshal(service, new FileOutputStream(new File(new File(outDir), s"${service.namespace}.${service.name}.xml")))
+   JAXB.marshal(service, new FileOutputStream(new File(new File(outDir), s"${service.namespace}.${service.name}.xml")))
     val xmlTargetPath = s"$outDir${service.namespace}.${service.name}.xml"
     //println(s"检查xml => $xmlTargetPath")
     try {
-      val checkServiceObj: Service = JAXB.unmarshal(xmlTargetPath, classOf[Service])
+      //val checkServiceObj: Service = JAXB.unmarshal(xmlTargetPath, classOf[Service])
+      val checkServiceObj: Service = JAXB.unmarshal(new File(xmlTargetPath).toURI, classOf[Service])
       if (checkServiceObj == null) {
         if (reGenCount <= XML_REGEN_COUNT) {
           println(s" Re-Gen Xml次数:$reGenCount")
