@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 
 
 /**
- *
  * @author tangliu
  * @date 2016/4/13
  */
@@ -26,17 +25,16 @@ public class JsonPost {
 
     private boolean doNotThrowError = false;
 
+    private final static ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class, JsonPost.class.getClassLoader());
+
+
     private SoaConnectionPool pool;
     private final SoaConnectionPool.ClientInfo clientInfo;
     private final String methodName;
 
     public JsonPost(final String serviceName, final String version, final String methodName) {
         this.methodName = methodName;
-        ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class, getClass().getClassLoader());
-        for (SoaConnectionPoolFactory factory : factories) {
-            this.pool = factory.getPool();
-            break;
-        }
+        this.pool = factories.iterator().next().getPool();
         this.clientInfo = this.pool.registerClientInfo(serviceName, version);
     }
 
@@ -61,7 +59,7 @@ public class JsonPost {
 
         if (targetMethods.isEmpty()) {
             return "method:" + methodName + " for service:"
-                    + clientInfo.serviceName + " not found" ;
+                    + clientInfo.serviceName + " not found";
         }
 
         Method method = targetMethods.get(0);
@@ -93,12 +91,12 @@ public class JsonPost {
      */
     private String post(String serviceName, String version, String method, String requestJson, JsonSerializer jsonEncoder, JsonSerializer jsonDecoder) throws Exception {
 
-        String jsonResponse = "{}" ;
+        String jsonResponse = "{}";
 
         try {
             String result = this.pool.send(serviceName, version, method, requestJson, jsonEncoder, jsonDecoder);
 
-            jsonResponse = result.equals("{}")?"{\"status\":1}":result.substring(0,result.lastIndexOf('}')) + ",\"status\":1}";
+            jsonResponse = result.equals("{}") ? "{\"status\":1}" : result.substring(0, result.lastIndexOf('}')) + ",\"status\":1}";
 
         } catch (SoaException e) {
 
@@ -109,7 +107,7 @@ public class JsonPost {
                 throw e;
             }
 
-        }  catch (Exception e) {
+        } catch (Exception e) {
 
             LOGGER.error(e.getMessage(), e);
             if (doNotThrowError) {
