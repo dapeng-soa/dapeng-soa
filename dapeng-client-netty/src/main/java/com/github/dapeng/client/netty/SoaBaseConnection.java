@@ -80,7 +80,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 checkChannel();
 
                 try {
-                    ByteBuf responseBuf = client.send(channel, seqid, requestBuf, timeout);
+                    ByteBuf responseBuf = client.send(channel, seqid, requestBuf, timeout,service);
 
                     Result<RESP> result = processResponse(responseBuf, responseSerializer);
                     ctx.setAttribute("result", result);
