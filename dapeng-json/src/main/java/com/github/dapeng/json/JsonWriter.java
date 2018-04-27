@@ -69,18 +69,42 @@ public class JsonWriter implements JsonCallback {
 
     /**
      * 对回车以及双引号做转义
+     * <p>
+     * """\t\n\r"\"""
+     * <p>
+     * escapeString("\n\"\\") == "\\n\\"\\\\"
      *
      * @param value
      * @return
      */
     private String escapeString(String value) {
-        if (value != null) {
-            if (value.contains("\n")) {
-                value = value.replaceAll("[\n\r]", "\\\\n");
-            }
-            if (value.contains("\"")) {
-                value = value.replaceAll("\"", "\\\\\"");
-            }
+        if (value != null && value.length() > 0) {
+            int index = 0;
+            StringBuilder sb = new StringBuilder(64);
+            do {
+                char ch = value.charAt(index++);
+                switch (ch) {
+                    case '\n':
+                        sb.append("\\n");
+                        break;
+                    case '\t':
+                        sb.append("\\t");
+                        break;
+                    case '\r':
+                        sb.append("\\r");
+                        break;
+                    case '"':
+                        sb.append("\\\"");
+                        break;
+                    case '\\':
+                        sb.append("\\\\");
+                        break;
+                    default:
+                        sb.append(ch);
+                }
+
+            } while (index < value.length());
+            return sb.toString();
         }
         return value;
     }
