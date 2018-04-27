@@ -3,6 +3,7 @@ package com.github.dapeng.client.filter;
 
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.InvocationInfoImpl;
+import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.TransactionContext;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.filter.FilterChain;
@@ -22,7 +23,7 @@ public class LogFilter implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(LogFilter.class);
 
     @Override
-    public void onEntry(FilterContext filterContext, FilterChain next) {
+    public void onEntry(FilterContext filterContext, FilterChain next) throws SoaException {
         try {
             InvocationContextImpl invocationContext = (InvocationContextImpl) filterContext.getAttribute("context");
             filterContext.setAttribute("startTime", System.currentTimeMillis());
@@ -48,11 +49,7 @@ public class LogFilter implements Filter {
 
             LOGGER.info(getClass().getSimpleName() + "::onEntry," + infoLog);
         } finally {
-            try {
-                next.onEntry(filterContext);
-            } catch (TException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
+            next.onEntry(filterContext);
         }
     }
 
@@ -60,8 +57,8 @@ public class LogFilter implements Filter {
     public void onExit(FilterContext filterContext, FilterChain prev) {
         try {
             InvocationContextImpl invocationContext = (InvocationContextImpl) filterContext.getAttribute("context");
-            Long startTime = (Long)filterContext.getAttribute("startTime");
-            InvocationInfoImpl invocationInfo = (InvocationInfoImpl)invocationContext.lastInvocationInfo();
+            Long startTime = (Long) filterContext.getAttribute("startTime");
+            InvocationInfoImpl invocationInfo = (InvocationInfoImpl) invocationContext.lastInvocationInfo();
             invocationInfo.serviceTime(System.currentTimeMillis() - startTime);
 
             String infoLog = "response[seqId:" + invocationContext.seqId() + ", server: " + filterContext.getAttribute("serverInfo") + "]:"

@@ -57,7 +57,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
             throws SoaException {
         int seqid = seqidAtomic.getAndIncrement();
 
-        InvocationContextImpl invocationContext = (InvocationContextImpl)InvocationContextImpl.Factory.currentInstance();
+        InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         invocationContext.seqId(seqid);
         invocationContext.serviceName(service);
         invocationContext.versionName(version);
@@ -80,7 +80,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 checkChannel();
 
                 try {
-                    ByteBuf responseBuf = client.send(channel, seqid, requestBuf, timeout,service);
+                    ByteBuf responseBuf = client.send(channel, seqid, requestBuf, timeout, service);
 
                     Result<RESP> result = processResponse(responseBuf, responseSerializer);
                     ctx.setAttribute("result", result);
@@ -146,7 +146,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         int seqid = seqidAtomic.getAndIncrement();
 
-        InvocationContextImpl invocationContext = (InvocationContextImpl)InvocationContextImpl.Factory.currentInstance();
+        InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         invocationContext.seqId(seqid);
         invocationContext.serviceName(service);
         invocationContext.versionName(version);
@@ -293,29 +293,28 @@ public abstract class SoaBaseConnection implements SoaConnection {
     }
 
     private <RESP> Result<RESP> processResponse(ByteBuf responseBuf, BeanSerializer<RESP> responseSerializer) {
+        if (responseBuf == null) {
+            return new Result<>(null, new SoaException(SoaCode.TimeOut));
+        }
         final int readerIndex = responseBuf.readerIndex();
         try {
-            if (responseBuf == null) {
-                return new Result<>(null, new SoaException(SoaCode.TimeOut));
+            SoaMessageParser parser = new SoaMessageParser(responseBuf, responseSerializer).parseHeader();
+            // TODO fill InvocationContext.lastInfo from response.Header
+            SoaHeader respHeader = parser.getHeader();
+            InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+            InvocationInfoImpl info = (InvocationInfoImpl) invocationContext.lastInvocationInfo();
+            fillLastInvocationInfo(info, respHeader);
+            if ("0000".equals(respHeader.getRespCode().get())) {
+                parser.parseBody();
+                RESP resp = (RESP) parser.getBody();
+                assert (resp != null);
+                return new Result<>(resp, null);
             } else {
-                SoaMessageParser parser = new SoaMessageParser(responseBuf, responseSerializer).parseHeader();
-                // TODO fill InvocationContext.lastInfo from response.Header
-                SoaHeader respHeader = parser.getHeader();
-                InvocationContextImpl invocationContext = (InvocationContextImpl)InvocationContextImpl.Factory.currentInstance();
-                InvocationInfoImpl info = (InvocationInfoImpl)invocationContext.lastInvocationInfo();
-                fillLastInvocationInfo(info,respHeader);
-                if ("0000".equals(respHeader.getRespCode().get())) {
-                    parser.parseBody();
-                    RESP resp = (RESP) parser.getBody();
-                    assert (resp != null);
-                    return new Result<>(resp, null);
-                } else {
-                    return new Result<>(null, new SoaException(
-                            (respHeader.getRespCode().isPresent()) ? respHeader.getRespCode().get() : SoaCode.UnKnown.getCode(),
-                            (respHeader.getRespMessage().isPresent()) ? respHeader.getRespMessage().get() : SoaCode.UnKnown.getMsg()));
-                }
-
+                return new Result<>(null, new SoaException(
+                        (respHeader.getRespCode().isPresent()) ? respHeader.getRespCode().get() : SoaCode.UnKnown.getCode(),
+                        (respHeader.getRespMessage().isPresent()) ? respHeader.getRespMessage().get() : SoaCode.UnKnown.getMsg()));
             }
+
         } catch (SoaException ex) {
             return new Result<>(null, ex);
         } catch (TException ex) {
@@ -363,11 +362,12 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
     /**
      * 构造lastInvocationInfo
+     *
      * @param info
      * @param respHeader
      */
     private void fillLastInvocationInfo(InvocationInfoImpl info, SoaHeader respHeader) {
-        InvocationContextImpl invocationContext = (InvocationContextImpl)InvocationContextImpl.Factory.currentInstance();
+        InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         info.calleeTid(respHeader.getCallerTid().orElse(""));
         info.calleeIp(respHeader.getCalleeIp().orElse(""));
         info.calleePort(respHeader.getCalleePort().orElse(0));
