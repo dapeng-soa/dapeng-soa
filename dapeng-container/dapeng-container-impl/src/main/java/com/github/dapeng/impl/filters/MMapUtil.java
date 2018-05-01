@@ -15,14 +15,23 @@ import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * Root Page 4K(version:1, nodePageCount:128K, rootPageLock(i32), nextUtf8offset, nextDictionId, resolved)
+ * Dictionary Root：12K
+ * Dictionary Data: 128K
+ * Node Page: 128M
+ *
+ * todo
+ * volatile 是否需要每个字节都如此操作?
  * @author ever
  */
 public class MMapUtil {
     private final static int FREE_LOCK = 0;
     private final static short VERSION = 1;
-    private final static short NODE_PAGE_COUNT = (short) (64 * 1024);
-    private final static short DICTION_ROOT_OFFSET = (short) 12;
-    private final static short DICTION_DATA_OFFSET = DICTION_ROOT_OFFSET + 12 * 1024;
+    private final static short NODE_PAGE_COUNT = (short) (128 * 1024);
+    private final static long DICTION_ROOT_OFFSET = 4096;
+    private final static long DICTION_DATA_OFFSET = DICTION_ROOT_OFFSET + 12 * 1024;
+    private final static long NODE_PAGE_OFFSET = DICTION_DATA_OFFSET + 128 * 1024;
+    private final static int TOTAL_MEM_BYTES = 4*1024 + 12*1024 + 128*1024 + 128*1024*1024;
     private Unsafe unsafe;
     private final Map<String, Short> localIdCache = new ConcurrentHashMap<>(64);
 
@@ -45,10 +54,14 @@ public class MMapUtil {
 
         addr = (Long) address.get(buffer);
 
-        short version = unsafe.getShort(addr);
+        short version = unsafe.getShortVolatile(null, addr);
         if (version != VERSION) {
             constructShm();
         }
+    }
+
+    private void close() {
+
     }
 
     /**
@@ -56,15 +69,24 @@ public class MMapUtil {
      */
     private void constructShm() {
         if (getRootLock(hashCode())) {
-            // version=1
-            unsafe.putShort(addr, VERSION);
-            // nodePageCount=64K
-            unsafe.putShort(addr + Short.BYTES, NODE_PAGE_COUNT);
+            long offset = addr;
+            // version=1 i16
+            unsafe.putShortVolatile(null, offset, VERSION);
+            offset += Short.BYTES;
+            // nodePageCount=64K i16
+            unsafe.putShortVolatile(null, offset, NODE_PAGE_COUNT);
+            offset += Short.BYTES;
+            // RootPageLock i32
+            offset += Integer.BYTES;
+            // nextUtf8offset i16
+            unsafe.putShortVolatile(null, offset, (short) 0);
+            offset += Short.BYTES;
+            // nextDictionId i16
+            unsafe.putShortVolatile(null, offset, (short) 1);
+            offset += Short.BYTES;
 
-            // nextUtf8offset
-            unsafe.putShort(addr + Integer.BYTES * 2, (short) 0);
-            // nextDictionId
-            unsafe.putShort(addr + Integer.BYTES * 2 + Short.BYTES, (short) 1);
+            //set rest of mem to 0
+            unsafe.setMemory(null, offset, TOTAL_MEM_BYTES - 12, (byte)0);
             freeRootLock();
         }
     }
@@ -95,12 +117,12 @@ public class MMapUtil {
             byte[] keyBytes = key.getBytes("utf-8");
 
             while ((id = unsafe.getShort(dictionaryItemAddr + 2)) > 0) {
-                short length = unsafe.getShort(dictionaryItemAddr);
+                short length = unsafe.getShortVolatile(null, dictionaryItemAddr);
                 if (length == keyBytes.length) {
-                    short utf8offset = unsafe.getShort(dictionaryItemAddr + 4);
+                    short utf8offset = unsafe.getShortVolatile(null, dictionaryItemAddr + 4);
                     byte[] bytes = new byte[length];
                     for (short i = 0; i < length; i++) {
-                        bytes[i] = unsafe.getByte(addr + DICTION_DATA_OFFSET + utf8offset + i);
+                        bytes[i] = unsafe.getByteVolatile(null, addr + DICTION_DATA_OFFSET + utf8offset + i);
                         if ((bytes[i] & keyBytes[i]) != keyBytes[i]) {
                             break;
                         }
@@ -111,18 +133,18 @@ public class MMapUtil {
             }
 
             // id not found, just create one
-            id = unsafe.getShort(addr + 10);
-            short nextUtf8offset = unsafe.getShort(addr + 8);
+            id = unsafe.getShortVolatile(null, addr + 10);
+            short nextUtf8offset = unsafe.getShortVolatile(null, addr + 8);
             // update RootPage
-            unsafe.putShort(addr + 8, (short) (nextUtf8offset + keyBytes.length));
-            unsafe.putShort(addr + 10, (short) (id + 1));
+            unsafe.putShortVolatile(null, addr + 8, (short) (nextUtf8offset + keyBytes.length));
+            unsafe.putShortVolatile(null, addr + 10, (short) (id + 1));
             // create a dictionaryItem
-            unsafe.putShort(dictionaryItemAddr, (short) keyBytes.length);
-            unsafe.putShort(dictionaryItemAddr + 2, id);
-            unsafe.putShort(dictionaryItemAddr + 4, (short) (nextUtf8offset + keyBytes.length));
+            unsafe.putShortVolatile(null, dictionaryItemAddr, (short) keyBytes.length);
+            unsafe.putShortVolatile(null, dictionaryItemAddr + 2, id);
+            unsafe.putShortVolatile(null, dictionaryItemAddr + 4, (short) (nextUtf8offset + keyBytes.length));
             // create an item for dictionary data
             for (int i = 0; i < keyBytes.length; i++) {
-                unsafe.putByte(addr + DICTION_DATA_OFFSET + nextUtf8offset + i, keyBytes[i]);
+                unsafe.putByteVolatile(null, addr + DICTION_DATA_OFFSET + nextUtf8offset + i, keyBytes[i]);
             }
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
@@ -154,7 +176,7 @@ public class MMapUtil {
     }
 
     private void freeRootLock() {
-        unsafe.putInt(addr + Integer.BYTES, FREE_LOCK);
+        unsafe.putIntVolatile(null, addr + Integer.BYTES, FREE_LOCK);
     }
 
 
