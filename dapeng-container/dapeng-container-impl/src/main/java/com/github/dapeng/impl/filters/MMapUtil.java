@@ -19,9 +19,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * Dictionary Root：12K
  * Dictionary Data: 128K
  * Node Page: 128M
- *
+ * <p>
  * todo
  * volatile 是否需要每个字节都如此操作?
+ *
  * @author ever
  */
 public class MMapUtil {
@@ -31,14 +32,33 @@ public class MMapUtil {
     private final static long DICTION_ROOT_OFFSET = 4096;
     private final static long DICTION_DATA_OFFSET = DICTION_ROOT_OFFSET + 12 * 1024;
     private final static long NODE_PAGE_OFFSET = DICTION_DATA_OFFSET + 128 * 1024;
-    private final static int TOTAL_MEM_BYTES = 4*1024 + 12*1024 + 128*1024 + 128*1024*1024;
+    private final static int TOTAL_MEM_BYTES = 4 * 1024 + 12 * 1024 + 128 * 1024 + 128 * 1024 * 1024;
     private Unsafe unsafe;
     private final Map<String, Short> localIdCache = new ConcurrentHashMap<>(64);
 
     /**
      * 共享内存起始地址
      */
-    private long addr;
+    private long homeAddr;
+
+    /**
+     * @param app 服务名称
+     * @param rule_type 规则名称
+     * @param key 目前仅支持 int 值，例如 callerIp值， userIp值等。如果是字符串，需要先取hash，再按此进行限流。
+     * @return
+     */
+    public boolean reportAndCheck(String app, String rule_type, int key) {
+        boolean result = false;
+
+        int appId = getId(app);
+        int ruleTypeId = getId(rule_type);
+
+        int nodeHash =  (appId << 16 | ruleTypeId) ^ key;
+
+        int nodePageIndex = nodeHash % NODE_PAGE_COUNT;
+
+        return result;
+    }
 
     private void init() throws NoSuchFieldException, IllegalAccessException, IOException {
         Field f = Unsafe.class.getDeclaredField("theUnsafe");
@@ -52,9 +72,9 @@ public class MMapUtil {
         Field address = Buffer.class.getDeclaredField("address");
         address.setAccessible(true);
 
-        addr = (Long) address.get(buffer);
+        homeAddr = (Long) address.get(buffer);
 
-        short version = unsafe.getShortVolatile(null, addr);
+        short version = unsafe.getShortVolatile(null, homeAddr);
         if (version != VERSION) {
             constructShm();
         }
@@ -69,7 +89,7 @@ public class MMapUtil {
      */
     private void constructShm() {
         if (getRootLock(hashCode())) {
-            long offset = addr;
+            long offset = homeAddr;
             // version=1 i16
             unsafe.putShortVolatile(null, offset, VERSION);
             offset += Short.BYTES;
@@ -86,13 +106,14 @@ public class MMapUtil {
             offset += Short.BYTES;
 
             //set rest of mem to 0
-            unsafe.setMemory(null, offset, TOTAL_MEM_BYTES - 12, (byte)0);
+            unsafe.setMemory(null, offset, TOTAL_MEM_BYTES - 12, (byte) 0);
             freeRootLock();
         }
     }
 
     /**
      * 获取id
+     *
      * @param key
      * @return
      */
@@ -106,6 +127,11 @@ public class MMapUtil {
         return id;
     }
 
+    /**
+     * todo 字符串比较算法
+     * @param key
+     * @return
+     */
     private short getIdFromShm(String key) {
         short id = 0;
 
@@ -113,38 +139,47 @@ public class MMapUtil {
             getSpinRootLock(key.hashCode());
 
             short dictionaryItemInfoSize = (short) 6;
-            long dictionaryItemAddr = addr + DICTION_ROOT_OFFSET;
+            long dictionaryItemAddr = homeAddr + DICTION_ROOT_OFFSET;
             byte[] keyBytes = key.getBytes("utf-8");
 
-            while ((id = unsafe.getShort(dictionaryItemAddr + 2)) > 0) {
+            while ((dictionaryItemAddr < homeAddr + DICTION_DATA_OFFSET)
+                    && (id = unsafe.getShort(dictionaryItemAddr + Short.BYTES)) > 0) {
+                boolean foundId = true;
+                // length(i16), id(i16), offset(i16),
                 short length = unsafe.getShortVolatile(null, dictionaryItemAddr);
                 if (length == keyBytes.length) {
-                    short utf8offset = unsafe.getShortVolatile(null, dictionaryItemAddr + 4);
+                    short utf8offset = unsafe.getShortVolatile(null, dictionaryItemAddr + Short.BYTES * 2);
                     byte[] bytes = new byte[length];
                     for (short i = 0; i < length; i++) {
-                        bytes[i] = unsafe.getByteVolatile(null, addr + DICTION_DATA_OFFSET + utf8offset + i);
+                        //Volatile or not?
+                        bytes[i] = unsafe.getByte(homeAddr + DICTION_DATA_OFFSET + utf8offset + i);
                         if ((bytes[i] & keyBytes[i]) != keyBytes[i]) {
+                            foundId = false;
                             break;
                         }
                     }
-                    return id;
+                    if (foundId) {
+                        return id;
+                    }
                 }
                 dictionaryItemAddr += dictionaryItemInfoSize;
             }
 
             // id not found, just create one
-            id = unsafe.getShortVolatile(null, addr + 10);
-            short nextUtf8offset = unsafe.getShortVolatile(null, addr + 8);
+            id = (short)(unsafe.getShortVolatile(null, homeAddr + 10) + 1);
+            short nextUtf8offset = unsafe.getShortVolatile(null, homeAddr + 8);
             // update RootPage
-            unsafe.putShortVolatile(null, addr + 8, (short) (nextUtf8offset + keyBytes.length));
-            unsafe.putShortVolatile(null, addr + 10, (short) (id + 1));
+            nextUtf8offset += keyBytes.length;
+            unsafe.putShortVolatile(null, homeAddr + 8, nextUtf8offset);
+            unsafe.putShortVolatile(null, homeAddr + 10, id);
             // create a dictionaryItem
             unsafe.putShortVolatile(null, dictionaryItemAddr, (short) keyBytes.length);
             unsafe.putShortVolatile(null, dictionaryItemAddr + 2, id);
-            unsafe.putShortVolatile(null, dictionaryItemAddr + 4, (short) (nextUtf8offset + keyBytes.length));
+            unsafe.putShortVolatile(null, dictionaryItemAddr + 4, nextUtf8offset);
             // create an item for dictionary data
+            long dictDataOffset = homeAddr + DICTION_DATA_OFFSET + nextUtf8offset*2;
             for (int i = 0; i < keyBytes.length; i++) {
-                unsafe.putByteVolatile(null, addr + DICTION_DATA_OFFSET + nextUtf8offset + i, keyBytes[i]);
+                unsafe.putByteVolatile(null,  dictDataOffset + i, keyBytes[i]);
             }
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
@@ -171,12 +206,12 @@ public class MMapUtil {
      */
     private boolean getRootLock(int nodeHash) {
         return unsafe.compareAndSwapInt(null,
-                addr + Integer.BYTES, FREE_LOCK,
+                homeAddr + Integer.BYTES, FREE_LOCK,
                 nodeHash);
     }
 
     private void freeRootLock() {
-        unsafe.putIntVolatile(null, addr + Integer.BYTES, FREE_LOCK);
+        unsafe.putIntVolatile(null, homeAddr + Integer.BYTES, FREE_LOCK);
     }
 
 
@@ -212,27 +247,27 @@ public class MMapUtil {
                 String[] segs = cmd.split(" ");
                 unsafe.getAndSetInt(null, addr, Integer.valueOf(segs[1]));
 //                buffer.putInt(Integer.valueOf(segs[1]));
-                System.out.println("set to addr:" + addr + " succeed");
+                System.out.println("set to homeAddr:" + addr + " succeed");
             } else if (cmd.equals("get")) {
                 int it = unsafe.getInt(addr);
-                System.out.println("addr:" + addr + ", value:" + it);
+                System.out.println("homeAddr:" + addr + ", value:" + it);
             }
             cmd = scanner.nextLine();
         }
 
 
-//        System.out.println(unsafe.getInt(addr));
+//        System.out.println(unsafe.getInt(homeAddr));
 //
 //        buffer.putInt(0x31_32_33_34);
 //
-//        System.out.println("buffer = " + buffer + " addr = " + addr);
+//        System.out.println("buffer = " + buffer + " homeAddr = " + homeAddr);
 //
-//        int it = unsafe.getInt(addr);
+//        int it = unsafe.getInt(homeAddr);
 //        System.out.println("it = " + it); // 0x34333231
 //
-//        boolean set = unsafe.compareAndSwapInt(null, addr, 0x34333231, 0x35363738);
+//        boolean set = unsafe.compareAndSwapInt(null, homeAddr, 0x34333231, 0x35363738);
 //
 //        System.out.println("set = " + set);
-//        System.out.println("it = " + unsafe.getInt(addr));
+//        System.out.println("it = " + unsafe.getInt(homeAddr));
     }
 }
