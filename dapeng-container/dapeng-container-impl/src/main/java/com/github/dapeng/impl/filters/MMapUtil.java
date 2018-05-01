@@ -50,12 +50,18 @@ public class MMapUtil {
     public boolean reportAndCheck(String app, String rule_type, int key) {
         boolean result = false;
 
-        int appId = getId(app);
-        int ruleTypeId = getId(rule_type);
+        try {
+            int appId = getId(app);
+            int ruleTypeId = getId(rule_type);
 
-        int nodeHash =  (appId << 16 | ruleTypeId) ^ key;
+            int nodeHash = (appId << 16 | ruleTypeId) ^ key;
 
-        int nodePageIndex = nodeHash % NODE_PAGE_COUNT;
+            int nodePageIndex = nodeHash % NODE_PAGE_COUNT;
+
+            getSpinRootLock(nodeHash);
+        } finally {
+            freeRootLock();
+        }
 
         return result;
     }
@@ -214,6 +220,17 @@ public class MMapUtil {
         unsafe.putIntVolatile(null, homeAddr + Integer.BYTES, FREE_LOCK);
     }
 
+    private void getSpinNodeLock(int nodeIndex) {
+        while (!getNodeLock(nodeIndex));
+    }
+
+    private boolean getNodeLock(int nodeIndex) {
+        return unsafe.compareAndSwapInt(null, homeAddr + NODE_PAGE_OFFSET + 1024 * nodeIndex, FREE_LOCK, nodeIndex);
+    }
+
+    private void freeNodeLock(int nodeIndex) {
+        unsafe.putIntVolatile(null, homeAddr + NODE_PAGE_OFFSET + 1024 * nodeIndex, FREE_LOCK);
+    }
 
     public static void main(String[] args) throws NoSuchFieldException, IOException, IllegalAccessException {
         Field f = Unsafe.class.getDeclaredField("theUnsafe"); //Internal reference
