@@ -1,5 +1,7 @@
 package com.github.dapeng.impl.filters;
 
+import com.github.dapeng.core.SoaCode;
+import com.github.dapeng.core.SoaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.Unsafe;
@@ -22,13 +24,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * Dictionary Data: 128K
  * Node Page: 128M
  * <p>
- * todo
- * volatile 是否需要每个字节都如此操作?
  *
  * @author ever
  */
-public class ShmUtil {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ShmUtil.class.getName());
+public class ShmManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShmManager.class.getName());
+    private static final ShmManager instance = new ShmManager();
     /**
      * 自旋锁标志, 0为free
      */
@@ -74,6 +75,19 @@ public class ShmUtil {
      * 共享内存起始地址
      */
     private long homeAddr;
+
+    private ShmManager() {
+        try {
+            init();
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static ShmManager getInstance() {
+        return instance;
+    }
 
     /**
      * 限流规则
@@ -302,6 +316,7 @@ public class ShmUtil {
 
     private void init() throws NoSuchFieldException, IllegalAccessException, IOException {
         LOGGER.info(getClass().getSimpleName() + "::init begin");
+        long t1 = System.nanoTime();
         Field f = Unsafe.class.getDeclaredField("theUnsafe");
         f.setAccessible(true);
         unsafe = (Unsafe) f.get(null);
@@ -320,7 +335,7 @@ public class ShmUtil {
             constructShm();
         }
 
-        LOGGER.info(getClass().getSimpleName() + "::init end, homeAddr:" + homeAddr);
+        LOGGER.info(getClass().getSimpleName() + "::init end, homeAddr:" + homeAddr + ", cost:" + (System.nanoTime() - t1));
     }
 
     private void close() {
@@ -533,61 +548,5 @@ public class ShmUtil {
 
     private void putByte(long addr, byte value) {
         unsafe.putByte(null, addr, value);
-    }
-
-    public static void main(String[] args) throws NoSuchFieldException, IOException, IllegalAccessException {
-        Field f = Unsafe.class.getDeclaredField("theUnsafe"); //Internal reference
-        f.setAccessible(true);
-        Unsafe unsafe = (Unsafe) f.get(null);
-
-        File file = new File("/data/shm.data");
-
-        RandomAccessFile access = new RandomAccessFile(file, "rw");
-
-        MappedByteBuffer buffer = access.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, 1024);
-
-        Field address = Buffer.class.getDeclaredField("address");
-        address.setAccessible(true);
-
-        long addr = (Long) address.get(buffer);
-
-        unsafe.putShort(addr, (short) 1024);
-        unsafe.putShort(addr + 2, (short) 1023);
-
-//        System.out.println(getShort(addr));
-//        System.out.println(getShort(addr + 110));
-
-        System.out.println("please input value for testing");
-
-        Scanner scanner = new Scanner(System.in);
-
-        String cmd = scanner.nextLine();
-        while (!cmd.trim().equals("exit")) {
-            if (cmd.startsWith("set")) {
-                String[] segs = cmd.split(" ");
-                unsafe.getAndSetInt(null, addr, Integer.valueOf(segs[1]));
-//                buffer.putInt(Integer.valueOf(segs[1]));
-                System.out.println("set to homeAddr:" + addr + " succeed");
-            } else if (cmd.equals("get")) {
-                int it = unsafe.getInt(addr);
-                System.out.println("homeAddr:" + addr + ", value:" + it);
-            }
-            cmd = scanner.nextLine();
-        }
-
-
-//        System.out.println(unsafe.getInt(homeAddr));
-//
-//        buffer.putInt(0x31_32_33_34);
-//
-//        System.out.println("buffer = " + buffer + " homeAddr = " + homeAddr);
-//
-//        int it = unsafe.getInt(homeAddr);
-//        System.out.println("it = " + it); // 0x34333231
-//
-//        boolean set = unsafe.compareAndSwapInt(null, homeAddr, 0x34333231, 0x35363738);
-//
-//        System.out.println("set = " + set);
-//        System.out.println("it = " + unsafe.getInt(homeAddr));
     }
 }
