@@ -478,6 +478,12 @@ public class ShmUtil {
 
     /**
      * 获取RootLock
+     * <p>
+     * # unsafe.compareAndSwapInt 参数说明
+     * 1）第一个参数为需要改变的对象
+     * 2）偏移量(即之前求出来的valueOffset的值
+     * 3）期待的值
+     * 4）更新后的值
      *
      * @return
      */
