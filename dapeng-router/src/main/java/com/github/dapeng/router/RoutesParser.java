@@ -74,10 +74,8 @@ public class RoutesParser {
                     if (route1 != null) {
                         routes.add(route1);
                     }
-
                 }
                 break;
-
             default:
                 error("expect `otherwise` or `id match ...` but got " + token);
         }
@@ -100,7 +98,7 @@ public class RoutesParser {
                 List<ThenIp> right = right();
                 return new Route(left, right);
             default:
-                error("expect `otherwise` or `id match ...` but got " + token);
+                warn("expect `otherwise` or `id match ...` but got " + token);
         }
         return null;
     }
@@ -292,6 +290,10 @@ public class RoutesParser {
 
     private void error(String errorInfo) {
         logger.error(errorInfo);
+    }
+
+    private void warn(String errorInfo) {
+        logger.warn(errorInfo);
     }
 
 }
