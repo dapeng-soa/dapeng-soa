@@ -65,10 +65,16 @@ public class RoutesParser {
             case Token.OTHERWISE:
             case Token.ID:
                 Route route = route();
-                routes.add(route);
+                if (route != null) {
+                    routes.add(route);
+                }
                 while (lexer.peek() == Token_EOL) {
                     lexer.next(Token.EOL);
-                    routes.add(route());
+                    Route route1 = route();
+                    if (route1 != null) {
+                        routes.add(route1);
+                    }
+
                 }
                 break;
 
