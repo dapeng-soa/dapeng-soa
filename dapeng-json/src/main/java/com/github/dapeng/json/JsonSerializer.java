@@ -858,6 +858,8 @@ public class JsonSerializer implements BeanSerializer<String> {
             header.setOperatorId(invocationCtx.getOperatorId());
             header.setOperatorName(invocationCtx.getOperatorName());
 
+            header.setTransactionId(invocationCtx.getTransactionId());
+
             return header;
         }
 
