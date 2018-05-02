@@ -25,16 +25,6 @@
             </dependency>
             <dependency>
                 <groupId>com.github.dapeng</groupId>
-                <artifactId>dapeng-route-api</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.github.dapeng</groupId>
-                <artifactId>dapeng-route-impl</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.github.dapeng</groupId>
                 <artifactId>dapeng-utils</artifactId>
                 <version>${project.version}</version>
             </dependency>

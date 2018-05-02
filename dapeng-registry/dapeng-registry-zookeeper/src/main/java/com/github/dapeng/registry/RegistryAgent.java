@@ -3,9 +3,7 @@ package com.github.dapeng.registry;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
-import com.github.dapeng.route.Route;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -63,14 +61,6 @@ public interface RegistryAgent {
      * @return
      */
     ZkServiceInfo getConfig(boolean usingFallback, String serviceKey);
-
-    /**
-     * 获取路由规则
-     *
-     * @param usingFallback
-     * @return
-     */
-    List<Route> getRoutes(boolean usingFallback);
 
 
 }
