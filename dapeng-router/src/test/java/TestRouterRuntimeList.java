@@ -424,21 +424,21 @@ public class TestRouterRuntimeList {
     public void testRouterBlank() {
         StringBuilder builder = new StringBuilder();
         builder.append("\r\n");
-        builder.append("method match 'register' => ip'192.168.10.12'" + "\r\n");
+        builder.append("method match 'register' => ip'192.168.1.102'" + "\r\n");
         builder.append("\r\n");
-        builder.append("method match 'register' => ip'192.168.10.12'" + "\r\n");
-
+        builder.append("method match 'register' => ip'192.168.1.103'" + "\r\n");
 
 
 
         List<Route> routes = RoutesExecutor.parseAll(builder.toString());
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-
+        ctx.methodName("register");
 
         List<RuntimeInstance> prepare = prepare(ctx, routes);
 
 
         List<RuntimeInstance> expectInstances = new ArrayList<>();
+        expectInstances.add(runtimeInstance2);
         Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
 
