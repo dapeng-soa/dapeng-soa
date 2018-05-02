@@ -5,7 +5,6 @@ import com.github.dapeng.core.Service;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.*;
-import com.github.dapeng.route.Route;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,11 +125,6 @@ public class RegistryAgentImpl implements RegistryAgent {
     @Override
     public ZkServiceInfo getConfig(boolean usingFallback, String serviceKey) {
         return serverZk.getConfigData(serviceKey);
-    }
-
-    @Override
-    public List<Route> getRoutes(boolean usingFallback) {
-        return null;
     }
 
 

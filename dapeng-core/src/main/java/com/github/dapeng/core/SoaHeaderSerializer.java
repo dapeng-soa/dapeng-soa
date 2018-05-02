@@ -1,5 +1,6 @@
 package com.github.dapeng.core;
 
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.*;
 
@@ -56,8 +57,8 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     }
                     break;
                 case 5:
-                    if (schemeField.type == TType.STRING) {
-                        bean.setCallerIp(iprot.readString());
+                    if (schemeField.type == TType.I32) {
+                        bean.setCallerIp(IPUtils.transferIp(iprot.readI32()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
@@ -77,8 +78,8 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     }
                     break;
                 case 8:
-                    if (schemeField.type == TType.STRING) {
-                        bean.setUserIp(Optional.of(iprot.readString()));
+                    if (schemeField.type == TType.I32) {
+                        bean.setUserIp(Optional.of(IPUtils.transferIp(iprot.readI32())));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
@@ -119,8 +120,8 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     }
                     break;
                 case 14:
-                    if (schemeField.type == TType.STRING) {
-                        bean.setCalleeIp(Optional.of(iprot.readString()));
+                    if (schemeField.type == TType.I32) {
+                        bean.setCalleeIp(Optional.of(IPUtils.transferIp(iprot.readI32())));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
@@ -236,8 +237,8 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
             oprot.writeFieldEnd();
         }
         if (bean.getCallerIp().isPresent()) {
-            oprot.writeFieldBegin(new TField("callerIp", TType.STRING, (short) 5));
-            oprot.writeString(bean.getCallerIp().get());
+            oprot.writeFieldBegin(new TField("callerIp", TType.I32, (short) 5));
+            oprot.writeI32(IPUtils.transferIp(bean.getCallerIp().get()));
             oprot.writeFieldEnd();
         }
         if (bean.getCallerPort().isPresent()) {
@@ -251,8 +252,8 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
             oprot.writeFieldEnd();
         }
         if (bean.getUserIp().isPresent()) {
-            oprot.writeFieldBegin(new TField("userIp", TType.STRING, (short) 8));
-            oprot.writeString(bean.getUserIp().get());
+            oprot.writeFieldBegin(new TField("userIp", TType.I32, (short) 8));
+            oprot.writeI32(IPUtils.transferIp(bean.getUserIp().get()));
             oprot.writeFieldEnd();
         }
         if (bean.getCallerTid().isPresent()) {
@@ -281,8 +282,8 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
             oprot.writeFieldEnd();
         }
         if (bean.getCalleeIp().isPresent()) {
-            oprot.writeFieldBegin(new TField("calleeIp", TType.STRING, (short) 14));
-            oprot.writeString(bean.getCalleeIp().get());
+            oprot.writeFieldBegin(new TField("calleeIp", TType.I32, (short) 14));
+            oprot.writeI32(IPUtils.transferIp(bean.getCalleeIp().get()));
             oprot.writeFieldEnd();
         }
         if (bean.getOperatorId().isPresent()) {
@@ -322,7 +323,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
         }
 
         if (bean.getCalleeTime2().isPresent()) {
-            oprot.writeFieldBegin(new TField("calleeTime1", TType.I32, (short) 22));
+            oprot.writeFieldBegin(new TField("calleeTime2", TType.I32, (short) 22));
             oprot.writeI32(bean.getCalleeTime2().get());
             oprot.writeFieldEnd();
         }
