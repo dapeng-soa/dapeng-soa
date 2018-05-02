@@ -422,8 +422,39 @@ public class TestRouterRuntimeList {
      */
     @Test
     public void testRouterBlank() {
-        String pattern = "";
-        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        StringBuilder builder = new StringBuilder();
+        builder.append("\r\n");
+        builder.append("method match 'register' => ip'192.168.10.12'" + "\r\n");
+        builder.append("\r\n");
+        builder.append("method match 'register' => ip'192.168.10.12'" + "\r\n");
+
+
+
+
+        List<Route> routes = RoutesExecutor.parseAll(builder.toString());
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+
+
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+    }
+
+
+    /**
+     * 测试多个换行符
+     */
+    @Test
+    public void testRouterEOL() {
+
+        String pattern = "otherwise => ip\"192.168.2.105/30\"\r\n";
+        StringBuilder sb = new StringBuilder(32);
+        sb.append(pattern);
+        sb.append("\r\n");
+        sb.append("\r\n");
+        List<Route> routes = RoutesExecutor.parseAll(sb.toString());
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
 
 
