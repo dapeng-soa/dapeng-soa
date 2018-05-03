@@ -41,7 +41,7 @@ public class ShmManager {
     /**
      * nodePage数量, 128K
      */
-    private final static short NODE_PAGE_COUNT = (short) (128 * 1024);
+    private final static int NODE_PAGE_COUNT = 128 * 1024;
     /**
      * DictionRoot域的地址偏移量, 该域占用12K
      */
@@ -171,7 +171,7 @@ public class ShmManager {
         long t1 = System.nanoTime();
 
         try {
-            getSpinNodePageLock(nodePageHash);
+            getSpinNodePageLock(nodePageIndex);
             LOGGER.debug("reportAndCheck, acquire spin lock cost:{}", System.nanoTime() - t1);
 
             CounterNode node = null;
@@ -187,9 +187,8 @@ public class ShmManager {
                 //todo 淘汰老node
             } else {
                 node = createNodeIfNotExist(appId, ruleTypeId, key,
-                        nodePageMeta.nodes, now,
+                        nodePageMeta, now,
                         nodeAddr, rule);
-                nodePageMeta.nodes = (short) (nodePageMeta.nodes + 1);
             }
 
             result = node.minCount <= rule.maxReqForMinInterval
@@ -205,12 +204,12 @@ public class ShmManager {
     }
 
     private CounterNode createNodeIfNotExist(short appId, short ruleTypeId, int key,
-                                             int currentNodes, int now, long nodeAddr,
+                                             NodePageMeta nodePageMeta, int now, long nodeAddr,
                                              FreqControlRule rule) {
         long t1 = System.nanoTime();
 
         CounterNode node = null;
-        for (int index = 0; index < currentNodes; index++) {
+        for (int index = 0; index < nodePageMeta.nodes; index++) {
             short _appId = getShort(nodeAddr);
             if (_appId == 0) break;
 
@@ -270,8 +269,9 @@ public class ShmManager {
         }
 
         if (node == null) {
-            LOGGER.debug("createNodeIfNotExist, node not found, index:{}, cost:{}", currentNodes, System.nanoTime() - t1);
+            LOGGER.debug("createNodeIfNotExist, node not found, index:{}, cost:{}", nodePageMeta.nodes, System.nanoTime() - t1);
             node = insertCounterNode(appId, ruleTypeId, key, now, nodeAddr);
+            nodePageMeta.nodes += 1;
         }
 
         return node;
@@ -353,8 +353,8 @@ public class ShmManager {
             putShort(addr, VERSION);
             addr += Short.BYTES;
             // nodePageCount=64K i16
-            putShort(addr, NODE_PAGE_COUNT);
-            addr += Short.BYTES;
+            putInt(addr, NODE_PAGE_COUNT);
+            addr += Integer.BYTES;
             // RootPageLock i32
             addr += Integer.BYTES;
             // nextUtf8offset i16
@@ -365,7 +365,7 @@ public class ShmManager {
             addr += Short.BYTES;
 
             //set rest of mem to 0
-            unsafe.setMemory(null, addr, TOTAL_MEM_BYTES - 12, (byte) 0);
+            unsafe.setMemory(null, addr, TOTAL_MEM_BYTES - 14, (byte) 0);
             freeRootLock();
             LOGGER.warn(getClass().getSimpleName() + "::constructShm end");
         }
@@ -554,5 +554,34 @@ public class ShmManager {
 
     private void putByte(long addr, byte value) {
         unsafe.putByte(null, addr, value);
+    }
+
+
+    public static void main(String[] args) {
+        ShmManager manager = ShmManager.getInstance();
+
+        FreqControlRule rule = new FreqControlRule();
+        rule.app = "com.today.hello";
+        rule.ruleType = "callId";
+        rule.minInterval = 60;
+        rule.maxReqForMinInterval = 20;
+        rule.midInterval = 3600;
+        rule.maxReqForMidInterval = 100;
+        rule.maxInterval = 86400;
+        rule.maxReqForMaxInterval = 500;
+
+        long t1 = System.currentTimeMillis();
+        for (int i = 0; i < 100000; i++) {
+            manager.reportAndCheck(rule, 100);
+        }
+
+        System.out.println("cost1:" + (System.currentTimeMillis() - t1));
+
+        t1 = System.currentTimeMillis();
+        for (int i = 0; i < 100000; i++) {
+            manager.reportAndCheck(rule, 100);
+        }
+
+        System.out.println("cost2:" + (System.currentTimeMillis() - t1));
     }
 }
