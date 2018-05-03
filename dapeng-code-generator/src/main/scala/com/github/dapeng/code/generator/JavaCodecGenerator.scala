@@ -63,13 +63,31 @@ class JavaCodecGenerator extends CodeGenerator {
             }
             }
 
+            @Override
+            public String toString()<block>
+              StringBuilder stringBuilder = new StringBuilder("<block>");
+                {toFieldArrayBuffer(method.request.getFields).map{(field : Field) =>{
+                  getToStringElement(field);
+                }}}
+                if(stringBuilder.lastIndexOf(",") > 0)
+                stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(","));
+                stringBuilder.append("</block>");
+
+              return stringBuilder.toString();
+            </block>
+
           </block>
 
             //2. method_result
             public static class {method.name}_result <block>
             {toFieldArrayBuffer(method.response.getFields()).map{(field:Field)=>
               if(field.getDataType().getKind() == DataType.KIND.VOID) {
-                <div></div>
+                <div>
+                  @Override
+                  public String toString()<block>
+                  return "<block></block>";
+                </block>
+                </div>
               } else {
                 <div>
                   private {toJavaDataType(method.response.getFields.get(0).getDataType)} success;
@@ -80,6 +98,20 @@ class JavaCodecGenerator extends CodeGenerator {
                   public void setSuccess({toJavaDataType(method.response.getFields.get(0).getDataType)} success)<block>
                   this.success = success;
                 </block>
+
+
+                  @Override
+                  public String toString()<block>
+                  StringBuilder stringBuilder = new StringBuilder("<block>");
+                    {toFieldArrayBuffer(method.response.getFields).map{(field : Field) =>{
+                      getToStringElement(field);
+                    }}}
+                    stringBuilder.deleteCharAt(stringBuilder.lastIndexOf(","));
+                    stringBuilder.append("</block>");
+
+                  return stringBuilder.toString();
+                </block>
+
                 </div>
               }
             }}

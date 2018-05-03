@@ -40,8 +40,7 @@ public class HeadFilter implements Filter {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(getClass().getSimpleName()
                     + "::onExit:[seqId:" + transactionContext.getSeqid()
-                    + ", execption:" + transactionContext.getSoaException()
-                    + ",\n result:" + filterContext.getAttribute("result") + "]\n");
+                    + ", execption:" + transactionContext.getSoaException() + "]\n");
         }
 
         SoaResponseWrapper responseWrapper = new SoaResponseWrapper(transactionContext,
