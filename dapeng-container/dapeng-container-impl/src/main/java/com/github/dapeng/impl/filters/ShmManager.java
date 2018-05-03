@@ -63,6 +63,7 @@ public class ShmManager {
      * 内存操作对象
      */
     private Unsafe unsafe;
+    private MappedByteBuffer buffer;
     /**
      * 本地字符串ID映射表
      */
@@ -324,7 +325,9 @@ public class ShmManager {
 
         File file = new File("/data/shm.data");
         RandomAccessFile access = new RandomAccessFile(file, "rw");
-        MappedByteBuffer buffer = access.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, TOTAL_MEM_BYTES);
+
+        // MappedBuffer buffer = access.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, TOTAL_MEM_BYTES);
+        buffer = access.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, TOTAL_MEM_BYTES);
 
         Field address = Buffer.class.getDeclaredField("address");
         address.setAccessible(true);
@@ -559,9 +562,9 @@ public class ShmManager {
 
 
     public static void main(String[] args) throws InterruptedException {
-        ShmManager manager = ShmManager.getInstance();
+        final ShmManager manager = ShmManager.getInstance();
 
-        FreqControlRule rule = new FreqControlRule();
+        final FreqControlRule rule = new FreqControlRule();
         rule.app = "com.today.hello";
         rule.ruleType = "callId";
         rule.minInterval = 60;
@@ -572,19 +575,35 @@ public class ShmManager {
         rule.maxReqForMaxInterval = 500;
 
         long t1 = System.currentTimeMillis();
-        for (int i = 0; i < 100000; i++) {
+        for (int i = 0; i < 1000000; i++) {
             manager.reportAndCheck(rule, 100);
         }
 
+        new Thread( ()-> { ttt(manager, rule, 100); }).start();
+        new Thread( ()-> { ttt(manager, rule, 101); }).start();
+        new Thread( ()-> { ttt(manager, rule, 102); }).start();
+        new Thread( ()-> { ttt(manager, rule, 103); }).start();
 
-        System.out.println("cost1:" + (System.currentTimeMillis() - t1));
 
-        for (int j = 0; j < 10; j++) {
-            t1 = System.currentTimeMillis();
-            for (int i = 0; i < 100000; i++) {
-                manager.reportAndCheck(rule, 100);
-            }
-            System.out.println("cost2:" + (System.currentTimeMillis() - t1));
-        }
+//        System.out.println("cost1:" + (System.currentTimeMillis() - t1));
+//
+//
+//        for (int j = 0; j < 10; j++) {
+//            t1 = System.currentTimeMillis();
+//            for (int i = 0; i < 1000000; i++) {
+//                manager.reportAndCheck(rule, 100);
+//            }
+//            System.out.println("cost2:" + (System.currentTimeMillis() - t1));
+//        }
     }
+
+    static void ttt(ShmManager manager, FreqControlRule rule, int key){
+        long t1 = System.currentTimeMillis();
+        for (int i = 0; i < 1000000; i++) {
+            manager.reportAndCheck(rule, key);
+        }
+        long t2 = System.currentTimeMillis();
+        System.out.println(Thread.currentThread() + " cost:" + (t2-t1) + "ms");
+    }
+
 }
