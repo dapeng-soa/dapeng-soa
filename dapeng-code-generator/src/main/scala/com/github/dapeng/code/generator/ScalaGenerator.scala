@@ -570,7 +570,7 @@ class ScalaGenerator extends CodeGenerator {
             if (methods.contains(i.key)) {
               i.key.substring(i.key.lastIndexOf(".") + 1) + "=" + getInstanceTypeValue(i.value, methods.get(i.key).get)
             } else {""}
-          }).mkString("(",",",")")
+          }).filterNot(_.isEmpty).mkString("(",",",")")
           <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
         }
         }
@@ -595,7 +595,7 @@ class ScalaGenerator extends CodeGenerator {
                 if (methods.contains(i.key)) {
                   i.key.substring(i.key.lastIndexOf(".") + 1) + "=" + getInstanceTypeValue(i.value, methods.get(i.key).get)
                 } else {""}
-              }).mkString("(",",",")")
+              }).filterNot(_.isEmpty).mkString("(",",",")")
               <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
             }
             }
@@ -638,7 +638,7 @@ class ScalaGenerator extends CodeGenerator {
           if (methods.contains(i.key)) {
             i.key.substring(i.key.lastIndexOf(".") + 1) + "=" + getInstanceTypeValue(i.value, methods.get(i.key).get)
           } else {""}
-        }).mkString("(",",",")")
+        }).filterNot(_.isEmpty).mkString("(",",",")")
         <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
       }
       }
@@ -663,7 +663,7 @@ class ScalaGenerator extends CodeGenerator {
                 if (methods.contains(i.key)) {
                   i.key.substring(i.key.lastIndexOf(".") + 1) + "=" + getInstanceTypeValue(i.value, methods.get(i.key).get)
                 } else {""}
-              }).mkString("(",",",")")
+              }).filterNot(_.isEmpty).mkString("(",",",")")
               <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
             }
             }
