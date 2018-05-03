@@ -1,7 +1,5 @@
 package com.github.dapeng.impl.filters;
 
-import com.github.dapeng.core.SoaCode;
-import com.github.dapeng.core.SoaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.Unsafe;
@@ -15,7 +13,6 @@ import java.nio.Buffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -107,7 +104,7 @@ public class ShmManager {
             return "app:" + app + ", ruleType:" + ruleType + ", freqRule:["
                     + minInterval + "," + maxReqForMinInterval + "/"
                     + midInterval + "," + maxReqForMidInterval + "/"
-                    + maxInterval + "," + maxReqForMaxInterval + ";";
+                    + maxInterval + "," + maxReqForMaxInterval + "]";
         }
     }
 
@@ -179,6 +176,7 @@ public class ShmManager {
 
             NodePageMeta nodePageMeta = getNodePageMeta(nodePageIndex);
             LOGGER.debug("reportAndCheck, nodePageMeta:{}, cost:{}", nodePageMeta, System.nanoTime() - t1);
+
             if (nodePageMeta.nodes == 0) {
                 nodePageMeta.hash = nodePageHash;
                 nodePageMeta.nodes = 1;
@@ -189,14 +187,17 @@ public class ShmManager {
                 node = createNodeIfNotExist(appId, ruleTypeId, key,
                         nodePageMeta, now,
                         nodeAddr, rule);
+                LOGGER.debug("createNodeIfNotExist returned");
             }
 
             result = node.minCount <= rule.maxReqForMinInterval
                     && node.midCount <= rule.maxReqForMidInterval
                     && node.maxCount <= rule.maxReqForMaxInterval;
             updateNodePageMeta(nodePageMeta, nodePageIndex);
+            LOGGER.debug("updateNodePageMeta nodePageIndex = {}", nodePageIndex);
         } finally {
             freeNodePageLock(nodePageIndex);
+            LOGGER.debug("freeNodePageLock {}", nodePageIndex);
         }
 
         LOGGER.debug("reportAndCheck end, result:{}, cost:{}", result, System.nanoTime() - t1);
@@ -517,7 +518,7 @@ public class ShmManager {
     }
 
     private boolean getNodePageLock(int nodeIndex) {
-        return unsafe.compareAndSwapInt(null, homeAddr + NODE_PAGE_OFFSET + 1024 * nodeIndex, FREE_LOCK, nodeIndex);
+        return unsafe.compareAndSwapInt(null, homeAddr + NODE_PAGE_OFFSET + 1024 * nodeIndex, FREE_LOCK, nodeIndex + 1);
     }
 
     private void freeNodePageLock(int nodeIndex) {
@@ -557,7 +558,7 @@ public class ShmManager {
     }
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         ShmManager manager = ShmManager.getInstance();
 
         FreqControlRule rule = new FreqControlRule();
@@ -575,13 +576,15 @@ public class ShmManager {
             manager.reportAndCheck(rule, 100);
         }
 
+
         System.out.println("cost1:" + (System.currentTimeMillis() - t1));
 
-        t1 = System.currentTimeMillis();
-        for (int i = 0; i < 100000; i++) {
-            manager.reportAndCheck(rule, 100);
+        for (int j = 0; j < 10; j++) {
+            t1 = System.currentTimeMillis();
+            for (int i = 0; i < 100000; i++) {
+                manager.reportAndCheck(rule, 100);
+            }
+            System.out.println("cost2:" + (System.currentTimeMillis() - t1));
         }
-
-        System.out.println("cost2:" + (System.currentTimeMillis() - t1));
     }
 }
