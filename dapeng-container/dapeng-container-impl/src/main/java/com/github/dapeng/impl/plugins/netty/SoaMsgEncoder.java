@@ -166,4 +166,5 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             LOGGER.error(e.getMessage(), e);
         }
     }
+
 }

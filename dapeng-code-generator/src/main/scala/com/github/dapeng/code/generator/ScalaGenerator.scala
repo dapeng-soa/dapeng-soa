@@ -584,7 +584,6 @@ class ScalaGenerator extends CodeGenerator {
             /**
             * {method.doc}
             **/
-            {if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div>}
             {
             if (method.annotations != null) {
               import collection.JavaConverters._
@@ -599,7 +598,8 @@ class ScalaGenerator extends CodeGenerator {
               <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
             }
             }
-            @throws[com.github.dapeng.core.SoaException]
+            {if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div>}
+            <div>@throws[com.github.dapeng.core.SoaException]</div>
             def {method.name}(
             {toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
             <div>{nameAsId(field.name)}: {toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}
@@ -652,7 +652,6 @@ class ScalaGenerator extends CodeGenerator {
           /**
           * {method.doc}
           **/
-          {if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div>}
             {
             if (method.annotations != null) {
               import collection.JavaConverters._
@@ -667,7 +666,8 @@ class ScalaGenerator extends CodeGenerator {
               <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
             }
             }
-          @throws[com.github.dapeng.core.SoaException]
+          {if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div>}
+          <div>@throws[com.github.dapeng.core.SoaException]</div>
           def {method.name}(
           {toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
           <div>{nameAsId(field.name)}: {toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}

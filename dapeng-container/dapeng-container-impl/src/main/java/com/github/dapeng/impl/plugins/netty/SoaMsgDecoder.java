@@ -126,7 +126,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         application.info(this.getClass(), infoLog);
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(getClass().getSimpleName() + "::decode " + infoLog + ", payload:\n" + args);
+            LOGGER.debug(getClass().getSimpleName() + "::decode " + infoLog + ", payload:\n" + soaFunction.reqSerializer.toString(args));
         }
         return args;
     }
@@ -139,4 +139,5 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         ctx.setOperatorId(soaHeader.getOperatorId());
         ctx.setOperatorName(soaHeader.getOperatorName());
     }
+
 }
