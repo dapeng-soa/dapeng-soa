@@ -1,7 +1,7 @@
 package com.github.dapeng.impl.plugins;
 
 import com.github.dapeng.api.Container;
-import com.github.dapeng.api.Plugin;
+import com.github.dapeng.core.Plugin;
 import com.github.dapeng.impl.plugins.monitor.mbean.ContainerRuntimeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

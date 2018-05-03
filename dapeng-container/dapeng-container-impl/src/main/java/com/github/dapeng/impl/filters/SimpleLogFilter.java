@@ -29,7 +29,6 @@ public class SimpleLogFilter implements ContainerFilter{
             SoaHeader soaHeader = context.getHeader();
             long waitingTime = (long) ctx.getAttribute("waitingTime");
             long startTime = (long) ctx.getAttribute("startTime");
-            Integer requestFlow = (Integer) ctx.getAttribute("requestFlow");
 
             StringBuilder builder = new StringBuilder("DONE")
                     .append(" ").append(channelHandlerContext.channel().remoteAddress())
@@ -38,7 +37,7 @@ public class SimpleLogFilter implements ContainerFilter{
                     .append(" ").append(soaHeader.getServiceName()).append(".").append(soaHeader.getMethodName()).append(":").append(soaHeader.getVersionName())
                     .append(" ").append(soaHeader.getRespCode())
                     .append(" ").append(soaHeader.getRespMessage())
-                    .append(" ").append(requestFlow)
+                    .append(" ").append(0)
                     .append(" ").append(0)
                     .append(" ").append(waitingTime).append("ms")
                     .append(" ").append(System.currentTimeMillis() - startTime).append("ms");
