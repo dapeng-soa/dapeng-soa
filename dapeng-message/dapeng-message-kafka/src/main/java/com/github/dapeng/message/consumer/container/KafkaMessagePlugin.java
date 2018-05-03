@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Created by tangliu on 2016/9/18.
  */
-public class KafkaMessagePlugin implements Plugin {
+public class KafkaMessagePlugin implements Plugin{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaMessagePlugin.class);
     private MessageConsumerService consumerService = new com.github.dapeng.message.consumer.kafka.MessageConsumerServiceImpl();
@@ -32,8 +32,8 @@ public class KafkaMessagePlugin implements Plugin {
             for (Application application : applications) {
                 List<ServiceInfo> serviceInfos = application.getServiceInfos();
 
-                for (ServiceInfo serviceInfo : serviceInfos) {
-                    SoaServiceDefinition<?> definition = processorMap.get(new ProcessorKey(serviceInfo.serviceName, serviceInfo.version));
+                for (ServiceInfo serviceInfo: serviceInfos) {
+                    SoaServiceDefinition<?> definition = processorMap.get(new ProcessorKey(serviceInfo.serviceName,serviceInfo.version));
                     Class<?> ifaceClass = serviceInfo.ifaceClass;
                     Class MessageConsumerClass = null;
                     Class MessageConsumerActionClass = null;
@@ -57,15 +57,11 @@ public class KafkaMessagePlugin implements Plugin {
 
                                 Annotation annotation = method.getAnnotation(MessageConsumerActionClass);
                                 String topic = (String) annotation.getClass().getDeclaredMethod("topic").invoke(annotation);
-                                //eventType
-                                String eventType = (String) annotation.getClass().getDeclaredMethod("eventType").invoke(annotation);
-
-                                SoaFunctionDefinition functionDefinition = (SoaFunctionDefinition) definition.functions.get(methodName);
+                                SoaFunctionDefinition functionDefinition = (SoaFunctionDefinition)definition.functions.get(methodName);
 
                                 ConsumerContext consumerContext = new ConsumerContext();
                                 consumerContext.setGroupId(groupId);
                                 consumerContext.setTopic(topic);
-                                consumerContext.setEventType(eventType);
                                 consumerContext.setIface(definition.iface);
                                 consumerContext.setSoaFunctionDefinition(functionDefinition);
 

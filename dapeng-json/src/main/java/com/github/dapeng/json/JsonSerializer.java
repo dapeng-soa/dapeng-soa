@@ -1002,6 +1002,8 @@ public class JsonSerializer implements BeanSerializer<String> {
             header.setCustomerName(invocationCtx.getCustomerName());
             header.setOperatorId(invocationCtx.getOperatorId());
             header.setOperatorName(invocationCtx.getOperatorName());
+            header.setTransactionId(invocationCtx.getTransactionId());
+
 
             header.setTransactionId(invocationCtx.getTransactionId());
 

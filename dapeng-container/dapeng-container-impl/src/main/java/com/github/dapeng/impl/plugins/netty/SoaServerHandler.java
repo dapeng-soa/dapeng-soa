@@ -46,9 +46,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext channelHandlerContext, Object msg) {
         final long invokeTime = System.currentTimeMillis();
-        ByteBuf reqMessage = (ByteBuf) msg;
-        Integer requestFlow = getRequestLength(reqMessage) + Integer.BYTES;
-        ByteBuf reqMirror = reqMessage.slice(); // only used for debug packet
 
         final TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
 
@@ -71,7 +68,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             dispatcher.execute(() -> {
                 try {
                     TransactionContext.Factory.setCurrentInstance(transactionContext);
-                    processRequest(channelHandlerContext, processor, msg, transactionContext, invokeTime,requestFlow);
+                    processRequest(channelHandlerContext, processor, msg, transactionContext, invokeTime);
                 } catch (Throwable e) {
                     writeErrorMessage(channelHandlerContext,
                             transactionContext,
@@ -102,7 +99,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                                                SoaServiceDefinition<I> serviceDef,
                                                REQ args,
                                                TransactionContext transactionContext,
-                                               long invokeTime,Integer requestFlow) throws TException {
+                                               long invokeTime) throws TException {
 
         try {
             SoaHeader soaHeader = transactionContext.getHeader();
@@ -140,7 +137,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             I iface = serviceDef.iface;
             //log request //TODO 需要改成filter
             boolean logFormatEnable = SoaSystemEnvProperties.SOA_LOG_FORMAT_ENABLE;
-            application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} request body:{}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.getOperatorId(), soaHeader.getOperatorName(), logFormatEnable ? formatToString(soaFunction.reqSerializer.toString(args)) : soaFunction.reqSerializer.toString(args));
+            //application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} request body:{}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.getOperatorId(), soaHeader.getOperatorName(), logFormatEnable ? formatToString(soaFunction.reqSerializer.toString(args)) : soaFunction.reqSerializer.toString(args));
 
             HeadFilter headFilter = new HeadFilter();
             Filter dispatchFilter = new Filter() {
@@ -180,7 +177,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                     } catch (SoaException soaException) {
                         LOGGER.error(soaException.getMessage(), soaException);
                         filterContext.setAttribute("isSuccess", false);
-                        writeErrorMessage(channelHandlerContext, transactionContext, filterContext,soaException);
+                        attachErrorInfo(transactionContext, ExceptionUtil.convertToSoaException(soaException));
                         onExit(filterContext,getPrevChain(filterContext));
                     } catch (Throwable e) {
                         filterContext.setAttribute("isSuccess", false);
@@ -199,7 +196,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                         }
                         prev.onExit(filterContext);
                     } catch (TException e) {
-                        ctx.setAttribute("isSuccess", false);
+                        filterContext.setAttribute("isSuccess", false);
                         attachErrorInfo(transactionContext, ExceptionUtil.convertToSoaException(e));
                     }
                 }
@@ -214,7 +211,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             filterContext.setAttribute("soaHeader",soaHeader);
             filterContext.setAttribute("waitingTime",waitingTime);
             filterContext.setAttribute("startTime",invokeTime);
-            filterContext.setAttribute("requestFlow",requestFlow);
             sharedChain.onEntry(filterContext);
         } catch (SoaException e) {
             // can't reach the headFilter
@@ -236,7 +232,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         try {
             //TODO 需要改成filter
             boolean logFormatEnable = SoaSystemEnvProperties.SOA_LOG_FORMAT_ENABLE;
-            application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} response body:{}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.getOperatorId(), soaHeader.getOperatorName(), logFormatEnable ? formatToString(soaFunction.respSerializer.toString(result)) : soaFunction.respSerializer.toString(result));
+            //application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} response body:{}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.getOperatorId(), soaHeader.getOperatorName(), logFormatEnable ? formatToString(soaFunction.respSerializer.toString(result)) : soaFunction.respSerializer.toString(result));
 
             filterContext.setAttribute("channelHandlerContext", channelHandlerContext);
             filterContext.setAttribute("context", transactionContext);

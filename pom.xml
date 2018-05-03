@@ -159,13 +159,13 @@
                 <repository>
                     <id>nexus-releases</id>
                     <name>Nexus Releases Repository</name>
-                    <url>http://nexus.oa.dapeng.com/repository/maven-releases/</url>
+                    <url>http://nexus.oa.isuwang.com/repository/maven-releases/</url>
                 </repository>
 
                 <snapshotRepository>
                     <id>nexus-snapshots</id>
                     <name>Nexus Snapshots Repository</name>
-                    <url>http://nexus.oa.dapeng.com/repository/maven-snapshots/</url>
+                    <url>http://nexus.oa.isuwang.com/repository/maven-snapshots/</url>
                 </snapshotRepository>
             </distributionManagement>
 
@@ -210,7 +210,7 @@
     <repositories>
         <repository>
             <id>maven-dapeng-com</id>
-            <url>http://nexus.oa.dapeng.com/repository/maven-public/</url>
+            <url>http://nexus.oa.isuwang.com/repository/maven-public/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
@@ -293,7 +293,7 @@
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-context</artifactId>
-                <version>4.2.4.RELEASE</version>
+                <version>4.3.5.RELEASE</version>
             </dependency>
 
             <dependency>
