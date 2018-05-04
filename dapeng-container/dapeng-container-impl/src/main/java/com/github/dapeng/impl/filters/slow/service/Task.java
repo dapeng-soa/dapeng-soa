@@ -3,6 +3,7 @@ package com.github.dapeng.impl.filters.slow.service;
 import com.github.dapeng.core.SoaHeader;
 import com.github.dapeng.core.TransactionContext;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
+import com.github.dapeng.core.filter.FilterContext;
 
 import java.util.Optional;
 
@@ -13,6 +14,8 @@ public class Task {
     private String versionName;
 
     private String methodName;
+
+    private Object request;
 
     private long startTime;
 
@@ -36,7 +39,8 @@ public class Task {
 
     private Thread currentThread;
 
-    public Task(TransactionContext context) {
+    public Task(FilterContext ctx) {
+        TransactionContext context = (TransactionContext) ctx.getAttribute("context");
         this.startTime = System.currentTimeMillis();
         this.seqId = context.getSeqid();
         this.timeout = context.timeout();
@@ -54,6 +58,10 @@ public class Task {
         this.calleePort = soaHeader.getCalleePort();
         this.callerTid = soaHeader.getCallerTid();
         this.callerMid = soaHeader.getCallerMid();
+
+        //设置request
+        Object req = ctx.getAttribute("request");
+        this.request = req;
     }
 
     public String serviceName() { return serviceName;}
@@ -142,6 +150,12 @@ public class Task {
         return this;
     }
 
+    public Object request() {return request;}
+    public Object request(Object request) {
+        this.request = request;
+        return this;
+    }
+
 
     /**
      *     private String serviceName;
@@ -175,6 +189,8 @@ public class Task {
                 .append(" calleePort: ").append(calleePort).append(",")
                 .append(" callerTid: ").append(callerTid).append(",")
                 .append(" callerMid: ").append(callerMid).append("]");
+
+        sb.append(" \n request: ").append(request.toString());
         return sb.toString();
     }
 }
