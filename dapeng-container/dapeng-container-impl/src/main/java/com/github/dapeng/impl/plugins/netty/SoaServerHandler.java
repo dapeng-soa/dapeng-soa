@@ -135,9 +135,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             }
 
             I iface = serviceDef.iface;
-            //log request //TODO 需要改成filter
-            boolean logFormatEnable = SoaSystemEnvProperties.SOA_LOG_FORMAT_ENABLE;
-            //application.info(this.getClass(), "{} {} {} operatorId:{} operatorName:{} request body:{}", soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName(), soaHeader.getOperatorId(), soaHeader.getOperatorName(), logFormatEnable ? formatToString(soaFunction.reqSerializer.toString(args)) : soaFunction.reqSerializer.toString(args));
 
             HeadFilter headFilter = new HeadFilter();
             Filter dispatchFilter = new Filter() {

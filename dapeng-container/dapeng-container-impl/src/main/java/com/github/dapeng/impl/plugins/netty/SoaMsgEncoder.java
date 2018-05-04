@@ -5,6 +5,7 @@ import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.*;
 import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.ExceptionUtil;
+import com.github.dapeng.util.SoaSystemEnvProperties;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -64,22 +65,26 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             LOGGER.warn(getClass().getSimpleName() + "::encode no requestTimestampMap found!");
         }
 
-        String infoLog = "response[seqId:" + transactionContext.getSeqid() + ", respCode:" + respCode.get() + "]:"
-                + "service[" + soaHeader.getServiceName()
-                + "]:version[" + soaHeader.getVersionName()
-                + "]:method[" + soaHeader.getMethodName() + "]"
-                + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : ""
-                + " cost:" + (System.currentTimeMillis() - requestTimestamp) + "ms");
-
-        application.info(this.getClass(), infoLog);
-
         if (respCode.isPresent() && !respCode.get().equals(SOA_NORMAL_RESP_CODE)) {
             writeErrorResponse(transactionContext, application, out);
         } else {
             try {
+
                 BeanSerializer serializer = wrapper.serializer.get();
                 Object result = wrapper.result.get();
+                boolean logFormatEnable = SoaSystemEnvProperties.SOA_LOG_FORMAT_ENABLE;
+
+                String infoLog = "response[seqId:" + transactionContext.getSeqid() + ", respCode:" + respCode.get() + "]:"
+                        + "service[" + soaHeader.getServiceName()
+                        + "]:version[" + soaHeader.getVersionName()
+                        + "]:method[" + soaHeader.getMethodName() + "]"
+                        + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
+                        + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "")
+                        + " result:[" + (logFormatEnable ? formatToString(result.toString()) : result.toString()) + "]"
+                        + " cost:" + (System.currentTimeMillis() - requestTimestamp) + "ms";
+
+                application.info(this.getClass(), infoLog);
+
 
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(getClass().getSimpleName() + "::encode " + infoLog + ", payload:\n" + result);
@@ -157,6 +162,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     + "]:method[" + soaHeader.getMethodName() + "]"
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
                     + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
+
             application.error(this.getClass(), infoLog, soaException);
 
             if (LOGGER.isDebugEnabled()) {
@@ -165,6 +171,21 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
         }
+    }
+
+    private static String formatToString(String msg) {
+        if (msg == null)
+            return msg;
+
+        msg = msg.indexOf("\r\n") != -1 ? msg.replaceAll("\r\n", "") : msg;
+
+        int len = msg.length();
+        int max_len = 128;
+
+        if (len > max_len)
+            msg = msg.substring(0, 128) + "...(" + len + ")";
+
+        return msg;
     }
 
 }
