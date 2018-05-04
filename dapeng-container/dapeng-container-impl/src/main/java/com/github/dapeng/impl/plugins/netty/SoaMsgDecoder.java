@@ -9,6 +9,7 @@ import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocolException;
 import com.github.dapeng.util.DumpUtil;
+import com.github.dapeng.util.SoaSystemEnvProperties;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -116,12 +117,14 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         }
         contentProtocol.readMessageEnd();
 
+        boolean logFormatEnable = SoaSystemEnvProperties.SOA_LOG_FORMAT_ENABLE;
         String infoLog = "request[seqId:" + context.getSeqid() + "]:"
                 + "service[" + soaHeader.getServiceName()
                 + "]:version[" + soaHeader.getVersionName()
                 + "]:method[" + soaHeader.getMethodName() + "]"
                 + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
+                + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "")
+                + " args:[" + (logFormatEnable ? formatToString(soaFunction.reqSerializer.toString(args)) : soaFunction.reqSerializer.toString(args)) + "]";
 
         application.info(this.getClass(), infoLog);
 
@@ -138,6 +141,21 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         ctx.setCustomerName(soaHeader.getCustomerName());
         ctx.setOperatorId(soaHeader.getOperatorId());
         ctx.setOperatorName(soaHeader.getOperatorName());
+    }
+
+    private static String formatToString(String msg) {
+        if (msg == null)
+            return msg;
+
+        msg = msg.indexOf("\r\n") != -1 ? msg.replaceAll("\r\n", "") : msg;
+
+        int len = msg.length();
+        int max_len = 128;
+
+        if (len > max_len)
+            msg = msg.substring(0, 128) + "...(" + len + ")";
+
+        return msg;
     }
 
 }
