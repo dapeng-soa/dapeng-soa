@@ -81,11 +81,11 @@ public class ShmUtil {
     static class FreqControlRule {
         String app;
         String ruleType;
-        int minInterval;
+        int minInterval;             //每分钟请求数[min,max]
         int maxReqForMinInterval;
-        int midInterval;
+        int midInterval;             //每小时请求数[min,max]
         int maxReqForMidInterval;
-        int maxInterval;
+        int maxInterval;             //每天请求数[min,max]
         int maxReqForMaxInterval;
 
         @Override
@@ -150,6 +150,7 @@ public class ShmUtil {
         int nodePageHash = (appId << 16 | ruleTypeId) ^ key;
         int nodePageIndex = nodePageHash % NODE_PAGE_COUNT;
         int now = (int) (System.currentTimeMillis() / 1000) % 86400;
+
 
         LOGGER.debug("reportAndCheck, rule:{}, nodePageHash:{}, nodePageIndex:{}, timestamp:{}, appId/ruleTypeId/key:{}/{}/{}",
                 rule, nodePageHash, nodePageIndex, now, appId, ruleTypeId, key);
@@ -358,7 +359,7 @@ public class ShmUtil {
 
     /**
      * 获取id
-     *
+     * 先从本地获取key值，如果不存在则从共享内存中查找获取
      * @param key
      * @return
      */
@@ -491,7 +492,7 @@ public class ShmUtil {
         putInt(homeAddr + Integer.BYTES, FREE_LOCK);
     }
 
-    private void getSpinNodePageLock(int nodePageIndex) {
+    private void getSpinNodePageLock(int nodePageIndex) {      //获取自旋锁
         while (!getNodePageLock(nodePageIndex)) ;
     }
 
