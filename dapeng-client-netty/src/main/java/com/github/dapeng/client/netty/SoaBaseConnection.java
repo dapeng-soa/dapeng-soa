@@ -82,7 +82,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 try {
                     ByteBuf responseBuf = client.send(channel, seqid, requestBuf, timeout, service);
 
-                    Result<RESP> result = processResponse(responseBuf, responseSerializer);
+                    Result<RESP> result = processResponse(responseBuf, responseSerializer,request);
                     ctx.setAttribute("result", result);
 
                     onExit(ctx, getPrevChain(ctx));
@@ -187,7 +187,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                             //fixme do it in filter
                             InvocationContextImpl.Factory.currentInstance(invocationContext);
 
-                            Result<RESP> result = processResponse(realResult, responseSerializer);
+                            Result<RESP> result = processResponse(realResult, responseSerializer, request);
                             ctx.setAttribute("result", result);
                         }
 
@@ -292,7 +292,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
         }
     }
 
-    private <RESP> Result<RESP> processResponse(ByteBuf responseBuf, BeanSerializer<RESP> responseSerializer) {
+    private <RESP,REQ> Result<RESP> processResponse(ByteBuf responseBuf, BeanSerializer<RESP> responseSerializer, REQ request) {
         if (responseBuf == null) {
             return new Result<>(null, new SoaException(SoaCode.TimeOut));
         }
@@ -310,6 +310,9 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 assert (resp != null);
                 return new Result<>(resp, null);
             } else {
+                //if exception occur, print the request for trace.
+                LOGGER.info(" request detail: " + request);
+
                 return new Result<>(null, new SoaException(
                         (respHeader.getRespCode().isPresent()) ? respHeader.getRespCode().get() : SoaCode.UnKnown.getCode(),
                         (respHeader.getRespMessage().isPresent()) ? respHeader.getRespMessage().get() : SoaCode.UnKnown.getMsg()));
