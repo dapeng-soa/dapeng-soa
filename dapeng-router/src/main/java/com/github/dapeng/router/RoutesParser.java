@@ -76,6 +76,9 @@ public class RoutesParser {
                     }
                 }
                 break;
+            case Token.EOF:
+                warn("current service hava no route express config");
+                break;
             default:
                 error("expect `otherwise` or `id match ...` but got " + token);
         }

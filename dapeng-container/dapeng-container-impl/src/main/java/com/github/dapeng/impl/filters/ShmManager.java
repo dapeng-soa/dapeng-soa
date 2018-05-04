@@ -1,5 +1,7 @@
 package com.github.dapeng.impl.filters;
 
+import com.github.dapeng.core.SoaCode;
+import com.github.dapeng.core.SoaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.Unsafe;
@@ -22,13 +24,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * Dictionary Data: 128K
  * Node Page: 128M
  * <p>
- * todo
- * volatile 是否需要每个字节都如此操作?
  *
  * @author ever
  */
-public class ShmUtil {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ShmUtil.class.getName());
+public class ShmManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShmManager.class.getName());
+    private static final ShmManager instance = new ShmManager();
     /**
      * 自旋锁标志, 0为free
      */
@@ -40,7 +41,7 @@ public class ShmUtil {
     /**
      * nodePage数量, 128K
      */
-    private final static short NODE_PAGE_COUNT = (short) (128 * 1024);
+    private final static int NODE_PAGE_COUNT = 128 * 1024;
     /**
      * DictionRoot域的地址偏移量, 该域占用12K
      */
@@ -74,6 +75,19 @@ public class ShmUtil {
      * 共享内存起始地址
      */
     private long homeAddr;
+
+    private ShmManager() {
+        try {
+            init();
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static ShmManager getInstance() {
+        return instance;
+    }
 
     /**
      * 限流规则
@@ -158,7 +172,7 @@ public class ShmUtil {
         long t1 = System.nanoTime();
 
         try {
-            getSpinNodePageLock(nodePageHash);
+            getSpinNodePageLock(nodePageIndex);
             LOGGER.debug("reportAndCheck, acquire spin lock cost:{}", System.nanoTime() - t1);
 
             CounterNode node = null;
@@ -174,9 +188,8 @@ public class ShmUtil {
                 //todo 淘汰老node
             } else {
                 node = createNodeIfNotExist(appId, ruleTypeId, key,
-                        nodePageMeta.nodes, now,
+                        nodePageMeta, now,
                         nodeAddr, rule);
-                nodePageMeta.nodes = (short) (nodePageMeta.nodes + 1);
             }
 
             result = node.minCount <= rule.maxReqForMinInterval
@@ -192,12 +205,12 @@ public class ShmUtil {
     }
 
     private CounterNode createNodeIfNotExist(short appId, short ruleTypeId, int key,
-                                             int currentNodes, int now, long nodeAddr,
+                                             NodePageMeta nodePageMeta, int now, long nodeAddr,
                                              FreqControlRule rule) {
         long t1 = System.nanoTime();
 
         CounterNode node = null;
-        for (int index = 0; index < currentNodes; index++) {
+        for (int index = 0; index < nodePageMeta.nodes; index++) {
             short _appId = getShort(nodeAddr);
             if (_appId == 0) break;
 
@@ -257,8 +270,9 @@ public class ShmUtil {
         }
 
         if (node == null) {
-            LOGGER.debug("createNodeIfNotExist, node not found, index:{}, cost:{}", currentNodes, System.nanoTime() - t1);
+            LOGGER.debug("createNodeIfNotExist, node not found, index:{}, cost:{}", nodePageMeta.nodes, System.nanoTime() - t1);
             node = insertCounterNode(appId, ruleTypeId, key, now, nodeAddr);
+            nodePageMeta.nodes += 1;
         }
 
         return node;
@@ -303,6 +317,7 @@ public class ShmUtil {
 
     private void init() throws NoSuchFieldException, IllegalAccessException, IOException {
         LOGGER.info(getClass().getSimpleName() + "::init begin");
+        long t1 = System.nanoTime();
         Field f = Unsafe.class.getDeclaredField("theUnsafe");
         f.setAccessible(true);
         unsafe = (Unsafe) f.get(null);
@@ -321,7 +336,7 @@ public class ShmUtil {
             constructShm();
         }
 
-        LOGGER.info(getClass().getSimpleName() + "::init end, homeAddr:" + homeAddr);
+        LOGGER.info(getClass().getSimpleName() + "::init end, homeAddr:" + homeAddr + ", cost:" + (System.nanoTime() - t1));
     }
 
     private void close() {
@@ -339,8 +354,8 @@ public class ShmUtil {
             putShort(addr, VERSION);
             addr += Short.BYTES;
             // nodePageCount=64K i16
-            putShort(addr, NODE_PAGE_COUNT);
-            addr += Short.BYTES;
+            putInt(addr, NODE_PAGE_COUNT);
+            addr += Integer.BYTES;
             // RootPageLock i32
             addr += Integer.BYTES;
             // nextUtf8offset i16
@@ -351,7 +366,7 @@ public class ShmUtil {
             addr += Short.BYTES;
 
             //set rest of mem to 0
-            unsafe.setMemory(null, addr, TOTAL_MEM_BYTES - 12, (byte) 0);
+            unsafe.setMemory(null, addr, TOTAL_MEM_BYTES - 14, (byte) 0);
             freeRootLock();
             LOGGER.warn(getClass().getSimpleName() + "::constructShm end");
         }
@@ -479,6 +494,12 @@ public class ShmUtil {
 
     /**
      * 获取RootLock
+     * <p>
+     * # unsafe.compareAndSwapInt 参数说明
+     * 1）第一个参数为需要改变的对象
+     * 2）偏移量(即之前求出来的valueOffset的值
+     * 3）期待的值
+     * 4）更新后的值
      *
      * @return
      */
@@ -536,59 +557,32 @@ public class ShmUtil {
         unsafe.putByte(null, addr, value);
     }
 
-    public static void main(String[] args) throws NoSuchFieldException, IOException, IllegalAccessException {
-        Field f = Unsafe.class.getDeclaredField("theUnsafe"); //Internal reference
-        f.setAccessible(true);
-        Unsafe unsafe = (Unsafe) f.get(null);
 
-        File file = new File("/data/shm.data");
+    public static void main(String[] args) {
+        ShmManager manager = ShmManager.getInstance();
 
-        RandomAccessFile access = new RandomAccessFile(file, "rw");
+        FreqControlRule rule = new FreqControlRule();
+        rule.app = "com.today.hello";
+        rule.ruleType = "callId";
+        rule.minInterval = 60;
+        rule.maxReqForMinInterval = 20;
+        rule.midInterval = 3600;
+        rule.maxReqForMidInterval = 100;
+        rule.maxInterval = 86400;
+        rule.maxReqForMaxInterval = 500;
 
-        MappedByteBuffer buffer = access.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, 1024);
-
-        Field address = Buffer.class.getDeclaredField("address");
-        address.setAccessible(true);
-
-        long addr = (Long) address.get(buffer);
-
-        unsafe.putShort(addr, (short) 1024);
-        unsafe.putShort(addr + 2, (short) 1023);
-
-//        System.out.println(getShort(addr));
-//        System.out.println(getShort(addr + 110));
-
-        System.out.println("please input value for testing");
-
-        Scanner scanner = new Scanner(System.in);
-
-        String cmd = scanner.nextLine();
-        while (!cmd.trim().equals("exit")) {
-            if (cmd.startsWith("set")) {
-                String[] segs = cmd.split(" ");
-                unsafe.getAndSetInt(null, addr, Integer.valueOf(segs[1]));
-//                buffer.putInt(Integer.valueOf(segs[1]));
-                System.out.println("set to homeAddr:" + addr + " succeed");
-            } else if (cmd.equals("get")) {
-                int it = unsafe.getInt(addr);
-                System.out.println("homeAddr:" + addr + ", value:" + it);
-            }
-            cmd = scanner.nextLine();
+        long t1 = System.currentTimeMillis();
+        for (int i = 0; i < 100000; i++) {
+            manager.reportAndCheck(rule, 100);
         }
 
+        System.out.println("cost1:" + (System.currentTimeMillis() - t1));
 
-//        System.out.println(unsafe.getInt(homeAddr));
-//
-//        buffer.putInt(0x31_32_33_34);
-//
-//        System.out.println("buffer = " + buffer + " homeAddr = " + homeAddr);
-//
-//        int it = unsafe.getInt(homeAddr);
-//        System.out.println("it = " + it); // 0x34333231
-//
-//        boolean set = unsafe.compareAndSwapInt(null, homeAddr, 0x34333231, 0x35363738);
-//
-//        System.out.println("set = " + set);
-//        System.out.println("it = " + unsafe.getInt(homeAddr));
+        t1 = System.currentTimeMillis();
+        for (int i = 0; i < 100000; i++) {
+            manager.reportAndCheck(rule, 100);
+        }
+
+        System.out.println("cost2:" + (System.currentTimeMillis() - t1));
     }
 }
