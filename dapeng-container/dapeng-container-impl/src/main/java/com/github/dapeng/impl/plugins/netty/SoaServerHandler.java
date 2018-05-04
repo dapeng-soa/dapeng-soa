@@ -133,7 +133,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             }
 
             HeadFilter headFilter = new HeadFilter();
-            Filter dispatchFilter = new DispatchFilter(serviceDef, soaFunction, args);
+            Filter dispatchFilter = new DispatchFilter(serviceDef, soaFunction);
 
             SharedChain sharedChain = new SharedChain(headFilter, container.getFilters(), dispatchFilter, 0);
 
@@ -252,15 +252,12 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
     class DispatchFilter<I, REQ, RESP> implements Filter {
         private final SoaServiceDefinition<I> serviceDef;
-        private final REQ args;
         private final SoaFunctionDefinition<I, REQ, RESP> soaFunction;
 
         DispatchFilter(SoaServiceDefinition<I> serviceDef,
-                              SoaFunctionDefinition<I, REQ, RESP> soaFunction,
-                              REQ args) {
+                              SoaFunctionDefinition<I, REQ, RESP> soaFunction) {
 
             this.serviceDef = serviceDef;
-            this.args = args;
             this.soaFunction = soaFunction;
         }
 
@@ -274,6 +271,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
             I iface = serviceDef.iface;
             TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
+            REQ args = (REQ)filterContext.getAttribute("request");
 
             try {
                 if (LOGGER.isDebugEnabled()) {
