@@ -50,6 +50,7 @@ public class SoaSystemEnvProperties {
      * 默认最大处理时间， 超过即认为是慢服务
      */
     private static final String KEY_SOA_MAX_PROCESS_TIME = "soa.max.process.time";
+    private static final String KEY_SOA_SLOW_SERVICE_CHECK_ENABLE = "slow.service.check.enable";
 
     /**
      * 消息总线 定时间隔
@@ -102,7 +103,7 @@ public class SoaSystemEnvProperties {
      * 默认服务处理最大时间为10s, 超过即认为是慢服务
      */
     public static final long SOA_MAX_PROCESS_TIME =  Long.valueOf(get(KEY_SOA_MAX_PROCESS_TIME, "10000"));
-
+    public static final boolean SOA_SLOW_SERVICE_CHECK_ENABLE = Boolean.valueOf(get(KEY_SOA_SLOW_SERVICE_CHECK_ENABLE, "false"));
 
     /**
      * 正常返回的时候的response code
