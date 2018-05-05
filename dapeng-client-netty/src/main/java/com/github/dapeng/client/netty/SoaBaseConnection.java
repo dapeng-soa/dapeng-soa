@@ -311,7 +311,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 return new Result<>(resp, null);
             } else {
                 //if exception occur, print the request for trace.
-                LOGGER.info(" request detail: " + request);
+                LOGGER.info(" error request detail: " + request);
 
                 return new Result<>(null, new SoaException(
                         (respHeader.getRespCode().isPresent()) ? respHeader.getRespCode().get() : SoaCode.UnKnown.getCode(),

@@ -61,13 +61,14 @@ public class LogFilter implements Filter {
             InvocationInfoImpl invocationInfo = (InvocationInfoImpl) invocationContext.lastInvocationInfo();
             invocationInfo.serviceTime(System.currentTimeMillis() - startTime);
 
-            String infoLog = "response[seqId:" + invocationContext.seqId() + ", server: " + filterContext.getAttribute("serverInfo") + "]:"
+            String infoLog = "response[seqId:" + invocationContext.seqId() + ", server: " + filterContext.getAttribute("serverInfo") + "]: "
                     + "service[" + invocationContext.serviceName()
-                    + "]:version[" + invocationContext.versionName()
-                    + "]:method[" + invocationContext.methodName()
-                    + "] cost[total:" + invocationInfo.serviceTime()
-                    + ", calleeTime1:" + invocationInfo.calleeTime1()
-                    + ", calleeTime2" + invocationInfo.calleeTime2();
+                    + "]: version[" + invocationContext.versionName()
+                    + "]: method[" + invocationContext.methodName()
+                    + "] cost[total: " + invocationInfo.serviceTime()
+                    + ", calleeTime1: " + invocationInfo.calleeTime1()
+                    + ", calleeTime2: " + invocationInfo.calleeTime2()
+                    + ", calleeIp: " + invocationInfo.calleeIp();
 
             LOGGER.info(getClass().getSimpleName() + "::onExit," + infoLog);
         } finally {
