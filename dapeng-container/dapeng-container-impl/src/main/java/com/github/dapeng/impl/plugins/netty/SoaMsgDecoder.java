@@ -130,7 +130,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
                     + "]:method[" + soaHeader.getMethodName() + "]"
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "") + " "
                     + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "") + " "
-                    + (soaHeader.getCallerIp().isPresent() ? " callerIp: " + soaHeader.getCalleeIp().get() : "");
+                    + (soaHeader.getCallerIp().isPresent() ? " callerIp: " + soaHeader.getCallerIp().get() : "");
             LOGGER.debug(getClass().getSimpleName() + "::decode " + debugLog + ", payload:\n" + args);
         }
         return args;
