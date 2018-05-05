@@ -32,7 +32,7 @@ public class SlowServiceCheckFilter implements Filter {
             long processTime = System.currentTimeMillis() - task.startTime();
             LOGGER.info(" task startTime: " + task.startTime() + "  endTime: " + System.currentTimeMillis() + " processTime: " + processTime);
 
-            long maxProcessTime = getMaxProccessTime(task.serviceName(),task.versionName(), task.methodName());
+            long maxProcessTime = (Long)ctx.getAttribute("slowServiceTime");
 
             if (processTime >= maxProcessTime) {
                 final StackTraceElement[] stackElements = task.currentThread().getStackTrace();
@@ -53,23 +53,5 @@ public class SlowServiceCheckFilter implements Filter {
         prev.onExit(ctx);
     }
 
-
-    /**
-     * 超时逻辑:
-     * 1. TODO 如果Zk设置了服务最大处理时间，则取ZK的
-     * 2. zk没有，则去环境变量的，否则取默认的最大处理时间
-     *
-     * @param service the serviceName to set
-     * @param version the version to set
-     * @param method the method to set
-     * @return
-     */
-    private long getMaxProccessTime(String service, String version, String method) {
-
-        long defaultTimeout = SoaSystemEnvProperties.SOA_MAX_PROCESS_TIME;
-
-        return defaultTimeout;
-
-    }
 
 }
