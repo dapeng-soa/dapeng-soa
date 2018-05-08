@@ -721,8 +721,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                             oproto.writeDouble(value);
                             break;
                         case BIGDECIMAL:
-                            //TODO ??
-                            oproto.writeDouble(value);
+                            oproto.writeString(String.valueOf(value));
                             break;
                         case BYTE:
                             oproto.writeByte((byte) value);
@@ -766,10 +765,6 @@ public class JsonSerializer implements BeanSerializer<String> {
                             oproto.writeI64((long) value);
                             break;
                         case DOUBLE:
-                            oproto.writeDouble(value);
-                            break;
-                        case BIGDECIMAL:
-                            //TODO ??
                             oproto.writeDouble(value);
                             break;
                         case BYTE:
@@ -832,8 +827,10 @@ public class JsonSerializer implements BeanSerializer<String> {
                             oproto.writeBool(Boolean.parseBoolean(value));
                             break;
                         case DOUBLE:
-                        case BIGDECIMAL:
                             oproto.writeDouble(Double.parseDouble(value));
+                            break;
+                        case BIGDECIMAL:
+                            oproto.writeString(value);
                             break;
                         case INTEGER:
                             oproto.writeI32(Integer.parseInt(value));
