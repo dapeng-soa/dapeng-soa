@@ -10,7 +10,6 @@ import com.github.dapeng.core.ServiceInfo;
 import com.github.dapeng.impl.container.DapengApplication;
 import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.registry.RegistryAgentProxy;
-import com.github.dapeng.registry.ZkNodeConfigContext;
 import com.github.dapeng.registry.zookeeper.RegistryAgentImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

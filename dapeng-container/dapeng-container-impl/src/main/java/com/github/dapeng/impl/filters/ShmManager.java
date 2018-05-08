@@ -94,15 +94,15 @@ public class ShmManager {
     /**
      * 限流规则
      */
-    static class FreqControlRule {
-        String app;
-        String ruleType;
-        int minInterval;
-        int maxReqForMinInterval;
-        int midInterval;
-        int maxReqForMidInterval;
-        int maxInterval;
-        int maxReqForMaxInterval;
+    public static class FreqControlRule {
+        public String app;
+        public String ruleType;
+        public int minInterval;
+        public int maxReqForMinInterval;
+        public int midInterval;
+        public int maxReqForMidInterval;
+        public int maxInterval;
+        public int maxReqForMaxInterval;
 
         @Override
         public String toString() {
@@ -504,7 +504,6 @@ public class ShmManager {
         File file = new File("/data/shm.data");
         RandomAccessFile access = new RandomAccessFile(file, "rw");
 
-        // MappedBuffer buffer = access.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, TOTAL_MEM_BYTES);
         buffer = access.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, TOTAL_MEM_BYTES);
 
         Field address = Buffer.class.getDeclaredField("address");

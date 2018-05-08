@@ -316,7 +316,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         private final SoaServiceDefinition<I> serviceDef;
         private final SoaFunctionDefinition<I, REQ, RESP> soaFunction;
 
-        DispatchFilter(SoaServiceDefinition<I> serviceDef,
+         DispatchFilter(SoaServiceDefinition<I> serviceDef,
                               SoaFunctionDefinition<I, REQ, RESP> soaFunction) {
 
             this.serviceDef = serviceDef;
