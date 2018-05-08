@@ -12,8 +12,11 @@ import java.lang.reflect.Field;
 import java.nio.Buffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Root Page 4K(version:1, nodePageCount:128K, rootPageLock(i32), nextUtf8offset, nextDictionId, resolved)
@@ -39,6 +42,7 @@ public class ShmManager {
      * nodePage数量, 128K
      */
     private final static int NODE_PAGE_COUNT = 128 * 1024;
+//    private final static int NODE_PAGE_COUNT = 2;
     /**
      * DictionRoot域的地址偏移量, 该域占用12K
      */
@@ -133,13 +137,34 @@ public class ShmManager {
      * 计数节点
      */
     static class CounterNode {
-        short appId;  // app 被映射为 16bit id
-        short ruleTypeId;  // rule_type_id 被映射为 16bit id
-        int key;  // ip, userId, callerMid etc.
-        int timestamp;  // last updated unix epoch, seconds since 1970.
-        int minCount;  // min interval counter
-        int midCount;  // mid interval counter
-        int maxCount;  // max interval counter
+        /**
+         * app 被映射为 16bit id
+         */
+        short appId;
+        /**
+         * rule_type_id 被映射为 16bit id
+         */
+        short ruleTypeId;
+        /**
+         * ip, userId, callerMid etc.
+         */
+        int key;
+        /**
+         * last updated unix epoch, seconds since 1970.
+         */
+        int timestamp;
+        /**
+         * min interval counter
+         */
+        int minCount;
+        /**
+         * mid interval counter
+         */
+        int midCount;
+        /**
+         * max interval counter
+         */
+        int maxCount;
 
         @Override
         public String toString() {
@@ -184,6 +209,7 @@ public class ShmManager {
                 node = insertCounterNode(appId, ruleTypeId, key, now, nodeAddr);
             } else if (nodePageMeta.nodes == MAX_NODE_PER_PAGE) {
                 //todo 淘汰老node
+                node = eliminateAndInsertNodes(nodePageMeta, appId, ruleTypeId, key, now, nodeAddr, rule);
             } else {
                 node = createNodeIfNotExist(appId, ruleTypeId, key,
                         nodePageMeta, now,
@@ -205,6 +231,7 @@ public class ShmManager {
         return result;
     }
 
+
     private CounterNode createNodeIfNotExist(short appId, short ruleTypeId, int key,
                                              NodePageMeta nodePageMeta, int now, long nodeAddr,
                                              FreqControlRule rule) {
@@ -215,17 +242,23 @@ public class ShmManager {
             short _appId = getShort(nodeAddr);
             if (_appId == 0) break;
 
-            if (appId != _appId) continue;
+            if (appId != _appId) {
+                nodeAddr += 24;
+                continue;
+            }
 
             nodeAddr += Short.BYTES;
             short _ruleTypeId = getShort(nodeAddr);
-            if (ruleTypeId != _ruleTypeId) continue;
+            if (ruleTypeId != _ruleTypeId) {
+                nodeAddr += 22;
+                continue;
+            }
 
             nodeAddr += Short.BYTES;
             int _key = getInt(nodeAddr);
             if (key != _key) {
                 //skip rest bytes
-                nodeAddr += Integer.BYTES * 4;
+                nodeAddr += Integer.BYTES * 5;
                 continue;
             }
 
@@ -279,6 +312,7 @@ public class ShmManager {
         return node;
     }
 
+
     private CounterNode insertCounterNode(short appId, short ruleTypeId, int key,
                                           int timestamp, long addr) {
         long t1 = System.nanoTime();
@@ -307,6 +341,150 @@ public class ShmManager {
 
         LOGGER.debug("insertCounterNode node:{}, cost:{}", node, System.nanoTime() - t1);
         return node;
+    }
+
+
+    /**
+     * 淘汰算法
+     *
+     * @param nodePageMeta
+     * @param appId
+     * @param ruleTypeId
+     * @param key
+     * @param now
+     * @param nodeAddr
+     * @param rule
+     */
+    private CounterNode eliminateAndInsertNodes(NodePageMeta nodePageMeta, short appId, short ruleTypeId, int key, int now, long nodeAddr, FreqControlRule rule) {
+        long t1 = System.nanoTime();
+        List<MarkNode> markNodes = new ArrayList<>(64);
+        for (int index = 0; index < nodePageMeta.nodes; index++) {
+            CounterNode node = new CounterNode();
+            MarkNode markNode = new MarkNode(nodeAddr + index * 24);
+
+            getNodeFromMemory(node, nodeAddr);
+            nodeAddr += 24;
+            processNodeRate(node, markNode, rule, now);
+            markNode.key = node.key;
+            markNodes.add(markNode);
+        }
+        long postion = eliminateNode(markNodes);
+        LOGGER.debug("eliminateAndInsertNode, index:{}, cost:{}", nodePageMeta.nodes, System.nanoTime() - t1);
+        return insertCounterNode(appId, ruleTypeId, key, now, postion);
+    }
+
+
+    private static class MarkNode {
+        long position;
+        double rate;
+        boolean isRemove = false;
+        int key;
+
+        public MarkNode(long position) {
+            this.position = position;
+        }
+
+        @Override
+        public String toString() {
+            return "MarkNode{ position=" + position + ", rate=" + rate + ", isRemove=" + isRemove + ", key=" + key + '}';
+        }
+    }
+
+    /**
+     * 从 nodePage 获取 node 值
+     *
+     * @param nodeAddr
+     * @return
+     */
+    private void getNodeFromMemory(CounterNode node, long nodeAddr) {
+        // I16
+        node.appId = getShort(nodeAddr);
+        nodeAddr += Short.BYTES;
+        //I16
+        node.ruleTypeId = getShort(nodeAddr);
+        nodeAddr += Short.BYTES;
+        //I32
+        node.key = getInt(nodeAddr);
+        nodeAddr += Integer.BYTES;
+        //i32
+        node.timestamp = getInt(nodeAddr);
+        nodeAddr += Integer.BYTES;
+        //i32 min interval counter
+        node.minCount = getInt(nodeAddr);
+        nodeAddr += Integer.BYTES;
+        //i32 mid interval counter
+        node.midCount = getInt(nodeAddr);
+        nodeAddr += Integer.BYTES;
+        //i32 max interval counter
+        node.maxCount = getInt(nodeAddr);
+        nodeAddr += Integer.BYTES;
+    }
+
+    /**
+     * process node rate due to eliminate
+     *
+     * @param node
+     * @param markNode
+     * @param rule
+     * @param now
+     */
+    private void processNodeRate(CounterNode node, MarkNode markNode, FreqControlRule rule, int now) {
+        boolean isSameMin = now / rule.minInterval == node.timestamp / rule.minInterval;
+        boolean isSameMid = now / rule.midInterval == node.timestamp / rule.midInterval;
+        boolean isSameMax = now / rule.maxInterval == node.timestamp / rule.maxInterval;
+
+        if (!isSameMin) {
+            node.minCount = 0;
+        }
+        if (!isSameMid) {
+            node.midCount = 0;
+        }
+        if (!isSameMax) {
+            node.maxCount = 0;
+        }
+
+        double minRate = node.minCount / rule.maxReqForMinInterval * rule.minInterval / (now % rule.minInterval + 1);
+        double midRate = node.midCount / rule.maxReqForMidInterval * rule.midInterval / (now % rule.midInterval + 1);
+        double maxRate = node.maxCount / rule.maxReqForMaxInterval * rule.maxInterval / (now % rule.maxInterval + 1);
+
+        //～～～～～～～～～～～～～～～
+        double rate;
+        if (minRate < midRate) {
+            if (midRate < maxRate) {
+                rate = maxRate;
+            } else {
+                rate = midRate;
+            }
+        } else {
+            if (minRate < maxRate) {
+                rate = maxRate;
+            } else {
+                rate = minRate;
+            }
+        }
+
+        if (rate < 0.1) {
+            markNode.isRemove = true;
+        } else {
+            // 如果没有 rate < 0.1的节点，则 筛选 rate 最小的2个节点，删除之。
+            markNode.rate = rate;
+        }
+    }
+
+    /**
+     * do get postion
+     *
+     * @param markNodes
+     */
+    private long eliminateNode(List<MarkNode> markNodes) {
+        List<MarkNode> collect = markNodes.stream().filter(node -> node.isRemove).collect(Collectors.toList());
+        if (collect.size() > 0) {
+            return collect.get(0).position;
+        }
+        List<MarkNode> sortList = markNodes.stream().sorted((n1, n2) -> (int) (n1.rate - n2.rate)).collect(Collectors.toList());
+        long postion = sortList.get(0).position;
+
+        return postion;
     }
 
     private void updateNodePageMeta(NodePageMeta nodePageMeta, int nodePageIndex) {
@@ -575,14 +753,23 @@ public class ShmManager {
         rule.maxReqForMaxInterval = 500;
 
         long t1 = System.currentTimeMillis();
-        for (int i = 0; i < 1000000; i++) {
-            manager.reportAndCheck(rule, 100);
-        }
+        for (int i = 0; i < 10000; i++) {
+            for (int j = 0; j < 100; j++) {
+                manager.reportAndCheck(rule, j);
 
-        new Thread( ()-> { ttt(manager, rule, 100); }).start();
+            }
+        }
+        long t2 = System.currentTimeMillis();
+
+        System.out.println((t2 - t1));
+
+
+
+
+       /* new Thread( ()-> { ttt(manager, rule, 100); }).start();
         new Thread( ()-> { ttt(manager, rule, 101); }).start();
         new Thread( ()-> { ttt(manager, rule, 102); }).start();
-        new Thread( ()-> { ttt(manager, rule, 103); }).start();
+        new Thread( ()-> { ttt(manager, rule, 103); }).start();*/
 
 
 //        System.out.println("cost1:" + (System.currentTimeMillis() - t1));
@@ -597,13 +784,13 @@ public class ShmManager {
 //        }
     }
 
-    static void ttt(ShmManager manager, FreqControlRule rule, int key){
+    static void ttt(ShmManager manager, FreqControlRule rule, int key) {
         long t1 = System.currentTimeMillis();
         for (int i = 0; i < 1000000; i++) {
             manager.reportAndCheck(rule, key);
         }
         long t2 = System.currentTimeMillis();
-        System.out.println(Thread.currentThread() + " cost:" + (t2-t1) + "ms");
+        System.out.println(Thread.currentThread() + " cost:" + (t2 - t1) + "ms");
     }
 
 }
