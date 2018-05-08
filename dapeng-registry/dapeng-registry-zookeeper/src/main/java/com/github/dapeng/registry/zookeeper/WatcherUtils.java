@@ -126,6 +126,22 @@ public class WatcherUtils {
                             zkInfo.loadbalanceConfig.serviceConfigs.put(props[0], LoadBalanceStrategy.findByValue(props[1]));
                         }
                     }
+                } else if (typeValue.equals(ConfigKey.SlowServiceTime.getValue())) {
+                    if (isGlobal) {
+                        String value = property.split("/")[1];
+                        zkInfo.slowServiceTimeConfig.globalConfig = timeHelper(value);
+                    } else {
+                        String[] keyValues = property.split(",");
+                        for (String keyValue : keyValues) {
+                            String[] props;
+                            if (keyValue.contains("/")) {
+                                props = keyValue.split("/");
+                            } else {
+                                props = keyValue.split(":");
+                            }
+                            zkInfo.slowServiceTimeConfig.serviceConfigs.put(props[0], timeHelper(props[1]));
+                        }
+                    }
                 }
             }
             LOGGER.info("get config from {} with data [{}]", zkInfo.service, configData);
