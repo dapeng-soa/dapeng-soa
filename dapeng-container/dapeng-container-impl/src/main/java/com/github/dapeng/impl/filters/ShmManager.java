@@ -153,25 +153,14 @@ public class ShmManager {
         }
     }
 
-    static class Result{
-        boolean contorl;
-        CounterNode result_node;
-        private  Result(){
-            contorl = false;
-            result_node = new CounterNode();
-        }
-    }
-
-
     /**
      * @param rule 规则对象
      * @param key  目前仅支持 int 值，例如 userId， userIp值等。
      *             如果是字符串，需要先取hash，再按此进行限流。
      * @return
      */
-    public Result reportAndCheck(FreqControlRule rule, int key) {
+    public boolean reportAndCheck(FreqControlRule rule, int key) {
         boolean result;
-        Result result_return = new Result();
         short appId = getId(rule.app);
         short ruleTypeId = getId(rule.ruleType);
 
@@ -216,11 +205,9 @@ public class ShmManager {
             freeNodePageLock(nodePageIndex);
         }
 
-        result_return.contorl = result;
-        result_return.result_node = node;
 
         LOGGER.debug("reportAndCheck end, result:{}, cost:{}", result, System.nanoTime() - t1);
-        return result_return;
+        return result;
     }
 
     private CounterNode createNodeIfNotExist(short appId, short ruleTypeId, int key,
@@ -577,20 +564,7 @@ public class ShmManager {
     }
 
 
-    public static void process(ShmManager manager,FreqControlRule rule){
 
-        Thread t = Thread.currentThread();
-        Result result = new Result();
-        long t1 = System.nanoTime();
-        for (int i = 0; i <10000; i++) {
-            result = manager.reportAndCheck(rule, 2034596153);
-        }
-        System.out.println("threadname: "+t.getName()+" cost = "+ (System.nanoTime() - t1));
-        System.out.println("threadname: "+t.getName()+" flowControl = "+ result.contorl+
-                " mincount = "+ result.result_node.minCount+
-                " midcount = "+ result.result_node.midCount+
-                " maxcount = "+ result.result_node.maxCount);
-    }
     public static void main(String[] args) {
 
         ShmManager manager = ShmManager.getInstance();
@@ -609,9 +583,12 @@ public class ShmManager {
                 " freqrule:["+ rule.minInterval + "," + rule.maxReqForMinInterval +
                 "/" + rule.midInterval + "," + rule.maxReqForMidInterval +
                 "/" + rule.maxInterval + "," + rule.maxReqForMaxInterval + "]");
+        long t1 = System.nanoTime();
+        for (int i = 0; i <10000; i++) {
+            manager.reportAndCheck(rule, 2034596153);
+        }
+        System.out.println("cost = "+ (System.nanoTime() - t1));
 
-        new Thread(()->process(manager,rule)).start();
-        new Thread(()->process(manager,rule)).start();
 
     }
 }
