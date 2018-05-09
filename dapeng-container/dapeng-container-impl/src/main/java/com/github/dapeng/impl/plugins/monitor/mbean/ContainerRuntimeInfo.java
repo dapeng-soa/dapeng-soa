@@ -1,5 +1,7 @@
 package com.github.dapeng.impl.plugins.monitor.mbean;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.core.Application;
 import com.github.dapeng.impl.plugins.monitor.config.MonitorFilterProperties;
@@ -9,7 +11,6 @@ import com.github.dapeng.impl.plugins.netty.SoaInvokeCounter;
 import com.github.dapeng.util.DumpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -24,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerRuntimeInfo.class);
+    private LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
     private final static String METHOD_NAME_KEY = "method_name";
     private String containerVersion = null;
     private final Container container;
@@ -31,6 +33,46 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     public ContainerRuntimeInfo(Container container) {
         super();
         this.container = container;
+    }
+
+    @Override
+    public void setLoggerLevel(String loggerName, String levelStr) {
+        if (loggerName == null) {
+            return;
+        }
+        if (levelStr == null) {
+            return;
+        }
+        loggerName = loggerName.trim();
+        levelStr = levelStr.trim();
+
+        LOGGER.info("Jmx Trying to set logger level [" + levelStr + "] to logger [" + loggerName +"]");
+
+        ch.qos.logback.classic.Logger logger = loggerContext.getLogger(loggerName);
+        if ("null".equalsIgnoreCase(levelStr)) {
+            logger.setLevel(null);
+        } else {
+            Level level = Level.toLevel(levelStr, null);
+            if (level != null) {
+                logger.setLevel(level);
+            }
+        }
+    }
+
+    @Override
+    public String getLoggerLevel(String loggerName) {
+        if (loggerName == null) {
+            return "";
+        }
+
+        loggerName = loggerName.trim();
+
+        ch.qos.logback.classic.Logger logger = loggerContext.exists(loggerName);
+        if (logger != null && logger.getLevel() != null) {
+            return logger.getLevel().toString();
+        } else {
+            return "";
+        }
     }
 
     @Override
