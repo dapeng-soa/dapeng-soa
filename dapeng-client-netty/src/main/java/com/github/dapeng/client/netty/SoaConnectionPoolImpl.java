@@ -170,10 +170,11 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
                 .filter(rt -> checkVersion(version, rt.version))
                 .collect(Collectors.toList());
-        // router
-        List<RuntimeInstance> byRouter = router(service, method, version, compatibles);
 
-        RuntimeInstance inst = loadBalance(service, version, method, byRouter);
+        // 可用服务实例 经过路由规则进行过滤
+        List<RuntimeInstance> routedInstances = router(service, method, version, compatibles);
+
+        RuntimeInstance inst = loadBalance(service, version, method, routedInstances);
         if (inst == null) {
             logger.error(getClass().getSimpleName() + "::findConnection[service:" + service + "], instance not found");
             return null;
