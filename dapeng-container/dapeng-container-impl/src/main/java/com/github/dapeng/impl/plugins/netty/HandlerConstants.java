@@ -17,5 +17,6 @@ public class HandlerConstants {
     public static final String SOA_INVOKE_COUNTER_HANDLER = "SoaInvokeCounterHandler";
     public static final String SOA_IDLE_HANDLER = "soaIdleHandler";
     public static final String SOA_SERVER_HANDLER = "soaServerHandler";
+    public static final String SOA_FREQ_HANDLER = "soaFreqHandler";
 
 }

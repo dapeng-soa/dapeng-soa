@@ -70,6 +70,8 @@ public class ZkServiceInfo {
      */
     public Config<LoadBalanceStrategy> loadbalanceConfig = new Config<>();
 
+    public Config<Long> slowServiceTimeConfig = new Config<>();
+
     /**
      * config class
      */

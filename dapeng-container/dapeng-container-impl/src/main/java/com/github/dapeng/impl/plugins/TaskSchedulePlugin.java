@@ -6,18 +6,8 @@ import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.Plugin;
 import com.github.dapeng.api.events.AppEvent;
-import com.github.dapeng.core.Application;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.ServiceInfo;
-import com.github.dapeng.core.definition.SoaServiceDefinition;
-import com.github.dapeng.core.timer.ScheduledTask;
-import com.github.dapeng.core.timer.ScheduledTaskCron;
-import com.github.dapeng.api.AppListener;
-import com.github.dapeng.api.Container;
-import com.github.dapeng.api.ContainerFactory;
-import com.github.dapeng.api.Plugin;
-import com.github.dapeng.api.events.AppEvent;
-import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.timer.ScheduledTask;
 import com.github.dapeng.core.timer.ScheduledTaskCron;
@@ -115,7 +105,10 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
 
         taskMethods.forEach(method -> {
             String methodName = method.getName();
-
+            if (method.getParameterCount() > 0) {
+                LOGGER.error("定时任务({}:{}) 方法定义有误,定时任务方法不能有参数.", ifaceClass.getName(), methodName);
+                throw new IllegalArgumentException("定时任务("+ifaceClass.getName()+":"+methodName+") 方法定义有误,定时任务方法不能有参数.");
+            }
             ScheduledTaskCron cron = method.getAnnotation(ScheduledTaskCron.class);
             String cronStr = cron.cron();
 

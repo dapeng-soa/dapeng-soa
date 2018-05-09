@@ -72,6 +72,9 @@ public class NettyPlugin implements AppListener, Plugin {
                     ChannelHandler soaServerHandler = new SoaServerHandler(container);
                     ChannelHandler soaFlowCounter = flowCounter;
 
+                    //限流 handler
+                    SoaFreqHandler freqHandler = new SoaFreqHandler();
+
                     bootstrap.group(bossGroup, workerGroup)
                             .channel(NioServerSocketChannel.class)
                             .childHandler(new ChannelInitializer<SocketChannel>() {
@@ -91,6 +94,8 @@ public class NettyPlugin implements AppListener, Plugin {
                                     if (MONITOR_ENABLE)
                                         ch.pipeline().addLast(HandlerConstants.SOA_INVOKE_COUNTER_HANDLER, new SoaInvokeCounter());
                                     ch.pipeline().addLast(HandlerConstants.SOA_IDLE_HANDLER, soaIdleHandler);
+                                    // 添加服务限流handler
+                                    ch.pipeline().addLast(HandlerConstants.SOA_FREQ_HANDLER, freqHandler);
                                     ch.pipeline().addLast(HandlerConstants.SOA_SERVER_HANDLER, soaServerHandler);
                                 }
                             })

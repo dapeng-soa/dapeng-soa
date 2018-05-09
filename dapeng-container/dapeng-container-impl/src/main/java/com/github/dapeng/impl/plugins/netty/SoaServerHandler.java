@@ -133,7 +133,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             }
 
             HeadFilter headFilter = new HeadFilter();
-            Filter dispatchFilter = new DispatchFilter(serviceDef, soaFunction, args);
+            Filter dispatchFilter = new DispatchFilter(serviceDef, soaFunction);
 
             SharedChain sharedChain = new SharedChain(headFilter, container.getFilters(), dispatchFilter, 0);
 
@@ -143,6 +143,11 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             filterContext.setAttribute("application", application);
             filterContext.setAttribute("isAsync", serviceDef.isAsync);
             filterContext.setAttribute("request",args);
+
+            //获取slowServiceTime config
+            long slowServiceTime = getSlowServiceTime(soaHeader);
+            filterContext.setAttribute("slowServiceTime", slowServiceTime);
+
             filterContext.setAttach(dispatchFilter, "chain", sharedChain);
 
             sharedChain.onEntry(filterContext);
@@ -249,18 +254,72 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         return timeout;
     }
 
+    /**
+     * TODO
+     * 获取timeout参数. 优先级如下:
+     * 1. 如果invocationContext有设置的话, 那么用invocationContext的(这个值每次调用都可能不一样)
+     * 2. invocationContext没有的话, 就拿Option的(命令行或者环境变量)
+     * 3. 没设置Option的话, 那么取ZK的.
+     * 4. ZK没有的话, 拿IDL的(暂没实现该参数)
+     * 5. 都没有的话, 拿默认值.(这个值所有方法一致, 假设为50S)
+     * <p>
+     * 最后校验一下,拿到的值不能超过系统设置的最大值
+     * <p>
+     * 如果得到的数据超过最大值, 那么就用最大值.
+     *
+     * @param soaHeader
+     * @return
+     */
+    private long getSlowServiceTime(SoaHeader soaHeader) {
+        long timeout = 0L;
+        String serviceKey = soaHeader.getServiceName();
+        ZkServiceInfo configInfo = RegistryAgentProxy.getCurrentInstance(RegistryAgentProxy.Type.Server).getConfig(false, serviceKey);
+
+        long envSlowServiceTime = SoaSystemEnvProperties.SOA_MAX_PROCESS_TIME;
+        if (null != configInfo) {
+            //方法级别
+            Long methodSlowServiceTime = configInfo.slowServiceTimeConfig.serviceConfigs.get(soaHeader.getMethodName());
+            //服务配置
+            Long serviceSlowServiceTime = configInfo.slowServiceTimeConfig.serviceConfigs.get(ConfigKey.SlowServiceTime.getValue());
+            //全局
+            Long globalSlowServiceTime = configInfo.slowServiceTimeConfig.globalConfig;
+
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(getClass().getSimpleName() + "::slowServiceTime request:serviceName:{},methodName:{}," +
+                                " methodTimeOut:{},serviceTimeOut:{},globalTimeOut:{}",
+                        soaHeader.getServiceName(), soaHeader.getMethodName(), methodSlowServiceTime, serviceSlowServiceTime, globalSlowServiceTime);
+            }
+
+            Long slowServiceTimeConfig;
+
+            if (methodSlowServiceTime != null) {
+                slowServiceTimeConfig = methodSlowServiceTime;
+            } else if (serviceSlowServiceTime != null) {
+                slowServiceTimeConfig = serviceSlowServiceTime;
+            } else if (globalSlowServiceTime != null) {
+                slowServiceTimeConfig = globalSlowServiceTime;
+            } else {
+                slowServiceTimeConfig = null;
+            }
+
+            timeout = (slowServiceTimeConfig != null) ? slowServiceTimeConfig.longValue() : envSlowServiceTime;
+        }
+        if (timeout == 0L) {
+            timeout = envSlowServiceTime;
+        }
+
+        return timeout;
+    }
+
 
     class DispatchFilter<I, REQ, RESP> implements Filter {
         private final SoaServiceDefinition<I> serviceDef;
-        private final REQ args;
         private final SoaFunctionDefinition<I, REQ, RESP> soaFunction;
 
-        DispatchFilter(SoaServiceDefinition<I> serviceDef,
-                              SoaFunctionDefinition<I, REQ, RESP> soaFunction,
-                              REQ args) {
+         DispatchFilter(SoaServiceDefinition<I> serviceDef,
+                              SoaFunctionDefinition<I, REQ, RESP> soaFunction) {
 
             this.serviceDef = serviceDef;
-            this.args = args;
             this.soaFunction = soaFunction;
         }
 
@@ -274,6 +333,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
             I iface = serviceDef.iface;
             TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
+            REQ args = (REQ)filterContext.getAttribute("request");
 
             try {
                 if (LOGGER.isDebugEnabled()) {

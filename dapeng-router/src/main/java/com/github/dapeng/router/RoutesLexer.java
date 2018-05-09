@@ -148,7 +148,7 @@ public class RoutesLexer {
     }
 
     /**
-     * 解析 正则 token
+     * 解析 正则 token,需要进行转义
      * <p>
      * r"get.*"
      * r'get.*'
@@ -162,10 +162,17 @@ public class RoutesLexer {
         do {
             throwExWithCondition(ch == EOI || ch == EOF,
                     "[RegexEx]", "parse IP_REGEX failed,check the IP_REGEX express:" + sb.toString());
+            //处理正则转义
+            processRegexChar(ch);
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
         String value = sb.toString();
         return new RegexToken(value);
+    }
+
+    private void processRegexChar(char ch) {
+
+
     }
 
 
@@ -338,7 +345,7 @@ public class RoutesLexer {
         char ws;
         while (((1L << (ws = nextChar())) & ((ws - 64) >> 31) & 0x100002600L) != 0L
                 && ws != '\n'
-                && ws != '\r');
+                && ws != '\r') ;
         pos--;
     }
 

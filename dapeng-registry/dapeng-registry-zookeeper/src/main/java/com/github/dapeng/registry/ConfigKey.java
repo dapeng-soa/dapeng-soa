@@ -1,5 +1,7 @@
 package com.github.dapeng.registry;
 
+import io.netty.util.Timeout;
+
 /**
  * Created by tangliu on 2016/2/16.
  */
@@ -18,6 +20,8 @@ public enum ConfigKey {
     FailOver("failover"),
 
     Compatible("compatible"),
+
+    SlowServiceTime("slowServiceTime"),
 
     TimeOut("timeout");
 
@@ -47,6 +51,10 @@ public enum ConfigKey {
                 return FailOver;
             case "compatible":
                 return Compatible;
+            case "timeout":
+                return TimeOut;
+            case "slowServiceTime":
+                return SlowServiceTime;
             default:
                 return null;
         }

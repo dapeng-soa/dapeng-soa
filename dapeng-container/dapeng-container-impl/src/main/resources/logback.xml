@@ -120,7 +120,7 @@
         <appender-ref ref="GBTRANSACTIONFILE"/>
     </logger>
 
-    <root level="INFO">
+    <root level="WARN">
         <if condition='!property("soa.run.mode").equals("native")'>
             <then>
                 <appender-ref ref="STDOUT"/>
