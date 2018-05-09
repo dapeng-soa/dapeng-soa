@@ -209,7 +209,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
                 signalLock.unlock();
             }
 
-        }, initialDelay + 50, PERIOD * 1000, TimeUnit.MILLISECONDS);
+        }, initialDelay , PERIOD * 1000, TimeUnit.MILLISECONDS);
 
         // uploader point thread.
         uploaderExecutor.execute(() -> {
@@ -234,13 +234,13 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
                             // 上送出错
                             LOGGER.error(e.getMessage(), e);
                             if (LOGGER.isDebugEnabled())
-                                LOGGER.debug(Thread.currentThread().getName() + " has upload " + uploads + " points, now  release the lock.");
+                                LOGGER.debug(Thread.currentThread().getName() + " upload error points:" + uploads + ", now  release the lock.");
                             uploads = 0;
                             signalCondition.await();
                         }
                     } else {
                         if (LOGGER.isDebugEnabled())
-                            LOGGER.debug(Thread.currentThread().getName() + " has upload " + uploads + " points, now  release the lock.");
+                            LOGGER.debug(Thread.currentThread().getName() + " points is empty points:" + uploads + ", now  release the lock.");
                         uploads = 0;
                         signalCondition.await();
                     }
