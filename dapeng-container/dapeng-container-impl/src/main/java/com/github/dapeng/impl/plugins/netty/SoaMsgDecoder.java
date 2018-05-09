@@ -6,6 +6,7 @@ import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.DapengUtil;
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
@@ -140,7 +141,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         if (soaHeader.getCallerMid().isPresent()) {
             ctx.callerMid(soaHeader.getCallerMid().get());
         }
-        ctx.callerIp(soaHeader.getCallerIp().orElse(null));
+        ctx.callerIp(IPUtils.transferIp(soaHeader.getCallerIp().orElse(null)));
         if (soaHeader.getUserId().isPresent()) {
             ctx.userId(soaHeader.getUserId().get());
         }

@@ -1,5 +1,7 @@
 package com.github.dapeng.core;
 
+import com.github.dapeng.core.helper.IPUtils;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -65,7 +67,7 @@ public class SoaHeader {
     /**
      * 服务会话发起人Ip
      */
-    private Optional<String> userIp = Optional.empty();
+    private Optional<Integer> userIp = Optional.empty();
     /**
      * 服务会话发起操作人Id, 特指后台用户
      */
@@ -81,10 +83,9 @@ public class SoaHeader {
     private Optional<String> callerMid = Optional.empty();
 
     /**
-     * todo 用int类型传输ip
      * 调用者ip
      */
-    private Optional<String> callerIp = Optional.empty();
+    private Optional<Integer> callerIp = Optional.empty();
     /**
      * 调用者port, 只有在dapeng容器内才需要设置这个值
      */
@@ -102,8 +103,7 @@ public class SoaHeader {
     private Optional<String> respMessage = Optional.empty();
 
     private Optional<String> calleeTid = Optional.empty();
-    //todo 用int类型传输IP
-    private Optional<String> calleeIp = Optional.empty();
+    private Optional<Integer> calleeIp = Optional.empty();
     private Optional<Integer> calleePort = Optional.empty();
     private Optional<String> calleeMid = Optional.empty();
     private Optional<Integer> calleeTime1 = Optional.empty();
@@ -194,10 +194,10 @@ public class SoaHeader {
     }
 
     public Optional<String> getUserIp() {
-        return userIp;
+        return Optional.of(userIp.map(IPUtils::transferIp).orElse(""));
     }
 
-    public void setUserIp(Optional<String> userIp) {
+    public void setUserIp(Optional<Integer> userIp) {
         this.userIp = userIp;
     }
 
@@ -258,10 +258,10 @@ public class SoaHeader {
     }
 
     public Optional<String> getCalleeIp() {
-        return calleeIp;
+         return Optional.of(calleeIp.map(IPUtils::transferIp).orElse(""));
     }
 
-    public void setCalleeIp(Optional<String> calleeIp) {
+    public void setCalleeIp(Optional<Integer> calleeIp) {
         this.calleeIp = calleeIp;
     }
 
@@ -282,7 +282,7 @@ public class SoaHeader {
     }
 
     public Optional<String> getCallerIp() {
-        return this.callerIp;
+        return Optional.of(callerIp.map(IPUtils::transferIp).orElse(""));
     }
 
     public Optional<Integer> getCallerPort() {
@@ -305,7 +305,7 @@ public class SoaHeader {
         this.calleeTime2 = Optional.ofNullable(calleeTime2);
     }
 
-    public void setCallerIp(String callerIp) {
+    public void setCallerIp(Integer callerIp) {
         this.callerIp = Optional.ofNullable(callerIp);
     }
 

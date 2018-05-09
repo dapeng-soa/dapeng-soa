@@ -1,6 +1,7 @@
 package com.github.dapeng.json;
 
 import com.github.dapeng.core.*;
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaHeaderHelper;
 import com.github.dapeng.core.metadata.*;
 import com.github.dapeng.core.metadata.Service;
@@ -964,7 +965,7 @@ public class JsonSerializer implements BeanSerializer<String> {
 
         private void fillStringToInvocationCtx(String value) {
             if ("calleeIp".equals(currentHeaderName)) {
-                invocationCtx.calleeIp(value);
+                invocationCtx.calleeIp(IPUtils.transferIp(value));
             } else if ("callerMid".equals(currentHeaderName)) {
                 invocationCtx.callerMid(value);
             } else {

@@ -2,8 +2,8 @@ package com.github.dapeng.client.netty;
 
 import com.github.dapeng.client.filter.LogFilter;
 import com.github.dapeng.core.*;
-import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.filter.*;
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.util.DumpUtil;
@@ -16,7 +16,6 @@ import org.slf4j.MDC;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -372,7 +371,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
     private void fillLastInvocationInfo(InvocationInfoImpl info, SoaHeader respHeader) {
         InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         info.calleeTid(respHeader.getCallerTid().orElse(""));
-        info.calleeIp(respHeader.getCalleeIp().orElse(""));
+        info.calleeIp(IPUtils.transferIp(respHeader.getCalleeIp().orElse("")));
         info.calleePort(respHeader.getCalleePort().orElse(0));
         info.calleeMid(respHeader.getCalleeMid().orElse(""));
         info.calleeTime1(respHeader.getCalleeTime1().orElse(0));
