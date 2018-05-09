@@ -76,6 +76,8 @@ public class ShmManager {
      */
     private long homeAddr;
 
+    private MappedByteBuffer buffer;
+
     private ShmManager() {
         try {
             init();
@@ -95,11 +97,11 @@ public class ShmManager {
     static class FreqControlRule {
         String app;
         String ruleType;
-        int minInterval;             //每分钟请求数[min,max]
+        int minInterval;
         int maxReqForMinInterval;
-        int midInterval;             //每小时请求数[min,max]
+        int midInterval;
         int maxReqForMidInterval;
-        int maxInterval;             //每天请求数[min,max]
+        int maxInterval;
         int maxReqForMaxInterval;
 
         @Override
@@ -116,6 +118,7 @@ public class ShmManager {
         int id;
         short utf8offset; // DictionaryData[ 2 * utf8offset ] 处开始存储这个字符串。
     }
+
 
     /**
      * nodePage元数据
@@ -150,14 +153,25 @@ public class ShmManager {
         }
     }
 
+    static class Result{
+        boolean contorl;
+        CounterNode result_node;
+        private  Result(){
+            contorl = false;
+            result_node = new CounterNode();
+        }
+    }
+
+
     /**
      * @param rule 规则对象
      * @param key  目前仅支持 int 值，例如 userId， userIp值等。
      *             如果是字符串，需要先取hash，再按此进行限流。
      * @return
      */
-    public boolean reportAndCheck(FreqControlRule rule, int key) {
+    public Result reportAndCheck(FreqControlRule rule, int key) {
         boolean result;
+        Result result_return = new Result();
         short appId = getId(rule.app);
         short ruleTypeId = getId(rule.ruleType);
 
@@ -165,6 +179,7 @@ public class ShmManager {
         int nodePageIndex = nodePageHash % NODE_PAGE_COUNT;
         int now = (int) (System.currentTimeMillis() / 1000) % 86400;
 
+        CounterNode node = null;
 
         LOGGER.debug("reportAndCheck, rule:{}, nodePageHash:{}, nodePageIndex:{}, timestamp:{}, appId/ruleTypeId/key:{}/{}/{}",
                 rule, nodePageHash, nodePageIndex, now, appId, ruleTypeId, key);
@@ -175,7 +190,7 @@ public class ShmManager {
             getSpinNodePageLock(nodePageIndex);
             LOGGER.debug("reportAndCheck, acquire spin lock cost:{}", System.nanoTime() - t1);
 
-            CounterNode node = null;
+
             long nodeAddr = homeAddr + NODE_PAGE_OFFSET + 1024 * nodePageIndex + 16;
 
             NodePageMeta nodePageMeta = getNodePageMeta(nodePageIndex);
@@ -195,13 +210,17 @@ public class ShmManager {
             result = node.minCount <= rule.maxReqForMinInterval
                     && node.midCount <= rule.maxReqForMidInterval
                     && node.maxCount <= rule.maxReqForMaxInterval;
+
             updateNodePageMeta(nodePageMeta, nodePageIndex);
         } finally {
             freeNodePageLock(nodePageIndex);
         }
 
+        result_return.contorl = result;
+        result_return.result_node = node;
+
         LOGGER.debug("reportAndCheck end, result:{}, cost:{}", result, System.nanoTime() - t1);
-        return result;
+        return result_return;
     }
 
     private CounterNode createNodeIfNotExist(short appId, short ruleTypeId, int key,
@@ -322,9 +341,9 @@ public class ShmManager {
         f.setAccessible(true);
         unsafe = (Unsafe) f.get(null);
 
-        File file = new File("/data/shm.data");
+        File file = new File("f:/data/shm.data");
         RandomAccessFile access = new RandomAccessFile(file, "rw");
-        MappedByteBuffer buffer = access.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, TOTAL_MEM_BYTES);
+        buffer = access.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, TOTAL_MEM_BYTES);
 
         Field address = Buffer.class.getDeclaredField("address");
         address.setAccessible(true);
@@ -558,31 +577,41 @@ public class ShmManager {
     }
 
 
-    public static void main(String[] args) {
-        ShmManager manager = ShmManager.getInstance();
+    public static void process(ShmManager manager,FreqControlRule rule){
 
+        Thread t = Thread.currentThread();
+        Result result = new Result();
+        long t1 = System.nanoTime();
+        for (int i = 0; i <10000; i++) {
+            result = manager.reportAndCheck(rule, 2034596153);
+        }
+        System.out.println("threadname: "+t.getName()+" cost = "+ (System.nanoTime() - t1));
+        System.out.println("threadname: "+t.getName()+" flowControl = "+ result.contorl+
+                " mincount = "+ result.result_node.minCount+
+                " midcount = "+ result.result_node.midCount+
+                " maxcount = "+ result.result_node.maxCount);
+    }
+    public static void main(String[] args) {
+
+        ShmManager manager = ShmManager.getInstance();
         FreqControlRule rule = new FreqControlRule();
         rule.app = "com.today.hello";
-        rule.ruleType = "callId";
+        rule.ruleType = "callIp";
         rule.minInterval = 60;
         rule.maxReqForMinInterval = 20;
         rule.midInterval = 3600;
-        rule.maxReqForMidInterval = 100;
+        rule.maxReqForMidInterval = 80;
         rule.maxInterval = 86400;
-        rule.maxReqForMaxInterval = 500;
+        rule.maxReqForMaxInterval = 200;
 
-        long t1 = System.currentTimeMillis();
-        for (int i = 0; i < 100000; i++) {
-            manager.reportAndCheck(rule, 100);
-        }
+        System.out.println("app: "+ rule.app+
+                " ruleType：" + rule.ruleType+
+                " freqrule:["+ rule.minInterval + "," + rule.maxReqForMinInterval +
+                "/" + rule.midInterval + "," + rule.maxReqForMidInterval +
+                "/" + rule.maxInterval + "," + rule.maxReqForMaxInterval + "]");
 
-        System.out.println("cost1:" + (System.currentTimeMillis() - t1));
+        new Thread(()->process(manager,rule)).start();
+        new Thread(()->process(manager,rule)).start();
 
-        t1 = System.currentTimeMillis();
-        for (int i = 0; i < 100000; i++) {
-            manager.reportAndCheck(rule, 100);
-        }
-
-        System.out.println("cost2:" + (System.currentTimeMillis() - t1));
     }
 }
