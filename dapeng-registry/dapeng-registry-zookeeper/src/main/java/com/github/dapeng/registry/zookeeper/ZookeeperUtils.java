@@ -182,12 +182,26 @@ public class ZookeeperUtils {
 
             // todo
 
+        List<FreqControlRule> datasOfRule = new ArrayList<>();
 
+        String[] str = ruleData.split("\n|\r|\r\n");
 
-
-
-
-        return null;
+        for (int i = 0;i<str.length;i++)
+        {
+            if (str[i].indexOf("rule")!= -1){
+                FreqControlRule rule = new FreqControlRule();
+                rule.app = str[++i].split("=")[1].trim();
+                rule.ruleType = str[++i].split("=")[1].trim();
+                rule.midInterval = Integer.parseInt( str[++i].split("=")[1].trim().split(",")[0]);
+                rule.maxReqForMinInterval = Integer.parseInt( str[i].split("=")[1].trim().split(",")[1]);
+                rule.midInterval = Integer.parseInt(str[++i].split("=")[1].trim().split(",")[0]);
+                rule.maxReqForMidInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[1]);
+                rule.maxInterval = Integer.parseInt(str[++i].split("=")[1].trim().split(",")[0]);
+                rule.maxReqForMaxInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[1]);
+                datasOfRule.add(rule);
+            }
+        }
+        return datasOfRule;
     }
 
 

@@ -8,14 +8,14 @@ package com.github.dapeng.core;
  */
 public class FreqControlRule {
 
-    String app;
-    String ruleType;
-    int minInterval;
-    int maxReqForMinInterval;
-    int midInterval;
-    int maxReqForMidInterval;
-    int maxInterval;
-    int maxReqForMaxInterval;
+    public String app;
+    public String ruleType;
+    public int minInterval;
+    public int maxReqForMinInterval;
+    public int midInterval;
+    public int maxReqForMidInterval;
+    public int maxInterval;
+    public int maxReqForMaxInterval;
 
     @Override
     public String toString() {
