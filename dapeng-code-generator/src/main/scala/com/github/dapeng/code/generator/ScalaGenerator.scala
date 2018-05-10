@@ -481,6 +481,18 @@ class ScalaGenerator extends CodeGenerator {
         </block>
       </block>
 
+      def findByLabel(name: String): {enum.name} = <block>
+        name match <block>
+          {toEnumItemArrayBuffer(enum.enumItems).filterNot(i => i.doc.trim.isEmpty).map { (enumItem: EnumItem) => {
+            <div>case "{enumItem.doc.trim.replace("*","")}" => {enumItem.label}
+            </div>
+          }
+          }}
+          case _ => UNDEFINED
+        </block>
+
+      </block>
+
     </block>
     </div>
   }
