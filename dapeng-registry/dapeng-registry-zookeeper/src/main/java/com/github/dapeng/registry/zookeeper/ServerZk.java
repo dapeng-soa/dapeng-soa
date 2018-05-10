@@ -1,8 +1,10 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.core.FreqControlRule;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.core.helper.MasterHelper;
+import com.github.dapeng.router.Route;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
@@ -30,9 +32,14 @@ public class ServerZk extends CommonZk {
     private RegistryAgent registryAgent;
 
     /**
-     * zk 配置 缓存 ，根据 serivceName + versionName 作为 key
+     * 路由配置信息
      */
-    public final ConcurrentMap<String, ZkServiceInfo> zkConfigMap = new ConcurrentHashMap();
+    private final Map<String, List<FreqControlRule>> freqControlMap = new ConcurrentHashMap<>(16);
+
+    /**
+     * zk 配置 缓存 ，根据 serviceName + versionName 作为 key
+     */
+    public final ConcurrentHashMap<String, ZkServiceInfo> zkConfigMap = new ConcurrentHashMap<>();
 
     public ServerZk(RegistryAgent registryAgent) {
         this.registryAgent = registryAgent;
@@ -62,6 +69,7 @@ public class ServerZk extends CommonZk {
                         create(SERVICE_PATH, null, false);
                         create(CONFIG_PATH, null, false);
                         create(ROUTES_PATH, null, false);
+                        create(FREQ_PATH, null, false);
                         zkConfigMap.clear();
                         LOGGER.info("ServerZk connected to  {} [Zookeeper]", zkHost);
                         if (registryAgent != null) {
@@ -356,4 +364,41 @@ public class ServerZk extends CommonZk {
         zkConfigMap.put(serviceName, info);
         return info;
     }
+
+    /**
+     * 从 zk 获取 服务限流规则，配置在服务节点上
+     */
+    public void getFreqRules() {
+
+
+    }
+
+    /**
+     * route 根据给定路由规则对可运行实例进行过滤
+     *
+     * @return
+     */
+    public List<FreqControlRule> getFreqControl(String service) {
+        if (freqControlMap.get(service) == null) {
+            try {
+                byte[] data = zk.getData(ROUTES_PATH + "/" + service, event -> {
+                    if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                        LOGGER.info("freq 节点 data 发生变更，重新获取信息");
+                        freqControlMap.remove(service);
+                        getFreqControl(service);
+                    }
+                }, null);
+                List<FreqControlRule> freqControlRules = ZookeeperUtils.processFreqRuleData(service, data, freqControlMap);
+                return freqControlRules;
+            } catch (KeeperException | InterruptedException e) {
+                LOGGER.error("获取route service 节点: {} 出现异常", service);
+            }
+        } else {
+            LOGGER.debug("获取route信息, service: {} , route size {}", service, freqControlMap.get(service).size());
+            return this.freqControlMap.get(service);
+        }
+        return null;
+    }
+
+
 }

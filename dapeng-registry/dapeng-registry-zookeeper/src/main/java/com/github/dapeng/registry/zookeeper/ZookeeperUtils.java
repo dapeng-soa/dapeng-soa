@@ -1,9 +1,11 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.core.FreqControlRule;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
-import com.github.dapeng.registry.*;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.ServiceInfo;
+import com.github.dapeng.router.Route;
+import com.github.dapeng.router.RoutesExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,65 +18,12 @@ import java.util.Map;
  * @author tangliu
  * @date 2016/8/8
  */
-public class WatcherUtils {
+public class ZookeeperUtils {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WatcherUtils.class);
-
-    /*public static void processConfigData(String configNode, byte[] data, Map<String, Map<ConfigKey, Object>> config) {
-        try {
-            String propertiesStr = new String(data, "utf-8");
-
-            String[] properties = propertiesStr.split(";");
-
-            Map<ConfigKey, Object> propertyMap = new HashMap<>(properties.length);
-
-            for (String property : properties) {
-
-                String[] key_values = property.split("=");
-                if (key_values.length == 2) {
-
-                    ConfigKey type = ConfigKey.findByValue(key_values[0]);
-                    switch (type) {
-
-                        case Thread:
-                            Integer value = Integer.valueOf(key_values[1]);
-                            propertyMap.put(type, value);
-                            break;
-                        case ThreadPool:
-                            Boolean bool = Boolean.valueOf(key_values[1]);
-                            propertyMap.put(type, bool);
-                            break;
-                        case ClientTimeout:
-                            long clientTimeout = Long.valueOf(key_values[1]);
-                            propertyMap.put(type, clientTimeout);
-                            break;
-                        case ServerTimeout:
-                            long serverTimeout = Long.valueOf(key_values[1]);
-                            propertyMap.put(type, serverTimeout);
-                            break;
-                        case LoadBalance:
-                            propertyMap.put(type, key_values[1]);
-                            break;
-                        case FailOver:
-                            propertyMap.put(type, Integer.valueOf(key_values[1]));
-                            break;
-                        case Compatible:
-                            propertyMap.put(type, key_values[1].split(","));
-                            break;
-                        default:
-                            //just skip
-                    }
-                }
-            }
-            config.put(configNode, propertyMap);
-            LOGGER.info("get config form {} with data [{}]", configNode, propertiesStr);
-        } catch (UnsupportedEncodingException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }*/
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZookeeperUtils.class);
 
     /**
-     * new get config data
+     * 解析 zk /soa/config/service 下的节点的内容
      * <p>
      * timeout/800ms,createSupplier:100ms,modifySupplier:200ms;
      * loadbalance/LeastActive,createSupplier:Random,modifySupplier:RoundRobin;
@@ -184,13 +133,71 @@ public class WatcherUtils {
         caches.put(serviceName, sinfos);
     }
 
+
+    /**
+     * process zk data 解析route 信息
+     */
+    public static List<Route> processRouteData(String service, byte[] data, Map<String, List<Route>> routesMap) {
+        List<Route> zkRoutes;
+        try {
+            String routeData = new String(data, "utf-8");
+            zkRoutes = RoutesExecutor.parseAll(routeData);
+            routesMap.put(service, zkRoutes);
+        } catch (Exception e) {
+            zkRoutes = new ArrayList<>(16);
+            LOGGER.error("parser routes 信息 失败，请检查路由规则写法是否正确!");
+        }
+        return zkRoutes;
+    }
+
+
+    /**
+     * process zk data freqControl 限流规则信息
+     *
+     * @param service
+     * @param data
+     * @return
+     */
+    public static List<FreqControlRule> processFreqRuleData(String service, byte[] data, Map<String, List<FreqControlRule>> freqControlMap) {
+        List<FreqControlRule> freqControlRules = null;
+        try {
+            String ruleData = new String(data, "utf-8");
+            freqControlRules = doParseRuleData(ruleData);
+
+            freqControlMap.put(service, freqControlRules);
+        } catch (Exception e) {
+            LOGGER.error("parser freq rule 信息 失败，请检查 rule data 写法是否正确!");
+        }
+        return freqControlRules;
+
+    }
+
+    /**
+     * 解析 zookeeper 上 配置的 ruleData数据 为FreqControlRule对象
+     *
+     * @param ruleData data from zk node
+     * @return
+     */
+    private static List<FreqControlRule> doParseRuleData(String ruleData) {
+
+            // todo
+
+
+
+
+
+
+        return null;
+    }
+
+
     /**
      * 将配置信息中的时间单位ms 字母替换掉  100ms -> 100
      *
      * @param number
      * @return
      */
-    public static Long timeHelper(String number) {
+    private static Long timeHelper(String number) {
         number = number.replaceAll("[^(0-9)]", "");
         return Long.valueOf(number);
     }
