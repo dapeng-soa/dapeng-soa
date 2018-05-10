@@ -1,6 +1,7 @@
 package com.github.dapeng.core;
 
 import com.github.dapeng.core.enums.CodecProtocol;
+import com.github.dapeng.core.helper.IPUtils;
 
 import java.util.Optional;
 
@@ -52,7 +53,7 @@ public class TransactionContextImpl implements TransactionContext {
     /**
      * 服务会话发起人Ip
      */
-    private Optional<String> userIp = Optional.empty();
+    private Optional<Integer> userIp = Optional.empty();
     /**
      * 服务会话发起操作人Id, 特指后台用户
      */
@@ -65,7 +66,7 @@ public class TransactionContextImpl implements TransactionContext {
     /**
      * 调用者ip
      */
-    private Optional<String> callerIp = Optional.empty();
+    private Optional<Integer> callerIp = Optional.empty();
     /**
      * 调用者port, 只有dapeng服务作为调用者的时候才有这个值
      */
@@ -115,10 +116,10 @@ public class TransactionContextImpl implements TransactionContext {
 
     @Override
     public Optional<String> callerIp() {
-        return callerIp;
+        return Optional.of(callerIp.map(IPUtils::transferIp).orElse(""));
     }
 
-    public TransactionContextImpl callerIp(String callerIp) {
+    public TransactionContextImpl callerIp(Integer callerIp) {
         this.callerIp = Optional.ofNullable(callerIp);
         return this;
     }
@@ -240,10 +241,10 @@ public class TransactionContextImpl implements TransactionContext {
 
     @Override
     public Optional<String> userIp() {
-        return userIp;
+        return Optional.of(userIp.map(IPUtils::transferIp).orElse(""));
     }
 
-    public TransactionContextImpl userIp(String userIp) {
+    public TransactionContextImpl userIp(Integer userIp) {
         this.userIp = Optional.ofNullable(userIp);
         return this;
     }

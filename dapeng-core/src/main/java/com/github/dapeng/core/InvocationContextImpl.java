@@ -4,9 +4,7 @@ import com.github.dapeng.core.enums.CodecProtocol;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.IPUtils;
-import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -35,7 +33,7 @@ public class InvocationContextImpl implements InvocationContext {
     private Optional<String> sessionTid = Optional.empty();
     private String callerTid = DapengUtil.generateTid();
     private Optional<Long> userId = Optional.empty();
-    private Optional<String> userIp = Optional.empty();
+    private Optional<Integer> userIp = Optional.empty();
 
     private Optional<Integer> timeout = Optional.empty();
 
@@ -43,7 +41,7 @@ public class InvocationContextImpl implements InvocationContext {
 
     private CodecProtocol codecProtocol = CodecProtocol.CompressedBinary;
 
-    private Optional<String> calleeIp = Optional.empty();
+    private Optional<Integer> calleeIp = Optional.empty();
 
     private Optional<Integer> calleePort = Optional.of(9090);
 
@@ -124,11 +122,11 @@ public class InvocationContextImpl implements InvocationContext {
 
     @Override
     public Optional<String> calleeIp() {
-        return this.calleeIp;
+        return Optional.of(this.calleeIp.map(IPUtils::transferIp).orElse(""));
     }
 
     @Override
-    public InvocationContext calleeIp(String calleeIp) {
+    public InvocationContext calleeIp(Integer calleeIp) {
         this.calleeIp = Optional.ofNullable(calleeIp);
         return this;
     }
@@ -234,14 +232,14 @@ public class InvocationContextImpl implements InvocationContext {
     }
 
     @Override
-    public InvocationContext userIp(String userIp) {
+    public InvocationContext userIp(Integer userIp) {
         this.userIp = Optional.ofNullable(userIp);
         return this;
     }
 
     @Override
     public Optional<String> userIp() {
-        return userIp;
+        return Optional.of(this.userIp.map(IPUtils::transferIp).orElse(""));
     }
 
     @Override

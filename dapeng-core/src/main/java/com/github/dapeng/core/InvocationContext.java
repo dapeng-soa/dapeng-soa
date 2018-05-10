@@ -63,7 +63,7 @@ public interface InvocationContext {
      * @param userIp
      * @return
      */
-    InvocationContext userIp(final String userIp);
+    InvocationContext userIp(final Integer userIp);
     Optional<String> userIp();
 
     /**
@@ -106,7 +106,7 @@ public interface InvocationContext {
      * @param calleeIp
      * @return
      */
-    InvocationContext calleeIp(final String calleeIp);
+    InvocationContext calleeIp(final Integer calleeIp);
     Optional<String> calleeIp();
 
     /**

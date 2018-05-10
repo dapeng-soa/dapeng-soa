@@ -1,5 +1,6 @@
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.RuntimeInstance;
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
 import com.github.dapeng.router.exception.ParsingException;
@@ -392,7 +393,7 @@ public class TestRouterRuntimeList {
 
 
 //        ctx.calleeIp("192.168.1.97   ");
-        ctx.calleeIp("192.168.1.101   ");
+        ctx.calleeIp(IPUtils.transferIp("192.168.1.101   "));
         List<RuntimeInstance> prepare = prepare(ctx, routes);
 
 

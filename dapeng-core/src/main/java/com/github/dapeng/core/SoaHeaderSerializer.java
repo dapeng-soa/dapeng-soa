@@ -58,7 +58,8 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     break;
                 case 5:
                     if (schemeField.type == TType.I32) {
-                        bean.setCallerIp(IPUtils.transferIp(iprot.readI32()));
+                        //bean.setCallerIp(IPUtils.transferIp(iprot.readI32()));
+                        bean.setCallerIp(iprot.readI32());
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
@@ -79,7 +80,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     break;
                 case 8:
                     if (schemeField.type == TType.I32) {
-                        bean.setUserIp(Optional.of(IPUtils.transferIp(iprot.readI32())));
+                        bean.setUserIp(Optional.of(iprot.readI32()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
@@ -121,7 +122,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     break;
                 case 14:
                     if (schemeField.type == TType.I32) {
-                        bean.setCalleeIp(Optional.of(IPUtils.transferIp(iprot.readI32())));
+                        bean.setCalleeIp(Optional.of(iprot.readI32()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }

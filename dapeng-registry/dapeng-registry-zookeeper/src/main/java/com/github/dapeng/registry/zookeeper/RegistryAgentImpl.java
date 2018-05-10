@@ -1,5 +1,6 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.core.FreqControlRule;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.Service;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
@@ -26,6 +27,7 @@ public class RegistryAgentImpl implements RegistryAgent {
     private final String RUNTIME_PATH = "/soa/runtime/services";
     private final String CONFIG_PATH = "/soa/config/services";
     private final static String ROUTES_PATH = "/soa/config/routes";
+    private final static String FREQ_PATH = "/soa/config/routes";
 
     private final boolean isClient;
     private final ServerZk serverZk = new ServerZk(this);
@@ -77,16 +79,13 @@ public class RegistryAgentImpl implements RegistryAgent {
             // 注册服务 runtime 实例 到 zk
             serverZk.create(path, registerContext, true);
 
-            // 创建  zk  config 服务 持久节点  eg:  /soa/config/com.github.dapeng.soa.UserService
-            serverZk.create(CONFIG_PATH + "/" + serverName, null, false);
-
-            // 创建路由节点
-            serverZk.create(ROUTES_PATH + "/" + serverName, null, false);
+            createPreparePath(serverZk, serverName);
 
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
+
 
     @Override
     public void registerAllServices() {
@@ -127,6 +126,11 @@ public class RegistryAgentImpl implements RegistryAgent {
         return serverZk.getConfigData(serviceKey);
     }
 
+    @Override
+    public List<FreqControlRule> getFreqControlRule(boolean usingFallback, String serviceKey) {
+        return serverZk.getFreqControl(serviceKey);
+    }
+
 
     /**
      * getAllServices
@@ -153,6 +157,22 @@ public class RegistryAgentImpl implements RegistryAgent {
             this.registerService("com.github.dapeng.transaction.api.service.GlobalTransactionService", "1.0.0");
         }
         return services;
+    }
+
+    /**
+     * 在 registerService 到zk 时，注册需要准备的各节点
+     *
+     * @param serverZk   register zookeeper
+     * @param serverName 服务名
+     */
+    private void createPreparePath(ServerZk serverZk, String serverName) {
+
+        // 创建  zk  config 服务 持久节点  eg:  /soa/config/com.github.dapeng.soa.UserService
+        serverZk.create(CONFIG_PATH + "/" + serverName, null, false);
+        // 创建路由节点
+        serverZk.create(ROUTES_PATH + "/" + serverName, null, false);
+        // 创建限流节点
+        serverZk.create(FREQ_PATH + "/" + serverName, null, false);
     }
 
 

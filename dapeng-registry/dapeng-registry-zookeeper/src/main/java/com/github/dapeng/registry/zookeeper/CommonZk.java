@@ -25,6 +25,7 @@ public class CommonZk {
     protected final static String SERVICE_PATH = "/soa/runtime/services";
     protected final static String CONFIG_PATH = "/soa/config/services";
     protected final static String ROUTES_PATH = "/soa/config/routes";
+    protected final static String FREQ_PATH = "/soa/config/freq";
 
 
     protected ZooKeeper zk;
@@ -101,7 +102,7 @@ public class CommonZk {
                 logger.error("全局配置节点不存在");
                 break;
             case OK:
-                WatcherUtils.processZkConfig(data, (ZkServiceInfo) ctx, true);
+                ZookeeperUtils.processZkConfig(data, (ZkServiceInfo) ctx, true);
                 break;
             default:
                 break;
@@ -120,7 +121,7 @@ public class CommonZk {
                 logger.error("服务 [{}] 的service配置节点不存在，无法获取service级配置信息 ", ((ZkServiceInfo) ctx).service);
                 break;
             case OK:
-                WatcherUtils.processZkConfig(data, (ZkServiceInfo) ctx, false);
+                ZookeeperUtils.processZkConfig(data, (ZkServiceInfo) ctx, false);
 
                 break;
             default:

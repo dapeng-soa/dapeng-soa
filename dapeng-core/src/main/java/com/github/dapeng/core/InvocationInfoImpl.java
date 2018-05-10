@@ -1,6 +1,7 @@
 package com.github.dapeng.core;
 
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
+import com.github.dapeng.core.helper.IPUtils;
 
 /**
  * <pre>
@@ -34,7 +35,7 @@ import com.github.dapeng.core.enums.LoadBalanceStrategy;
  */
 public class InvocationInfoImpl implements InvocationContext.InvocationInfo {
     private  String calleeTid;
-    private  String calleeIp;
+    private  int calleeIp;
     private  int calleePort;
     private  String calleeMid;
     private  int calleeTime1;
@@ -42,7 +43,7 @@ public class InvocationInfoImpl implements InvocationContext.InvocationInfo {
     private long serviceTime;
     private  LoadBalanceStrategy loadBalanceStrategy;
 
-    public InvocationInfoImpl(String calleeTid, String calleeIp,
+    public InvocationInfoImpl(String calleeTid, int calleeIp,
                               int calleePort, String calleeMid,
                               int calleeTime1, int calleeTime2,
                               long serviceTime, LoadBalanceStrategy loadBalanceStrategy) {
@@ -60,7 +61,7 @@ public class InvocationInfoImpl implements InvocationContext.InvocationInfo {
         this.calleeTid = calleeTid;
     }
 
-    public void calleeIp(String calleeIp) {
+    public void calleeIp(int calleeIp) {
         this.calleeIp = calleeIp;
     }
 
@@ -95,7 +96,7 @@ public class InvocationInfoImpl implements InvocationContext.InvocationInfo {
 
     @Override
     public String calleeIp() {
-        return calleeIp;
+        return IPUtils.transferIp(calleeIp);
     }
 
     @Override

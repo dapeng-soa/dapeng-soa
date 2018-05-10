@@ -381,6 +381,7 @@ public class ShmManager {
     /**
      * 获取id
      * 先从本地获取key值，如果不存在则从共享内存中查找获取
+     *
      * @param key
      * @return
      */
@@ -564,7 +565,6 @@ public class ShmManager {
     }
 
 
-
     public static void main(String[] args) {
 
         ShmManager manager = ShmManager.getInstance();
@@ -578,16 +578,16 @@ public class ShmManager {
         rule.maxInterval = 86400;
         rule.maxReqForMaxInterval = 200;
 
-        System.out.println("app: "+ rule.app+
-                " ruleType：" + rule.ruleType+
-                " freqrule:["+ rule.minInterval + "," + rule.maxReqForMinInterval +
+        System.out.println("app: " + rule.app +
+                " ruleType：" + rule.ruleType +
+                " freqrule:[" + rule.minInterval + "," + rule.maxReqForMinInterval +
                 "/" + rule.midInterval + "," + rule.maxReqForMidInterval +
                 "/" + rule.maxInterval + "," + rule.maxReqForMaxInterval + "]");
         long t1 = System.nanoTime();
-        for (int i = 0; i <10000; i++) {
+        for (int i = 0; i < 10000; i++) {
             manager.reportAndCheck(rule, 2034596153);
         }
-        System.out.println("cost = "+ (System.nanoTime() - t1));
+        System.out.println("cost = " + (System.nanoTime() - t1));
 
 
     }

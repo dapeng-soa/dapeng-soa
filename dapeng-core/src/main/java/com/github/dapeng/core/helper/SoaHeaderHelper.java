@@ -56,7 +56,7 @@ public class SoaHeaderHelper {
         header.setVersionName(version);
         header.setMethodName(methodName);
 
-        header.setCallerIp(IPUtils.localIp());
+        header.setCallerIp(IPUtils.transferIp(IPUtils.localIp()));
         header.setCallerTid(Optional.ofNullable(invocationContext.callerTid()));
 
 
@@ -65,7 +65,7 @@ public class SoaHeaderHelper {
          */
         if (invocationCtxProxy != null) {
             header.setSessionTid(invocationCtxProxy.sessionTid());
-            header.setUserIp(invocationCtxProxy.userIp());
+            header.setUserIp(Optional.of(invocationCtxProxy.userIp().map(IPUtils::transferIp).get()));
             header.setUserId(invocationCtxProxy.userId());
             header.setOperatorId(invocationCtxProxy.operatorId());
 
@@ -86,7 +86,7 @@ public class SoaHeaderHelper {
             header.setUserId(invocationContext.userId());
         }
         if (invocationContext.userIp().isPresent()) {
-            header.setUserIp(invocationContext.userIp());
+            header.setUserIp(Optional.of(invocationContext.userIp().map(IPUtils::transferIp).get()));
         }
         if (invocationContext.sessionTid().isPresent()) {
             header.setSessionTid(invocationContext.sessionTid());
@@ -106,7 +106,7 @@ public class SoaHeaderHelper {
                 header.setUserId(oriHeader.getUserId());
             }
             if (!header.getUserIp().isPresent()) {
-                header.setUserIp(oriHeader.getUserIp());
+                header.setUserIp(Optional.of(oriHeader.getUserIp().map(IPUtils::transferIp).get()));
             }
 
             // 传递tid
