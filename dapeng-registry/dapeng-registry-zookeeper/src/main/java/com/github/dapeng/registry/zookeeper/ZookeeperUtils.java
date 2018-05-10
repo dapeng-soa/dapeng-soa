@@ -190,14 +190,22 @@ public class ZookeeperUtils {
         {
             if (str[i].indexOf("rule")!= -1){
                 FreqControlRule rule = new FreqControlRule();
-                rule.app = str[++i].split("=")[1].trim();
-                rule.ruleType = str[++i].split("=")[1].trim();
-                rule.minInterval = Integer.parseInt( str[++i].split("=")[1].trim().split(",")[0]);
-                rule.maxReqForMinInterval = Integer.parseInt( str[i].split("=")[1].trim().split(",")[1]);
-                rule.midInterval = Integer.parseInt(str[++i].split("=")[1].trim().split(",")[0]);
-                rule.maxReqForMidInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[1]);
-                rule.maxInterval = Integer.parseInt(str[++i].split("=")[1].trim().split(",")[0]);
-                rule.maxReqForMaxInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[1]);
+                for (int j = 0;j < 5;j++){
+                    if (str[++i].indexOf("match_app") != -1){
+                        rule.app = str[i].split("=")[1].trim();
+                    }else if (str[i].indexOf("rule_type") != -1){
+                        rule.ruleType = str[i].split("=")[1].trim();
+                    }else if (str[i].indexOf("min_interval") != -1){
+                        rule.minInterval = Integer.parseInt( str[i].split("=")[1].trim().split(",")[0]);
+                        rule.maxReqForMinInterval = Integer.parseInt( str[i].split("=")[1].trim().split(",")[1]);
+                    }else if (str[i].indexOf("mid_interval") != -1){
+                        rule.midInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[0]);
+                        rule.maxReqForMidInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[1]);
+                    } else if (str[i].indexOf("max_interval") != -1){
+                        rule.maxInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[0]);
+                        rule.maxReqForMaxInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[1]);
+                    }
+                }
                 datasOfRule.add(rule);
             }
         }
