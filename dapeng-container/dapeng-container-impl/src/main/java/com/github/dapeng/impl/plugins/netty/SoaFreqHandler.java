@@ -2,11 +2,14 @@ package com.github.dapeng.impl.plugins.netty;
 
 import com.github.dapeng.core.*;
 import com.github.dapeng.impl.filters.ShmManager;
+import com.github.dapeng.registry.RegistryAgent;
+import com.github.dapeng.registry.RegistryAgentProxy;
 import com.github.dapeng.util.ExceptionUtil;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -24,19 +27,26 @@ public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
         final long begin = System.currentTimeMillis();
         final TransactionContext context = TransactionContext.Factory.currentInstance();
         try {
-
-            context.callerIp();
             ShmManager manager = ShmManager.getInstance();
+            RegistryAgent registryAgent = RegistryAgentProxy.getCurrentInstance(RegistryAgentProxy.Type.Server);
+            List<FreqControlRule> freqRules = registryAgent.getFreqControlRule(false, context.getHeader().getServiceName());
 
-            ShmManager.FreqControlRule rule = new ShmManager.FreqControlRule();
-            //todo fetch from zk rule
-
-            boolean access = manager.reportAndCheck(rule, 1);
-
-            if (access) {
+            if (freqRules.size() == 0) {
                 super.channelRead(ctx, msg);
             } else {
-                throw new SoaException(SoaBaseCode.FreqControl, "当前服务在一定时间内请求次数过多，被限流");
+                boolean access = false;
+                for (FreqControlRule rule : freqRules) {
+                    if (rule.app.equals(context.getHeader().getServiceName())) {
+                        access = manager.reportAndCheck(rule, 100);
+                    } else {
+                        access = true;
+                    }
+                }
+                if (access) {
+                    super.channelRead(ctx, msg);
+                } else {
+                    throw new SoaException(SoaBaseCode.FreqControl, "当前服务在一定时间内请求次数过多，被限流");
+                }
             }
         } catch (Throwable ex) {
             writeErrorMessage(ctx, context, ExceptionUtil.convertToSoaException(ex));

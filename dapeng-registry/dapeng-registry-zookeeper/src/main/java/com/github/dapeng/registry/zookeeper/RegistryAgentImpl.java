@@ -27,7 +27,7 @@ public class RegistryAgentImpl implements RegistryAgent {
     private final String RUNTIME_PATH = "/soa/runtime/services";
     private final String CONFIG_PATH = "/soa/config/services";
     private final static String ROUTES_PATH = "/soa/config/routes";
-    private final static String FREQ_PATH = "/soa/config/routes";
+    private final static String FREQ_PATH = "/soa/config/freq";
 
     private final boolean isClient;
     private final ServerZk serverZk = new ServerZk(this);

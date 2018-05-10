@@ -1,7 +1,6 @@
 package com.github.dapeng.impl.filters;
 
-import com.github.dapeng.core.SoaCode;
-import com.github.dapeng.core.SoaException;
+import com.github.dapeng.core.FreqControlRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.Unsafe;
@@ -15,7 +14,6 @@ import java.nio.Buffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -91,32 +89,14 @@ public class ShmManager {
         return instance;
     }
 
-    /**
-     * 限流规则
-     */
-    public static class FreqControlRule {
-        String app;
-        String ruleType;
-        int minInterval;
-        int maxReqForMinInterval;
-        int midInterval;
-        int maxReqForMidInterval;
-        int maxInterval;
-        int maxReqForMaxInterval;
-
-        @Override
-        public String toString() {
-            return "app:" + app + ", ruleType:" + ruleType + ", freqRule:["
-                    + minInterval + "," + maxReqForMinInterval + "/"
-                    + midInterval + "," + maxReqForMidInterval + "/"
-                    + maxInterval + "," + maxReqForMaxInterval + ";";
-        }
-    }
 
     static class DictionaryItem {
         short length;
         int id;
-        short utf8offset; // DictionaryData[ 2 * utf8offset ] 处开始存储这个字符串。
+        /**
+         * DictionaryData[ 2 * utf8offset ] 处开始存储这个字符串。
+         */
+        short utf8offset;
     }
 
 
