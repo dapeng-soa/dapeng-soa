@@ -1,7 +1,7 @@
 package com.github.dapeng.json;
 
 import com.github.dapeng.core.*;
-import com.github.dapeng.core.enums.CodecProtocol;
+import com.github.dapeng.core.helper.SoaHeaderHelper;
 import com.github.dapeng.core.metadata.*;
 import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.org.apache.thrift.TException;
@@ -10,13 +10,15 @@ import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Stack;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.github.dapeng.core.enums.CodecProtocol.CompressedBinary;
 import static com.github.dapeng.util.MetaDataUtil.*;
 
+/**
+ * @author ever
+ */
 public class JsonSerializer implements BeanSerializer<String> {
     private final Logger logger = LoggerFactory.getLogger(JsonSerializer.class);
 
@@ -24,38 +26,14 @@ public class JsonSerializer implements BeanSerializer<String> {
     private ByteBuf requestByteBuf;
     private final Service service;
     private final Method method;
-    private final InvocationContext invocationCtx = InvocationContextImpl.Factory.getCurrentInstance();
+    private final String version;
+    private final InvocationContext invocationCtx = InvocationContextImpl.Factory.currentInstance();
 
-    /**
-     * for encode only
-     *
-     * @param service
-     * @param method
-     * @param struct
-     * @param jsonStr
-     * @throws TException
-     */
-    public JsonSerializer(Service service, Method method, Struct struct, String jsonStr) throws TException {
+    public JsonSerializer(Service service, Method method, String version, Struct struct) {
         this.struct = struct;
         this.service = service;
         this.method = method;
-
-        if (jsonStr != null) {
-            invocationCtx.setCodecProtocol(CodecProtocol.Binary);
-        }
-    }
-
-    /**
-     * for decode only
-     *
-     * @param service
-     * @param method
-     * @param struct
-     */
-    public JsonSerializer(Service service, Method method, Struct struct) {
-        this.struct = struct;
-        this.service = service;
-        this.method = method;
+        this.version = version;
     }
 
     // thrift -> json
@@ -147,7 +125,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                 if (!skip) {
                     String subStructName = fieldDataType.qualifiedName;
                     Struct subStruct = findStruct(subStructName, service);
-                    new JsonSerializer(service, method, subStruct).read(iproto, writer);
+                    new JsonSerializer(service, method, version, subStruct).read(iproto, writer);
                 } else {
                     TProtocolUtil.skip(iproto, TType.STRUCT);
                 }
@@ -225,7 +203,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                 readField(iproto, metadataType, elemType, writer, false);
             } else {
                 if (struct != null) {
-                    new JsonSerializer(service, method, struct).read(iproto, writer);
+                    new JsonSerializer(service, method, version, struct).read(iproto, writer);
                 } else if (isCollectionKind(metadataType.kind)) {
                     //处理List<list<>>
                     TList list = iproto.readListBegin();
@@ -267,6 +245,9 @@ public class JsonSerializer implements BeanSerializer<String> {
     }
 
     class Json2ThriftCallback implements JsonCallback {
+        /**
+         * 压缩二进制编码下,集合的默认长度(占3字节)
+         */
         private final TProtocol oproto;
         private ParsePhase parsePhase = ParsePhase.INIT;
 
@@ -294,6 +275,11 @@ public class JsonSerializer implements BeanSerializer<String> {
              * the field name
              */
             final String fieldName;
+
+            /**
+             * if datatype is struct, all fields parsed will be add to this set
+             */
+            final Set<String> fields4Struct = new HashSet<>(32);
 
             /**
              * if dataType is a Collection(such as LIST, MAP, SET etc), elCount represents the size of the Collection.
@@ -324,27 +310,27 @@ public class JsonSerializer implements BeanSerializer<String> {
          * 用于在多余字段是复杂结构类型的情况下, 忽略该复杂结构内嵌套的所有多余字段
          * 例如:
          * {
-         *     createdOrderRequest: {
-         *         "buyerId":2,
-         *         "sellerId":3,
-         *         "uselessField1":{
-         *             "innerField1":"a",
-         *             "innerField2":"b"
-         *         },
-         *         "uselessField2":[{
-         *             "innerField3":"c",
-         *             "innerField4":"d"
-         *         },
-         *         {
-         *             "innerField3":"c",
-         *             "innerField4":"d"
-         *         }]
-         *     }
+         * createdOrderRequest: {
+         * "buyerId":2,
+         * "sellerId":3,
+         * "uselessField1":{
+         * "innerField1":"a",
+         * "innerField2":"b"
+         * },
+         * "uselessField2":[{
+         * "innerField3":"c",
+         * "innerField4":"d"
+         * },
+         * {
+         * "innerField3":"c",
+         * "innerField4":"d"
+         * }]
+         * }
          * }
          * 当uselessField1跟uselessField2是多余字段时,我们要确保其内部所有字段都
          * 给skip掉.
          */
-        int fieldsSinceLastNotFound = 0;
+        int skipFieldsStack = 0;
         //记录是否是null. 前端在处理optional字段的时候, 可能会传入一个null,见单元测试
         boolean foundNull = true;
 
@@ -382,7 +368,6 @@ public class JsonSerializer implements BeanSerializer<String> {
 
         @Override
         public void onStartObject() throws TException {
-//            assert current.dataType.kind == DataType.KIND.STRUCT || current.dataType.kind == DataType.KIND.MAP;
             switch (parsePhase) {
                 case INIT:
                     break;
@@ -394,7 +379,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                 case HEADER_END:
                     break;
                 case BODY_BEGIN:
-                    new SoaHeaderSerializer().write(buildSoaHeader(), oproto);
+                    new SoaHeaderSerializer().write(SoaHeaderHelper.buildHeader(service.namespace + "." + service.name, version, method.name), new TBinaryProtocol(oproto.getTransport()));
 
                     //初始化当前数据节点
                     DataType initDataType = new DataType();
@@ -408,8 +393,11 @@ public class JsonSerializer implements BeanSerializer<String> {
                     break;
                 case BODY:
                     if (!foundField) {
+                        skipFieldsStack++;
                         return;
                     }
+
+                    assert current.dataType.kind == DataType.KIND.STRUCT || current.dataType.kind == DataType.KIND.MAP;
 
                     if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
                         peek().increaseElement();
@@ -427,8 +415,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                             break;
                         case MAP:
                             assert isValidMapKeyType(current.dataType.keyType.kind);
-                            // 压缩模式下, default size不能设置为0...
-                            oproto.writeMapBegin(new TMap(dataType2Byte(current.dataType.keyType), dataType2Byte(current.dataType.valueType), 1));
+                            writeMapBegin(dataType2Byte(current.dataType.keyType), dataType2Byte(current.dataType.valueType), 0);
                             break;
                         default:
                             logAndThrowTException();
@@ -441,8 +428,6 @@ public class JsonSerializer implements BeanSerializer<String> {
 
         @Override
         public void onEndObject() throws TException {
-//            assert current.dataType.kind == DataType.KIND.STRUCT || current.dataType.kind == DataType.KIND.MAP;
-
             switch (parsePhase) {
                 case HEADER_BEGIN:
                     logAndThrowTException();
@@ -457,9 +442,19 @@ public class JsonSerializer implements BeanSerializer<String> {
                     logAndThrowTException();
                     break;
                 case BODY:
-                    if (!foundField) return;
+                    if (!foundField) {
+                        skipFieldsStack--;
+                        return;
+                    } else {
+                        assert skipFieldsStack == 0;
+                    }
+
+                    assert current.dataType.kind == DataType.KIND.STRUCT || current.dataType.kind == DataType.KIND.MAP;
+
                     switch (current.dataType.kind) {
                         case STRUCT:
+                            validateStruct(current);
+
                             oproto.writeFieldStop();
                             oproto.writeStructEnd();
                             if (current.struct.name.equals(struct.name)) {
@@ -482,6 +477,26 @@ public class JsonSerializer implements BeanSerializer<String> {
             }
         }
 
+        private void validateStruct(StackNode current) throws TException {
+            /**
+             * 不在该Struct必填字段列表的字段列表
+             */
+            List<Field> mandatoryMissFileds = current.struct.fields.stream()
+                    .filter(field -> !field.isOptional())
+                    .filter(field -> !current.fields4Struct.contains(field.name))
+                    .collect(Collectors.toList());
+            if (!mandatoryMissFileds.isEmpty()) {
+                String fieldName = current.fieldName;
+                String struct = current.struct.name;
+                TException ex = new TException("JsonError, please check:"
+                        + struct + "." + fieldName
+                        + ", struct mandatory fields missing:"
+                        + mandatoryMissFileds.stream().map(field -> field.name + ", ").collect(Collectors.toList()));
+                logger.error(ex.getMessage(), ex);
+                throw ex;
+            }
+        }
+
         /**
          * 由于目前拿不到集合的元素个数, 暂时设置为0个
          *
@@ -489,9 +504,14 @@ public class JsonSerializer implements BeanSerializer<String> {
          */
         @Override
         public void onStartArray() throws TException {
-            assert isCollectionKind(current.dataType.kind);
+            if (parsePhase != ParsePhase.BODY || !foundField) {
+                if (!foundField) {
+                    skipFieldsStack++;
+                }
+                return;
+            }
 
-            if (parsePhase != ParsePhase.BODY || !foundField) return;
+            assert isCollectionKind(current.dataType.kind);
 
             if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
                 peek().increaseElement();
@@ -501,11 +521,8 @@ public class JsonSerializer implements BeanSerializer<String> {
 
             switch (current.dataType.kind) {
                 case LIST:
-                    //TODO 压缩模式下, size > 14的时候如何处理?
-                    oproto.writeListBegin(new TList(dataType2Byte(current.dataType.valueType), 0));
-                    break;
                 case SET:
-                    oproto.writeSetBegin(new TSet(dataType2Byte(current.dataType.valueType), 0));
+                    writeCollectionBegin(dataType2Byte(current.dataType.valueType), 0);
                     break;
                 default:
                     logAndThrowTException();
@@ -517,7 +534,12 @@ public class JsonSerializer implements BeanSerializer<String> {
 
         @Override
         public void onEndArray() throws TException {
-            if (parsePhase != ParsePhase.BODY || !foundField) return;
+            if (parsePhase != ParsePhase.BODY || !foundField) {
+                if (!foundField) {
+                    skipFieldsStack--;
+                }
+                return;
+            }
 
             pop();
 
@@ -560,6 +582,10 @@ public class JsonSerializer implements BeanSerializer<String> {
                     }
                     break;
                 case BODY:
+                    if (!foundField) {
+                        return;
+                    }
+
                     if (current.dataType.kind == DataType.KIND.MAP) {
                         assert isValidMapKeyType(current.dataType.keyType.kind);
                         stackNew(new StackNode(current.dataType.keyType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(), null, name));
@@ -580,6 +606,10 @@ public class JsonSerializer implements BeanSerializer<String> {
                             foundField = false;
                             logger.info("field(" + name + ") not found. just skip");
                             return;
+                        }
+
+                        if (current.dataType.kind == DataType.KIND.STRUCT) {
+                            current.fields4Struct.add(name);
                         }
 
                         int byteBufPositionBefore = requestByteBuf.writerIndex();
@@ -616,15 +646,25 @@ public class JsonSerializer implements BeanSerializer<String> {
         public void onEndField() throws TException {
             if (parsePhase != ParsePhase.BODY || !foundField) {
                 // reset the flag
-                foundField = true;
+                if (skipFieldsStack == 0) {
+                    foundField = true;
+                }
                 return;
             }
 
+            String fieldName = current.fieldName;
             pop();
 
+            if (foundNull) {
+                if (current.dataType.kind == DataType.KIND.STRUCT) {
+                    current.fields4Struct.remove(fieldName);
+                }
+            }
             if (current.dataType.kind != DataType.KIND.MAP && !foundNull) {
                 oproto.writeFieldEnd();
             }
+
+            foundNull = false;
         }
 
         @Override
@@ -681,7 +721,50 @@ public class JsonSerializer implements BeanSerializer<String> {
                             oproto.writeDouble(value);
                             break;
                         case BIGDECIMAL:
-                            //TODO ??
+                            oproto.writeString(String.valueOf(value));
+                            break;
+                        case BYTE:
+                            oproto.writeByte((byte) value);
+                            break;
+                        default:
+                            throw new TException("Field:" + current.fieldName + ", DataType(" + current.dataType.kind + ") for " + current.dataType.qualifiedName + " is not a Number");
+
+                    }
+                    break;
+                default:
+                    logger.warn("skip number(" + value + ")@pase:" + parsePhase + " Field:" + current.fieldName);
+            }
+        }
+
+        @Override
+        public void onNumber(long value) throws TException {
+            switch (parsePhase) {
+                case HEADER:
+                    fillIntToInvocationCtx((int) value);
+                    break;
+                case BODY:
+                    DataType.KIND currentType = current.dataType.kind;
+
+                    if (!foundField) {
+                        return;
+                    }
+
+                    if (peek() != null && isMultiElementKind(peek().dataType.kind)) {
+                        peek().increaseElement();
+                    }
+
+                    switch (currentType) {
+                        case SHORT:
+                            oproto.writeI16((short) value);
+                            break;
+                        case INTEGER:
+                        case ENUM:
+                            oproto.writeI32((int) value);
+                            break;
+                        case LONG:
+                            oproto.writeI64((long) value);
+                            break;
+                        case DOUBLE:
                             oproto.writeDouble(value);
                             break;
                         case BYTE:
@@ -709,6 +792,9 @@ public class JsonSerializer implements BeanSerializer<String> {
                     foundNull = true;
                     //reset writerIndex, skip the field
                     requestByteBuf.writerIndex(current.byteBufPositionBefore);
+                    if (invocationCtx.codecProtocol() == CompressedBinary) {
+                        ((TCompactProtocol)oproto).resetLastFieldId();
+                    }
                     break;
                 default:
                     logAndThrowTException();
@@ -734,15 +820,17 @@ public class JsonSerializer implements BeanSerializer<String> {
                         case ENUM:
                             TEnum tEnum = findEnum(current.dataType.qualifiedName, service);
                             Integer tValue = findEnumItemValue(tEnum, value);
-//                            if (tValue == null) logAndThrowTException();
+                            if (tValue == null) logAndThrowTException();
                             oproto.writeI32(tValue);
                             break;
                         case BOOLEAN:
                             oproto.writeBool(Boolean.parseBoolean(value));
                             break;
                         case DOUBLE:
-                        case BIGDECIMAL:
                             oproto.writeDouble(Double.parseDouble(value));
+                            break;
+                        case BIGDECIMAL:
+                            oproto.writeString(value);
                             break;
                         case INTEGER:
                             oproto.writeI32(Integer.parseInt(value));
@@ -793,51 +881,98 @@ public class JsonSerializer implements BeanSerializer<String> {
             //备份最新的writerIndex
             int currentIndex = requestByteBuf.writerIndex();
 
-            //reWriteListBegin
             requestByteBuf.writerIndex(beginPosition);
 
             switch (current.dataType.kind) {
                 case MAP:
-                    oproto.writeMapBegin(new TMap(dataType2Byte(current.dataType.keyType), dataType2Byte(current.dataType.valueType), elCount));
+                    reWriteMapBegin(dataType2Byte(current.dataType.keyType), dataType2Byte(current.dataType.valueType), elCount);
                     break;
                 case SET:
-                    oproto.writeSetBegin(new TSet(dataType2Byte(current.dataType.valueType), elCount));
-                    break;
                 case LIST:
-                    oproto.writeListBegin(new TList(dataType2Byte(current.dataType.valueType), elCount));
+                    reWriteCollectionBegin(dataType2Byte(current.dataType.valueType), elCount);
                     break;
                 default:
                     logger.error("Field:" + current.fieldName + ", won't be here", new Throwable());
             }
 
-            requestByteBuf.writerIndex(currentIndex);
+            if (current.dataType.kind == DataType.KIND.MAP
+                    && invocationCtx.codecProtocol() == CompressedBinary
+                    && elCount == 0) {
+                requestByteBuf.writerIndex(beginPosition + 1);
+            } else {
+                requestByteBuf.writerIndex(currentIndex);
+            }
+        }
+
+        private void writeMapBegin(byte keyType, byte valueType, int defaultSize) throws TException {
+            switch (invocationCtx.codecProtocol()) {
+                case Binary:
+                    oproto.writeMapBegin(new TMap(keyType, valueType, defaultSize));
+                    break;
+                case CompressedBinary:
+                default:
+                    TJsonCompressProtocolUtil.writeMapBegin(keyType, valueType, requestByteBuf);
+                    break;
+            }
+        }
+
+        private void reWriteMapBegin(byte keyType, byte valueType, int size) throws TException {
+            switch (invocationCtx.codecProtocol()) {
+                case Binary:
+                    oproto.writeMapBegin(new TMap(keyType, valueType, size));
+                    break;
+                case CompressedBinary:
+                default:
+                    TJsonCompressProtocolUtil.reWriteMapBegin(size, requestByteBuf);
+                    break;
+            }
+        }
+
+        /**
+         * TList just the same as TSet
+         *
+         * @param valueType
+         * @param defaultSize
+         * @throws TException
+         */
+        private void writeCollectionBegin(byte valueType, int defaultSize) throws TException {
+            switch (invocationCtx.codecProtocol()) {
+                case Binary:
+                    oproto.writeListBegin(new TList(valueType, defaultSize));
+                    break;
+                case CompressedBinary:
+                default:
+                    TJsonCompressProtocolUtil.writeCollectionBegin(valueType, requestByteBuf);
+                    break;
+            }
+        }
+
+        private void reWriteCollectionBegin(byte valueType, int size) throws TException {
+            switch (invocationCtx.codecProtocol()) {
+                case Binary:
+                    oproto.writeListBegin(new TList(valueType, size));
+                    break;
+                case CompressedBinary:
+                default:
+                    TJsonCompressProtocolUtil.reWriteCollectionBegin(size, requestByteBuf);
+                    break;
+            }
         }
 
         private void fillStringToInvocationCtx(String value) {
-            if ("serviceName".equals(currentHeaderName)) {
-                invocationCtx.setServiceName(value);
-            } else if ("methodName".equals(currentHeaderName)) {
-                invocationCtx.setMethodName(value);
-            } else if ("versionName".equals(currentHeaderName)) {
-                invocationCtx.setVersionName(value);
-            } else if ("calleeIp".equals(currentHeaderName)) {
-                invocationCtx.setCalleeIp(Optional.of(value));
-            } else if ("callerFrom".equals(currentHeaderName)) {
-                invocationCtx.setCallerFrom(Optional.of(value));
-            } else if ("callerIp".equals(currentHeaderName)) {
-                invocationCtx.setCallerFrom(Optional.of(value));
-            } else if ("customerName".equals(currentHeaderName)) {
-                invocationCtx.setCustomerName(Optional.of(value));
+            if ("calleeIp".equals(currentHeaderName)) {
+                invocationCtx.calleeIp(value);
+            } else if ("callerMid".equals(currentHeaderName)) {
+                invocationCtx.callerMid(value);
             } else {
                 logger.warn("skip field(" + currentHeaderName + ")@pase:" + parsePhase);
             }
         }
 
 
-
         private void logAndThrowTException() throws TException {
-            String fieldName = current==null?"":current.fieldName;
-            String struct = current==null?"":current.struct==null?(peek().struct==null?"":peek().struct.name):current.struct.name;
+            String fieldName = current == null ? "" : current.fieldName;
+            String struct = current == null ? "" : current.struct == null ? (peek().struct == null ? "" : peek().struct.name) : current.struct.name;
             TException ex = new TException("JsonError, please check:"
                     + struct + "." + fieldName
                     + ", current phase:" + parsePhase);
@@ -845,30 +980,13 @@ public class JsonSerializer implements BeanSerializer<String> {
             throw ex;
         }
 
-        private SoaHeader buildSoaHeader() {
-            SoaHeader header = new SoaHeader();
-            header.setServiceName(invocationCtx.getServiceName());
-            header.setVersionName(invocationCtx.getVersionName());
-            header.setMethodName(invocationCtx.getMethodName());
-
-            header.setCallerFrom(invocationCtx.getCallerFrom());
-            header.setCallerIp(invocationCtx.getCallerIp());
-            header.setCustomerId(invocationCtx.getCustomerId());
-            header.setCustomerName(invocationCtx.getCustomerName());
-            header.setOperatorId(invocationCtx.getOperatorId());
-
-            return header;
-        }
-
         private void fillIntToInvocationCtx(int value) {
             if ("calleePort".equals(currentHeaderName)) {
-                invocationCtx.setCalleePort(Optional.of(value));
+                invocationCtx.calleePort(value);
             } else if ("operatorId".equals(currentHeaderName)) {
-                invocationCtx.setOperatorId(Optional.of(value));
-            } else if ("customerId".equals(currentHeaderName)) {
-                invocationCtx.setCustomerId(Optional.of(value));
-            } else if ("transactionSequence".equals(currentHeaderName)) {
-                invocationCtx.setTransactionSequence(Optional.of(value));
+                invocationCtx.operatorId(Long.valueOf(value));
+            } else if ("userId".equals(currentHeaderName)) {
+                invocationCtx.userId(Long.valueOf(value));
             } else {
                 logger.warn("skip field(" + currentHeaderName + ")@pase:" + parsePhase);
             }
@@ -962,5 +1080,140 @@ public class JsonSerializer implements BeanSerializer<String> {
 
     public void setRequestByteBuf(ByteBuf requestByteBuf) {
         this.requestByteBuf = requestByteBuf;
+    }
+}
+
+/**
+ * dapeng-json定制的Thrift二进制压缩协议工具类,主要更改了集合类的序列化方法
+ *
+ * @author ever
+ */
+class TJsonCompressProtocolUtil {
+
+    /**
+     * Invoked before we get the actually collection size.
+     * Always assume that the collection size should take 3 bytes.
+     *
+     * @param elemType type of the collection Element
+     * @throws TException
+     */
+    public static void writeCollectionBegin(byte elemType, ByteBuf byteBuf) throws TException {
+        writeByteDirect((byte) (0xf0 | TCompactProtocol.ttypeToCompactType[elemType]), byteBuf);
+        //write 3 byte with 0x0 to hold the collectionSize
+        writeFixedLengthVarint32(3, byteBuf);
+    }
+
+    /**
+     * Invoked after we get the actually collection size.
+     *
+     * @param size    collection size
+     * @param byteBuf
+     * @throws TException
+     */
+    public static void reWriteCollectionBegin(int size, ByteBuf byteBuf) throws TException {
+        //Actually we should only change the collection length.
+        byteBuf.writerIndex(byteBuf.writerIndex() + 1);
+        reWriteVarint32(size, byteBuf);
+    }
+
+    /**
+     * Invoked before we get the actually collection size.
+     * Always assume that the collection size should take 3 bytes.
+     *
+     * @throws TException
+     */
+    public static void writeMapBegin(byte keyType, byte valueType, ByteBuf byteBuf) throws TException {
+        /**
+         * origin implementation:
+         *  if (map.size == 0) {
+         *     writeByteDirect(0);
+         *  } else {
+         *   writeVarint32(map.size);
+         *   writeByteDirect(getCompactType(map.keyType) << 4 | getCompactType(map.valueType));
+         *  }
+         */
+        writeFixedLengthVarint32(3, byteBuf);
+        writeByteDirect((byte) (TCompactProtocol.ttypeToCompactType[keyType] << 4
+                | TCompactProtocol.ttypeToCompactType[valueType]), byteBuf);
+    }
+
+    /**
+     * Invoked after we get the actually collection size.
+     * Please note that writerIndex should be updated:
+     * 1. size > 0, byteBuf.writerIndex(currentWriterIndex);
+     * 2. size = 0, byteBuf.writerIndex(byteBuf.writerIndex() + 1);
+     *
+     * @param size    collection size
+     * @param byteBuf byteBuf which has reset the writerIndex to before collection
+     * @throws TException
+     */
+    public static void reWriteMapBegin(int size, ByteBuf byteBuf) throws TException {
+        if (size > 0) {
+            reWriteVarint32(size, byteBuf);
+        } else {
+            // just need to update the byteBuf writerIndex by caller.
+        }
+    }
+
+    private static byte[] byteDirectBuffer = new byte[1];
+
+    private static void writeByteDirect(byte b, ByteBuf byteBuf) throws TException {
+        byteDirectBuffer[0] = b;
+        byteBuf.writeBytes(byteDirectBuffer);
+    }
+
+    /**
+     * write count bytes as placeholder
+     *
+     * @param count   count of bytes
+     * @param byteBuf
+     * @throws TException
+     */
+    private static void writeFixedLengthVarint32(int count, ByteBuf byteBuf) throws TException {
+        for (int i = 0; i < count; i++) {
+            writeByteDirect((byte) 0, byteBuf);
+        }
+    }
+
+    /**
+     * 低位在前, 高位在后,
+     * n = 3, result = 0x83 0x80 0x00
+     * n = 129(1000 0001), result = 0x81 0x81 0x00
+     * n = 130(1000 0010), result = 0x82 0x81 0x00
+     * n = 65537(1 0000 0000 0000 0001) result = 0x81 0x80 0x04
+     * Write an i32 as a varint. Always results in 3 bytes on the wire.
+     */
+    private static byte[] i32buf = new byte[3];
+
+    private static void reWriteVarint32(int n, ByteBuf byteBuf) throws TException {
+        int idx = 0;
+        while (true) {
+            if (idx >= i32buf.length) {
+                throw new TException("Too long:" + n);
+            }
+
+            if ((n & ~0x7F) == 0) {
+                i32buf[idx++] = (byte) n;
+                break;
+            } else {
+                i32buf[idx++] = (byte) ((n & 0x7F) | 0x80);
+                n >>>= 7;
+            }
+        }
+
+        // 如果不够位数, 那么最后一个首位需要置1,说明后续还有数字.
+        if (idx < i32buf.length) {
+            i32buf[idx - 1] |= 0x80;
+        }
+
+        byteBuf.writeBytes(i32buf, 0, idx);
+
+        for (int i = idx; i < i32buf.length - 1; i++) {
+            byteBuf.writeByte((byte) 0x80);
+        }
+
+        if (idx < i32buf.length) {
+            byteBuf.writeByte((byte) 0x00);
+        }
     }
 }

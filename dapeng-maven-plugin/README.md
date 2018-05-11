@@ -10,5 +10,5 @@
 #### Maven运行
 
 ```
-mvn compile com.github.dapeng:dapeng-maven-plugin:1.2.2:run
+mvn compile com.github.dapeng:dapeng-maven-plugin:2.0.0:run
 ```

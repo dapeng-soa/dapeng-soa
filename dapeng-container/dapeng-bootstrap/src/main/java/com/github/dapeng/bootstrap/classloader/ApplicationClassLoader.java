@@ -32,6 +32,9 @@ public class ApplicationClassLoader extends URLClassLoader {
                 || name.startsWith("com.google.gson")) {
             return coreClassLoader.loadClass(name);
         }
-        return super.loadClass(name, resolve);
+
+        Class clz =  super.loadClass(name, resolve);
+
+        return clz;
     }
 }

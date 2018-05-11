@@ -3,116 +3,101 @@ package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
-import com.github.dapeng.registry.*;
-
-import com.github.dapeng.route.Route;
-import com.github.dapeng.route.RouteExecutor;
-import com.github.dapeng.util.SoaSystemEnvProperties;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.github.dapeng.router.Route;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Created by lihuimin on 2017/12/24.
+ * @author lihuimin
+ * @date 2017/12/24
  */
 public class ZkClientAgentImpl implements ZkClientAgent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ZkClientAgentImpl.class);
+    /**
+     * 是否使用 灰度 zk
+     */
+    private final boolean usingFallbackZk = SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_ISCONFIG;
 
-    private ZookeeperWatcher siw, zkfbw;
+    private ClientZk masterZk, fallbackZk;
 
-    public ZkClientAgentImpl(){
+    /**
+     * 路由配置信息
+     */
+    private final Map<String, List<Route>> routesMap = new ConcurrentHashMap<>(16);
+
+
+    public ZkClientAgentImpl() {
         start();
     }
 
     @Override
     public void start() {
 
-        siw = new ZookeeperWatcher(true, SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
-        siw.init();
+        masterZk = new ClientZk(SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
+        masterZk.init();
 
         if (SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_ISCONFIG) {
-            zkfbw = new ZookeeperWatcher(true, SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_HOST);
-            zkfbw.init();
+            fallbackZk = new ClientZk(SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_HOST);
+            fallbackZk.init();
         }
-
     }
 
+    //todo 优雅退出的时候, 需要调用这个
     @Override
     public void stop() {
-        if (siw != null) {
-            siw.destroy();
+        if (masterZk != null) {
+            masterZk.destroy();
         }
 
-        if (zkfbw != null) {
-            zkfbw.destroy();
+        if (fallbackZk != null) {
+            fallbackZk.destroy();
         }
 
     }
 
     @Override
-    public void cancnelSyncService(String service) {
-
-
+    public void cancelSyncService(ZkServiceInfo zkInfo) {
+        //fixme should remove the debug log
+        LOGGER.info("cancelSyncService:[" + zkInfo.service + "]");
+        zkInfo.setStatus(ZkServiceInfo.Status.CANCELED);
     }
 
     @Override
-    public void syncService(String serviceName, Map<String,ServiceZKInfo> zkInfos) {
-
-        boolean usingFallbackZookeeper = SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_ISCONFIG;
-
-        ServiceZKInfo zkInfo = zkInfos.get(serviceName);
-        if(zkInfo == null){  //zkInfos没有，从zookeeper拿
-            zkInfo = siw.getServiceZkInfo(serviceName,zkInfos);
-            if(zkInfo == null && usingFallbackZookeeper){
-                zkInfo = zkfbw.getServiceZkInfo(serviceName,zkInfos);
+    public void syncService(ZkServiceInfo zkInfo) {
+        if (zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
+            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo just created, now sync with zk");
+            masterZk.syncServiceZkInfo(zkInfo);
+            if (zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE && usingFallbackZk) {
+                fallbackZk.syncServiceZkInfo(zkInfo);
             }
+
+            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + ", status:" + zkInfo.getStatus() + "]");
         }
 
         //使用路由规则，过滤可用服务器
-        InvocationContext context = InvocationContextImpl.Factory.getCurrentInstance();
-        List<Route> routes = usingFallbackZookeeper ? zkfbw.getRoutes() : siw.getRoutes();
-        List<RuntimeInstance> runtimeList = new ArrayList<>();
+        // fixme 在runtime跟config变化的时候才需要计算可用节点信息
+        InvocationContext context = InvocationContextImpl.Factory.currentInstance();
+//        List<Route> routes = usingFallbackZk ? fallbackZk.getRoutes() : masterZk.getRoutes();
+//        List<RuntimeInstance> runtimeList = new ArrayList<>();
 
-        if (zkInfo != null&&zkInfo.getRuntimeInstances()!=null) {
-            for (RuntimeInstance instance : zkInfo.getRuntimeInstances()) {
-                try {
-                    InetAddress inetAddress = InetAddress.getByName(instance.ip);
-                    if (RouteExecutor.isServerMatched(context, routes, inetAddress)) {
-                        runtimeList.add(instance);
-                    }
-                } catch (UnknownHostException e) {
-                    LOGGER.error(e.getMessage(),e);
-                }
-            }
-            zkInfo.setRuntimeInstances(runtimeList);
-            zkInfos.put(serviceName,zkInfo);
+        if (zkInfo.getStatus() == ZkServiceInfo.Status.ACTIVE && zkInfo.getRuntimeInstances() != null) {
+
+            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo succeed");
+        } else {
+            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo failed");
         }
-
     }
 
-
     @Override
-    public Map<ConfigKey, Object> getConfig(boolean usingFallback, String serviceKey) {
-
-        if (usingFallback) {
-            if (zkfbw.getConfigWithKey(serviceKey).entrySet().size() <= 0) {
-                return null;
-            } else {
-                return zkfbw.getConfigWithKey(serviceKey);
-            }
-        } else {
-
-            if (siw.getConfigWithKey(serviceKey).entrySet().size() <= 0) {
-                return null;
-            } else {
-                return siw.getConfigWithKey(serviceKey);
-            }
-        }
+    public List<Route> getRoutes(String service) {
+        return masterZk.getRoutes(service);
     }
 }

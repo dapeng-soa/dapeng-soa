@@ -38,6 +38,6 @@ GCOPTS="-Dfile.encoding=UTF-8 -Dsun.jun.encoding=UTF-8 -Dname=$PRGNAME -Xms256M 
 SOA_BASE="-Dsoa.base=$PRGDIR/../ -Dsoa.run.mode=native"
 NETTY_MEM_LEAK_OPS="-ea -Dio.netty.leakDetectionLevel=paranoid"
 
-nohup java $PINPOINT -server $GCOPTS $NETTY_MEM_LEAK_OPS $E_JAVA_OPTS $SOA_BASE -cp ./dapeng-bootstrap.jar com.github.dapeng.bootstrap.Bootstrap >> $LOGDIR/catalina.out 2>&1 &
+nohup java -server $GCOPTS $E_JAVA_OPTS $SOA_BASE -cp ./dapeng-bootstrap.jar com.github.dapeng.bootstrap.Bootstrap >> $LOGDIR/catalina.out 2>&1 &
 
 echo $! > $LOGDIR/pid.txt

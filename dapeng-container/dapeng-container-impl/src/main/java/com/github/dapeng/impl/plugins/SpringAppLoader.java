@@ -4,8 +4,10 @@ import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.Plugin;
 import com.github.dapeng.core.*;
+import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.impl.container.DapengApplication;
+import org.apache.kafka.common.protocol.types.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +32,7 @@ public class SpringAppLoader implements Plugin {
 
     @Override
     public void start() {
-        LOGGER.warn("Plugin::SpringAppLoader start.");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
         String configPath = "META-INF/spring/services.xml";
 
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
@@ -91,7 +93,7 @@ public class SpringAppLoader implements Plugin {
 
     @Override
     public void stop() {
-        LOGGER.warn("Plugin:SpringAppLoader stop.");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::stop");
         LOGGER.warn("Gracefully shutdown not implemented yet");
         // TODO stop or close??
 //        springCtxs.forEach(springCtx -> {
@@ -127,10 +129,21 @@ public class SpringAppLoader implements Plugin {
                     processor.iface.getClass());
 
             Service service = processor.ifaceClass.getAnnotation(Service.class);
-            assert (service != null); // TODO
+            // TODO
+            assert (service != null);
+
+            /**
+             * customConfig 封装到 ServiceInfo 中
+             */
+            Map<String, Optional<CustomConfigInfo>> methodsConfigMap = new HashMap<>();
+
+            processor.functions.forEach((key, function) -> {
+                methodsConfigMap.put(key, function.getCustomConfigInfo());
+            });
 
             ServiceInfo serviceInfo = new ServiceInfo(service.name(), service.version(),
-                    "service", ifaceClass);
+                    "service", ifaceClass, processor.getConfigInfo(), methodsConfigMap);
+
             serviceInfoMap.put(processorKey, serviceInfo);
         }
 

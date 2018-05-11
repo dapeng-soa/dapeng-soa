@@ -1,15 +1,10 @@
 package com.github.dapeng.impl.plugins;
 
 import com.github.dapeng.api.Plugin;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.transaction.api.GlobalTransactionFactory;
 import com.github.dapeng.transaction.api.service.GlobalTransactionProcessService;
 import com.github.dapeng.transaction.api.service.GlobalTransactionService;
-import com.github.dapeng.util.SoaSystemEnvProperties;
-import com.github.dapeng.api.Plugin;
-import com.github.dapeng.transaction.api.GlobalTransactionFactory;
-import com.github.dapeng.transaction.api.service.GlobalTransactionProcessService;
-import com.github.dapeng.transaction.api.service.GlobalTransactionService;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -37,7 +32,7 @@ public class TransactionPlugin implements Plugin {
     @Override
     public void start() {
         if (SoaSystemEnvProperties.SOA_TRANSACTIONAL_ENABLE) {
-            System.out.println(" Start to initialize transaction plugin......");
+            LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
             String configPath = System.getProperty(SPRING_CONFIG);
             if (configPath == null || configPath.length() <= 0) {
                 configPath = DEFAULT_SPRING_CONFIG;
@@ -80,6 +75,7 @@ public class TransactionPlugin implements Plugin {
 
     @Override
     public void stop() {
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::stop");
         if (context != null) {
             context.stop();
         }

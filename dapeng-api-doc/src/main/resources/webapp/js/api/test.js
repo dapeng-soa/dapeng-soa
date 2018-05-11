@@ -359,6 +359,33 @@ function getDataTypeElement(dataType, name, service, optional, doc) {
     }
 }
 
+/**
+ * 提交自定义json测试
+ * @param serviceName
+ * @param version
+ * @param methodName
+ */
+function applyTestForJsonStr(serviceName, version, methodName){
+    var params = $("#pasteJsonBox").val();
+    var jsonObj = {};
+    try {
+        jsonObj = JSON.parse(params)
+    }catch (e){
+        alert("json格式异常请检查");
+        return;
+    }
+    $("#json-request").html(getFormatedJsonHTML(jsonObj));
+    var url = window.basePath + "/test.htm";
+    $.post(url, {
+        serviceName: serviceName,
+        version: version,
+        methodName: methodName,
+        parameter: JSON.stringify(jsonObj)
+    }, function (result) {
+        $("#json-result").html(getFormatedJsonHTML(eval('(' + result + ')')));
+    }, 'json');
+}
+
 
 function applyTest(serviceName, version, methodName) {
 

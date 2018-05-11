@@ -120,7 +120,7 @@
                             <kind>STRING</kind>
                         </keyType>
                         <valueType>
-                            <kind>STRING</kind>
+                            <kind>LONG</kind>
                         </valueType>
                     </dataType>
                     <doc>

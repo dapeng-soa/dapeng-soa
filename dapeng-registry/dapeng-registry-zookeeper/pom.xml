@@ -5,18 +5,13 @@
     <parent>
         <artifactId>dapeng-registry</artifactId>
         <groupId>com.github.dapeng</groupId>
-        <version>2.0.0</version>
+        <version>2.0.2-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>dapeng-registry-zookeeper</artifactId>
 
     <dependencies>
-        <dependency>
-            <groupId>com.github.dapeng</groupId>
-            <artifactId>dapeng-registry-api</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>org.apache.zookeeper</groupId>
             <artifactId>zookeeper</artifactId>
@@ -36,8 +31,19 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.github.dapeng</groupId>
+            <artifactId>dapeng-core</artifactId>
+        </dependency>
 
+        <dependency>
+            <groupId>com.github.dapeng</groupId>
+            <artifactId>dapeng-utils</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.dapeng</groupId>
+            <artifactId>dapeng-router</artifactId>
+        </dependency>
     </dependencies>
-
-
 </project>

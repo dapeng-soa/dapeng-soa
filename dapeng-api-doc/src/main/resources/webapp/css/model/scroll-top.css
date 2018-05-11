@@ -1,0 +1,20 @@
+.go-top{
+    padding: 10px 10px;
+    position: fixed;
+    z-index: 999;
+    right: 40px;
+    bottom: 40px;
+    font-size: 16px;
+    border: 1px solid #DDD;
+    display: block;
+    width: 36px;
+    height: 73px;
+    background: #fff;
+    line-height: 100%;
+    color: #DDD;
+}
+.go-top:hover,
+.go-top:focus{
+    color: #918e8e;
+    text-decoration: none;
+}

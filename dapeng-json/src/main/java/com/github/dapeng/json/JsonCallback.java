@@ -15,6 +15,7 @@ public interface JsonCallback {
 
     void onBoolean(boolean value) throws TException;
     void onNumber(double value) throws TException;
+    void onNumber(long value) throws TException;
     void onNull() throws TException;
 
     void onString(String value) throws TException;

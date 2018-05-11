@@ -12,7 +12,6 @@ import com.github.dapeng.transaction.api.service.GlobalTransactionProcessService
 import com.github.dapeng.org.apache.thrift.TException;
 
 import java.util.Date;
-import java.util.Optional;
 
 /**
  * Soa Transactional Process Template
@@ -37,30 +36,30 @@ public class GlobalTransactionProcessTemplate<REQ> {
         T result = null;
 
         try {
-            InvocationContext invocationContext = InvocationContextImpl.Factory.getCurrentInstance();
-            TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
+            InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
+            TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
 
-            transactionContext.setCurrentTransactionSequence(transactionContext.getCurrentTransactionSequence() + 1);
+            transactionContext.currentTransactionSequence(transactionContext.currentTransactionSequence() + 1);
 
-            invocationContext.setTransactionId(Optional.of(transactionContext.getCurrentTransactionId()));
-            invocationContext.setTransactionSequence(Optional.of(transactionContext.getCurrentTransactionSequence()));
+            invocationContext.transactionId(transactionContext.currentTransactionId());
+            invocationContext.transactionSequence(transactionContext.currentTransactionSequence());
 
             transactionProcess = new TGlobalTransactionProcess();
             transactionProcess.setCreatedAt(new Date());
             transactionProcess.setCreatedBy(0);
             transactionProcess.setExpectedStatus(TGlobalTransactionProcessExpectedStatus.Success);
 
-            transactionProcess.setServiceName(invocationContext.getServiceName());
-            transactionProcess.setMethodName(invocationContext.getMethodName());
-            transactionProcess.setVersionName(invocationContext.getVersionName());
-            transactionProcess.setRollbackMethodName(invocationContext.getMethodName() + "_rollback");
+            transactionProcess.setServiceName(invocationContext.serviceName());
+            transactionProcess.setMethodName(invocationContext.methodName());
+            transactionProcess.setVersionName(invocationContext.versionName());
+            transactionProcess.setRollbackMethodName(invocationContext.methodName() + "_rollback");
 
             transactionProcess.setRequestJson(req == null ? "" : new Gson().toJson(req));
             transactionProcess.setResponseJson("");
 
             transactionProcess.setStatus(TGlobalTransactionProcessStatus.New);
-            transactionProcess.setTransactionId(transactionContext.getCurrentTransactionId());
-            transactionProcess.setTransactionSequence(transactionContext.getCurrentTransactionSequence());
+            transactionProcess.setTransactionId(transactionContext.currentTransactionId());
+            transactionProcess.setTransactionSequence(transactionContext.currentTransactionSequence());
 
             transactionProcess.setRedoTimes(0);
             transactionProcess.setNextRedoTime(new Date(System.currentTimeMillis() + 30 * 1000));

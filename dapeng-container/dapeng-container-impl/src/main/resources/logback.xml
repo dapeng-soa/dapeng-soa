@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-
+    <contextName>container</contextName>
     <!-- 控制台日志打印 -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <Pattern>%d{MM-dd HH:mm:ss SSS} %t %p - %m%n</Pattern>
+            <Pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</Pattern>
         </layout>
         <!-- @see http://logback.qos.ch/manual/filters.html#levelFilter -->
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
@@ -13,46 +13,46 @@
     </appender>
 
     <appender name="SIMPLEFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <prudent>true</prudent>
+        <prudent>false</prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${soa.base}/logs/simple-dapeng-container.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p - %m%n</pattern>
+            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</pattern>
         </encoder>
     </appender>
 
     <appender name="SLOWTIMEFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <prudent>true</prudent>
+        <prudent>false</prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${soa.base}/logs/slowtime-dapeng-container.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p - %m%n</pattern>
+            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</pattern>
         </encoder>
     </appender>
 
     <appender name="DETAILFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <prudent>true</prudent>
+        <prudent>false</prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${soa.base}/logs/detail-dapeng-container.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p - %m%n</pattern>
+            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</pattern>
         </encoder>
     </appender>
 
     <appender name="ERRORFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <prudent>true</prudent>
+        <prudent>false</prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${soa.base}/logs/error-dapeng-container.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p - %m%n</pattern>
+            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</pattern>
         </encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>ERROR</level>
@@ -60,13 +60,13 @@
     </appender>
 
     <appender name="GBTRANSACTIONFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <prudent>true</prudent>
+        <prudent>false</prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${soa.base}/logs/transaction-dapeng-container.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p - %m%n</pattern>
+            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</pattern>
         </encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>INFO</level>
@@ -85,13 +85,13 @@
     <!--</appender>-->
 
     <appender name="SCHEDULEDTASK" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <prudent>true</prudent>
+        <prudent>false</prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${soa.base}/logs/scheduled-task.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p - %m%n</pattern>
+            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</pattern>
         </encoder>
     </appender>
 
@@ -130,4 +130,5 @@
         <appender-ref ref="DETAILFILE"/>
         <appender-ref ref="ERRORFILE"/>
     </root>
+    <jmxConfigurator />
 </configuration>

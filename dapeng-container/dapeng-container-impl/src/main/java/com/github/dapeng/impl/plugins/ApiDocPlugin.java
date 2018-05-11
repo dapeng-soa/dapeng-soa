@@ -4,13 +4,8 @@ import com.github.dapeng.api.AppListener;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.Plugin;
 import com.github.dapeng.api.events.AppEvent;
-import com.github.dapeng.util.SoaSystemEnvProperties;
-import com.github.dapeng.api.AppListener;
-import com.github.dapeng.api.Container;
-import com.github.dapeng.api.Plugin;
-import com.github.dapeng.api.events.AppEvent;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.doc.ApiWebSite;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,17 +31,17 @@ public class ApiDocPlugin implements AppListener, Plugin {
     @Override
     public void appRegistered(AppEvent event) {
         //TODO:
-        LOGGER.info(" ApiDocPlugin received appRegistered event.....");
+        LOGGER.info(getClass().getSimpleName() + "::appRegistered event:[" + event.getSource() + "]");
     }
 
     @Override
     public void appUnRegistered(AppEvent event) {
-        LOGGER.info(" ApiDocPlugin received appUnregistered event.....");
+        LOGGER.info(getClass().getSimpleName() + "::appUnRegistered event:[" + event.getSource() + "]");
     }
 
     @Override
     public void start() {
-        LOGGER.warn("Plugin::ApiDocPlugin start");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
         Thread thread = new Thread("api-doc-thread") {
             @Override
             public void run() {
@@ -69,7 +64,7 @@ public class ApiDocPlugin implements AppListener, Plugin {
 
     @Override
     public void stop() {
-        LOGGER.warn("Plugin::ApiDocPlugin stop");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::stop");
         try {
             server.stop();
         } catch (Exception e) {
