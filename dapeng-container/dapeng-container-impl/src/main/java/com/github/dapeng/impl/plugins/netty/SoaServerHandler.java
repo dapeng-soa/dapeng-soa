@@ -76,12 +76,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                     TransactionContext.Factory.removeCurrentInstance();
                 }
             });
-        } catch (Throwable ex) {
-            if (transactionContext.getHeader() == null) {
-                LOGGER.error("should not come here. soaHeader is null");
-                ((TransactionContextImpl) transactionContext).setHeader(new SoaHeader());
-            }
-            writeErrorMessage(channelHandlerContext, transactionContext, new SoaException(SoaCode.UnKnown.getCode(), "读请求异常", ex));
         } finally {
             TransactionContext.Factory.removeCurrentInstance();
             MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
@@ -94,65 +88,58 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                                                REQ args,
                                                TransactionContext transactionContext,
                                                long invokeTime) throws TException {
-        try {
-            SoaHeader soaHeader = transactionContext.getHeader();
+        SoaHeader soaHeader = transactionContext.getHeader();
 
-            //check if request expired
-            final long waitingTime = System.currentTimeMillis() - invokeTime;
-            //fixme if zk down ?
-            long timeout = getTimeout(soaHeader);
-            if (waitingTime > timeout) {
-                if (LOGGER.isDebugEnabled()) {
-                    int seqId = transactionContext.getSeqid();
-                    String debugLog = "request[seqId=" + seqId + ", waitingTime=" + waitingTime + "] timeout:"
-                            + "service[" + soaHeader.getServiceName()
-                            + "]:version[" + soaHeader.getVersionName()
-                            + "]:method[" + soaHeader.getMethodName() + "]"
-                            + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                            + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
+        //check if request expired
+        final long waitingTime = System.currentTimeMillis() - invokeTime;
+        //fixme if zk down ?
+        long timeout = getTimeout(soaHeader);
+        if (waitingTime > timeout) {
+            if (LOGGER.isDebugEnabled()) {
+                int seqId = transactionContext.getSeqid();
+                String debugLog = "request[seqId=" + seqId + ", waitingTime=" + waitingTime + "] timeout:"
+                        + "service[" + soaHeader.getServiceName()
+                        + "]:version[" + soaHeader.getVersionName()
+                        + "]:method[" + soaHeader.getMethodName() + "]"
+                        + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
+                        + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
 
-                    LOGGER.debug(getClass().getSimpleName() + "::processRequest " + debugLog);
-                }
-                throw new SoaException(SoaCode.TimeOut, "服务端请求超时");
+                LOGGER.debug(getClass().getSimpleName() + "::processRequest " + debugLog);
             }
-
-            Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
-
-            if (application == null) {
-                throw new SoaException(SoaCode.NotMatchedService);
-            }
-            SoaFunctionDefinition<I, REQ, RESP> soaFunction = (SoaFunctionDefinition<I, REQ, RESP>) serviceDef.functions.get(soaHeader.getMethodName());
-
-            if (soaFunction == null) {
-                throw new SoaException(SoaCode.NotMatchedMethod);
-            }
-
-            HeadFilter headFilter = new HeadFilter();
-            Filter dispatchFilter = new DispatchFilter(serviceDef, soaFunction);
-
-            SharedChain sharedChain = new SharedChain(headFilter, container.getFilters(), dispatchFilter, 0);
-
-            FilterContextImpl filterContext = new FilterContextImpl();
-            filterContext.setAttribute("channelHandlerContext", channelHandlerContext);
-            filterContext.setAttribute("context", transactionContext);
-            filterContext.setAttribute("application", application);
-            filterContext.setAttribute("isAsync", serviceDef.isAsync);
-            filterContext.setAttribute("request", args);
-
-            //获取slowServiceTime config
-            long slowServiceTime = getSlowServiceTime(soaHeader);
-            filterContext.setAttribute("slowServiceTime", slowServiceTime);
-
-            filterContext.setAttach(dispatchFilter, "chain", sharedChain);
-
-            sharedChain.onEntry(filterContext);
-        } catch (SoaException e) {
-            // can't reach the headFilter
-            writeErrorMessage(channelHandlerContext, transactionContext, e);
-        } catch (Throwable e) {
-            // can't reach the headFilter
-            writeErrorMessage(channelHandlerContext, transactionContext, ExceptionUtil.convertToSoaException(e));
+            throw new SoaException(SoaCode.TimeOut, "服务端请求超时");
         }
+
+        Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
+
+        if (application == null) {
+            throw new SoaException(SoaCode.NotMatchedService);
+        }
+        SoaFunctionDefinition<I, REQ, RESP> soaFunction = (SoaFunctionDefinition<I, REQ, RESP>) serviceDef.functions.get(soaHeader.getMethodName());
+
+        if (soaFunction == null) {
+            throw new SoaException(SoaCode.NotMatchedMethod);
+        }
+
+        HeadFilter headFilter = new HeadFilter();
+        Filter dispatchFilter = new DispatchFilter(serviceDef, soaFunction);
+
+        SharedChain sharedChain = new SharedChain(headFilter, container.getFilters(), dispatchFilter, 0);
+
+        FilterContextImpl filterContext = new FilterContextImpl();
+        filterContext.setAttribute("channelHandlerContext", channelHandlerContext);
+        filterContext.setAttribute("context", transactionContext);
+        filterContext.setAttribute("application", application);
+        filterContext.setAttribute("isAsync", serviceDef.isAsync);
+        filterContext.setAttribute("request", args);
+
+        //获取slowServiceTime config
+        long slowServiceTime = getSlowServiceTime(soaHeader);
+        filterContext.setAttribute("slowServiceTime", slowServiceTime);
+
+        filterContext.setAttach(dispatchFilter, "chain", sharedChain);
+
+        sharedChain.onEntry(filterContext);
+
     }
 
 

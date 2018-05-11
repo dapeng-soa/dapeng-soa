@@ -1,9 +1,6 @@
 package com.github.dapeng.impl.plugins.netty;
 
-import com.github.dapeng.core.SoaCode;
-import com.github.dapeng.core.SoaException;
-import com.github.dapeng.core.SoaHeader;
-import com.github.dapeng.core.TransactionContext;
+import com.github.dapeng.core.*;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -26,6 +23,11 @@ public class SoaExceptionHandler extends ChannelInboundHandlerAdapter {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         LOGGER.error("[SoaExceptionHandler] soaHandler throw an exception" + cause.getMessage(), cause);
         final TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
+
+        if (transactionContext.getHeader() == null) {
+            LOGGER.error("should not come here. soaHeader is null");
+            ((TransactionContextImpl) transactionContext).setHeader(new SoaHeader());
+        }
         writeErrorMessage(ctx, transactionContext, new SoaException(SoaCode.UnKnown.getCode(), cause.getMessage(), cause));
     }
 
