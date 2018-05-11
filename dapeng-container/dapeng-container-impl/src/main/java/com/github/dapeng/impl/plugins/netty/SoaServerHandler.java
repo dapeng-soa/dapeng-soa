@@ -88,13 +88,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        LOGGER.error("【SoaServerHandler】<-----> " + cause.getMessage(), cause);
-        final TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
-        writeErrorMessage(ctx, transactionContext, new SoaException(SoaCode.UnKnown.getCode(), cause.getMessage(), cause));
-        ctx.close();
-    }
 
     private <I, REQ, RESP> void processRequest(ChannelHandlerContext channelHandlerContext,
                                                SoaServiceDefinition<I> serviceDef,

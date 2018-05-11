@@ -5,7 +5,7 @@ import io.netty.util.AttributeKey;
 import java.util.Map;
 
 /**
- * 描述:
+ * 描述: NettyChannelKeys 作为 handler间共享数据
  *
  * @author hz.lei
  * @date 2018年03月22日 下午8:03

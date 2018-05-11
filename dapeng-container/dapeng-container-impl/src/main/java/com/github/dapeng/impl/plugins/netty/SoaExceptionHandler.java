@@ -1,10 +1,14 @@
 package com.github.dapeng.impl.plugins.netty;
 
+import com.github.dapeng.core.SoaCode;
 import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.SoaHeader;
 import com.github.dapeng.core.TransactionContext;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
@@ -14,21 +18,22 @@ import java.util.Optional;
  * @author hz.lei
  * @date 2018年05月11日 下午4:37
  */
+@ChannelHandler.Sharable
 public class SoaExceptionHandler extends ChannelInboundHandlerAdapter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SoaExceptionHandler.class);
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        super.exceptionCaught(ctx, cause);
+        LOGGER.error("[SoaExceptionHandler] soaHandler throw an exception" + cause.getMessage(), cause);
+        final TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
+        writeErrorMessage(ctx, transactionContext, new SoaException(SoaCode.UnKnown.getCode(), cause.getMessage(), cause));
     }
 
     private void writeErrorMessage(ChannelHandlerContext ctx, TransactionContext transactionContext, SoaException e) {
-
         attachErrorInfo(transactionContext, e);
-
         SoaResponseWrapper responseWrapper = new SoaResponseWrapper(transactionContext,
                 Optional.ofNullable(null),
                 Optional.ofNullable(null));
-
         ctx.writeAndFlush(responseWrapper);
     }
 

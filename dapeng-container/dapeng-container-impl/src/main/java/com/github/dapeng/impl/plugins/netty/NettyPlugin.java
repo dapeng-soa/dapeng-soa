@@ -75,6 +75,9 @@ public class NettyPlugin implements AppListener, Plugin {
                     //限流 handler
                     SoaFreqHandler freqHandler = new SoaFreqHandler();
 
+                    //入站 统一异常处理
+                    SoaExceptionHandler exceptionHandler = new SoaExceptionHandler();
+
                     bootstrap.group(bossGroup, workerGroup)
                             .channel(NioServerSocketChannel.class)
                             .childHandler(new ChannelInitializer<SocketChannel>() {
@@ -97,6 +100,7 @@ public class NettyPlugin implements AppListener, Plugin {
                                     // 添加服务限流handler
                                     ch.pipeline().addLast(HandlerConstants.SOA_FREQ_HANDLER, freqHandler);
                                     ch.pipeline().addLast(HandlerConstants.SOA_SERVER_HANDLER, soaServerHandler);
+                                    ch.pipeline().addLast(HandlerConstants.SOA_EXCEPTION_HANDLER, exceptionHandler);
                                 }
                             })
                             .option(ChannelOption.SO_BACKLOG, 1024)

@@ -25,22 +25,16 @@ public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         final TransactionContext context = TransactionContext.Factory.currentInstance();
-        try {
-            ShmManager manager = ShmManager.getInstance();
-            RegistryAgent registryAgent = RegistryAgentProxy.getCurrentInstance(RegistryAgentProxy.Type.Server);
-            List<FreqControlRule> freqRules = registryAgent.getFreqControlRule(false, context.getHeader().getServiceName());
-            boolean freqResult = processFreqControl(freqRules, manager, context);
+        ShmManager manager = ShmManager.getInstance();
+        RegistryAgent registryAgent = RegistryAgentProxy.getCurrentInstance(RegistryAgentProxy.Type.Server);
+        List<FreqControlRule> freqRules = registryAgent.getFreqControlRule(false, context.getHeader().getServiceName());
+        boolean freqResult = processFreqControl(freqRules, manager, context);
 
-            if (freqResult) {
-                ctx.fireChannelRead(msg);
-            } else {
-                throw new SoaException(SoaCode.FreqControl, "当前服务在一定时间内请求次数过多，被限流");
-            }
-        } catch (Throwable ex) {
-//            throw new SoaException(SoaBaseCode.FreqControl, "当前服务在一定时间内请求次数过多，被限流");
-            writeErrorMessage(ctx, context, ExceptionUtil.convertToSoaException(ex));
+        if (freqResult) {
+            ctx.fireChannelRead(msg);
+        } else {
+            throw new SoaException(SoaCode.FreqControl, "当前服务在一定时间内请求次数过多，被限流");
         }
-
     }
 
 
@@ -92,22 +86,5 @@ public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
             access = result;
         }
         return access;
-    }
-
-
-    private void attachErrorInfo(TransactionContext transactionContext, SoaException e) {
-        SoaHeader soaHeader = transactionContext.getHeader();
-        soaHeader.setRespCode(e.getCode());
-        soaHeader.setRespMessage(e.getMsg());
-        transactionContext.soaException(e);
-    }
-
-    private void writeErrorMessage(ChannelHandlerContext ctx, TransactionContext transactionContext, SoaException e) {
-        attachErrorInfo(transactionContext, e);
-
-        SoaResponseWrapper responseWrapper = new SoaResponseWrapper(transactionContext,
-                Optional.ofNullable(null),
-                Optional.ofNullable(null));
-        ctx.writeAndFlush(responseWrapper);
     }
 }
