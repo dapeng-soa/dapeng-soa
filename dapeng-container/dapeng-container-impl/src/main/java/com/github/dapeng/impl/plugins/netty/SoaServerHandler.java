@@ -90,7 +90,9 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        LOGGER.error(cause.getMessage(), cause);
+        LOGGER.error("【SoaServerHandler】<-----> " + cause.getMessage(), cause);
+        final TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
+        writeErrorMessage(ctx, transactionContext, new SoaException(SoaCode.UnKnown.getCode(), cause.getMessage(), cause));
         ctx.close();
     }
 
@@ -142,7 +144,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             filterContext.setAttribute("context", transactionContext);
             filterContext.setAttribute("application", application);
             filterContext.setAttribute("isAsync", serviceDef.isAsync);
-            filterContext.setAttribute("request",args);
+            filterContext.setAttribute("request", args);
 
             //获取slowServiceTime config
             long slowServiceTime = getSlowServiceTime(soaHeader);
@@ -316,8 +318,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         private final SoaServiceDefinition<I> serviceDef;
         private final SoaFunctionDefinition<I, REQ, RESP> soaFunction;
 
-         DispatchFilter(SoaServiceDefinition<I> serviceDef,
-                              SoaFunctionDefinition<I, REQ, RESP> soaFunction) {
+        DispatchFilter(SoaServiceDefinition<I> serviceDef,
+                       SoaFunctionDefinition<I, REQ, RESP> soaFunction) {
 
             this.serviceDef = serviceDef;
             this.soaFunction = soaFunction;
@@ -333,7 +335,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
             I iface = serviceDef.iface;
             TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
-            REQ args = (REQ)filterContext.getAttribute("request");
+            REQ args = (REQ) filterContext.getAttribute("request");
 
             try {
                 if (LOGGER.isDebugEnabled()) {
