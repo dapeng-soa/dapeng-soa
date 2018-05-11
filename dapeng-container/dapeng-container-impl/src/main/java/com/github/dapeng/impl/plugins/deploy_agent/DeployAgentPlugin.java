@@ -5,7 +5,7 @@ import com.github.dapeng.api.Plugin;
 import com.github.dapeng.bootstrap.classloader.ApplicationClassLoader;
 import com.github.dapeng.bootstrap.classloader.ClassLoaderFactory;
 import com.github.dapeng.impl.container.DapengContainer;
-import com.github.dapeng.util.SoaSystemEnvProperties;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import org.apache.ivy.Ivy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
