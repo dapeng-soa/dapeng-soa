@@ -8,7 +8,6 @@ import com.github.dapeng.core.metadata.DataType.KIND
 import com.github.dapeng.core.metadata.TEnum.EnumItem
 import com.github.dapeng.core.metadata._
 
-import collection.JavaConverters._
 import scala.xml.Elem
 
 /**
