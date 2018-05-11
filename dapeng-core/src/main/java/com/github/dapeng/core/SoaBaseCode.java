@@ -11,7 +11,6 @@ public enum SoaBaseCode implements SoaBaseCodeInterface {
     NotFoundServer("Err-Core-098", "无可用的服务实例"),
     NotConnected("Error-Core-002", "连接失败"),
     TimeOut("Error-Core-003", "请求超时"),
-    FreqControl("Error-Core-004", "请求被限流");
 
     private String code;
     private String msg;
@@ -31,4 +30,4 @@ public enum SoaBaseCode implements SoaBaseCodeInterface {
         return msg;
     }
 
-}
+    }
