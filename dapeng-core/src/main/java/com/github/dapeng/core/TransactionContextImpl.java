@@ -162,7 +162,7 @@ public class TransactionContextImpl implements TransactionContext {
 
     public TransactionContextImpl setHeader(SoaHeader header) {
         this.header = header;
-        return  this;
+        return this;
     }
 
     @Override
@@ -240,8 +240,8 @@ public class TransactionContextImpl implements TransactionContext {
     }
 
     @Override
-    public Optional<String> userIp() {
-        return Optional.of(userIp.map(IPUtils::transferIp).orElse(""));
+    public Optional<Integer> userIp() {
+        return userIp;
     }
 
     public TransactionContextImpl userIp(Integer userIp) {

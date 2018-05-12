@@ -69,9 +69,10 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                     TransactionContext.Factory.currentInstance(transactionContext);
                     processRequest(channelHandlerContext, processor, msg, transactionContext, invokeTime);
                 } catch (Throwable e) {
-                    writeErrorMessage(channelHandlerContext,
+                    channelHandlerContext.fireExceptionCaught(e);
+                    /*writeErrorMessage(channelHandlerContext,
                             transactionContext,
-                            ExceptionUtil.convertToSoaException(e));
+                            ExceptionUtil.convertToSoaException(e));*/
                 } finally {
                     TransactionContext.Factory.removeCurrentInstance();
                 }

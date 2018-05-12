@@ -75,7 +75,7 @@ public interface TransactionContext {
 
     Optional<String> sessionTid();
 
-    Optional<String> userIp();
+    Optional<Integer> userIp();
 
     Optional<String> callerTid();
 

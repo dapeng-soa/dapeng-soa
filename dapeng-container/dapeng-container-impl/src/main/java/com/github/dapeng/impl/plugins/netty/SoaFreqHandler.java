@@ -59,19 +59,18 @@ public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
                     break;
                 case "callerIp":
                     String callerIp = context.callerIp().orElse("-1");
-                    freqKey = Integer.valueOf(callerIp);
+                    freqKey = callerIp.hashCode();
                     break;
                 case "callerMid":
                     String callerMid = context.callerMid().orElse("-1");
-                    freqKey = Integer.valueOf(callerMid);
+                    freqKey = callerMid.hashCode();
                     break;
                 case "userId":
                     Long userId = context.userId().orElse(-1L);
                     freqKey = Integer.valueOf(userId.intValue());
                     break;
                 case "userIp":
-                    String userIp = context.userIp().orElse("-1");
-                    freqKey = Integer.valueOf(userIp);
+                    freqKey = context.userIp().orElse(-1);
                     break;
                 default:
                     freqKey = -1;
