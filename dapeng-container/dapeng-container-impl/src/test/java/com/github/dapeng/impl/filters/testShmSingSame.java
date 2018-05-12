@@ -1,6 +1,5 @@
-package com.github.dapeng.impl.filters.correctness;
+package com.github.dapeng.impl.filters;
 
-import sun.awt.windows.ThemeReader;
 import sun.misc.Unsafe;
 
 import java.io.File;
@@ -23,8 +22,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author ever
  */
-public class testShmSingDiff {
-    private static final testShmSingDiff instance = new testShmSingDiff();
+public class testShmSingSame {
+    private static final testShmSingSame instance = new testShmSingSame();
     /**
      * 自旋锁标志, 0为free
      */
@@ -73,7 +72,7 @@ public class testShmSingDiff {
 
     private MappedByteBuffer buffer;
 
-    private testShmSingDiff() {
+    private testShmSingSame() {
         try {
             init();
         } catch (Exception e) {
@@ -81,7 +80,7 @@ public class testShmSingDiff {
         }
     }
 
-    public static testShmSingDiff getInstance() {
+    public static testShmSingSame getInstance() {
         return instance;
     }
 
@@ -551,7 +550,7 @@ public class testShmSingDiff {
     }
 
     public static void main(String[] args) {
-        testShmSingDiff manager = testShmSingDiff.getInstance();
+        testShmSingSame manager = testShmSingSame.getInstance();
         FreqControlRule rule = new FreqControlRule();
         Result result = new Result();
 
@@ -565,55 +564,10 @@ public class testShmSingDiff {
         rule.maxReqForMaxInterval = 100;
 
         long t1 = System.nanoTime();
-        for (int i = 0; i <500; i++) {
+        for (int i = 0; i <10000; i++) {
             result = manager.reportAndCheck(rule, 214);
         }
         System.out.println("app:" + rule.app + ", ruleType:" + rule.ruleType + ", key:214"+ ", freqRule:["
-                + rule.minInterval + "," + rule.maxReqForMinInterval + "/"
-                + rule.midInterval + "," + rule.maxReqForMidInterval + "/"
-                + rule.maxInterval + "," + rule.maxReqForMaxInterval + "];");
-        System.out.println( " cost = "+ (System.nanoTime() - t1));
-        System.out.println( " mincout = " + result.result_node.minCount +
-                " midcount = " + result.result_node.midCount +
-                " maxcount = " + result.result_node.maxCount);
-        System.out.println();
-
-        rule.app = "com.today.servers2";
-        rule.ruleType = "callIp";
-        rule.minInterval = 60;
-        rule.maxReqForMinInterval = 20;
-        rule.midInterval = 3600;
-        rule.maxReqForMidInterval = 80;
-        rule.maxInterval = 86400;
-        rule.maxReqForMaxInterval = 100;
-
-        t1 = System.nanoTime();
-        for (int i = 0; i <500; i++) {
-            result = manager.reportAndCheck(rule, 2147463647);
-        }
-        System.out.println("app:" + rule.app + ", ruleType:" + rule.ruleType + ", key:2147463647"+ ", freqRule:["
-                + rule.minInterval + "," + rule.maxReqForMinInterval + "/"
-                + rule.midInterval + "," + rule.maxReqForMidInterval + "/"
-                + rule.maxInterval + "," + rule.maxReqForMaxInterval + "];");
-        System.out.println( " cost = "+ (System.nanoTime() - t1));
-        System.out.println( " mincout = " + result.result_node.minCount +
-                " midcount = " + result.result_node.midCount +
-                " maxcount = " + result.result_node.maxCount);
-        System.out.println();
-
-        rule.app = "com.today.servers3";
-        rule.ruleType = "callId";
-        rule.minInterval = 60;
-        rule.maxReqForMinInterval = 10;
-        rule.midInterval = 3600;
-        rule.maxReqForMidInterval = 50;
-        rule.maxInterval = 86400;
-        rule.maxReqForMaxInterval = 80;
-        t1 = System.nanoTime();
-        for (int i = 0; i <500; i++) {
-            result = manager.reportAndCheck(rule, 400);
-        }
-        System.out.println("app:" + rule.app + ", ruleType:" + rule.ruleType + ", key:400"+ ", freqRule:["
                 + rule.minInterval + "," + rule.maxReqForMinInterval + "/"
                 + rule.midInterval + "," + rule.maxReqForMidInterval + "/"
                 + rule.maxInterval + "," + rule.maxReqForMaxInterval + "];");

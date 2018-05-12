@@ -1,6 +1,5 @@
-package com.github.dapeng.impl.filters.correctness;
+package com.github.dapeng.impl.filters;
 
-import sun.awt.windows.ThemeReader;
 import sun.misc.Unsafe;
 
 import java.io.File;
@@ -23,8 +22,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author ever
  */
-public class testShmId {
-    private static final testShmId instance = new testShmId();
+public class testShmSingDiff {
+    private static final testShmSingDiff instance = new testShmSingDiff();
     /**
      * 自旋锁标志, 0为free
      */
@@ -73,7 +72,7 @@ public class testShmId {
 
     private MappedByteBuffer buffer;
 
-    private testShmId() {
+    private testShmSingDiff() {
         try {
             init();
         } catch (Exception e) {
@@ -81,7 +80,7 @@ public class testShmId {
         }
     }
 
-    public static testShmId getInstance() {
+    public static testShmSingDiff getInstance() {
         return instance;
     }
 
@@ -147,7 +146,7 @@ public class testShmId {
         }
     }
 
-/*    static class Result{
+    static class Result{
         boolean control;
         CounterNode result_node;
 
@@ -155,7 +154,7 @@ public class testShmId {
             result_node = new CounterNode();
             control = false;
         }
-    }*/
+    }
 
     /**
      * @param rule 规则对象
@@ -163,9 +162,9 @@ public class testShmId {
      *             如果是字符串，需要先取hash，再按此进行限流。
      * @return
      */
-    public boolean reportAndCheck(FreqControlRule rule, int key) {
+    public Result reportAndCheck(FreqControlRule rule, int key) {
         boolean result;
-/*        Result result_return = new Result();*/
+        Result result_return = new Result();
         short appId = getId(rule.app);
         short ruleTypeId = getId(rule.ruleType);
         int nodePageHash = (appId << 16 | ruleTypeId) ^ key;
@@ -204,10 +203,10 @@ public class testShmId {
             freeNodePageLock(nodePageIndex);
         }
 
-/*        result_return.control = result;
-        result_return.result_node = node;*/
+        result_return.control = result;
+        result_return.result_node = node;
 
-        return result;
+        return result_return;
     }
 
     private CounterNode createNodeIfNotExist(short appId, short ruleTypeId, int key,
@@ -379,17 +378,13 @@ public class testShmId {
      */
     private short getId(final String key) {
         Short id = localStringIdCache.get(key);
-        int flag = 0;
+
         if (id == null) {
-            flag = 1;
-            System.out.println(key + " is not in local!Creat in local.");
             long t1 = System.nanoTime();
             id = getIdFromShm(key);
             localStringIdCache.put(key, id);
         }
-        if (flag == 0){
-            System.out.println(key + " is in local!");
-        }
+
         return id;
     }
 
@@ -427,7 +422,6 @@ public class testShmId {
                         }
                     }
                     if (foundId) {
-                        System.out.println(key + " is in Shm!");
                         return id;
                     }
                 }
@@ -459,8 +453,6 @@ public class testShmId {
         } finally {
             freeRootLock();
         }
-
-        System.out.println(key + " is not in Shm.Creat new ID!");
 
         return id;
     }
@@ -558,11 +550,10 @@ public class testShmId {
     }
 
     public static void main(String[] args) {
-        testShmId manager = testShmId.getInstance();
+        testShmSingDiff manager = testShmSingDiff.getInstance();
         FreqControlRule rule = new FreqControlRule();
+        Result result = new Result();
 
-        System.out.println();
-        System.out.println("insert new item");
         rule.app = "com.today.servers1";
         rule.ruleType = "callId";
         rule.minInterval = 60;
@@ -572,39 +563,63 @@ public class testShmId {
         rule.maxInterval = 86400;
         rule.maxReqForMaxInterval = 100;
 
-        manager.reportAndCheck(rule, 214);
+        long t1 = System.nanoTime();
+        for (int i = 0; i <500; i++) {
+            result = manager.reportAndCheck(rule, 214);
+        }
+        System.out.println("app:" + rule.app + ", ruleType:" + rule.ruleType + ", key:214"+ ", freqRule:["
+                + rule.minInterval + "," + rule.maxReqForMinInterval + "/"
+                + rule.midInterval + "," + rule.maxReqForMidInterval + "/"
+                + rule.maxInterval + "," + rule.maxReqForMaxInterval + "];");
+        System.out.println( " cost = "+ (System.nanoTime() - t1));
+        System.out.println( " mincout = " + result.result_node.minCount +
+                " midcount = " + result.result_node.midCount +
+                " maxcount = " + result.result_node.maxCount);
         System.out.println();
 
         rule.app = "com.today.servers2";
-        rule.ruleType = "callId";
-        manager.reportAndCheck(rule, 214);
+        rule.ruleType = "callIp";
+        rule.minInterval = 60;
+        rule.maxReqForMinInterval = 20;
+        rule.midInterval = 3600;
+        rule.maxReqForMidInterval = 80;
+        rule.maxInterval = 86400;
+        rule.maxReqForMaxInterval = 100;
+
+        t1 = System.nanoTime();
+        for (int i = 0; i <500; i++) {
+            result = manager.reportAndCheck(rule, 2147463647);
+        }
+        System.out.println("app:" + rule.app + ", ruleType:" + rule.ruleType + ", key:2147463647"+ ", freqRule:["
+                + rule.minInterval + "," + rule.maxReqForMinInterval + "/"
+                + rule.midInterval + "," + rule.maxReqForMidInterval + "/"
+                + rule.maxInterval + "," + rule.maxReqForMaxInterval + "];");
+        System.out.println( " cost = "+ (System.nanoTime() - t1));
+        System.out.println( " mincout = " + result.result_node.minCount +
+                " midcount = " + result.result_node.midCount +
+                " maxcount = " + result.result_node.maxCount);
         System.out.println();
 
         rule.app = "com.today.servers3";
         rule.ruleType = "callId";
-        manager.reportAndCheck(rule, 214);
+        rule.minInterval = 60;
+        rule.maxReqForMinInterval = 10;
+        rule.midInterval = 3600;
+        rule.maxReqForMidInterval = 50;
+        rule.maxInterval = 86400;
+        rule.maxReqForMaxInterval = 80;
+        t1 = System.nanoTime();
+        for (int i = 0; i <500; i++) {
+            result = manager.reportAndCheck(rule, 400);
+        }
+        System.out.println("app:" + rule.app + ", ruleType:" + rule.ruleType + ", key:400"+ ", freqRule:["
+                + rule.minInterval + "," + rule.maxReqForMinInterval + "/"
+                + rule.midInterval + "," + rule.maxReqForMidInterval + "/"
+                + rule.maxInterval + "," + rule.maxReqForMaxInterval + "];");
+        System.out.println( " cost = "+ (System.nanoTime() - t1));
+        System.out.println( " mincout = " + result.result_node.minCount +
+                " midcount = " + result.result_node.midCount +
+                " maxcount = " + result.result_node.maxCount);
         System.out.println();
-
-        rule.app = "com.today.servers4";
-        rule.ruleType = "callId";
-        manager.reportAndCheck(rule, 214);
-
-
-        System.out.println();
-        System.out.println("check item");
-        System.out.println();
-        rule.app = "com.today.servers5";
-        rule.ruleType = "callIp";
-        manager.reportAndCheck(rule, 214);
-
-        rule.app = "com.today.servers2";
-        rule.ruleType = "callId";
-        manager.reportAndCheck(rule, 214);
-        System.out.println();
-
-        rule.app = "com.today.servers6";
-        rule.ruleType = "callIp";
-        manager.reportAndCheck(rule, 214);
-
     }
 }

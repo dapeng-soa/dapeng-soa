@@ -1,6 +1,5 @@
-package com.github.dapeng.impl.filters.functional;
+package com.github.dapeng.impl.filters;
 
-import sun.awt.windows.ThemeReader;
 import sun.misc.Unsafe;
 
 import java.io.File;
@@ -23,8 +22,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author ever
  */
-public class testShmCallerId {
-    private static final testShmCallerId instance = new testShmCallerId();
+public class testShmMutilSame {
+    private static final testShmMutilSame instance = new testShmMutilSame();
     /**
      * 自旋锁标志, 0为free
      */
@@ -73,7 +72,7 @@ public class testShmCallerId {
 
     private MappedByteBuffer buffer;
 
-    private testShmCallerId() {
+    private testShmMutilSame() {
         try {
             init();
         } catch (Exception e) {
@@ -81,7 +80,7 @@ public class testShmCallerId {
         }
     }
 
-    public static testShmCallerId getInstance() {
+    public static testShmMutilSame getInstance() {
         return instance;
     }
 
@@ -177,6 +176,8 @@ public class testShmCallerId {
 
         try {
             getSpinNodePageLock(nodePageIndex);
+
+
 
             long nodeAddr = homeAddr + NODE_PAGE_OFFSET + 1024 * nodePageIndex + 16;
 
@@ -377,11 +378,13 @@ public class testShmCallerId {
      */
     private short getId(final String key) {
         Short id = localStringIdCache.get(key);
+
         if (id == null) {
             long t1 = System.nanoTime();
             id = getIdFromShm(key);
             localStringIdCache.put(key, id);
         }
+
         return id;
     }
 
@@ -450,6 +453,7 @@ public class testShmCallerId {
         } finally {
             freeRootLock();
         }
+
         return id;
     }
 
@@ -545,100 +549,45 @@ public class testShmCallerId {
         unsafe.putByte(null, addr, value);
     }
 
-    public static void main(String[] args) {
-        testShmCallerId manager = testShmCallerId.getInstance();
+
+    public static void process(){
+
+        testShmMutilSame manager = testShmMutilSame.getInstance();
         FreqControlRule rule = new FreqControlRule();
+
+        Thread t = Thread.currentThread();
         Result result = new Result();
-        rule.app = "com.today.servers0";
+
+        rule.app = "com.today.servers1";
         rule.ruleType = "callId";
         rule.minInterval = 60;
-        rule.maxReqForMinInterval = 10;
+        rule.maxReqForMinInterval = 20;
         rule.midInterval = 3600;
-        rule.maxReqForMidInterval = 50;
+        rule.maxReqForMidInterval = 80;
         rule.maxInterval = 86400;
-        rule.maxReqForMaxInterval = 80;
-
-        for (int i = 0; i < 100; i++){
-
-            result = manager.reportAndCheck(rule, 214);
-
-            if ( i == 0){
-                System.out.println(" first call :");
-                System.out.println(" flowControl = "+ result.control+
-                                    " mincount = " + result.result_node.minCount+
-                                    " midcount = " + result.result_node.midCount+
-                                    " maxcount = " + result.result_node.maxCount);
-                System.out.println();
-            }
-            if (i == 9){
-                System.out.println(" 10th call :");
-                System.out.println(" flowControl = "+ result.control+
-                        " mincount = " + result.result_node.minCount+
-                        " midcount = " + result.result_node.midCount+
-                        " maxcount = " + result.result_node.maxCount);
-                System.out.println();
-            }
-            if (i == 10){
-                System.out.println(" 11th call :");
-                System.out.println(" flowControl = "+ result.control+
-                        " mincount = " + result.result_node.minCount+
-                        " midcount = " + result.result_node.midCount+
-                        " maxcount = " + result.result_node.maxCount);
-                System.out.println();
-            }
-            try {
-                if (i == 48) {
-                    System.out.println(" 49th call :");
-                    System.out.println(" flowControl = " + result.control +
-                            " mincount = " + result.result_node.minCount +
-                            " midcount = " + result.result_node.midCount +
-                            " maxcount = " + result.result_node.maxCount);
-                    System.out.println("sleep 1 minute");
-                    Thread.sleep(60000);
-                    System.out.println();
-                }
-            }catch (InterruptedException e){
-                System.out.println(" InterruptedException ");
-            }
-            if (i == 49){
-                System.out.println(" 50th call :");
-                System.out.println(" flowControl = "+ result.control+
-                        " mincount = " + result.result_node.minCount+
-                        " midcount = " + result.result_node.midCount+
-                        " maxcount = " + result.result_node.maxCount);
-                System.out.println();
-            }
-            if (i == 50){
-                System.out.println(" 51th call :");
-                System.out.println(" flowControl = "+ result.control+
-                        " mincount = " + result.result_node.minCount+
-                        " midcount = " + result.result_node.midCount+
-                        " maxcount = " + result.result_node.maxCount);
-            }
-
+        rule.maxReqForMaxInterval = 100;
+        long t1 = System.nanoTime();
+        for (int i = 0; i <10000; i++) {
+            result = manager.reportAndCheck(rule, 325);
         }
-
-
-        System.out.println("key1 = 258, call times = 9 ");
-        for (int i = 0; i < 9; i++) {
-            result = manager.reportAndCheck(rule, 258);
-        }
-        System.out.println( "flowcontrol = "+ result.control+
-                " mincount = " + result.result_node.minCount +
-                " midcount = " + result.result_node.midCount +
-                " maxcount = " + result.result_node.maxCount);
-        System.out.println();
-        System.out.println("key2 = 564, call times = 8 ");
-        for (int i = 0; i < 8; i++) {
-            result = manager.reportAndCheck(rule, 564);
-        }
-        System.out.println( "flowcontrol = "+ result.control+
-                " mincount = " + result.result_node.minCount +
+        System.out.println("app:" + rule.app + ", ruleType:" + rule.ruleType + ", key:325"+ ", freqRule:["
+                + rule.minInterval + "," + rule.maxReqForMinInterval + "/"
+                + rule.midInterval + "," + rule.maxReqForMidInterval + "/"
+                + rule.maxInterval + "," + rule.maxReqForMaxInterval + "];");
+        System.out.println("threadname: "+t.getName()+" cost = "+ (System.nanoTime() - t1));
+        System.out.println("threadname: "+t.getName()+" mincout = " + result.result_node.minCount +
                 " midcount = " + result.result_node.midCount +
                 " maxcount = " + result.result_node.maxCount);
         System.out.println();
 
+    }
 
+    public static void main(String[] args) {
+
+
+
+        new Thread(() -> process()).start();
+        new Thread(() -> process()).start();
 
     }
 }
