@@ -193,7 +193,7 @@ public class ShmManager {
                 nodePageMeta.nodes = 1;
                 node = insertCounterNode(appId, ruleTypeId, key, now, nodeAddr);
             } else if (nodePageMeta.nodes == MAX_NODE_PER_PAGE) {
-                //todo 淘汰老node
+                // 淘汰老node
                 node = eliminateAndInsertNodes(nodePageMeta, appId, ruleTypeId, key, now, nodeAddr, rule);
             } else {
                 node = createNodeIfNotExist(appId, ruleTypeId, key,

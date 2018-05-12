@@ -1,9 +1,9 @@
 package com.github.dapeng.impl.filters;
 
 
-
 import com.github.dapeng.core.FreqControlRule;
 import sun.misc.Unsafe;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -26,7 +26,7 @@ public class testShmCallerId {
     private static long homeAddr;
     private static MappedByteBuffer buffer;
 
-    private static ShmManager.CounterNode checkNodeCount(FreqControlRule rule,int key) throws IOException, NoSuchFieldException,IllegalAccessException {
+    private static ShmManager.CounterNode checkNodeCount(FreqControlRule rule, int key) throws IOException, NoSuchFieldException, IllegalAccessException {
 
         short appId = getIdFromShm(rule.app);
         short ruleTypeId = getIdFromShm(rule.ruleType);
@@ -46,21 +46,27 @@ public class testShmCallerId {
     }
 
     private static ShmManager.CounterNode getNodeData(short appId, short ruleTypeId, int key,
-                                               ShmManager.NodePageMeta nodePageMeta,long nodeAddr) {
+                                                      ShmManager.NodePageMeta nodePageMeta, long nodeAddr) {
         ShmManager.CounterNode node = null;
         for (int index = 0; index < nodePageMeta.nodes; index++) {
             short _appId = getShort(nodeAddr);
             if (_appId == 0) break;
-            if (appId != _appId) continue;
+            if (appId != _appId) {
+                nodeAddr += 24;
+                continue;
+            }
 
             nodeAddr += Short.BYTES;
             short _ruleTypeId = getShort(nodeAddr);
-            if (ruleTypeId != _ruleTypeId) continue;
+            if (ruleTypeId != _ruleTypeId) {
+                nodeAddr += 22;
+                continue;
+            }
 
             nodeAddr += Short.BYTES;
             int _key = getInt(nodeAddr);
             if (key != _key) {
-                nodeAddr += Integer.BYTES * 4;
+                nodeAddr += Integer.BYTES * 5;
                 continue;
             }
 
@@ -84,20 +90,23 @@ public class testShmCallerId {
         return node;
     }
 
-    private static short getIdFromShm(String key) throws NoSuchFieldException, IllegalAccessException, IOException{
+    private static short getIdFromShm(String key) throws NoSuchFieldException, IllegalAccessException, IOException {
         short id = 0;
 
         Field f = Unsafe.class.getDeclaredField("theUnsafe");
         f.setAccessible(true);
         unsafe = (Unsafe) f.get(null);
 
-        File file = new File("f:/data/shm.data");
+        File file = new File("/data/shm.data");
         RandomAccessFile access = new RandomAccessFile(file, "rw");
         buffer = access.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, TOTAL_MEM_BYTES);
 
         Field address = Buffer.class.getDeclaredField("address");
         address.setAccessible(true);
         homeAddr = (Long) address.get(buffer);
+
+
+
 
 
         try {
@@ -107,7 +116,7 @@ public class testShmCallerId {
             byte[] keyBytes = key.getBytes("utf-8");
 
             while ((dictionaryItemAddr < homeAddr + DICTION_DATA_OFFSET)
-                    && (    id = getShort(dictionaryItemAddr + Short.BYTES)) > 0) {
+                    && (id = getShort(dictionaryItemAddr + Short.BYTES)) > 0) {
                 boolean foundId = true;
                 short length = getShort(dictionaryItemAddr);
                 if (length == keyBytes.length) {
@@ -127,14 +136,13 @@ public class testShmCallerId {
                 }
                 dictionaryItemAddr += dictionaryItemInfoSize;
             }
-        }finally {
+        } finally {
             freeRootLock();
         }
 
 
-        return  id;
+        return id;
     }
-
 
 
     private static ShmManager.NodePageMeta getNodePageMeta(int nodePageIndex) {
@@ -150,37 +158,45 @@ public class testShmCallerId {
     private static void getSpinRootLock(int nodeHash) {
         while (!getRootLock(nodeHash)) ;
     }
+
     private static boolean getRootLock(int nodeHash) {
-        return unsafe.compareAndSwapInt(null,homeAddr + Integer.BYTES, FREE_LOCK, nodeHash);
+        return unsafe.compareAndSwapInt(null, homeAddr + Integer.BYTES, FREE_LOCK, nodeHash);
     }
+
     private static void freeRootLock() {
         putInt(homeAddr + Integer.BYTES, FREE_LOCK);
     }
+
     private static void getSpinNodePageLock(int nodePageIndex) {
         while (!getNodePageLock(nodePageIndex)) ;
     }
+
     private static boolean getNodePageLock(int nodeIndex) {
         return unsafe.compareAndSwapInt(null, homeAddr + NODE_PAGE_OFFSET + 1024 * nodeIndex, FREE_LOCK, nodeIndex);
     }
+
     private static void freeNodePageLock(int nodeIndex) {
         putInt(homeAddr + NODE_PAGE_OFFSET + 1024 * nodeIndex, FREE_LOCK);
     }
+
     private static int getInt(long addr) {
         return unsafe.getInt(null, addr);
     }
+
     private static void putInt(long addr, int value) {
         unsafe.putInt(null, addr, value);
     }
+
     private static short getShort(long addr) {
         return unsafe.getShort(null, addr);
     }
+
     private static byte getByte(long addr) {
         return unsafe.getByte(null, addr);
     }
 
 
-
-    public static void main(String[] args) throws IllegalAccessException, NoSuchFieldException, IOException{
+    public static void main(String[] args) throws IllegalAccessException, NoSuchFieldException, IOException {
 
 
         ShmManager manager = ShmManager.getInstance();
@@ -197,62 +213,50 @@ public class testShmCallerId {
         rule.maxReqForMaxInterval = 80;
 
 
-        for (int i = 0; i < 100; i++){
+        for (int i = 0; i < 100; i++) {
 
             result = manager.reportAndCheck(rule, 214);
-            node = checkNodeCount(rule,214);
+            node = checkNodeCount(rule, 214);
 
-            if ( i == 0){
+            if (i == 0) {
                 System.out.println(" first call :");
-                System.out.println(" flowControl = "+ result +
-                                    " mincount = " + node.minCount +
-                                    " midcount = " + node.midCount +
-                                    " maxcount = " + node.maxCount);
+                System.out.println(" flowControl = " + result +
+                        " mincount = " + node.minCount +
+                        " midcount = " + node.midCount +
+                        " maxcount = " + node.maxCount);
                 System.out.println();
             }
-            if (i == 9){
+            if (i == 9) {
                 System.out.println(" 10th call :");
-                System.out.println(" flowControl = "+ result +
+                System.out.println(" flowControl = " + result +
                         " mincount = " + node.minCount +
-                        " midcount = "+ node.midCount +
+                        " midcount = " + node.midCount +
                         " maxcount = " + node.maxCount);
                 System.out.println();
             }
-            if (i == 10){
+            if (i == 10) {
                 System.out.println(" 11th call :");
-                System.out.println(" flowControl = "+ result +
+                System.out.println(" flowControl = " + result +
                         " mincount = " + node.minCount +
-                        " midcount = "+ node.midCount +
+                        " midcount = " + node.midCount +
                         " maxcount = " + node.maxCount);
                 System.out.println();
             }
-/*            try {
-                if (i == 48) {
-                    System.out.println(" 49th call :");
-                    System.out.println(" flowControl = "+ result +
-                            " mincount = " + node.minCount +
-                            " midcount = "+ node.midCount +
-                            " maxcount = " + node.maxCount);
-                    System.out.println("sleep 1 minute");
-                    Thread.sleep(60000);
-                    System.out.println();
-                }
-            }catch (InterruptedException e){
-                System.out.println(" InterruptedException ");
-            }*/
-            if (i == 49){
+
+
+            if (i == 49) {
                 System.out.println(" 50th call :");
-                System.out.println(" flowControl = "+ result +
+                System.out.println(" flowControl = " + result +
                         " mincount = " + node.minCount +
-                        " midcount = "+ node.midCount +
+                        " midcount = " + node.midCount +
                         " maxcount = " + node.maxCount);
                 System.out.println();
             }
-            if (i == 50){
+            if (i == 50) {
                 System.out.println(" 51th call :");
-                System.out.println(" flowControl = "+ result +
+                System.out.println(" flowControl = " + result +
                         " mincount = " + node.minCount +
-                        " midcount = "+ node.midCount +
+                        " midcount = " + node.midCount +
                         " maxcount = " + node.maxCount);
             }
 
@@ -262,24 +266,23 @@ public class testShmCallerId {
         System.out.println("key1 = 258, call times = 9 ");
         for (int i = 0; i < 9; i++) {
             result = manager.reportAndCheck(rule, 258);
-            node = checkNodeCount(rule,258);
+            node = checkNodeCount(rule, 258);
         }
-        System.out.println(" flowControl = "+ result +
+        System.out.println(" flowControl = " + result +
                 " mincount = " + node.minCount +
-                " midcount = "+ node.midCount +
+                " midcount = " + node.midCount +
                 " maxcount = " + node.maxCount);
         System.out.println();
         System.out.println("key2 = 564, call times = 8 ");
         for (int i = 0; i < 8; i++) {
             result = manager.reportAndCheck(rule, 564);
-            node = checkNodeCount(rule,564);
+            node = checkNodeCount(rule, 564);
         }
-        System.out.println(" flowControl = "+ result +
+        System.out.println(" flowControl = " + result +
                 " mincount = " + node.minCount +
-                " midcount = "+ node.midCount +
+                " midcount = " + node.midCount +
                 " maxcount = " + node.maxCount);
         System.out.println();
-
 
 
     }
