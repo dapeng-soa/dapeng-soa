@@ -486,7 +486,8 @@ public class ShmManager {
         f.setAccessible(true);
         unsafe = (Unsafe) f.get(null);
 
-        File file = new File("/data/shm.data");
+//        File file = new File("/data/shm.data");
+        File file = new File(System.getProperty("user.home") + "/shm.data");
         RandomAccessFile access = new RandomAccessFile(file, "rw");
 
         buffer = access.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, TOTAL_MEM_BYTES);
