@@ -609,10 +609,7 @@ public class ShmManager {
 
             // id not found, just create one
             id = (short) (getShort(homeAddr + 10) + 1);
-            short nextUtf8offset = (short) (getShort(homeAddr + 8) + keyBytes.length);
-            // update RootPage
-            putShort(homeAddr + 8, nextUtf8offset);
-            putShort(homeAddr + 10, id);
+            short nextUtf8offset = getShort(homeAddr + 8);
             // create a dictionaryItem
             putShort(dictionaryItemAddr, (short) keyBytes.length);
             putShort(dictionaryItemAddr + 2, id);
@@ -622,6 +619,9 @@ public class ShmManager {
             for (int i = 0; i < keyBytes.length; i++) {
                 putByte(dictDataOffset + i, keyBytes[i]);
             }
+            // update RootPage
+            putShort(homeAddr + 8, (short)(nextUtf8offset +  keyBytes.length));
+            putShort(homeAddr + 10, id);
             LOGGER.debug("getIdFromShm create id:{} for key:{}, cost:{}", id, key, System.nanoTime() - t1);
         } catch (UnsupportedEncodingException e) {
             LOGGER.error(e.getMessage(), e);
