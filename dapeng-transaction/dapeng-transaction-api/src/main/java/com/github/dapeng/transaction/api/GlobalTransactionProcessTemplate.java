@@ -1,15 +1,17 @@
 package com.github.dapeng.transaction.api;
 
-import com.google.gson.Gson;
 import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.TransactionContext;
-import com.github.dapeng.transaction.api.domain.TGlobalTransactionProcess;
-import com.github.dapeng.transaction.api.domain.TGlobalTransactionProcessStatus;
-import com.github.dapeng.transaction.api.domain.TGlobalTransactionProcessExpectedStatus;
-import com.github.dapeng.transaction.api.service.GlobalTransactionProcessService;
 import com.github.dapeng.org.apache.thrift.TException;
+import com.github.dapeng.transaction.api.domain.TGlobalTransactionProcess;
+import com.github.dapeng.transaction.api.domain.TGlobalTransactionProcessExpectedStatus;
+import com.github.dapeng.transaction.api.domain.TGlobalTransactionProcessStatus;
+import com.github.dapeng.transaction.api.service.GlobalTransactionProcessService;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import net.dongliu.gson.GsonJava8TypeAdapterFactory;
 
 import java.util.Date;
 import java.util.Optional;
@@ -55,7 +57,9 @@ public class GlobalTransactionProcessTemplate<REQ> {
             transactionProcess.setVersionName(invocationContext.getVersionName());
             transactionProcess.setRollbackMethodName(invocationContext.getMethodName() + "_rollback");
 
-            transactionProcess.setRequestJson(req == null ? "" : new Gson().toJson(req));
+            Gson gson = new GsonBuilder().registerTypeAdapterFactory(new GsonJava8TypeAdapterFactory()).create();
+
+            transactionProcess.setRequestJson(req == null ? "" : gson.toJson(req));
             transactionProcess.setResponseJson("");
 
             transactionProcess.setStatus(TGlobalTransactionProcessStatus.New);
@@ -93,5 +97,7 @@ public class GlobalTransactionProcessTemplate<REQ> {
             }
         }
     }
+
+
 
 }
