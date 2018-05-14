@@ -1,5 +1,8 @@
-package com.github.dapeng.impl.filters;
+package com.github.dapeng.impl.filters.freq;
 
+import com.github.dapeng.core.FreqControlRule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sun.misc.Unsafe;
 
 import java.io.File;
@@ -10,8 +13,11 @@ import java.lang.reflect.Field;
 import java.nio.Buffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Root Page 4K(version:1, nodePageCount:128K, rootPageLock(i32), nextUtf8offset, nextDictionId, resolved)
@@ -22,8 +28,9 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author ever
  */
-public class testShmMutilSame {
-    private static final testShmMutilSame instance = new testShmMutilSame();
+public class ShmManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShmManager.class.getName());
+    private static final ShmManager instance = new ShmManager();
     /**
      * 自旋锁标志, 0为free
      */
@@ -36,16 +43,17 @@ public class testShmMutilSame {
      * nodePage数量, 128K
      */
     private final static int NODE_PAGE_COUNT = 128 * 1024;
+    // private final static int NODE_PAGE_COUNT = 2;
     /**
-     * DictionRoot域的地址偏移量, 该域占用12K
+     * Root Page:存储基本的信息,该域占用4K
      */
     private final static long DICTION_ROOT_OFFSET = 4096;
     /**
-     * DictionData域的地址偏移量, 该域占用128K
+     * DictionRoot域的地址偏移量, 该域占用12K
      */
     private final static long DICTION_DATA_OFFSET = DICTION_ROOT_OFFSET + 12 * 1024;
     /**
-     * NodePage域的地址偏移量, 该域占用128M
+     * DictionData域的地址偏移量, 该域占用128K
      */
     private final static long NODE_PAGE_OFFSET = DICTION_DATA_OFFSET + 128 * 1024;
     /**
@@ -72,89 +80,19 @@ public class testShmMutilSame {
 
     private MappedByteBuffer buffer;
 
-    private testShmMutilSame() {
+    private ShmManager() {
         try {
             init();
         } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
 
-    public static testShmMutilSame getInstance() {
+    public static ShmManager getInstance() {
         return instance;
     }
 
-    /**
-     * 限流规则
-     */
-    static class FreqControlRule {
-        String app;
-        String ruleType;
-        int minInterval;
-        int maxReqForMinInterval;
-        int midInterval;
-        int maxReqForMidInterval;
-        int maxInterval;
-        int maxReqForMaxInterval;
-
-        @Override
-        public String toString() {
-            return "app:" + app + ", ruleType:" + ruleType + ", freqRule:["
-                    + minInterval + "," + maxReqForMinInterval + "/"
-                    + midInterval + "," + maxReqForMidInterval + "/"
-                    + maxInterval + "," + maxReqForMaxInterval + ";";
-        }
-    }
-
-    static class DictionaryItem {
-        short length;
-        int id;
-        short utf8offset; // DictionaryData[ 2 * utf8offset ] 处开始存储这个字符串。
-    }
-
-
-    /**
-     * nodePage元数据
-     */
-    static class NodePageMeta {
-        int pageLock;
-        int hash;
-        short nodes;
-
-        @Override
-        public String toString() {
-            return "hash:" + hash + ", nodes:" + nodes;
-        }
-    }
-
-    /**
-     * 计数节点
-     */
-    static class CounterNode {
-        short appId;  // app 被映射为 16bit id
-        short ruleTypeId;  // rule_type_id 被映射为 16bit id
-        int key;  // ip, userId, callerMid etc.
-        int timestamp;  // last updated unix epoch, seconds since 1970.
-        int minCount;  // min interval counter
-        int midCount;  // mid interval counter
-        int maxCount;  // max interval counter
-
-        @Override
-        public String toString() {
-            return "appId:" + appId + ", ruleTypeId:" + ruleTypeId + ", key:" + key
-                    + ", timestamp:" + timestamp + ", counters:" + minCount + "/" + midCount + "/" + maxCount;
-        }
-    }
-
-    static class Result{
-        boolean control;
-        CounterNode result_node;
-
-        private Result(){
-            result_node = new CounterNode();
-            control = false;
-        }
-    }
 
     /**
      * @param rule 规则对象
@@ -162,52 +100,58 @@ public class testShmMutilSame {
      *             如果是字符串，需要先取hash，再按此进行限流。
      * @return
      */
-    public Result reportAndCheck(FreqControlRule rule, int key) {
+    public boolean reportAndCheck(FreqControlRule rule, int key) {
         boolean result;
-        Result result_return = new Result();
         short appId = getId(rule.app);
         short ruleTypeId = getId(rule.ruleType);
+
         int nodePageHash = (appId << 16 | ruleTypeId) ^ key;
         int nodePageIndex = nodePageHash % NODE_PAGE_COUNT;
         int now = (int) (System.currentTimeMillis() / 1000) % 86400;
 
+        LOGGER.debug("reportAndCheck, rule:{}, nodePageHash:{}, nodePageIndex:{}, timestamp:{}, appId/ruleTypeId/key:{}/{}/{}",
+                rule, nodePageHash, nodePageIndex, now, appId, ruleTypeId, key);
 
-        CounterNode node = null;
+        long t1 = System.nanoTime();
 
         try {
             getSpinNodePageLock(nodePageIndex);
+            LOGGER.debug("reportAndCheck, acquire spin lock cost:{}", System.nanoTime() - t1);
 
-
-
+            CounterNode node = null;
             long nodeAddr = homeAddr + NODE_PAGE_OFFSET + 1024 * nodePageIndex + 16;
 
             NodePageMeta nodePageMeta = getNodePageMeta(nodePageIndex);
+            LOGGER.debug("reportAndCheck, nodePageMeta:{}, cost:{}", nodePageMeta, System.nanoTime() - t1);
 
             if (nodePageMeta.nodes == 0) {
                 nodePageMeta.hash = nodePageHash;
                 nodePageMeta.nodes = 1;
                 node = insertCounterNode(appId, ruleTypeId, key, now, nodeAddr);
             } else if (nodePageMeta.nodes == MAX_NODE_PER_PAGE) {
-                //todo 淘汰老node
+                // 淘汰老node
+                node = eliminateAndInsertNodes(nodePageMeta, appId, ruleTypeId, key, now, nodeAddr, rule);
             } else {
                 node = createNodeIfNotExist(appId, ruleTypeId, key,
                         nodePageMeta, now,
                         nodeAddr, rule);
+                LOGGER.debug("createNodeIfNotExist returned");
             }
 
             result = node.minCount <= rule.maxReqForMinInterval
                     && node.midCount <= rule.maxReqForMidInterval
                     && node.maxCount <= rule.maxReqForMaxInterval;
             updateNodePageMeta(nodePageMeta, nodePageIndex);
+            LOGGER.debug("updateNodePageMeta nodePageIndex = {}", nodePageIndex);
         } finally {
             freeNodePageLock(nodePageIndex);
+            LOGGER.debug("freeNodePageLock {}", nodePageIndex);
         }
 
-        result_return.control = result;
-        result_return.result_node = node;
-
-        return result_return;
+        LOGGER.debug("reportAndCheck end, result:{}, cost:{}", result, System.nanoTime() - t1);
+        return result;
     }
+
 
     private CounterNode createNodeIfNotExist(short appId, short ruleTypeId, int key,
                                              NodePageMeta nodePageMeta, int now, long nodeAddr,
@@ -219,17 +163,23 @@ public class testShmMutilSame {
             short _appId = getShort(nodeAddr);
             if (_appId == 0) break;
 
-            if (appId != _appId) continue;
+            if (appId != _appId) {
+                nodeAddr += 24;
+                continue;
+            }
 
             nodeAddr += Short.BYTES;
             short _ruleTypeId = getShort(nodeAddr);
-            if (ruleTypeId != _ruleTypeId) continue;
+            if (ruleTypeId != _ruleTypeId) {
+                nodeAddr += 22;
+                continue;
+            }
 
             nodeAddr += Short.BYTES;
             int _key = getInt(nodeAddr);
             if (key != _key) {
                 //skip rest bytes
-                nodeAddr += Integer.BYTES * 4;
+                nodeAddr += Integer.BYTES * 5;
                 continue;
             }
 
@@ -270,16 +220,19 @@ public class testShmMutilSame {
             }
 
             node.timestamp = now;
+            LOGGER.debug("createNodeIfNotExist, found node:{}, index:{}, cost:{}", node, index, System.nanoTime() - t1);
             break;
         }
 
         if (node == null) {
+            LOGGER.debug("createNodeIfNotExist, node not found, index:{}, cost:{}", nodePageMeta.nodes, System.nanoTime() - t1);
             node = insertCounterNode(appId, ruleTypeId, key, now, nodeAddr);
             nodePageMeta.nodes += 1;
         }
 
         return node;
     }
+
 
     private CounterNode insertCounterNode(short appId, short ruleTypeId, int key,
                                           int timestamp, long addr) {
@@ -307,7 +260,136 @@ public class testShmMutilSame {
         addr += Integer.BYTES;
         putInt(addr, node.maxCount);
 
+        LOGGER.debug("insertCounterNode node:{}, cost:{}", node, System.nanoTime() - t1);
         return node;
+    }
+
+
+    /**
+     * 淘汰算法
+     *
+     * @param nodePageMeta
+     * @param appId
+     * @param ruleTypeId
+     * @param key
+     * @param now
+     * @param nodeAddr
+     * @param rule
+     */
+    private CounterNode eliminateAndInsertNodes(NodePageMeta nodePageMeta, short appId, short ruleTypeId, int key, int now, long nodeAddr, FreqControlRule rule) {
+        long t1 = System.nanoTime();
+        List<MarkNode> markNodes = new ArrayList<>(64);
+        for (int index = 0; index < nodePageMeta.nodes; index++) {
+            CounterNode node = new CounterNode();
+            MarkNode markNode = new MarkNode(nodeAddr + index * 24);
+
+            getNodeFromMemory(node, nodeAddr);
+            nodeAddr += 24;
+            processNodeRate(node, markNode, rule, now);
+            markNode.key = node.key;
+            markNodes.add(markNode);
+        }
+        long postion = eliminateNode(markNodes);
+        LOGGER.debug("eliminateAndInsertNode, index:{}, cost:{}", nodePageMeta.nodes, System.nanoTime() - t1);
+        return insertCounterNode(appId, ruleTypeId, key, now, postion);
+    }
+
+
+    /**
+     * 从 nodePage 获取 node 值
+     *
+     * @param nodeAddr
+     * @return
+     */
+    private void getNodeFromMemory(CounterNode node, long nodeAddr) {
+        // I16
+        node.appId = getShort(nodeAddr);
+        nodeAddr += Short.BYTES;
+        //I16
+        node.ruleTypeId = getShort(nodeAddr);
+        nodeAddr += Short.BYTES;
+        //I32
+        node.key = getInt(nodeAddr);
+        nodeAddr += Integer.BYTES;
+        //i32
+        node.timestamp = getInt(nodeAddr);
+        nodeAddr += Integer.BYTES;
+        //i32 min interval counter
+        node.minCount = getInt(nodeAddr);
+        nodeAddr += Integer.BYTES;
+        //i32 mid interval counter
+        node.midCount = getInt(nodeAddr);
+        nodeAddr += Integer.BYTES;
+        //i32 max interval counter
+        node.maxCount = getInt(nodeAddr);
+        nodeAddr += Integer.BYTES;
+    }
+
+    /**
+     * process node rate due to eliminate
+     *
+     * @param node
+     * @param markNode
+     * @param rule
+     * @param now
+     */
+    private void processNodeRate(CounterNode node, MarkNode markNode, FreqControlRule rule, int now) {
+        boolean isSameMin = now / rule.minInterval == node.timestamp / rule.minInterval;
+        boolean isSameMid = now / rule.midInterval == node.timestamp / rule.midInterval;
+        boolean isSameMax = now / rule.maxInterval == node.timestamp / rule.maxInterval;
+
+        if (!isSameMin) {
+            node.minCount = 0;
+        }
+        if (!isSameMid) {
+            node.midCount = 0;
+        }
+        if (!isSameMax) {
+            node.maxCount = 0;
+        }
+
+        double minRate = node.minCount / rule.maxReqForMinInterval * rule.minInterval / (now % rule.minInterval + 1);
+        double midRate = node.midCount / rule.maxReqForMidInterval * rule.midInterval / (now % rule.midInterval + 1);
+        double maxRate = node.maxCount / rule.maxReqForMaxInterval * rule.maxInterval / (now % rule.maxInterval + 1);
+
+        //～～～～～～～～～～～～～～～
+        double rate;
+        if (minRate < midRate) {
+            if (midRate < maxRate) {
+                rate = maxRate;
+            } else {
+                rate = midRate;
+            }
+        } else {
+            if (minRate < maxRate) {
+                rate = maxRate;
+            } else {
+                rate = minRate;
+            }
+        }
+
+        if (rate < 0.1) {
+            markNode.isRemove = true;
+        } else {
+            // 如果没有 rate < 0.1的节点，则 筛选 rate 最小的2个节点，删除之。
+            markNode.rate = rate;
+        }
+    }
+
+    /**
+     * do get postion
+     *
+     * @param markNodes
+     */
+    private long eliminateNode(List<MarkNode> markNodes) {
+        List<MarkNode> collect = markNodes.stream().filter(node -> node.isRemove).collect(Collectors.toList());
+        if (collect.size() > 0) {
+            return collect.get(0).position;
+        }
+        List<MarkNode> sortList = markNodes.stream().sorted((n1, n2) -> (int) (n1.rate - n2.rate)).collect(Collectors.toList());
+        long postion = sortList.get(0).position;
+
+        return postion;
     }
 
     private void updateNodePageMeta(NodePageMeta nodePageMeta, int nodePageIndex) {
@@ -318,13 +400,17 @@ public class testShmMutilSame {
     }
 
     private void init() throws NoSuchFieldException, IllegalAccessException, IOException {
+        LOGGER.info(getClass().getSimpleName() + "::init begin");
         long t1 = System.nanoTime();
         Field f = Unsafe.class.getDeclaredField("theUnsafe");
         f.setAccessible(true);
         unsafe = (Unsafe) f.get(null);
 
-        File file = new File("/data/shm.data");
+
+        File file = new File("f:data/shm.data");
+   //     File file = new File(System.getProperty("user.home") + "/shm.data");
         RandomAccessFile access = new RandomAccessFile(file, "rw");
+
         buffer = access.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, TOTAL_MEM_BYTES);
 
         Field address = Buffer.class.getDeclaredField("address");
@@ -337,6 +423,7 @@ public class testShmMutilSame {
             constructShm();
         }
 
+        LOGGER.info(getClass().getSimpleName() + "::init end, homeAddr:" + homeAddr + ", cost:" + (System.nanoTime() - t1));
     }
 
     private void close() {
@@ -348,6 +435,7 @@ public class testShmMutilSame {
      */
     private void constructShm() {
         if (getRootLock(hashCode())) {
+            LOGGER.warn(getClass().getSimpleName() + "::constructShm begin");
             long addr = homeAddr;
             // version=1 i16
             putShort(addr, VERSION);
@@ -367,21 +455,25 @@ public class testShmMutilSame {
             //set rest of mem to 0
             unsafe.setMemory(null, addr, TOTAL_MEM_BYTES - 14, (byte) 0);
             freeRootLock();
+            LOGGER.warn(getClass().getSimpleName() + "::constructShm end");
         }
     }
 
     /**
      * 获取id
      * 先从本地获取key值，如果不存在则从共享内存中查找获取
+     *
      * @param key
      * @return
      */
     private short getId(final String key) {
         Short id = localStringIdCache.get(key);
-
+        LOGGER.debug("getId, from cache, key:{} -> {}", key, id);
         if (id == null) {
             long t1 = System.nanoTime();
             id = getIdFromShm(key);
+            LOGGER.debug("getId, from shm, key:{} -> {}, cost:{}",
+                    key, id, System.nanoTime() - t1);
             localStringIdCache.put(key, id);
         }
 
@@ -400,6 +492,7 @@ public class testShmMutilSame {
         try {
             long t1 = System.nanoTime();
             getSpinRootLock(key.hashCode());
+            LOGGER.debug("getIdFromShm acquire spinRootLock cost:{}", System.nanoTime() - t1);
 
             short dictionaryItemInfoSize = (short) Short.BYTES * 3;
             long dictionaryItemAddr = homeAddr + DICTION_ROOT_OFFSET;
@@ -422,6 +515,7 @@ public class testShmMutilSame {
                         }
                     }
                     if (foundId) {
+                        LOGGER.debug("getIdFromShm found existId:{} for key:{}, cost:{}", id, key, System.nanoTime() - t1);
                         return id;
                     }
                 }
@@ -430,15 +524,13 @@ public class testShmMutilSame {
 
             if (dictionaryItemAddr >= homeAddr + DICTION_DATA_OFFSET) {
                 String errorMsg = "getIdFromShm dictionRoot is full, homeAddr:" + homeAddr + ", currentAddr:" + dictionaryItemAddr;
+                LOGGER.error(errorMsg);
                 throw new IndexOutOfBoundsException(errorMsg);
             }
 
             // id not found, just create one
             id = (short) (getShort(homeAddr + 10) + 1);
-            short nextUtf8offset = (short) (getShort(homeAddr + 8) + keyBytes.length);
-            // update RootPage
-            putShort(homeAddr + 8, nextUtf8offset);
-            putShort(homeAddr + 10, id);
+            short nextUtf8offset = getShort(homeAddr + 8);
             // create a dictionaryItem
             putShort(dictionaryItemAddr, (short) keyBytes.length);
             putShort(dictionaryItemAddr + 2, id);
@@ -448,8 +540,12 @@ public class testShmMutilSame {
             for (int i = 0; i < keyBytes.length; i++) {
                 putByte(dictDataOffset + i, keyBytes[i]);
             }
-
+            // update RootPage
+            putShort(homeAddr + 8, (short) (nextUtf8offset + keyBytes.length));
+            putShort(homeAddr + 10, id);
+            LOGGER.debug("getIdFromShm create id:{} for key:{}, cost:{}", id, key, System.nanoTime() - t1);
         } catch (UnsupportedEncodingException e) {
+            LOGGER.error(e.getMessage(), e);
         } finally {
             freeRootLock();
         }
@@ -509,8 +605,15 @@ public class testShmMutilSame {
         while (!getNodePageLock(nodePageIndex)) ;
     }
 
+
+    /**
+     * 0 表示锁是空闲的， 1 表示 锁被占有， 这里比较并set 所以要加 1 ， 从而占有锁
+     *
+     * @param nodeIndex
+     * @return
+     */
     private boolean getNodePageLock(int nodeIndex) {
-        return unsafe.compareAndSwapInt(null, homeAddr + NODE_PAGE_OFFSET + 1024 * nodeIndex, FREE_LOCK, nodeIndex);
+        return unsafe.compareAndSwapInt(null, homeAddr + NODE_PAGE_OFFSET + 1024 * nodeIndex, FREE_LOCK, nodeIndex + 1);
     }
 
     private void freeNodePageLock(int nodeIndex) {
@@ -550,44 +653,56 @@ public class testShmMutilSame {
     }
 
 
-    public static void process(){
+    public static void main(String[] args) throws InterruptedException {
+        final ShmManager manager = ShmManager.getInstance();
 
-        testShmMutilSame manager = testShmMutilSame.getInstance();
-        FreqControlRule rule = new FreqControlRule();
-
-        Thread t = Thread.currentThread();
-        Result result = new Result();
-
-        rule.app = "com.today.servers1";
+        final FreqControlRule rule = new FreqControlRule();
+        rule.app = "com.today.hello";
         rule.ruleType = "callId";
         rule.minInterval = 60;
         rule.maxReqForMinInterval = 20;
         rule.midInterval = 3600;
-        rule.maxReqForMidInterval = 80;
+        rule.maxReqForMidInterval = 100;
         rule.maxInterval = 86400;
-        rule.maxReqForMaxInterval = 100;
-        long t1 = System.nanoTime();
-        for (int i = 0; i <10000; i++) {
-            result = manager.reportAndCheck(rule, 325);
+        rule.maxReqForMaxInterval = 500;
+
+        long t1 = System.currentTimeMillis();
+        for (int i = 0; i < 10000; i++) {
+            for (int j = 0; j < 100; j++) {
+                manager.reportAndCheck(rule, j);
+
+            }
         }
-        System.out.println("app:" + rule.app + ", ruleType:" + rule.ruleType + ", key:325"+ ", freqRule:["
-                + rule.minInterval + "," + rule.maxReqForMinInterval + "/"
-                + rule.midInterval + "," + rule.maxReqForMidInterval + "/"
-                + rule.maxInterval + "," + rule.maxReqForMaxInterval + "];");
-        System.out.println("threadname: "+t.getName()+" cost = "+ (System.nanoTime() - t1));
-        System.out.println("threadname: "+t.getName()+" mincout = " + result.result_node.minCount +
-                " midcount = " + result.result_node.midCount +
-                " maxcount = " + result.result_node.maxCount);
-        System.out.println();
+        long t2 = System.currentTimeMillis();
 
+        System.out.println((t2 - t1));
+
+
+       /* new Thread( ()-> { ttt(manager, rule, 100); }).start();
+        new Thread( ()-> { ttt(manager, rule, 101); }).start();
+        new Thread( ()-> { ttt(manager, rule, 102); }).start();
+        new Thread( ()-> { ttt(manager, rule, 103); }).start();*/
+
+
+//        System.out.println("cost1:" + (System.currentTimeMillis() - t1));
+//
+//
+//        for (int j = 0; j < 10; j++) {
+//            t1 = System.currentTimeMillis();
+//            for (int i = 0; i < 1000000; i++) {
+//                manager.reportAndCheck(rule, 100);
+//            }
+//            System.out.println("cost2:" + (System.currentTimeMillis() - t1));
+//        }
     }
 
-    public static void main(String[] args) {
-
-
-
-        new Thread(() -> process()).start();
-        new Thread(() -> process()).start();
-
+    static void ttt(ShmManager manager, FreqControlRule rule, int key) {
+        long t1 = System.currentTimeMillis();
+        for (int i = 0; i < 1000000; i++) {
+            manager.reportAndCheck(rule, key);
+        }
+        long t2 = System.currentTimeMillis();
+        System.out.println(Thread.currentThread() + " cost:" + (t2 - t1) + "ms");
     }
+
 }
