@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.Buffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -26,10 +28,16 @@ public class testShmCallerId {
     private static long homeAddr;
     private static MappedByteBuffer buffer;
 
-    private static ShmManager.CounterNode checkNodeCount(FreqControlRule rule,int key) throws IOException, NoSuchFieldException,IllegalAccessException {
+    private static ShmManager.CounterNode checkNodeCount(FreqControlRule rule,int key) throws IOException, NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
 
-        short appId = getIdFromShm(rule.app);
-        short ruleTypeId = getIdFromShm(rule.ruleType);
+        ShmManager shmManagerRef = ShmManager.getInstance();
+        Method getIdFromShm = shmManagerRef.getClass().getDeclaredMethod("getIdFromShm");
+
+
+
+
+        short appId = Short.parseShort(getIdFromShm.invoke(rule.app).toString());
+        short ruleTypeId = Short.parseShort(getIdFromShm.invoke(rule.ruleType).toString());
         int nodePageHash = (appId << 16 | ruleTypeId) ^ key;
         int nodePageIndex = nodePageHash % NODE_PAGE_COUNT;
 
@@ -51,16 +59,22 @@ public class testShmCallerId {
         for (int index = 0; index < nodePageMeta.nodes; index++) {
             short _appId = getShort(nodeAddr);
             if (_appId == 0) break;
-            if (appId != _appId) continue;
+            if (appId != _appId) {
+                nodeAddr += 24;
+                continue;
+            }
 
             nodeAddr += Short.BYTES;
             short _ruleTypeId = getShort(nodeAddr);
-            if (ruleTypeId != _ruleTypeId) continue;
+            if (ruleTypeId != _ruleTypeId) {
+                nodeAddr += 22;
+                continue;
+            }
 
             nodeAddr += Short.BYTES;
             int _key = getInt(nodeAddr);
             if (key != _key) {
-                nodeAddr += Integer.BYTES * 4;
+                nodeAddr += Integer.BYTES * 5;
                 continue;
             }
 
@@ -84,7 +98,7 @@ public class testShmCallerId {
         return node;
     }
 
-    private static short getIdFromShm(String key) throws NoSuchFieldException, IllegalAccessException, IOException{
+/*    private static short getIdFromShm(String key) throws NoSuchFieldException, IllegalAccessException, IOException{
         short id = 0;
 
         Field f = Unsafe.class.getDeclaredField("theUnsafe");
@@ -99,6 +113,23 @@ public class testShmCallerId {
         address.setAccessible(true);
         homeAddr = (Long) address.get(buffer);
 
+        ShmManager instance = ShmManager.getInstance();
+        Field[] shnmanager = instance.getClass().getDeclaredFields();
+
+        for (int i = 0;i< shnmanager.length;i++){
+            shnmanager[i].setAccessible(true);
+            System.out.println(shnmanager[i]);
+            System.out.println(shnmanager[i].getName());
+        }
+
+        Method[] shmmanagerMethod = instance.getClass().getDeclaredMethods();
+
+        for (int i = 0;i< shmmanagerMethod.length;i++){
+            shmmanagerMethod[i].setAccessible(true);
+            System.out.println(shmmanagerMethod[i]);
+            System.out.println(shmmanagerMethod[i].getName());
+        }
+
 
         try {
             getSpinRootLock(key.hashCode());
@@ -107,7 +138,7 @@ public class testShmCallerId {
             byte[] keyBytes = key.getBytes("utf-8");
 
             while ((dictionaryItemAddr < homeAddr + DICTION_DATA_OFFSET)
-                    && (    id = getShort(dictionaryItemAddr + Short.BYTES)) > 0) {
+                    && (id = getShort(dictionaryItemAddr + Short.BYTES)) > 0) {
                 boolean foundId = true;
                 short length = getShort(dictionaryItemAddr);
                 if (length == keyBytes.length) {
@@ -133,7 +164,7 @@ public class testShmCallerId {
 
 
         return  id;
-    }
+    }*/
 
 
 
@@ -180,7 +211,26 @@ public class testShmCallerId {
 
 
 
-    public static void main(String[] args) throws IllegalAccessException, NoSuchFieldException, IOException{
+    public static void main(String[] args) throws IllegalAccessException, NoSuchFieldException, IOException, NoSuchMethodException, InvocationTargetException {
+
+
+
+        ShmManager instance = ShmManager.getInstance();
+        Field[] shnmanager = instance.getClass().getDeclaredFields();
+
+        for (int i = 0;i< shnmanager.length;i++){
+            shnmanager[i].setAccessible(true);
+            System.out.println(shnmanager[i]);
+            System.out.println(shnmanager[i].get(instance));
+        }
+
+        Method[] shmmanagerMethod = instance.getClass().getDeclaredMethods();
+
+        for (int i = 0;i< shmmanagerMethod.length;i++){
+            shmmanagerMethod[i].setAccessible(true);
+            System.out.println(shmmanagerMethod[i]);
+            System.out.println(shmmanagerMethod[i].getName());
+        }
 
 
         ShmManager manager = ShmManager.getInstance();

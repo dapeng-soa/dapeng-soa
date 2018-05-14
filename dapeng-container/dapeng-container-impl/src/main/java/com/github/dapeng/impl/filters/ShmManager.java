@@ -486,7 +486,7 @@ public class ShmManager {
         f.setAccessible(true);
         unsafe = (Unsafe) f.get(null);
 
-        File file = new File("/data/shm.data");
+        File file = new File("f:/data/shm.data");
         RandomAccessFile access = new RandomAccessFile(file, "rw");
 
         buffer = access.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, TOTAL_MEM_BYTES);
@@ -754,8 +754,6 @@ public class ShmManager {
         long t2 = System.currentTimeMillis();
 
         System.out.println((t2 - t1));
-
-
 
 
        /* new Thread( ()-> { ttt(manager, rule, 100); }).start();
