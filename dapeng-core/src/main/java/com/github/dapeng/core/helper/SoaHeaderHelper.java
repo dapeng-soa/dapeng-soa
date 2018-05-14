@@ -99,16 +99,18 @@ public class SoaHeaderHelper {
             TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
             SoaHeader oriHeader = transactionContext.getHeader();
 
-            if (!header.getOperatorId().isPresent()) {
-                header.setOperatorId(oriHeader.getOperatorId());
-            }
-            if (!header.getUserId().isPresent()) {
-                header.setUserId(oriHeader.getUserId());
-            }
-            if (!header.getUserIp().isPresent()) {
-                header.setUserIp(oriHeader.getUserIp());
-            }
+            if (oriHeader != null) {
+                if (!header.getOperatorId().isPresent()) {
+                    header.setOperatorId(oriHeader.getOperatorId());
+                }
+                if (!header.getUserId().isPresent()) {
+                    header.setUserId(oriHeader.getUserId());
+                }
+                if (!header.getUserIp().isPresent()) {
+                    header.setUserIp(oriHeader.getUserIp());
+                }
 
+            }
             // 传递tid
             header.setSessionTid(transactionContext.sessionTid());
             invocationContext.callerTid(transactionContext.calleeTid());
