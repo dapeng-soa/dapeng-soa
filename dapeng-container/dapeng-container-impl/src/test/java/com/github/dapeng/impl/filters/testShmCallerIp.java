@@ -2,6 +2,7 @@ package com.github.dapeng.impl.filters;
 
 
 import com.github.dapeng.core.FreqControlRule;
+import com.github.dapeng.impl.filters.freq.ShmManager;
 
 public class testShmCallerIp {
 

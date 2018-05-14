@@ -2,6 +2,7 @@ package com.github.dapeng.impl.filters;
 
 
 import com.github.dapeng.core.FreqControlRule;
+import com.github.dapeng.impl.filters.freq.ShmManager;
 import sun.misc.Unsafe;
 
 import java.io.File;

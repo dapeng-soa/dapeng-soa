@@ -1,6 +1,7 @@
 package com.github.dapeng.impl.filters;
 
 import com.github.dapeng.core.FreqControlRule;
+import com.github.dapeng.impl.filters.freq.ShmManager;
 
 /**
  * Root Page 4K(version:1, nodePageCount:128K, rootPageLock(i32), nextUtf8offset, nextDictionId, resolved)
