@@ -1,7 +1,7 @@
 package com.github.dapeng.impl.filters.freq;
 
 /**
- * 描述: com.github.dapeng.impl.filters.freq
+ * 描述: DictionaryItem 字符串到id的映射区
  *
  * @author hz.lei
  * @date 2018年05月14日 上午10:52
