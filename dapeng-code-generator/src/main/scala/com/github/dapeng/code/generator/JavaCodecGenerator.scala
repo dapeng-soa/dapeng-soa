@@ -533,7 +533,7 @@ class JavaCodecGenerator extends CodeGenerator {
   }
 
 
-  def toStructSerializerTemplate(service: Service, struct:Struct,structNamespaces:util.Set[String] ): Elem ={
+  def toStructSerializerTemplate(struct:Struct,structNamespaces:util.Set[String] ): Elem ={
     return {
       <div> package {struct.getNamespace() + ".serializer"};
         {
