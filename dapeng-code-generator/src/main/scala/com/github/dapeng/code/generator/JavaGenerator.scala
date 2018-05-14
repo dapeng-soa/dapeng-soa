@@ -76,6 +76,12 @@ class JavaGenerator extends CodeGenerator {
         domainWriter.write(domainTemplate.toString)
         domainWriter.close()
         println(s"生成struct:${struct.name}.java 完成")
+
+
+        val structSerializerTemplate = new StringTemplate(new JavaCodecGenerator().toStructSerializerTemplate(struct,structNamespaces))
+        val structSerializerWriter = new PrintWriter(new File(rootDir(outDir, struct.namespace+".serializer."),s"${struct.name}Serializer.java"), "UTF-8")
+        structSerializerWriter.write(structSerializerTemplate.toString)
+        structSerializerWriter.close()
       }
       }
 
@@ -89,6 +95,8 @@ class JavaGenerator extends CodeGenerator {
         println(s"生成Enum:${enum.name}.java 完成")
       }
       }
+
+
       println("=========================================================")
     }
 
@@ -157,10 +165,12 @@ class JavaGenerator extends CodeGenerator {
 
       println(s"生成serializer")
       toStructArrayBuffer(service.structDefinitions).map{(struct:Struct)=>{
-        val structSerializerTemplate = new StringTemplate(new JavaCodecGenerator().toStructSerializerTemplate(service,struct,structNamespaces))
+        println(s" 生成Serializer: ${struct.name}Serializer..")
+        val structSerializerTemplate = new StringTemplate(new JavaCodecGenerator().toStructSerializerTemplate(struct,structNamespaces))
         val structSerializerWriter = new PrintWriter(new File(rootDir(outDir, struct.namespace+".serializer."),s"${struct.name}Serializer.java"), "UTF-8")
         structSerializerWriter.write(structSerializerTemplate.toString)
         structSerializerWriter.close()
+        println(s" 生成Serializer: ${struct.name}Serializer..完成")
       }}
 
       println(s"生成SuperCodec:${service.name}SuperCodec.java")

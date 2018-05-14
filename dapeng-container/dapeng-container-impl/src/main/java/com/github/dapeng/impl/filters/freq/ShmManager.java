@@ -93,12 +93,46 @@ public class ShmManager {
         return instance;
     }
 
+    /**
+     * ShmManager 初始化
+     *
+     * @throws NoSuchFieldException
+     * @throws IllegalAccessException
+     * @throws IOException
+     */
+    private void init() throws NoSuchFieldException, IllegalAccessException, IOException {
+        LOGGER.info(getClass().getSimpleName() + "::init begin");
+        long t1 = System.nanoTime();
+        Field f = Unsafe.class.getDeclaredField("theUnsafe");
+        f.setAccessible(true);
+        unsafe = (Unsafe) f.get(null);
+
+        File file = new File(System.getProperty("user.home") + "/shm.data");
+        RandomAccessFile access = new RandomAccessFile(file, "rw");
+
+        buffer = access.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, TOTAL_MEM_BYTES);
+
+        Field address = Buffer.class.getDeclaredField("address");
+        address.setAccessible(true);
+
+        homeAddr = (Long) address.get(buffer);
+
+        short version = getShort(homeAddr);
+        if (version != VERSION) {
+            constructShm();
+        }
+
+        LOGGER.info(getClass().getSimpleName() + "::init end, homeAddr:" + homeAddr + ", cost:" + (System.nanoTime() - t1));
+    }
+
 
     /**
+     * 限流入口，检测每一次请求，返回true 表示 access ，返回false 表示被限流
+     *
      * @param rule 规则对象
      * @param key  目前仅支持 int 值，例如 userId， userIp值等。
      *             如果是字符串，需要先取hash，再按此进行限流。
-     * @return
+     * @return true access , false can't access
      */
     public boolean reportAndCheck(FreqControlRule rule, int key) {
         boolean result;
@@ -153,6 +187,9 @@ public class ShmManager {
     }
 
 
+    /**
+     * 从 share memory 获取CountNode，如果不存在就创建
+     */
     private CounterNode createNodeIfNotExist(short appId, short ruleTypeId, int key,
                                              NodePageMeta nodePageMeta, int now, long nodeAddr,
                                              FreqControlRule rule) {
@@ -233,7 +270,9 @@ public class ShmManager {
         return node;
     }
 
-
+    /**
+     * 向 share memory 插入CountNode
+     */
     private CounterNode insertCounterNode(short appId, short ruleTypeId, int key,
                                           int timestamp, long addr) {
         long t1 = System.nanoTime();
@@ -266,15 +305,7 @@ public class ShmManager {
 
 
     /**
-     * 淘汰算法
-     *
-     * @param nodePageMeta
-     * @param appId
-     * @param ruleTypeId
-     * @param key
-     * @param now
-     * @param nodeAddr
-     * @param rule
+     * 淘汰算法,如果一个nodePage里的node数超过了42个，再次插入时，需要淘汰已插入node
      */
     private CounterNode eliminateAndInsertNodes(NodePageMeta nodePageMeta, short appId, short ruleTypeId, int key, int now, long nodeAddr, FreqControlRule rule) {
         long t1 = System.nanoTime();
@@ -352,7 +383,6 @@ public class ShmManager {
         double midRate = node.midCount / rule.maxReqForMidInterval * rule.midInterval / (now % rule.midInterval + 1);
         double maxRate = node.maxCount / rule.maxReqForMaxInterval * rule.maxInterval / (now % rule.maxInterval + 1);
 
-        //～～～～～～～～～～～～～～～
         double rate;
         if (minRate < midRate) {
             if (midRate < maxRate) {
@@ -377,9 +407,7 @@ public class ShmManager {
     }
 
     /**
-     * do get postion
-     *
-     * @param markNodes
+     * do get position
      */
     private long eliminateNode(List<MarkNode> markNodes) {
         List<MarkNode> collect = markNodes.stream().filter(node -> node.isRemove).collect(Collectors.toList());
@@ -392,38 +420,17 @@ public class ShmManager {
         return postion;
     }
 
+    /**
+     * 更新 nodePage 元信息
+     *
+     * @param nodePageMeta
+     * @param nodePageIndex
+     */
     private void updateNodePageMeta(NodePageMeta nodePageMeta, int nodePageIndex) {
         long pageOffset = homeAddr + NODE_PAGE_OFFSET + 1024 * nodePageIndex + Integer.BYTES;
         putInt(pageOffset, nodePageMeta.hash);
         pageOffset += Integer.BYTES;
         putShort(pageOffset, nodePageMeta.nodes);
-    }
-
-    private void init() throws NoSuchFieldException, IllegalAccessException, IOException {
-        LOGGER.info(getClass().getSimpleName() + "::init begin");
-        long t1 = System.nanoTime();
-        Field f = Unsafe.class.getDeclaredField("theUnsafe");
-        f.setAccessible(true);
-        unsafe = (Unsafe) f.get(null);
-
-
-        File file = new File("f:data/shm.data");
-   //     File file = new File(System.getProperty("user.home") + "/shm.data");
-        RandomAccessFile access = new RandomAccessFile(file, "rw");
-
-        buffer = access.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, TOTAL_MEM_BYTES);
-
-        Field address = Buffer.class.getDeclaredField("address");
-        address.setAccessible(true);
-
-        homeAddr = (Long) address.get(buffer);
-
-        short version = getShort(homeAddr);
-        if (version != VERSION) {
-            constructShm();
-        }
-
-        LOGGER.info(getClass().getSimpleName() + "::init end, homeAddr:" + homeAddr + ", cost:" + (System.nanoTime() - t1));
     }
 
     private void close() {
@@ -704,5 +711,4 @@ public class ShmManager {
         long t2 = System.currentTimeMillis();
         System.out.println(Thread.currentThread() + " cost:" + (t2 - t1) + "ms");
     }
-
 }

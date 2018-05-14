@@ -130,8 +130,8 @@
                   break;
                   /*
                   case 1: //ERROR
-                  bean.soaException(new SoaException());
-                  new SoaExceptionSerializer().read(bean.soaException(),iprot);
+                  bean.setSoaException(new SoaException());
+                  new SoaExceptionSerializer().read(bean.getSoaException(),iprot);
                   break A;
                   */
                   default:
@@ -292,8 +292,8 @@
                   break;
                   /*
                   case 1: //ERROR
-                  bean.soaException(new SoaException());
-                  new SoaExceptionSerializer().read(bean.soaException(),iprot);
+                  bean.setSoaException(new SoaException());
+                  new SoaExceptionSerializer().read(bean.getSoaException(),iprot);
                   break A;
                   */
                   default:
@@ -513,8 +513,8 @@
                   break;
                   /*
                   case 1: //ERROR
-                  bean.soaException(new SoaException());
-                  new SoaExceptionSerializer().read(bean.soaException(),iprot);
+                  bean.setSoaException(new SoaException());
+                  new SoaExceptionSerializer().read(bean.getSoaException(),iprot);
                   break A;
                   */
                   default:
