@@ -7,10 +7,11 @@ package com.github.dapeng.impl.filters.freq;
  * @date 2018年05月14日 上午10:56
  */
 public class MarkNode {
-    long position;
-    double rate;
-    boolean isRemove = false;
-    int key;
+
+    public long position;
+    public double rate;
+    public boolean isRemove = false;
+    public int key;
 
     public MarkNode(long position) {
         this.position = position;

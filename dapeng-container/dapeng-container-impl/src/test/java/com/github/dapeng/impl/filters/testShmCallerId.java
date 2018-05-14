@@ -2,6 +2,8 @@ package com.github.dapeng.impl.filters;
 
 
 import com.github.dapeng.core.FreqControlRule;
+import com.github.dapeng.impl.filters.freq.CounterNode;
+import com.github.dapeng.impl.filters.freq.NodePageMeta;
 import com.github.dapeng.impl.filters.freq.ShmManager;
 import sun.misc.Unsafe;
 
@@ -27,7 +29,7 @@ public class testShmCallerId {
     private static long homeAddr;
     private static MappedByteBuffer buffer;
 
-    private static ShmManager.CounterNode checkNodeCount(FreqControlRule rule, int key) throws IOException, NoSuchFieldException, IllegalAccessException {
+    private static CounterNode checkNodeCount(FreqControlRule rule, int key) throws IOException, NoSuchFieldException, IllegalAccessException {
 
         short appId = getIdFromShm(rule.app);
         short ruleTypeId = getIdFromShm(rule.ruleType);
@@ -38,17 +40,17 @@ public class testShmCallerId {
         getSpinNodePageLock(nodePageIndex);
 
         long nodeAddr = homeAddr + NODE_PAGE_OFFSET + 1024 * nodePageIndex + 16;
-        ShmManager.NodePageMeta nodePageMeta = getNodePageMeta(nodePageIndex);
-        ShmManager.CounterNode node = getNodeData(appId, ruleTypeId, key, nodePageMeta, nodeAddr);
+        NodePageMeta nodePageMeta = getNodePageMeta(nodePageIndex);
+        CounterNode node = getNodeData(appId, ruleTypeId, key, nodePageMeta, nodeAddr);
 
         freeNodePageLock(nodePageIndex);
 
         return node;
     }
 
-    private static ShmManager.CounterNode getNodeData(short appId, short ruleTypeId, int key,
-                                                      ShmManager.NodePageMeta nodePageMeta, long nodeAddr) {
-        ShmManager.CounterNode node = null;
+    private static CounterNode getNodeData(short appId, short ruleTypeId, int key,
+                                           NodePageMeta nodePageMeta, long nodeAddr) {
+        CounterNode node = null;
         for (int index = 0; index < nodePageMeta.nodes; index++) {
             short _appId = getShort(nodeAddr);
             if (_appId == 0) break;
@@ -71,7 +73,7 @@ public class testShmCallerId {
                 continue;
             }
 
-            node = new ShmManager.CounterNode();
+            node = new CounterNode();
             node.appId = _appId;
             node.ruleTypeId = _ruleTypeId;
             node.key = _key;
@@ -105,9 +107,6 @@ public class testShmCallerId {
         Field address = Buffer.class.getDeclaredField("address");
         address.setAccessible(true);
         homeAddr = (Long) address.get(buffer);
-
-
-
 
 
         try {
@@ -146,9 +145,9 @@ public class testShmCallerId {
     }
 
 
-    private static ShmManager.NodePageMeta getNodePageMeta(int nodePageIndex) {
+    private static NodePageMeta getNodePageMeta(int nodePageIndex) {
         long pageOffset = homeAddr + NODE_PAGE_OFFSET + 1024 * nodePageIndex;
-        ShmManager.NodePageMeta meta = new ShmManager.NodePageMeta();
+        NodePageMeta meta = new NodePageMeta();
         pageOffset += Integer.BYTES;
         meta.hash = getInt(pageOffset);
         pageOffset += Integer.BYTES;
@@ -203,7 +202,7 @@ public class testShmCallerId {
         ShmManager manager = ShmManager.getInstance();
         FreqControlRule rule = new FreqControlRule();
         boolean result = false;
-        ShmManager.CounterNode node = null;
+        CounterNode node = null;
         rule.app = "com.today.hello";
         rule.ruleType = "callIp";
         rule.minInterval = 60;

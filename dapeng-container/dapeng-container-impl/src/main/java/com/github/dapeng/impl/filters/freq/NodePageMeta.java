@@ -8,9 +8,9 @@ package com.github.dapeng.impl.filters.freq;
  */
 public class NodePageMeta {
 
-    int pageLock;
-    int hash;
-    short nodes;
+    public int pageLock;
+    public int hash;
+    public short nodes;
 
     @Override
     public String toString() {
