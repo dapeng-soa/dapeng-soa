@@ -23,7 +23,7 @@ public class SoaHeaderHelper {
 
         if (context.getHeader() == null) {
             SoaHeader header = new SoaHeader();
-            ((TransactionContextImpl)context).setHeader(header);
+            ((TransactionContextImpl) context).setHeader(header);
         }
 
         if (setDefaultIfEmpty) {
@@ -99,14 +99,17 @@ public class SoaHeaderHelper {
             TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
             SoaHeader oriHeader = transactionContext.getHeader();
 
-            if (!header.getOperatorId().isPresent()) {
-                header.setOperatorId(oriHeader.getOperatorId());
-            }
-            if (!header.getUserId().isPresent()) {
-                header.setUserId(oriHeader.getUserId());
-            }
-            if (!header.getUserIp().isPresent()) {
-                header.setUserIp(Optional.of(oriHeader.getUserIp().map(IPUtils::transferIp).get()));
+            // 部分场景下(例如定时任务, 事件等容器发起的请求)
+            if (oriHeader != null) {
+                if (!header.getOperatorId().isPresent()) {
+                    header.setOperatorId(oriHeader.getOperatorId());
+                }
+                if (!header.getUserId().isPresent()) {
+                    header.setUserId(oriHeader.getUserId());
+                }
+                if (!header.getUserIp().isPresent()) {
+                    header.setUserIp(Optional.of(oriHeader.getUserIp().map(IPUtils::transferIp).get()));
+                }
             }
 
             // 传递tid
