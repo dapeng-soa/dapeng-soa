@@ -25,7 +25,7 @@ public class JsonPost {
 
     private boolean doNotThrowError = false;
 
-    private final static ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class, JsonPost.class.getClassLoader());
+    private final static SoaConnectionPoolFactory factory = ServiceLoader.load(SoaConnectionPoolFactory.class, JsonPost.class.getClassLoader()).iterator().next();
 
 
     private SoaConnectionPool pool;
@@ -34,7 +34,7 @@ public class JsonPost {
 
     public JsonPost(final String serviceName, final String version, final String methodName) {
         this.methodName = methodName;
-        this.pool = factories.iterator().next().getPool();
+        this.pool = factory.getPool();
         this.clientInfo = this.pool.registerClientInfo(serviceName, version);
     }
 
