@@ -351,6 +351,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
         try {
             return channel = this.client.connect(host, port);
         } catch (Exception e) {
+            LOGGER.error(e.getMessage(),e);
             throw new SoaException(SoaCode.NotConnected);
         }
     }
