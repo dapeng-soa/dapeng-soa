@@ -99,6 +99,7 @@ public class SoaHeaderHelper {
             TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
             SoaHeader oriHeader = transactionContext.getHeader();
 
+            // 部分场景下(例如定时任务, 事件等容器发起的请求)
             if (oriHeader != null) {
                 if (!header.getOperatorId().isPresent()) {
                     header.setOperatorId(oriHeader.getOperatorId());
