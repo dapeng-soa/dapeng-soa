@@ -546,7 +546,7 @@ class JavaGenerator extends CodeGenerator {
       }
       }
       @Service(name="{s"${service.namespace}.${service.name}"}",version = "{service.meta.version}")
-      @Processor(className = "{service.namespace.substring(0, service.namespace.lastIndexOf("service"))}{service.name}Codec$Processor")
+      @Processor(className = "{service.namespace.substring(0, service.namespace.lastIndexOf("."))}.{service.name}Codec$Processor")
       public interface {service.name} <block>
       {
       toMethodArrayBuffer(service.methods).map { (method: Method) =>
@@ -613,7 +613,7 @@ class JavaGenerator extends CodeGenerator {
         }
         }
         @Service(name="{s"${service.namespace}.${service.name}"}",version = "{service.meta.version}")
-        @Processor(className = "{service.namespace.substring(0, service.namespace.lastIndexOf("service"))}{service.name}AsyncCodec$Processor")
+        @Processor(className = "{service.namespace.substring(0, service.namespace.lastIndexOf("."))}.{service.name}AsyncCodec$Processor")
         public interface {service.name}Async  extends com.github.dapeng.core.definition.AsyncService <block>
         {
         toMethodArrayBuffer(service.methods).map { (method: Method) =>
