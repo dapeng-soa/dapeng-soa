@@ -310,6 +310,17 @@ class ScalaGenerator extends CodeGenerator {
           ).success
         </block>
 
+        def echo: String = <block>
+          pool.send(
+          serviceName,
+          version,
+          "echo",
+          new echo_args,
+          new echo_argsSerializer,
+          new echo_resultSerializer
+          ).success
+        </block>
+
 
         {
         toMethodArrayBuffer(service.methods).map{(method:Method)=>{
@@ -381,6 +392,17 @@ class ScalaGenerator extends CodeGenerator {
           new getServiceMetadata_args,
           new GetServiceMetadata_argsSerializer,
           new GetServiceMetadata_resultSerializer
+          ).success
+        </block>
+
+        def echo: String = <block>
+          pool.send(
+          serviceName,
+          version,
+          "echo",
+          new echo_args,
+          new echo_argsSerializer,
+          new echo_resultSerializer
           ).success
         </block>
 

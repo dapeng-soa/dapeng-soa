@@ -194,6 +194,106 @@ class ScalaCodecGenerator extends CodeGenerator {
 
         </block>
 
+
+        case class echo_args()
+
+        case class echo_result(success: String)
+
+        class echo_argsSerializer extends BeanSerializer[echo_args] <block>
+
+          @throws[TException]
+          override def read(iprot: TProtocol): echo_args = <block>
+
+            iprot.readStructBegin
+
+            var schemeField: com.github.dapeng.org.apache.thrift.protocol.TField = null
+
+            while (schemeField == null || schemeField.`type` != com.github.dapeng.org.apache.thrift.protocol.TType.STOP) <block>
+              schemeField = iprot.readFieldBegin
+              com.github.dapeng.org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.`type`)
+              iprot.readFieldEnd
+            </block>
+
+            iprot.readStructEnd
+
+            val bean = echo_args()
+            validate(bean)
+
+            bean
+          </block>
+
+          @throws[TException]
+          override def write(bean: echo_args, oproto: TProtocol): Unit = <block>
+            validate(bean)
+            oproto.writeStructBegin(new com.github.dapeng.org.apache.thrift.protocol.TStruct("echo_args"))
+
+            oproto.writeFieldStop
+            oproto.writeStructEnd
+          </block>
+
+          @throws[TException]
+          override def validate(bean: echo_args): Unit = <block></block>
+
+          override def toString(bean: echo_args): String = if (bean == null) "null" else bean.toString
+        </block>
+
+
+
+        class echo_resultSerializer extends BeanSerializer[echo_result] <block>
+          @throws[TException]
+          override def read(iprot: TProtocol): echo_result = <block>
+            iprot.readStructBegin
+
+            var schemeField: com.github.dapeng.org.apache.thrift.protocol.TField = null
+
+            var success: String = null
+
+            while (schemeField == null || schemeField.`type` != com.github.dapeng.org.apache.thrift.protocol.TType.STOP) <block>
+              schemeField = iprot.readFieldBegin
+
+              schemeField.id match <block>
+                case 0 =>
+                schemeField.`type` match <block>
+                  case com.github.dapeng.org.apache.thrift.protocol.TType.STRING => success = iprot.readString
+                  case _ => com.github.dapeng.org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.`type`)
+                </block>
+                case _ => com.github.dapeng.org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.`type`)
+              </block>
+              iprot.readFieldEnd
+            </block>
+
+            iprot.readStructEnd
+            val bean = echo_result(success)
+            validate(bean)
+
+            bean
+          </block>
+
+          @throws[TException]
+          override def write(bean: echo_result, oproto: TProtocol): Unit = <block>
+            validate(bean)
+            oproto.writeStructBegin(new com.github.dapeng.org.apache.thrift.protocol.TStruct("echo_result"))
+
+            oproto.writeFieldBegin(new com.github.dapeng.org.apache.thrift.protocol.TField("success", com.github.dapeng.org.apache.thrift.protocol.TType.STRING, 0.asInstanceOf[Short]))
+            oproto.writeString(bean.success)
+            oproto.writeFieldEnd
+
+            oproto.writeFieldStop
+            oproto.writeStructEnd
+          </block>
+
+          @throws[TException]
+          override def validate(bean: echo_result): Unit = <block>
+            if (bean.success == null)
+            throw new SoaException(SoaCode.NotNull, "success字段不允许为空")
+          </block>
+
+          override def toString(bean: echo_result): String = if (bean == null) "null" else bean.toString
+
+        </block>
+
+
+
       </block>
 
       </div>
@@ -245,18 +345,30 @@ class ScalaCodecGenerator extends CodeGenerator {
         }
 
 
-  class getServiceMetadata extends SoaFunctionDefinition.Sync[{service.namespace}.{service.name}, getServiceMetadata_args, getServiceMetadata_result](
-  "getServiceMetadata", new GetServiceMetadata_argsSerializer(), new GetServiceMetadata_resultSerializer()) <block>
+        class getServiceMetadata extends SoaFunctionDefinition.Sync[{service.namespace}.{service.name}, getServiceMetadata_args, getServiceMetadata_result](
+        "getServiceMetadata", new GetServiceMetadata_argsSerializer(), new GetServiceMetadata_resultSerializer()) <block>
 
 
-      @throws[TException]
-      override def apply(iface: {service.namespace}.{service.name}, args: getServiceMetadata_args): getServiceMetadata_result = <block>
+            @throws[TException]
+            override def apply(iface: {service.namespace}.{service.name}, args: getServiceMetadata_args): getServiceMetadata_result = <block>
 
-              val source = scala.io.Source.fromInputStream({service.name}Codec.getClass.getClassLoader.getResourceAsStream("{oriNamespace}.{service.name}.xml"))
-              try getServiceMetadata_result(source.mkString) finally source.close
+                    val source = scala.io.Source.fromInputStream({service.name}Codec.getClass.getClassLoader.getResourceAsStream("{oriNamespace}.{service.name}.xml"))
+                    try getServiceMetadata_result(source.mkString) finally source.close
 
-      </block>
-      </block>
+            </block>
+            </block>
+
+        class echo extends SoaFunctionDefinition.Sync[{service.namespace}.{service.name}, echo_args, echo_result](
+        "echo", new echo_argsSerializer(), new echo_resultSerializer()) <block>
+
+
+          @throws[TException]
+          override def apply(iface: {service.namespace}.{service.name}, args: echo_args): echo_result = <block>
+
+            echo_result("PONG")
+
+          </block>
+        </block>
 
       class Processor(iface: {service.getNamespace}.{service.name}, ifaceClass: Class[{service.getNamespace}.{service.name}] ) extends
         SoaServiceDefinition(iface,classOf[{service.getNamespace}.{service.name}], Processor.getProcessMap)
@@ -357,6 +469,21 @@ class ScalaCodecGenerator extends CodeGenerator {
             val result = scala.concurrent.Future <block>
               val source = scala.io.Source.fromInputStream({service.name}Codec.getClass.getClassLoader.getResourceAsStream("{oriNamespace}.{service.name}.xml"))
               try getServiceMetadata_result(source.mkString) finally source.close
+            </block>
+            result.tojava
+
+          </block>
+        </block>
+
+        class echo extends SoaFunctionDefinition.Async[{service.namespace}.{service.name}Async, echo_args, echo_result](
+        "echo", new echo_argsSerializer(), new echo_resultSerializer()) <block>
+
+
+          @throws[TException]
+          override def apply(iface: {service.namespace}.{service.name}Async, args: echo_args): Future[echo_result] = <block>
+
+            val result = scala.concurrent.Future <block>
+              echo_result("PONG");
             </block>
             result.tojava
 

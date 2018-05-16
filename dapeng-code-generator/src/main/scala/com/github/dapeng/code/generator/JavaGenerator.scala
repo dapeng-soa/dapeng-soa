@@ -297,6 +297,17 @@ class JavaGenerator extends CodeGenerator {
         return response.getSuccess();
       </block>
 
+      /**
+      * echo
+      **/
+      public String echo() throws SoaException <block>
+        String methodName = "echo";
+        echo_args echo_args = new echo_args();
+        echo_result response = pool.send(serviceName,version,methodName,echo_args, new echo_argsSerializer(), new echo_resultSerializer());
+        return response.getSuccess();
+      </block>
+
+
     </block>
     </div>
   }
@@ -390,6 +401,15 @@ class JavaGenerator extends CodeGenerator {
         return response.getSuccess();
       </block>
 
+      /**
+      * echo
+      **/
+      public String echo() throws SoaException <block>
+        String methodName = "echo";
+        echo_args echo_args = new echo_args();
+        echo_result response = pool.send(serviceName,version,methodName,echo_args, new echo_argsSerializer(), new echo_resultSerializer());
+        return response.getSuccess();
+      </block>
     </block>
     </div>
   }
