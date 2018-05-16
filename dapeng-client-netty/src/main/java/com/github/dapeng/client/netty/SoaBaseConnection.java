@@ -310,17 +310,6 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 assert (resp != null);
                 return new Result<>(resp, null);
             } else {
-
-                //if exception occur, print the request for trace.
-                String debugLog = "request[seqId:" + invocationContext.seqId() + "]:"
-                        + "service[" + respHeader.getServiceName()
-                        + "]:version[" + respHeader.getVersionName()
-                        + "]:method[" + respHeader.getMethodName() + "]"
-                        + (respHeader.getOperatorId().isPresent() ? " operatorId:" + respHeader.getOperatorId().get() : "") + " "
-                        + (respHeader.getUserId().isPresent() ? " userId:" + respHeader.getUserId().get() : "") + " "
-                        + (respHeader.getCallerIp().isPresent() ? " callerIp: " + respHeader.getCallerIp().get() : "");
-                LOGGER.info(" error request detail: " + debugLog);
-
                 return new Result<>(null, new SoaException(
                         (respHeader.getRespCode().isPresent()) ? respHeader.getRespCode().get() : SoaCode.UnKnown.getCode(),
                         (respHeader.getRespMessage().isPresent()) ? respHeader.getRespMessage().get() : SoaCode.UnKnown.getMsg()));
