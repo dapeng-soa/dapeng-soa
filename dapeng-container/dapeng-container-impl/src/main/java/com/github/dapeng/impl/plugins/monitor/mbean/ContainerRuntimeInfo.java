@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerRuntimeInfo.class);
-    private LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+    private LoggerContext loggerContext = null;
     private final static String METHOD_NAME_KEY = "method_name";
     private String containerVersion = null;
     private final Container container;
@@ -33,6 +33,11 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     public ContainerRuntimeInfo(Container container) {
         super();
         this.container = container;
+        try {
+            loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        }catch (Exception e){
+            LOGGER.info("loggerContext get error",e);
+        }
     }
 
     @Override
@@ -83,18 +88,21 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     }
 
     @Override
-    public String getTheardPoolStatus() {
+    public String getThreadPoolStatus() {
         ThreadPoolExecutor poolExecutor = (ThreadPoolExecutor) container.getDispatcher();
-        return DumpUtil.dumpThreadPool(poolExecutor);
+        StringBuilder sb = new StringBuilder();
+        sb.append("[Dapeng Mbean] Dapeng TheardPoolStatus == ");
+        sb.append(DumpUtil.dumpThreadPool(poolExecutor));
+        return sb.toString();
     }
 
     @Override
-    public String getSerivceBasicInfo() {
+    public String getServiceBasicInfo() {
         StringBuilder sb = new StringBuilder();
-        sb.append("\nDapeng ContainerVersion ==> [ ")
+        sb.append("[Dapeng Mbean] Dapeng ContainerVersion == [ ")
                 .append(getContainerVersion())
-                .append(" ]\n");
-        sb.append("\nCurrent Services Info ==> [ \n");
+                .append(" ]");
+        sb.append("\nCurrent Services Info == [ \n");
         for (Application application : container.getApplications()) {
             AtomicInteger count = new AtomicInteger();
             application.getServiceInfos().forEach(info -> {
@@ -111,7 +119,7 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     @Override
     public String getServiceFlow() {
         StringBuilder sb = new StringBuilder();
-        sb.append("\nServiceFlow data ==> ");
+        sb.append("\nServiceFlow data == ");
         SoaFlowCounter.getFlowCacheQueue().forEach(x -> {
             sb.append("\n").append(x.toString()).append("\n");
         });
@@ -122,7 +130,7 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     public String getServiceInvoke() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("\nServiceInvoke data ==> ");
+        sb.append("\nServiceInvoke data == ");
         SoaInvokeCounter.getServiceCacheQueue().forEach(x -> {
             sb.append("\n");
             x.forEach(y -> sb.append(y.toString()));
@@ -166,7 +174,7 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     @Override
     public String getNettyConnections() {
         StringBuilder sb = new StringBuilder();
-        sb.append("\nDapeng Netty Connections [ Active / Total / Inactive ] ==> [ ")
+        sb.append("[Dapeng Mbean] Dapeng Netty Connections == [ Active / Total / Inactive ] == [ ")
                 .append(NettyConnectCounter.getActiveChannel())
                 .append(" / ")
                 .append(NettyConnectCounter.getTotalChannel())

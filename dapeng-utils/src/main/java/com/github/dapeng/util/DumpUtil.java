@@ -77,9 +77,19 @@ public class DumpUtil {
      * @return
      */
     public static String dumpThreadPool(ThreadPoolExecutor poolExecutor) {
-        return " \n--shutdown / terminating / terminated[" + poolExecutor.isShutdown() + " / " + poolExecutor.isTerminating() + " / " + poolExecutor.isTerminated() + "]\n"
-                + " --activeCount / poolSize[" + poolExecutor.getActiveCount() + " / " + poolExecutor.getPoolSize() + "]\n"
-                + " --waitingTasks / completeTasks / totalTasks[" + poolExecutor.getQueue().size() + " / " + poolExecutor.getCompletedTaskCount() + " / " + poolExecutor.getTaskCount() + "]";
+        StringBuilder sb = new StringBuilder();
+        sb.append(" shutdown / terminating / terminated[")
+                .append(poolExecutor.isShutdown()).append(" / ")
+                .append(poolExecutor.isTerminating()).append(" / ")
+                .append(poolExecutor.isTerminated()).append("]");
+        sb.append(" -activeCount / poolSize[")
+                .append(poolExecutor.getActiveCount()).append(" / ")
+                .append(poolExecutor.getPoolSize()).append("]");
+        sb.append(" -waitingTasks / completeTasks / totalTasks[")
+                .append(poolExecutor.getQueue().size()).append(" / ")
+                .append(poolExecutor.getCompletedTaskCount()).append(" / ")
+                .append(poolExecutor.getTaskCount()).append("]");
+        return sb.toString();
     }
 
     public static String formatToString(String msg) {
