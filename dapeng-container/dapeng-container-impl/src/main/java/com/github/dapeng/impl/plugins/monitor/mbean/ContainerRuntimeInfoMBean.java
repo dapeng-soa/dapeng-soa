@@ -30,13 +30,13 @@ public interface ContainerRuntimeInfoMBean {
      * 获取业务线程池情况
      * @return
      */
-    String getTheardPoolStatus();
+    String getThreadPoolStatus();
 
     /**
      * 获取服务信息(包含容器信息)
      * @return
      */
-    String getSerivceBasicInfo();
+    String getServiceBasicInfo();
 
     /**
      * 获取当前运行服务流量信息
