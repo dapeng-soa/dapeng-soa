@@ -9,12 +9,14 @@ import com.github.dapeng.impl.plugins.netty.NettyConnectCounter;
 import com.github.dapeng.impl.plugins.netty.SoaFlowCounter;
 import com.github.dapeng.impl.plugins.netty.SoaInvokeCounter;
 import com.github.dapeng.util.DumpUtil;
+import com.github.dapeng.util.ShmUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
+
 
 /**
  * @author with struy.
@@ -174,6 +176,19 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
                 .append(NettyConnectCounter.getInactiveChannel())
                 .append(" ]");
         LOGGER.info(sb.toString());
+        return sb.toString();
+    }
+
+    @Override
+    public String getFreqControlCount(String app, String rule_type, int key) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            sb.append("\nFreqControlCount data ==>")
+                    .append(ShmUtil.freqControlCount(app,rule_type,key));
+        } catch (Exception e) {
+            LOGGER.error("getFreqControlCount error ::",e);
+            return "getFreqControlCount error";
+        }
         return sb.toString();
     }
 

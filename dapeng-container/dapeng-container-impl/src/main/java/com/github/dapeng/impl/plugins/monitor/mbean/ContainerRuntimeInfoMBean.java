@@ -71,4 +71,13 @@ public interface ContainerRuntimeInfoMBean {
      */
     String getNettyConnections();
 
+    /**
+     * 根据userId，userIp等信息查看用户目前的限流计数情况
+     * @param app 服务名称
+     * @param rule_type  查询规则类型（userId,userIp等）
+     * @param key userId值,userIp值等
+     * @return
+     */
+    String getFreqControlCount(String app, String rule_type, int key);
+
 }

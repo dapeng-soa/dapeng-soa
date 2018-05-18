@@ -121,6 +121,9 @@ public class testShm {
 
         System.out.println("test callerId:----------------------------------------");
 
+        manager.reportAndCheck(rule, 456);
+        manager.reportAndCheck(rule, 789);
+
         for (int i = 0; i < 100; i++) {
 
             result = manager.reportAndCheck(rule, 214);
