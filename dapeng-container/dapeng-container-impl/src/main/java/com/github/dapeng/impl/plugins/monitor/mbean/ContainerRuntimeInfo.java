@@ -27,7 +27,7 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerRuntimeInfo.class);
     private LoggerContext loggerContext = null;
     private final static String METHOD_NAME_KEY = "method_name";
-    private String containerVersion = null;
+    private final static String containerVersion = "2.0.2";
     private final Container container;
 
     public ContainerRuntimeInfo(Container container) {
@@ -186,17 +186,6 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     }
 
     private String getContainerVersion() {
-        if (null == containerVersion) {
-            Properties properties = new Properties();
-            try {
-                properties.load(this.getClass().getClassLoader().getResourceAsStream("container.properties"));
-                if (!properties.isEmpty()) {
-                    containerVersion = properties.getProperty("container.version");
-                }
-            } catch (IOException e) {
-                LOGGER.info("获取容器版本失败", e);
-            }
-        }
         return containerVersion;
     }
 }

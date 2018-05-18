@@ -34,7 +34,7 @@ public class MbeanAgentPlugin implements Plugin {
             server.registerMBean(new ContainerRuntimeInfo(container), mName);
             LOGGER.info("::registerMBean dapengContainerMBean success");
             if (MonitorFilterProperties.SOA_JMXRMI_ENABLE){
-                ObjectName adapterName = new ObjectName("com.github.dapeng:name=HtmlAdaptor,port=" + 8888);
+                ObjectName adapterName = new ObjectName("com.github.dapeng:name=HtmlAdaptor,port=8888");
                 HtmlAdaptorServer adapter = new HtmlAdaptorServer();
                 adapter.setPort(MonitorFilterProperties.SOA_JMXRMI_PORT);
                 server.registerMBean(adapter, adapterName);
