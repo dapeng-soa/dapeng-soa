@@ -57,11 +57,11 @@ public class SoaMessageBuilder<T> {
     }
 
     public ByteBuf build() throws TException {
-        InvocationContext invocationCtx = InvocationContextImpl.Factory.getCurrentInstance();
+        InvocationContext invocationCtx = InvocationContextImpl.Factory.currentInstance();
 
         //buildHeader
-        protocol = protocol == null ? (invocationCtx.getCodecProtocol() == null ? CodecProtocol.CompressedBinary
-                : invocationCtx.getCodecProtocol()) : protocol;
+        protocol = protocol == null ? (invocationCtx.codecProtocol() == null ? CodecProtocol.CompressedBinary
+                : invocationCtx.codecProtocol()) : protocol;
         TSoaTransport transport = new TSoaTransport(buffer);
         TBinaryProtocol headerProtocol = new TBinaryProtocol(transport);
         headerProtocol.writeByte(STX);

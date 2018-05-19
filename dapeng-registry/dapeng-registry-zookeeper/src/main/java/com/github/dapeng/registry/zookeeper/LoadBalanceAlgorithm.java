@@ -1,6 +1,6 @@
 package com.github.dapeng.registry.zookeeper;
 
-import com.github.dapeng.registry.RuntimeInstance;
+import com.github.dapeng.core.RuntimeInstance;
 
 import java.util.List;
 import java.util.Random;

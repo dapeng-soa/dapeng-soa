@@ -1,10 +1,11 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.version.Version;
 import com.github.dapeng.registry.ConfigKey;
-import com.github.dapeng.registry.RuntimeInstance;
 import com.github.dapeng.registry.ServiceInfo;
-import com.github.dapeng.route.Route;
+import com.github.dapeng.router.Route;
+import com.github.dapeng.router.RoutesExecutor;
 import org.apache.zookeeper.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,7 @@ public class ClientZk extends CommonZk {
     /**
      * 路由配置信息
      */
-    private final List<Route> routes = new ArrayList<>();
+    private final Map<String, List<Route>> routesMap = new ConcurrentHashMap<>(16);
 
 
     public ClientZk(String zkHost) {
@@ -54,7 +55,7 @@ public class ClientZk extends CommonZk {
             CountDownLatch semaphore = new CountDownLatch(1);
 
             // Fixme zk连接状态变化不应该引起本地runtime缓存的清除, 尤其是zk挂了之后, 不至于影响业务(本地缓存还存在于每个SoaConnectionPool中?)
-            zk = new ZooKeeper(zkHost, 15000, e -> {
+            zk = new ZooKeeper(zkHost, 30000, e -> {
                 switch (e.getState()) {
                     case Expired:
                         LOGGER.info("Client's host: {} 到zookeeper Server的session过期，重连", zkHost);
@@ -99,15 +100,49 @@ public class ClientZk extends CommonZk {
         }
     }
 
+
     /**
-     * route 目前暂未实现
+     * route 根据给定路由规则对可运行实例进行过滤
      *
      * @return
      */
-    public List<Route> getRoutes() {
-        return this.routes;
+    public List<Route> getRoutes(String service) {
+        if (routesMap.get(service) == null) {
+            try {
+                byte[] data = zk.getData(ROUTES_PATH + "/" + service, event -> {
+                    if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                        LOGGER.info("routes 节点 data 发现变更，重新获取信息");
+                        routesMap.remove(service);
+                        getRoutes(service);
+                    }
+                }, null);
+                List<Route> routes = processRouteData(service, data);
+                return routes;
+            } catch (KeeperException | InterruptedException e) {
+                LOGGER.error("获取route service 节点: {} 出现异常", service);
+            }
+        } else {
+            LOGGER.debug("获取route信息, service: {} , route size {}", service, routesMap.get(service).size());
+            return this.routesMap.get(service);
+        }
+        return null;
     }
 
+    /**
+     * process zk data 解析route 信息
+     */
+    public List<Route> processRouteData(String service, byte[] data) {
+        List<Route> zkRoutes;
+        try {
+            String routeData = new String(data, "utf-8");
+            zkRoutes = RoutesExecutor.parseAll(routeData);
+            routesMap.put(service, zkRoutes);
+        } catch (Exception e) {
+            zkRoutes = new ArrayList<>(16);
+            LOGGER.error("parser routes 信息 失败，请检查路由规则写法是否正确!");
+        }
+        return zkRoutes;
+    }
 
     /**
      * 客户端 同步zk 服务信息  syncServiceZkInfo
@@ -262,4 +297,34 @@ public class ClientZk extends CommonZk {
         }
     }
 
+
+    /*
+
+    public void getRoutesAsync() {
+        zk.getData(ROUTES_PATH, event -> {
+            if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                LOGGER.info("routes 节点 data 发现变更，重新获取信息");
+                routes.clear();
+                getRoutesAsync();
+            }
+        }, routeDataCb, null);
+    }
+
+    private AsyncCallback.DataCallback routeDataCb = (rc, path, ctx, data, stat) -> {
+        switch (KeeperException.Code.get(rc)) {
+            case CONNECTIONLOSS:
+                getRoutesAsync();
+                break;
+            case NONODE:
+                LOGGER.error("服务 [{}] 的service配置节点不存在，无法获取service级配置信息 ", ((ZkServiceInfo) ctx).service);
+                break;
+            case OK:
+                processRouteData(data);
+                break;
+            default:
+                break;
+        }
+    };
+
+    */
 }

@@ -35,9 +35,4 @@ public interface SoaConnectionPool {
             REQ request,
             BeanSerializer<REQ> requestSerializer,
             BeanSerializer<RESP> responseSerializer) throws SoaException;
-
-
-//    SoaConnection getConnection() throws SoaException;
-
-//    void removeConnection(SoaConnection connection) throws SoaException;
 }

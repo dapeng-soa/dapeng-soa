@@ -6,6 +6,20 @@ package com.github.dapeng.impl.plugins.monitor.mbean;
 public interface ContainerRuntimeInfoMBean {
 
     /**
+     * 设置日志级别
+     * @param loggerName
+     * @param levelStr
+     */
+    void setLoggerLevel(String loggerName, String levelStr);
+
+    /**
+     * 获取日志级别
+     * @param loggerName
+     * @return
+     */
+    String getLoggerLevel(String loggerName);
+
+    /**
      * 禁用/开启监控
      * @param enable
      * @return
@@ -13,28 +27,16 @@ public interface ContainerRuntimeInfoMBean {
     boolean enableMonitor(boolean enable);
 
     /**
-     * 获取日志级别
-     * @return
-     */
-    String getLoggerLevel();
-
-    /**
-     * 修改日志级别
-     * @return
-     */
-    String setLoggerLevel(String level);
-
-    /**
      * 获取业务线程池情况
      * @return
      */
-    String getTheardPoolStatus();
+    String getThreadPoolStatus();
 
     /**
      * 获取服务信息(包含容器信息)
      * @return
      */
-    String getSerivceBasicInfo();
+    String getServiceBasicInfo();
 
     /**
      * 获取当前运行服务流量信息

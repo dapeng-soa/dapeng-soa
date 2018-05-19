@@ -5,14 +5,16 @@
 module api {
 
     export class MethodAction {
-        serviceName:string
-        version:string
-        methodName:string
+        serviceName:string;
+        version:string;
+        methodName:string;
+        isModel: Boolean;
 
-        public findMethod(serviceName:string, version:string, methodName:string) {
-            this.serviceName = serviceName
-            this.version = version
-            this.methodName = methodName
+        public findMethod(serviceName:string, version:string, methodName:string, isModel=false) {
+            this.serviceName = serviceName;
+            this.version = version;
+            this.methodName = methodName;
+            this.isModel = isModel;
 
             var url = window.basePath + "/api/findmethod/" + serviceName + "/" + version + "/" + methodName + ".htm"
 
@@ -59,13 +61,29 @@ module api {
                 case api.model.KIND.SET:
                     return "Set&lt;" + this.dataTypeToHTML(dataType.valueType) + "&gt;"
                 case api.model.KIND.ENUM:
-                    var enumurl = window.basePath + "/api/enum/" + this.serviceName + "/" + this.version + "/" + dataType.qualifiedName + ".htm"
-
-                    return "<a href='" + enumurl + "'>" + dataType.qualifiedName.substring(dataType.qualifiedName.lastIndexOf(".") + 1) + "</a>"
+                    if (this.isModel){
+                        return `
+                    <a href="javascript:void(0)"
+                       onclick=getEnumDetail1('${this.serviceName}','${this.version}','${dataType.qualifiedName}')>
+                       ${dataType.qualifiedName.substring(dataType.qualifiedName.lastIndexOf(".") + 1)}
+                   </a>
+                    `;
+                    }else {
+                        let enumurl = window.basePath + "/api/enum/" + this.serviceName + "/" + this.version + "/" + dataType.qualifiedName + ".htm"
+                        return "<a href='" + enumurl + "'>" + dataType.qualifiedName.substring(dataType.qualifiedName.lastIndexOf(".") + 1) + "</a>"
+                    }
                 case api.model.KIND.STRUCT:
-                    var structurl = window.basePath + "/api/struct/" + this.serviceName + "/" + this.version + "/" + dataType.qualifiedName + ".htm"
-
-                    return "<a href='" + structurl + "'>" + dataType.qualifiedName.substring(dataType.qualifiedName.lastIndexOf(".") + 1) + "</a>"
+                    if (this.isModel){
+                        return `
+                            <a href="javascript:void(0)"
+                               onclick=getStructDetail1('${this.serviceName}','${this.version}','${dataType.qualifiedName}')>
+                               ${dataType.qualifiedName.substring(dataType.qualifiedName.lastIndexOf(".") + 1)}
+                           </a>
+                        `;
+                    }else {
+                        let structurl = window.basePath + "/api/struct/" + this.serviceName + "/" + this.version + "/" + dataType.qualifiedName + ".htm"
+                        return "<a href='" + structurl + "'>" + dataType.qualifiedName.substring(dataType.qualifiedName.lastIndexOf(".") + 1) + "</a>"
+                    }
                 case api.model.KIND.DATE:
                     return "Date"
                 case api.model.KIND.BIGDECIMAL:

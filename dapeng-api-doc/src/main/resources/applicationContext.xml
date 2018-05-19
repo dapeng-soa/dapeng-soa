@@ -26,6 +26,9 @@
         </mvc:message-converters>
     </mvc:annotation-driven>
 
+    <!-- soa 服务请求头代理 -->
+    <bean class="com.github.dapeng.doc.ServiceInvocationProxy" init-method="init" destroy-method="destroy"/>
+
     <!-- 由ApiDocPlugin 实例化 -->
     <bean id="serviceCache" class="com.github.dapeng.doc.cache.ServiceCache" init-method="init" destroy-method="destory"/>
 

@@ -2,7 +2,7 @@ package com.github.dapeng.client.netty;
 
 import com.github.dapeng.core.SoaCode;
 import com.github.dapeng.core.SoaException;
-import com.github.dapeng.util.SoaSystemEnvProperties;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.AbstractByteBufAllocator;
 import io.netty.buffer.ByteBuf;
@@ -117,7 +117,16 @@ public class NettyClient {
         return bootstrap;
     }
 
-    public ByteBuf send(Channel channel, int seqid, ByteBuf request, long timeout) throws SoaException {
+    /**
+     * @param channel
+     * @param seqid
+     * @param request
+     * @param timeout
+     * @param service 传入 service 参数 是为了返回服务超时信息更具体
+     * @return
+     * @throws SoaException
+     */
+    public ByteBuf send(Channel channel, int seqid, ByteBuf request, long timeout, String service) throws SoaException {
 
         //means that this channel is not idle and would not managered by IdleConnectionManager
         IdleConnectionManager.remove(channel);
@@ -131,8 +140,8 @@ public class NettyClient {
             ByteBuf respByteBuf = future.get(timeout, TimeUnit.MILLISECONDS);
             return respByteBuf;
         } catch (TimeoutException e) {
-            LOGGER.error("请求超时，seqid:"+seqid);
-            throw new SoaException(SoaCode.TimeOut.getCode(), SoaCode.TimeOut.getMsg());
+            LOGGER.error("请求服务[" + service + "]超时，seqid:" + seqid);
+            throw new SoaException(SoaCode.TimeOut.getCode(), "请求服务[" + service + "]超时");
         } catch (Throwable e) {
             throw new SoaException(SoaCode.UnKnown, e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage());
         } finally {
@@ -197,6 +206,7 @@ public class NettyClient {
 
     /**
      * 同步连接并返回channel
+     *
      * @param host
      * @param port
      * @return

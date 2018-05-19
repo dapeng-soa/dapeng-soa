@@ -1,7 +1,10 @@
 package com.github.dapeng.client.netty;
 
+import com.github.dapeng.client.filter.LogFilter;
 import com.github.dapeng.core.*;
+import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.filter.*;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.SoaMessageParser;
@@ -9,8 +12,11 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -49,8 +55,13 @@ public abstract class SoaBaseConnection implements SoaConnection {
             BeanSerializer<RESP> responseSerializer,
             long timeout)
             throws SoaException {
-
         int seqid = seqidAtomic.getAndIncrement();
+
+        InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        invocationContext.seqId(seqid);
+        invocationContext.serviceName(service);
+        invocationContext.versionName(version);
+        invocationContext.methodName(method);
 
         Filter dispatchFilter = new Filter() {
             private FilterChain getPrevChain(FilterContext ctx) {
@@ -60,18 +71,24 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
             @Override
             public void onEntry(FilterContext ctx, FilterChain next) throws SoaException {
-
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace("dispatchFilter::onEntry");
+                }
                 ByteBuf requestBuf = buildRequestBuf(service, version, method, seqid, request, requestSerializer);
 
                 // TODO filter
                 checkChannel();
 
-                ByteBuf responseBuf = client.send(channel, seqid, requestBuf, timeout); //发送请求，返回结果
+                try {
+                    ByteBuf responseBuf = client.send(channel, seqid, requestBuf, timeout, service);
 
-                Result<RESP> result = processResponse(responseBuf, responseSerializer);
-                ctx.setAttribute("result", result);
+                    Result<RESP> result = processResponse(responseBuf, responseSerializer);
+                    ctx.setAttribute("result", result);
 
-                onExit(ctx, getPrevChain(ctx));
+                    onExit(ctx, getPrevChain(ctx));
+                } finally {
+                    InvocationContextImpl.Factory.removeCurrentInstance();
+                }
             }
 
             @Override
@@ -84,29 +101,39 @@ public abstract class SoaBaseConnection implements SoaConnection {
         Filter headerFilter = new Filter() {
             @Override
             public void onEntry(FilterContext ctx, FilterChain next) throws SoaException {
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace("headerFilter::onEntry");
+                }
                 next.onEntry(ctx);
             }
 
             @Override
             public void onExit(FilterContext ctx, FilterChain prev) throws SoaException {
                 // do nothing
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace("headerFilter::onExit");
+                }
             }
         };
-        //todo shareFilter
-        SharedChain sharedChain = new SharedChain(headerFilter, new ArrayList<>(), dispatchFilter, 0);
+
+        List<Filter> shareFilters = new ArrayList<>();
+        shareFilters.add(new LogFilter());
+        SharedChain sharedChain = new SharedChain(headerFilter, shareFilters, dispatchFilter, 0);
 
         FilterContextImpl filterContext = new FilterContextImpl();
         filterContext.setAttach(dispatchFilter, "chain", sharedChain);
+        filterContext.setAttribute("context", invocationContext);
+        filterContext.setAttribute("serverInfo", host + ":" + port);
 
         sharedChain.onEntry(filterContext);
 
         Result<RESP> result = (Result<RESP>) filterContext.getAttribute("result");
         assert (result != null);
-
-        if (result.success != null)
+        if (result.success != null) {
             return result.success;
-        else
+        } else {
             throw result.exception;
+        }
     }
 
     @Override
@@ -118,6 +145,12 @@ public abstract class SoaBaseConnection implements SoaConnection {
             long timeout) throws SoaException {
 
         int seqid = seqidAtomic.getAndIncrement();
+
+        InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        invocationContext.seqId(seqid);
+        invocationContext.serviceName(service);
+        invocationContext.versionName(version);
+        invocationContext.methodName(method);
 
         Filter dispatchFilter = new Filter() {
             private FilterChain getPrevChain(FilterContext ctx) {
@@ -131,10 +164,10 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
                     ByteBuf requestBuf = buildRequestBuf(service, version, method, seqid, request, requestSerializer);
 
-                    CompletableFuture<ByteBuf> responseBufFuture = null;
+                    CompletableFuture<ByteBuf> responseBufFuture;
                     try {
                         checkChannel();
-                        responseBufFuture = client.sendAsync(channel, seqid, requestBuf, timeout); //发送请求，返回结果
+                        responseBufFuture = client.sendAsync(channel, seqid, requestBuf, timeout);
                     } catch (Exception e) {
                         LOGGER.error(e.getMessage(), e);
                         Result<RESP> result = new Result<>(null,
@@ -145,11 +178,15 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     }
 
                     responseBufFuture.whenComplete((realResult, ex) -> {
+                        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().orElse("0"));
                         if (ex != null) {
                             SoaException soaException = convertToSoaException(ex);
                             Result<RESP> result = new Result<>(null, soaException);
                             ctx.setAttribute("result", result);
                         } else {
+                            //fixme do it in filter
+                            InvocationContextImpl.Factory.currentInstance(invocationContext);
+
                             Result<RESP> result = processResponse(realResult, responseSerializer);
                             ctx.setAttribute("result", result);
                         }
@@ -158,6 +195,9 @@ public abstract class SoaBaseConnection implements SoaConnection {
                             onExit(ctx, getPrevChain(ctx));
                         } catch (SoaException e) {
                             LOGGER.error(e.getMessage(), e);
+                        } finally {
+                            InvocationContextImpl.Factory.removeCurrentInstance();
+                            MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
                         }
                     });
                 } catch (Exception e) {
@@ -167,6 +207,9 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
                     ctx.setAttribute("result", result);
                     onExit(ctx, getPrevChain(ctx));
+                } finally {
+                    InvocationContextImpl.Factory.removeCurrentInstance();
+                    MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
                 }
             }
 
@@ -197,10 +240,15 @@ public abstract class SoaBaseConnection implements SoaConnection {
             }
         };
         // Head, LoadBalance, .. dispatch
-        SharedChain sharedChain = new SharedChain(headFilter, new ArrayList<>(), dispatchFilter, 0);
+        List<Filter> shareFilters = new ArrayList<>();
+        shareFilters.add(new LogFilter());
+
+        SharedChain sharedChain = new SharedChain(headFilter, shareFilters, dispatchFilter, 0);
 
         FilterContextImpl filterContext = new FilterContextImpl();
         filterContext.setAttach(dispatchFilter, "chain", sharedChain);
+        filterContext.setAttribute("context", invocationContext);
+        filterContext.setAttribute("serverInfo", host + ":" + port);
 
         try {
             sharedChain.onEntry(filterContext);
@@ -209,10 +257,13 @@ public abstract class SoaBaseConnection implements SoaConnection {
         }
         CompletableFuture<RESP> resultFuture = (CompletableFuture<RESP>) filterContext.getAttach(headFilter, "future");
 
+
         assert (resultFuture != null);
+
 
         return resultFuture;
     }
+
 
     private SoaException convertToSoaException(Throwable ex) {
         SoaException soaException = null;
@@ -222,22 +273,6 @@ public abstract class SoaBaseConnection implements SoaConnection {
             soaException = new SoaException(SoaCode.UnKnown.getCode(), ex.getMessage());
         }
         return soaException;
-    }
-
-    protected SoaHeader buildHeader(String service, String version, String method) {
-        SoaHeader header = new SoaHeader();
-        header.setServiceName(service);
-        header.setVersionName(version);
-        header.setMethodName(method);
-
-        InvocationContext invocationContext = InvocationContextImpl.Factory.getCurrentInstance();
-        header.setCallerFrom(invocationContext.getCallerFrom());
-        header.setCallerIp(invocationContext.getCallerIp());
-        header.setCustomerId(invocationContext.getCustomerId());
-        header.setCustomerName(invocationContext.getCustomerName());
-        header.setOperatorId(invocationContext.getOperatorId());
-
-        return header;
     }
 
     protected abstract <REQ> ByteBuf buildRequestBuf(String service, String version, String method, int seqid, REQ request, BeanSerializer<REQ> requestSerializer) throws SoaException;
@@ -258,28 +293,28 @@ public abstract class SoaBaseConnection implements SoaConnection {
     }
 
     private <RESP> Result<RESP> processResponse(ByteBuf responseBuf, BeanSerializer<RESP> responseSerializer) {
+        if (responseBuf == null) {
+            return new Result<>(null, new SoaException(SoaCode.TimeOut));
+        }
         final int readerIndex = responseBuf.readerIndex();
         try {
-            if (responseBuf == null) {
-                return new Result<>(null, new SoaException(SoaCode.TimeOut));
+            SoaMessageParser parser = new SoaMessageParser(responseBuf, responseSerializer).parseHeader();
+            // TODO fill InvocationContext.lastInfo from response.Header
+            SoaHeader respHeader = parser.getHeader();
+            InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+            InvocationInfoImpl info = (InvocationInfoImpl) invocationContext.lastInvocationInfo();
+            fillLastInvocationInfo(info, respHeader);
+            if ("0000".equals(respHeader.getRespCode().get())) {
+                parser.parseBody();
+                RESP resp = (RESP) parser.getBody();
+                assert (resp != null);
+                return new Result<>(resp, null);
             } else {
-                SoaMessageParser parser = new SoaMessageParser(responseBuf, responseSerializer).parseHeader();
-                // TODO fill InvocationContext.lastInfo from response.Header
-                SoaHeader respHeader = parser.getHeader();
-
-                if ("0000".equals(respHeader.getRespCode().get())) {
-                    parser.parseBody();
-                    RESP resp = (RESP) parser.getBody();
-                    assert (resp != null);
-                    //ctx.setAttribute(filter, "response", resp);
-                    return new Result<>(resp, null);
-                } else {
-                    return new Result<>(null, new SoaException(
-                            (respHeader.getRespCode().isPresent()) ? respHeader.getRespCode().get() : SoaCode.UnKnown.getCode(),
-                            (respHeader.getRespMessage().isPresent()) ? respHeader.getRespMessage().get() : SoaCode.UnKnown.getMsg()));
-                }
-
+                return new Result<>(null, new SoaException(
+                        (respHeader.getRespCode().isPresent()) ? respHeader.getRespCode().get() : SoaCode.UnKnown.getCode(),
+                        (respHeader.getRespMessage().isPresent()) ? respHeader.getRespMessage().get() : SoaCode.UnKnown.getMsg()));
             }
+
         } catch (SoaException ex) {
             return new Result<>(null, ex);
         } catch (TException ex) {
@@ -295,12 +330,14 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
     }
 
+
     /**
      * 创建连接
      */
     private synchronized Channel connect(String host, int port) throws SoaException {
-        if (channel != null && channel.isActive())
+        if (channel != null && channel.isActive()) {
             return channel;
+        }
 
         try {
             return channel = this.client.connect(host, port);
@@ -315,7 +352,6 @@ public abstract class SoaBaseConnection implements SoaConnection {
         } else if (!channel.isActive()) {
             try {
                 channel.close();
-//                parent.removeConnection();
             } finally {
                 channel = null;
                 connect(host, port);
@@ -323,4 +359,21 @@ public abstract class SoaBaseConnection implements SoaConnection {
         }
     }
 
+
+    /**
+     * 构造lastInvocationInfo
+     *
+     * @param info
+     * @param respHeader
+     */
+    private void fillLastInvocationInfo(InvocationInfoImpl info, SoaHeader respHeader) {
+        InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        info.calleeTid(respHeader.getCallerTid().orElse(""));
+        info.calleeIp(respHeader.getCalleeIp().orElse(""));
+        info.calleePort(respHeader.getCalleePort().orElse(0));
+        info.calleeMid(respHeader.getCalleeMid().orElse(""));
+        info.calleeTime1(respHeader.getCalleeTime1().orElse(0));
+        info.calleeTime2(respHeader.getCalleeTime2().orElse(0));
+        info.loadBalanceStrategy(invocationContext.loadBalanceStrategy().orElse(null));
+    }
 }

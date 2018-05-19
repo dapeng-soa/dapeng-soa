@@ -1,7 +1,12 @@
 package com.github.dapeng.core;
 
 import com.github.dapeng.core.enums.CodecProtocol;
+import com.github.dapeng.core.enums.LoadBalanceStrategy;
+import com.github.dapeng.core.helper.DapengUtil;
+import com.github.dapeng.core.helper.IPUtils;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -11,254 +16,244 @@ import java.util.Optional;
  * @date 15/9/24
  */
 
-public class InvocationContextImpl implements  InvocationContext {
-
+public class InvocationContextImpl implements InvocationContext {
+    /**
+     * 服务名称
+     */
     private String serviceName;
 
+    /**
+     * 方法名称
+     */
     private String methodName;
 
+    /**
+     * 版本号
+     */
     private String versionName;
+
+    private Optional<String> sessionTid = Optional.empty();
+    private String callerTid = DapengUtil.generateTid();
+    private Optional<Long> userId = Optional.empty();
+    private Optional<String> userIp = Optional.empty();
+
+    private Optional<Integer> timeout = Optional.empty();
+
+    private Optional<LoadBalanceStrategy> loadBalanceStrategy = Optional.empty();
 
     private CodecProtocol codecProtocol = CodecProtocol.CompressedBinary;
 
     private Optional<String> calleeIp = Optional.empty();
 
-    private Optional<Integer> calleePort = Optional.empty();
+    private Optional<Integer> calleePort = Optional.of(9090);
 
-    private Optional<String> callerFrom = Optional.empty();
+    private Optional<String> callerMid = Optional.empty();
 
-    private Optional<String> callerIp = Optional.empty();
+    private Optional<Long> operatorId = Optional.empty();
 
-    private Optional<Integer> operatorId = Optional.empty();
-
-    private Optional<String> operatorName = Optional.empty();
-
-    private Optional<Integer> customerId = Optional.empty();
-
-    private Optional<String> customerName = Optional.empty();
+    private Optional<Integer> transactionId = Optional.empty();
 
     private Optional<Integer> transactionSequence = Optional.empty();
 
-    private InvocationInfo invocationInfo;
-
-    private Optional<String> sessionId = Optional.empty();
-
-    private Optional<Long> timeout = Optional.empty();
-
-
     /**
-     * 全局事务id
+     * 包含服务提供端返回来的一些信息, 例如calleeIp, 服务耗时等信息
      */
-    private Optional<Integer> transactionId = Optional.empty();
-
-    // readonly
-    private int seqid;
-
-    private boolean isSoaTransactionProcess;
+    private InvocationInfo lastInvocationInfo;
+    private Integer seqId;
 
     @Override
-    public Optional<Long> getTimeout() {
+    public String serviceName() {
+        return serviceName;
+    }
+
+    @Deprecated
+    public InvocationContext serviceName(String serviceName) {
+        this.serviceName = serviceName;
+        return this;
+    }
+
+    @Override
+    public String methodName() {
+        return methodName;
+    }
+
+    @Deprecated
+    public InvocationContext methodName(String methodName) {
+        this.methodName = methodName;
+        return this;
+    }
+
+    @Override
+    public String versionName() {
+        return versionName;
+    }
+
+    @Deprecated
+    public InvocationContext seqId(Integer seqId) {
+        this.seqId = seqId;
+        return this;
+    }
+
+    @Override
+    public int seqId() {
+        return seqId;
+    }
+
+    @Deprecated
+    public InvocationContext versionName(String versionName) {
+        this.versionName = versionName;
+        return this;
+    }
+
+    @Override
+    public Optional<Integer> timeout() {
         return timeout;
     }
 
     @Override
-    public void setTimeout(Optional<Long> timeout) {
-        this.timeout = timeout;
+    public InvocationContext timeout(final Integer timeout) {
+        this.timeout = Optional.ofNullable(timeout);
+        return this;
     }
 
     // read/write
     @Override
-    public CodecProtocol getCodecProtocol() {
+    public CodecProtocol codecProtocol() {
         return codecProtocol;
     }
 
     @Override
-    public Optional<String> getCalleeIp() {
+    public Optional<String> calleeIp() {
         return this.calleeIp;
     }
 
     @Override
-    public void setCalleeIp(Optional<String> calleeIp) {
-        this.calleeIp = calleeIp;
+    public InvocationContext calleeIp(String calleeIp) {
+        this.calleeIp = Optional.ofNullable(calleeIp);
+        return this;
     }
 
     @Override
-    public Optional<Integer> getCalleePort() {
+    public Optional<Integer> calleePort() {
         return this.calleePort;
     }
 
     @Override
-    public void setCalleePort(Optional<Integer> calleePort) {
-        this.calleePort = calleePort;
+    public InvocationContext loadBalanceStrategy(LoadBalanceStrategy loadBalanceStrategy) {
+        this.loadBalanceStrategy = Optional.ofNullable(loadBalanceStrategy);
+        return this;
     }
 
     @Override
-    public InvocationInfo getLastInfo() {
-        return this.invocationInfo;
+    public Optional<LoadBalanceStrategy> loadBalanceStrategy() {
+        return loadBalanceStrategy;
     }
 
     @Override
-    public void setSessionId(Optional<String> sessionId) {
-        this.sessionId = sessionId;
+    public InvocationContext calleePort(Integer calleePort) {
+        this.calleePort = Optional.ofNullable(calleePort);
+        return this;
     }
 
     @Override
-    public Optional<String> getSessionId() {
-        return this.sessionId;
+    public InvocationInfo lastInvocationInfo() {
+        return this.lastInvocationInfo;
     }
 
     @Override
-    public boolean isSoaTransactionProcess() {
-      return this.isSoaTransactionProcess;
+    public InvocationContext transactionId(Integer currentTransactionId) {
+        this.transactionId = Optional.ofNullable(currentTransactionId);
+        return this;
     }
 
     @Override
-    public void setSoaTransactionProcess(Boolean isSoaTransactionProcess) {
-        this.isSoaTransactionProcess = isSoaTransactionProcess;
+    public InvocationContext transactionSequence(Integer currentTransactionSequence) {
+        this.transactionSequence = Optional.ofNullable(currentTransactionSequence);
+        return this;
     }
 
     @Override
-    public void setLastInfo(InvocationInfo invocationInfo) {
-        this.invocationInfo = invocationInfo;
+    public InvocationContext sessionTid(String sessionTid) {
+        this.sessionTid = Optional.ofNullable(sessionTid);
+        return this;
     }
 
     @Override
-    public Optional<Integer> getTransactionId() {
-        return transactionId;
+    public Optional<String> sessionTid() {
+        return this.sessionTid;
     }
 
     @Override
-    public void setTransactionId(Optional<Integer> transactionId) {
-        this.transactionId = transactionId;
+    public InvocationContext callerTid(String callerTid) {
+        this.callerTid = callerTid;
+        return this;
     }
 
     @Override
-    public void setCustomerId(Optional<Integer> customerId) {
+    public String callerTid() {
+        return this.callerTid;
+    }
 
+    public InvocationContext lastInvocationInfo(InvocationInfo lastInvocationInfo) {
+        this.lastInvocationInfo = lastInvocationInfo;
+        return this;
     }
 
     @Override
-    public Optional<Integer> getCustomerId() {
-        return this.customerId;
+    public InvocationContext operatorId(Long operatorId) {
+        this.operatorId = Optional.ofNullable(operatorId);
+        return this;
     }
 
     @Override
-    public void setCustomerName(Optional<String> customerName) {
-        this.customerName = customerName;
-    }
-
-    @Override
-    public Optional<String> getCustomerName() {
-        return this.customerName;
-    }
-
-    @Override
-    public void setOperatorId(Optional<Integer> operatorId) {
-        this.operatorId = operatorId;
-    }
-
-    @Override
-    public Optional<Integer> getOperatorId() {
+    public Optional<Long> operatorId() {
         return this.operatorId;
     }
 
+
     @Override
-    public void setOperatorName(Optional<String> operatorName) {
-        this.operatorName = operatorName;
+    public InvocationContext callerMid(String callerMid) {
+        this.callerMid = Optional.ofNullable(callerMid);
+        return this;
     }
 
     @Override
-    public Optional<String> getOperatorName() {
-        return this.operatorName;
+    public Optional<String> callerMid() {
+        return this.callerMid;
     }
 
     @Override
-    public void setCallerFrom(Optional<String> callerFrom) {
-        this.callerFrom = callerFrom;
+    public InvocationContext userId(Long userId) {
+        this.userId = Optional.ofNullable(userId);
+        return this;
     }
 
     @Override
-    public Optional<String> getCallerFrom() {
-        return this.callerFrom;
+    public Optional<Long> userId() {
+        return userId;
     }
 
     @Override
-    public void setCallerIp(Optional<String> callerIp) {
-        this.callerIp = callerIp;
+    public InvocationContext userIp(String userIp) {
+        this.userIp = Optional.ofNullable(userIp);
+        return this;
     }
 
     @Override
-    public Optional<String> getCallerIp() {
-        return this.callerIp;
+    public Optional<String> userIp() {
+        return userIp;
     }
 
     @Override
-    public void setTransactionSequence(Optional<Integer> transactionSequence) {
-        this.transactionSequence = transactionSequence;
-    }
-
-    @Override
-    public void setServiceName(String serviceName) {
-        this.serviceName = serviceName;
-    }
-
-    @Override
-    public String getServiceName() {
-        return this.serviceName;
-    }
-
-    @Override
-    public void setMethodName(String methodName) {
-        this.methodName = methodName;
-    }
-
-    @Override
-    public String getMethodName() {
-        return this.methodName;
-    }
-
-    @Override
-    public void setVersionName(String versionName) {
-        this.versionName = versionName;
-    }
-
-    @Override
-    public String getVersionName() {
-        return this.versionName;
-    }
-
-    @Override
-    public void setCodecProtocol(CodecProtocol codecProtocol) {
+    public InvocationContext codecProtocol(CodecProtocol codecProtocol) {
         this.codecProtocol = codecProtocol;
-    }
-
-    public int getSeqid() {
-        return seqid;
-    }
-
-    public void setSeqid(int seqid) {
-        this.seqid = seqid;
+        return this;
     }
 
     public static class Factory {
         private static ThreadLocal<InvocationContext> threadLocal = new ThreadLocal<>();
 
         private static InvocationContextProxy invocationContextProxy;
-
-        public static interface InvocationContextProxy {
-
-            Optional<String> callerFrom();
-
-            Optional<Integer> customerId();
-
-            Optional<String> customerName();
-
-            Optional<Integer> operatorId();
-
-            Optional<String> operatorName();
-
-            Optional<String> sessionId();
-        }
 
         public static void setInvocationContextProxy(InvocationContextProxy invocationContextProxy) {
             Factory.invocationContextProxy = invocationContextProxy;
@@ -267,19 +262,22 @@ public class InvocationContextImpl implements  InvocationContext {
         public static InvocationContextProxy getInvocationContextProxy() {
             return invocationContextProxy;
         }
+
         /**
          * must be invoked one time per thread before work begin
+         *
          * @return
          */
         public static InvocationContext createNewInstance() {
             assert threadLocal.get() == null;
 
             InvocationContext context = new InvocationContextImpl();
+
             threadLocal.set(context);
             return context;
         }
 
-        public static InvocationContext getCurrentInstance() {
+        public static InvocationContext currentInstance() {
             InvocationContext context = threadLocal.get();
 
             //客户端可能不手动创建上下文.
@@ -290,13 +288,44 @@ public class InvocationContextImpl implements  InvocationContext {
             return context;
         }
 
+        public static InvocationContext currentInstance(InvocationContext context) {
+            threadLocal.set(context);
+
+            return context;
+        }
+
         /**
          * must be invoked after work done
+         *
          * @return
          */
         public static void removeCurrentInstance() {
             threadLocal.remove();
         }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("{");
+        sb.append("\"").append("serviceName").append("\":\"").append(this.serviceName).append("\",");
+        sb.append("\"").append("methodName").append("\":\"").append(this.methodName).append("\",");
+        sb.append("\"").append("versionName").append("\":\"").append(this.versionName).append("\",");
+        sb.append("\"").append("sessionTid").append("\":\"").append(this.sessionTid.isPresent() ? this.sessionTid.get() : null).append("\",");
+        sb.append("\"").append("userId").append("\":\"").append(this.userId.isPresent() ? this.userId.get() : null).append("\",");
+        sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? this.userIp.get() : null).append("\",");
+        sb.append("\"").append("timeout").append("\":\"").append(this.timeout.isPresent() ? this.timeout.get() : null).append("\",");
+        sb.append("\"").append("transactionId").append("\":\"").append(this.transactionId.isPresent() ? this.transactionId.get() : null).append("\",");
+        sb.append("\"").append("transactionSequence").append("\":\"").append(this.transactionSequence.isPresent() ? this.transactionSequence.get() : null).append("\",");
+        sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid).append("\",");
+        sb.append("\"").append("callerMid").append("\":\"").append(this.callerMid.isPresent() ? this.callerMid.get() : null).append("\",");
+        sb.append("\"").append("operatorId").append("\":").append(this.operatorId.isPresent() ? this.operatorId.get() : null).append(",");
+        sb.append("\"").append("calleeIp").append("\":\"").append(this.calleeIp.isPresent() ? this.calleeIp.get() : null).append("\",");
+        sb.append("\"").append("calleePort").append("\":\"").append(this.calleePort.isPresent() ? this.calleePort.get() : null).append("\",");
+
+        sb.deleteCharAt(sb.lastIndexOf(","));
+        sb.append("}");
+
+        return sb.toString();
     }
 
 

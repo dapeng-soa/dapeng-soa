@@ -5,12 +5,13 @@ import com.github.dapeng.basic.api.counter.domain.DataPoint;
 import com.github.dapeng.basic.api.counter.service.CounterService;
 import com.github.dapeng.core.SoaHeader;
 import com.github.dapeng.core.TransactionContext;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.plugins.monitor.ServiceProcessData;
 import com.github.dapeng.impl.plugins.monitor.ServiceBasicInfo;
 import com.github.dapeng.impl.plugins.monitor.config.MonitorFilterProperties;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import org.slf4j.Logger;
@@ -71,6 +72,17 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
     private ReentrantLock signalLock = new ReentrantLock();
     private Condition signalCondition = signalLock.newCondition();
 
+
+    private ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(1,
+            new ThreadFactoryBuilder()
+                    .setDaemon(true)
+                    .setNameFormat("dapeng-" + getClass().getSimpleName() + "-scheduler-%d")
+                    .build());
+    private ExecutorService uploaderExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
+            .setDaemon(true)
+            .setNameFormat("dapeng-" + getClass().getSimpleName() + "-uploader")
+            .build());
+
     private static class CounterClientFactory {
         private static CounterService COUNTER_CLIENT = new CounterServiceClient();
     }
@@ -81,7 +93,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
+        TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
         Integer seqId = transactionContext.getSeqid();
         invokeStartPair.put(seqId, System.currentTimeMillis());
 
@@ -95,7 +107,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         Long invokeEndTime = System.currentTimeMillis();
-        // 异步返回不能从通过 TransactionContext.Factory.getCurrentInstance() 去拿context
+        // 异步返回不能从通过 TransactionContext.Factory.currentInstance() 去拿context
         SoaResponseWrapper wrapper = (SoaResponseWrapper) msg;
         TransactionContext context = wrapper.transactionContext;
         SoaHeader soaHeader = context.getHeader();
@@ -103,6 +115,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
 
         ServiceBasicInfo basicInfo = new ServiceBasicInfo(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName());
         ServiceProcessData processData = serviceProcessCallDatas.get(basicInfo);
+
         Long invokeStartTime = invokeStartPair.remove(seqId);
         Long cost = invokeEndTime - invokeStartTime;
         Map<ServiceBasicInfo, Long> map = new ConcurrentHashMap<>(1);
@@ -146,15 +159,6 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
 
         LOGGER.info("dapeng invoke Monitor started, upload interval:" + PERIOD + "s");
 
-        ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(1,
-                new ThreadFactoryBuilder()
-                        .setDaemon(true)
-                        .setNameFormat("dapeng-" + getClass().getSimpleName() + "-scheduler-%d")
-                        .build());
-        ExecutorService uploaderExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
-                .setDaemon(true)
-                .setNameFormat("dapeng-" + getClass().getSimpleName() + "-uploader")
-                .build());
 
         // 定时统计服务调用数据并加入到上送队列
         schedulerExecutorService.scheduleAtFixedRate(() -> {
@@ -182,7 +186,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
                 if (!dataList.isEmpty()) {
                     serviceDataQueue.put(dataList);
                     // 默认保留最新30条,缓存调用数据,offer,poll防止阻塞
-                    if (!serviceCacheQueue.offer(dataList)){
+                    if (!serviceCacheQueue.offer(dataList)) {
                         serviceCacheQueue.poll();
                         serviceCacheQueue.offer(dataList);
                     }
@@ -205,7 +209,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
                 signalLock.unlock();
             }
 
-        }, initialDelay + 50, PERIOD * 1000, TimeUnit.MILLISECONDS);
+        }, initialDelay , PERIOD * 1000, TimeUnit.MILLISECONDS);
 
         // uploader point thread.
         uploaderExecutor.execute(() -> {
@@ -230,13 +234,13 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
                             // 上送出错
                             LOGGER.error(e.getMessage(), e);
                             if (LOGGER.isDebugEnabled())
-                                LOGGER.debug(Thread.currentThread().getName() + " has upload " + uploads + " points, now  release the lock.");
+                                LOGGER.debug(Thread.currentThread().getName() + " upload error points:" + uploads + ", now  release the lock.");
                             uploads = 0;
                             signalCondition.await();
                         }
                     } else {
                         if (LOGGER.isDebugEnabled())
-                            LOGGER.debug(Thread.currentThread().getName() + " has upload " + uploads + " points, now  release the lock.");
+                            LOGGER.debug(Thread.currentThread().getName() + " points is empty points:" + uploads + ", now  release the lock.");
                         uploads = 0;
                         signalCondition.await();
                     }
@@ -318,5 +322,17 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
         });
 
         return points;
+    }
+
+    /**
+     * 停止上送线程
+     *
+     * @return
+     */
+    public void destory() {
+        LOGGER.info(" stop InvokeCounter upload !");
+        schedulerExecutorService.shutdown();
+        uploaderExecutor.shutdown();
+        LOGGER.info(" InvokeCounter is shutdown");
     }
 }

@@ -1,11 +1,11 @@
 package com.github.dapeng.message.consumer.kafka;
 
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.message.config.KafkaConfigBuilder;
 import com.github.dapeng.message.consumer.api.context.ConsumerContext;
 import com.github.dapeng.message.serializer.KafkaMessageProcessor;
 import com.github.dapeng.org.apache.thrift.TException;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.kafka.clients.consumer.CommitFailedException;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;

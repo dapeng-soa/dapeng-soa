@@ -1,13 +1,20 @@
 package com.github.dapeng.impl.plugins.monitor.mbean;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import com.github.dapeng.api.Container;
+import com.github.dapeng.core.Application;
+import com.github.dapeng.impl.plugins.monitor.config.MonitorFilterProperties;
 import com.github.dapeng.impl.plugins.netty.NettyConnectCounter;
 import com.github.dapeng.impl.plugins.netty.SoaFlowCounter;
 import com.github.dapeng.impl.plugins.netty.SoaInvokeCounter;
 import com.github.dapeng.util.DumpUtil;
-import com.github.dapeng.util.SoaSystemEnvProperties;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.io.IOException;
+import java.util.Properties;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author with struy.
@@ -17,48 +24,102 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 
 public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ContainerRuntimeInfo.class);
+    private LoggerContext loggerContext = null;
     private final static String METHOD_NAME_KEY = "method_name";
+    private final static String containerVersion = "2.0.2";
     private final Container container;
 
     public ContainerRuntimeInfo(Container container) {
         super();
         this.container = container;
+        try {
+            loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        }catch (Exception e){
+            LOGGER.info("loggerContext get error",e);
+        }
+    }
+
+    @Override
+    public void setLoggerLevel(String loggerName, String levelStr) {
+        if (loggerName == null) {
+            return;
+        }
+        if (levelStr == null) {
+            return;
+        }
+        loggerName = loggerName.trim();
+        levelStr = levelStr.trim();
+
+        LOGGER.info("Jmx Trying to set logger level [" + levelStr + "] to logger [" + loggerName +"]");
+
+        ch.qos.logback.classic.Logger logger = loggerContext.getLogger(loggerName);
+        if ("null".equalsIgnoreCase(levelStr)) {
+            logger.setLevel(null);
+        } else {
+            Level level = Level.toLevel(levelStr, null);
+            if (level != null) {
+                logger.setLevel(level);
+            }
+        }
+    }
+
+    @Override
+    public String getLoggerLevel(String loggerName) {
+        if (loggerName == null) {
+            return "";
+        }
+
+        loggerName = loggerName.trim();
+
+        ch.qos.logback.classic.Logger logger = loggerContext.exists(loggerName);
+        if (logger != null && logger.getLevel() != null) {
+            return logger.getLevel().toString();
+        } else {
+            return "";
+        }
     }
 
     @Override
     public boolean enableMonitor(boolean enable) {
-        // TODO
-        return SoaSystemEnvProperties.SOA_MONITOR_ENABLE;
+        LOGGER.info("Jmx Switch Monitor to:", enable);
+        MonitorFilterProperties.SOA_JMX_SWITCH_MONITOR = enable;
+        return MonitorFilterProperties.SOA_JMX_SWITCH_MONITOR;
     }
 
     @Override
-    public String getLoggerLevel() {
-        // TODO
-        return "DEBUG";
-    }
-
-    @Override
-    public String setLoggerLevel(String level) {
-        // TODO
-        return level;
-    }
-
-    @Override
-    public String getTheardPoolStatus() {
+    public String getThreadPoolStatus() {
         ThreadPoolExecutor poolExecutor = (ThreadPoolExecutor) container.getDispatcher();
-        return DumpUtil.dumpThreadPool(poolExecutor);
+        StringBuilder sb = new StringBuilder();
+        sb.append("[Dapeng Mbean] Dapeng TheardPoolStatus == ");
+        sb.append(DumpUtil.dumpThreadPool(poolExecutor));
+        return sb.toString();
     }
 
     @Override
-    public String getSerivceBasicInfo() {
-        // TODO
-        return null;
+    public String getServiceBasicInfo() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[Dapeng Mbean] Dapeng ContainerVersion == [ ")
+                .append(getContainerVersion())
+                .append(" ]");
+        sb.append("\nCurrent Services Info == [ \n");
+        for (Application application : container.getApplications()) {
+            AtomicInteger count = new AtomicInteger();
+            application.getServiceInfos().forEach(info -> {
+                sb.append(count.incrementAndGet())
+                        .append(". ")
+                        .append(info)
+                        .append("\n");
+            });
+        }
+        sb.append("\n ]");
+        return sb.toString();
     }
 
     @Override
     public String getServiceFlow() {
         StringBuilder sb = new StringBuilder();
-        sb.append("\nServiceFlow data ==> ");
+        sb.append("\nServiceFlow data == ");
         SoaFlowCounter.getFlowCacheQueue().forEach(x -> {
             sb.append("\n").append(x.toString()).append("\n");
         });
@@ -69,7 +130,7 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     public String getServiceInvoke() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("\nServiceInvoke data ==> ");
+        sb.append("\nServiceInvoke data == ");
         SoaInvokeCounter.getServiceCacheQueue().forEach(x -> {
             sb.append("\n");
             x.forEach(y -> sb.append(y.toString()));
@@ -113,13 +174,18 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     @Override
     public String getNettyConnections() {
         StringBuilder sb = new StringBuilder();
-        sb.append("\nDapeng Netty Connections [ Active / Total / Inactive ] ==> [ ")
+        sb.append("[Dapeng Mbean] Dapeng Netty Connections == [ Active / Total / Inactive ] == [ ")
                 .append(NettyConnectCounter.getActiveChannel())
                 .append(" / ")
                 .append(NettyConnectCounter.getTotalChannel())
                 .append(" / ")
                 .append(NettyConnectCounter.getInactiveChannel())
                 .append(" ]");
+        LOGGER.info(sb.toString());
         return sb.toString();
+    }
+
+    private String getContainerVersion() {
+        return containerVersion;
     }
 }

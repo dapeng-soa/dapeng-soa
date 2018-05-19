@@ -5,6 +5,8 @@ import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
+import com.github.dapeng.core.helper.DapengUtil;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocolException;
@@ -14,11 +16,14 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import io.netty.util.Attribute;
-import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static com.github.dapeng.util.ExceptionUtil.convertToSoaException;
 
@@ -44,7 +49,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
 
             Object request = parseSoaMsg(msg);
 
-            final TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
+            final TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
             /**
              * use AttributeMap to share common data on different  ChannelHandlers
              */
@@ -62,13 +67,13 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         } catch (Throwable e) {
 
             SoaException soaException = convertToSoaException(e);
-            TransactionContext transactionContext = TransactionContext.Factory.getCurrentInstance();
+            TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
 
             SoaHeader soaHeader = transactionContext.getHeader();
-            soaHeader.setRespCode(Optional.ofNullable(soaException.getCode()));
-            soaHeader.setRespMessage(Optional.ofNullable(soaException.getMessage()));
+            soaHeader.setRespCode(soaException.getCode());
+            soaHeader.setRespMessage(soaException.getMessage());
 
-            transactionContext.setSoaException(soaException);
+            transactionContext.soaException(soaException);
             SoaResponseWrapper responseWrapper = new SoaResponseWrapper(transactionContext,
                     Optional.ofNullable(null),
                     Optional.ofNullable(null));
@@ -87,9 +92,11 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
 
         // parser.service, version, method, header, bodyProtocol
         SoaHeader soaHeader = parser.parseSoaMessage(context);
-        context.setHeader(soaHeader);
+        ((TransactionContextImpl)context).setHeader(soaHeader);
 
-        updateTransactionCtx(context,soaHeader);
+        updateTransactionCtx((TransactionContextImpl)context, soaHeader);
+
+        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, context.sessionTid().orElse("0"));
 
         Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
@@ -116,27 +123,37 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         }
         contentProtocol.readMessageEnd();
 
-        String infoLog = "request[seqId:" + context.getSeqid() + "]:"
-                + "service[" + soaHeader.getServiceName()
-                + "]:version[" + soaHeader.getVersionName()
-                + "]:method[" + soaHeader.getMethodName() + "]"
-                + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
-
-        application.info(this.getClass(), infoLog);
-
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(getClass().getSimpleName() + "::decode " + infoLog + ", payload:\n" + args);
+            String debugLog = "request[seqId:" + context.getSeqid() + "]:"
+                    + "service[" + soaHeader.getServiceName()
+                    + "]:version[" + soaHeader.getVersionName()
+                    + "]:method[" + soaHeader.getMethodName() + "]"
+                    + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
+                    + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
+            LOGGER.debug(getClass().getSimpleName() + "::decode " + debugLog + ", payload:\n" + args);
         }
         return args;
     }
 
-    private void updateTransactionCtx(TransactionContext ctx, SoaHeader soaHeader)  {
-        ctx.setCallerFrom(soaHeader.getCallerFrom());
-        ctx.setCallerIp(soaHeader.getCallerIp());
-        ctx.setCustomerId(soaHeader.getCustomerId());
-        ctx.setCustomerName(soaHeader.getCustomerName());
-        ctx.setOperatorId(soaHeader.getOperatorId());
-        ctx.setOperatorName(soaHeader.getOperatorName());
+    private void updateTransactionCtx(TransactionContextImpl ctx, SoaHeader soaHeader) {
+        if (soaHeader.getCallerMid().isPresent()) {
+            ctx.callerMid(soaHeader.getCallerMid().get());
+        }
+        ctx.callerIp(soaHeader.getCallerIp().orElse(null));
+        if (soaHeader.getUserId().isPresent()) {
+            ctx.userId(soaHeader.getUserId().get());
+        }
+        if (soaHeader.getCallerPort().isPresent()) {
+            ctx.callerPort(soaHeader.getCallerPort().get());
+        }
+        if (soaHeader.getOperatorId().isPresent()) {
+            ctx.operatorId(soaHeader.getOperatorId().get());
+        }
+        if (soaHeader.getCallerTid().isPresent()) {
+            ctx.callerTid(soaHeader.getCallerTid().get());
+        }
+
+        ctx.calleeTid(DapengUtil.generateTid());
+        ctx.sessionTid(soaHeader.getSessionTid().orElse(ctx.calleeTid()));
     }
 }
