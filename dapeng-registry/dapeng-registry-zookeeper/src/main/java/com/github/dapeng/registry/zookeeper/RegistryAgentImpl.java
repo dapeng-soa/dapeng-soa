@@ -3,9 +3,8 @@ package com.github.dapeng.registry.zookeeper;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.Service;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.*;
-import com.github.dapeng.route.Route;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +25,7 @@ public class RegistryAgentImpl implements RegistryAgent {
 
     private final String RUNTIME_PATH = "/soa/runtime/services";
     private final String CONFIG_PATH = "/soa/config/services";
+    private final static String ROUTES_PATH = "/soa/config/routes";
 
     private final boolean isClient;
     private final ServerZk serverZk = new ServerZk(this);
@@ -80,6 +80,9 @@ public class RegistryAgentImpl implements RegistryAgent {
             // 创建  zk  config 服务 持久节点  eg:  /soa/config/com.github.dapeng.soa.UserService
             serverZk.create(CONFIG_PATH + "/" + serverName, null, false);
 
+            // 创建路由节点
+            serverZk.create(ROUTES_PATH + "/" + serverName, null, false);
+
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -122,11 +125,6 @@ public class RegistryAgentImpl implements RegistryAgent {
     @Override
     public ZkServiceInfo getConfig(boolean usingFallback, String serviceKey) {
         return serverZk.getConfigData(serviceKey);
-    }
-
-    @Override
-    public List<Route> getRoutes(boolean usingFallback) {
-        return null;
     }
 
 

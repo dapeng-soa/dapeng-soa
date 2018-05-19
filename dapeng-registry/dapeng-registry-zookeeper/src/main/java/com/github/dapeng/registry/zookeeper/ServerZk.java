@@ -1,8 +1,8 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.core.helper.MasterHelper;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
@@ -46,7 +46,7 @@ public class ServerZk extends CommonZk {
         try {
             CountDownLatch semaphore = new CountDownLatch(1);
 
-            zk = new ZooKeeper(zkHost, 15000, watchedEvent -> {
+            zk = new ZooKeeper(zkHost, 30000, watchedEvent -> {
 
                 switch (watchedEvent.getState()) {
 
@@ -61,6 +61,7 @@ public class ServerZk extends CommonZk {
                         //创建根节点
                         create(SERVICE_PATH, null, false);
                         create(CONFIG_PATH, null, false);
+                        create(ROUTES_PATH, null, false);
                         zkConfigMap.clear();
                         LOGGER.info("ServerZk connected to  {} [Zookeeper]", zkHost);
                         if (registryAgent != null) {
@@ -70,7 +71,7 @@ public class ServerZk extends CommonZk {
 
                     case Disconnected:
                         //zookeeper重启或zookeeper实例重新创建
-                        LOGGER.error("Registry {} zookeeper 连接断开，可能是zookeeper重启或重建");
+                        LOGGER.error("[Disconnected]: ServerZookeeper Registry zk 连接断开，可能是zookeeper重启或重建");
 
                         isMaster.clear(); //断开连接后，认为，master应该失效，避免某个孤岛一直以为自己是master
 

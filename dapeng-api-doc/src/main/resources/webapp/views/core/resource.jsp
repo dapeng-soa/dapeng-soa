@@ -30,6 +30,8 @@
 
 <!-- 新 Bootstrap 核心 CSS 文件 -->
 <link rel="stylesheet" href="${basePath}/css/bootstrap/3.3.5/bootstrap.min.css">
+<link rel="stylesheet" href="${basePath}/css/model/struct.css">
+<link rel="stylesheet" href="${basePath}/css/model/scroll-top.css" type="text/css"/>
 <!-- 可选的Bootstrap主题文件（一般不用引入） -->
 <link rel="stylesheet" href="${basePath}/css/bootstrap/3.3.5/bootstrap.min.css">
 <link rel="stylesheet" href="${basePath}/css/default.css" type="text/css"/>

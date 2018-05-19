@@ -3,21 +3,23 @@ package com.github.dapeng.impl.plugins.netty;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.*;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.ExceptionUtil;
+import com.google.common.base.Joiner;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.util.Attribute;
-import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.util.Map;
 import java.util.Optional;
 
-import static com.github.dapeng.util.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
+import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
 
 /**
  * 响应消息编码器
@@ -38,72 +40,79 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
     protected void encode(ChannelHandlerContext channelHandlerContext,
                           SoaResponseWrapper wrapper,
                           ByteBuf out) throws Exception {
+        TransactionContext transactionContext = wrapper.transactionContext;
+        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().orElse("0"));
+
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(getClass().getSimpleName() + "::encode");
         }
 
+        try {
+            SoaHeader soaHeader = transactionContext.getHeader();
+            Optional<String> respCode = soaHeader.getRespCode();
 
-        TransactionContext transactionContext = wrapper.transactionContext;
-        SoaHeader soaHeader = transactionContext.getHeader();
-        Optional<String> respCode = soaHeader.getRespCode();
+            Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
-        Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
-        /**
-         * use AttributeMap to share common data on different  ChannelHandlers
-         */
-        Attribute<Map<Integer, Long>> requestTimestampAttr = channelHandlerContext.channel().attr(NettyChannelKeys.REQUEST_TIMESTAMP);
-        Map<Integer, Long> requestTimestampMap = requestTimestampAttr.get();
-
-        Long requestTimestamp = 0L;
-        if (requestTimestampMap != null) {
-            requestTimestamp = requestTimestampMap.getOrDefault(transactionContext.getSeqid(), requestTimestamp);
-            //each per request take the time then remove it
-            requestTimestampMap.remove(transactionContext.getSeqid());
-        } else {
-            LOGGER.warn(getClass().getSimpleName() + "::encode no requestTimestampMap found!");
-        }
-
-        String infoLog = "response[seqId:" + transactionContext.getSeqid() + ", respCode:" + respCode.get() + "]:"
-                + "service[" + soaHeader.getServiceName()
-                + "]:version[" + soaHeader.getVersionName()
-                + "]:method[" + soaHeader.getMethodName() + "]"
-                + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : ""
-                + " cost:" + (System.currentTimeMillis() - requestTimestamp) + "ms");
-
-        application.info(this.getClass(), infoLog);
-
-        if (respCode.isPresent() && !respCode.get().equals(SOA_NORMAL_RESP_CODE)) {
-            writeErrorResponse(transactionContext, application, out);
-        } else {
-            try {
-                BeanSerializer serializer = wrapper.serializer.get();
-                Object result = wrapper.result.get();
-
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug(getClass().getSimpleName() + "::encode " + infoLog + ", payload:\n" + result);
-                    LOGGER.debug(getClass().getSimpleName() + "::encode " + DumpUtil.dumpToStr(out));
-                }
-
-                TSoaTransport transport = new TSoaTransport(out);
-                SoaMessageProcessor messageProcessor = new SoaMessageProcessor(transport);
-
-                messageProcessor.writeHeader(transactionContext);
-                if (serializer != null && result != null) {
-                    messageProcessor.writeBody(serializer, result);
-                }
-                messageProcessor.writeMessageEnd();
-                transport.flush();
-            } catch (Throwable e) {
-                SoaException soaException = ExceptionUtil.convertToSoaException(e);
-
-                soaHeader.setRespCode(Optional.ofNullable(soaException.getCode()));
-                soaHeader.setRespMessage(Optional.ofNullable(soaException.getMessage()));
-
-                transactionContext.setSoaException(soaException);
+            if (respCode.isPresent() && !respCode.get().equals(SOA_NORMAL_RESP_CODE)) {
                 writeErrorResponse(transactionContext, application, out);
+            } else {
+                try {
+                    BeanSerializer serializer = wrapper.serializer.get();
+                    Object result = wrapper.result.get();
+
+                    TSoaTransport transport = new TSoaTransport(out);
+                    SoaMessageProcessor messageProcessor = new SoaMessageProcessor(transport);
+                    Attribute<Map<Integer, Long>> requestTimestampAttr = channelHandlerContext.channel().attr(NettyChannelKeys.REQUEST_TIMESTAMP);
+                    Map<Integer, Long> requestTimestampMap = requestTimestampAttr.get();
+
+                    Long requestTimestamp = 0L;
+                    if (requestTimestampMap != null) {
+                        //each per request take the time then remove it
+                        requestTimestamp = requestTimestampMap.remove(transactionContext.getSeqid());
+
+                        if (requestTimestamp == null) {
+                            requestTimestamp = 0L;
+                        }
+                    } else {
+                        LOGGER.warn(getClass().getSimpleName() + "::encode no requestTimestampMap found!");
+                    }
+                    Long cost = System.currentTimeMillis() - requestTimestamp;
+                    soaHeader.setCalleeTime2(cost.intValue());
+                    soaHeader.setCalleeIp(Optional.ofNullable(SoaSystemEnvProperties.SOA_CONTAINER_IP));
+                    soaHeader.setCalleePort(Optional.ofNullable(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
+                    Joiner joiner = Joiner.on(":");
+                    soaHeader.setCalleeMid(joiner.join(soaHeader.getServiceName(),soaHeader.getMethodName(),soaHeader.getVersionName()));
+                    soaHeader.setCalleeTid(transactionContext.calleeTid());
+                    messageProcessor.writeHeader(transactionContext);
+                    if (serializer != null && result != null) {
+                        messageProcessor.writeBody(serializer, result);
+                    }
+                    messageProcessor.writeMessageEnd();
+                    transport.flush();
+
+                    if (LOGGER.isDebugEnabled()) {
+                        String infoLog = "response[seqId:" + transactionContext.getSeqid() + ", respCode:" + respCode.get() + "]:"
+                                + "service[" + soaHeader.getServiceName()
+                                + "]:version[" + soaHeader.getVersionName()
+                                + "]:method[" + soaHeader.getMethodName() + "]"
+                                + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
+                                + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
+                        LOGGER.debug(getClass().getSimpleName() + "::encode " + infoLog + ", payload:\n" + result);
+                        LOGGER.debug(getClass().getSimpleName() + "::encode " + DumpUtil.dumpToStr(out));
+                    }
+                } catch (Throwable e) {
+                    SoaException soaException = ExceptionUtil.convertToSoaException(e);
+
+                    soaHeader.setRespCode(soaException.getCode());
+                    soaHeader.setRespMessage(soaException.getMessage());
+
+                    transactionContext.soaException(soaException);
+                    writeErrorResponse(transactionContext, application, out);
+                }
             }
+        } finally {
+            MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         }
     }
 
@@ -130,11 +139,11 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                                     Application application,
                                     ByteBuf out) {
         SoaHeader soaHeader = transactionContext.getHeader();
-        SoaException soaException = transactionContext.getSoaException();
+        SoaException soaException = transactionContext.soaException();
         if (soaException == null) {
             soaException = new SoaException(soaHeader.getRespCode().get(),
                     soaHeader.getRespMessage().orElse(SoaCode.UnKnown.getMsg()));
-            transactionContext.setSoaException(soaException);
+            transactionContext.soaException(soaException);
         }
 
         //Reuse the byteBuf
@@ -156,8 +165,13 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     + "]:version[" + soaHeader.getVersionName()
                     + "]:method[" + soaHeader.getMethodName() + "]"
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                    + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
-            application.error(this.getClass(), infoLog, soaException);
+                    + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
+            // 根据respCode判断是否是业务异常还是运行时异常
+            if (soaHeader.getRespCode().get().equals(SoaCode.UnKnown.getCode())) {
+                application.error(this.getClass(), infoLog, soaException);
+            } else {
+                application.info(this.getClass(), infoLog);
+            }
 
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(getClass() + " " + infoLog + ", payload:\n" + soaException.getMessage());

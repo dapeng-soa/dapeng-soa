@@ -16,7 +16,6 @@ import javax.xml.bind.JAXB;
 import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.TreeMap;
 
 /**
@@ -61,7 +60,7 @@ public class ServiceCache {
             try {
                 //init service,no need to set params
                 InvocationContext invocationContext = InvocationContextImpl.Factory.createNewInstance();
-                invocationContext.setTimeout(Optional.of(5000L));
+                invocationContext.timeout(5000);
                 metadata = new MetadataClient(serviceInfo.serviceName, serviceInfo.version)
                         .getServiceMetadata();
             } catch (Exception e) {
@@ -76,7 +75,7 @@ public class ServiceCache {
                     Map<String, Service> services = loadResource(serviceData);
                     ServiceCache.services.putAll(services);
                 } catch (Exception e) {
-                    LOGGER.error("生成SERVICE出错, metaData:\n" + metadata, e);
+                    LOGGER.error("生成SERVICE[" + serviceInfo.serviceName + "]出错, metaData:\n" + metadata, e);
                 }
             }
         });

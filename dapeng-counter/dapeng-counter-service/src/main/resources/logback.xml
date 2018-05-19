@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <contextName>service</contextName>
+    <contextName>counterService</contextName>
     <!-- 控制台日志打印 -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <Pattern>%d{MM-dd HH:mm:ss SSS} %t %p - %m%n</Pattern>
+            <Pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</Pattern>
         </layout>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>DEBUG</level>
@@ -18,7 +18,7 @@
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p - %m%n</pattern>
+            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</pattern>
         </encoder>
     </appender>
 
@@ -50,7 +50,7 @@
     <!--</logger>-->
     <logger name="druid.sql" level="OFF"/>
 
-    <root level="DEBUG">
+    <root level="INFO">
         <if condition='!property("soa.run.mode").equals("native")'>
             <then>
                 <appender-ref ref="STDOUT"/>

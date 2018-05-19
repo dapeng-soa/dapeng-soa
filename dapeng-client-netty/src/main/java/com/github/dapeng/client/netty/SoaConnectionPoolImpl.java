@@ -1,15 +1,15 @@
 package com.github.dapeng.client.netty;
 
 import com.github.dapeng.core.*;
+import com.github.dapeng.core.enums.LoadBalanceStrategy;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.ConfigKey;
-import com.github.dapeng.registry.LoadBalanceStrategy;
-import com.github.dapeng.registry.RuntimeInstance;
 import com.github.dapeng.registry.zookeeper.*;
-import com.github.dapeng.util.SoaSystemEnvProperties;
+import com.github.dapeng.router.Route;
+import com.github.dapeng.router.RoutesExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -27,31 +27,43 @@ import java.util.stream.Collectors;
  */
 public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private final Logger logger = LoggerFactory.getLogger(SoaConnectionPoolImpl.class);
+    private final LoadBalanceStrategy DEFAULT_LB_STRATEGY = LoadBalanceStrategy.Random;
+
+    class ClientInfoWeakRef extends WeakReference<SoaConnectionPool.ClientInfo> {
+        final String serviceName;
+        final String version;
+
+        public ClientInfoWeakRef(SoaConnectionPool.ClientInfo referent,
+                                 ReferenceQueue<? super SoaConnectionPool.ClientInfo> q) {
+            super(referent, q);
+            this.serviceName = referent.serviceName;
+            this.version = referent.version;
+        }
+    }
+
     private Map<String, ZkServiceInfo> zkInfos = new ConcurrentHashMap<>();
     private Map<IpPort, SubPool> subPools = new ConcurrentHashMap<>();
     private ZkClientAgent zkAgent = new ZkClientAgentImpl();
 
     private ReentrantLock subPoolLock = new ReentrantLock();
 
-
-    private Map<String, WeakReference<ClientInfo>> clientInfos = new ConcurrentHashMap<>(16);
-    private Map<WeakReference<ClientInfo>, String> clientInfoRefs = new ConcurrentHashMap<>(16);
+    private Map<String, ClientInfoWeakRef> clientInfos = new ConcurrentHashMap<>(16);
     private final ReferenceQueue<ClientInfo> referenceQueue = new ReferenceQueue<>();
 
     Thread cleanThread = new Thread(() -> {
         while (true) {
             try {
-                Reference<ClientInfo> clientInfoRef = (Reference<ClientInfo>) referenceQueue.remove(1000);
+                ClientInfoWeakRef clientInfoRef = (ClientInfoWeakRef) referenceQueue.remove(1000);
                 if (clientInfoRef == null) continue;
 
-                String serviceVersion = clientInfoRefs.remove(clientInfoRef);
+                final String key = clientInfoRef.serviceName + ":" + clientInfoRef.version;
 
                 if (logger.isDebugEnabled()) {
-                    logger.debug("client for service:" + serviceVersion + " is gone.");
+                    logger.debug("client for service:" + key + " is gone.");
                 }
 
-                clientInfos.remove(serviceVersion);
-                ZkServiceInfo zkServiceInfo = zkInfos.remove(serviceVersion.split(":")[0]);
+                clientInfos.remove(key);
+                ZkServiceInfo zkServiceInfo = zkInfos.remove(clientInfoRef.serviceName);
 
                 if (zkServiceInfo != null) {
                     zkAgent.cancelSyncService(zkServiceInfo);
@@ -82,19 +94,15 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     public synchronized ClientInfo registerClientInfo(String serviceName, String version) {
         final String key = serviceName + ":" + version;
 
-        WeakReference<ClientInfo> clientInfoRef = clientInfos.get(key);
+        ClientInfoWeakRef clientInfoRef = clientInfos.get(key);
         ClientInfo clientInfo = (clientInfoRef == null) ? null : clientInfoRef.get();
         if (clientInfo != null) {
-            //fixme should remove the debug log
-            logger.info("registerClientInfo-0:[" + serviceName + ", version:"
-                    + version + ", zkInfo:" + zkInfos.get(serviceName));
             return clientInfo;
         } else {
             clientInfo = new ClientInfo(serviceName, version);
-            clientInfoRef = new WeakReference<>(clientInfo, referenceQueue);
+            clientInfoRef = new ClientInfoWeakRef(clientInfo, referenceQueue);
 
             clientInfos.put(key, clientInfoRef);
-            clientInfoRefs.put(clientInfoRef, key);
 
             ZkServiceInfo zkInfo = new ZkServiceInfo(serviceName, new ArrayList<>());
             zkAgent.syncService(zkInfo);
@@ -104,9 +112,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             } else {
                 //todo ??
             }
-            //fixme should remove the debug log
-            logger.info("registerClientInfo-1:[" + serviceName + ", version:"
-                    + version + ", zkInfo:" + zkInfos.get(serviceName));
             return clientInfo;
         }
 
@@ -165,7 +170,10 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
                 .filter(rt -> checkVersion(version, rt.version))
                 .collect(Collectors.toList());
-        RuntimeInstance inst = loadBalance(service, version, method, compatibles);
+        // router
+        List<RuntimeInstance> byRouter = router(service, method, version, compatibles);
+
+        RuntimeInstance inst = loadBalance(service, version, method, byRouter);
         if (inst == null) {
             logger.error(getClass().getSimpleName() + "::findConnection[service:" + service + "], instance not found");
             return null;
@@ -189,6 +197,30 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
 
         return subPool.getConnection();
+    }
+
+    /**
+     * 服务路由
+     *
+     * @param service
+     * @param method
+     * @param version
+     * @param compatibles
+     * @return
+     */
+    private List<RuntimeInstance> router(String service, String method, String version, List<RuntimeInstance> compatibles) {
+        InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        List<Route> routes = zkAgent.getRoutes(service);
+        if (routes == null || routes.size() == 0) {
+            logger.debug("router 获取 路由信息为空或size为0,跳过router,服务实例数：{}", compatibles.size());
+            return compatibles;
+        } else {
+            context.serviceName(service);
+            context.methodName(method);
+            context.versionName(version);
+            List<RuntimeInstance> runtimeInstances = RoutesExecutor.executeRoutes(context, routes, compatibles);
+            return runtimeInstances;
+        }
     }
 
 
@@ -220,16 +252,20 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             globalLB = zkServiceInfo.loadbalanceConfig.globalConfig;
         }
 
-        LoadBalanceStrategy balance;
+        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
+        LoadBalanceStrategy balance = invocationContext.loadBalanceStrategy().orElse(null);
 
-        if (methodLB != null) {
-            balance = methodLB;
-        } else if (serviceLB != null) {
-            balance = serviceLB;
-        } else if (globalLB != null) {
-            balance = globalLB;
-        } else {
-            balance = LoadBalanceStrategy.Random;
+        if (balance == null) {
+            if (methodLB != null) {
+                balance = methodLB;
+            } else if (serviceLB != null) {
+                balance = serviceLB;
+            } else if (globalLB != null) {
+                balance = globalLB;
+            } else {
+                balance = DEFAULT_LB_STRATEGY;
+                invocationContext.loadBalanceStrategy(balance);
+            }
         }
 
         if (logger.isDebugEnabled()) {
@@ -277,7 +313,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         long maxTimeout = SoaSystemEnvProperties.SOA_MAX_TIMEOUT;
         long defaultTimeout = SoaSystemEnvProperties.SOA_DEFAULT_TIMEOUT;
 
-        Optional<Long> invocationTimeout = getInvocationTimeout();
+        Optional<Integer> invocationTimeout = getInvocationTimeout();
         Optional<Long> envTimeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT.longValue() == 0 ?
                 Optional.empty() : Optional.of(SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT.longValue());
 
@@ -286,7 +322,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         Optional<Long> timeout;
         if (invocationTimeout.isPresent()) {
-            timeout = invocationTimeout;
+            timeout = invocationTimeout.map(Long::valueOf);
         } else if (envTimeout.isPresent()) {
             timeout = envTimeout;
         } else if (idlTimeout.isPresent()) {
@@ -301,9 +337,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     }
 
-    private Optional<Long> getInvocationTimeout() {
-        InvocationContext context = InvocationContextImpl.Factory.getCurrentInstance();
-        return context.getTimeout() == null ? Optional.empty() : context.getTimeout();
+    private Optional<Integer> getInvocationTimeout() {
+        InvocationContext context = InvocationContextImpl.Factory.currentInstance();
+        return context.timeout();
     }
 
 
