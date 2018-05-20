@@ -84,13 +84,13 @@
                 <repository>
                     <id>today-dev</id>
                     <name>Nexus Releases Repository</name>
-                    <url>http://nexus.today36524.com/repository/maven-releases/</url>
+                    <url>http://nexus.today36524.td/repository/maven-releases/</url>
                 </repository>
 
                 <snapshotRepository>
                     <id>today-dev</id>
                     <name>Nexus Snapshots Repository</name>
-                    <url>http://nexus.today36524.com/repository/maven-snapshots/</url>
+                    <url>http://nexus.today36524.td/repository/maven-snapshots/</url>
                 </snapshotRepository>
             </distributionManagement>
 
@@ -124,13 +124,13 @@
                 <repository>
                     <id>today-dev</id>
                     <name>Nexus Releases Repository</name>
-                    <url>http://nexus.today36524.com/repository/maven-releases/</url>
+                    <url>http://nexus.today36524.td/repository/maven-releases/</url>
                 </repository>
 
                 <snapshotRepository>
                     <id>today-dev</id>
                     <name>Nexus Snapshots Repository</name>
-                    <url>http://nexus.today36524.com/repository/maven-snapshots/</url>
+                    <url>http://nexus.today36524.td/repository/maven-snapshots/</url>
                 </snapshotRepository>
             </distributionManagement>
 
@@ -175,7 +175,7 @@
     <repositories>
         <repository>
             <id>maven-dapeng-com</id>
-            <url>http://nexus.today36524.com/repository/maven-public/</url>
+            <url>http://nexus.today36524.td/repository/maven-public/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
