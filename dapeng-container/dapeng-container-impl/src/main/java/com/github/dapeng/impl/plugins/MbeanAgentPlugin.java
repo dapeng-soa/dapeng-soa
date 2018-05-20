@@ -7,6 +7,7 @@ import com.github.dapeng.impl.plugins.monitor.mbean.ContainerRuntimeInfo;
 import com.sun.jdmk.comm.HtmlAdaptorServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import javax.management.*;
 import java.lang.management.ManagementFactory;
 
@@ -22,7 +23,7 @@ public class MbeanAgentPlugin implements Plugin {
     private ObjectName mName = null;
     private final Container container;
 
-    public MbeanAgentPlugin(Container container){
+    public MbeanAgentPlugin(Container container) {
         this.container = container;
     }
 
@@ -33,27 +34,27 @@ public class MbeanAgentPlugin implements Plugin {
             //create mbean and register mbean
             server.registerMBean(new ContainerRuntimeInfo(container), mName);
             LOGGER.info("::registerMBean dapengContainerMBean success");
-            if (MonitorFilterProperties.SOA_JMXRMI_ENABLE){
+            if (MonitorFilterProperties.SOA_JMXRMI_ENABLE) {
                 ObjectName adapterName = new ObjectName("com.github.dapeng:name=HtmlAdaptor,port=8888");
                 HtmlAdaptorServer adapter = new HtmlAdaptorServer();
                 adapter.setPort(MonitorFilterProperties.SOA_JMXRMI_PORT);
                 server.registerMBean(adapter, adapterName);
                 adapter.start();
-                LOGGER.info("::Starting JMX Management in port " + adapter.getPort() + ".");
+                LOGGER.info("::Starting JMX Management for HtmlAdaptor in port " + adapter.getPort());
             }
         } catch (Exception e) {
-            LOGGER.info("::registerMBean dapengContainerMBean error [{}]",e.getMessage());
+            LOGGER.info("::registerMBean dapengContainerMBean error [" + e.getMessage() + "]", e);
         }
     }
 
     @Override
     public void stop() {
-        if (null != mName){
+        if (null != mName) {
             try {
                 server.unregisterMBean(mName);
                 LOGGER.info("::unregisterMBean dapengContainerMBean success");
             } catch (Exception e) {
-                LOGGER.info("::unregisterMBean dapengContainerMBean error [{}]",e.getMessage());
+                LOGGER.info("::unregisterMBean dapengContainerMBean error [" + e.getMessage() + "]", e);
             }
         }
     }
