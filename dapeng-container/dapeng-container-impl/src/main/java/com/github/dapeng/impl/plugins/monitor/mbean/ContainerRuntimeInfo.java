@@ -4,16 +4,15 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.core.Application;
+import com.github.dapeng.impl.filters.freq.ShmManager;
 import com.github.dapeng.impl.plugins.monitor.config.MonitorFilterProperties;
 import com.github.dapeng.impl.plugins.netty.NettyConnectCounter;
 import com.github.dapeng.impl.plugins.netty.SoaFlowCounter;
 import com.github.dapeng.impl.plugins.netty.SoaInvokeCounter;
 import com.github.dapeng.util.DumpUtil;
-import com.github.dapeng.util.ShmUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.IOException;
-import java.util.Properties;
+
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -31,6 +30,7 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     private final static String METHOD_NAME_KEY = "method_name";
     private final static String containerVersion = "2.0.3-SNAPSHOT";
     private final Container container;
+    private static ShmManager shmManager;
 
     public ContainerRuntimeInfo(Container container) {
         super();
@@ -189,10 +189,16 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
 
     @Override
     public String getFreqControlCount(String app, String rule_type, int key) {
+        /**
+         * 低频方法, 不考虑并发
+         */
+        if (shmManager == null) {
+            shmManager = ShmManager.getInstance();
+        }
         StringBuilder sb = new StringBuilder();
         try {
             sb.append("\nFreqControlCount data ==>")
-                    .append(ShmUtil.freqControlCount(app,rule_type,key));
+                    .append(shmManager.getCounterInfo(app,rule_type,key));
         } catch (Exception e) {
             LOGGER.error("getFreqControlCount error ::",e);
             return "getFreqControlCount error";

@@ -139,8 +139,8 @@ public class ShmManager {
      */
     public boolean reportAndCheck(FreqControlRule rule, int key) {
         boolean result;
-        short appId = getId(rule.app);
-        short ruleTypeId = getId(rule.ruleType);
+        short appId = allocId(rule.app);
+        short ruleTypeId = allocId(rule.ruleType);
 
         int nodePageHash = (appId << 16 | ruleTypeId) ^ key;
         int nodePageIndex = nodePageHash % NODE_PAGE_COUNT;
@@ -186,6 +186,93 @@ public class ShmManager {
 
         LOGGER.debug("reportAndCheck end, result:{}, cost:{}", result, System.nanoTime() - t1);
         return result;
+    }
+
+    /**
+     * 根据指定的限流规则以及指定key, 得到该key当前的计数情况
+     *
+     * @param app
+     * @param ruleType
+     * @param key
+     * @return
+     * @throws IOException
+     * @throws IllegalAccessException
+     * @throws NoSuchFieldException
+     */
+    public String getCounterInfo(String app, String ruleType, int key) {
+        short appId = getId(app);
+        if (appId <= 0) {
+            return "[" + app + "/" + ruleType + "/" + key + ":0/0/0]";
+        }
+        short ruleTypeId = getId(ruleType);
+
+        if (ruleTypeId <= 0) {
+            return "[" + app + "/" + ruleType + "/" + key + ":0/0/0]";
+        }
+
+        int nodePageHash = (appId << 16 | ruleTypeId) ^ key;
+        int nodePageIndex = nodePageHash % NODE_PAGE_COUNT;
+        long nodeAddr = homeAddr + NODE_PAGE_OFFSET + 1024 * nodePageIndex + 16;
+        NodePageMeta nodePageMeta = getNodePageMeta(nodePageIndex);
+
+        CounterNode node = null;
+        for (int index = 0; index < nodePageMeta.nodes; index++) {
+            short _appId = getShort(nodeAddr);
+            if (_appId == 0) break;
+            if (appId != _appId) {
+                nodeAddr += 24;
+                continue;
+            }
+
+            nodeAddr += Short.BYTES;
+            short _ruleTypeId = getShort(nodeAddr);
+            if (ruleTypeId != _ruleTypeId) {
+                nodeAddr += 22;
+                continue;
+            }
+
+            nodeAddr += Short.BYTES;
+            int _key = getInt(nodeAddr);
+            if (key != _key) {
+                nodeAddr += Integer.BYTES * 5;
+                continue;
+            }
+
+            //timestamp
+            nodeAddr += Integer.BYTES;
+            int timestamp = getInt(nodeAddr);
+
+            nodeAddr += Integer.BYTES;
+            int minCount = getInt(nodeAddr);
+
+            nodeAddr += Integer.BYTES;
+            int midCount = getInt(nodeAddr);
+
+            nodeAddr += Integer.BYTES;
+            int maxCount = getInt(nodeAddr);
+            node = new CounterNode(appId, ruleTypeId, key, timestamp, minCount, midCount, maxCount);
+            break;
+        }
+        if (node == null) {
+            return "[" + app + "/" + ruleType + "/" + key + ":0/0/0]";
+        } else {
+            return "[" + app + "/" + ruleType + "/" + key + ":" + node.minCount + "/" + node.midCount + "/" + node.maxCount + "]";
+        }
+    }
+
+    /**
+     * 获取id, 注意如果不存在则返回0
+     *
+     * @param key
+     * @return
+     */
+    public short getId(final String key) {
+        Short id = localStringIdCache.get(key);
+        if (id == null) {
+            id = allocIdAndCache(key, true);
+        }
+
+        return id;
     }
 
 
@@ -333,7 +420,7 @@ public class ShmManager {
 
     /**
      * 从 nodePage 获取 node 值
-     *内存结构如下:
+     * 内存结构如下:
      * <pre>
      * struct CounterNode {
      *   i16 app_id;  // app 被映射为 16bit id
@@ -345,6 +432,7 @@ public class ShmManager {
      *   i32 max_count;  // max interval counter
      * }
      * </pre>
+     *
      * @param nodeAddr
      * @return
      */
@@ -475,13 +563,13 @@ public class ShmManager {
      * @param key
      * @return
      */
-    private short getId(final String key) {
+    private short allocId(final String key) {
         Short id = localStringIdCache.get(key);
-        LOGGER.debug("getId, from cache, key:{} -> {}", key, id);
+        LOGGER.debug("allocId, from cache, key:{} -> {}", key, id);
         if (id == null) {
             long t1 = System.nanoTime();
-            id = allocIdAndCache(key);
-            LOGGER.debug("getId, from shm, key:{} -> {}, cost:{}",
+            id = allocIdAndCache(key, false);
+            LOGGER.debug("allocId, from shm, key:{} -> {}, cost:{}",
                     key, id, System.nanoTime() - t1);
         }
 
@@ -489,12 +577,13 @@ public class ShmManager {
     }
 
     /**
-     * 分配并缓存Id
+     * 分配并缓存Id(如果已分配的话, 仅需从共享内存中加载即可)
      *
      * @param key
+     * @param readOnly 是否仅加载id(id不存在的话, 不会分配)
      * @return
      */
-    private short allocIdAndCache(final String key) {
+    private short allocIdAndCache(final String key, boolean readOnly) {
         short id = 0;
 
         try {
@@ -528,6 +617,10 @@ public class ShmManager {
                     }
                 }
                 dictionaryItemAddr += dictionaryItemInfoSize;
+            }
+
+            if (readOnly) {
+                return id;
             }
 
             if (dictionaryItemAddr >= homeAddr + DICTION_DATA_OFFSET) {

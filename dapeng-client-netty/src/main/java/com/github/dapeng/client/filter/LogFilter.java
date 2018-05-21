@@ -1,10 +1,8 @@
 package com.github.dapeng.client.filter;
 
 
-import com.github.dapeng.core.InvocationContextImpl;
-import com.github.dapeng.core.InvocationInfoImpl;
-import com.github.dapeng.core.SoaException;
-import com.github.dapeng.core.TransactionContext;
+import com.github.dapeng.client.netty.SoaBaseConnection;
+import com.github.dapeng.core.*;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.filter.FilterChain;
 import com.github.dapeng.core.filter.FilterContext;
@@ -61,7 +59,14 @@ public class LogFilter implements Filter {
             InvocationInfoImpl invocationInfo = (InvocationInfoImpl) invocationContext.lastInvocationInfo();
             invocationInfo.serviceTime(System.currentTimeMillis() - startTime);
 
-            String infoLog = "response[seqId:" + invocationContext.seqId() + ", server: " + filterContext.getAttribute("serverInfo") + "]: "
+            SoaBaseConnection.Result result = (SoaBaseConnection.Result)filterContext.getAttribute("result");
+
+            String respCode = "0000";
+            if (result.exception != null) {
+                respCode = result.exception.getCode();
+            }
+
+            String infoLog = "response[seqId:" + invocationContext.seqId() + ", respCode:" + respCode + ", server: " + filterContext.getAttribute("serverInfo") + "]: "
                     + "service[" + invocationContext.serviceName()
                     + "]: version[" + invocationContext.versionName()
                     + "]: method[" + invocationContext.methodName()

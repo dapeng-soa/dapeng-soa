@@ -61,6 +61,7 @@ public class testShm {
         Method getShort = shmManagerRef.getClass().getDeclaredMethod("getShort",long.class);
         getShort.setAccessible(true);
         Method getInt = shmManagerRef.getClass().getDeclaredMethod("getInt",long.class);
+        Method getLong = shmManagerRef.getClass().getDeclaredMethod("getLong",long.class);
         getInt.setAccessible(true);
 
         for (int index = 0; index < nodePageMeta.nodes; index++) {
@@ -85,21 +86,21 @@ public class testShm {
                 continue;
             }
 
-            node = new CounterNode(appId, ruleTypeId, key, timestamp, minCount, midCount, maxCount);
-            node.appId = _appId;
-            node.ruleTypeId = _ruleTypeId;
-            node.key = _key;
-
             nodeAddr += Integer.BYTES; //timestamp
 
-            nodeAddr += Integer.BYTES;
-            node.minCount = (int)getInt.invoke(shmManagerRef,nodeAddr);
+            int timestamp = (int)getInt.invoke(shmManagerRef, nodeAddr);
 
             nodeAddr += Integer.BYTES;
-            node.midCount = (int)getInt.invoke(shmManagerRef,nodeAddr);
+            int minCount = (int)getInt.invoke(shmManagerRef,nodeAddr);
 
             nodeAddr += Integer.BYTES;
-            node.maxCount = (int)getInt.invoke(shmManagerRef,nodeAddr);
+            int midCount = (int)getInt.invoke(shmManagerRef,nodeAddr);
+
+            nodeAddr += Integer.BYTES;
+            int maxCount = (int)getInt.invoke(shmManagerRef,nodeAddr);
+
+            node = new CounterNode(appId, ruleTypeId, key, timestamp, minCount, midCount, maxCount);
+
             break;
         }
         return node;
