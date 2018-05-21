@@ -8,12 +8,12 @@ package com.github.dapeng.impl.filters.freq;
  */
 public class MarkNode {
 
-    public long position;
+    public final long position;
     public double rate;
     public boolean isRemove = false;
     public int key;
 
-    public MarkNode(long position) {
+    public MarkNode(final long position) {
         this.position = position;
     }
 

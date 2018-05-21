@@ -85,7 +85,7 @@ public class testShm {
                 continue;
             }
 
-            node = new CounterNode();
+            node = new CounterNode(appId, ruleTypeId, key, timestamp, minCount, midCount, maxCount);
             node.appId = _appId;
             node.ruleTypeId = _ruleTypeId;
             node.key = _key;

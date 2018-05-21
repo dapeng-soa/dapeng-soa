@@ -29,7 +29,7 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerRuntimeInfo.class);
     private LoggerContext loggerContext = null;
     private final static String METHOD_NAME_KEY = "method_name";
-    private final static String containerVersion = "2.0.2";
+    private final static String containerVersion = "2.0.3-SNAPSHOT";
     private final Container container;
 
     public ContainerRuntimeInfo(Container container) {

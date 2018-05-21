@@ -78,6 +78,9 @@ public class ShmManager {
      */
     private long homeAddr;
 
+    /**
+     * 持有buffer的强引用, 以防止该对象给gc回收
+     */
     private MappedByteBuffer buffer;
 
     private ShmManager() {
@@ -107,7 +110,7 @@ public class ShmManager {
         f.setAccessible(true);
         unsafe = (Unsafe) f.get(null);
 
-        File file = new File(System.getProperty("user.home")+"/shm.data");
+        File file = new File(System.getProperty("user.home") + "/shm.data");
         RandomAccessFile access = new RandomAccessFile(file, "rw");
 
         buffer = access.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, TOTAL_MEM_BYTES);
@@ -159,8 +162,7 @@ public class ShmManager {
             LOGGER.debug("reportAndCheck, nodePageMeta:{}, cost:{}", nodePageMeta, System.nanoTime() - t1);
 
             if (nodePageMeta.nodes == 0) {
-                nodePageMeta.hash = nodePageHash;
-                nodePageMeta.nodes = 1;
+                nodePageMeta = new NodePageMeta(nodePageHash, (short) 1);
                 node = insertCounterNode(appId, ruleTypeId, key, now, nodeAddr);
             } else if (nodePageMeta.nodes == MAX_NODE_PER_PAGE) {
                 // 淘汰老node
@@ -188,7 +190,19 @@ public class ShmManager {
 
 
     /**
-     * 从 share memory 获取CountNode，如果不存在就创建
+     * 从 share memory 获取CountNode，如果不存在就创建 <br/>
+     * 内存结构如下:
+     * <pre>
+     * struct CounterNode {
+     *   i16 app_id;  // app 被映射为 16bit id
+     *   i16 rule_type_id;  // rule_type_id 被映射为 16bit id
+     *   i32 key;  // ip, userId, callerMid etc.
+     *   i32 timestamp;  // last updated unix epoch, seconds since 1970.
+     *   i32 min_count;  // min interval counter
+     *   i32 mid_count;  // mid interval counter
+     *   i32 max_count;  // max interval counter
+     * }
+     * </pre>
      */
     private CounterNode createNodeIfNotExist(short appId, short ruleTypeId, int key,
                                              NodePageMeta nodePageMeta, int now, long nodeAddr,
@@ -198,6 +212,7 @@ public class ShmManager {
         CounterNode node = null;
         for (int index = 0; index < nodePageMeta.nodes; index++) {
             short _appId = getShort(nodeAddr);
+            // 已经遍历完所有节点
             if (_appId == 0) break;
 
             if (appId != _appId) {
@@ -220,43 +235,40 @@ public class ShmManager {
                 continue;
             }
 
-            node = new CounterNode();
-            node.appId = _appId;
-            node.ruleTypeId = _ruleTypeId;
-            node.key = _key;
-
             nodeAddr += Integer.BYTES;
-            node.timestamp = getAndSetInt(nodeAddr, now);
+            long lastTimeStame = getAndSetInt(nodeAddr, now);
 
-            boolean isSameMin = now / rule.minInterval == node.timestamp / rule.minInterval;
-            boolean isSameMid = now / rule.midInterval == node.timestamp / rule.midInterval;
-            boolean isSameMax = now / rule.maxInterval == node.timestamp / rule.maxInterval;
+            boolean isSameMin = now / rule.minInterval == lastTimeStame / rule.minInterval;
+            boolean isSameMid = now / rule.midInterval == lastTimeStame / rule.midInterval;
+            boolean isSameMax = now / rule.maxInterval == lastTimeStame / rule.maxInterval;
 
+            int minCount, midCount, maxCount;
             nodeAddr += Integer.BYTES;
             if (isSameMin) {
-                node.minCount = getAndIncreseInt(nodeAddr) + 1;
+                minCount = getAndIncreseInt(nodeAddr) + 1;
             } else {
-                node.minCount = 1;
-                putInt(nodeAddr, node.minCount);
+                minCount = 1;
+                putInt(nodeAddr, minCount);
             }
 
             nodeAddr += Integer.BYTES;
             if (isSameMid) {
-                node.midCount = getAndIncreseInt(nodeAddr) + 1;
+                midCount = getAndIncreseInt(nodeAddr) + 1;
             } else {
-                node.midCount = 1;
-                putInt(nodeAddr, node.midCount);
+                midCount = 1;
+                putInt(nodeAddr, midCount);
             }
 
             nodeAddr += Integer.BYTES;
             if (isSameMax) {
-                node.maxCount = getAndIncreseInt(nodeAddr) + 1;
+                maxCount = getAndIncreseInt(nodeAddr) + 1;
             } else {
-                node.maxCount = 1;
-                putInt(nodeAddr, node.maxCount);
+                maxCount = 1;
+                putInt(nodeAddr, maxCount);
             }
 
-            node.timestamp = now;
+            node = new CounterNode(appId, ruleTypeId, key, now,
+                    minCount, midCount, maxCount);
             LOGGER.debug("createNodeIfNotExist, found node:{}, index:{}, cost:{}", node, index, System.nanoTime() - t1);
             break;
         }
@@ -264,7 +276,8 @@ public class ShmManager {
         if (node == null) {
             LOGGER.debug("createNodeIfNotExist, node not found, index:{}, cost:{}", nodePageMeta.nodes, System.nanoTime() - t1);
             node = insertCounterNode(appId, ruleTypeId, key, now, nodeAddr);
-            nodePageMeta.nodes += 1;
+
+            nodePageMeta.increaseNode();
         }
 
         return node;
@@ -276,14 +289,7 @@ public class ShmManager {
     private CounterNode insertCounterNode(short appId, short ruleTypeId, int key,
                                           int timestamp, long addr) {
         long t1 = System.nanoTime();
-        CounterNode node = new CounterNode();
-        node.appId = appId;
-        node.ruleTypeId = ruleTypeId;
-        node.key = key;
-        node.timestamp = timestamp;
-        node.minCount = 1;
-        node.midCount = 1;
-        node.maxCount = 1;
+        CounterNode node = new CounterNode(appId, ruleTypeId, key, timestamp, 1, 1, 1);
 
         putShort(addr, node.appId);
         addr += Short.BYTES;
@@ -311,10 +317,9 @@ public class ShmManager {
         long t1 = System.nanoTime();
         List<MarkNode> markNodes = new ArrayList<>(64);
         for (int index = 0; index < nodePageMeta.nodes; index++) {
-            CounterNode node = new CounterNode();
             MarkNode markNode = new MarkNode(nodeAddr + index * 24);
 
-            getNodeFromMemory(node, nodeAddr);
+            CounterNode node = getCounterNode(nodeAddr);
             nodeAddr += 24;
             processNodeRate(node, markNode, rule, now);
             markNode.key = node.key;
@@ -328,32 +333,25 @@ public class ShmManager {
 
     /**
      * 从 nodePage 获取 node 值
-     *
+     *内存结构如下:
+     * <pre>
+     * struct CounterNode {
+     *   i16 app_id;  // app 被映射为 16bit id
+     *   i16 rule_type_id;  // rule_type_id 被映射为 16bit id
+     *   i32 key;  // ip, userId, callerMid etc.
+     *   i32 timestamp;  // last updated unix epoch, seconds since 1970.
+     *   i32 min_count;  // min interval counter
+     *   i32 mid_count;  // mid interval counter
+     *   i32 max_count;  // max interval counter
+     * }
+     * </pre>
      * @param nodeAddr
      * @return
      */
-    private void getNodeFromMemory(CounterNode node, long nodeAddr) {
-        // I16
-        node.appId = getShort(nodeAddr);
-        nodeAddr += Short.BYTES;
-        //I16
-        node.ruleTypeId = getShort(nodeAddr);
-        nodeAddr += Short.BYTES;
-        //I32
-        node.key = getInt(nodeAddr);
-        nodeAddr += Integer.BYTES;
-        //i32
-        node.timestamp = getInt(nodeAddr);
-        nodeAddr += Integer.BYTES;
-        //i32 min interval counter
-        node.minCount = getInt(nodeAddr);
-        nodeAddr += Integer.BYTES;
-        //i32 mid interval counter
-        node.midCount = getInt(nodeAddr);
-        nodeAddr += Integer.BYTES;
-        //i32 max interval counter
-        node.maxCount = getInt(nodeAddr);
-        nodeAddr += Integer.BYTES;
+    private CounterNode getCounterNode(final long nodeAddr) {
+        return new CounterNode(getShort(nodeAddr), getShort(nodeAddr + 2),
+                getInt(nodeAddr + 4), getInt(nodeAddr + nodeAddr + 8),
+                getInt(nodeAddr + 12), getInt(nodeAddr + 16), getInt(nodeAddr + 20));
     }
 
     /**
@@ -369,19 +367,23 @@ public class ShmManager {
         boolean isSameMid = now / rule.midInterval == node.timestamp / rule.midInterval;
         boolean isSameMax = now / rule.maxInterval == node.timestamp / rule.maxInterval;
 
+        int minCount = node.minCount;
+        int midCount = node.midCount;
+        int maxCount = node.maxCount;
+
         if (!isSameMin) {
-            node.minCount = 0;
+            minCount = 0;
         }
         if (!isSameMid) {
-            node.midCount = 0;
+            midCount = 0;
         }
         if (!isSameMax) {
-            node.maxCount = 0;
+            maxCount = 0;
         }
 
-        double minRate = node.minCount / rule.maxReqForMinInterval * rule.minInterval / (now % rule.minInterval + 1);
-        double midRate = node.midCount / rule.maxReqForMidInterval * rule.midInterval / (now % rule.midInterval + 1);
-        double maxRate = node.maxCount / rule.maxReqForMaxInterval * rule.maxInterval / (now % rule.maxInterval + 1);
+        double minRate = minCount / rule.maxReqForMinInterval * rule.minInterval / (now % rule.minInterval + 1);
+        double midRate = midCount / rule.maxReqForMidInterval * rule.midInterval / (now % rule.midInterval + 1);
+        double maxRate = maxCount / rule.maxReqForMaxInterval * rule.maxInterval / (now % rule.maxInterval + 1);
 
         double rate;
         if (minRate < midRate) {
@@ -478,28 +480,27 @@ public class ShmManager {
         LOGGER.debug("getId, from cache, key:{} -> {}", key, id);
         if (id == null) {
             long t1 = System.nanoTime();
-            id = getIdFromShm(key);
+            id = allocIdAndCache(key);
             LOGGER.debug("getId, from shm, key:{} -> {}, cost:{}",
                     key, id, System.nanoTime() - t1);
-            localStringIdCache.put(key, id);
         }
 
         return id;
     }
 
     /**
-     * todo 字符串比较算法
+     * 分配并缓存Id
      *
      * @param key
      * @return
      */
-    private short getIdFromShm(final String key) {
+    private short allocIdAndCache(final String key) {
         short id = 0;
 
         try {
             long t1 = System.nanoTime();
             getSpinRootLock(key.hashCode());
-            LOGGER.debug("getIdFromShm acquire spinRootLock cost:{}", System.nanoTime() - t1);
+            LOGGER.debug("allocIdAndCache acquire spinRootLock cost:{}", System.nanoTime() - t1);
 
             short dictionaryItemInfoSize = (short) Short.BYTES * 3;
             long dictionaryItemAddr = homeAddr + DICTION_ROOT_OFFSET;
@@ -522,7 +523,7 @@ public class ShmManager {
                         }
                     }
                     if (foundId) {
-                        LOGGER.debug("getIdFromShm found existId:{} for key:{}, cost:{}", id, key, System.nanoTime() - t1);
+                        LOGGER.debug("allocIdAndCache found existId:{} for key:{}, cost:{}", id, key, System.nanoTime() - t1);
                         return id;
                     }
                 }
@@ -530,7 +531,7 @@ public class ShmManager {
             }
 
             if (dictionaryItemAddr >= homeAddr + DICTION_DATA_OFFSET) {
-                String errorMsg = "getIdFromShm dictionRoot is full, homeAddr:" + homeAddr + ", currentAddr:" + dictionaryItemAddr;
+                String errorMsg = "allocIdAndCache dictionRoot is full, homeAddr:" + homeAddr + ", currentAddr:" + dictionaryItemAddr;
                 LOGGER.error(errorMsg);
                 throw new IndexOutOfBoundsException(errorMsg);
             }
@@ -550,10 +551,15 @@ public class ShmManager {
             // update RootPage
             putShort(homeAddr + 8, (short) (nextUtf8offset + keyBytes.length));
             putShort(homeAddr + 10, id);
-            LOGGER.debug("getIdFromShm create id:{} for key:{}, cost:{}", id, key, System.nanoTime() - t1);
+
+            LOGGER.debug("allocIdAndCache create id:{} for key:{}, cost:{}", id, key, System.nanoTime() - t1);
         } catch (UnsupportedEncodingException e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
+            // 本地cache
+            if (id > 0) {
+                localStringIdCache.put(key, id);
+            }
             freeRootLock();
         }
 
@@ -568,14 +574,9 @@ public class ShmManager {
      */
     private NodePageMeta getNodePageMeta(int nodePageIndex) {
         long pageOffset = homeAddr + NODE_PAGE_OFFSET + 1024 * nodePageIndex;
-        NodePageMeta meta = new NodePageMeta();
         // skip the pageLock
-        pageOffset += Integer.BYTES;
-        meta.hash = getInt(pageOffset);
-        pageOffset += Integer.BYTES;
-        meta.nodes = getShort(pageOffset);
-
-        return meta;
+        return new NodePageMeta(getInt(pageOffset + Integer.BYTES),
+                getShort(pageOffset + Integer.BYTES * 2));
     }
 
     /**
@@ -608,7 +609,12 @@ public class ShmManager {
         putInt(homeAddr + Integer.BYTES, FREE_LOCK);
     }
 
-    private void getSpinNodePageLock(int nodePageIndex) {      //获取自旋锁
+    /**
+     * 获取自旋锁
+     *
+     * @param nodePageIndex
+     */
+    private void getSpinNodePageLock(int nodePageIndex) {
         while (!getNodePageLock(nodePageIndex)) ;
     }
 
