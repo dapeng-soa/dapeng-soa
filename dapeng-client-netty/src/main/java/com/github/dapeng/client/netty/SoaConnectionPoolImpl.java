@@ -43,7 +43,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     private Map<String, ZkServiceInfo> zkInfos = new ConcurrentHashMap<>();
     private Map<IpPort, SubPool> subPools = new ConcurrentHashMap<>();
-    private ZkClientAgent zkAgent = new ZkClientAgentImpl();
+    private ClientZkAgent zkAgent = ClientZkAgentImpl.getInstance();
 
     private ReentrantLock subPoolLock = new ReentrantLock();
 

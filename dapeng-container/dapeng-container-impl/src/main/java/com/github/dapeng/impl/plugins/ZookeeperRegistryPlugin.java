@@ -9,8 +9,7 @@ import com.github.dapeng.api.events.AppEvent;
 import com.github.dapeng.core.ServiceInfo;
 import com.github.dapeng.impl.container.DapengApplication;
 import com.github.dapeng.registry.RegistryAgent;
-import com.github.dapeng.registry.RegistryAgentProxy;
-import com.github.dapeng.registry.zookeeper.RegistryAgentImpl;
+import com.github.dapeng.registry.zookeeper.ServerZkAgentImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +19,7 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
     private static final Logger LOGGER = LoggerFactory.getLogger(ZookeeperRegistryPlugin.class);
 
     private final Container container;
-    private final RegistryAgent registryAgent = new RegistryAgentImpl(false);
+    private final RegistryAgent registryAgent = ServerZkAgentImpl.getInstance();
 
     public ZookeeperRegistryPlugin(Container container) {
         this.container = container;
@@ -52,10 +51,6 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
     @Override
     public void start() {
         LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
-        /**
-         * set RegistryAgentImpl ,SoaServerHandler 会用到
-         */
-        RegistryAgentProxy.setCurrentInstance(RegistryAgentProxy.Type.Server, registryAgent);
 
         registryAgent.setProcessorMap(ContainerFactory.getContainer().getServiceProcessors());
         registryAgent.start();
