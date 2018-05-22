@@ -10,31 +10,43 @@ public class CounterNode {
     /**
      * app 被映射为 16bit id
      */
-    public short appId;
+    public final short appId;
     /**
      * rule_type_id 被映射为 16bit id
      */
-    public short ruleTypeId;
+    public final short ruleTypeId;
     /**
      * ip, userId, callerMid etc.
      */
-    public int key;
+    public final int key;
     /**
      * last updated unix epoch, seconds since 1970.
      */
-    public int timestamp;
+    public final int timestamp;
     /**
      * min interval counter
      */
-    public int minCount;
+    public final int minCount;
     /**
      * mid interval counter
      */
-    public int midCount;
+    public final int midCount;
     /**
      * max interval counter
      */
-    public int maxCount;
+    public final int maxCount;
+
+    public CounterNode(short appId, short ruleTypeId, int key,
+                       int timestamp, int minCount, int midCount,
+                       int maxCount) {
+        this.appId = appId;
+        this.ruleTypeId = ruleTypeId;
+        this.key = key;
+        this.timestamp = timestamp;
+        this.minCount = minCount;
+        this.midCount = midCount;
+        this.maxCount = maxCount;
+    }
 
     @Override
     public String toString() {

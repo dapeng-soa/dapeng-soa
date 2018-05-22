@@ -7,10 +7,17 @@ package com.github.dapeng.impl.filters.freq;
  * @date 2018年05月14日 上午10:51
  */
 public class NodePageMeta {
-
-    public int pageLock;
-    public int hash;
+    public final int hash;
     public short nodes;
+
+    public NodePageMeta(int hash, short nodes) {
+        this.hash = hash;
+        this.nodes = nodes;
+    }
+
+    public void increaseNode() {
+        this.nodes++;
+    }
 
     @Override
     public String toString() {

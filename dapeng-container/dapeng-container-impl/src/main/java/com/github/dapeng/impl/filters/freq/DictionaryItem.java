@@ -8,12 +8,18 @@ package com.github.dapeng.impl.filters.freq;
  */
 public class DictionaryItem {
 
-    short length;
-    int id;
+    public final short length;
+    public final int id;
     /**
      * DictionaryData[ 2 * utf8offset ] 处开始存储这个字符串。
      */
-    short utf8offset;
+    public final short utf8offset;
+
+    public DictionaryItem(short length, int id, short utf8offset) {
+        this.length = length;
+        this.id = id;
+        this.utf8offset = utf8offset;
+    }
 
     @Override
     public String toString() {

@@ -1,5 +1,7 @@
 package com.github.dapeng.core;
 
+import java.util.Set;
+
 /**
  * 描述: 限流规则
  *
@@ -10,6 +12,7 @@ public class FreqControlRule {
 
     public String app;
     public String ruleType;
+    public Set<Integer> targets;
     public int minInterval;
     public int maxReqForMinInterval;
     public int midInterval;

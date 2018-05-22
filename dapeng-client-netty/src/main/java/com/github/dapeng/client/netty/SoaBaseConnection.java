@@ -281,7 +281,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
      *
      * @param <RESP>
      */
-    static class Result<RESP> {
+    public static class Result<RESP> {
         public final RESP success;
         public final SoaException exception;
 

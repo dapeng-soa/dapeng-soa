@@ -30,13 +30,13 @@ public interface ContainerRuntimeInfoMBean {
      * 获取业务线程池情况
      * @return
      */
-    String getTheardPoolStatus();
+    String getThreadPoolStatus();
 
     /**
      * 获取服务信息(包含容器信息)
      * @return
      */
-    String getSerivceBasicInfo();
+    String getServiceBasicInfo();
 
     /**
      * 获取当前运行服务流量信息
@@ -70,5 +70,14 @@ public interface ContainerRuntimeInfoMBean {
      * @return
      */
     String getNettyConnections();
+
+    /**
+     * 根据userId，userIp等信息查看用户目前的限流计数情况
+     * @param app 服务名称
+     * @param rule_type  查询规则类型（userId,userIp等）
+     * @param key userId值,userIp值等
+     * @return
+     */
+    String getFreqControlCount(String app, String rule_type, int key);
 
 }
