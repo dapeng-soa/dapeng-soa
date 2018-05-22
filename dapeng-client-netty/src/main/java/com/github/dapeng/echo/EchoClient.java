@@ -5,7 +5,7 @@ import com.github.dapeng.core.helper.DapengUtil;
 
 import java.util.ServiceLoader;
 
-public class echoClient {    private final String serviceName;
+public class EchoClient {    private final String serviceName;
     private final String version;
     private final String methodName = "echo";
 
@@ -13,7 +13,7 @@ public class echoClient {    private final String serviceName;
 
     private final SoaConnectionPool.ClientInfo clientInfo;
 
-    public echoClient(String serviceName, String version) {
+    public EchoClient(String serviceName, String version) {
         this.serviceName = serviceName;
         this.version = version;
 

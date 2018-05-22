@@ -18,12 +18,12 @@ import java.util.List;
  */
 @ChannelHandler.Sharable
 public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
+    private static ShmManager manager = ShmManager.getInstance();
 
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         final TransactionContext context = TransactionContext.Factory.currentInstance();
-        ShmManager manager = ShmManager.getInstance();
         RegistryAgent registryAgent = RegistryAgentProxy.getCurrentInstance(RegistryAgentProxy.Type.Server);
         List<FreqControlRule> freqRules = registryAgent.getFreqControlRule(false, context.getHeader().getServiceName());
         boolean freqResult = processFreqControl(freqRules, manager, context);
