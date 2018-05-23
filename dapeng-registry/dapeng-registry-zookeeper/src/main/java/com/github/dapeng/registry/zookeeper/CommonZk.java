@@ -27,7 +27,6 @@ public class CommonZk {
     protected final static String ROUTES_PATH = "/soa/config/routes";
     protected final static String FREQ_PATH = "/soa/config/freq";
 
-
     protected ZooKeeper zk;
 
 
@@ -128,5 +127,4 @@ public class CommonZk {
                 break;
         }
     };
-
 }
