@@ -5,8 +5,6 @@ import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.router.Route;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,9 +16,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author lihuimin
  * @date 2017/12/24
  */
-public class ZkClientAgentImpl implements ZkClientAgent {
+public class ClientZkAgentImpl implements ClientZkAgent {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ZkClientAgentImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClientZkAgentImpl.class);
+    private static final ClientZkAgent instance = new ClientZkAgentImpl();
     /**
      * 是否使用 灰度 zk
      */
@@ -33,8 +32,11 @@ public class ZkClientAgentImpl implements ZkClientAgent {
      */
     private final Map<String, List<Route>> routesMap = new ConcurrentHashMap<>(16);
 
+    public static ClientZkAgent getInstance() {
+        return instance;
+    }
 
-    public ZkClientAgentImpl() {
+    private ClientZkAgentImpl() {
         start();
     }
 

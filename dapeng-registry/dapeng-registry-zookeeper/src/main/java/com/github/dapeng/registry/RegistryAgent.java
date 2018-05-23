@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Registry Agent
+ * Container Registry Agent
  *
  * @author craneding
  * @date 16/3/1
@@ -57,12 +57,12 @@ public interface RegistryAgent {
 
 
     /**
+     * 获取限流规则
+     *
      * @param usingFallback
      * @param serviceKey
      * @return
      * @see com.github.dapeng.impl.plugins.netty
      */
     List<FreqControlRule> getFreqControlRule(boolean usingFallback, String serviceKey);
-
-
 }

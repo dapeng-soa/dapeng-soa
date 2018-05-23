@@ -20,16 +20,17 @@ import java.util.Set;
  * @author tangliu
  * @date 2016-08-12
  */
-public class RegistryAgentImpl implements RegistryAgent {
+public class ServerZkAgentImpl implements RegistryAgent {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RegistryAgentImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServerZkAgentImpl.class);
+
+    private static final RegistryAgent instance = new ServerZkAgentImpl();
 
     private final String RUNTIME_PATH = "/soa/runtime/services";
     private final String CONFIG_PATH = "/soa/config/services";
     private final static String ROUTES_PATH = "/soa/config/routes";
     private final static String FREQ_PATH = "/soa/config/freq";
 
-    private final boolean isClient;
     private final ServerZk serverZk = new ServerZk(this);
     /**
      * 灰度环境下访问生产环境的zk?
@@ -40,26 +41,22 @@ public class RegistryAgentImpl implements RegistryAgent {
     private Map<ProcessorKey, SoaServiceDefinition<?>> processorMap;
 
 
-    public RegistryAgentImpl() {
-        this(true);
+    private ServerZkAgentImpl() {
     }
 
-    public RegistryAgentImpl(boolean isClient) {
-        this.isClient = isClient;
+    public static RegistryAgent getInstance() {
+        return instance;
     }
 
     @Override
     public void start() {
+        serverZk.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
+        serverZk.connect();
 
-        if (!isClient) {
-            serverZk.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
-            serverZk.connect();
-
-            if (SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_ISCONFIG) {
-                zooKeeperMasterClient = new ServerZk(this);
-                zooKeeperMasterClient.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_HOST);
-                zooKeeperMasterClient.connect();
-            }
+        if (SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_ISCONFIG) {
+            zooKeeperMasterClient = new ServerZk(this);
+            zooKeeperMasterClient.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_HOST);
+            zooKeeperMasterClient.connect();
         }
     }
 
