@@ -7,6 +7,7 @@ import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.ServiceInfo;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
+import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -181,9 +182,9 @@ public class ZookeeperUtils {
      * @param ruleData data from zk node
      * @return
      */
-    private static List<FreqControlRule> doParseRuleData(String ruleData) {
+    private static List<FreqControlRule> doParseRuleData(String ruleData) throws Exception {
+        LOGGER.debug("doParseRuleData,限流规则解析前：{}",ruleData);
         List<FreqControlRule> datasOfRule = new ArrayList<>();
-        if ("".equals(ruleData.trim())) return datasOfRule;
         String[] str = ruleData.split("\n|\r|\r\n");
         String pattern1 = "^\\[.*\\]$";
         String pattern2 = "^[a-zA-Z]+\\[.*\\]$";
@@ -194,7 +195,7 @@ public class ZookeeperUtils {
                 rule.targets = new HashSet<>();
 
                 while (!Pattern.matches(pattern1,str[++i])){
-                    if (str[i].trim().equals("")) continue;
+                    if ("".equals(str[i].trim())) continue;
                     String[] s = str[i].split("=");
                     switch (s[0].trim()) {
                         case "match_app":
@@ -234,9 +235,19 @@ public class ZookeeperUtils {
                         break;
                     }
                 }
+                if (rule.app == null || rule.ruleType == null ||
+                        rule.minInterval == 0 ||
+                        rule.midInterval == 0 ||
+                        rule.maxInterval == 0 ){
+                    LOGGER.error("doParseRuleData, 限流规则解析失败。rule:{}",rule);
+                    throw new Exception();
+                }
                 datasOfRule.add(rule);
+            }else {
+                i++;
             }
         }
+        LOGGER.debug("doParseRuleData,限流规则解析后：{}",datasOfRule);
         return datasOfRule;
     }
 
