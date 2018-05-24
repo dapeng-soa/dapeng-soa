@@ -2,8 +2,12 @@
 package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.FreqControlRule;
+import com.github.dapeng.core.helper.IPUtils;
+
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class TestRuleParse {
 
@@ -15,25 +19,56 @@ public class TestRuleParse {
         List<FreqControlRule> datasOfRule = new ArrayList<>();
 
         String[] str = ruleData.split("\n|\r|\r\n");
+        String pattern1 = "^\\[.*\\]$";
+        String pattern2 = "^[a-zA-Z]+\\[.*\\]$";
 
-        for (int i = 0;i<str.length;i++)
+
+        for (int i = 0;i<str.length;)
         {
-            if (str[i].indexOf("rule")!= -1){
+            if (Pattern.matches(pattern1,str[i])){
                 FreqControlRule rule = new FreqControlRule();
-                for (int j = 0;j < 5;j++){
-                    if (str[++i].indexOf("match_app") != -1){
-                        rule.app = str[i].split("=")[1].trim();
-                    }else if (str[i].indexOf("rule_type") != -1){
-                        rule.ruleType = str[i].split("=")[1].trim();
-                    }else if (str[i].indexOf("min_interval") != -1){
-                        rule.minInterval = Integer.parseInt( str[i].split("=")[1].trim().split(",")[0]);
-                        rule.maxReqForMinInterval = Integer.parseInt( str[i].split("=")[1].trim().split(",")[1]);
-                    }else if (str[i].indexOf("mid_interval") != -1){
-                        rule.midInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[0]);
-                        rule.maxReqForMidInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[1]);
-                    } else if (str[i].indexOf("max_interval") != -1){
-                        rule.maxInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[0]);
-                        rule.maxReqForMaxInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[1]);
+                rule.targets = new HashSet<>();
+
+                while (!Pattern.matches(pattern1,str[++i])){
+                    if (str[i].trim().equals("")) continue;
+                    String[] s = str[i].split("=");
+                    switch (s[0].trim()) {
+                        case "match_app":
+                            rule.app = s[1].trim();
+                            break;
+                        case "rule_type":
+                            if (Pattern.matches(pattern2,s[1].trim())){
+                                rule.ruleType = s[1].trim().split("\\[")[0];
+                                String[] str1 = s[1].trim().split("\\[")[1].trim().split("\\]")[0].trim().split(",");
+                                for (int k = 0; k < str1.length;k++){
+                                    if (!str1[k].contains(".")){
+                                        rule.targets.add(Integer.parseInt(str1[k].trim()));
+                                    }else {
+                                        rule.targets.add(IPUtils.transferIp(str1[k].trim()));
+                                    }
+                                }
+                            }else{
+                                rule.targets = null;
+                                rule.ruleType = s[1].trim();
+                            }
+                            break;
+                        case "min_interval":
+                            rule.minInterval = Integer.parseInt(s[1].trim().split(",")[0]);
+                            rule.maxReqForMinInterval = Integer.parseInt(s[1].trim().split(",")[1]);
+                            break;
+                        case "mid_interval":
+                            rule.midInterval = Integer.parseInt(s[1].trim().split(",")[0]);
+                            rule.maxReqForMidInterval = Integer.parseInt(s[1].trim().split(",")[1]);
+                            break;
+                        case "max_interval":
+                            rule.maxInterval = Integer.parseInt(s[1].trim().split(",")[0]);
+                            rule.maxReqForMaxInterval = Integer.parseInt(s[1].trim().split(",")[1]);
+                            break;
+                    }
+                    if ( i == str.length-1)
+                    {
+                        i++;
+                        break;
                     }
                 }
                 datasOfRule.add(rule);
@@ -45,26 +80,26 @@ public class TestRuleParse {
 
 
     public static void main(String[] args){
-        String data = "[rule1]\n" +
-                      "match_app = com.foo.service1\n" +
-                      "rule_type = callerId\n" +
-                      "min_interval = 60,600\n" +
-                      "mid_interval = 3600,10000\n" +
-                      "max_interval = 86400,80000\n" +
+        String data = "[customerUserIds]\r\n" +
+                      "match_app = com.foo.service1\r\n" +
+                      "rule_type = callerId\r\n" +
+                      "min_interval = 60,600\r\n" +
+                      "mid_interval = 3600,10000\r\n" +
+                      "max_interval = 86400,80000\r\n" +
                       "\n" +
-                     "[rule2]\n" +
-                     "match_app = com.foo.service2\n" +
-                     "rule_type = callerIp\n" +
-                     "min_interval = 60,600\n" +
-                     "mid_interval = 3600,10000\n" +
-                     "max_interval = 86400,80000\n" +
+                     "[customerUserIds]\r\n" +
+                     "match_app = com.foo.service2\r\n" +
+                     "rule_type = callerId[1,3,5]\r\n" +
+                     "min_interval = 60,600\r\n" +
+                     "mid_interval = 3600,10000\r\n" +
+                     "max_interval = 86400,80000\r\n" +
                      "\n" +
-                     "[rule3]\n" +
-                     "match_app = com.foo.service3\n" +
-                     "rule_type = callerIp\n" +
-                     "min_interval = 60,600\n" +
-                     "mid_interval = 3600,10000\n" +
-                     "max_interval = 86400,80000\n";
+                     "[customerUserIps]\r\n" +
+                     "match_app = com.foo.service3\r\n" +
+                     "rule_type = callerIp[192.168.2.1,192.168.35.36,192.162.25.3]\r\n" +
+                     "min_interval = 60,600\r\n" +
+                     "mid_interval = 3600,10000\r\n" +
+                     "max_interval = 86400,80000\r\n";
 
         List<FreqControlRule> rules = doParseRuleData(data);
 

@@ -2,11 +2,10 @@ package com.github.dapeng.impl.filters;
 
 
 import com.github.dapeng.core.FreqControlRule;
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.impl.filters.freq.CounterNode;
 import com.github.dapeng.impl.filters.freq.NodePageMeta;
 import com.github.dapeng.impl.filters.freq.ShmManager;
-
-
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -16,10 +15,10 @@ public class testShm {
     private static CounterNode checkNodeCount(FreqControlRule rule, int key) throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
 
         ShmManager shmManagerRef = ShmManager.getInstance();
-        Method getIdFromShm = shmManagerRef.getClass().getDeclaredMethod("getIdFromShm",String.class);
-        getIdFromShm.setAccessible(true);
-        short appId = (short)getIdFromShm.invoke(shmManagerRef,rule.app);
-        short ruleTypeId = (short)getIdFromShm.invoke(shmManagerRef,rule.ruleType);
+        Method getId = shmManagerRef.getClass().getDeclaredMethod("getId",String.class);
+        getId.setAccessible(true);
+        short appId = (short)getId.invoke(shmManagerRef,rule.app);
+        short ruleTypeId = (short)getId.invoke(shmManagerRef,rule.ruleType);
 
         Field nodePageCountRef = shmManagerRef.getClass().getDeclaredField("NODE_PAGE_COUNT");
         nodePageCountRef.setAccessible(true);
@@ -654,7 +653,7 @@ public class testShm {
         CounterNode node = null;
 
         System.out.println("test SingSame:----------------------------------------");
-        rule.app = "com.today.servers1";
+/*        rule.app = "com.today.servers1";
         rule.ruleType = "callId";
         rule.minInterval = 60;
         rule.maxReqForMinInterval = 20;
@@ -676,7 +675,20 @@ public class testShm {
         System.out.println( " mincout = " +  node.minCount +
                 " midcount = " +  node.midCount +
                 " maxcount = " +  node.maxCount);
-        System.out.println();
+        System.out.println();*/
+
+        rule.app = "com.today.servers1";
+        rule.ruleType = "callIp";
+        rule.minInterval = 60;
+        rule.maxReqForMinInterval = 20;
+        rule.midInterval = 3600;
+        rule.maxReqForMidInterval = 80;
+        rule.maxInterval = 86400;
+        rule.maxReqForMaxInterval = 100;
+
+        int key = IPUtils.transferIp("192.168.35.36");
+        manager.reportAndCheck(rule, key);
+
     }
 
     private static void testShmPerformance(){
@@ -711,21 +723,23 @@ public class testShm {
 
     public static void main(String[] args) throws NoSuchMethodException, NoSuchFieldException, IllegalAccessException, InvocationTargetException, InterruptedException {
 
-          testShmCallerId();
+/*          testShmCallerId();
 
           testShmCallerIp();
 
           testShmId();
 
-          testShmSingDiff();
+          testShmSingDiff();*/
 
           testShmSingSame();
 
+/*
           testShmPerformance();
 
           testShmMutilDiff();
 
           testShmMutilSame();
+*/
 
 
         }

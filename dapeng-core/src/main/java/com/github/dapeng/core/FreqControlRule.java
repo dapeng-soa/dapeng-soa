@@ -22,7 +22,7 @@ public class FreqControlRule {
 
     @Override
     public String toString() {
-        return "app:" + app + ", ruleType:" + ruleType + ", freqRule:["
+        return "app:" + app + ", ruleType:" + ruleType + ", targets:" + targets +", freqRule:["
                 + minInterval + "," + maxReqForMinInterval + "/"
                 + midInterval + "," + maxReqForMidInterval + "/"
                 + maxInterval + "," + maxReqForMaxInterval + ";";

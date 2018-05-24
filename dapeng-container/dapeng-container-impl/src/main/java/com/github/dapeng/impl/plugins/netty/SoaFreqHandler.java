@@ -1,12 +1,15 @@
 package com.github.dapeng.impl.plugins.netty;
 
 import com.github.dapeng.core.*;
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.impl.filters.freq.ShmManager;
 import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.registry.zookeeper.ServerZkAgentImpl;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -18,6 +21,7 @@ import java.util.List;
  */
 @ChannelHandler.Sharable
 public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SoaFreqHandler.class.getName());
     private static ShmManager manager = ShmManager.getInstance();
 
 
@@ -50,34 +54,44 @@ public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
         }
         boolean access = false;
         for (FreqControlRule rule : freqRules) {
+            boolean flag = true;
+            boolean result = true;
             int freqKey;
             switch (rule.ruleType) {
                 case "all":
-                    freqKey = -1;
+                    freqKey = 0;
                     break;
                 case "callerIp":
-                    String callerIp = context.callerIp().orElse("-1");
+                    String callerIp = context.callerIp().orElse("0");
                     freqKey = callerIp.hashCode();
                     break;
                 case "callerMid":
-                    String callerMid = context.callerMid().orElse("-1");
+                    String callerMid = context.callerMid().orElse("0");
                     freqKey = callerMid.hashCode();
                     break;
                 case "userId":
-                    Long userId = context.userId().orElse(-1L);
-                    freqKey = Integer.valueOf(userId.intValue());
+                    Long userId = context.userId().orElse(0L);
+                    freqKey = userId.intValue();
+                    if (rule.targets!=null&&!rule.targets.contains(freqKey)){
+                        flag = false;
+                    }
                     break;
                 case "userIp":
-                    freqKey = context.userIp().orElse(-1);
+                    freqKey = context.userIp().orElse(0);
+                    if (rule.targets != null && !rule.targets.contains(freqKey)){
+                        flag = false;
+                    }else {
+                        freqKey = Math.abs(freqKey);
+                    }
                     break;
-                default:
-                    freqKey = -1;
-                    break;
+                    default:
+                        freqKey = 0;
             }
-
-            boolean result = manager.reportAndCheck(rule, freqKey);
-
+            if (flag) {
+                result = manager.reportAndCheck(rule, freqKey);
+            }
             if (!result) {
+                LOGGER.debug("processFreqControl,[app/ruleType/key:mincount/midcount/maxcount]:{}",manager.getCounterInfo(rule.app,rule.ruleType,freqKey));
                 return result;
             }
             access = result;

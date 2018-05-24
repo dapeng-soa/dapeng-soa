@@ -2,6 +2,7 @@ package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.FreqControlRule;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.ServiceInfo;
 import com.github.dapeng.router.Route;
@@ -11,8 +12,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * @author tangliu
@@ -180,25 +183,55 @@ public class ZookeeperUtils {
      */
     private static List<FreqControlRule> doParseRuleData(String ruleData) {
         List<FreqControlRule> datasOfRule = new ArrayList<>();
+        if ("".equals(ruleData.trim())) return datasOfRule;
         String[] str = ruleData.split("\n|\r|\r\n");
+        String pattern1 = "^\\[.*\\]$";
+        String pattern2 = "^[a-zA-Z]+\\[.*\\]$";
 
-        for (int i = 0; i < str.length; i++) {
-            if (str[i].indexOf("rule") != -1) {
+        for (int i = 0;i<str.length;) {
+            if (Pattern.matches(pattern1,str[i])){
                 FreqControlRule rule = new FreqControlRule();
-                for (int j = 0; j < 5; j++) {
-                    if (str[++i].indexOf("match_app") != -1) {
-                        rule.app = str[i].split("=")[1].trim();
-                    } else if (str[i].indexOf("rule_type") != -1) {
-                        rule.ruleType = str[i].split("=")[1].trim();
-                    } else if (str[i].indexOf("min_interval") != -1) {
-                        rule.minInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[0]);
-                        rule.maxReqForMinInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[1]);
-                    } else if (str[i].indexOf("mid_interval") != -1) {
-                        rule.midInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[0]);
-                        rule.maxReqForMidInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[1]);
-                    } else if (str[i].indexOf("max_interval") != -1) {
-                        rule.maxInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[0]);
-                        rule.maxReqForMaxInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[1]);
+                rule.targets = new HashSet<>();
+
+                while (!Pattern.matches(pattern1,str[++i])){
+                    if (str[i].trim().equals("")) continue;
+                    String[] s = str[i].split("=");
+                    switch (s[0].trim()) {
+                        case "match_app":
+                            rule.app = s[1].trim();
+                            break;
+                        case "rule_type":
+                            if (Pattern.matches(pattern2,s[1].trim())){
+                                rule.ruleType = s[1].trim().split("\\[")[0];
+                                String[] str1 = s[1].trim().split("\\[")[1].trim().split("\\]")[0].trim().split(",");
+                                for (int k = 0; k < str1.length;k++){
+                                    if (!str1[k].contains(".")){
+                                        rule.targets.add(Integer.parseInt(str1[k].trim()));
+                                    }else {
+                                        rule.targets.add(IPUtils.transferIp(str1[k].trim()));
+                                    }
+                                }
+                            }else{
+                                rule.targets = null;
+                                rule.ruleType = s[1].trim();
+                            }
+                            break;
+                        case "min_interval":
+                            rule.minInterval = Integer.parseInt(s[1].trim().split(",")[0]);
+                            rule.maxReqForMinInterval = Integer.parseInt(s[1].trim().split(",")[1]);
+                            break;
+                        case "mid_interval":
+                            rule.midInterval = Integer.parseInt(s[1].trim().split(",")[0]);
+                            rule.maxReqForMidInterval = Integer.parseInt(s[1].trim().split(",")[1]);
+                            break;
+                        case "max_interval":
+                            rule.maxInterval = Integer.parseInt(s[1].trim().split(",")[0]);
+                            rule.maxReqForMaxInterval = Integer.parseInt(s[1].trim().split(",")[1]);
+                            break;
+                    }
+                    if ( i == str.length-1) {
+                        i++;
+                        break;
                     }
                 }
                 datasOfRule.add(rule);
