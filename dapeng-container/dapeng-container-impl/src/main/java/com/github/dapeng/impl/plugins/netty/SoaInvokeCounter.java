@@ -94,7 +94,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
-        Integer seqId = transactionContext.getSeqid();
+        int seqId = transactionContext.getSeqid();
         invokeStartPair.put(seqId, System.currentTimeMillis());
 
         if (LOGGER.isDebugEnabled()) {
@@ -107,18 +107,25 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         try {
-            Long invokeEndTime = System.currentTimeMillis();
+            long invokeEndTime = System.currentTimeMillis();
             // 异步返回不能从通过 TransactionContext.Factory.currentInstance() 去拿context
             SoaResponseWrapper wrapper = (SoaResponseWrapper) msg;
             TransactionContext context = wrapper.transactionContext;
             SoaHeader soaHeader = context.getHeader();
-            Integer seqId = context.getSeqid();
+            int seqId = context.getSeqid();
 
             ServiceBasicInfo basicInfo = new ServiceBasicInfo(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName());
             ServiceProcessData processData = serviceProcessCallDatas.get(basicInfo);
 
             Long invokeStartTime = invokeStartPair.remove(seqId);
-            Long cost = invokeEndTime - invokeStartTime;
+            if(invokeStartTime == null){
+                // TODO bug
+                LOGGER.error("_SoaInvokeCounter_ seqId:{} channel:{} service:{} method:{}", seqId, ctx.channel(),
+                        soaHeader.getServiceName(), soaHeader.getMethodName());
+                invokeStartTime = System.currentTimeMillis();
+            }
+
+            long cost = invokeEndTime - invokeStartTime;
             Map<ServiceBasicInfo, Long> map = new ConcurrentHashMap<>(1);
             map.put(basicInfo, cost);
             serviceElapses.add(map);
@@ -180,7 +187,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
 
                 List<DataPoint> dataList = serviceData2Points(System.currentTimeMillis(),
                         tmpMap, tmpList);
-                invokeStartPair.clear();
+                invokeStartPair.clear(); // BUG
                 // 当容量达到最大容量的90%时,丢弃头部数据，保留正常容量
                 if (serviceDataQueue.size() >= ALERT_SIZE) {
                     LOGGER.warn("服务调用监控本地容量超过" + ALERT_SIZE);
