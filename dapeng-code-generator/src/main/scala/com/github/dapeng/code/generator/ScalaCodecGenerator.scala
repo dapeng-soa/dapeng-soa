@@ -383,6 +383,7 @@ class ScalaCodecGenerator extends CodeGenerator {
               <div>map.put("{method.name}", new {method.name})
               </div>}}}
             map.put("getServiceMetadata", new getServiceMetadata)
+            map.put("echo", new echo)
             map
           </block>
 
