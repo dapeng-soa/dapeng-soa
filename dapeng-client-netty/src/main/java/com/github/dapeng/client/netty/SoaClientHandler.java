@@ -27,6 +27,7 @@ public class SoaClientHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
 
+        LOGGER.debug("SoaClientHandler channelRead {} length:{}", ctx.channel(), ((ByteBuf)msg).readableBytes() );
         if (callBack != null)
             try {
                 callBack.onSuccess((ByteBuf) msg);

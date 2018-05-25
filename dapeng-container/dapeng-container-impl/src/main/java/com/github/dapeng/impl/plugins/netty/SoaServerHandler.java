@@ -164,6 +164,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
      * @param e
      */
     private void writeErrorMessage(ChannelHandlerContext ctx, TransactionContext transactionContext, SoaException e) {
+        LOGGER.error("writeErrorMessage: " + ctx.channel(), e);
 
         attachErrorInfo(transactionContext, e);
 

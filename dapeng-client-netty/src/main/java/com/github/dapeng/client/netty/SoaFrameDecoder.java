@@ -44,6 +44,8 @@ public class SoaFrameDecoder extends ByteToMessageDecoder {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         // waiting for four bytes
+        LOGGER.debug("channel:{} decode available = {}", ctx.channel(), in.readableBytes() );
+
         if (in.readableBytes() < Integer.BYTES) return;
 
         int readerIndex = in.readerIndex();
