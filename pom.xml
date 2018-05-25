@@ -55,7 +55,6 @@
         <module>dapeng-core</module>
         <module>dapeng-spring</module>
         <module>dapeng-maven-plugin</module>
-        <module>dapeng-registry</module>
         <module>dapeng-code-generator</module>
         <module>dapeng-api-doc</module>
         <module>dapeng-router</module>
@@ -68,6 +67,8 @@
         <module>dapeng-json</module>
         <!--<module>dapeng-demo</module>-->
         <module>dapeng-counter</module>
+        <module>dapeng-registry-zookeeper</module>
+        <module>dapeng-registry-zookeeper</module>
     </modules>
 
     <properties>
