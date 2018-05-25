@@ -46,9 +46,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:https://github.com/dapeng-soa/dapeng-soa.git</connection>
-        <developerConnection>scm:git:https://github.com/dapeng-soa/dapeng-soa.git</developerConnection>
-        <url>https://github.com/dapeng-soa/dapeng-soa</url>
+        <connection>scm:https://github.com/dapeng-soa/dapeng-soa.git</connection>
+        <developerConnection>scm:https://github.com/dapeng-soa/dapeng-soa.git</developerConnection>
+        <url>https://github.com/dapeng-soa/dapeng-soa.git</url>
     </scm>
 
     <modules>
@@ -79,39 +79,72 @@
 
     <profiles>
         <profile>
-            <id>today-release</id>
+            <id>release</id>
             <distributionManagement>
-                <repository>
-                    <id>today-dev</id>
-                    <name>Nexus Releases Repository</name>
-                    <url>http://nexus.today36524.td/repository/maven-releases/</url>
-                </repository>
-
                 <snapshotRepository>
-                    <id>today-dev</id>
-                    <name>Nexus Snapshots Repository</name>
-                    <url>http://nexus.today36524.td/repository/maven-snapshots/</url>
+                    <id>oss</id>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
                 </snapshotRepository>
+                <repository>
+                    <id>oss</id>
+                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                </repository>
             </distributionManagement>
 
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>1.6</version>
+                </dependency>
+            </dependencies>
             <build>
                 <plugins>
+                    <!-- Source -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <source>1.8</source>
-                            <target>1.8</target>
-                        </configuration>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.4</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
+                    <!-- Javadoc -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-release-plugin</artifactId>
-                        <version>2.5.3</version>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>2.10.3</version>
                         <configuration>
-                            <tagNameFormat>v@{project.version}</tagNameFormat>
-                            <autoVersionSubmodules>true</autoVersionSubmodules>
+                            <additionalparam>-Xdoclint:none</additionalparam>
                         </configuration>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- Gpg Signature -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
@@ -119,18 +152,18 @@
 
 
         <profile>
-            <id>today</id>
+            <id>test</id>
             <distributionManagement>
                 <repository>
-                    <id>today-dev</id>
+                    <id>nexus-releases</id>
                     <name>Nexus Releases Repository</name>
-                    <url>http://nexus.today36524.td/repository/maven-releases/</url>
+                    <url>http://nexus.oa.dapeng.com/repository/maven-releases/</url>
                 </repository>
 
                 <snapshotRepository>
-                    <id>today-dev</id>
+                    <id>nexus-snapshots</id>
                     <name>Nexus Snapshots Repository</name>
-                    <url>http://nexus.today36524.td/repository/maven-snapshots/</url>
+                    <url>http://nexus.oa.dapeng.com/repository/maven-snapshots/</url>
                 </snapshotRepository>
             </distributionManagement>
 
@@ -175,7 +208,7 @@
     <repositories>
         <repository>
             <id>maven-dapeng-com</id>
-            <url>http://nexus.today36524.td/repository/maven-public/</url>
+            <url>http://nexus.oa.dapeng.com/repository/maven-public/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
