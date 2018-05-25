@@ -40,6 +40,7 @@ public class HeadFilter implements Filter {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(getClass().getSimpleName()
                     + "::onExit:[seqId:" + transactionContext.getSeqid()
+                    + ",channel:[" + channelHandlerContext.channel() + "]"
                     + ", execption:" + transactionContext.soaException()
                     + ",\n result:" + filterContext.getAttribute("result") + "]\n");
         }

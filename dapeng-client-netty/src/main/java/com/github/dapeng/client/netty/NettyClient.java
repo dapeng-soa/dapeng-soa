@@ -135,6 +135,10 @@ public class NettyClient {
 
         RequestQueue.put(seqid, future);
 
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("NettyClient::send, timeout:" + timeout + ", seqId:" + seqid + ",  to: " + channel.remoteAddress());
+        }
+
         try {
             channel.writeAndFlush(request);
             ByteBuf respByteBuf = future.get(timeout, TimeUnit.MILLISECONDS);

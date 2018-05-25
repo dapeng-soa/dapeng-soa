@@ -98,7 +98,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
         invokeStartPair.put(seqId, System.currentTimeMillis());
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(getClass().getSimpleName() + "::read response[seqId=" + transactionContext.getSeqid());
+            LOGGER.debug(getClass().getSimpleName() + "::read response[seqId=" + transactionContext.getSeqid() + "]");
         }
 
         ctx.fireChannelRead(msg);
@@ -106,44 +106,48 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        Long invokeEndTime = System.currentTimeMillis();
-        // 异步返回不能从通过 TransactionContext.Factory.currentInstance() 去拿context
-        SoaResponseWrapper wrapper = (SoaResponseWrapper) msg;
-        TransactionContext context = wrapper.transactionContext;
-        SoaHeader soaHeader = context.getHeader();
-        Integer seqId = context.getSeqid();
+        try {
+            Long invokeEndTime = System.currentTimeMillis();
+            // 异步返回不能从通过 TransactionContext.Factory.currentInstance() 去拿context
+            SoaResponseWrapper wrapper = (SoaResponseWrapper) msg;
+            TransactionContext context = wrapper.transactionContext;
+            SoaHeader soaHeader = context.getHeader();
+            Integer seqId = context.getSeqid();
 
-        ServiceBasicInfo basicInfo = new ServiceBasicInfo(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName());
-        ServiceProcessData processData = serviceProcessCallDatas.get(basicInfo);
+            ServiceBasicInfo basicInfo = new ServiceBasicInfo(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName());
+            ServiceProcessData processData = serviceProcessCallDatas.get(basicInfo);
 
-        Long invokeStartTime = invokeStartPair.remove(seqId);
-        Long cost = invokeEndTime - invokeStartTime;
-        Map<ServiceBasicInfo, Long> map = new ConcurrentHashMap<>(1);
-        map.put(basicInfo, cost);
-        serviceElapses.add(map);
+            Long invokeStartTime = invokeStartPair.remove(seqId);
+            Long cost = invokeEndTime - invokeStartTime;
+            Map<ServiceBasicInfo, Long> map = new ConcurrentHashMap<>(1);
+            map.put(basicInfo, cost);
+            serviceElapses.add(map);
 
-        // 存在服务信息增加计数，不存在则初始化服务信息
-        if (null != processData) {
-            processData.getTotalCalls().incrementAndGet();
-            if (soaHeader.getRespCode().isPresent() && SUCCESS_CODE.equals(soaHeader.getRespCode().get())) {
-                processData.getSucceedCalls().incrementAndGet();
+            // 存在服务信息增加计数，不存在则初始化服务信息
+            if (null != processData) {
+                processData.getTotalCalls().incrementAndGet();
+                if (soaHeader.getRespCode().isPresent() && SUCCESS_CODE.equals(soaHeader.getRespCode().get())) {
+                    processData.getSucceedCalls().incrementAndGet();
+                } else {
+                    processData.getFailCalls().incrementAndGet();
+                }
             } else {
-                processData.getFailCalls().incrementAndGet();
+                ServiceProcessData newProcessData = createNewData(basicInfo);
+                newProcessData.setTotalCalls(new AtomicInteger(1));
+                if (soaHeader.getRespCode().isPresent() && SUCCESS_CODE.equals(soaHeader.getRespCode().get())) {
+                    newProcessData.getSucceedCalls().incrementAndGet();
+                } else {
+                    newProcessData.getFailCalls().incrementAndGet();
+                }
+                serviceProcessCallDatas.put(basicInfo, newProcessData);
             }
-        } else {
-            ServiceProcessData newProcessData = createNewData(basicInfo);
-            newProcessData.setTotalCalls(new AtomicInteger(1));
-            if (soaHeader.getRespCode().isPresent() && SUCCESS_CODE.equals(soaHeader.getRespCode().get())) {
-                newProcessData.getSucceedCalls().incrementAndGet();
-            } else {
-                newProcessData.getFailCalls().incrementAndGet();
-            }
-            serviceProcessCallDatas.put(basicInfo, newProcessData);
-        }
 
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(getClass().getSimpleName() + "::write response[seqId=" + context.getSeqid() + ", respCode=" + soaHeader.getRespCode().get()
-                    + "] cost:" + cost + "ms");
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(getClass().getSimpleName() + "::write response[seqId=" + context.getSeqid() + ", respCode=" + soaHeader.getRespCode().get()
+                        + "] cost:" + cost + "ms");
+            }
+        } catch (Throwable ex) {
+            LOGGER.error("_SoaInvokeCounter_write: " + ex.getMessage(), ex);
         }
 
         ctx.write(msg, promise);
@@ -209,7 +213,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
                 signalLock.unlock();
             }
 
-        }, initialDelay , PERIOD * 1000, TimeUnit.MILLISECONDS);
+        }, initialDelay, PERIOD * 1000, TimeUnit.MILLISECONDS);
 
         // uploader point thread.
         uploaderExecutor.execute(() -> {
