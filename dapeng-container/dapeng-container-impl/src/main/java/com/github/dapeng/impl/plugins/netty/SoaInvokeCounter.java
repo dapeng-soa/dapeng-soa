@@ -11,7 +11,6 @@ import com.github.dapeng.impl.plugins.monitor.ServiceBasicInfo;
 import com.github.dapeng.impl.plugins.monitor.config.MonitorFilterProperties;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import org.slf4j.Logger;
@@ -94,11 +93,11 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
-        int seqId = transactionContext.getSeqid();
+        int seqId = transactionContext.seqId();
         invokeStartPair.put(seqId, System.currentTimeMillis());
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(getClass().getSimpleName() + "::read response[seqId=" + transactionContext.getSeqid() + "]");
+            LOGGER.debug(getClass().getSimpleName() + "::read response[seqId=" + transactionContext.seqId() + "]");
         }
 
         ctx.fireChannelRead(msg);
@@ -112,7 +111,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
             SoaResponseWrapper wrapper = (SoaResponseWrapper) msg;
             TransactionContext context = wrapper.transactionContext;
             SoaHeader soaHeader = context.getHeader();
-            int seqId = context.getSeqid();
+            int seqId = context.seqId();
 
             ServiceBasicInfo basicInfo = new ServiceBasicInfo(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName());
             ServiceProcessData processData = serviceProcessCallDatas.get(basicInfo);
@@ -150,7 +149,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
             }
 
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(getClass().getSimpleName() + "::write response[seqId=" + context.getSeqid() + ", respCode=" + soaHeader.getRespCode().get()
+                LOGGER.debug(getClass().getSimpleName() + "::write response[seqId=" + context.seqId() + ", respCode=" + soaHeader.getRespCode().get()
                         + "] cost:" + cost + "ms");
             }
         } catch (Throwable ex) {

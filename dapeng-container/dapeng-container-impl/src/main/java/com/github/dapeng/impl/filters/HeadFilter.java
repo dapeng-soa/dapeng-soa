@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
+import static io.netty.channel.ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE;
+
 public class HeadFilter implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(HeadFilter.class);
 
@@ -22,7 +24,7 @@ public class HeadFilter implements Filter {
         try {
             if (LOGGER.isDebugEnabled()) {
                 TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
-                LOGGER.debug(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.getSeqid() + "]");
+                LOGGER.debug(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.seqId() + "]");
             }
             next.onEntry(filterContext);
         } catch (TException e) {
@@ -39,7 +41,7 @@ public class HeadFilter implements Filter {
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(getClass().getSimpleName()
-                    + "::onExit:[seqId:" + transactionContext.getSeqid()
+                    + "::onExit:[seqId:" + transactionContext.seqId()
                     + ",channel:[" + channelHandlerContext.channel() + "]"
                     + ", execption:" + transactionContext.soaException()
                     + ",\n result:" + filterContext.getAttribute("result") + "]\n");
@@ -48,6 +50,6 @@ public class HeadFilter implements Filter {
         SoaResponseWrapper responseWrapper = new SoaResponseWrapper(transactionContext,
                 Optional.ofNullable(filterContext.getAttribute("result")),
                 Optional.ofNullable((BeanSerializer) filterContext.getAttribute("respSerializer")));
-        channelHandlerContext.writeAndFlush(responseWrapper);
+        channelHandlerContext.writeAndFlush(responseWrapper).addListener(FIRE_EXCEPTION_ON_FAILURE);
     }
 }
