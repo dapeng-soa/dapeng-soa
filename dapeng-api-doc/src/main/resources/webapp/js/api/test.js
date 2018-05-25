@@ -369,14 +369,18 @@ function applyTest(serviceName, version, methodName) {
     }
 
     $("#json-request").html(getFormatedJsonHTML(jsonParameter));
-
+    var operatorId = $("#operatorId").val()
+    if(operatorId ==""){
+        operatorId = 0
+    }
     var stringParameter = JSON.stringify(jsonParameter);
     var url = window.basePath + "/test.htm";
     $.post(url, {
         serviceName: serviceName,
         version: version,
         methodName: methodName,
-        parameter: stringParameter
+        parameter: stringParameter,
+        operatorId:operatorId
     }, function (result) {
 
         $("#json-result").html(getFormatedJsonHTML(eval('(' + result + ')')));
