@@ -53,7 +53,7 @@ public interface TransactionContext {
 
     SoaHeader getHeader();
 
-    int getSeqid();
+    int seqId();
 
     boolean isSoaGlobalTransactional();
 

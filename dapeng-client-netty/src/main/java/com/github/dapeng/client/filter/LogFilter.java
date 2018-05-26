@@ -82,7 +82,10 @@ public class LogFilter implements Filter {
             } catch (TException e) {
                 LOGGER.error(e.getMessage(), e);
             } finally {
-                MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+                // 如果在服务里面, 那么不清理MDC
+                if (!TransactionContext.hasCurrentInstance()) {
+                    MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+                }
             }
         }
     }

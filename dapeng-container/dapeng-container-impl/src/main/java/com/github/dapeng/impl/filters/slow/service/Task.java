@@ -42,7 +42,7 @@ public class Task {
     public Task(FilterContext ctx) {
         TransactionContext context = (TransactionContext) ctx.getAttribute("context");
         this.startTime = System.currentTimeMillis();
-        this.seqId = context.getSeqid();
+        this.seqId = context.seqId();
         this.timeout = context.timeout();
         this.currentThread = Thread.currentThread();
 

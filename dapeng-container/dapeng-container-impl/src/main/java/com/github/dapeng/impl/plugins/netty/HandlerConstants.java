@@ -19,5 +19,4 @@ public class HandlerConstants {
     static final String SOA_SERVER_HANDLER = "soaServerHandler";
     static final String SOA_FREQ_HANDLER = "soaFreqHandler";
     static final String SOA_EXCEPTION_HANDLER = "soaExceptionHandler";
-
 }

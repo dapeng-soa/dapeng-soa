@@ -21,4 +21,12 @@ public class ModePattern implements Pattern {
         this.to = to;
     }
 
+    @Override
+    public String toString() {
+        return "ModePattern{" +
+                "base=" + base +
+                ", from=" + from +
+                ", to=" + to +
+                '}';
+    }
 }

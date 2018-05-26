@@ -94,8 +94,12 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(getClass().getSimpleName() + "::write");
         }
-        Long responseFlow = (long) ((ByteBuf) msg).readableBytes();
-        responseFlows.add(responseFlow);
+        try {
+            Long responseFlow = (long) ((ByteBuf) msg).readableBytes();
+            responseFlows.add(responseFlow);
+        } catch (Throwable ex) {
+            LOGGER.error(ex.getMessage(), ex);
+        }
         ctx.write(msg, promise);
     }
 
