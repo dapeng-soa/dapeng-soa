@@ -74,6 +74,8 @@ public class SoaHeaderHelper {
             header.addCookies(invocationCtxProxy.cookies());
         }
 
+        header.addCookies(invocationContext.cookies());
+
         if (invocationContext.callerMid().isPresent()) {
             header.setCallerMid(invocationContext.callerMid());
         }
@@ -115,6 +117,10 @@ public class SoaHeaderHelper {
             // 传递tid
             header.setSessionTid(transactionContext.sessionTid());
             invocationContext.callerTid(transactionContext.calleeTid());
+
+            if (!oriHeader.getCookies().isEmpty()) {
+                header.addCookies(oriHeader.getCookies());
+            }
 
             header.setCallerPort(Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
         }

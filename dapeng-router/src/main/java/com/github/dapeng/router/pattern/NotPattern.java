@@ -14,4 +14,10 @@ public class NotPattern implements Pattern {
         this.pattern = pattern;
     }
 
+    @Override
+    public String toString() {
+        return "NotPattern{" +
+                "pattern=" + pattern +
+                '}';
+    }
 }

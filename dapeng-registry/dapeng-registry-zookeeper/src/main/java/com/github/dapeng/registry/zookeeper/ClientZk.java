@@ -117,6 +117,7 @@ public class ClientZk extends CommonZk {
                     }
                 }, null);
                 List<Route> routes = processRouteData(service, data);
+                LOGGER.warn("ClientZk::getRoutes routes changes:" + routes);
                 return routes;
             } catch (KeeperException | InterruptedException e) {
                 LOGGER.error("获取route service 节点: {} 出现异常", service);

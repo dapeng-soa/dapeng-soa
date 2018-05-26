@@ -6,6 +6,8 @@ import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -54,6 +56,8 @@ public class InvocationContextImpl implements InvocationContext {
     private Optional<Integer> transactionId = Optional.empty();
 
     private Optional<Integer> transactionSequence = Optional.empty();
+
+    private Map<String, String> cookies = new HashMap<>(16);
 
     /**
      * 包含服务提供端返回来的一些信息, 例如calleeIp, 服务耗时等信息
@@ -220,6 +224,28 @@ public class InvocationContextImpl implements InvocationContext {
     @Override
     public Optional<String> callerMid() {
         return this.callerMid;
+    }
+
+    @Override
+    public InvocationContext cookies(Map<String, String> cookies) {
+        cookies.putAll(cookies);
+        return this;
+    }
+
+    @Override
+    public InvocationContext setCookie(String key, String value) {
+        cookies.put(key, value);
+        return this;
+    }
+
+    @Override
+    public Map<String, String> cookies() {
+        return Collections.unmodifiableMap(cookies);
+    }
+
+    @Override
+    public String cookie(String key) {
+        return cookies.get(key);
     }
 
     @Override

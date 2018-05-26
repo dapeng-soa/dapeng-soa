@@ -30,4 +30,12 @@ public class Matcher {
     public List<Pattern> getPatterns() {
         return patterns;
     }
+
+    @Override
+    public String toString() {
+        return "Matcher{" +
+                "id='" + id + '\'' +
+                ", patterns=" + patterns +
+                '}';
+    }
 }
