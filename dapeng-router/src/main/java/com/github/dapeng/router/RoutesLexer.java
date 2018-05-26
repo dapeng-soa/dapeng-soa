@@ -179,7 +179,7 @@ public class RoutesLexer {
         char ch = currentChar();
         do {
             sb.append(ch);
-        } while (isLetterOrDigit(ch = nextChar()));
+        } while (isValidIdChar(ch = nextChar()));
         pos--;
 
         String value = sb.toString();
@@ -199,8 +199,8 @@ public class RoutesLexer {
      * @param ch
      * @return
      */
-    private boolean isLetterOrDigit(char ch) {
-        return Character.isLetter(ch) || Character.isDigit(ch);
+    private boolean isValidIdChar(char ch) {
+        return Character.isLetter(ch) || Character.isDigit(ch) || ch == '_';
     }
 
 

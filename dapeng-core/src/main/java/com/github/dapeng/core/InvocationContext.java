@@ -134,6 +134,12 @@ public interface InvocationContext {
     InvocationContext callerMid(final String callerMid);
     Optional<String> callerMid();
 
+    InvocationContext cookies(Map<String, String> cookies); // copy
+    InvocationContext setCookie(String key, String value);
+
+    Map<String, String> cookies(); // immutable
+    String cookie(String key);
+
     /**
      * 供服务提供方返回时填写, 例如耗时, calleeIp等
      *
@@ -221,6 +227,7 @@ public interface InvocationContext {
         LoadBalanceStrategy loadBalanceStrategy();
     }
 
+    @Deprecated
     interface InvocationContextProxy {
         /**
          * 服务会话Id

@@ -15,4 +15,10 @@ public class StringPattern implements Pattern {
         this.content = content;
     }
 
+    @Override
+    public String toString() {
+        return "StringPattern{" +
+                "content='" + content + '\'' +
+                '}';
+    }
 }

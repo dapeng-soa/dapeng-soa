@@ -1,5 +1,8 @@
 package com.github.dapeng.router.pattern;
 
+import com.github.dapeng.core.helper.DapengUtil;
+import com.github.dapeng.core.helper.IPUtils;
+
 /**
  * 描述: ip 条件表达式
  *
@@ -13,5 +16,13 @@ public class IpPattern implements Pattern {
     public IpPattern(int ip, int mask) {
         this.ip = ip;
         this.mask = mask;
+    }
+
+    @Override
+    public String toString() {
+        return "IpPattern{" +
+                "ip=" + IPUtils.transferIp(ip) +
+                ", mask=" + mask +
+                '}';
     }
 }

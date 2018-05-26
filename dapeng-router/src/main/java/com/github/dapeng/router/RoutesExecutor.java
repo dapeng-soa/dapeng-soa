@@ -1,5 +1,6 @@
 package com.github.dapeng.router;
 
+import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.IPUtils;
@@ -22,7 +23,7 @@ import static com.github.dapeng.core.helper.IPUtils.matchIpWithMask;
 public class RoutesExecutor {
 
     private static Logger logger = LoggerFactory.getLogger(RoutesExecutor.class);
-
+    private static final String COOKIE_PREFIX = "cookie_";
     /**
      * 解析 路由规则
      *
@@ -176,9 +177,13 @@ public class RoutesExecutor {
 
     /**
      * match on Matcher.id
+     * <p>
+     * service -> ctx.serviceName
      *
      * @param ctx
      * @param matcher
+     * @skuId -> args.skuId
+     * cookie_posid -> cookies.posid
      */
     private static String getValueFromInvocationCtx(InvocationContextImpl ctx, Matcher matcher) {
         // IdToken name
@@ -201,6 +206,15 @@ public class RoutesExecutor {
                 ctxValue = ctx.calleeIp().orElse("");
                 break;
             default:
+                if (id.startsWith(COOKIE_PREFIX)) {
+                    String cookie = id.substring(COOKIE_PREFIX.length());
+                    InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
+                    if (invocationContext != null) {
+                        return invocationContext.cookie(cookie);
+                    } else {
+                        return null;
+                    }
+                }
                 ctxValue = null;
                 break;
 
