@@ -70,7 +70,9 @@ public class JsonPost {
 
         final long beginTime = System.currentTimeMillis();
 
-        LOGGER.info("soa-request: " + jsonParameter);
+        LOGGER.info("soa-request: service:[" + service.namespace + "." + service.name
+                + ":" + service.meta.version + "], method:" + methodName + ", param:"
+                + jsonParameter);
 
         String jsonResponse = post(clientInfo.serviceName, clientInfo.version,
                 methodName, jsonParameter, jsonEncoder, jsonDecoder);
