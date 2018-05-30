@@ -83,6 +83,9 @@ public interface TransactionContext {
 
     String calleeTid();
 
+    void setAttribute(String key, Object value);
+    Object getAttribute(String key);
+
     TransactionContext calleeTid(String calleeTid);
 
     class Factory {
