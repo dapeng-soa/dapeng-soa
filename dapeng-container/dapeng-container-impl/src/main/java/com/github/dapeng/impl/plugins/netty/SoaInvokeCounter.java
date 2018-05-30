@@ -11,7 +11,6 @@ import com.github.dapeng.impl.plugins.monitor.ServiceBasicInfo;
 import com.github.dapeng.impl.plugins.monitor.config.MonitorFilterProperties;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import org.slf4j.Logger;
@@ -94,11 +93,11 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
-        Integer seqId = transactionContext.getSeqid();
+        int seqId = transactionContext.seqId();
         invokeStartPair.put(seqId, System.currentTimeMillis());
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(getClass().getSimpleName() + "::read response[seqId=" + transactionContext.getSeqid());
+            LOGGER.debug(getClass().getSimpleName() + "::read response[seqId=" + transactionContext.seqId() + "]");
         }
 
         ctx.fireChannelRead(msg);
@@ -106,44 +105,55 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        Long invokeEndTime = System.currentTimeMillis();
-        // 异步返回不能从通过 TransactionContext.Factory.currentInstance() 去拿context
-        SoaResponseWrapper wrapper = (SoaResponseWrapper) msg;
-        TransactionContext context = wrapper.transactionContext;
-        SoaHeader soaHeader = context.getHeader();
-        Integer seqId = context.getSeqid();
+        try {
+            long invokeEndTime = System.currentTimeMillis();
+            // 异步返回不能从通过 TransactionContext.Factory.currentInstance() 去拿context
+            SoaResponseWrapper wrapper = (SoaResponseWrapper) msg;
+            TransactionContext context = wrapper.transactionContext;
+            SoaHeader soaHeader = context.getHeader();
+            int seqId = context.seqId();
 
-        ServiceBasicInfo basicInfo = new ServiceBasicInfo(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName());
-        ServiceProcessData processData = serviceProcessCallDatas.get(basicInfo);
+            ServiceBasicInfo basicInfo = new ServiceBasicInfo(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName());
+            ServiceProcessData processData = serviceProcessCallDatas.get(basicInfo);
 
-        Long invokeStartTime = invokeStartPair.remove(seqId);
-        Long cost = invokeEndTime - invokeStartTime;
-        Map<ServiceBasicInfo, Long> map = new ConcurrentHashMap<>(1);
-        map.put(basicInfo, cost);
-        serviceElapses.add(map);
-
-        // 存在服务信息增加计数，不存在则初始化服务信息
-        if (null != processData) {
-            processData.getTotalCalls().incrementAndGet();
-            if (soaHeader.getRespCode().isPresent() && SUCCESS_CODE.equals(soaHeader.getRespCode().get())) {
-                processData.getSucceedCalls().incrementAndGet();
-            } else {
-                processData.getFailCalls().incrementAndGet();
+            Long invokeStartTime = invokeStartPair.remove(seqId);
+            if(invokeStartTime == null){
+                // TODO bug
+                LOGGER.error("_SoaInvokeCounter_ seqId:{} channel:{} service:{} method:{}", seqId, ctx.channel(),
+                        soaHeader.getServiceName(), soaHeader.getMethodName());
+                invokeStartTime = System.currentTimeMillis();
             }
-        } else {
-            ServiceProcessData newProcessData = createNewData(basicInfo);
-            newProcessData.setTotalCalls(new AtomicInteger(1));
-            if (soaHeader.getRespCode().isPresent() && SUCCESS_CODE.equals(soaHeader.getRespCode().get())) {
-                newProcessData.getSucceedCalls().incrementAndGet();
-            } else {
-                newProcessData.getFailCalls().incrementAndGet();
-            }
-            serviceProcessCallDatas.put(basicInfo, newProcessData);
-        }
 
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(getClass().getSimpleName() + "::write response[seqId=" + context.getSeqid() + ", respCode=" + soaHeader.getRespCode().get()
-                    + "] cost:" + cost + "ms");
+            long cost = invokeEndTime - invokeStartTime;
+            Map<ServiceBasicInfo, Long> map = new ConcurrentHashMap<>(1);
+            map.put(basicInfo, cost);
+            serviceElapses.add(map);
+
+            // 存在服务信息增加计数，不存在则初始化服务信息
+            if (null != processData) {
+                processData.getTotalCalls().incrementAndGet();
+                if (soaHeader.getRespCode().isPresent() && SUCCESS_CODE.equals(soaHeader.getRespCode().get())) {
+                    processData.getSucceedCalls().incrementAndGet();
+                } else {
+                    processData.getFailCalls().incrementAndGet();
+                }
+            } else {
+                ServiceProcessData newProcessData = createNewData(basicInfo);
+                newProcessData.setTotalCalls(new AtomicInteger(1));
+                if (soaHeader.getRespCode().isPresent() && SUCCESS_CODE.equals(soaHeader.getRespCode().get())) {
+                    newProcessData.getSucceedCalls().incrementAndGet();
+                } else {
+                    newProcessData.getFailCalls().incrementAndGet();
+                }
+                serviceProcessCallDatas.put(basicInfo, newProcessData);
+            }
+
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(getClass().getSimpleName() + "::write response[seqId=" + context.seqId() + ", respCode=" + soaHeader.getRespCode().get()
+                        + "] cost:" + cost + "ms");
+            }
+        } catch (Throwable ex) {
+            LOGGER.error("_SoaInvokeCounter_write: " + ex.getMessage(), ex);
         }
 
         ctx.write(msg, promise);
@@ -176,7 +186,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
 
                 List<DataPoint> dataList = serviceData2Points(System.currentTimeMillis(),
                         tmpMap, tmpList);
-                invokeStartPair.clear();
+                invokeStartPair.clear(); // BUG
                 // 当容量达到最大容量的90%时,丢弃头部数据，保留正常容量
                 if (serviceDataQueue.size() >= ALERT_SIZE) {
                     LOGGER.warn("服务调用监控本地容量超过" + ALERT_SIZE);
@@ -209,7 +219,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
                 signalLock.unlock();
             }
 
-        }, initialDelay , PERIOD * 1000, TimeUnit.MILLISECONDS);
+        }, initialDelay, PERIOD * 1000, TimeUnit.MILLISECONDS);
 
         // uploader point thread.
         uploaderExecutor.execute(() -> {

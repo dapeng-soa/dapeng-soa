@@ -22,7 +22,7 @@ public class FlowControlFilter implements Filter {
     public void onEntry(FilterContext filterContext, FilterChain next) throws SoaException {
         if (LOGGER.isDebugEnabled()) {
             TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
-            LOGGER.debug(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.getSeqid() + "]");
+            LOGGER.debug(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.seqId() + "]");
         }
         next.onEntry(filterContext);
     }
@@ -31,7 +31,7 @@ public class FlowControlFilter implements Filter {
     public void onExit(FilterContext filterContext, FilterChain prev) throws SoaException {
         if (LOGGER.isDebugEnabled()) {
             TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
-            LOGGER.debug(getClass().getSimpleName() + "::onExit[seqId:" + transactionContext.getSeqid() + "]");
+            LOGGER.debug(getClass().getSimpleName() + "::onExit[seqId:" + transactionContext.seqId() + "]");
         }
         prev.onExit(filterContext);
     }

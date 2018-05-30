@@ -12,7 +12,6 @@ package com.github.dapeng.router;
  * @date 2018年04月13日 下午9:42
  */
 public class ThenIp {
-
     public final boolean not;
     public final int ip;
     public final int mask;
@@ -21,5 +20,14 @@ public class ThenIp {
         this.not = not;
         this.ip = ip;
         this.mask = mask;
+    }
+
+    @Override
+    public String toString() {
+        return "ThenIp{" +
+                "not=" + not +
+                ", ip=" + ip +
+                ", mask=" + mask +
+                '}';
     }
 }

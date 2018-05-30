@@ -27,4 +27,12 @@ public class Route {
     public List<ThenIp> getThenRouteIps() {
         return thenRouteIps;
     }
+
+    @Override
+    public String toString() {
+        return "Route{" +
+                "left=" + left +
+                ", thenRouteIps:" + thenRouteIps +
+                '}';
+    }
 }

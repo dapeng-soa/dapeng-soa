@@ -11,4 +11,11 @@ import java.util.List;
  */
 public class Matchers implements Condition {
     public List<Matcher> macthers = new ArrayList<>();
+
+    @Override
+    public String toString() {
+        return "Matchers{" +
+                "macthers=" + macthers +
+                '}';
+    }
 }

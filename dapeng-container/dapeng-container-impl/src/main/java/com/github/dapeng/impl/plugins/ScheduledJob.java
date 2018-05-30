@@ -33,6 +33,7 @@ public class ScheduledJob implements Job {
 //            logger.info("--定时任务({}:{})不是Master，跳过--", serviceName, versionName);
 //            return;
 //        }
+
         Stopwatch stopwatch = Stopwatch.createStarted();
         logger.info("定时任务({})开始执行", context.getJobDetail().getKey().getName());
         Map<ProcessorKey, SoaServiceDefinition<?>> processorMap = ContainerFactory.getContainer().getServiceProcessors();
@@ -51,10 +52,9 @@ public class ScheduledJob implements Job {
                 SoaFunctionDefinition.Sync<Object, Object, Object> functionDefinition = (SoaFunctionDefinition.Sync<Object, Object, Object>) data.get("function");
                 functionDefinition.apply(iface, null);
             }
-
-            logger.info("定时任务({})执行完成,cost({}ms)", context.getJobDetail().getKey().getName(),stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
+            logger.info("定时任务({})执行完成,cost({}ms)", context.getJobDetail().getKey().getName(), stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
         } catch (Exception e) {
-            logger.error("定时任务({})执行异常,cost({}ms)", context.getJobDetail().getKey().getName(),stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
+            logger.error("定时任务({})执行异常,cost({}ms)", context.getJobDetail().getKey().getName(), stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
             logger.error(e.getMessage(), e);
         }
 

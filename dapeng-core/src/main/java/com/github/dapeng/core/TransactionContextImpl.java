@@ -166,7 +166,7 @@ public class TransactionContextImpl implements TransactionContext {
     }
 
     @Override
-    public int getSeqid() {
+    public int seqId() {
         return seqid;
     }
 

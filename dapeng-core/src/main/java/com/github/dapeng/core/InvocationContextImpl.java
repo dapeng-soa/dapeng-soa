@@ -5,6 +5,9 @@ import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.IPUtils;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -52,6 +55,8 @@ public class InvocationContextImpl implements InvocationContext {
     private Optional<Integer> transactionId = Optional.empty();
 
     private Optional<Integer> transactionSequence = Optional.empty();
+
+    private Map<String, String> cookies = new HashMap<>(16);
 
     /**
      * 包含服务提供端返回来的一些信息, 例如calleeIp, 服务耗时等信息
@@ -221,6 +226,28 @@ public class InvocationContextImpl implements InvocationContext {
     }
 
     @Override
+    public InvocationContext cookies(Map<String, String> cookies) {
+        cookies.putAll(cookies);
+        return this;
+    }
+
+    @Override
+    public InvocationContext setCookie(String key, String value) {
+        cookies.put(key, value);
+        return this;
+    }
+
+    @Override
+    public Map<String, String> cookies() {
+        return Collections.unmodifiableMap(cookies);
+    }
+
+    @Override
+    public String cookie(String key) {
+        return cookies.get(key);
+    }
+
+    @Override
     public InvocationContext userId(Long userId) {
         this.userId = Optional.ofNullable(userId);
         return this;
@@ -311,6 +338,7 @@ public class InvocationContextImpl implements InvocationContext {
         sb.append("\"").append("sessionTid").append("\":\"").append(this.sessionTid.isPresent() ? this.sessionTid.get() : null).append("\",");
         sb.append("\"").append("userId").append("\":\"").append(this.userId.isPresent() ? this.userId.get() : null).append("\",");
         sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? this.userIp.get() : null).append("\",");
+        sb.append("\"").append("cookies").append("\":\"").append(this.cookies).append("\",");
         sb.append("\"").append("timeout").append("\":\"").append(this.timeout.isPresent() ? this.timeout.get() : null).append("\",");
         sb.append("\"").append("transactionId").append("\":\"").append(this.transactionId.isPresent() ? this.transactionId.get() : null).append("\",");
         sb.append("\"").append("transactionSequence").append("\":\"").append(this.transactionSequence.isPresent() ? this.transactionSequence.get() : null).append("\",");

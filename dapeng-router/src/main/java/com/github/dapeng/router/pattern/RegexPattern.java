@@ -17,4 +17,11 @@ public class RegexPattern implements Pattern {
 
         this.pattern = pattern;
     }
+
+    @Override
+    public String toString() {
+        return "RegexPattern{" +
+                "pattern=" + pattern +
+                '}';
+    }
 }

@@ -14,4 +14,10 @@ public class NumberPattern implements Pattern {
         this.number = number;
     }
 
+    @Override
+    public String toString() {
+        return "NumberPattern{" +
+                "number=" + number +
+                '}';
+    }
 }
