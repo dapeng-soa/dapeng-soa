@@ -1,4 +1,4 @@
-package com.github.dapeng.common;
+package com.github.dapeng.zookeeper.common;
 
 /**
  * ZK 配置定义

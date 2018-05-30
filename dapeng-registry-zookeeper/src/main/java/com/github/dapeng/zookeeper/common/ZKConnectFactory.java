@@ -1,4 +1,4 @@
-package com.github.dapeng.common;
+package com.github.dapeng.zookeeper.common;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.RetryPolicy;
@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.github.dapeng.common.BaseConfig.*;
+import static com.github.dapeng.zookeeper.common.BaseConfig.*;
 
 /**
  * Zk 连接工厂

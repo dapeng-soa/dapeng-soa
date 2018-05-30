@@ -1,7 +1,7 @@
-package com.github.dapeng.common;
+package com.github.dapeng.zookeeper.common;
 
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.github.dapeng.zoomkeeper.monitor.ZkMonitorUtils;
+import com.github.dapeng.zookeeper.utils.ZkMonitorUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.BackgroundCallback;
 import org.apache.curator.framework.api.CuratorEvent;
@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 
-import static com.github.dapeng.common.BaseConfig.ZK_ROOT_PATH;
+import static com.github.dapeng.zookeeper.common.BaseConfig.*;
 
 /**
  * ZK客户端 基础封装
@@ -174,7 +174,7 @@ public class BaseZKClient {
     }
 
 
-    public void lockZkDataContext() throws InterruptedException {
+    public void lockZkDataContext() {
         sysncSemaphore = new CountDownLatch(1);
     }
 

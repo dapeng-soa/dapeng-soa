@@ -1,4 +1,4 @@
-package com.github.dapeng.common;
+package com.github.dapeng.zookeeper.common;
 
 import com.github.dapeng.core.FreqControlRule;
 import com.github.dapeng.core.RuntimeInstance;
@@ -38,6 +38,10 @@ public class ZkDataContext {
      * config配置信息
      * key  [serviceName]
      * value  [Config]
+     * <p>
+     * <p>
+     * 全局配置 /soa/config/services timeout/800ms;loadBalance/random
+     * 服务级别和方法级别   timeout/800ms,register:4001ms,modifySupplier:200ms;loadBalance/leastActive,createSupplier:random,modifySupplier:roundRobin;
      */
     private final ConcurrentHashMap<String, HashMap<ConfigKey, ZkConfig>> configsMap = new ConcurrentHashMap<>(16);
 
@@ -89,20 +93,31 @@ public class ZkDataContext {
     }
 
 
-    public void setConfigData(ConfigLevel configLevel, String serviceName, ConfigKey configKey, String configData) {
+    public void setConfigData(ConfigLevel configLevel, String serviceName, String method, ConfigKey configKey, String configData) {
         switch (configLevel) {
             case GLOBAL:
                 if (Objects.isNull(configData)) {
                     //foreach 不能改变原值
                     //zkDataContext.getConfigsMap().values().forEach(zkConfigMap -> zkConfigMap.get(itemKey).removeGlobalConfig(itemKey.getValue()));
                     for (HashMap<ConfigKey, ZkConfig> cMap : getConfigsMap().values()) {
-                        cMap.get(configKey).removeGlobalConfig(configKey.getValue());
+                        cMap.get(configKey).removeGlobalConfig();
                     }
                 } else {
-                    //foreach 不能改变原值
-                    //zkDataContext.getConfigsMap().values().forEach(zkConfigMap -> zkConfigMap.get(itemKey).setGlobalConfig(itemKey.getValue(), itemArr[1]));
+                    //TODO 全局变量 在初始化时 有BUG eg:先安同步全局变量  后同步服务和方法会有问题
+                    ZkConfig global_config = null;
+                    /*   if (getConfigsMap().values().isEmpty()) {
+                        global_config = new ZkConfig();
+                        global_config.setGlobalConfig(configData);
+                        HashMap<ConfigKey, ZkConfig> configMap = new HashMap<>();
+                        configMap.put(configKey, global_config);
+                        getConfigsMap().put(serviceName, configMap);
+                        return;
+                    }*/
                     for (HashMap<ConfigKey, ZkConfig> cMap : getConfigsMap().values()) {
-                        cMap.get(configKey).setGlobalConfig(configKey.getValue(), configData);
+                        global_config = cMap.get(configKey);
+                        global_config = Objects.isNull(global_config) ? new ZkConfig() : global_config;
+                        global_config.setGlobalConfig(configData);
+                        cMap.put(configKey, global_config);
                     }
                 }
                 break;
@@ -111,9 +126,9 @@ public class ZkDataContext {
                 ZkConfig service_config = service_Map.get(configKey);
                 service_config = Objects.isNull(service_config) ? new ZkConfig() : service_config;
                 if (Objects.isNull(configData)) {
-                    service_config.removeServiceConfig(configKey.getValue());
+                    service_config.removeServiceConfig();
                 } else {
-                    service_config.setServiceConfig(configKey.getValue(), configData);
+                    service_config.setServiceConfig(configData);
                 }
                 service_Map.put(configKey, service_config);
                 getConfigsMap().put(serviceName, service_Map);
@@ -123,9 +138,9 @@ public class ZkDataContext {
                 ZkConfig method_config = method_Map.get(configKey);
                 method_config = Objects.isNull(method_config) ? new ZkConfig() : method_config;
                 if (Objects.isNull(configData)) {
-                    method_config.removeMethodConfig(configKey.getValue());
+                    method_config.removeMethodConfig(method);
                 } else {
-                    method_config.setMethodConfig(configKey.getValue(), configData);
+                    method_config.setMethodConfig(method, configData);
                 }
                 method_Map.put(configKey, method_config);
                 getConfigsMap().put(serviceName, method_Map);

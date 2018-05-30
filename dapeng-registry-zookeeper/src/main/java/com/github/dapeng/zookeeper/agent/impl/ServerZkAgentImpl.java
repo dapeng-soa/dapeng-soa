@@ -1,11 +1,11 @@
-package com.github.dapeng.zoomkeeper.agent.impl;
+package com.github.dapeng.zookeeper.agent.impl;
 
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.Service;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.github.dapeng.zoomkeeper.agent.ServerZkAgent;
-import com.github.dapeng.zoomkeeper.client.ServerZk;
+import com.github.dapeng.zookeeper.agent.ServerZkAgent;
+import com.github.dapeng.zookeeper.client.ServerZk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.github.dapeng.common.BaseConfig.*;
+import static com.github.dapeng.zookeeper.common.BaseConfig.*;
 
 /**
  * 服务端 zk agent 实现

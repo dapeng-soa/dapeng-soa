@@ -1,4 +1,4 @@
-package com.github.dapeng.common;
+package com.github.dapeng.zookeeper.common;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

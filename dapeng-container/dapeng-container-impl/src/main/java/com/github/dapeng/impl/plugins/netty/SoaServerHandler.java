@@ -2,8 +2,8 @@ package com.github.dapeng.impl.plugins.netty;
 
 
 import com.github.dapeng.api.Container;
-import com.github.dapeng.common.ConfigKey;
-import com.github.dapeng.common.ZkConfig;
+import com.github.dapeng.zookeeper.common.ConfigKey;
+import com.github.dapeng.zookeeper.common.ZkConfig;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
@@ -13,7 +13,7 @@ import com.github.dapeng.impl.filters.HeadFilter;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.ExceptionUtil;
-import com.github.dapeng.zoomkeeper.agent.impl.ServerZkAgentImpl;
+import com.github.dapeng.zookeeper.agent.impl.ServerZkAgentImpl;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;

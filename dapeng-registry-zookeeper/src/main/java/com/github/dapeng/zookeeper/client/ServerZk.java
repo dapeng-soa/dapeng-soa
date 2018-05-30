@@ -1,7 +1,7 @@
-package com.github.dapeng.zoomkeeper.client;
+package com.github.dapeng.zookeeper.client;
 
-import com.github.dapeng.common.BaseZKClient;
-import com.github.dapeng.common.ConfigKey;
+import com.github.dapeng.zookeeper.common.BaseZKClient;
+import com.github.dapeng.zookeeper.common.ConfigKey;
 import com.github.dapeng.core.FreqControlRule;
 
 import java.util.List;
@@ -22,13 +22,13 @@ public class ServerZk extends BaseZKClient {
      * 获得 服务配置
      *
      * @param serviceName  服务名
-     * @param configKey    配置枚举  @see com.github.dapeng.common.ConfigKey
+     * @param configKey    配置枚举  @see com.github.dapeng.zookeeper.common.ConfigKey
      * @param method       需要拿方法级别的配置则传入方法名
      * @param defaultValue 默认值
      * @return
      */
     public Object getServiceConfig(String serviceName, ConfigKey configKey, String method, Object defaultValue) {
-        return this.getZkDataContext().getConfigsMap().get(serviceName).get(configKey).getConfig(configKey.getValue(), method, defaultValue);
+        return this.getZkDataContext().getConfigsMap().get(serviceName).get(configKey).getConfig(method, defaultValue);
     }
 
 

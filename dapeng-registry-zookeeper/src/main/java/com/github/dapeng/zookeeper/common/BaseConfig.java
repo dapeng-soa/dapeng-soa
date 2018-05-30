@@ -1,4 +1,4 @@
-package com.github.dapeng.common;
+package com.github.dapeng.zookeeper.common;
 
 /**
  * 配置  信息

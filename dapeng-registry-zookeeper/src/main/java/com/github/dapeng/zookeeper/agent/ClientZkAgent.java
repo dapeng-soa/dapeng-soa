@@ -1,8 +1,8 @@
-package com.github.dapeng.zoomkeeper.agent;
+package com.github.dapeng.zookeeper.agent;
 
-import com.github.dapeng.common.ZkServiceInfo;
+import com.github.dapeng.zookeeper.common.ZkServiceInfo;
 import com.github.dapeng.core.RuntimeInstance;
-import com.github.dapeng.zoomkeeper.client.ClientZk;
+import com.github.dapeng.zookeeper.client.ClientZk;
 
 /**
  * 客户端 zkAgent

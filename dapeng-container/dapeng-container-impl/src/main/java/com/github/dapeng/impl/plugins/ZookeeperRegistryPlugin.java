@@ -8,8 +8,8 @@ import com.github.dapeng.api.Plugin;
 import com.github.dapeng.api.events.AppEvent;
 import com.github.dapeng.core.ServiceInfo;
 import com.github.dapeng.impl.container.DapengApplication;
-import com.github.dapeng.zoomkeeper.agent.ServerZkAgent;
-import com.github.dapeng.zoomkeeper.agent.impl.ServerZkAgentImpl;
+import com.github.dapeng.zookeeper.agent.ServerZkAgent;
+import com.github.dapeng.zookeeper.agent.impl.ServerZkAgentImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

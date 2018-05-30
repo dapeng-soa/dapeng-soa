@@ -1,8 +1,8 @@
-package com.github.dapeng.zoomkeeper.client;
+package com.github.dapeng.zookeeper.client;
 
-import com.github.dapeng.common.BaseZKClient;
-import com.github.dapeng.common.ConfigKey;
-import com.github.dapeng.common.ZkConfig;
+import com.github.dapeng.zookeeper.common.BaseZKClient;
+import com.github.dapeng.zookeeper.common.ConfigKey;
+import com.github.dapeng.zookeeper.common.ZkConfig;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.router.Route;
 import org.slf4j.Logger;
@@ -51,7 +51,7 @@ public class ClientZk extends BaseZKClient {
      * 获得 服务配置
      *
      * @param serviceName  服务名
-     * @param configKey    配置枚举  @see com.github.dapeng.common.ConfigKey
+     * @param configKey    配置枚举  @see com.github.dapeng.zookeeper.common.ConfigKey
      * @param method       需要拿方法级别的配置则传入方法名
      * @param defaultValue 默认值
      * @return
@@ -60,7 +60,7 @@ public class ClientZk extends BaseZKClient {
 
         HashMap<ConfigKey, ZkConfig> configHashMap = this.getZkDataContext().getConfigsMap().get(serviceName);
         if (Objects.nonNull(configHashMap) && Objects.nonNull(configHashMap.get(configKey))) {
-            return this.getZkDataContext().getConfigsMap().get(serviceName).get(configKey).getConfig(configKey.getValue(), method, defaultValue);
+            return this.getZkDataContext().getConfigsMap().get(serviceName).get(configKey).getConfig(method, defaultValue);
         } else {
             return defaultValue;
         }

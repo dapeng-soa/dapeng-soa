@@ -1,4 +1,4 @@
-package com.github.dapeng.utils;
+package com.github.dapeng.zookeeper.utils;
 
 /**
  *

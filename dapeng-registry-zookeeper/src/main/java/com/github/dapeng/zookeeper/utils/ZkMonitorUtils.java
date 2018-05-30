@@ -1,14 +1,18 @@
-package com.github.dapeng.zoomkeeper.monitor;
+package com.github.dapeng.zookeeper.utils;
 
-import com.github.dapeng.common.*;
 import com.github.dapeng.core.FreqControlRule;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.MasterHelper;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
-import com.github.dapeng.zoomkeeper.agent.impl.ServerZkAgentImpl;
+import com.github.dapeng.zookeeper.agent.impl.ServerZkAgentImpl;
+import com.github.dapeng.zookeeper.common.BaseZKClient;
+import com.github.dapeng.zookeeper.common.ConfigKey;
+import com.github.dapeng.zookeeper.common.ZkDataContext;
+import com.github.dapeng.zookeeper.common.ZkServiceInfo;
 import com.google.common.base.Splitter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.TreeCache;
 import org.apache.curator.framework.recipes.cache.TreeCacheEvent;
@@ -16,10 +20,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
-import static com.github.dapeng.common.BaseConfig.*;
+import static com.github.dapeng.zookeeper.common.BaseConfig.*;
+
 
 /**
  * zk 数据监听工具
@@ -201,7 +209,7 @@ public class ZkMonitorUtils {
                 if (Objects.isNull(itemKey)) {
                     logger.info("the config[{}] is not found in the ConfigKey,Please check whether the input is incorrect...", itemArr[0]);
                 } else {
-                    zkDataContext.setConfigData(ZkDataContext.ConfigLevel.GLOBAL, null, itemKey, itemArr[1]);
+                    zkDataContext.setConfigData(ZkDataContext.ConfigLevel.GLOBAL, null, null, itemKey, itemArr[1]);
                 }
             }
         } else {
@@ -211,6 +219,7 @@ public class ZkMonitorUtils {
             list.toArray(arr);
             String serviceName = arr[3];
 
+            ConfigKey configKey = null;
             //1.按';'分割不同功能配置
             String[] confArr = data.split("[;]");
             for (String itemConfig : confArr) {//格式: timeout/800ms,register:4001ms,modifySupplier:200ms
@@ -219,19 +228,18 @@ public class ZkMonitorUtils {
                 for (String item : itemConfigArr) {//格式: timeout/800ms register:4001ms  modifySupplier:200ms
                     if (item.contains("/")) {//服务级别
                         String[] itemArr = item.split("[/]");
-                        ConfigKey itemKey = ConfigKey.getConfigKeyByValue(itemArr[0]);
-                        if (Objects.isNull(itemKey)) {
+                        configKey = ConfigKey.getConfigKeyByValue(itemArr[0]);
+                        if (Objects.isNull(configKey)) {
                             logger.info("the config[{}] is not found in the ConfigKey,Please check whether the input is incorrect...", itemArr[0]);
                         } else {
-                            zkDataContext.setConfigData(ZkDataContext.ConfigLevel.SERVICE, serviceName, itemKey, itemArr[1]);
+                            zkDataContext.setConfigData(ZkDataContext.ConfigLevel.SERVICE, serviceName, null, configKey, itemArr[1]);
                         }
                     } else {//方法级别
                         String[] itemArr = item.split("[:]");
-                        ConfigKey itemKey = ConfigKey.getConfigKeyByValue(itemArr[0]);
-                        if (Objects.isNull(itemKey)) {
-                            logger.info("the config[{}] is not found in the ConfigKey,Please check whether the input is incorrect...", itemArr[0]);
+                        if (itemArr.length >= 2) {
+                            zkDataContext.setConfigData(ZkDataContext.ConfigLevel.METHOD, serviceName, itemArr[0], configKey, itemArr[1]);
                         } else {
-                            zkDataContext.setConfigData(ZkDataContext.ConfigLevel.METHOD, serviceName, itemKey, itemArr[1]);
+                            logger.info("the config[{}] is incorrect...", item);
                         }
                     }
                 }
@@ -251,12 +259,14 @@ public class ZkMonitorUtils {
         String routeData = getNodeData(treeCacheEvent);
         String serviceName = arr[3];
 
-        List<Route> zkRoutes;
-        try {
-            zkRoutes = RoutesExecutor.parseAll(routeData);
-        } catch (Exception e) {
-            zkRoutes = new ArrayList<>(16);
-            logger.error("parser routes 信息 失败，请检查路由规则写法是否正确!");
+        List<Route> zkRoutes = null;
+        if (StringUtils.isNotBlank(routeData)) {
+            try {
+                zkRoutes = RoutesExecutor.parseAll(routeData);
+            } catch (Exception e) {
+                zkRoutes = new ArrayList<>(16);
+                logger.error("parser routes 信息 失败，请检查路由规则写法是否正确!");
+            }
         }
 
         /*if (zkRoutes != null && !zkRoutes.isEmpty()) {
@@ -412,8 +422,8 @@ public class ZkMonitorUtils {
      * @param serviceKey   当前服务信息                eg com.github.user.UserService:1.0.0
      * @param instanceInfo 当前服务节点实例信息         eg  192.168.10.17:9081:1.0.0
      */
-    private static void checkIsMaster(List<RuntimeInstance> runtimeInstances, String serviceKey, String
-            instanceInfo) {
+    // TODO 判断是否Master 需要重写
+    private static void checkIsMaster(List<RuntimeInstance> runtimeInstances, String serviceKey, String instanceInfo) {
         if (runtimeInstances.size() <= 0) {
             return;
         }

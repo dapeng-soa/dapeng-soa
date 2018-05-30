@@ -1,8 +1,8 @@
-package com.github.dapeng.zoomkeeper.agent;
+package com.github.dapeng.zookeeper.agent;
 
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
-import com.github.dapeng.zoomkeeper.client.ServerZk;
+import com.github.dapeng.zookeeper.client.ServerZk;
 
 import java.util.Map;
 

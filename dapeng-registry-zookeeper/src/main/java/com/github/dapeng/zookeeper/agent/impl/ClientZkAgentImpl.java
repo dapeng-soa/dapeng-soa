@@ -1,10 +1,10 @@
-package com.github.dapeng.zoomkeeper.agent.impl;
+package com.github.dapeng.zookeeper.agent.impl;
 
-import com.github.dapeng.common.ZkServiceInfo;
+import com.github.dapeng.zookeeper.common.ZkServiceInfo;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.github.dapeng.zoomkeeper.agent.ClientZkAgent;
-import com.github.dapeng.zoomkeeper.client.ClientZk;
+import com.github.dapeng.zookeeper.agent.ClientZkAgent;
+import com.github.dapeng.zookeeper.client.ClientZk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
