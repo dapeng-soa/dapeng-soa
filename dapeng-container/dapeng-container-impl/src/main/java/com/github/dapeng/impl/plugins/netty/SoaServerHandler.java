@@ -2,6 +2,8 @@ package com.github.dapeng.impl.plugins.netty;
 
 
 import com.github.dapeng.api.Container;
+import com.github.dapeng.common.ConfigKey;
+import com.github.dapeng.common.ZkConfig;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
@@ -9,11 +11,9 @@ import com.github.dapeng.core.filter.*;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.filters.HeadFilter;
 import com.github.dapeng.org.apache.thrift.TException;
-import com.github.dapeng.registry.ConfigKey;
-import com.github.dapeng.registry.zookeeper.ServerZkAgentImpl;
-import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
 import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.ExceptionUtil;
+import com.github.dapeng.zoomkeeper.agent.impl.ServerZkAgentImpl;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -194,47 +194,32 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
      * @return
      */
     private long getTimeout(SoaHeader soaHeader) {
-        long timeout = 0L;
-        String serviceKey = soaHeader.getServiceName();
-        ZkServiceInfo configInfo = ServerZkAgentImpl.getInstance().getConfig(false, serviceKey);
+        String serviceName = soaHeader.getServiceName();
+        String version = soaHeader.getVersionName();
+        String method = soaHeader.getMethodName();
+        long defaultTimeout = SoaSystemEnvProperties.SOA_DEFAULT_TIMEOUT;
+        long maxTimeout = SoaSystemEnvProperties.SOA_MAX_TIMEOUT;
 
-        long envTimeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT;
-        if (null != configInfo) {
-            //方法级别
-            Long methodTimeOut = configInfo.timeConfig.serviceConfigs.get(soaHeader.getMethodName());
-            //服务配置
-            Long serviceTimeOut = configInfo.timeConfig.serviceConfigs.get(ConfigKey.TimeOut.getValue());
-            //全局
-            Long globalTimeOut = configInfo.timeConfig.globalConfig;
-
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(getClass().getSimpleName() + "::timeout request:serviceName:{},methodName:{}," +
-                                " methodTimeOut:{},serviceTimeOut:{},globalTimeOut:{}",
-                        soaHeader.getServiceName(), soaHeader.getMethodName(), methodTimeOut, serviceTimeOut, globalTimeOut);
-            }
-
-            Long timeoutConfig;
-
-            if (methodTimeOut != null) {
-                timeoutConfig = methodTimeOut;
-            } else if (serviceTimeOut != null) {
-                timeoutConfig = serviceTimeOut;
-            } else if (globalTimeOut != null) {
-                timeoutConfig = globalTimeOut;
-            } else {
-                timeoutConfig = null;
-            }
-
-            timeout = (timeoutConfig != null) ? timeoutConfig.longValue() : envTimeout;
+        Optional<Integer> invocationTimeout = getInvocationTimeout();
+        if (invocationTimeout.isPresent()) {
+            return invocationTimeout.get() >= maxTimeout ? maxTimeout : invocationTimeout.get();
         }
-        if (timeout == 0L) {
-            timeout = (envTimeout == 0) ? SoaSystemEnvProperties.SOA_DEFAULT_TIMEOUT : envTimeout;
+        Optional<Long> envTimeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT == 0 ? Optional.empty() : Optional.of(SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT);
+        if (envTimeout.isPresent()) {
+            return envTimeout.get() >= maxTimeout ? maxTimeout : envTimeout.get();
+        }
+        Optional<Long> zkTimeout = getZkTimeout(serviceName, version, method, ConfigKey.TimeOut);
+        if (zkTimeout.isPresent()) {
+            return zkTimeout.get() >= maxTimeout ? maxTimeout : zkTimeout.get();
         }
 
-        if (timeout > SoaSystemEnvProperties.SOA_MAX_TIMEOUT) {
-            timeout = SoaSystemEnvProperties.SOA_MAX_TIMEOUT;
-        }
-        return timeout;
+        //TODO  拿IDL的(暂没实现该参数)
+        /*Optional<Long> idlTimeout = getIdlTimeout(serviceName, version, method);
+        if (idlTimeout.isPresent()) {
+            return idlTimeout.get() >= maxTimeout ? maxTimeout : idlTimeout.get();
+        }*/
+
+        return defaultTimeout;
     }
 
     /**
@@ -254,44 +239,21 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
      * @return
      */
     private long getSlowServiceTime(SoaHeader soaHeader) {
-        long timeout = 0L;
-        String serviceKey = soaHeader.getServiceName();
-        ZkServiceInfo configInfo = ServerZkAgentImpl.getInstance().getConfig(false, serviceKey);
+        String serviceName = soaHeader.getServiceName();
+        String version = soaHeader.getVersionName();
+        String method = soaHeader.getMethodName();
+        long defaultTimeout = SoaSystemEnvProperties.SOA_DEFAULT_TIMEOUT;
+        long maxTimeout = SoaSystemEnvProperties.SOA_MAX_TIMEOUT;
 
-        long envSlowServiceTime = SoaSystemEnvProperties.SOA_MAX_PROCESS_TIME;
-        if (null != configInfo) {
-            //方法级别
-            Long methodSlowServiceTime = configInfo.slowServiceTimeConfig.serviceConfigs.get(soaHeader.getMethodName());
-            //服务配置
-            Long serviceSlowServiceTime = configInfo.slowServiceTimeConfig.serviceConfigs.get(ConfigKey.SlowServiceTime.getValue());
-            //全局
-            Long globalSlowServiceTime = configInfo.slowServiceTimeConfig.globalConfig;
-
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(getClass().getSimpleName() + "::slowServiceTime request:serviceName:{},methodName:{}," +
-                                " methodTimeOut:{},serviceTimeOut:{},globalTimeOut:{}",
-                        soaHeader.getServiceName(), soaHeader.getMethodName(), methodSlowServiceTime, serviceSlowServiceTime, globalSlowServiceTime);
-            }
-
-            Long slowServiceTimeConfig;
-
-            if (methodSlowServiceTime != null) {
-                slowServiceTimeConfig = methodSlowServiceTime;
-            } else if (serviceSlowServiceTime != null) {
-                slowServiceTimeConfig = serviceSlowServiceTime;
-            } else if (globalSlowServiceTime != null) {
-                slowServiceTimeConfig = globalSlowServiceTime;
-            } else {
-                slowServiceTimeConfig = null;
-            }
-
-            timeout = (slowServiceTimeConfig != null) ? slowServiceTimeConfig.longValue() : envSlowServiceTime;
+        Optional<Long> envTimeout = SoaSystemEnvProperties.SOA_MAX_PROCESS_TIME == 0 ? Optional.empty() : Optional.of(SoaSystemEnvProperties.SOA_MAX_PROCESS_TIME);
+        if (envTimeout.isPresent()) {
+            return envTimeout.get() >= maxTimeout ? maxTimeout : envTimeout.get();
         }
-        if (timeout == 0L) {
-            timeout = envSlowServiceTime;
+        Optional<Long> zkTimeout = getZkTimeout(serviceName, version, method, ConfigKey.SlowServiceTime);
+        if (zkTimeout.isPresent()) {
+            return zkTimeout.get() >= maxTimeout ? maxTimeout : zkTimeout.get();
         }
-
-        return timeout;
+        return defaultTimeout;
     }
 
 
@@ -388,5 +350,20 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                 attachErrorInfo(transactionContext, ExceptionUtil.convertToSoaException(e));
             }
         }
+    }
+
+    private Optional<Integer> getInvocationTimeout() {
+        InvocationContext context = InvocationContextImpl.Factory.currentInstance();
+        return context.timeout();
+    }
+
+    /**
+     * 获取 zookeeper timeout config
+     * method level -> service level -> global level
+     *
+     * @return
+     */
+    private Optional<Long> getZkTimeout(String serviceName, String version, String methodName, ConfigKey configKey) {
+        return Optional.of(ZkConfig.timeHelper((String) ServerZkAgentImpl.getServerZkAgentInstance().getZkClient().getServiceConfig(serviceName, configKey, methodName, null)));
     }
 }

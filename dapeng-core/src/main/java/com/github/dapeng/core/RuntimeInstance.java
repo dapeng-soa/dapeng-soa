@@ -14,17 +14,19 @@ public class RuntimeInstance {
     public final String version;
     public final String ip;
     public final int port;
+    public final String temp_seqid; //临时节点序号
 
     /**
      * 该服务实例在某客户端的调用计数
      */
     private AtomicInteger activeCount = new AtomicInteger(0);
 
-    public RuntimeInstance(String service, String ip, int port, String version) {
+    public RuntimeInstance(String service, String ip, int port, String version, String temp_seqid) {
         this.service = service;
         this.version = version;
         this.ip = ip;
         this.port = port;
+        this.temp_seqid = temp_seqid;
     }
 
     public AtomicInteger getActiveCount() {
@@ -47,6 +49,30 @@ public class RuntimeInstance {
      */
     public int decreaseActiveCount() {
         return activeCount.decrementAndGet();
+    }
+
+
+    public String getTemp_seqid() {
+        return temp_seqid;
+    }
+
+    /**
+     * ip:port:version
+     *
+     * @return
+     */
+    public String getInstanceInfo() {
+        return ip + ":" + port + ":" + version;
+    }
+
+
+    /**
+     * ip:port:version
+     *
+     * @return
+     */
+    public String getEqualStr() {
+        return ip + ":" + port + ":" + version + ":" + temp_seqid;
     }
 
     @Override

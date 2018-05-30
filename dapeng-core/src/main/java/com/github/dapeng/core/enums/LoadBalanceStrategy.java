@@ -41,17 +41,17 @@ public enum LoadBalanceStrategy {
     ConsistentHash;
 
     public static LoadBalanceStrategy findByValue(String value) {
-        switch (value) {
+        switch (value.toLowerCase()) {
             case "random":
                 return Random;
-            case "roundRobin":
+            case "roundrobin":
                 return RoundRobin;
-            case "leastActive":
+            case "leastactive":
                 return LeastActive;
-            case "consistentHash":
+            case "consistenthash":
                 return ConsistentHash;
             default:
-                return null;
+                return Random;
         }
     }
 

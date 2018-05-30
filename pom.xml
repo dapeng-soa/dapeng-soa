@@ -68,7 +68,6 @@
         <!--<module>dapeng-demo</module>-->
         <module>dapeng-counter</module>
         <module>dapeng-registry-zookeeper</module>
-        <module>dapeng-registry-zookeeper</module>
     </modules>
 
     <properties>
