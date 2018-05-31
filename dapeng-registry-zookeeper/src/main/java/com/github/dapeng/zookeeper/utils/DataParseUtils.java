@@ -6,20 +6,17 @@ import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.MasterHelper;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
-import com.github.dapeng.zookeeper.agent.impl.ServerZkAgentImpl;
 import com.github.dapeng.zookeeper.common.BaseZKClient;
 import com.github.dapeng.zookeeper.common.ConfigKey;
 import com.github.dapeng.zookeeper.common.ZkDataContext;
 import com.github.dapeng.zookeeper.common.ZkServiceInfo;
 import com.google.common.base.Splitter;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.cache.TreeCache;
 import org.apache.curator.framework.recipes.cache.TreeCacheEvent;
+import org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -27,102 +24,20 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static com.github.dapeng.zookeeper.common.BaseConfig.*;
-
+import static com.github.dapeng.zookeeper.utils.DataParseUtils.MonitorType.*;
 
 /**
- * zk 数据监听工具
+ * zk 数据解析工具类
  *
  * @author huyj
- * @Created 2018/5/25 9:48
+ * @Created 2018/5/30 19:19
  */
-public class ZkMonitorUtils {
-    private static final Logger logger = LoggerFactory.getLogger(ServerZkAgentImpl.class);
-
-    public static void MonitorZkData(String path, CuratorFramework curator, BaseZKClient.ZK_TYPE zk_type, BaseZKClient baseZKClient) throws Exception {
-        TreeCache treeCache = new TreeCache(curator, path);
-        treeCache.start();
-        treeCache.getListenable().addListener((curatorFramework, treeCacheEvent) -> {
-            if (Objects.isNull(treeCacheEvent.getData())) return;
-
-            String changePath = treeCacheEvent.getData().getPath();
-            switch (getChangePath(changePath)) {
-                //运行实例
-                case MONITOR_RUNTIME_PATH:
-                    baseZKClient.lockZkDataContext();
-                    System.out.println("----" + zk_type + "------ ZK [" + changePath + "] 开始同步 -------");
-                    runtimeInstanceChanged(treeCacheEvent, baseZKClient.zkDataContext(), zk_type, baseZKClient);
-                    System.out.println("----" + zk_type + "------ ZK [" + changePath + "] 同步结束 ------- ");
-                    baseZKClient.releaseZkDataContext();
-                    break;
-
-                //服务配置
-                case CONFIG_PATH:
-                    //  baseZKClient.lockZkDataContext();
-                    System.out.println("----" + zk_type + "------ ZK [" + changePath + "] 开始同步 -------");
-                    configsDataChanged(treeCacheEvent, baseZKClient.zkDataContext());
-                    System.out.println("----" + zk_type + "------ ZK [" + changePath + "] 同步结束 ------- ");
-                    // baseZKClient.releaseZkDataContext();
-                    break;
-
-                //路由配置
-                case MONITOR_ROUTES_PATH:
-                    //baseZKClient.lockZkDataContext();
-                    System.out.println("----" + zk_type + "------ ZK [" + changePath + "] 开始同步 -------");
-                    routesDataChanged(treeCacheEvent, baseZKClient.zkDataContext());
-                    System.out.println("----" + zk_type + "------ ZK [" + changePath + "] 同步结束 ------- ");
-                    // baseZKClient.releaseZkDataContext();
-                    break;
-
-                //限流规则
-                case MONITOR_FREQ_PATH:
-                    //baseZKClient.lockZkDataContext();
-                    System.out.println("----" + zk_type + "------ ZK [" + changePath + "] 开始同步 -------");
-                    freqsDataChanged(treeCacheEvent, baseZKClient.zkDataContext());
-                    System.out.println("----" + zk_type + "------ ZK [" + changePath + "] 同步结束 ------- ");
-                    //baseZKClient.releaseZkDataContext();
-                    break;
-
-                //白名单
-                case MONITOR_WHITELIST_PATH:
-                    //baseZKClient.lockZkDataContext();
-                    System.out.println("----" + zk_type + "------ ZK [" + changePath + "] 开始同步 -------");
-                    whiteListChanged(treeCacheEvent, baseZKClient.zkDataContext());
-                    System.out.println("----" + zk_type + "------ ZK [" + changePath + "] 同步结束 ------- ");
-                    //baseZKClient.releaseZkDataContext();
-                    break;
-
-                default:
-                    logger.info("The current path[{}] is not monitored....", getChangePath(changePath));
-                    break;
-            }
-        });
-    }
-
-
-    private static String getChangePath(String path) {
-        if (path.contains(MONITOR_RUNTIME_PATH)) {
-            return MONITOR_RUNTIME_PATH;
-        }
-        if (path.contains(CONFIG_PATH)) {
-            return CONFIG_PATH;
-        }
-        if (path.contains(MONITOR_ROUTES_PATH)) {
-            return MONITOR_ROUTES_PATH;
-        }
-        if (path.contains(MONITOR_FREQ_PATH)) {
-            return MONITOR_FREQ_PATH;
-        }
-        if (path.contains(MONITOR_WHITELIST_PATH)) {
-            return MONITOR_WHITELIST_PATH;
-        }
-        return path;
-    }
-
+public class DataParseUtils {
+    private static final Logger logger = LoggerFactory.getLogger(DataParseUtils.class);
 
     //zk 运行实例监听
-    private static void runtimeInstanceChanged(TreeCacheEvent treeCacheEvent, ZkDataContext zkDataContext, BaseZKClient.ZK_TYPE zk_type, BaseZKClient baseZKClient) throws Exception {
+    public static void runtimeInstanceChanged(MonitorType monitorType, String path, ZkDataContext zkDataContext, BaseZKClient.ZK_TYPE zk_type, BaseZKClient baseZKClient) {
         logger.info("the zk path[{}] has changed, then start sync zkDataContext[servicesMap,runtimeInstancesMap]..", RUNTIME_PATH);
-        String path = treeCacheEvent.getData().getPath();
         List list = Splitter.on("/").trimResults().omitEmptyStrings().splitToList(path);
         if (list.size() < 5) { //  /soa/runtime/services/XXXXService
             return;
@@ -141,9 +56,9 @@ public class ZkMonitorUtils {
 
         ZkServiceInfo zkServiceInfo = new ZkServiceInfo(serviceName, host, Integer.parseInt(port), versionName);
         RuntimeInstance runtimeInstance = new RuntimeInstance(serviceName, host, Integer.parseInt(port), versionName, temp_seqid);
-        switch (treeCacheEvent.getType()) {
+        switch (monitorType) {
             //添加数据
-            case NODE_ADDED:
+            case TYPE_ADDED:
                 List<RuntimeInstance> runtimeInstanceList = zkDataContext.getRuntimeInstancesMap().get(serviceName);
                 if (runtimeInstanceList == null) {
                     runtimeInstanceList = new ArrayList<RuntimeInstance>();
@@ -158,28 +73,25 @@ public class ZkMonitorUtils {
 
                 zkDataContext.getRuntimeInstancesMap().put(serviceName, runtimeInstanceList);
                 zkDataContext.getServicesMap().put(serviceName, zkServiceInfoList);
-                logger.info("NODE_ADDED：路径：[{}]，数据：[{}]，状态：[{}]", treeCacheEvent.getData().getPath(), getNodeData(treeCacheEvent), treeCacheEvent.getData().getStat());
                 break;
 
             //数据更新
-            case NODE_UPDATED:
+            case TYPE_UPDATED:
                 /*zkDataContext.getRuntimeInstancesMap().get(serviceName).add(runtimeInstance);
                 zkDataContext.getServicesMap().get(serviceName).add(zkServiceInfo);*/
                 logger.info("the path [{}] is protected.. it can not be update.", RUNTIME_PATH);
                 break;
 
             //数据删除
-            case NODE_REMOVED:
+            case TYPE_REMOVED:
                 zkDataContext.getRuntimeInstancesMap().get(serviceName).removeIf(item -> item.getEqualStr().equalsIgnoreCase(runtimeInstance.getEqualStr()));
                 zkDataContext.getServicesMap().get(serviceName).removeIf(item -> item.getZkServiceInfo().equalsIgnoreCase(zkServiceInfo.getZkServiceInfo()));
                 //zkDataContext.getServicesMap().get(serviceName).remove(zkServiceInfo);
-                logger.info("NODE_REMOVED：路径：[{}]，数据：[{}]，状态：[{}]", treeCacheEvent.getData().getPath(), getNodeData(treeCacheEvent), treeCacheEvent.getData().getStat());
                 break;
 
             default:
                 break;
         }
-        logger.info("***********the zk path[{}] has changed, sync zkDataContext[servicesMap,runtimeInstancesMap] succeed..", RUNTIME_PATH);
        /* if (zk_type == BaseZKClient.ZK_TYPE.CLIENT && zkDataContext.getRuntimeInstancesMap().get(serviceName).size() > 0) {
             System.out.println("客户端 RuntimeInstances 同步完成。。。" + zkDataContext.getRuntimeInstancesMap().get(serviceName));
         }*/
@@ -195,11 +107,8 @@ public class ZkMonitorUtils {
     }
 
     //zk config 监听
-    private static void configsDataChanged(TreeCacheEvent treeCacheEvent, ZkDataContext zkDataContext) throws UnsupportedEncodingException {
+    public static void configsDataChanged(String path, String data, ZkDataContext zkDataContext) {
         logger.info("the zk path[{}] has changed, then start sync zkDataContext[configsMap]..", CONFIG_PATH);
-        String path = treeCacheEvent.getData().getPath();
-        String data = getNodeData(treeCacheEvent);
-
         //全局配置，格式  timeout/800ms;loadBalance/random
         if (path.equalsIgnoreCase(CONFIG_PATH)) {
             String[] confArr = data.split("[;]");
@@ -214,7 +123,7 @@ public class ZkMonitorUtils {
             }
         } else {
             //服务级别和方法级别   timeout/800ms,register:4001ms,modifySupplier:200ms;loadBalance/leastActive,createSupplier:random,modifySupplier:roundRobin;
-            List list = Splitter.on("/").trimResults().omitEmptyStrings().splitToList(treeCacheEvent.getData().getPath());
+            List list = Splitter.on("/").trimResults().omitEmptyStrings().splitToList(path);
             String[] arr = new String[list.size()];
             list.toArray(arr);
             String serviceName = arr[3];
@@ -249,14 +158,11 @@ public class ZkMonitorUtils {
     }
 
     //zk 路由配置监听
-    private static void routesDataChanged(TreeCacheEvent treeCacheEvent, ZkDataContext zkDataContext) throws
-            UnsupportedEncodingException {
+    public static void routesDataChanged(String path, String routeData, ZkDataContext zkDataContext) {
         logger.info("the zk path[{}] has changed, then start sync zkDataContext[routesMap]..", ROUTES_PATH);
-        String path = treeCacheEvent.getData().getPath();
         List list = Splitter.on("/").trimResults().omitEmptyStrings().splitToList(path);
         String[] arr = new String[list.size()];
         list.toArray(arr);
-        String routeData = getNodeData(treeCacheEvent);
         String serviceName = arr[3];
 
         List<Route> zkRoutes = null;
@@ -280,22 +186,20 @@ public class ZkMonitorUtils {
     }
 
     //zk 限流配置监听
-    private static void freqsDataChanged(TreeCacheEvent treeCacheEvent, ZkDataContext zkDataContext) throws
-            UnsupportedEncodingException {
+    public static void freqsDataChanged(String path, String freqData, ZkDataContext zkDataContext) {
         logger.info("the zk path[{}] has changed, then start sync zkDataContext[freqRulesMap]..", FREQ_PATH);
-        String path = treeCacheEvent.getData().getPath();
-        List list = Splitter.on("/").trimResults().omitEmptyStrings().splitToList(path);
-        String[] arr = new String[list.size()];
-        list.toArray(arr);
-        String freqData = getNodeData(treeCacheEvent);
-        String serviceName = arr[3];
-
         List<FreqControlRule> freqControlRules = null;
         try {
             freqControlRules = doParseRuleData(freqData);
         } catch (Exception e) {
             logger.error("parser freq rule 信息 失败，请检查 rule data 写法是否正确!");
         }
+
+
+        List list = Splitter.on("/").trimResults().omitEmptyStrings().splitToList(path);
+        String[] arr = new String[list.size()];
+        list.toArray(arr);
+        String serviceName = arr[3];
 
        /* if (freqControlRules != null && !freqControlRules.isEmpty()) {
             zkDataContext.getFreqRulesMap().get(serviceName).clear();
@@ -308,30 +212,26 @@ public class ZkMonitorUtils {
     }
 
     //zk 白名单监听
-    private static void whiteListChanged(TreeCacheEvent treeCacheEvent, ZkDataContext zkDataContext) throws
-            UnsupportedEncodingException {
+    public static void whiteListChanged(MonitorType monitorType, String path, ZkDataContext zkDataContext) {
         logger.info("the zk path[{}] has changed, then start sync zkDataContext[whiteList]..", WHITELIST_PATH);
-        String path = treeCacheEvent.getData().getPath();
         List list = Splitter.on("/").trimResults().omitEmptyStrings().splitToList(path);
         String[] arr = new String[list.size()];
         list.toArray(arr);
         String serviceName = arr[3];
-        switch (treeCacheEvent.getType()) {
+        switch (monitorType) {
             //添加数据
-            case NODE_ADDED:
+            case TYPE_ADDED:
                 zkDataContext.getWhiteList().add(serviceName);
-                logger.info("NODE_ADDED：路径：[{}]，数据：[{}]，状态：[{}]", treeCacheEvent.getData().getPath(), getNodeData(treeCacheEvent), treeCacheEvent.getData().getStat());
                 break;
 
             //数据更新
-            case NODE_UPDATED:
+            case TYPE_UPDATED:
                 logger.info("the path [{}] is protected.. it can not be update.", WHITELIST_PATH);
                 break;
 
             //数据删除
-            case NODE_REMOVED:
+            case TYPE_REMOVED:
                 zkDataContext.getWhiteList().remove(serviceName);
-                logger.info("NODE_REMOVED：路径：[{}]，数据：[{}]，状态：[{}]", treeCacheEvent.getData().getPath(), getNodeData(treeCacheEvent), treeCacheEvent.getData().getStat());
                 break;
 
             default:
@@ -339,7 +239,6 @@ public class ZkMonitorUtils {
         }
         logger.info("***********the zk path[{}] has changed, sync zkDataContext[whiteList] succeed ..", WHITELIST_PATH);
     }
-
 
     /**
      * 解析 zookeeper 上 配置的 ruleData数据 为FreqControlRule对象
@@ -416,6 +315,56 @@ public class ZkMonitorUtils {
         return datasOfRule;
     }
 
+    public static String getChangePath(String path) {
+        if (path.contains(MONITOR_RUNTIME_PATH)) {
+            return MONITOR_RUNTIME_PATH;
+        }
+        if (path.contains(CONFIG_PATH)) {
+            return CONFIG_PATH;
+        }
+        if (path.contains(MONITOR_ROUTES_PATH)) {
+            return MONITOR_ROUTES_PATH;
+        }
+        if (path.contains(MONITOR_FREQ_PATH)) {
+            return MONITOR_FREQ_PATH;
+        }
+        if (path.contains(MONITOR_WHITELIST_PATH)) {
+            return MONITOR_WHITELIST_PATH;
+        }
+        return path;
+    }
+
+    public static MonitorType getChangeEventType(boolean isNative, TreeCacheEvent treeCacheEvent, Watcher.Event.EventType eventType) {
+        if (isNative) {
+            switch (eventType) {
+                case NodeCreated:
+                    return TYPE_ADDED;
+                case NodeDataChanged:
+                    return TYPE_UPDATED;
+                case NodeDeleted:
+                    return TYPE_REMOVED;
+                default:
+                    return TYPE_OTHER;
+            }
+        } else {
+            switch (treeCacheEvent.getType()) {
+                case NODE_ADDED:
+                    return TYPE_ADDED;
+                case NODE_UPDATED:
+                    return TYPE_UPDATED;
+                case NODE_REMOVED:
+                    return TYPE_REMOVED;
+                default:
+                    return TYPE_OTHER;
+            }
+        }
+    }
+
+
+    /*******EventType*************/
+    public enum MonitorType {
+        TYPE_ADDED, TYPE_UPDATED, TYPE_REMOVED, TYPE_OTHER
+    }
 
     /**
      * @param children     当前方法下的实例列表，        eg 127.0.0.1:9081:1.0.0,192.168.1.12:9081:1.0.0
@@ -454,12 +403,4 @@ public class ZkMonitorUtils {
         }
     }
 
-
-    private static String getNodeData(TreeCacheEvent treeCacheEvent) throws UnsupportedEncodingException {
-        if (Objects.isNull(treeCacheEvent.getData().getData())) {
-            return "null";
-        } else {
-            return new String(treeCacheEvent.getData().getData(), "utf-8");
-        }
-    }
 }

@@ -26,7 +26,7 @@ public class SoaSystemEnvProperties {
     //    private static final String KEY_SOA_ZOOKEEPER_REGISTRY_HOST = "soa.zookeeper.registry.host";
     private static final String KEY_SOA_ZOOKEEPER_FALLBACK_HOST = "soa.zookeeper.fallback.host";
     private static final String KEY_SOA_ZOOKEEPER_KAFKA_HOST = "soa.zookeeper.kafka.host";
-
+    private static final String KEY_SOA_ZOOKEEPER_NATIVE = "soa.zookeeper.native";
 
     private static final String KEY_SOA_CONTAINER_USETHREADPOOL = "soa.container.usethreadpool";
 
@@ -72,6 +72,8 @@ public class SoaSystemEnvProperties {
     public static final boolean SOA_ZOOKEEPER_MASTER_ISCONFIG = get(KEY_SOA_ZOOKEEPER_MASTER_HOST) != null;
     public static final String SOA_ZOOKEEPER_KAFKA_HOST = get(KEY_SOA_ZOOKEEPER_KAFKA_HOST, "127.0.0.1:2181");
     public static final String SOA_KAFKA_PORT = get(KEY_SOA_KAFKA_HOST, "127.0.0.1:9092");
+    public static final boolean SOA_ZOOKEEPER_NATIVE = Boolean.valueOf(get(KEY_SOA_ZOOKEEPER_NATIVE, "true"));
+
 
     public static final boolean SOA_CONTAINER_USETHREADPOOL = Boolean.valueOf(get(KEY_SOA_CONTAINER_USETHREADPOOL, Boolean.TRUE.toString()));
     public static final String SOA_CONTAINER_IP = get(KEY_SOA_CONTAINER_IP, IPUtils.containerIp());
@@ -102,7 +104,7 @@ public class SoaSystemEnvProperties {
     /**
      * 默认服务处理最大时间为10s, 超过即认为是慢服务
      */
-    public static final long SOA_MAX_PROCESS_TIME =  Long.valueOf(get(KEY_SOA_MAX_PROCESS_TIME, "10000"));
+    public static final long SOA_MAX_PROCESS_TIME = Long.valueOf(get(KEY_SOA_MAX_PROCESS_TIME, "10000"));
     public static final boolean SOA_SLOW_SERVICE_CHECK_ENABLE = Boolean.valueOf(get(KEY_SOA_SLOW_SERVICE_CHECK_ENABLE, "false"));
 
     /**
