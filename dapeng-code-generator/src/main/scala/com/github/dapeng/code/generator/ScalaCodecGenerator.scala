@@ -365,7 +365,8 @@ class ScalaCodecGenerator extends CodeGenerator {
           @throws[TException]
           override def apply(iface: {service.namespace}.{service.name}, args: echo_args): echo_result = <block>
 
-            echo_result("PONG")
+            echo_result(TransactionContext.Factory.currentInstance().getAttribute("container-threadPool-info"))
+            //echo_result("PONG")
 
           </block>
         </block>
@@ -484,7 +485,10 @@ class ScalaCodecGenerator extends CodeGenerator {
           override def apply(iface: {service.namespace}.{service.name}Async, args: echo_args): Future[echo_result] = <block>
 
             val result = scala.concurrent.Future <block>
-              echo_result("PONG");
+
+              //echo_result("PONG")
+              echo_result(TransactionContext.Factory.currentInstance().getAttribute("container-threadPool-info"))
+
             </block>
             result.tojava
 

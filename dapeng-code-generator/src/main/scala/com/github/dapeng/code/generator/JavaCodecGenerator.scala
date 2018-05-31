@@ -502,7 +502,10 @@ class JavaCodecGenerator extends CodeGenerator {
           @Override
           public echo_result apply(I iface, echo_args args) <block>
             echo_result result = new echo_result();
-            result.setSuccess("PONG");
+
+            String echoMsg = (String) TransactionContext.Factory.currentInstance().getAttribute("container-threadPool-info");
+            //result.setSuccess("PONG");
+            result.setSuccess(echoMsg);
             return result;
 
           </block>
@@ -651,7 +654,10 @@ class JavaCodecGenerator extends CodeGenerator {
           public CompletableFuture{lt}echo_result{gt} apply(I iface, echo_args args) <block>
             echo_result result = new echo_result();
             CompletableFuture{lt}echo_result{gt} resultFuture = new CompletableFuture{lt}{gt}();
-            result.setSuccess("PONG");
+
+            String echoMsg = (String) TransactionContext.Factory.currentInstance().getAttribute("container-threadPool-info");
+            result.setSuccess(echoMsg);
+            //result.setSuccess("PONG");
             resultFuture.complete(result);
             return resultFuture;
           </block>

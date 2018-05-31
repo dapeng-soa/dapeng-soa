@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import static com.github.dapeng.util.ExceptionUtil.convertToSoaException;
 import static io.netty.channel.ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE;
@@ -52,6 +53,18 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             Object request = parseSoaMsg(msg);
 
             final TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
+            String methodName = transactionContext.getHeader().getMethodName();
+
+            //将容器线程池信息 transactionContext 进行共享
+            if (methodName.equalsIgnoreCase("echo")) {
+                System.out.println("*************************************");
+                System.out.println("*************************************");
+                System.out.println("*************************************");
+                System.out.println("将容器线程池信息 transactionContext 进行共享");
+                System.out.println("*************************************");
+                System.out.println("*************************************");
+                transactionContext.setAttribute("container-threadPool-info", DumpUtil.dumpThreadPool((ThreadPoolExecutor) container.getDispatcher()));
+            }
             /**
              * use AttributeMap to share common data on different  ChannelHandlers
              */
@@ -94,9 +107,9 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
 
         // parser.service, version, method, header, bodyProtocol
         SoaHeader soaHeader = parser.parseSoaMessage(context);
-        ((TransactionContextImpl)context).setHeader(soaHeader);
+        ((TransactionContextImpl) context).setHeader(soaHeader);
 
-        updateTransactionCtx((TransactionContextImpl)context, soaHeader);
+        updateTransactionCtx((TransactionContextImpl) context, soaHeader);
 
         MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, context.sessionTid().orElse("0"));
 
