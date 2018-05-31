@@ -129,7 +129,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         Result<RESP> result = (Result<RESP>) filterContext.getAttribute("result");
         assert (result != null);
-        ClientZkAgentImpl.getClientZkAgentInstance().activeCountDecrement(new RuntimeInstance(invocationContext.serviceName(), invocationContext.calleeIp().get(), invocationContext.calleePort().get(), invocationContext.versionName(), null));
+        ClientZkAgentImpl.getClientZkAgentInstance().activeCountDecrement(new RuntimeInstance(invocationContext.serviceName(), SoaSystemEnvProperties.SOA_CONTAINER_IP, SoaSystemEnvProperties.SOA_CONTAINER_PORT, invocationContext.versionName(), null));
         if (result.success != null) {
             return result.success;
         } else {
