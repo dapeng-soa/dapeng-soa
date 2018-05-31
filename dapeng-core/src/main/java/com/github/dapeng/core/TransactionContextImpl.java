@@ -3,6 +3,8 @@ package com.github.dapeng.core;
 import com.github.dapeng.core.enums.CodecProtocol;
 import com.github.dapeng.core.helper.IPUtils;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -80,6 +82,8 @@ public class TransactionContextImpl implements TransactionContext {
      * 调用源
      */
     private Optional<String> callerMid = Optional.empty();
+
+    private Map<String, Object> attributes = new HashMap<>(16);
 
 
     /**
@@ -272,6 +276,16 @@ public class TransactionContextImpl implements TransactionContext {
     @Override
     public String calleeTid() {
         return calleeTid;
+    }
+
+    @Override
+    public void setAttribute(String key, Object value) {
+        attributes.put(key, value);
+    }
+
+    @Override
+    public Object getAttribute(String key) {
+        return attributes.get(key);
     }
 
     @Override

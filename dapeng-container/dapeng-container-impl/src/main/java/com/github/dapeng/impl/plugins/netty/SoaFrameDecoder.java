@@ -36,7 +36,8 @@ import static com.github.dapeng.core.SoaProtocolConstants.STX;
 public class SoaFrameDecoder extends ByteToMessageDecoder {
     private final static Logger LOGGER = LoggerFactory.getLogger(SoaFrameDecoder.class);
 
-    public SoaFrameDecoder() {
+    SoaFrameDecoder() {
+        ensureNotSharable();
         setSingleDecode(false);
     }
 
