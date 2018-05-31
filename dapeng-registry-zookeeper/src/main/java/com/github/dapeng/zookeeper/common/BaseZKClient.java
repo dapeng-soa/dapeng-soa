@@ -160,7 +160,7 @@ public class BaseZKClient {
     }
 
     public ZkDataContext getZkDataContext() {
-       /* while (sysncSemaphore == null) {
+        while (sysncSemaphore == null) {
             logger.info("正在同步ZK数据.....");
             try {
                 Thread.sleep(200);
@@ -172,7 +172,7 @@ public class BaseZKClient {
             sysncSemaphore.await();
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }*/
+        }
         return zkDataContext;
     }
 

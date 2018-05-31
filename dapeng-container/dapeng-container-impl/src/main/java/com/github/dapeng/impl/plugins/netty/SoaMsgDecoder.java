@@ -55,14 +55,8 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             final TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
             String methodName = transactionContext.getHeader().getMethodName();
 
-            //将容器线程池信息 transactionContext 进行共享
+            //TODO 将容器线程池信息 transactionContext 进行共享  echo实现方法时可以直接从 transactionContext中拿到 【数据库连接池信息暂时拿不到】
             if (methodName.equalsIgnoreCase("echo")) {
-                System.out.println("*************************************");
-                System.out.println("*************************************");
-                System.out.println("*************************************");
-                System.out.println("将容器线程池信息 transactionContext 进行共享");
-                System.out.println("*************************************");
-                System.out.println("*************************************");
                 transactionContext.setAttribute("container-threadPool-info", DumpUtil.dumpThreadPool((ThreadPoolExecutor) container.getDispatcher()));
             }
             /**
