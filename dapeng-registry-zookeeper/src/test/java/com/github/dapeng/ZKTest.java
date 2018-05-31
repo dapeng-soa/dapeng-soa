@@ -1,9 +1,5 @@
 package com.github.dapeng;
 
-import com.github.dapeng.zookeeper.agent.ClientZkAgent;
-import com.github.dapeng.zookeeper.agent.ServerZkAgent;
-import com.github.dapeng.zookeeper.agent.impl.ClientZkAgentImpl;
-import com.github.dapeng.zookeeper.agent.impl.ServerZkAgentImpl;
 import org.apache.zookeeper.*;
 import org.junit.Test;
 
@@ -16,13 +12,13 @@ public class ZKTest {
     public void CreateNodeTest() throws Exception {
 
 
-        ServerZkAgent serverZkAgent = ServerZkAgentImpl.getServerZkAgentInstance();
+       /* ServerZkAgent serverZkAgent = ServerZkAgentImpl.getServerZkAgentInstance();
         System.out.println(serverZkAgent.getZkClient().getZkDataContext());
         serverZkAgent.registerService("com.github.dapeng.hello.service.HelloService", "1.0.0");
 
         ClientZkAgent clientZkAgent = ClientZkAgentImpl.getClientZkAgentInstance();
         System.out.println(clientZkAgent.getZkClient().getZkDataContext());
-
+*/
         System.out.println("------------------------------------");
         /*CuratorFramework curatorFramework1 = ZKConnectFactory.getCuratorClient("127.0.0.1:2181");
         CuratorFramework curatorFramework2 = ZKConnectFactory.getCuratorClient("192.168.4.154:2181");
@@ -30,10 +26,10 @@ public class ZKTest {
         CuratorFramework curatorFramework4 = ZKConnectFactory.getCuratorClient("10.10.10.45:2181");
         CuratorFramework curatorFramework5 = ZKConnectFactory.getCuratorClient("192.168.4.154:2181");*/
 
-        while (true) {
+      /*  while (true) {
             System.out.println("*******************************");
             Thread.sleep(1000 * 10);
-        }
+        }*/
 
         /* System.out.println("********************************");*/
     }
