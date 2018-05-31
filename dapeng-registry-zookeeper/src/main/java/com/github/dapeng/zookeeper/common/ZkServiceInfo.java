@@ -69,6 +69,10 @@ public class ZkServiceInfo {
         return activeCount.incrementAndGet();
     }
 
+    public int decreaseActiveCount() {
+        return activeCount.decrementAndGet();
+    }
+
 
     public String getZkServiceInfo() {
         return serviceName + ":" + versionName + "[" + host + ":" + port + "]";

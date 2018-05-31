@@ -67,7 +67,7 @@ public class RuntimeInstance {
 
 
     /**
-     * ip:port:version
+     * ip:port:version:seq_id
      *
      * @return
      */

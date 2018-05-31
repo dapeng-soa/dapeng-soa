@@ -8,6 +8,7 @@ import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.SoaMessageParser;
+import com.github.dapeng.zookeeper.agent.impl.ClientZkAgentImpl;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import org.slf4j.Logger;
@@ -81,7 +82,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 try {
                     ByteBuf responseBuf = client.send(channel, seqid, requestBuf, timeout, service);
 
-                    Result<RESP> result = processResponse(responseBuf, responseSerializer,request);
+                    Result<RESP> result = processResponse(responseBuf, responseSerializer, request);
                     ctx.setAttribute("result", result);
 
                     onExit(ctx, getPrevChain(ctx));
@@ -128,6 +129,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         Result<RESP> result = (Result<RESP>) filterContext.getAttribute("result");
         assert (result != null);
+        ClientZkAgentImpl.getClientZkAgentInstance().activeCountDecrement(new RuntimeInstance(invocationContext.serviceName(), invocationContext.calleeIp().get(), invocationContext.calleePort().get(), invocationContext.versionName(), null));
         if (result.success != null) {
             return result.success;
         } else {
@@ -291,7 +293,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
         }
     }
 
-    private <RESP,REQ> Result<RESP> processResponse(ByteBuf responseBuf, BeanSerializer<RESP> responseSerializer, REQ request) {
+    private <RESP, REQ> Result<RESP> processResponse(ByteBuf responseBuf, BeanSerializer<RESP> responseSerializer, REQ request) {
         if (responseBuf == null) {
             return new Result<>(null, new SoaException(SoaCode.TimeOut));
         }

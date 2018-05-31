@@ -48,9 +48,16 @@ public interface ClientZkAgent {
 
 
     /**
-     * 服务调用 次数统计
+     * 服务调用 在途统计 +1
      *
      * @param runtimeInstance
      */
     void activeCountIncrement(RuntimeInstance runtimeInstance);
+
+    /**
+     * 服务调用 在途统计 -1
+     *
+     * @param runtimeInstance
+     */
+    void activeCountDecrement(RuntimeInstance runtimeInstance);
 }

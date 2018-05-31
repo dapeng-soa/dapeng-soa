@@ -82,7 +82,7 @@ public class ClientZkAgentImpl implements ClientZkAgent {
         //修改 zkDataContext RuntimeInstance
         List<RuntimeInstance> runtimeInstanceList = usingFallbackZk ? fallbackZk.getZkDataContext().getRuntimeInstancesMap().get(serviceName) : masterZk.getZkDataContext().getRuntimeInstancesMap().get(serviceName);
         for (RuntimeInstance instance : runtimeInstanceList) {
-            if (instance.getEqualStr().equalsIgnoreCase(runtimeInstance.getEqualStr())) {
+            if (instance.getInstanceInfo().equalsIgnoreCase(runtimeInstance.getInstanceInfo())) {
                 instance.increaseActiveCount();
             }
         }
@@ -98,6 +98,37 @@ public class ClientZkAgentImpl implements ClientZkAgent {
         for (ZkServiceInfo info : zkServiceInfoList) {
             if (info.getZkServiceInfo().equalsIgnoreCase(serviceInfo)) {
                 info.increaseActiveCount();
+            }
+        }
+        if (usingFallbackZk) {
+            fallbackZk.getZkDataContext().getServicesMap().put(serviceName, zkServiceInfoList);
+        } else {
+            masterZk.getZkDataContext().getServicesMap().put(serviceName, zkServiceInfoList);
+        }
+    }
+
+    @Override
+    public void activeCountDecrement(RuntimeInstance runtimeInstance) {
+        String serviceName = runtimeInstance.service;
+        //修改 zkDataContext RuntimeInstance
+        List<RuntimeInstance> runtimeInstanceList = usingFallbackZk ? fallbackZk.getZkDataContext().getRuntimeInstancesMap().get(serviceName) : masterZk.getZkDataContext().getRuntimeInstancesMap().get(serviceName);
+        for (RuntimeInstance instance : runtimeInstanceList) {
+            if (instance.getInstanceInfo().equalsIgnoreCase(runtimeInstance.getInstanceInfo())) {
+                instance.decreaseActiveCount();
+            }
+        }
+        if (usingFallbackZk) {
+            fallbackZk.getZkDataContext().getRuntimeInstancesMap().put(serviceName, runtimeInstanceList);
+        } else {
+            masterZk.getZkDataContext().getRuntimeInstancesMap().put(serviceName, runtimeInstanceList);
+        }
+
+        //修改 zkDataContext ServiceMap
+        String serviceInfo = serviceName + ":" + runtimeInstance.version + "[" + runtimeInstance.ip + ":" + runtimeInstance.port + "]";
+        List<ZkServiceInfo> zkServiceInfoList = usingFallbackZk ? fallbackZk.getZkDataContext().getServicesMap().get(serviceName) : masterZk.getZkDataContext().getServicesMap().get(serviceName);
+        for (ZkServiceInfo info : zkServiceInfoList) {
+            if (info.getZkServiceInfo().equalsIgnoreCase(serviceInfo)) {
+                info.decreaseActiveCount();
             }
         }
         if (usingFallbackZk) {

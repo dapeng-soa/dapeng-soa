@@ -1,22 +1,20 @@
 package com.github.dapeng.zookeeper.common;
 
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.github.dapeng.zookeeper.utils.ZkMonitorUtils;
+import com.github.dapeng.zookeeper.utils.CuratorMonitorUtils;
+import com.github.dapeng.zookeeper.utils.NativeMonitorUtils;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.api.BackgroundCallback;
-import org.apache.curator.framework.api.CuratorEvent;
-import org.apache.curator.framework.api.CuratorListener;
 import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 
-import static com.github.dapeng.zookeeper.common.BaseConfig.*;
+import static com.github.dapeng.zookeeper.common.BaseConfig.ZK_ROOT_PATH;
 
 /**
  * ZK客户端 基础封装
@@ -27,7 +25,9 @@ import static com.github.dapeng.zookeeper.common.BaseConfig.*;
 public class BaseZKClient {
     private static Logger logger = LoggerFactory.getLogger(BaseZKClient.class);
     private static String zkHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
+    private static boolean isNativeClient = SoaSystemEnvProperties.SOA_ZOOKEEPER_NATIVE;
     private static CuratorFramework curatorFramework;
+    private static ZooKeeper zooKeeper;
     private ZkDataContext zkDataContext;
 
     //数据同步信号量
@@ -38,11 +38,19 @@ public class BaseZKClient {
     public BaseZKClient(String host, boolean isMonitorFlag, ZK_TYPE zk_type) {
         zkHost = host;
         zkDataContext = new ZkDataContext();
-        curatorFramework = ZKConnectFactory.getCuratorClient(zkHost);
+        if (isNativeClient) {//是否使用原生连接
+            zooKeeper = ZKConnectFactory.getZooKeeperClient(zkHost);
+        } else {
+            curatorFramework = ZKConnectFactory.getCuratorClient(zkHost);
+        }
 
         if (isMonitorFlag) {
             try {
-                ZkMonitorUtils.MonitorZkData(ZK_ROOT_PATH, curatorFramework, zk_type, this);
+                if (isNativeClient) {
+                    NativeMonitorUtils.MonitorNativeZkData(ZK_ROOT_PATH, zooKeeper, zk_type, this);
+                } else {
+                    CuratorMonitorUtils.MonitorCuratorZkData(ZK_ROOT_PATH, curatorFramework, zk_type, this);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -51,19 +59,12 @@ public class BaseZKClient {
 
 
     /*****zk 客户端常用方法*********************************************************/
-    //创建普通节点
-    public String create(String path, byte[] data) throws Exception {
-        return recurseCreate(path, data, CreateMode.PERSISTENT);
-    }
-
     //递归创建节点
     private String recurseCreate(String path, byte[] data, CreateMode createMode) throws Exception {
-
         //持久节点  不能重复创建
         if (checkExists(path) && (createMode == CreateMode.PERSISTENT || createMode == CreateMode.PERSISTENT_SEQUENTIAL)) {
             return path;
         }
-
         int index = path.lastIndexOf("/");
         if (index > 0) {
             String parentPath = path.substring(0, index);
@@ -73,10 +74,15 @@ public class BaseZKClient {
             }
         }
         if (Objects.isNull(createMode)) {
-            return curatorFramework.create().forPath(path, data);
+            return isNativeClient ? zooKeeper.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT) : curatorFramework.create().forPath(path, data);
         } else {
-            return curatorFramework.create().withMode(createMode).forPath(path, data);
+            return isNativeClient ? zooKeeper.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, createMode) : curatorFramework.create().withMode(createMode).forPath(path, data);
         }
+    }
+
+    //创建普通节点
+    public String create(String path, byte[] data) throws Exception {
+        return recurseCreate(path, data, CreateMode.PERSISTENT);
     }
 
     //创建持久化节点
@@ -108,71 +114,36 @@ public class BaseZKClient {
     //设置节点数据
     public Stat setData(String path, byte[] data) throws Exception {
         // set data for the given node
-        return curatorFramework.setData().forPath(path, data);
+        return isNativeClient ? zooKeeper.setData(path, data, -1) : curatorFramework.setData().forPath(path, data);
     }
 
-
-    //异步 设置节点数据
-    public Stat setDataAsync(String path, byte[] data) throws Exception {
-        // this is one method of getting event/async notifications
-        CuratorListener listener = new CuratorListener() {
-            @Override
-            public void eventReceived(CuratorFramework client, CuratorEvent event) throws Exception {
-                // examine event for details
-                logger.info("[eventReceived] ==> CuratorListener listener path=[{}], EventType = [{}]", event.getPath(), event.getType());
-            }
-        };
-        curatorFramework.getCuratorListenable().addListener(listener);
-        // set data for the given node asynchronously. The completion
-        // notification
-        // is done via the CuratorListener.
-        return curatorFramework.setData().inBackground().forPath(path, data);
-    }
-
-
-    //异步 设置节点数据  设置回调
-    public Stat setDataAsyncWithCallback(BackgroundCallback callback, String path, byte[] data) throws Exception {
-        // this is another method of getting notification of an async completion
-        return curatorFramework.setData().inBackground(callback).forPath(path, data);
+    //设置节点数据
+    public byte[] getData(String path) throws Exception {
+        // set data for the given node
+        return isNativeClient ? zooKeeper.getData(path, true, null) : curatorFramework.getData().forPath(path);
     }
 
     // 删除节点
     public void delete(String path) throws Exception {
-        curatorFramework.delete().forPath(path);
+        if (isNativeClient) {
+            zooKeeper.delete(path, -1);
+        } else {
+            curatorFramework.delete().forPath(path);
+        }
     }
 
     // 删除节点
     private boolean checkExists(String path) throws Exception {
-        return Objects.nonNull(curatorFramework.checkExists().forPath(path));
-    }
-
-    //删除给定节点  并保证其完成
-    public void guaranteedDelete(String path) throws Exception {
-        curatorFramework.delete().guaranteed().forPath(path);
-    }
-
-
-    //获得自子节点  并可以触发setDataAsync中设置的CuratorListener
-    public List<String> watchedGetChildren(String path) throws Exception {
-        return curatorFramework.getChildren().watched().forPath(path);
-    }
-
-
-    //获得子节点  并设置Watcher
-    public List<String> watchedGetChildren(String path, Watcher watcher) throws Exception {
-        return curatorFramework.getChildren().usingWatcher(watcher).forPath(path);
-    }
-
-    /*public static void init() {
-        if (curatorFramework == null) {
-            ZKConnectFactory.getZkClient(zkHost);
+        if (isNativeClient) {
+            return Objects.nonNull(zooKeeper.exists(path, true));
+        } else {
+            return Objects.nonNull(curatorFramework.checkExists().forPath(path));
         }
-    }*/
+    }
 
     public void destroy() {
-        ZKConnectFactory.destroyCurator(zkHost);
+        ZKConnectFactory.destroyConnect(zkHost);
     }
-
 
     public void lockZkDataContext() {
         sysncSemaphore = new CountDownLatch(1);
@@ -189,7 +160,7 @@ public class BaseZKClient {
     }
 
     public ZkDataContext getZkDataContext() {
-        while (sysncSemaphore == null) {
+       /* while (sysncSemaphore == null) {
             logger.info("正在同步ZK数据.....");
             try {
                 Thread.sleep(200);
@@ -201,7 +172,7 @@ public class BaseZKClient {
             sysncSemaphore.await();
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
+        }*/
         return zkDataContext;
     }
 
