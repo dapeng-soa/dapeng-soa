@@ -178,6 +178,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             throw new SoaException("Err-Core-098", "服务 [ " + service + " ] 无可用实例:路由规则没有解析到可运行的实例");
             //return null;
         }
+        //负载均衡 选择可用服务实例
         RuntimeInstance inst = loadBalance(service, version, method, routedInstances);
         if (inst == null) {
             logger.error(getClass().getSimpleName() + "::findConnection[service:" + service + "], the instance is loss after loadBalance[{}]...");
@@ -185,7 +186,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             //return null;
         }
 
-        //调用次数加 1
+        //在途请求次数 +1
         //inst.getActiveCount().incrementAndGet();
         clientZkAgent.activeCountIncrement(inst);
 
@@ -282,7 +283,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * <p>
      * 最后校验一下,拿到的值不能超过系统设置的最大值
      *
-     * @param service
+     * @param serviceName
      * @param version
      * @param method
      * @return

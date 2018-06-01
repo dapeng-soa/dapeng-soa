@@ -63,6 +63,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
         invocationContext.versionName(version);
         invocationContext.methodName(method);
 
+
         Filter dispatchFilter = new Filter() {
             private FilterChain getPrevChain(FilterContext ctx) {
                 SharedChain chain = (SharedChain) ctx.getAttach(this, "chain");
@@ -129,7 +130,10 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         Result<RESP> result = (Result<RESP>) filterContext.getAttribute("result");
         assert (result != null);
+
+        //请求响应，在途请求次数 -1
         ClientZkAgentImpl.getClientZkAgentInstance().activeCountDecrement(new RuntimeInstance(invocationContext.serviceName(), SoaSystemEnvProperties.SOA_CONTAINER_IP, SoaSystemEnvProperties.SOA_CONTAINER_PORT, invocationContext.versionName(), null));
+
         if (result.success != null) {
             return result.success;
         } else {
@@ -260,7 +264,8 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
 
         assert (resultFuture != null);
-
+        //请求响应，在途请求次数 -1
+        ClientZkAgentImpl.getClientZkAgentInstance().activeCountDecrement(new RuntimeInstance(invocationContext.serviceName(), SoaSystemEnvProperties.SOA_CONTAINER_IP, SoaSystemEnvProperties.SOA_CONTAINER_PORT, invocationContext.versionName(), null));
 
         return resultFuture;
     }
