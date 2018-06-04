@@ -4,6 +4,7 @@ import com.github.dapeng.core.FreqControlRule;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.MasterHelper;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
 import com.github.dapeng.zookeeper.common.BaseZKClient;
@@ -159,8 +160,8 @@ public class DataParseUtils {
         if (baseZKClient.getClientType() == BaseZKClient.CLIENT_TYPE.SERVER) {
             logger.info("-------- zk runtimeinstance changed, To carry out the election.. ----------------");
             String serviceKey = serviceName + ":" + versionName;
-            String instanceInfo = host + ":" + port + ":" + versionName;
-            checkIsMaster(zkDataContext.getRuntimeInstancesMap().get(serviceName), serviceKey, instanceInfo);
+            //String instanceInfo = host + ":" + port + ":" + versionName;
+            checkIsMaster(zkDataContext.getRuntimeInstancesMap().get(serviceName), serviceKey, versionName);
         }
         baseZKClient.releaseZkDataContext();
     }
@@ -434,13 +435,13 @@ public class DataParseUtils {
      * @param instanceInfo 当前服务节点实例信息         eg  192.168.10.17:9081:1.0.0
      */
     // TODO 判断是否Master 需要重写
-    private static void checkIsMaster(List<RuntimeInstance> runtimeInstances, String serviceKey, String instanceInfo) {
+    private static void checkIsMaster(List<RuntimeInstance> runtimeInstances, String serviceKey, String versionName) {
         if (runtimeInstances != null && runtimeInstances.size() <= 0) {
             return;
         }
         /**
          * 排序规则
-         * a: 192.168.100.1:9081:1.0.0:0000000022
+         * a: 192.168.101.1:9081:1.0.0:0000000022
          * b: 192.168.100.1:9081:1.0.0:0000000014
          * 根据 lastIndexOf :  之后的数字进行排序，由小到大，每次取zk临时有序节点中的序列最小的节点作为master
          */
@@ -451,6 +452,8 @@ public class DataParseUtils {
                 return int1 - int2;
             });
 
+            //注册容器IP:port:version
+            String instanceInfo = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
             RuntimeInstance firstInstance = runtimeInstances.get(0);
             logger.info("serviceInfo firstNode {}", firstInstance.getInstanceInfo());
             if (firstInstance.getInstanceInfo().equals(instanceInfo)) {
