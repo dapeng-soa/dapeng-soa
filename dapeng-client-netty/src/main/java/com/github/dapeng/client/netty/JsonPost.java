@@ -101,8 +101,11 @@ public class JsonPost {
             jsonResponse = result.equals("{}") ? "{\"status\":1}" : result.substring(0, result.lastIndexOf('}')) + ",\"status\":1}";
 
         } catch (SoaException e) {
-
-            LOGGER.error(e.getMsg(), e);
+            if (e.getCode().startsWith("Err-Core")) {
+                LOGGER.error(e.getMsg(), e);
+            } else {
+                LOGGER.error(e.getMsg());
+            }
             if (doNotThrowError) {
                 jsonResponse = String.format("{\"responseCode\":\"%s\", \"responseMsg\":\"%s\", \"success\":\"%s\", \"status\":0}", e.getCode(), e.getMsg(), "{}");
             } else {
