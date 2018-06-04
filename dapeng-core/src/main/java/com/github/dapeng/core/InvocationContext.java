@@ -225,6 +225,11 @@ public interface InvocationContext {
          * @return
          */
         LoadBalanceStrategy loadBalanceStrategy();
+
+        /**
+         * responseCode
+         */
+        String responseCode();
     }
 
     @Deprecated
