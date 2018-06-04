@@ -98,7 +98,7 @@ public class ZKConnectFactory {
              * 当会话真正创建完毕后，Zookeeper服务器会向客户端发送一个事件通知
              */
             ZooKeeper zkClient = new ZooKeeper(host, SESSION_TIMEOUT_MS, (event) -> {
-                System.out.println("回调watcher实例： 路径" + event.getPath() + " 类型：" + event.getType());
+                //System.out.println("回调watcher实例： 路径" + event.getPath() + " 类型：" + event.getType());
                 if (event.getState() == Watcher.Event.KeeperState.SyncConnected) {
                     semaphore.countDown();
                 }

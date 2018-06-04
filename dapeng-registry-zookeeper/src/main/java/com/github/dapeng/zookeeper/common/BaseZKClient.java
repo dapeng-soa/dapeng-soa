@@ -2,11 +2,10 @@ package com.github.dapeng.zookeeper.common;
 
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.zookeeper.utils.CuratorMonitorUtils;
+import com.github.dapeng.zookeeper.utils.DataParseUtils;
 import com.github.dapeng.zookeeper.utils.NativeMonitorUtils;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +14,8 @@ import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 
 import static com.github.dapeng.zookeeper.common.BaseConfig.ZK_ROOT_PATH;
+
+;
 
 /**
  * ZK客户端 基础封装
@@ -29,13 +30,15 @@ public class BaseZKClient {
     private static CuratorFramework curatorFramework;
     private static ZooKeeper zooKeeper;
     private ZkDataContext zkDataContext;
+    private CLIENT_TYPE clientType;
 
     //数据同步信号量
     private CountDownLatch sysncSemaphore = null;
     //private Semaphore sysncSemaphore = new Semaphore(1, false);
 
 
-    public BaseZKClient(String host, boolean isMonitorFlag, ZK_TYPE zk_type) {
+    public BaseZKClient(String host, boolean isMonitorFlag, CLIENT_TYPE client_type) {
+        clientType = client_type;
         zkHost = host;
         zkDataContext = new ZkDataContext();
         if (isNativeClient) {//是否使用原生连接
@@ -47,9 +50,9 @@ public class BaseZKClient {
         if (isMonitorFlag) {
             try {
                 if (isNativeClient) {
-                    NativeMonitorUtils.MonitorNativeZkData(ZK_ROOT_PATH, zooKeeper, zk_type, this);
+                    NativeMonitorUtils.MonitorNativeZkData(ZK_ROOT_PATH, zooKeeper, this);
                 } else {
-                    CuratorMonitorUtils.MonitorCuratorZkData(ZK_ROOT_PATH, curatorFramework, zk_type, this);
+                    CuratorMonitorUtils.MonitorCuratorZkData(ZK_ROOT_PATH, curatorFramework, this);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -73,11 +76,14 @@ public class BaseZKClient {
                 recurseCreate(parentPath, null, CreateMode.PERSISTENT);
             }
         }
-        if (Objects.isNull(createMode)) {
-            return isNativeClient ? zooKeeper.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT) : curatorFramework.create().forPath(path, data);
+
+        createMode = Objects.isNull(createMode) ? CreateMode.PERSISTENT : createMode;
+        if (isNativeClient) {
+            zooKeeper.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, createMode, createNodeCallback, data);
         } else {
-            return isNativeClient ? zooKeeper.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, createMode) : curatorFramework.create().withMode(createMode).forPath(path, data);
+            curatorFramework.create().withMode(createMode).forPath(path, data);
         }
+        return path;
     }
 
     //创建普通节点
@@ -117,10 +123,21 @@ public class BaseZKClient {
         return isNativeClient ? zooKeeper.setData(path, data, -1) : curatorFramework.setData().forPath(path, data);
     }
 
-    //设置节点数据
-    public byte[] getData(String path) throws Exception {
-        // set data for the given node
-        return isNativeClient ? zooKeeper.getData(path, true, null) : curatorFramework.getData().forPath(path);
+    //获取节点数据
+    public String getData(String path) {
+        try {
+            // set data for the given node
+            if (isNativeClient ? Objects.isNull(zooKeeper.exists(path, false)) : Objects.isNull(curatorFramework.checkExists().forPath(path))) {
+                return "";
+            }
+            byte[] data = isNativeClient ? zooKeeper.getData(path, false, null) : curatorFramework.getData().forPath(path);
+            if (Objects.nonNull(data)) {
+                return new String(data, "utf-8");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "";
     }
 
     // 删除节点
@@ -132,14 +149,42 @@ public class BaseZKClient {
         }
     }
 
-    // 删除节点
+    // 检查节点是否存在
     private boolean checkExists(String path) throws Exception {
         if (isNativeClient) {
             return Objects.nonNull(zooKeeper.exists(path, true));
+           /* System.out.println("位置：BaseZKClient.checkExists ==> ***********"+path);
+            return Objects.nonNull(zooKeeper.exists(path, watchedEvent -> {
+                logger.info(" exists  节点 [{}] 发生变化[{}]，正在同步信息....", watchedEvent.getPath(), watchedEvent.getType());
+                DataParseUtils.MonitorType eventType = DataParseUtils.getChangeEventType(true, null, watchedEvent.getType());
+            }));*/
         } else {
             return Objects.nonNull(curatorFramework.checkExists().forPath(path));
         }
     }
+
+
+    /**
+     * 异步添加持久化节点回调方法
+     */
+    private AsyncCallback.StringCallback createNodeCallback = (rc, targetPath, ctx, createPath) -> {
+        switch (KeeperException.Code.get(rc)) {
+            case CONNECTIONLOSS:
+                logger.info("创建节点:{},连接断开，重新创建", createPath);
+                break;
+            case OK:
+                logger.info("创建节点:{},成功", createPath);
+                //NativeMonitorUtils.parseZkData(zooKeeper, createPath, this, DataParseUtils.MonitorType.TYPE_ADDED, type);
+                NativeMonitorUtils.registerZkWatcher(createPath, zooKeeper, DataParseUtils.MonitorType.TYPE_ADDED, this);
+                break;
+            case NODEEXISTS:
+                logger.info("创建节点:{},已存在", createPath);
+                break;
+            default:
+                logger.info("创建节点:{},失败", createPath);
+        }
+    };
+
 
     public void destroy() {
         ZKConnectFactory.destroyConnect(zkHost);
@@ -176,9 +221,12 @@ public class BaseZKClient {
         return zkDataContext;
     }
 
+    public CLIENT_TYPE getClientType() {
+        return clientType;
+    }
 
-    /**********ZK Client type  enum**********/
-    public enum ZK_TYPE {
+    /**********ZK Client Type **********/
+    public enum CLIENT_TYPE {
         CLIENT, SERVER
     }
 }

@@ -1,10 +1,13 @@
 package com.github.dapeng.zookeeper.client;
 
+import com.github.dapeng.core.FreqControlRule;
 import com.github.dapeng.zookeeper.common.BaseZKClient;
 import com.github.dapeng.zookeeper.common.ConfigKey;
-import com.github.dapeng.core.FreqControlRule;
+import com.github.dapeng.zookeeper.common.ZkConfig;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 服务端ZK
@@ -14,7 +17,7 @@ import java.util.List;
  */
 public class ServerZk extends BaseZKClient {
     public ServerZk(String zkHost) {
-        super(zkHost, true, ZK_TYPE.SERVER);
+        super(zkHost, true, CLIENT_TYPE.SERVER);
     }
 
 
@@ -28,7 +31,12 @@ public class ServerZk extends BaseZKClient {
      * @return
      */
     public Object getServiceConfig(String serviceName, ConfigKey configKey, String method, Object defaultValue) {
-        return this.getZkDataContext().getConfigsMap().get(serviceName).get(configKey).getConfig(method, defaultValue);
+        HashMap<ConfigKey, ZkConfig> configHashMap = this.getZkDataContext().getConfigsMap().get(serviceName);
+        if (Objects.nonNull(configHashMap) && Objects.nonNull(configHashMap.get(configKey))) {
+            return this.getZkDataContext().getConfigsMap().get(serviceName).get(configKey).getConfig(method, defaultValue);
+        } else {
+            return defaultValue;
+        }
     }
 
 

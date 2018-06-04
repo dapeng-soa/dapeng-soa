@@ -22,7 +22,7 @@ public class ClientZk extends BaseZKClient {
     private static final Logger logger = LoggerFactory.getLogger(ClientZk.class);
 
     public ClientZk(String zkHost) {
-        super(zkHost, true, ZK_TYPE.CLIENT);
+        super(zkHost, true, CLIENT_TYPE.CLIENT);
     }
 
     /**

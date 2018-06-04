@@ -35,8 +35,67 @@ import static com.github.dapeng.zookeeper.utils.DataParseUtils.MonitorType.*;
 public class DataParseUtils {
     private static final Logger logger = LoggerFactory.getLogger(DataParseUtils.class);
 
+
+    /**
+     * ZK 数据同步 缓存
+     *
+     * @param path
+     * @param data
+     * @param baseZKClient
+     * @param monitorType
+     */
+    public static void syncZkData(String changePath, String data, BaseZKClient baseZKClient, MonitorType monitorType, String zkType) {
+        String targetPath = DataParseUtils.getTargetPath(changePath);
+        switch (targetPath) {
+            //运行实例
+            case MONITOR_RUNTIME_PATH:
+                //baseZKClient.lockZkDataContext();
+                DataParseUtils.runtimeInstanceChanged(monitorType, changePath, baseZKClient.zkDataContext(), baseZKClient);
+                logger.info("--[{}]:[{}]:[{}] 数据同步完成...", zkType, baseZKClient.getClientType(), changePath);
+                //baseZKClient.releaseZkDataContext();
+                break;
+
+            //服务配置
+            case CONFIG_PATH:
+                //  baseZKClient.lockZkDataContext();
+                DataParseUtils.configsDataChanged(changePath, data, baseZKClient.zkDataContext());
+                logger.info("--[{}]:[{}]:[{}] 数据同步完成...", zkType, baseZKClient.getClientType(), changePath);
+                // baseZKClient.releaseZkDataContext();
+                break;
+
+            //路由配置
+            case MONITOR_ROUTES_PATH:
+                //baseZKClient.lockZkDataContext();
+                DataParseUtils.routesDataChanged(changePath, data, baseZKClient.zkDataContext());
+                logger.info("--[{}]:[{}]:[{}] 数据同步完成...", zkType, baseZKClient.getClientType(), changePath);
+                // baseZKClient.releaseZkDataContext();
+                break;
+
+            //限流规则
+            case MONITOR_FREQ_PATH:
+                //baseZKClient.lockZkDataContext();
+                DataParseUtils.freqsDataChanged(changePath, data, baseZKClient.zkDataContext());
+                logger.info("--[{}]:[{}]:[{}] 数据同步完成...", zkType, baseZKClient.getClientType(), changePath);
+                //baseZKClient.releaseZkDataContext();
+                break;
+
+            //白名单
+            case MONITOR_WHITELIST_PATH:
+                //baseZKClient.lockZkDataContext();
+                DataParseUtils.whiteListChanged(monitorType, changePath, baseZKClient.zkDataContext());
+                logger.info("--[{}]:[{}]:[{}] 数据同步完成...", zkType, baseZKClient.getClientType(), changePath);
+                //baseZKClient.releaseZkDataContext();
+                break;
+
+            default:
+                logger.info("The current path[{}] is not monitored....", targetPath);
+                break;
+        }
+    }
+
+
     //zk 运行实例监听
-    public static void runtimeInstanceChanged(MonitorType monitorType, String path, ZkDataContext zkDataContext, BaseZKClient.ZK_TYPE zk_type, BaseZKClient baseZKClient) {
+    private static void runtimeInstanceChanged(MonitorType monitorType, String path, ZkDataContext zkDataContext, BaseZKClient baseZKClient) {
         logger.info("the zk path[{}] has changed, then start sync zkDataContext[servicesMap,runtimeInstancesMap]..", RUNTIME_PATH);
         List list = Splitter.on("/").trimResults().omitEmptyStrings().splitToList(path);
         if (list.size() < 5) { //  /soa/runtime/services/XXXXService
@@ -97,7 +156,7 @@ public class DataParseUtils {
         }*/
 
         //服务器端 要选举
-        if (zk_type == BaseZKClient.ZK_TYPE.SERVER) {
+        if (baseZKClient.getClientType() == BaseZKClient.CLIENT_TYPE.SERVER) {
             logger.info("-------- zk runtimeinstance changed, To carry out the election.. ----------------");
             String serviceKey = serviceName + ":" + versionName;
             String instanceInfo = host + ":" + port + ":" + versionName;
@@ -107,7 +166,7 @@ public class DataParseUtils {
     }
 
     //zk config 监听
-    public static void configsDataChanged(String path, String data, ZkDataContext zkDataContext) {
+    private static void configsDataChanged(String path, String data, ZkDataContext zkDataContext) {
         logger.info("the zk path[{}] has changed, then start sync zkDataContext[configsMap]..", CONFIG_PATH);
         //全局配置，格式  timeout/800ms;loadBalance/random
         if (path.equalsIgnoreCase(CONFIG_PATH)) {
@@ -158,7 +217,7 @@ public class DataParseUtils {
     }
 
     //zk 路由配置监听
-    public static void routesDataChanged(String path, String routeData, ZkDataContext zkDataContext) {
+    private static void routesDataChanged(String path, String routeData, ZkDataContext zkDataContext) {
         logger.info("the zk path[{}] has changed, then start sync zkDataContext[routesMap]..", ROUTES_PATH);
         List list = Splitter.on("/").trimResults().omitEmptyStrings().splitToList(path);
         String[] arr = new String[list.size()];
@@ -186,16 +245,16 @@ public class DataParseUtils {
     }
 
     //zk 限流配置监听
-    public static void freqsDataChanged(String path, String freqData, ZkDataContext zkDataContext) {
+    private static void freqsDataChanged(String path, String freqData, ZkDataContext zkDataContext) {
         logger.info("the zk path[{}] has changed, then start sync zkDataContext[freqRulesMap]..", FREQ_PATH);
         List<FreqControlRule> freqControlRules = null;
-        try {
-            freqControlRules = doParseRuleData(freqData);
-        } catch (Exception e) {
-            logger.error("parser freq rule 信息 失败，请检查 rule data 写法是否正确!");
+        if (StringUtils.isNotBlank(freqData)) {
+            try {
+                freqControlRules = doParseRuleData(freqData);
+            } catch (Exception e) {
+                logger.error("parser freq rule 信息 失败，请检查 rule data 写法是否正确!");
+            }
         }
-
-
         List list = Splitter.on("/").trimResults().omitEmptyStrings().splitToList(path);
         String[] arr = new String[list.size()];
         list.toArray(arr);
@@ -212,7 +271,7 @@ public class DataParseUtils {
     }
 
     //zk 白名单监听
-    public static void whiteListChanged(MonitorType monitorType, String path, ZkDataContext zkDataContext) {
+    private static void whiteListChanged(MonitorType monitorType, String path, ZkDataContext zkDataContext) {
         logger.info("the zk path[{}] has changed, then start sync zkDataContext[whiteList]..", WHITELIST_PATH);
         List list = Splitter.on("/").trimResults().omitEmptyStrings().splitToList(path);
         String[] arr = new String[list.size()];
@@ -315,7 +374,7 @@ public class DataParseUtils {
         return datasOfRule;
     }
 
-    public static String getChangePath(String path) {
+    public static String getTargetPath(String path) {
         if (path.contains(MONITOR_RUNTIME_PATH)) {
             return MONITOR_RUNTIME_PATH;
         }
@@ -339,6 +398,9 @@ public class DataParseUtils {
             switch (eventType) {
                 case NodeCreated:
                     return TYPE_ADDED;
+                case NodeChildrenChanged:
+                    return TYPE_CHILDCHANGED;
+                //return TYPE_ADDED;
                 case NodeDataChanged:
                     return TYPE_UPDATED;
                 case NodeDeleted:
@@ -363,7 +425,7 @@ public class DataParseUtils {
 
     /*******EventType*************/
     public enum MonitorType {
-        TYPE_ADDED, TYPE_UPDATED, TYPE_REMOVED, TYPE_OTHER
+        TYPE_ADDED, TYPE_UPDATED, TYPE_REMOVED, TYPE_OTHER, TYPE_CHILDCHANGED
     }
 
     /**
@@ -373,7 +435,7 @@ public class DataParseUtils {
      */
     // TODO 判断是否Master 需要重写
     private static void checkIsMaster(List<RuntimeInstance> runtimeInstances, String serviceKey, String instanceInfo) {
-        if (runtimeInstances.size() <= 0) {
+        if (runtimeInstances != null && runtimeInstances.size() <= 0) {
             return;
         }
         /**
