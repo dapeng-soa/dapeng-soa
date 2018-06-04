@@ -77,6 +77,11 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
                     .forEach(s -> unRegisterService(s.serviceName, s.version));
         });
         registryAgent.stop();
+        try {
+            Thread.sleep(4000);
+        } catch (InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
     }
 
     public void registerService(String serviceName, String version) {
