@@ -31,8 +31,9 @@ public class SoaConnectionImpl extends SoaBaseConnection {
 
         SoaMessageBuilder<REQ> builder = new SoaMessageBuilder<>();
 
-        SoaHeader header = SoaHeaderHelper.buildHeader(service, version, method);
         try {
+            SoaHeader header = SoaHeaderHelper.buildHeader(service, version, method);
+
             ByteBuf buf = builder.buffer(requestBuf)
                     .header(header)
                     .body(request, requestSerializer)
@@ -41,6 +42,7 @@ public class SoaConnectionImpl extends SoaBaseConnection {
             return buf;
         } catch (TException e) {
             LOGGER.error(e.getMessage(), e);
+            requestBuf.release();
             throw new SoaException(e);
         }
     }

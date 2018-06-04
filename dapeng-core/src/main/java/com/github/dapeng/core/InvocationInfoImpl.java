@@ -40,12 +40,14 @@ public class InvocationInfoImpl implements InvocationContext.InvocationInfo {
     private  int calleeTime1;
     private  int calleeTime2;
     private long serviceTime;
+    private String responseCode;
     private  LoadBalanceStrategy loadBalanceStrategy;
 
     public InvocationInfoImpl(String calleeTid, String calleeIp,
                               int calleePort, String calleeMid,
                               int calleeTime1, int calleeTime2,
-                              long serviceTime, LoadBalanceStrategy loadBalanceStrategy) {
+                              long serviceTime, String responseCode,
+                              LoadBalanceStrategy loadBalanceStrategy) {
         this.calleeTid = calleeTid;
         this.calleeIp = calleeIp;
         this.calleePort = calleePort;
@@ -53,6 +55,7 @@ public class InvocationInfoImpl implements InvocationContext.InvocationInfo {
         this.calleeTime1 = calleeTime1;
         this.calleeTime2 = calleeTime2;
         this.serviceTime = serviceTime;
+        this.responseCode = responseCode;
         this.loadBalanceStrategy = loadBalanceStrategy;
     }
 
@@ -78,6 +81,10 @@ public class InvocationInfoImpl implements InvocationContext.InvocationInfo {
 
     public void calleeTime2(int calleeTime2) {
         this.calleeTime2 = calleeTime2;
+    }
+
+    public void responseCode(String responseCode) {
+        this.responseCode = responseCode;
     }
 
     public void loadBalanceStrategy(LoadBalanceStrategy loadBalanceStrategy) {
@@ -126,6 +133,11 @@ public class InvocationInfoImpl implements InvocationContext.InvocationInfo {
     @Override
     public LoadBalanceStrategy loadBalanceStrategy() {
         return loadBalanceStrategy;
+    }
+
+    @Override
+    public String responseCode() {
+        return responseCode;
     }
 
     public void serviceTime(long serviceTime){

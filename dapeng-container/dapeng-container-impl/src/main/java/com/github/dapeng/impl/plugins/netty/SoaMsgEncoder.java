@@ -91,16 +91,15 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     messageProcessor.writeMessageEnd();
                     transport.flush();
 
-                    String infoLog = "response[seqId:" + transactionContext.seqId() + ", respCode:" + respCode.get() + "]:"
-                            + "service[" + soaHeader.getServiceName()
-                            + "]:version[" + soaHeader.getVersionName()
-                            + "]:method[" + soaHeader.getMethodName() + "]"
-                            + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                            + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
-                    LOGGER.info("SoaMsgEncoder::encode " + infoLog);
                     if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug(getClass().getSimpleName() + "::encode, payload[seqId:" + transactionContext.seqId() + "]:\n" + result);
-                        LOGGER.debug(getClass().getSimpleName() + "::encode, payload[seqId:" + transactionContext.seqId() + "]:\n" + DumpUtil.dumpToStr(out));
+                        String debugLog = "response[seqId:" + transactionContext.seqId() + ", respCode:" + respCode.get() + "]:"
+                                + "service[" + soaHeader.getServiceName()
+                                + "]:version[" + soaHeader.getVersionName()
+                                + "]:method[" + soaHeader.getMethodName() + "]"
+                                + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
+                                + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
+                        LOGGER.debug(getClass().getSimpleName() + "::encode:" + debugLog + ", payload[seqId:" + transactionContext.seqId() + "]:\n" + result);
+                        LOGGER.debug(getClass().getSimpleName() + "::encode, payloadAsByteBuf:\n" + DumpUtil.dumpToStr(out));
                     }
                 } catch (Throwable e) {
                     SoaException soaException = ExceptionUtil.convertToSoaException(e);

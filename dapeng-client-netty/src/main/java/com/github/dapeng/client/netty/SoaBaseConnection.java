@@ -299,19 +299,18 @@ public abstract class SoaBaseConnection implements SoaConnection {
         final int readerIndex = responseBuf.readerIndex();
         try {
             SoaMessageParser parser = new SoaMessageParser(responseBuf, responseSerializer).parseHeader();
-            // TODO fill InvocationContext.lastInfo from response.Header
             SoaHeader respHeader = parser.getHeader();
             InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-            InvocationInfoImpl info = (InvocationInfoImpl) invocationContext.lastInvocationInfo();
-            fillLastInvocationInfo(info, respHeader);
-            if ("0000".equals(respHeader.getRespCode().get())) {
+            InvocationInfoImpl lastInfo = (InvocationInfoImpl) invocationContext.lastInvocationInfo();
+            fillLastInvocationInfo(lastInfo, respHeader);
+            if (SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE.equals(lastInfo.responseCode())) {
                 parser.parseBody();
                 RESP resp = (RESP) parser.getBody();
                 assert (resp != null);
                 return new Result<>(resp, null);
             } else {
                 return new Result<>(null, new SoaException(
-                        (respHeader.getRespCode().isPresent()) ? respHeader.getRespCode().get() : SoaCode.UnKnown.getCode(),
+                        lastInfo.responseCode(),
                         (respHeader.getRespMessage().isPresent()) ? respHeader.getRespMessage().get() : SoaCode.UnKnown.getMsg()));
             }
 
@@ -375,5 +374,6 @@ public abstract class SoaBaseConnection implements SoaConnection {
         info.calleeTime1(respHeader.getCalleeTime1().orElse(0));
         info.calleeTime2(respHeader.getCalleeTime2().orElse(0));
         info.loadBalanceStrategy(invocationContext.loadBalanceStrategy().orElse(null));
+        info.responseCode(respHeader.getRespCode().orElse(SoaCode.UnKnown.getCode()));
     }
 }
