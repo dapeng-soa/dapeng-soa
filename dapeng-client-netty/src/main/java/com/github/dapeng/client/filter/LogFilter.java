@@ -1,7 +1,6 @@
 package com.github.dapeng.client.filter;
 
 
-import com.github.dapeng.client.netty.SoaBaseConnection;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.InvocationInfoImpl;
 import com.github.dapeng.core.SoaException;
