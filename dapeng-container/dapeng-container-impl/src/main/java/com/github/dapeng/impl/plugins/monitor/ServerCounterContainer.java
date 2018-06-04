@@ -362,7 +362,7 @@ public class ServerCounterContainer {
         calendar.add(Calendar.MINUTE, 1);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
-        return calendar.getTime().getTime() - System.currentTimeMillis() + 5;
+        return calendar.getTime().getTime() - System.currentTimeMillis() + 5000;
     }
 
     private void initThreads() {

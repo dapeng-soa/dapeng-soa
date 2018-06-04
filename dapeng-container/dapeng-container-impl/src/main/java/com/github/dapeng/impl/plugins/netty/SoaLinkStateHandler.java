@@ -87,6 +87,6 @@ public class SoaLinkStateHandler extends ChannelDuplexHandler {
     public void channelInactive(ChannelHandlerContext ctx) {
         int active = counterContainer.decreaseActiveChannelAndGet();
         int inactive = counterContainer.increaseInactiveChannelAndGet();
-        LOGGER.info("Channel连接关闭:{}, 连接状态:{}/{}/{}", active, inactive, counterContainer.getTotalChannel());
+        LOGGER.info("Channel连接关闭:{}, 连接状态:{}/{}/{}", ctx.channel(), active, inactive, counterContainer.getTotalChannel());
     }
 }
