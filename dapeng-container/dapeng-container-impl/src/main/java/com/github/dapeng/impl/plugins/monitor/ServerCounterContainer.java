@@ -403,7 +403,6 @@ public class ServerCounterContainer {
                 checkWater();
 
                 flowDataSignalCondition.signal();
-                invocationDataSignalCondition.signal();
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(Thread.currentThread().getName()
                             + "::reminder got the signalLock and has woke up the uploader");
@@ -411,11 +410,10 @@ public class ServerCounterContainer {
             } finally {
                 signalLock.unlock();
             }
-        }, initialDelay, PERIOD * 1000, TimeUnit.MILLISECONDS);
+        }, initialDelay + 10000, PERIOD * 1000, TimeUnit.MILLISECONDS);
 
         // uploader point thread.
         flowDataUploaderExecutor.execute(() -> {
-            AtomicInteger uploadCounter = new AtomicInteger(0);
             while (true) {
                 try {
                     if (LOGGER.isDebugEnabled()) {
@@ -423,7 +421,9 @@ public class ServerCounterContainer {
                                 + "::uploader is working. trying to acquire the signalLock");
                     }
                     signalLock.lock();
-                    submitFlowPoint(uploadCounter);
+                    flowDataSignalCondition.await();
+                    submitFlowPoint();
+                    invocationDataSignalCondition.signal();
                 } catch (InterruptedException e) {
                     LOGGER.error(e.getMessage(), e);
                 } finally {
@@ -432,7 +432,6 @@ public class ServerCounterContainer {
             }
         });
         invocationDataUploaderExecutor.execute(() -> {
-            AtomicInteger uploadCounter = new AtomicInteger(0);
             while (true) {
                 try {
                     if (LOGGER.isDebugEnabled()) {
@@ -440,7 +439,8 @@ public class ServerCounterContainer {
                                 + "::uploader is working. trying to acquire the signalLock");
                     }
                     signalLock.lock();
-                    submitInvokePoints(uploadCounter);
+                    invocationDataSignalCondition.await();
+                    submitInvokePoints();
                 } catch (InterruptedException e) {
                     LOGGER.error(e.getMessage(), e);
                 } finally {
@@ -470,15 +470,15 @@ public class ServerCounterContainer {
         }
     }
 
-    private void submitFlowPoint(AtomicInteger uploadCounter) throws InterruptedException {
+    private void submitFlowPoint() {
+        AtomicInteger uploadCounter = new AtomicInteger(0);
         DataPoint point = flowDataQueue.peek();
-        if (null != point) {
+        while (point != null) {
             try {
-                LOGGER.debug(Thread.currentThread().getName() + "::uploading submitPoint ");
-
                 CounterClientFactory.COUNTER_CLIENT.submitPoint(point);
                 flowDataQueue.remove(point);
                 uploadCounter.incrementAndGet();
+                point = flowDataQueue.peek();
             } catch (Throwable e) {
                 // 上送出错
                 LOGGER.error(e.getMessage(), e);
@@ -486,23 +486,19 @@ public class ServerCounterContainer {
                     LOGGER.debug(Thread.currentThread().getName()
                             + " points:" + uploadCounter.get() + " uploaded before error, now release the lock.");
                 }
-                uploadCounter.set(0);
-                flowDataSignalCondition.await();
+                return;
             }
-        } else {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(Thread.currentThread().getName() + " no more points, total points:"
-                        + uploadCounter.get() + "  uploaded");
-                // 重置计数器
-                uploadCounter.set(0);
-                flowDataSignalCondition.await();
-            }
+        }
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(Thread.currentThread().getName() + " no more points, total points:"
+                    + uploadCounter.get() + "  uploaded");
         }
     }
 
-    private void submitInvokePoints(AtomicInteger uploadCounter) throws InterruptedException {
+    private void submitInvokePoints() {
+        AtomicInteger uploadCounter = new AtomicInteger(0);
         List<DataPoint> points = invokeDataQueue.peek();
-        if (points != null) {
+        while (points != null) {
             try {
                 if (!points.isEmpty()) {
                     LOGGER.debug(Thread.currentThread().getName() + "::uploading submitPoints ");
@@ -511,6 +507,8 @@ public class ServerCounterContainer {
                     uploadCounter.addAndGet(points.size());
                 }
                 invokeDataQueue.remove(points);
+
+                points = invokeDataQueue.peek();
             } catch (Throwable e) {
                 // 上送出错
                 LOGGER.error(e.getMessage(), e);
@@ -518,16 +516,13 @@ public class ServerCounterContainer {
                     LOGGER.debug(Thread.currentThread().getName()
                             + " points:" + uploadCounter.get() + " uploaded before error, now  release the lock.");
                 }
-                uploadCounter.set(0);
-                invocationDataSignalCondition.await();
+                return;
             }
-        } else {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(Thread.currentThread().getName() + " no more points, total points:" + uploadCounter.get()
-                        + " uploaded, now release the lock.");
-            }
-            uploadCounter.set(0);
-            invocationDataSignalCondition.await();
+        }
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(Thread.currentThread().getName() + " no more points, total points:" + uploadCounter.get()
+                    + " uploaded, now release the lock.");
         }
     }
 
