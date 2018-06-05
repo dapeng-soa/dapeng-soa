@@ -3,15 +3,13 @@ package com.github.dapeng.message.consumer.kafka;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.message.consumer.api.context.ConsumerContext;
 import com.github.dapeng.util.SoaSystemEnvProperties;
-import com.github.dapeng.core.definition.SoaFunctionDefinition;
-import com.github.dapeng.message.consumer.api.context.ConsumerContext;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.serialization.ByteBufferDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -129,29 +127,55 @@ public class KafkaConsumer extends Thread {
             ifaceClass = iface.getClass();
         }
 
-        Method method = ((SoaFunctionDefinition.Sync) functionDefinition).getClass().getDeclaredMethods()[0];
+        Method [] declaredMethods = ((SoaFunctionDefinition.Sync) functionDefinition).getClass().getDeclaredMethods();
+        Method method = declaredMethods[0];
 
-        Parameter[] parameters = method.getParameters();
         Object argsParam = null;
-        for (Parameter param: parameters) {
-            if (param.getType().getName().contains("args")) {
-                try {
-                    argsParam = param.getType().newInstance();
-                } catch (Exception e) {
-                    logger.error(" failed to instance method: {}" + method.getName());
+
+        if (!method.getReturnType().getName().contains("java.lang.Object")) {
+
+            Parameter[] parameters = method.getParameters();
+            for (Parameter param : parameters) {
+                if (param.getType().getName().contains("args")) {
+                    try {
+                        argsParam = param.getType().newInstance();
+                    } catch (Exception e) {
+                        logger.error(" failed to instance method: {}" + method.getName());
+                    }
                 }
             }
+
+            Field field = argsParam.getClass().getDeclaredFields()[0];
+            field.setAccessible(true);//暴力访问，取消私有权限,让对象可以访问
+
+            try {
+                field.set(argsParam, message);
+            } catch (IllegalAccessException e) {
+                logger.error(e.getMessage(),e);
+            }
+
+        }else{
+            method = declaredMethods[1];
+            Parameter[] parameters = method.getParameters();
+            Class[] inArgs = new Class[]{ByteBuffer.class};
+            Object[] inArgsParms = new Object[]{message};
+            for (Parameter param : parameters) {
+                if (param.getType().getName().contains("args")) {
+                    try {
+                        Constructor constructor = param.getType().getDeclaredConstructor(inArgs);
+                        constructor.setAccessible(true);
+                        argsParam = constructor.newInstance(inArgsParms);
+                    } catch (Exception e) {
+                        logger.error(" failed to instance method: {}" + method.getName());
+                    }
+                }
+            }
+
         }
 
-
-        Field field = argsParam.getClass().getDeclaredFields()[0];
-        field.setAccessible(true);//暴力访问，取消私有权限,让对象可以访问
-
         try {
-            field.set(argsParam, message);
-
             logger.info("{}收到kafka消息，执行{}方法", ifaceClass.getName(), functionDefinition.methodName);
-            functionDefinition.apply(iface,argsParam);
+            functionDefinition.apply(iface, argsParam);
             logger.info("{}收到kafka消息，执行{}方法完成", ifaceClass.getName(), functionDefinition.methodName);
         } catch (Exception e) {
             logger.error("{}收到kafka消息，执行{}方法异常", ifaceClass.getName(), functionDefinition.methodName);
