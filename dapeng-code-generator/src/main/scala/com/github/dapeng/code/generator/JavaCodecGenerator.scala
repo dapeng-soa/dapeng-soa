@@ -120,7 +120,7 @@ class JavaCodecGenerator extends CodeGenerator {
 
            //3. args_serializer
             public static class {method.name.charAt(0).toUpper + method.name.substring(1)}_argsSerializer implements BeanSerializer{lt}{method.name}_args{gt}<block>
-            {getReadMethod(method.getRequest)}{getWriteMethod(method.getRequest)}{getValidateMethod(method.getRequest)}
+            {getReadMethod(method.getRequest)}{getWriteMethod(method.getRequest)}{getValidateMethod(method.getRequest,false)}
 
             @Override
             public String toString({method.name}_args bean) <block> return bean == null ? "null" : bean.toString(); </block>
@@ -165,7 +165,7 @@ class JavaCodecGenerator extends CodeGenerator {
               return bean;
             </block>
             {getWriteMethod(method.getResponse)}
-            {getValidateMethod(method.getResponse)}
+            {getValidateMethod(method.getResponse,false)}
 
             @Override
             public String toString({method.name}_result bean) <block> return bean == null ? "null" : bean.toString(); </block>
@@ -590,7 +590,7 @@ class JavaCodecGenerator extends CodeGenerator {
         *
         **/
         {<div>public class {struct.name}Serializer implements BeanSerializer{lt}{struct.getNamespace() + "." + struct.name}{gt}<block>
-        {getReadMethod(struct)}{getWriteMethod(struct)}{getValidateMethod(struct)}
+        {getReadMethod(struct)}{getWriteMethod(struct)}{getValidateMethod(struct,true)}
         @Override
         public String toString({struct.getNamespace() + "." + struct.name} bean)
         <block>return bean == null ? "null" : bean.toString();</block>
@@ -849,13 +849,13 @@ class JavaCodecGenerator extends CodeGenerator {
     </div>
   }
 
-  def getValidateMethod(struct: Struct) : Elem = {
+  def getValidateMethod(struct: Struct , isBasicType : Boolean ) : Elem = {
     <div>
       public void validate({toStructName(struct)} bean) throws TException<block>
       {
       toFieldArrayBuffer(struct.fields).map{(field : Field) =>{
         <div>{
-          if(!field.isOptional && field.dataType.kind != DataType.KIND.VOID && checkIfNeedValidate(field.isOptional, field.dataType)){
+          if(!field.isOptional && field.dataType.kind != DataType.KIND.VOID && checkIfNeedValidate(field.isOptional,( if(isBasicType) field.dataType else new DataType()))){
             <div>
               if(bean.get{field.name.charAt(0).toUpper + field.name.substring(1)}() == null)
               throw new SoaException(SoaCode.NotNull, "{field.name}字段不允许为空");
