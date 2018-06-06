@@ -10,7 +10,6 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>dapeng-code-generator</artifactId>
-    <version>2.0.1.1</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -77,7 +76,6 @@
         <dependency>
             <groupId>com.github.dapeng</groupId>
             <artifactId>dapeng-core</artifactId>
-            <version>2.0.1</version>
         </dependency>
 
         <!--thrift-->
