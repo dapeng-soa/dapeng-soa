@@ -368,6 +368,8 @@ class ScalaGenerator extends CodeGenerator {
         import com.github.dapeng.org.apache.thrift._;
         import java.util.ServiceLoader;
         import java.util.concurrent.CompletableFuture;
+        import java.util.function.BiConsumer
+
         import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "AsyncCodec._"};
         import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "SuperCodec._"};
         import {service.namespace+ "." + service.name }Async;
@@ -419,10 +421,14 @@ class ScalaGenerator extends CodeGenerator {
         def toScala[T,R](response: CompletableFuture[T])(extractor: T => R): Future[R] = <block>
 
           val promise = Promise[R]()
-          response.whenComplete((res: T, ex) => <block>
+          response.whenComplete(new BiConsumer[T,Throwable] <block>
+          override def accept(res: T, ex: Throwable): Unit = <block>
             if (ex != null) promise.failure(ex)
-            else promise.success(extractor(res))
+              else promise.success(extractor(res))
+         </block>
+
           </block>)
+
           promise.future
         </block>
 

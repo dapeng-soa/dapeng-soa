@@ -37,7 +37,6 @@
                             var li = getDataTypeElement(field.dataType, field.name, result, field.optional, field.doc);
                             $('#tree').append(li);
                         }
-
                         //生成示范报文
                         var parameter = {};
                         for (var index = 0; index < method.request.fields.length; index++) {
@@ -118,6 +117,13 @@
                                disabled="disabled">
                     </div>
                 </div>
+                <div class="form-group">
+                <label for="methodName" class="col-sm-2 control-label">操作员Id</label>
+
+                <div class="col-sm-10">
+                    <input type="number" class="form-control" id="operatorId" value="0">
+                </div>
+        </div>
             </form>
             <hr>
 

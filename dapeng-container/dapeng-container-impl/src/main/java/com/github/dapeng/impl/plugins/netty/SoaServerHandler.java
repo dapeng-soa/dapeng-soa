@@ -116,7 +116,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             + "]:version[" + soaHeader.getVersionName()
                             + "]:method[" + soaHeader.getMethodName() + "]"
                             + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                            + (soaHeader.getOperatorId().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
+                            + (soaHeader.getOperatorName().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "");
 
                     LOGGER.debug(getClass().getSimpleName() + "::processRequest " + debugLog);
                 }
