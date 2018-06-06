@@ -125,7 +125,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             throws SoaException {
         SoaConnection connection = findConnection(service, version, method);
         if (connection == null) {
-            throw new SoaException("Err-Core-098", "服务 [ " + service + " ] 无可用实例");
+            throw new SoaException(SoaCode.NotFoundServer, "服务 [ " + service + " ] 无可用实例");
         }
         long timeout = getTimeout(service, version, method);
         return connection.send(service, version, method, request, requestSerializer, responseSerializer, timeout);
