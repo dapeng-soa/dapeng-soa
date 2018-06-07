@@ -1,6 +1,7 @@
 package com.github.dapeng.doc.cache;
 
 
+import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.metadata.*;
 import com.google.common.collect.TreeMultimap;
@@ -38,6 +39,7 @@ public class ServiceCache {
 
         System.out.println("--------------------Container: " + ContainerFactory.getContainer());
         System.out.println("--------------------Applications: " + ContainerFactory.getContainer().getApplications());
+        System.out.println("--------------------Filters: " + ContainerFactory.getContainer().getFilters());
 
         List<Application> applications = ContainerFactory.getContainer().getApplications();
         applications.forEach(i -> loadServices(i));
@@ -57,8 +59,8 @@ public class ServiceCache {
             String metadata = "";
             try {
                 //init service,no need to set params
-                InvocationContextImpl.Factory.createNewInstance();
-
+                InvocationContext invocationContext = InvocationContextImpl.Factory.createNewInstance();
+                invocationContext.timeout(5000);
                 metadata = new MetadataClient(serviceInfo.serviceName, serviceInfo.version)
                         .getServiceMetadata();
             } catch (Exception e) {
@@ -73,7 +75,7 @@ public class ServiceCache {
                     Map<String, Service> services = loadResource(serviceData);
                     ServiceCache.services.putAll(services);
                 } catch (Exception e) {
-                    LOGGER.error("生成SERVICE出错", e);
+                    LOGGER.error("生成SERVICE[" + serviceInfo.serviceName + "]出错, metaData:\n" + metadata, e);
                 }
             }
         });

@@ -4,8 +4,10 @@ import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.Plugin;
 import com.github.dapeng.core.*;
+import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.impl.container.DapengApplication;
+import org.apache.kafka.common.protocol.types.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +32,7 @@ public class SpringAppLoader implements Plugin {
 
     @Override
     public void start() {
-        LOGGER.warn("Plugin::SpringAppLoader start.");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
         String configPath = "META-INF/spring/services.xml";
 
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
@@ -57,21 +59,23 @@ public class SpringAppLoader implements Plugin {
                 Application application = new DapengApplication(appInfos.values().stream().collect(Collectors.toList()),
                         appClassLoader);
 
-                Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitionMap = toSoaServiceDefinitionMap(appInfos, processorMap);
-                container.registerAppProcessors(serviceDefinitionMap);
-
-                // IApplication app = new ...
-                if (!application.getServiceInfos().isEmpty()) {
-                    container.registerApplication(application);
-                    container.registerAppMap(toApplicationMap(serviceDefinitionMap, application));
-                }
-
-                LOGGER.info(" ------------ SpringClassLoader: " + ContainerFactory.getContainer().getApplications());
-
                 //Start spring context
                 LOGGER.info(" start to boot app");
                 Method startMethod = appCtxClass.getMethod("start");
                 startMethod.invoke(springCtx);
+
+                // IApplication app = new ...
+                if (!application.getServiceInfos().isEmpty()) {
+                    // fixme only registerApplication
+                    Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitionMap = toSoaServiceDefinitionMap(appInfos, processorMap);
+                    container.registerAppProcessors(serviceDefinitionMap);
+
+                    container.registerAppMap(toApplicationMap(serviceDefinitionMap, application));
+                    container.registerApplication(application); //fire a zk event
+                }
+
+                LOGGER.info(" ------------ SpringClassLoader: " + ContainerFactory.getContainer().getApplications());
+
 
             } catch (Exception e) {
                 LOGGER.error(e.getMessage(), e);
@@ -91,7 +95,7 @@ public class SpringAppLoader implements Plugin {
 
     @Override
     public void stop() {
-        LOGGER.warn("Plugin:SpringAppLoader stop ..");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::stop");
         springCtxs.forEach(context -> {
             try {
                 LOGGER.info(" start to close SpringApplication.....");
@@ -99,9 +103,7 @@ public class SpringAppLoader implements Plugin {
                 method.invoke(context);
             } catch (NoSuchMethodException e) {
                 LOGGER.info(" failed to get context close method.....");
-            } catch (IllegalAccessException e) {
-                LOGGER.info(e.getMessage());
-            } catch (InvocationTargetException e) {
+            } catch (IllegalAccessException|InvocationTargetException e) {
                 LOGGER.info(e.getMessage());
             }
         });
@@ -126,10 +128,21 @@ public class SpringAppLoader implements Plugin {
                     processor.iface.getClass());
 
             Service service = processor.ifaceClass.getAnnotation(Service.class);
-            assert (service != null); // TODO
+            // TODO
+            assert (service != null);
+
+            /**
+             * customConfig 封装到 ServiceInfo 中
+             */
+            Map<String, Optional<CustomConfigInfo>> methodsConfigMap = new HashMap<>();
+
+            processor.functions.forEach((key, function) -> {
+                methodsConfigMap.put(key, function.getCustomConfigInfo());
+            });
 
             ServiceInfo serviceInfo = new ServiceInfo(service.name(), service.version(),
-                    "service", ifaceClass);
+                    "service", ifaceClass, processor.getConfigInfo(), methodsConfigMap);
+
             serviceInfoMap.put(processorKey, serviceInfo);
         }
 

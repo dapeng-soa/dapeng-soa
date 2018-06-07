@@ -8,12 +8,11 @@
     <groupId>com.github.dapeng</groupId>
     <artifactId>dapeng-demo</artifactId>
     <packaging>pom</packaging>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>2.0.1-SNAPSHOT</version>
     <modules>
-        <module>dapeng-sync-services</module>
-        <module>dapeng-test-client</module>
-        <module>dapeng-async-service</module>
         <module>dapeng-test-api</module>
+        <module>dapeng-test-service</module>
+        <module>dapeng-test-client</module>
     </modules>
 
 

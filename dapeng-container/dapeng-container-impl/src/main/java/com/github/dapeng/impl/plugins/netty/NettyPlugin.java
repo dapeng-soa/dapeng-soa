@@ -5,20 +5,12 @@ import com.github.dapeng.api.AppListener;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.Plugin;
 import com.github.dapeng.api.events.AppEvent;
-import com.github.dapeng.util.SoaSystemEnvProperties;
-import com.github.dapeng.api.AppListener;
-import com.github.dapeng.api.Container;
-import com.github.dapeng.api.Plugin;
-import com.github.dapeng.api.events.AppEvent;
-import com.github.dapeng.util.SoaSystemEnvProperties;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.AbstractByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.UnpooledByteBufAllocator;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -27,18 +19,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @date 2017/12/7
  * @author lihuimin
+ * @date 2017/12/7
  */
 public class NettyPlugin implements AppListener, Plugin {
-
     private final Container container;
-    public NettyPlugin(Container container) {
-        this.container = container;
-        container.registerAppListener(this);
-    }
-
-
+    private final boolean MONITOR_ENABLE = SoaSystemEnvProperties.SOA_MONITOR_ENABLE;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NettyPlugin.class);
 
@@ -49,13 +35,18 @@ public class NettyPlugin implements AppListener, Plugin {
 
     private ServerBootstrap bootstrap;
 
+    public NettyPlugin(Container container) {
+        this.container = container;
+        container.registerAppListener(this);
+    }
+
     @Override
     public void start() {
-        LOGGER.warn("Plugin::NettyPlugin start");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
         LOGGER.info("Bind Local Port {} [Netty]", port);
-        LOGGER.info("ByteBufAllocator:{}", SoaSystemEnvProperties.SOA_POOLED_BYTEBUF?"pooled":"unpooled");
+        LOGGER.info("ByteBufAllocator:{}", SoaSystemEnvProperties.SOA_POOLED_BYTEBUF ? "pooled" : "unpooled");
 
-        new Thread("NettyContainer-Thread") {
+        Thread bootstrapThread = new Thread("NettyContainer-Thread") {
             @Override
             public void run() {
                 try {
@@ -65,15 +56,35 @@ public class NettyPlugin implements AppListener, Plugin {
                             SoaSystemEnvProperties.SOA_POOLED_BYTEBUF ?
                                     PooledByteBufAllocator.DEFAULT : UnpooledByteBufAllocator.DEFAULT;
 
+                    //链路控制
+                    ChannelHandler soaLinkStateHandler = new SoaLinkStateHandler();
+                    //编解码器
+                    ChannelHandler soaMsgDecoder = new SoaMsgDecoder(container);
+                    ChannelHandler soaMsgEncoder = new SoaMsgEncoder(container);
+
+                    //业务处理器
+                    ChannelHandler soaServerHandler = new SoaServerHandler(container);
+                    ChannelHandler soaInvokeCounter = MONITOR_ENABLE ? new SoaInvokeCounter() : null;
+
                     bootstrap.group(bossGroup, workerGroup)
                             .channel(NioServerSocketChannel.class)
                             .childHandler(new ChannelInitializer<SocketChannel>() {
                                 @Override
                                 protected void initChannel(SocketChannel ch) throws Exception {
-                                    ch.pipeline().addLast(new IdleStateHandler(15, 0, 0), //超时设置
-                                            new SoaDecoder(), //粘包和断包处理
-                                            new SoaIdleHandler(),  //心跳处理
-                                            new SoaServerHandler(container));  //调用处理
+                                    // 超时设置
+                                    ch.pipeline().addLast(HandlerConstants.IDLE_STATE_HANDLER, new IdleStateHandler(20, 0, 0));
+                                    // 链路监控检测
+                                    ch.pipeline().addLast(HandlerConstants.SOA_IDLE_HANDLER, soaLinkStateHandler);
+                                    //粘包和断包处理
+                                    ch.pipeline().addLast(HandlerConstants.SOA_FRAME_DECODER_HANDLER, new SoaFrameDecoder());
+                                    ch.pipeline().addLast(HandlerConstants.SOA_MSG_ENCODER_HANDLER, soaMsgEncoder);
+                                    ch.pipeline().addLast(HandlerConstants.SOA_MSG_DECODER_HANDLER, soaMsgDecoder);
+                                    // 服务调用统计
+                                    if (MONITOR_ENABLE) {
+                                        ch.pipeline().addLast(HandlerConstants.SOA_INVOKE_COUNTER_HANDLER, soaInvokeCounter);
+                                    }
+
+                                    ch.pipeline().addLast(HandlerConstants.SOA_SERVER_HANDLER, soaServerHandler);
                                 }
                             })
                             .option(ChannelOption.SO_BACKLOG, 1024)
@@ -93,23 +104,25 @@ public class NettyPlugin implements AppListener, Plugin {
                     bossGroup.shutdownGracefully();
                 }
             }
-        }.start();
+        };
+        bootstrapThread.setDaemon(true);
+        bootstrapThread.start();
     }
 
     @Override
     public void stop() {
-        LOGGER.warn("Plugin::NettyPlugin stop");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::stop");
         workerGroup.shutdownGracefully();
         bossGroup.shutdownGracefully();
     }
 
     @Override
     public void appRegistered(AppEvent event) {
-
+        LOGGER.info(getClass().getSimpleName() + "::appRegistered event:[" + event.getSource() + "]");
     }
 
     @Override
     public void appUnRegistered(AppEvent event) {
-
+        LOGGER.info(getClass().getSimpleName() + "::appUnRegistered event:[" + event.getSource() + "]");
     }
 }

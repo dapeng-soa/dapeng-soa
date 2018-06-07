@@ -1,10 +1,15 @@
 package com.github.dapeng.doc;
 
 
+import com.github.dapeng.core.metadata.TEnum;
 import com.github.dapeng.doc.cache.ServiceCache;
 import com.github.dapeng.core.metadata.Method;
 import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.core.metadata.Struct;
+import com.github.dapeng.doc.dto.EventDto;
+import com.github.dapeng.doc.dto.EventVo;
+import com.github.dapeng.doc.util.ServiceAnnotationsUtil;
+import com.github.dapeng.doc.util.ServiceJsonUtil;
 import com.github.dapeng.util.MetaDataUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -13,10 +18,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Api服务Controller
@@ -39,22 +41,25 @@ public class ApiServiceController {
     @RequestMapping(value = "index", method = RequestMethod.GET)
     public String api(HttpServletRequest request) {
         Map<String, Service> services = serviceCache.getServices();
-
+        Map<String, Collection<Service>> groupedServices = ServiceAnnotationsUtil.groupingServices(services.values());
         request.setAttribute("services", services.values());
-
+        request.setAttribute("groupedServices", groupedServices);
         return "api/api";
     }
 
     @RequestMapping(value = "service/{serviceName}/{version}", method = RequestMethod.GET)
-    @Transactional(value = "dapeng_api", rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String service(HttpServletRequest request, @PathVariable String serviceName, @PathVariable String version) {
-        request.setAttribute("service", serviceCache.getService(serviceName, version));
+        Service service = serviceCache.getService(serviceName, version);
+        List<EventVo> events = ServiceAnnotationsUtil.findEvents(service);
+        request.setAttribute("events", events);
+        request.setAttribute("service", ServiceAnnotationsUtil.excludeMethods(service));
         request.setAttribute("services", serviceCache.getServices().values());
         return "api/service";
     }
 
     @RequestMapping(value = "method/{serviceName}/{version}/{methodName}", method = RequestMethod.GET)
-    @Transactional(value = "dapeng_api", rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String method(HttpServletRequest request, @PathVariable String serviceName, @PathVariable String version, @PathVariable String methodName) {
         Service service = serviceCache.getService(serviceName, version);
 
@@ -62,7 +67,9 @@ public class ApiServiceController {
         List<Method> methods = service.getMethods();
 
         Collections.sort(methods, Comparator.comparing(Method::getName));
+        List<EventDto> events = ServiceAnnotationsUtil.findEventsByMethod(seleted);
 
+        request.setAttribute("events", events);
         request.setAttribute("service", service);
         request.setAttribute("methods", methods);
         request.setAttribute("method", seleted);
@@ -78,7 +85,7 @@ public class ApiServiceController {
     }
 
     @RequestMapping(value = "struct/{serviceName}/{version}/{ref}", method = RequestMethod.GET)
-    @Transactional(value = "dapeng_api", rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String struct(HttpServletRequest request, @PathVariable String serviceName, @PathVariable String version, @PathVariable String ref) {
         Service service = serviceCache.getService(serviceName, version);
 
@@ -97,7 +104,7 @@ public class ApiServiceController {
     }
 
     @RequestMapping(value = "enum/{serviceName}/{version}/{ref}", method = RequestMethod.GET)
-    @Transactional(value = "dapeng_api", rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String anEnum(HttpServletRequest request, @PathVariable String serviceName, @PathVariable String version, @PathVariable String ref) {
         Service service = serviceCache.getService(serviceName, version);
 
@@ -108,8 +115,16 @@ public class ApiServiceController {
         return "api/enum";
     }
 
+    @RequestMapping(value = "findEnum/{serviceName}/{version}/{ref}", method = RequestMethod.GET)
+    @ResponseBody
+    public TEnum findEnum(@PathVariable String serviceName, @PathVariable String version, @PathVariable String ref) {
+        Service service = serviceCache.getService(serviceName, version);
+
+        return MetaDataUtil.findEnum(ref, service);
+    }
+
     @RequestMapping(value = "test/{serviceName}/{version}/{methodName}", method = RequestMethod.GET)
-    @Transactional(value = "dapeng_api", rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String goTest(HttpServletRequest request, @PathVariable String serviceName, @PathVariable String version, @PathVariable String methodName) {
 
         Service service = serviceCache.getService(serviceName, version);
@@ -133,5 +148,33 @@ public class ApiServiceController {
 //            serviceCache.reloadServices();
 //        }
         return serviceCache.getService(serviceName, version);
+    }
+
+    /**
+     * 解析枚举信息，转为Json格式
+     *
+     * @param serviceName 服务名
+     * @param version     版本号
+     * @return Json 字符串
+     * @author maple.lei
+     */
+    @RequestMapping(value = "enum/{serviceName}/{version}/jsonEnum", method = RequestMethod.GET)
+    @Transactional(rollbackFor = Exception.class)
+    @ResponseBody
+    public Object getEnumJson(@PathVariable String serviceName, @PathVariable String version) {
+        Service service = serviceCache.getService(serviceName, version);
+        Map<String, Object> stringObjectMap = ServiceJsonUtil.executeJson(service);
+        return stringObjectMap.get(ServiceJsonUtil.JSONOBJ);
+
+    }
+
+    @RequestMapping(value = "enum/{serviceName}/{version}/jsonEnumString", method = RequestMethod.GET)
+    @Transactional(rollbackFor = Exception.class)
+    @ResponseBody
+    public String getEnumJsonString(@PathVariable String serviceName, @PathVariable String version) {
+        Service service = serviceCache.getService(serviceName, version);
+        Map<String, Object> stringObjectMap = ServiceJsonUtil.executeJson(service);
+
+        return (String) stringObjectMap.get(ServiceJsonUtil.JSONSTR);
     }
 }

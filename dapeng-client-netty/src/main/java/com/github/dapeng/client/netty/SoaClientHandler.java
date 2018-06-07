@@ -26,7 +26,6 @@ public class SoaClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-
         if (callBack != null)
             try {
                 callBack.onSuccess((ByteBuf) msg);
@@ -38,13 +37,11 @@ public class SoaClientHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) {
-    }
-
-    @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        LOGGER.error(cause.getMessage(), cause);
+        LOGGER.error(getClass().getSimpleName() + "::exceptionCaught: " + cause.getMessage(), cause);
 
+        LOGGER.error(getClass().getSimpleName() + "::exceptionCaught, close channel:" + ctx.channel());
         ctx.close();
     }
+
 }

@@ -2,11 +2,7 @@ package com.github.dapeng.impl.plugins.netty;
 
 
 import com.github.dapeng.client.netty.TSoaTransport;
-import com.github.dapeng.core.BeanSerializer;
-import com.github.dapeng.core.SoaHeader;
-import com.github.dapeng.core.SoaHeaderSerializer;
-import com.github.dapeng.core.TransactionContext;
-import com.github.dapeng.core.enums.CodecProtocol;
+import com.github.dapeng.core.*;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TBinaryProtocol;
 import com.github.dapeng.org.apache.thrift.protocol.TCompactProtocol;
@@ -68,10 +64,10 @@ public class SoaMessageProcessor {
 
         headerProtocol.writeByte(STX);
         headerProtocol.writeByte(VERSION);
-        headerProtocol.writeByte(context.getCodecProtocol().getCode());
-        headerProtocol.writeI32(context.getSeqid());
+        headerProtocol.writeByte(context.codecProtocol().getCode());
+        headerProtocol.writeI32(context.seqId());
 
-        switch (context.getCodecProtocol()) {
+        switch (context.codecProtocol()) {
             case Binary:
                 contentProtocol = new TBinaryProtocol(transport);
                 break;
@@ -115,8 +111,8 @@ public class SoaMessageProcessor {
         }
 
         byte protocol = headerProtocol.readByte();
-        context.setCodecProtocol(toCodecProtocol(protocol));
-        switch (context.getCodecProtocol()) {
+        context.codecProtocol(toCodecProtocol(protocol));
+        switch (context.codecProtocol()) {
             case Binary:
                 contentProtocol = new TBinaryProtocol(getTransport());
                 break;
@@ -133,7 +129,7 @@ public class SoaMessageProcessor {
                 throw new TException("通讯协议不正确(包体协议)");
         }
 
-        context.setSeqid(headerProtocol.readI32());
+        ((TransactionContextImpl)context).setSeqid(headerProtocol.readI32());
         return new SoaHeaderSerializer().read( headerProtocol);
     }
 

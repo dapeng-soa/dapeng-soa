@@ -72,7 +72,7 @@ public class IdleConnectionManager {
             channel.close();
             remove(channel);
 
-            LOGGER.info("channel closed because of too much idle time");
+            LOGGER.info("channel:" + channel + " closed because of too much idle time");
         });
         //sleep, check per 10 seconds default
         Thread.sleep(DEFAULT_SLEEP_TIME);
