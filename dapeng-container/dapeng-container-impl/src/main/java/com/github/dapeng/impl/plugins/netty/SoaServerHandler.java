@@ -110,7 +110,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             //check if request expired
             final long waitingTime = System.currentTimeMillis() - invokeTime;
             //fixme if zk down ?
-            long timeout = getTimeout(soaHeader);
+            long timeout = soaHeader.getTimeout().map(Long::valueOf).orElse(getTimeout(soaHeader));
             if (waitingTime > timeout) {
                 if (LOGGER.isDebugEnabled()) {
                     int seqId = transactionContext.seqId();

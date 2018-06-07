@@ -69,6 +69,7 @@ public class RegistryAgentImpl implements RegistryAgent {
     @Override
     public void unregisterService(String serverName, String versionName) {
         try {
+            //fixme
             String path = "/soa/runtime/services/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
             LOGGER.info(" logger zookeeper unRegister service: " + path);
             serverZk.zk.delete(path, -1);
