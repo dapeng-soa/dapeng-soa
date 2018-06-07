@@ -55,7 +55,7 @@ object DbGeneratorUtil {
   def toDbClassTemplate(tableName: String, packageName: String, columns: List[(String, String, String, String)]) = {
     val sb = new StringBuilder(256)
     val className = toFirstUpperCamel(tableNameConvert(tableName))
-    sb.append(s" package ${packageName}.entity \r\n")
+    sb.append(s" package ${packageName}\r\n")
 
     //如果有枚举字段，需要引入
     if (columns.exists(column => !getEnumFields(column._1, column._3).isEmpty)) {
@@ -63,7 +63,7 @@ object DbGeneratorUtil {
     }
 
     if (columns.exists(c => List("DATETIME", "DATE", "TIMESTAMP").contains(c._2))) {
-      sb.append(" import java.sql.Timestamp \r\n")
+      sb.append(" import java.time.LocalDateTime \r\n")
     }
 
     sb.append(" import wangzx.scala_commons.sql.ResultSetMapper \r\n\r\n ")
@@ -76,7 +76,7 @@ object DbGeneratorUtil {
         if (hasValidEnum) toFirstUpperCamel(tableNameConvert(tableName)) + toFirstUpperCamel(column._1) else toScalaFieldType(column._2, column._4)
       ).append(",\r\n")
     })
-    if (sb.contains(",")) sb.delete(sb.lastIndexOf(","), sb.lastIndexOf(",") + 1)
+    if (sb.toString().contains(",")) sb.delete(sb.lastIndexOf(","), sb.lastIndexOf(",") + 1)
     sb.append(") \t\n \t\n")
 
     //添加数据库的隐式转换
@@ -263,7 +263,7 @@ object DbGeneratorUtil {
       case "BIGINT" => "Long"
       case "CHAR" | "VARCHAR" => "String"
       case "DECIMAL" | "DOUBLE" | "FLOAT" => "BigDecimal"
-      case "DATETIME" | "DATE" | "TIMESTAMP" => "Timestamp"
+      case "DATETIME" | "DATE" | "TIMESTAMP" => "LocalDateTime"
       case "ENUM" | "TEXT" => "String"
       case "LONGBLOB" | "BLOB" | "MEDIUMBLOB" => "Array[Byte]"
       case _ => throw new ParseException(s"tableFieldType = ${tableFieldType} 无法识别", 1023)
@@ -337,7 +337,7 @@ object DbGeneratorUtil {
     val dbClassTemplate = toDbClassTemplate(tableName, packageName, columns)
     val targetPath = baseTargetPath + "src"+separator+"main"+ separator +"scala"+ separator + packageName.split("\\.").mkString(separator) + separator
 
-    generateEntityFile(dbClassTemplate, targetPath + "entity/", s"${toFirstUpperCamel(tableNameConvert(tableName))}.scala")
+    generateEntityFile(dbClassTemplate, targetPath, s"${toFirstUpperCamel(tableNameConvert(tableName))}.scala")
 
     columns.foreach(column => {
       generateEnumFile(tableName, column._1, column._3, targetPath + "enum/", packageName, s"${toFirstUpperCamel(tableNameConvert(tableName)) + toFirstUpperCamel(column._1)}.scala")
