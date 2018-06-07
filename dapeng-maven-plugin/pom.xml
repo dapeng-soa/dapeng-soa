@@ -14,7 +14,6 @@
     <artifactId>dapeng-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
     <name>dapeng-maven-plugin</name>
-    <version>2.0.1.1</version>
 
 
     <dependencies>
@@ -22,7 +21,7 @@
         <dependency>
             <groupId>com.github.dapeng</groupId>
             <artifactId>dapeng-container-impl</artifactId>
-            <version>2.0.1</version>
+            <version>${project.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>com</groupId>
