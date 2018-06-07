@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * author with struy.
@@ -22,12 +23,16 @@ public class InfluxdbDao {
     private final String INFLUXDB_URL = CounterServiceProperties.SOA_COUNTER_INFLUXDB_URL;
     private final String INFLUXDB_USER = CounterServiceProperties.SOA_COUNTER_INFLUXDB_USER;
     private final String INFLUXDB_PWD = CounterServiceProperties.SOA_COUNTER_INFLUXDB_PWD;
+    private InfluxDB influxDB = getInfluxDBConnection();
 
     public void writePoint(DataPoint dataPoint) {
+        if (null == influxDB){
+            influxDB = getInfluxDBConnection();
+        }
         Point.Builder commit = Point.measurement(dataPoint.bizTag);
         dataPoint.values.forEach(commit::addField);
         dataPoint.tags.forEach(commit::tag);
-        InfluxDB influxDB = getInfluxDBConnection();
+        commit.time(dataPoint.getTimestamp(), TimeUnit.MILLISECONDS);
         try {
             influxDB.write(dataPoint.database, "", commit.build());
         } finally {
@@ -39,12 +44,15 @@ public class InfluxdbDao {
 
     public void writePoints(List<DataPoint> dataPoints) {
         LOGGER.info("counter writePoints {}", dataPoints);
-        InfluxDB influxDB = getInfluxDBConnection();
         try {
+            if (null == influxDB){
+                influxDB = getInfluxDBConnection();
+            }
             dataPoints.forEach(dataPoint -> {
                 Point.Builder commit = Point.measurement(dataPoint.bizTag);
                 dataPoint.values.forEach(commit::addField);
                 dataPoint.tags.forEach(commit::tag);
+                commit.time(dataPoint.getTimestamp(), TimeUnit.MILLISECONDS);
                 influxDB.write(dataPoint.database, "", commit.build());
             });
         } finally {

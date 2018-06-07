@@ -328,6 +328,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
             fields.put("succeed_calls", (long) serviceProcessData.getSucceedCalls().get());
             fields.put("fail_calls", (long) serviceProcessData.getFailCalls().get());
             point.setValues(fields);
+            point.setTimestamp(millis);
             points.add(point);
         });
 
