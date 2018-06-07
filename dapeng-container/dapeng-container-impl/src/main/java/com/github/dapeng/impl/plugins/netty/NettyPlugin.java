@@ -73,10 +73,10 @@ public class NettyPlugin implements AppListener, Plugin {
                                 protected void initChannel(SocketChannel ch) throws Exception {
                                     // 超时设置
                                     ch.pipeline().addLast(HandlerConstants.IDLE_STATE_HANDLER, new IdleStateHandler(20, 0, 0));
-                                    // 链路监控检测
-                                    ch.pipeline().addLast(HandlerConstants.SOA_IDLE_HANDLER, soaLinkStateHandler);
                                     //粘包和断包处理
                                     ch.pipeline().addLast(HandlerConstants.SOA_FRAME_DECODER_HANDLER, new SoaFrameDecoder());
+                                    // 链路监控检测
+                                    ch.pipeline().addLast(HandlerConstants.SOA_IDLE_HANDLER, soaLinkStateHandler);
                                     ch.pipeline().addLast(HandlerConstants.SOA_MSG_ENCODER_HANDLER, soaMsgEncoder);
                                     ch.pipeline().addLast(HandlerConstants.SOA_MSG_DECODER_HANDLER, soaMsgDecoder);
                                     // 服务调用统计

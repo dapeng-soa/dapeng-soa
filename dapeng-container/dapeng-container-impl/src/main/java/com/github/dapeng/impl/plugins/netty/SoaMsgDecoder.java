@@ -154,6 +154,9 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         if (soaHeader.getCallerTid().isPresent()) {
             ctx.callerTid(soaHeader.getCallerTid().get());
         }
+        if (soaHeader.getTimeout().isPresent()) {
+            ctx.timeout(soaHeader.getTimeout().get());
+        }
 
         ctx.calleeTid(DapengUtil.generateTid());
         ctx.sessionTid(soaHeader.getSessionTid().orElse(ctx.calleeTid()));
