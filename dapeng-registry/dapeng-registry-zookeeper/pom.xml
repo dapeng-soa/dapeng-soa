@@ -45,5 +45,10 @@
             <groupId>com.github.dapeng</groupId>
             <artifactId>dapeng-router</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>com.github.dapeng</groupId>
+            <artifactId>dapeng-container-api</artifactId>
+        </dependency>
     </dependencies>
 </project>
