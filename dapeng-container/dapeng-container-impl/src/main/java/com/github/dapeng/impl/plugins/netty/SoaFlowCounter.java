@@ -126,7 +126,7 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
                 responses.addAll(responseFlows);
                 responseFlows.clear();
 
-                DataPoint point = flowInfo2Point(requests, responses);
+                DataPoint point = flowInfo2Point(System.currentTimeMillis() ,requests, responses);
 
                 // 当容量达到最大容量的90%时
                 if (flowDataQueue.size() >= ALERT_SIZE) {
@@ -210,7 +210,7 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
      * @param responseFlows
      * @return
      */
-    private DataPoint flowInfo2Point(List<Long> requestFlows, List<Long> responseFlows) {
+    private DataPoint flowInfo2Point(Long millis,List<Long> requestFlows, List<Long> responseFlows) {
 
         if (requestFlows.size() > 0 && responseFlows.size() > 0) {
 
@@ -255,7 +255,7 @@ public class SoaFlowCounter extends ChannelDuplexHandler {
             fields.put("sum_response_flow", sumResponseFlow);
             fields.put("avg_response_flow", avgResponseFlow);
             point.setValues(fields);
-
+            point.setTimestamp(millis);
             return point;
 
         } else {
