@@ -216,7 +216,6 @@ public class RoutesExecutor {
                     String cookie = id.substring(COOKIE_PREFIX.length());
                     InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
                     if (invocationContext != null) {
-                        logger.info("cookies content: {}", invocationContext.cookie(cookie));
                         return invocationContext.cookie(cookie);
                     } else {
                         return null;
