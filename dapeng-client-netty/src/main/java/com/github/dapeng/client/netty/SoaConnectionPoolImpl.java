@@ -84,10 +84,21 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     }
 
 
+    /**
+     * 版本 兼容(主版本不兼容，副版本向下兼容)
+     *
+     * @param reqVersion
+     * @param targetVersion
+     * @return
+     */
     private boolean checkVersion(String reqVersion, String targetVersion) {
-        // x.y.z
-        // x.Y.Z Y.Z >= y.z
-        return true;
+        String[] reqArr = reqVersion.split("[.]");
+        String[] tarArr = targetVersion.split("[.]");
+        if (Integer.parseInt(tarArr[0]) != Integer.parseInt(reqArr[0])) {
+            return false;
+        }
+        return  ((Integer.parseInt(tarArr[1]) * 10 + Integer.parseInt(tarArr[2]))
+                >= (Integer.parseInt(reqArr[1]) * 10 + Integer.parseInt(reqArr[2])));
     }
 
     @Override

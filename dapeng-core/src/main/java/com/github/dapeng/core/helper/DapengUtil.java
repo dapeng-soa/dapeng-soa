@@ -2,6 +2,7 @@ package com.github.dapeng.core.helper;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.github.dapeng.core.helper.IPUtils.localIpAsInt;
@@ -11,7 +12,8 @@ import static com.github.dapeng.core.helper.IPUtils.localIpAsInt;
  * @date 20180406
  */
 public class DapengUtil {
-    private static AtomicInteger seqId = new AtomicInteger(0);
+    private static int random = new Random().nextInt();
+    private static AtomicInteger seqId = new AtomicInteger(random);
     private static int processId = getProcessId() << 16;
     private static int localIp = localIpAsInt();
     /**
@@ -24,9 +26,6 @@ public class DapengUtil {
     public static String generateTid() {
         int high = localIp ^ processId;
         int low = seqId.getAndIncrement();
-        if (low == Integer.MAX_VALUE) {
-            seqId.set(0);
-        }
 
         StringBuilder sb = new StringBuilder();
 
