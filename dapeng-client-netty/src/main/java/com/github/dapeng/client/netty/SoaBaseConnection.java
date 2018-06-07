@@ -2,7 +2,6 @@ package com.github.dapeng.client.netty;
 
 import com.github.dapeng.client.filter.LogFilter;
 import com.github.dapeng.core.*;
-import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.filter.*;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.org.apache.thrift.TException;
@@ -16,7 +15,6 @@ import org.slf4j.MDC;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
