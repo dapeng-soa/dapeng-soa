@@ -1,66 +1,55 @@
 package com.github.dapeng.impl.filters;
 
 
-import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.BeanSerializer;
 import com.github.dapeng.core.TransactionContext;
+import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.filter.FilterChain;
 import com.github.dapeng.core.filter.FilterContext;
-import com.github.dapeng.core.filter.Filter;
-import com.github.dapeng.impl.plugins.netty.SoaMessageProcessor;
+import com.github.dapeng.impl.plugins.netty.SoaResponseWrapper;
 import com.github.dapeng.org.apache.thrift.TException;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
+
+import static io.netty.channel.ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE;
 
 public class HeadFilter implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(HeadFilter.class);
 
     @Override
-    public void onEntry(FilterContext ctx, FilterChain next)  {
-
+    public void onEntry(FilterContext filterContext, FilterChain next) {
         try {
-            next.onEntry(ctx);
+            if (LOGGER.isDebugEnabled()) {
+                TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
+                LOGGER.debug(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.seqId() + "]");
+            }
+            next.onEntry(filterContext);
         } catch (TException e) {
             LOGGER.error(e.getMessage(), e);
         }
-
-
     }
 
     @Override
-    public void onExit(FilterContext ctx, FilterChain prev)  {
+    public void onExit(FilterContext filterContext, FilterChain prev) {
         // 第一个filter不需要调onExit
-        ByteBuf outputBuf = null;
-        try {
-            ChannelHandlerContext channelHandlerContext = (ChannelHandlerContext) ctx.getAttribute( "channelHandlerContext");
-            TransactionContext context = (TransactionContext) ctx.getAttribute("context");
-            BeanSerializer serializer = (BeanSerializer) ctx.getAttribute("respSerializer");
-            Object result = ctx.getAttribute("result");
+        // (这里不能通过TransactionContext.currentInstance()的方式.因为已经给remove掉了.
+        TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
+        ChannelHandlerContext channelHandlerContext = (ChannelHandlerContext) filterContext.getAttribute("channelHandlerContext");
 
-            if(channelHandlerContext!=null) {
-                outputBuf = channelHandlerContext.alloc().buffer(8192);  // TODO 8192?
-                TSoaTransport transport = new TSoaTransport(outputBuf);
-
-                SoaMessageProcessor builder = new SoaMessageProcessor(transport);
-                builder.writeHeader(context);
-                if(serializer != null && result != null) {
-                    builder.writeBody(serializer, result);
-                }
-                builder.writeMessageEnd();
-                transport.flush();
-
-                assert(outputBuf.refCnt() == 1);
-                channelHandlerContext.writeAndFlush(outputBuf);
-            }
-        }catch (Exception e){
-            LOGGER.error(e.getMessage(), e);
-
-            if (outputBuf != null) {
-                outputBuf.release();
-            }
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(getClass().getSimpleName()
+                    + "::onExit:[seqId:" + transactionContext.seqId()
+                    + ",channel:[" + channelHandlerContext.channel() + "]"
+                    + ", execption:" + transactionContext.soaException()
+                    + ",\n result:" + filterContext.getAttribute("result") + "]\n");
         }
 
+        SoaResponseWrapper responseWrapper = new SoaResponseWrapper(transactionContext,
+                Optional.ofNullable(filterContext.getAttribute("result")),
+                Optional.ofNullable((BeanSerializer) filterContext.getAttribute("respSerializer")));
+        channelHandlerContext.writeAndFlush(responseWrapper).addListener(FIRE_EXCEPTION_ON_FAILURE);
     }
 }

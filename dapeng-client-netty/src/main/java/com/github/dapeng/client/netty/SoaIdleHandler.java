@@ -22,20 +22,20 @@ public class SoaIdleHandler extends ChannelInboundHandlerAdapter {
 
             if (e.state() == IdleState.READER_IDLE) {
                 ctx.close();
-                LOGGER.info("读超时，关闭连接");
+                LOGGER.info(getClass().getName() + "::读超时，关闭连接:" + ctx.channel());
 
             } else if (e.state() == IdleState.WRITER_IDLE) {
                 ctx.writeAndFlush(ctx.alloc().buffer(1).writeInt(0));
 
                 if(LOGGER.isDebugEnabled())
-                    LOGGER.debug("写超时，发送心跳包");
+                    LOGGER.debug(getClass().getName() + "::写超时，发送心跳包:" + ctx.channel());
 
                 //check times of write idle, close the channel if exceed specify times
                 IdleConnectionManager.addChannel(ctx.channel());
 
             } else if (e.state() == IdleState.ALL_IDLE) {
                 if(LOGGER.isDebugEnabled())
-                    LOGGER.debug("读写都超时，发送心跳包");
+                    LOGGER.debug(getClass().getName() + "::读写都超时，发送心跳包:" + ctx.channel());
             }
         }
 

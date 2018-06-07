@@ -1,17 +1,17 @@
 package com.github.dapeng.message.consumer.kafka;
 
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.message.consumer.api.context.ConsumerContext;
-import com.github.dapeng.util.SoaSystemEnvProperties;
-import com.github.dapeng.core.definition.SoaFunctionDefinition;
-import com.github.dapeng.message.consumer.api.context.ConsumerContext;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.serialization.ByteBufferDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,28 +38,22 @@ public class KafkaConsumer extends Thread {
     private String kafkaConnect = SoaSystemEnvProperties.SOA_KAFKA_PORT;
 
     protected org.apache.kafka.clients.consumer.KafkaConsumer<ByteBuffer, ByteBuffer> consumer;
-//    protected final static String ZookeeperSessionTimeoutMs = "40000";
-//    protected final static String ZookeeperSyncTimeMs = "200";
-//    protected final static String AutoCommitIntervalMs = "1000";
 
     public void init() {
 
         logger.info(new StringBuffer("[KafkaConsumer] [init] ")
-                .append("kafkaConnect(").append(kafkaConnect)
+                .append("kafkaConnect(").append("192.168.4.5:9092")
                 .append(") groupId(").append(groupId)
                 .append(") topic(").append(topic).append(")").toString());
 
         Properties props = new Properties();
-        props.put("bootstrap.servers", kafkaConnect);
+        props.put("bootstrap.servers", "192.168.4.5:9092");
         props.put("group.id", groupId);
         props.put("enable.auto.commit", "true");
         props.put("auto.commit.interval.ms", "1000");
         props.put("key.deserializer", ByteBufferDeserializer.class);
         props.put("value.deserializer", ByteBufferDeserializer.class);
 
-//        props.put("zookeeper.session.timeout.ms", ZookeeperSessionTimeoutMs);
-//        props.put("zookeeper.sync.time.ms", ZookeeperSyncTimeMs);
-//        props.put("auto.commit.interval.ms", AutoCommitIntervalMs);
         consumer = new org.apache.kafka.clients.consumer.KafkaConsumer<>(props);
 
     }
@@ -132,14 +126,29 @@ public class KafkaConsumer extends Thread {
             ifaceClass = iface.getClass();
         }
 
-        //Object args = soaProcessFunction.getEmptyArgsInstance();
-//        Field field = args.getClass().getDeclaredFields()[0];
-//        field.setAccessible(true);//暴力访问，取消私有权限,让对象可以访问
-//        ByteBuffer buf = message;
-        //field.set(args, buf);
+        Method method = ((SoaFunctionDefinition.Sync) functionDefinition).getClass().getDeclaredMethods()[0];
+
+        Parameter[] parameters = method.getParameters();
+        Object argsParam = null;
+        for (Parameter param: parameters) {
+            if (param.getType().getName().contains("args")) {
+                try {
+                    argsParam = param.getType().newInstance();
+                } catch (Exception e) {
+                    logger.error(" failed to instance method: {}" + method.getName());
+                }
+            }
+        }
+
+
+        Field field = argsParam.getClass().getDeclaredFields()[0];
+        field.setAccessible(true);//暴力访问，取消私有权限,让对象可以访问
+
         try {
+            field.set(argsParam, message);
+
             logger.info("{}收到kafka消息，执行{}方法", ifaceClass.getName(), functionDefinition.methodName);
-            functionDefinition.apply(iface,null);
+            functionDefinition.apply(iface,argsParam);
             logger.info("{}收到kafka消息，执行{}方法完成", ifaceClass.getName(), functionDefinition.methodName);
         } catch (Exception e) {
             logger.error("{}收到kafka消息，执行{}方法异常", ifaceClass.getName(), functionDefinition.methodName);

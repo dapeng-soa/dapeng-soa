@@ -6,18 +6,8 @@ import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.Plugin;
 import com.github.dapeng.api.events.AppEvent;
-import com.github.dapeng.core.Application;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.ServiceInfo;
-import com.github.dapeng.core.definition.SoaServiceDefinition;
-import com.github.dapeng.core.timer.ScheduledTask;
-import com.github.dapeng.core.timer.ScheduledTaskCron;
-import com.github.dapeng.api.AppListener;
-import com.github.dapeng.api.Container;
-import com.github.dapeng.api.ContainerFactory;
-import com.github.dapeng.api.Plugin;
-import com.github.dapeng.api.events.AppEvent;
-import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.timer.ScheduledTask;
 import com.github.dapeng.core.timer.ScheduledTaskCron;
@@ -50,31 +40,24 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
         container.registerAppListener(this);
     }
 
-
     @Override
     public void appRegistered(AppEvent event) {
-        Application application = (Application) event.getSource();
-
-        List<ServiceInfo> serviceInfos = application.getServiceInfos().stream()
-                .filter(serviceInfo ->
-                        serviceInfo.ifaceClass.isAnnotationPresent(ScheduledTask.class))
-                .collect(Collectors.toList());
-
-        serviceInfos.forEach(serviceInfo -> runTask(serviceInfo));
+        LOGGER.warn(getClass().getSimpleName() + "::appRegistered, event[" + event.getSource() + "], do nothing here");
     }
 
     @Override
     public void appUnRegistered(AppEvent event) {
+        LOGGER.warn(getClass().getSimpleName() + "::appUnRegistered, event[" + event.getSource() + "]");
         stop();
     }
 
     @Override
     public void start() {
-        LOGGER.warn("Plugin::TaskSchedulePlugin start");
+        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
         container.getApplications().forEach(application -> {
             List<ServiceInfo> serviceInfos = application.getServiceInfos().stream()
                     .filter(serviceInfo ->
-                    serviceInfo.ifaceClass.isAnnotationPresent(ScheduledTask.class))
+                            serviceInfo.ifaceClass.isAnnotationPresent(ScheduledTask.class))
                     .collect(Collectors.toList());
             serviceInfos.forEach(serviceInfo -> runTask(serviceInfo));
         });

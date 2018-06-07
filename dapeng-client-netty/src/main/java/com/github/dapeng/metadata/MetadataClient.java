@@ -1,15 +1,15 @@
 package com.github.dapeng.metadata;
 
-import com.github.dapeng.client.netty.SoaConnectionImpl;
-import com.github.dapeng.client.netty.SoaConnectionImpl;
+import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.SoaConnectionPool;
 import com.github.dapeng.core.SoaConnectionPoolFactory;
-import com.github.dapeng.util.SoaSystemEnvProperties;
+import com.github.dapeng.core.helper.DapengUtil;
 
 import java.util.ServiceLoader;
 
 /**
- * Created by tangliu on 2016/3/3.
+ * @author tangliu
+ * @date 2016/3/3
  */
 public class MetadataClient {
 
@@ -17,18 +17,17 @@ public class MetadataClient {
     private final String version;
     private final String methodName = "getServiceMetadata";
 
-    private SoaConnectionPool pool;
+    private final SoaConnectionPool pool;
+
+    private final SoaConnectionPool.ClientInfo clientInfo;
 
     public MetadataClient(String serviceName, String version) {
         this.serviceName = serviceName;
         this.version = version;
 
-        ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class);
-        for (SoaConnectionPoolFactory factory : factories) {
-            this.pool = factory.getPool();
-            break;
-        }
-        this.pool.registerClientInfo(serviceName, version);
+        ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class, getClass().getClassLoader());
+        this.pool = factories.iterator().next().getPool();
+        this.clientInfo = this.pool.registerClientInfo(serviceName, version);
 
     }
 
@@ -36,6 +35,9 @@ public class MetadataClient {
      * getServiceMetadata
      **/
     public String getServiceMetadata() throws Exception {
+        InvocationContextImpl.Factory.currentInstance()
+                .sessionTid(DapengUtil.generateTid())
+                .callerMid("InnerApiSite");
         getServiceMetadata_result result = pool.send(serviceName, version, methodName,
                 new getServiceMetadata_args(),
                 new GetServiceMetadata_argsSerializer(),

@@ -2,7 +2,7 @@ package com.github.dapeng.client.netty;
 
 import com.github.dapeng.core.SoaCode;
 import com.github.dapeng.core.SoaException;
-import com.github.dapeng.util.SoaSystemEnvProperties;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.AbstractByteBufAllocator;
 import io.netty.buffer.ByteBuf;
@@ -29,8 +29,8 @@ public class NettyClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NettyClient.class);
 
-    private final int readerIdleTimeSeconds = 15;
-    private final int writerIdleTimeSeconds = 10;
+    private final int readerIdleTimeSeconds = 45;
+    private final int writerIdleTimeSeconds = 15;
     private final int allIdleTimeSeconds = 0;
 
     private Bootstrap bootstrap = null;
@@ -108,13 +108,25 @@ public class NettyClient {
         bootstrap.handler(new ChannelInitializer<SocketChannel>() {
             @Override
             public void initChannel(SocketChannel ch) throws Exception {
-                ch.pipeline().addLast(new IdleStateHandler(readerIdleTimeSeconds, writerIdleTimeSeconds, allIdleTimeSeconds), new SoaDecoder(), new SoaIdleHandler(), new SoaClientHandler(callBack));
+                ch.pipeline().addLast(new IdleStateHandler(readerIdleTimeSeconds, writerIdleTimeSeconds, allIdleTimeSeconds),
+                        new SoaFrameDecoder(), //粘包和断包处理
+                        new SoaIdleHandler(),
+                        new SoaClientHandler(callBack));
             }
         });
         return bootstrap;
     }
 
-    public ByteBuf send(Channel channel, int seqid, ByteBuf request) throws SoaException {
+    /**
+     * @param channel
+     * @param seqid
+     * @param request
+     * @param timeout
+     * @param service 传入 service 参数 是为了返回服务超时信息更具体
+     * @return
+     * @throws SoaException
+     */
+    public ByteBuf send(Channel channel, int seqid, ByteBuf request, long timeout, String service) throws SoaException {
 
         //means that this channel is not idle and would not managered by IdleConnectionManager
         IdleConnectionManager.remove(channel);
@@ -123,12 +135,17 @@ public class NettyClient {
 
         RequestQueue.put(seqid, future);
 
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("NettyClient::send, timeout:" + timeout + ", seqId:" + seqid + ",  to: " + channel.remoteAddress());
+        }
+
         try {
             channel.writeAndFlush(request);
-            ByteBuf respByteBuf = future.get(30000, TimeUnit.MILLISECONDS);
+            ByteBuf respByteBuf = future.get(timeout, TimeUnit.MILLISECONDS);
             return respByteBuf;
         } catch (TimeoutException e) {
-            throw new SoaException(SoaCode.UnKnown, e.getMessage() == null ? "Timeout" : e.getMessage());
+            LOGGER.error("请求服务[" + service + "]超时，seqid:" + seqid);
+            throw new SoaException(SoaCode.TimeOut.getCode(), "请求服务[" + service + "]超时");
         } catch (Throwable e) {
             throw new SoaException(SoaCode.UnKnown, e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage());
         } finally {
@@ -151,7 +168,7 @@ public class NettyClient {
     }
 
     private SoaClientHandler.CallBack callBack = msg -> {
-        // length(4) stx(1) version(...) protocol(1) seqid(4) header(...) body(...) etx(1)
+        // length(4) stx(1) version(1) protocol(1) seqid(4) header(...) body(...) etx(1)
         int readerIndex = msg.readerIndex();
         msg.skipBytes(7); // length4 + stx1 + version1 + protocol1
         int seqid = msg.readInt();
@@ -191,6 +208,14 @@ public class NettyClient {
     }
 
 
+    /**
+     * 同步连接并返回channel
+     *
+     * @param host
+     * @param port
+     * @return
+     * @throws InterruptedException
+     */
     public Channel connect(String host, int port) throws InterruptedException {
         return bootstrap.connect(host, port).sync().channel();
     }

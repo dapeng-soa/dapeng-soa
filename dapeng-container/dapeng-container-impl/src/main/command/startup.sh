@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export JVM_HOME='/opt/jdk1.8.0_51'
+export JVM_HOME='opt/oracle-server-jre'
 export PATH=$JVM_HOME/bin:$PATH
 
 PRGNAME=soa-service
@@ -32,9 +32,9 @@ do
   CLASSPATH=$CLASSPATH:$filename
 done
 
-DEBUG="-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9997"
+#DEBUG="-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9997"
 JMX="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=1091 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
-GCOPTS="-Dfile.encoding=UTF-8 -Dsun.jun.encoding=UTF-8 -Dname=$PRGNAME -Xms512M -Xmx1024M -XX:PermSize=512M -XX:MaxPermSize=512M -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDateStamps -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintGCDetails -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+UseParallelGC -XX:+UseParallelOldGC -Dlog.dir=$PRGDIR/.."
+JVM_OPTS="-Dfile.encoding=UTF-8 -Dsun.jun.encoding=UTF-8 -Dname=$PRGNAME -Xms512M -Xmx1024M -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDateStamps -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintGCDetails -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+UseParallelGC -XX:+UseParallelOldGC -Dlog.dir=$PRGDIR/.."
 SOA_BASE="-Dsoa.base=$PRGDIR/../ -Dsoa.run.mode=native"
 
 process_exit() {
@@ -43,9 +43,10 @@ process_exit() {
 
 trap 'process_exit' SIGTERM SIGINT
 
-nohup java $PINPOINT -server $GCOPTS $E_JAVA_OPTS $SOA_BASE -cp ./dapeng-bootstrap.jar com.isuwang.dapeng.bootstrap.Bootstrap >> $LOGDIR/catalina.out 2>&1 &
+nohup java -server $JVM_OPTS $SOA_BASE $DEBUG_OPTS $USER_OPTS  $E_JAVA_OPTS -cp ./dapeng-bootstrap.jar com.github.dapeng.bootstrap.Bootstrap >> $logdir/console.log 2>&1 &
+echo $! > $logdir/pid.txt
 
-echo $! > $LOGDIR/pid.txt
+nohup sh /opt/fluent-bit/fluent-bit.sh >> $logdir/fluent-bit.log 2>&1 &
 
 ## use while loop to prevent the bash exit..
 while [ 1 == 1 ];do

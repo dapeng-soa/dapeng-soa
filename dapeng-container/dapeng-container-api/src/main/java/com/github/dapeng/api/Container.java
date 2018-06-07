@@ -4,10 +4,6 @@ import com.github.dapeng.core.Application;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.Filter;
-import com.github.dapeng.core.Application;
-import com.github.dapeng.core.ProcessorKey;
-import com.github.dapeng.core.definition.SoaServiceDefinition;
-import com.github.dapeng.core.filter.Filter;
 
 import java.util.List;
 import java.util.Map;
@@ -57,6 +53,17 @@ public interface Container {
     public void unregisterPlugin(Plugin plugin);
 
     /**
+     * 注册Filter(like: monitor)
+     */
+    public void registerFilter(Filter filter);
+
+    /**
+     * 卸载Filter
+     * @param filter
+     */
+    public void unregisterFilter(Filter filter);
+
+    /**
      * 获取应用程序的相关信息
      * @return
      */
@@ -66,10 +73,12 @@ public interface Container {
 
     Map<ProcessorKey, SoaServiceDefinition<?>> getServiceProcessors();
 
+    // fixme @Deprecated
     void registerAppProcessors(Map<ProcessorKey, SoaServiceDefinition<?>> processors);
 
     public Application getApplication(ProcessorKey key);
 
+    // fixme @Deprecated
     public void registerAppMap(Map<ProcessorKey,Application> applicationMap);
 
     public Executor getDispatcher();

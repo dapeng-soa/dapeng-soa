@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+         http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
+
+    <!--参数配置-->
+    <!--<context:property-placeholder location="classpath:config_message.properties" local-override="false"-->
+                                  <!--ignore-unresolvable="true" system-properties-mode="ENVIRONMENT"/>-->
+
+    <!--&lt;!&ndash;当使用 <context:component-scan/> 后，即可将 <context:annotation-config/> 省去。&ndash;&gt;-->
+    <!--<context:component-scan base-package="com.github.dapeng.message.*"/>-->
+
+    <!--<bean id="slf4j-filter" class="com.alibaba.druid.filter.logging.Slf4jLogFilter">-->
+        <!--<property name="statementExecutableSqlLogEnable" value="true"/>-->
+    <!--</bean>-->
+
+    <!--<bean id="stat-filter" class="com.alibaba.druid.filter.stat.StatFilter">-->
+        <!--<property name="slowSqlMillis" value="3000"/>-->
+        <!--<property name="logSlowSql" value="true"/>-->
+    <!--</bean>-->
+
+    <!-- 数据库和事务配置 -->
+    <!--<bean id="message_dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init"-->
+          <!--destroy-method="close">-->
+        <!--&lt;!&ndash; 基本属性 url、user、password &ndash;&gt;-->
+        <!--<property name="url" value="${DB.MESSAGE.URL}"/>-->
+        <!--<property name="username" value="${DB.MESSAGE.USER}"/>-->
+        <!--<property name="password" value="${DB.MESSAGE.PASSWD}"/>-->
+
+        <!--&lt;!&ndash; 配置初始化大小、最小、最大 &ndash;&gt;-->
+        <!--<property name="initialSize" value="1"/>-->
+        <!--<property name="minIdle" value="1"/>-->
+        <!--<property name="maxActive" value="20"/>-->
+
+        <!--&lt;!&ndash; 配置获取连接等待超时的时间 &ndash;&gt;-->
+        <!--<property name="maxWait" value="10000"/>-->
+
+        <!--&lt;!&ndash; 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 &ndash;&gt;-->
+        <!--<property name="timeBetweenEvictionRunsMillis" value="60000"/>-->
+
+        <!--&lt;!&ndash; 配置一个连接在池中最小生存的时间，单位是毫秒 &ndash;&gt;-->
+        <!--<property name="minEvictableIdleTimeMillis" value="300000"/>-->
+
+        <!--<property name="validationQuery" value="SELECT 'x'"/>-->
+        <!--<property name="testWhileIdle" value="true"/>-->
+        <!--<property name="testOnBorrow" value="false"/>-->
+        <!--<property name="testOnReturn" value="false"/>-->
+
+        <!--&lt;!&ndash; 打开PSCache，并且指定每个连接上PSCache的大小 &ndash;&gt;-->
+        <!--&lt;!&ndash;-->
+        <!--<property name="poolPreparedStatements" value="true"/>-->
+        <!--<property name="maxPoolPreparedStatementPerConnectionSize" value="20"/>-->
+        <!--&ndash;&gt;-->
+
+        <!--&lt;!&ndash; 配置监控统计拦截的filters &ndash;&gt;-->
+        <!--&lt;!&ndash;-->
+        <!--<property name="filters" value="stat,slf4j"/>-->
+        <!--&ndash;&gt;-->
+        <!--<property name="proxyFilters">-->
+            <!--<list>-->
+                <!--<ref bean="stat-filter"/>-->
+                <!--<ref bean="slf4j-filter"/>-->
+            <!--</list>-->
+        <!--</property>-->
+    <!--</bean>-->
+
+    <!--<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">-->
+        <!--<property name="dataSource" ref="message_dataSource"/>-->
+        <!--<property name="defaultTimeout" value="30"/>-->
+        <!--&lt;!&ndash;<qualifier value="globalTransaction"/>&ndash;&gt;-->
+    <!--</bean>-->
+
+
+    <!--<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">-->
+        <!--<property name="dataSource" ref="message_dataSource"/>-->
+    <!--</bean>-->
+
+    <!--<bean id="abstractDao" abstract="true">-->
+        <!--<property name="jdbcTemplate" ref="jdbcTemplate"/>-->
+    <!--</bean>-->
+
+    <!--<bean id="messageDao" class="com.github.dapeng.message.event.dao.MessageDaoImpl" parent="abstractDao"/>-->
+
+    <!--<bean id="contextHolder" class="com.github.dapeng.message.event.dao.SpringContextHolder"/>-->
+
+
+    <!--<bean id="soaKafkaProducer" class="com.github.dapeng.message.producer.EventKafkaProducer">-->
+        <!--<constructor-arg index="0" value="false"/>-->
+    <!--</bean>-->
+
+    <!--<tx:annotation-driven/>-->
+
+    <!--定时任务-->
+    <!--<bean id="messageScheduled" class="com.github.dapeng.message.event.task.MessageScheduled"/>-->
+
+
+    <!--<task:annotation-driven scheduler="qbScheduler" mode="proxy"/>
+    <task:scheduler id="qbScheduler" pool-size="10"/>
+
+    <task:scheduled-tasks scheduler="qbScheduler">
+        &lt;!&ndash;"0 0/1 * * * ?"&ndash;&gt;
+        <task:scheduled ref="messageScheduled" method="fetchMessage" cron="${message.fetch.cron}"/>
+    </task:scheduled-tasks>-->
+</beans>

@@ -1,7 +1,7 @@
 package com.github.dapeng.registry.zookeeper;
 
-import com.github.dapeng.registry.ConfigKey;
-import com.github.dapeng.registry.ServiceInfo;
+import com.github.dapeng.core.enums.LoadBalanceStrategy;
+import com.github.dapeng.registry.*;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.ServiceInfo;
 import org.slf4j.Logger;
@@ -9,12 +9,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- *
  * @author tangliu
  * @date 2016/8/8
  */
@@ -22,7 +20,7 @@ public class WatcherUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WatcherUtils.class);
 
-    public static void processConfigData(String configNode, byte[] data, Map<String, Map<ConfigKey, Object>> config) {
+    /*public static void processConfigData(String configNode, byte[] data, Map<String, Map<ConfigKey, Object>> config) {
         try {
             String propertiesStr = new String(data, "utf-8");
 
@@ -46,9 +44,13 @@ public class WatcherUtils {
                             Boolean bool = Boolean.valueOf(key_values[1]);
                             propertyMap.put(type, bool);
                             break;
-                        case Timeout:
-                            Integer timeout = Integer.valueOf(key_values[1]);
-                            propertyMap.put(type, timeout);
+                        case ClientTimeout:
+                            long clientTimeout = Long.valueOf(key_values[1]);
+                            propertyMap.put(type, clientTimeout);
+                            break;
+                        case ServerTimeout:
+                            long serverTimeout = Long.valueOf(key_values[1]);
+                            propertyMap.put(type, serverTimeout);
                             break;
                         case LoadBalance:
                             propertyMap.put(type, key_values[1]);
@@ -66,6 +68,67 @@ public class WatcherUtils {
             }
             config.put(configNode, propertyMap);
             LOGGER.info("get config form {} with data [{}]", configNode, propertiesStr);
+        } catch (UnsupportedEncodingException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }*/
+
+    /**
+     * new get config data
+     * <p>
+     * timeout/800ms,createSupplier:100ms,modifySupplier:200ms;
+     * loadbalance/LeastActive,createSupplier:Random,modifySupplier:RoundRobin;
+     *
+     * @param data
+     * @param zkInfo
+     */
+    public static void processZkConfig(byte[] data, ZkServiceInfo zkInfo, boolean isGlobal) {
+        try {
+
+            String configData = new String(data, "utf-8");
+
+            String[] properties = configData.split(";");
+
+            for (String property : properties) {
+                String typeValue = property.split("/")[0];
+                if (typeValue.equals(ConfigKey.TimeOut.getValue())) {
+                    if (isGlobal) {
+                        String value = property.split("/")[1];
+                        zkInfo.timeConfig.globalConfig = timeHelper(value);
+                    } else {
+                        String[] keyValues = property.split(",");
+                        for (String keyValue : keyValues) {
+                            String[] props;
+                            if (keyValue.contains("/")) {
+                                props = keyValue.split("/");
+                            } else {
+                                props = keyValue.split(":");
+                            }
+                            zkInfo.timeConfig.serviceConfigs.put(props[0], timeHelper(props[1]));
+                        }
+                    }
+
+                } else if (typeValue.equals(ConfigKey.LoadBalance.getValue())) {
+
+                    if (isGlobal) {
+                        String value = property.split("/")[1];
+                        zkInfo.loadbalanceConfig.globalConfig = LoadBalanceStrategy.findByValue(value);
+                    } else {
+
+                        String[] keyValues = property.split(",");
+                        for (String keyValue : keyValues) {
+                            String[] props;
+                            if (keyValue.contains("/")) {
+                                props = keyValue.split("/");
+                            } else {
+                                props = keyValue.split(":");
+                            }
+                            zkInfo.loadbalanceConfig.serviceConfigs.put(props[0], LoadBalanceStrategy.findByValue(props[1]));
+                        }
+                    }
+                }
+            }
+            LOGGER.info("get config from {} with data [{}]", zkInfo.service, configData);
         } catch (UnsupportedEncodingException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -103,5 +166,16 @@ public class WatcherUtils {
             }
         }
         caches.put(serviceName, sinfos);
+    }
+
+    /**
+     * 将配置信息中的时间单位ms 字母替换掉  100ms -> 100
+     *
+     * @param number
+     * @return
+     */
+    public static Long timeHelper(String number) {
+        number = number.replaceAll("[^(0-9)]", "");
+        return Long.valueOf(number);
     }
 }

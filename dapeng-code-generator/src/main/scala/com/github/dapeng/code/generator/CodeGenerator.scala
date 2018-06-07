@@ -16,6 +16,8 @@ import scala.xml.{Atom, Elem, Node, Text}
   */
 abstract class CodeGenerator {
 
+
+  val XML_REGEN_COUNT = 5
   val lt = "<"
   val gt = ">"
   val and = "&"

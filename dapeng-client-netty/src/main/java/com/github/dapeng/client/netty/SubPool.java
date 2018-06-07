@@ -11,7 +11,6 @@ import java.util.concurrent.locks.ReentrantLock;
 public class SubPool {
 
     private final ReentrantLock connectionLock = new ReentrantLock();
-    private final ReentrantLock jsonConnectionlock = new ReentrantLock();
 
     private final String ip;
     private final int port;
@@ -19,49 +18,28 @@ public class SubPool {
     /**
      * connection that used by rpcClients, such as java, scala, php..
      */
-    private SoaConnection normalConnection;
-
-    /**
-     * connection that used by json based httpClients.
-     */
-    private SoaConnection jsonConnection;
+    private SoaConnection soaConnection;
 
     SubPool(String ip, int port) {
         this.ip = ip;
         this.port = port;
     }
 
-    /**
-     * @param connectionType
-     * @return
-     */
-    public SoaConnection getConnection(ConnectionType connectionType) {
-        switch (connectionType) {
-            case Json:
-                if (jsonConnection != null) return jsonConnection;
-                try {
-                    jsonConnectionlock.lock();
-                    if (jsonConnection == null) {
-                        jsonConnection = new SoaJsonConnectionImpl(ip, port);
-                    }
-                } finally {
-                    jsonConnectionlock.unlock();
-                }
+    public SoaConnection getConnection() {
 
-                return jsonConnection;
-            case Common:
-                if (normalConnection != null) return normalConnection;
-                try {
-                    connectionLock.lock();
-                    if (normalConnection == null) {
-                        normalConnection = new SoaConnectionImpl(ip, port);
-                    }
-                } finally {
-                    connectionLock.unlock();
-                }
-                return normalConnection;
-            default:
-                return null;
+        if (soaConnection != null) return soaConnection;
+        try {
+            connectionLock.lock();
+            if (soaConnection == null) {
+                soaConnection = new SoaConnectionImpl(ip, port, this);
+            }
+        } finally {
+            connectionLock.unlock();
         }
+        return soaConnection;
     }
+
+//    public void removeConnection() {
+//        soaConnection = null;
+//    }
 }
