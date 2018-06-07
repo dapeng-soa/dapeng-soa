@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -273,9 +274,10 @@ public class ServerCounterContainer {
             DataPoint point = new DataPoint();
             point.setDatabase(DATA_BASE);
             point.setBizTag("dapeng_node_flow");
+            long now = System.currentTimeMillis();
             Map<String, String> tags = new HashMap<>(4);
             tags.put("period", String.valueOf(PERIOD));
-            tags.put("analysis_time", String.valueOf(System.currentTimeMillis()));
+            tags.put("analysis_time", String.valueOf(now));
             tags.put("node_ip", NODE_IP);
             tags.put("node_port", String.valueOf(NODE_PORT));
             point.setTags(tags);
@@ -289,7 +291,7 @@ public class ServerCounterContainer {
             fields.put("sum_response_flow", sumResponseFlow);
             fields.put("avg_response_flow", avgResponseFlow);
             point.setValues(fields);
-
+            point.setTimestamp(now);
             return point;
 
         } else {
@@ -306,6 +308,8 @@ public class ServerCounterContainer {
 
         List<DataPoint> points = new ArrayList<>(invocationDatas.size());
 
+        long now = System.currentTimeMillis();
+        AtomicLong increment = new AtomicLong(0);
         invocationDatas.forEach((serviceBasicInfo, serviceProcessData) -> {
             final Long iTotalTime = elapses.stream()
                     .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost))
@@ -326,7 +330,7 @@ public class ServerCounterContainer {
             point.setBizTag("dapeng_service_process");
             Map<String, String> tags = new HashMap<>(8);
             tags.put("period", String.valueOf(PERIOD));
-            tags.put("analysis_time", String.valueOf(System.currentTimeMillis()));
+            tags.put("analysis_time", String.valueOf(now));
             tags.put("service_name", serviceBasicInfo.getServiceName());
             tags.put("method_name", serviceProcessData.getMethodName());
             tags.put("version_name", serviceProcessData.getVersionName());
@@ -342,6 +346,8 @@ public class ServerCounterContainer {
             fields.put("succeed_calls", (long) serviceProcessData.getSucceedCalls().get());
             fields.put("fail_calls", (long) serviceProcessData.getFailCalls().get());
             point.setValues(fields);
+            point.setTimestamp(now + increment.incrementAndGet());
+
             points.add(point);
         });
 

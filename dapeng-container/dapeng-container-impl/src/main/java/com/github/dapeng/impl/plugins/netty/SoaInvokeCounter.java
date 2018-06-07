@@ -46,6 +46,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
             // 异步返回不能从通过 TransactionContext.Factory.currentInstance() 去拿context
             SoaResponseWrapper wrapper = (SoaResponseWrapper) msg;
             TransactionContext context = wrapper.transactionContext;
+
             handleInvocationInfo(context);
         } catch (Throwable ex) {
             LOGGER.error(ex.getMessage(), ex);
