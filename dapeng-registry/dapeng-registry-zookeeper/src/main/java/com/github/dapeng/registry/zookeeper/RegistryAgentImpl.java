@@ -1,5 +1,7 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.api.Container;
+import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.Service;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
@@ -72,7 +74,7 @@ public class RegistryAgentImpl implements RegistryAgent {
             //fixme
             String path = "/soa/runtime/services/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
             LOGGER.info(" logger zookeeper unRegister service: " + path);
-            serverZk.zk.delete(path, -1);
+//            serverZk.zk.delete(path, -1);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -86,6 +88,11 @@ public class RegistryAgentImpl implements RegistryAgent {
             String instanceInfo = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
 
             RegisterContext registerContext = new RegisterContext(serverName, versionName, servicePath, instanceInfo);
+            if (ContainerFactory.getContainer().status() == Container.STATUS_SHUTTING
+                    || ContainerFactory.getContainer().status() == Container.STATUS_DOWN) {
+                LOGGER.warn("Container is shutting down");
+                return;
+            }
             // 注册服务 runtime 实例 到 zk
             serverZk.create(path, registerContext, true);
 

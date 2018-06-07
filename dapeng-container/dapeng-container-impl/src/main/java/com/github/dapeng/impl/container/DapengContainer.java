@@ -37,6 +37,10 @@ public class DapengContainer implements Container {
     private Map<ProcessorKey, SoaServiceDefinition<?>> processors = new ConcurrentHashMap<>();
     private Map<ProcessorKey, Application> applicationMap = new ConcurrentHashMap<>();
     private final List<ClassLoader> applicationCls;
+    /**
+     * 容器状态, 初始状态为STATUS_UNKNOWN
+     */
+    private static int status = STATUS_UNKNOWN;
 
     private final static CountDownLatch SHUTDOWN_SIGNAL = new CountDownLatch(1);
 
@@ -175,6 +179,7 @@ public class DapengContainer implements Container {
     @Override
     public void startup() {
         LOGGER.info(getClass().getSimpleName() + "::startup begin");
+        status = STATUS_CREATING;
         //3. 初始化appLoader,dapengPlugin 应该用serviceLoader的方式去加载
         Plugin springAppLoader = new SpringAppLoader(this, applicationCls);
         Plugin zookeeperPlugin = new ZookeeperRegistryPlugin(this);
@@ -211,11 +216,12 @@ public class DapengContainer implements Container {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.warn("Container graceful shutdown begin.");
+            status = STATUS_SHUTTING;
             // fixme not so graceful
             getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
             Lists.reverse(getPlugins()).stream().filter(plugin -> !(plugin instanceof ZookeeperRegistryPlugin)).forEach(Plugin::stop);
             try {
-                Thread.sleep(2000);
+                Thread.sleep(4000);
             } catch (InterruptedException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -225,11 +231,18 @@ public class DapengContainer implements Container {
 
         try {
             LOGGER.warn(getClass().getSimpleName() + "::startup end");
+            status = STATUS_RUNNING;
             SHUTDOWN_SIGNAL.await();
             LOGGER.warn(getClass().getSimpleName() + "::startup quit");
+            status = STATUS_DOWN;
         } catch (InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
         }
+    }
+
+    @Override
+    public int status() {
+        return status;
     }
 
     public static InputStream loadInputStreamInClassLoader(String path) throws FileNotFoundException {

@@ -1,5 +1,7 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.api.Container;
+import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.core.helper.MasterHelper;
@@ -165,8 +167,12 @@ public class ServerZk extends CommonZk {
             List<String> children = zk.getChildren(watchPath, event -> {
                 //Children发生变化，则重新获取最新的services列表
                 if (event.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-                    LOGGER.info("{}子节点发生变化，重新获取子节点...", event.getPath());
-
+                    LOGGER.info("容器状态:{}, {}子节点发生变化，重新获取子节点...", ContainerFactory.getContainer().status(), event.getPath());
+                    if (ContainerFactory.getContainer().status() == Container.STATUS_SHUTTING
+                            || ContainerFactory.getContainer().status() == Container.STATUS_DOWN) {
+                        LOGGER.warn("Container is shutting down");
+                        return;
+                    }
                     watchInstanceChange(context);
                 }
             });
