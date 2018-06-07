@@ -26,7 +26,7 @@ public class InfluxdbDao {
     private InfluxDB influxDB = getInfluxDBConnection();
 
     public void writePoint(DataPoint dataPoint) {
-        if (null == influxDB){
+        if (null == influxDB) {
             influxDB = getInfluxDBConnection();
         }
         Point.Builder commit = Point.measurement(dataPoint.bizTag);
@@ -45,7 +45,7 @@ public class InfluxdbDao {
     public void writePoints(List<DataPoint> dataPoints) {
         LOGGER.info("counter writePoints {}", dataPoints);
         try {
-            if (null == influxDB){
+            if (null == influxDB) {
                 influxDB = getInfluxDBConnection();
             }
             dataPoints.forEach(dataPoint -> {
