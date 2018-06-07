@@ -568,7 +568,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     } else if ("body".equals(name)) {
                         parsePhase = ParsePhase.BODY_BEGIN;
                     } else {
-                        logger.warn("skip field(" + name + ")@pase:" + parsePhase);
+                        logger.debug("skip field(" + name + ")@pase:" + parsePhase);
                     }
                     break;
                 case HEADER:
@@ -578,7 +578,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     if ("body".equals(name)) {
                         parsePhase = ParsePhase.BODY_BEGIN;
                     } else {
-                        logger.warn("skip field(" + name + ")@pase:" + parsePhase);
+                        logger.debug("skip field(" + name + ")@pase:" + parsePhase);
                     }
                     break;
                 case BODY:
@@ -604,7 +604,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                         Field field = findField(name, current.struct);
                         if (field == null) {
                             foundField = false;
-                            logger.info("field(" + name + ") not found. just skip");
+                            logger.debug("field(" + name + ") not found. just skip");
                             return;
                         }
 
@@ -618,7 +618,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     }
                     break;
                 case BODY_END:
-                    logger.warn("skip field(" + name + ")@pase:" + parsePhase);
+                    logger.debug("skip field(" + name + ")@pase:" + parsePhase);
                     break;
                 default:
                     logAndThrowTException();
@@ -671,7 +671,7 @@ public class JsonSerializer implements BeanSerializer<String> {
         public void onBoolean(boolean value) throws TException {
             switch (parsePhase) {
                 case HEADER:
-                    logger.warn("skip boolean(" + value + ")@pase:" + parsePhase + " field:" + current.fieldName);
+                    logger.debug("skip boolean(" + value + ")@pase:" + parsePhase + " field:" + current.fieldName);
                     break;
                 case BODY:
                     if (!foundField) {
@@ -684,7 +684,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     oproto.writeBool(value);
                     break;
                 default:
-                    logger.warn("skip boolean(" + value + ")@pase:" + parsePhase + " for field:" + current.fieldName);
+                    logger.debug("skip boolean(" + value + ")@pase:" + parsePhase + " for field:" + current.fieldName);
             }
 
         }
@@ -732,7 +732,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     }
                     break;
                 default:
-                    logger.warn("skip number(" + value + ")@pase:" + parsePhase + " Field:" + current.fieldName);
+                    logger.debug("skip number(" + value + ")@pase:" + parsePhase + " Field:" + current.fieldName);
             }
         }
 
@@ -776,7 +776,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     }
                     break;
                 default:
-                    logger.warn("skip number(" + value + ")@pase:" + parsePhase + " Field:" + current.fieldName);
+                    logger.debug("skip number(" + value + ")@pase:" + parsePhase + " Field:" + current.fieldName);
             }
         }
 
@@ -851,7 +851,7 @@ public class JsonSerializer implements BeanSerializer<String> {
 
                     break;
                 default:
-                    logger.warn("skip boolean(" + value + ")@pase:" + parsePhase + " Field:" + current.fieldName);
+                    logger.debug("skip boolean(" + value + ")@pase:" + parsePhase + " Field:" + current.fieldName);
             }
         }
 
@@ -965,7 +965,7 @@ public class JsonSerializer implements BeanSerializer<String> {
             } else if ("callerMid".equals(currentHeaderName)) {
                 invocationCtx.callerMid(value);
             } else {
-                logger.warn("skip field(" + currentHeaderName + ")@pase:" + parsePhase);
+                logger.debug("skip field(" + currentHeaderName + ")@pase:" + parsePhase);
             }
         }
 
