@@ -78,27 +78,27 @@ package com.github.dapeng.basic.api.counter;
         
           
             /**
-            * 
+            *
             **/
-            
-              public java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint> queryPoints(com.github.dapeng.basic.api.counter.domain.DataPoint condition,String beginTimeStamp,String endTimeStamp) throws SoaException{
+
+          public java.util.List<com.github.dapeng.basic.api.counter.domain.DataPoint> queryPoints(com.github.dapeng.basic.api.counter.domain.DataPoint condition,String beginTimeStamp,String endTimeStamp) throws SoaException{
 
               String methodName = "queryPoints";
 
               queryPoints_args queryPoints_args = new queryPoints_args();
               queryPoints_args.setCondition(condition);
-                queryPoints_args.setBeginTimeStamp(beginTimeStamp);
-                queryPoints_args.setEndTimeStamp(endTimeStamp);
-                
+              queryPoints_args.setBeginTimeStamp(beginTimeStamp);
+              queryPoints_args.setEndTimeStamp(endTimeStamp);
+
 
               queryPoints_result response = pool.send(serviceName,version,"queryPoints",queryPoints_args, new QueryPoints_argsSerializer(), new QueryPoints_resultSerializer());
 
-              
-                  
-                      return response.getSuccess();
-                    
-                
-            }
+
+
+              return response.getSuccess();
+
+
+          }
             
           
 

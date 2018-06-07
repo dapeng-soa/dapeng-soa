@@ -132,7 +132,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
         assert (result != null);
 
         //请求响应，在途请求次数 -1
-        ClientZkAgentImpl.getClientZkAgentInstance().activeCountDecrement(new RuntimeInstance(invocationContext.serviceName(), SoaSystemEnvProperties.SOA_CONTAINER_IP, SoaSystemEnvProperties.SOA_CONTAINER_PORT, invocationContext.versionName(), null));
+        ClientZkAgentImpl.getClientZkAgentInstance().activeCountDecrement(new RuntimeInstance(invocationContext.serviceName(), SoaSystemEnvProperties.SOA_CONTAINER_IP, SoaSystemEnvProperties.SOA_CONTAINER_PORT, invocationContext.versionName(), null,null));
 
         if (result.success != null) {
             return result.success;
@@ -265,7 +265,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         assert (resultFuture != null);
         //请求响应，在途请求次数 -1
-        ClientZkAgentImpl.getClientZkAgentInstance().activeCountDecrement(new RuntimeInstance(invocationContext.serviceName(), SoaSystemEnvProperties.SOA_CONTAINER_IP, SoaSystemEnvProperties.SOA_CONTAINER_PORT, invocationContext.versionName(), null));
+        ClientZkAgentImpl.getClientZkAgentInstance().activeCountDecrement(new RuntimeInstance(invocationContext.serviceName(), SoaSystemEnvProperties.SOA_CONTAINER_IP, SoaSystemEnvProperties.SOA_CONTAINER_PORT, invocationContext.versionName(), null,null));
 
         return resultFuture;
     }

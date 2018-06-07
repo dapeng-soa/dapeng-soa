@@ -19,10 +19,10 @@ import java.util.List;
 public class TestRouterRuntimeList {
 
 
-    RuntimeInstance runtimeInstance1 = new RuntimeInstance("com.maple.Uservice", "192.168.1.101", 9090, "1.0.0", "000001");
-    RuntimeInstance runtimeInstance2 = new RuntimeInstance("com.maple.Uservice", "192.168.1.102", 9091, "1.0.0", "000001");
-    RuntimeInstance runtimeInstance3 = new RuntimeInstance("com.maple.Uservice", "192.168.1.103", 9092, "1.0.0", "000001");
-    RuntimeInstance runtimeInstance4 = new RuntimeInstance("com.maple.Uservice", "192.168.1.104", 9093, "1.0.0", "000001");
+    RuntimeInstance runtimeInstance1 = new RuntimeInstance("com.maple.Uservice", "192.168.1.101", 9090, "1.0.0", "000001",null);
+    RuntimeInstance runtimeInstance2 = new RuntimeInstance("com.maple.Uservice", "192.168.1.102", 9091, "1.0.0", "000001",null);
+    RuntimeInstance runtimeInstance3 = new RuntimeInstance("com.maple.Uservice", "192.168.1.103", 9092, "1.0.0", "000001",null);
+    RuntimeInstance runtimeInstance4 = new RuntimeInstance("com.maple.Uservice", "192.168.1.104", 9093, "1.0.0", "000001",null);
 
 
     public List<RuntimeInstance> prepare(InvocationContextImpl ctx, List<Route> routes) {

@@ -56,6 +56,10 @@ public class SoaSystemEnvProperties {
      * 消息总线 定时间隔
      */
     private static final String KEY_SOA_EVENTBUS_PERIOD = "soa.eventbus.publish.period";
+    /**
+     * 服务实例权重
+     */
+    private static final String KEY_SOA_INSTANCE_WEIGHT = "soa.instance.weight";
 
     //    public static final String SOA_SERVICE_IP = get(KEY_SOA_SERVICE_IP, "127.0.0.1");
 //    public static final boolean SOA_SERVICE_IP_ISCONFIG = get(KEY_SOA_SERVICE_IP) != null;
@@ -111,6 +115,12 @@ public class SoaSystemEnvProperties {
      * 正常返回的时候的response code
      */
     public static final String SOA_NORMAL_RESP_CODE = "0000";
+
+    /**
+     * 默认的服务实例的权重
+     */
+    public static  final Integer SOA_INSTANCE_WEIGHT = Integer.valueOf(get(KEY_SOA_INSTANCE_WEIGHT,"100"));
+
 
     public static String get(String key) {
         return get(key, null);
