@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -117,7 +118,7 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
             ServiceProcessData processData = serviceProcessCallDatas.get(basicInfo);
 
             Long invokeStartTime = invokeStartPair.remove(seqId);
-            if(invokeStartTime == null){
+            if (invokeStartTime == null) {
                 // TODO bug
                 LOGGER.error("_SoaInvokeCounter_ seqId:{} channel:{} service:{} method:{}", seqId, ctx.channel(),
                         soaHeader.getServiceName(), soaHeader.getMethodName());
@@ -291,8 +292,8 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
 
         List<DataPoint> points = new ArrayList<>(spd.size());
 
+        AtomicLong increment = new AtomicLong(0);
         spd.forEach((serviceBasicInfo, serviceProcessData) -> {
-
             final Long iTotalTime = elapses.stream()
                     .filter(x -> x.containsKey(serviceBasicInfo)).map(y -> y.get(serviceBasicInfo))
                     .reduce((m, n) -> (m + n)).get();
@@ -328,7 +329,9 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
             fields.put("succeed_calls", (long) serviceProcessData.getSucceedCalls().get());
             fields.put("fail_calls", (long) serviceProcessData.getFailCalls().get());
             point.setValues(fields);
-            point.setTimestamp(millis);
+            point.setTimestamp(millis + increment.get());
+            // 每个点位毫秒值+1避免只能写入一条数据
+            increment.incrementAndGet();
             points.add(point);
         });
 
