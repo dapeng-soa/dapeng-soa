@@ -72,7 +72,12 @@ public class ServerZkAgentImpl implements ServerZkAgent {
             //String servicePath = RUNTIME_PATH + "/" + serverName;
 
             // 注册服务 runtime 实例 到 zk  临时节点
-            masterZk.createEphemeralSequential(path, null);
+            if (usingFallbackZk) {
+                fallbackZk.createEphemeralSequential(path, null);
+            } else {
+                masterZk.createEphemeralSequential(path, null);
+            }
+
             createPreparePath(serverName);
         } catch (Exception e) {
             logger.error("registerService failed..");
@@ -108,16 +113,29 @@ public class ServerZkAgentImpl implements ServerZkAgent {
      */
     private void createPreparePath(String serverName) {
         try {
-            // 创建  zk  runtime imstances
-            masterZk.createPersistent(RUNTIME_PATH + "/" + serverName, null);
-            // 创建  zk  config 服务 持久节点 \
-            masterZk.createPersistent(CONFIG_PATH + "/" + serverName, null);
-            // 创建路由节点
-            masterZk.createPersistent(ROUTES_PATH + "/" + serverName, null);
-            // 创建限流节点
-            masterZk.createPersistent(FREQ_PATH + "/" + serverName, null);
-            // 创建白名单节点
-            masterZk.createPersistent(WHITELIST_PATH + "/" + serverName, null);
+            if (usingFallbackZk) {
+                // 创建  zk  runtime imstances
+                fallbackZk.createPersistent(RUNTIME_PATH + "/" + serverName, null);
+                // 创建  zk  config 服务 持久节点 \
+                fallbackZk.createPersistent(CONFIG_PATH + "/" + serverName, null);
+                // 创建路由节点
+                fallbackZk.createPersistent(ROUTES_PATH + "/" + serverName, null);
+                // 创建限流节点
+                fallbackZk.createPersistent(FREQ_PATH + "/" + serverName, null);
+                // 创建白名单节点
+                fallbackZk.createPersistent(WHITELIST_PATH + "/" + serverName, null);
+            } else {
+                // 创建  zk  runtime imstances
+                masterZk.createPersistent(RUNTIME_PATH + "/" + serverName, null);
+                // 创建  zk  config 服务 持久节点 \
+                masterZk.createPersistent(CONFIG_PATH + "/" + serverName, null);
+                // 创建路由节点
+                masterZk.createPersistent(ROUTES_PATH + "/" + serverName, null);
+                // 创建限流节点
+                masterZk.createPersistent(FREQ_PATH + "/" + serverName, null);
+                // 创建白名单节点
+                masterZk.createPersistent(WHITELIST_PATH + "/" + serverName, null);
+            }
         } catch (Exception ex) {
             logger.error("[createPreparePath] ==> create zk node failed...", ex, ex);
             logger.error(ex.getMessage(), ex);

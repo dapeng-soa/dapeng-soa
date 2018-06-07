@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * 客户端 zk agent 实现
  *
- * @author huyjO
+ * @author huyj
  * @Created 2018/5/24 22:21
  */
 public class ClientZkAgentImpl implements ClientZkAgent {
@@ -62,7 +62,7 @@ public class ClientZkAgentImpl implements ClientZkAgent {
         List<RuntimeInstance> runtimeInstances = usingFallbackZk ? fallbackZk.getZkDataContext().getRuntimeInstancesMap().get(zkServiceInfo.getServiceName()) : masterZk.getZkDataContext().getRuntimeInstancesMap().get(zkServiceInfo.getServiceName());
         if (runtimeInstances != null && !runtimeInstances.isEmpty()) {
             zkServiceInfo.setStatus(ZkServiceInfo.Status.ACTIVE);
-            logger.error(getClass().getSimpleName() + "::syncService [service: " + zkServiceInfo.getServiceName() + "] ,runtimeInstances :[" + runtimeInstances + "] ");
+            logger.info(getClass().getSimpleName() + "::syncService [service: " + zkServiceInfo.getServiceName() + "] ,runtimeInstances :[" + runtimeInstances + "] ");
         } else {//没有实例  就要 注销服务
             zkServiceInfo.setStatus(ZkServiceInfo.Status.CANCELED);
             logger.error(getClass().getSimpleName() + "::syncService [service: " + zkServiceInfo.getServiceName() + "], not found  runtimeInstances.");

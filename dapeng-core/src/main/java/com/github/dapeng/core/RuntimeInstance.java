@@ -1,7 +1,6 @@
 package com.github.dapeng.core;
 
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import org.omg.CORBA.PUBLIC_MEMBER;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -25,13 +24,13 @@ public class RuntimeInstance {
      */
     private AtomicInteger activeCount = new AtomicInteger(0);
 
-    public RuntimeInstance(String service, String ip, int port, String version, String temp_seqid,String weightData) {
+    public RuntimeInstance(String service, String ip, int port, String version, String temp_seqid, String weightData) {
         this.service = service;
         this.version = version;
         this.ip = ip;
         this.port = port;
         this.temp_seqid = temp_seqid;
-        this.weight = weightData == null?SoaSystemEnvProperties.SOA_INSTANCE_WEIGHT:Integer.parseInt(weightData);
+        this.weight = weightData != null && !"".equalsIgnoreCase(weightData) ? Integer.parseInt(weightData) : SoaSystemEnvProperties.SOA_INSTANCE_WEIGHT;
     }
 
     public AtomicInteger getActiveCount() {

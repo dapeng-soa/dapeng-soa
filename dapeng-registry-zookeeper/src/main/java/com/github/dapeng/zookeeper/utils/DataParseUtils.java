@@ -51,7 +51,7 @@ public class DataParseUtils {
             //运行实例
             case MONITOR_RUNTIME_PATH:
                 //baseZKClient.lockZkDataContext();
-                DataParseUtils.runtimeInstanceChanged(monitorType, changePath, baseZKClient.zkDataContext(), baseZKClient,data);
+                DataParseUtils.runtimeInstanceChanged(monitorType, changePath, baseZKClient.zkDataContext(), baseZKClient, data);
                 logger.info("--[{}]:[{}]:[{}] 数据同步完成...", zkType, baseZKClient.getClientType(), changePath);
                 //baseZKClient.releaseZkDataContext();
                 break;
@@ -96,7 +96,7 @@ public class DataParseUtils {
 
 
     //zk 运行实例监听
-    private static void runtimeInstanceChanged(MonitorType monitorType, String path, ZkDataContext zkDataContext, BaseZKClient baseZKClient,String weightData) {
+    private static void runtimeInstanceChanged(MonitorType monitorType, String path, ZkDataContext zkDataContext, BaseZKClient baseZKClient, String weightData) {
         logger.info("the zk path[{}] has changed, then start sync zkDataContext[servicesMap,runtimeInstancesMap]..", RUNTIME_PATH);
         List list = Splitter.on("/").trimResults().omitEmptyStrings().splitToList(path);
         if (list.size() < 5) { //  /soa/runtime/services/XXXXService
@@ -115,7 +115,7 @@ public class DataParseUtils {
         String temp_seqid = innstanceInfo[3];
 
         ZkServiceInfo zkServiceInfo = new ZkServiceInfo(serviceName, host, Integer.parseInt(port), versionName);
-        RuntimeInstance runtimeInstance = new RuntimeInstance(serviceName, host, Integer.parseInt(port), versionName, temp_seqid,doParseWeightData(weightData));
+        RuntimeInstance runtimeInstance = new RuntimeInstance(serviceName, host, Integer.parseInt(port), versionName, temp_seqid, doParseWeightData(weightData));
         switch (monitorType) {
             //添加数据
             case TYPE_ADDED:
@@ -137,21 +137,19 @@ public class DataParseUtils {
 
             //数据更新
             case TYPE_UPDATED:
-                if (StringUtils.isNotBlank(weightData)){
-
+                if (StringUtils.isNotBlank(weightData)) {
                     int weight = Integer.parseInt(doParseWeightData(weightData));
                     runtimeInstanceList = zkDataContext.getRuntimeInstancesMap().get(serviceName);
-
-                    for (RuntimeInstance instance : runtimeInstanceList){
-                        if (instance.getEqualStr().equals(runtimeInstance.getEqualStr())){
+                    for (RuntimeInstance instance : runtimeInstanceList) {
+                        if (instance.getEqualStr().equals(runtimeInstance.getEqualStr())) {
                             instance.weight = weight;
                         }
                     }
                 }
-                logger.info("update instance:{} weight",path);
+                logger.info("update instance:{} weight", path);
                 /*zkDataContext.getRuntimeInstancesMap().get(serviceName).add(runtimeInstance);
                 zkDataContext.getServicesMap().get(serviceName).add(zkServiceInfo);*/
-              //  logger.info("the path [{}] is protected.. it can not be update.", RUNTIME_PATH);
+                //  logger.info("the path [{}] is protected.. it can not be update.", RUNTIME_PATH);
                 break;
 
             //数据删除
@@ -442,9 +440,9 @@ public class DataParseUtils {
     }
 
     /**
-     * @param runtimeInstances     当前方法下的实例列表，        eg 127.0.0.1:9081:1.0.0,192.168.1.12:9081:1.0.0
-     * @param serviceKey           当前服务信息                eg com.github.user.UserService:1.0.0
-     * @param versionName          版本                       eg 1.0.0
+     * @param runtimeInstances 当前方法下的实例列表，        eg 127.0.0.1:9081:1.0.0,192.168.1.12:9081:1.0.0
+     * @param serviceKey       当前服务信息                eg com.github.user.UserService:1.0.0
+     * @param versionName      版本                       eg 1.0.0
      */
     // TODO 判断是否Master 需要重写
     private static void checkIsMaster(List<RuntimeInstance> runtimeInstances, String serviceKey, String versionName) {
@@ -482,18 +480,17 @@ public class DataParseUtils {
 
     /**
      * 解析zk服务实例节点下的权重
+     *
      * @param weightData
      * @return
      */
-    public static String  doParseWeightData(String weightData){
-
-        if ("".equals(weightData)){
-            return  null;
-        }else {
-            return weightData.split("=")[1].trim();
+    public static String doParseWeightData(String weightData) {
+        String[] arr = weightData.trim().split("=");
+        if (StringUtils.isNotBlank(weightData)) {
+            return arr.length < 2 ? arr[0].trim() : arr[1].trim();
+        } else {
+            return "";
         }
-
     }
-
 
 }
