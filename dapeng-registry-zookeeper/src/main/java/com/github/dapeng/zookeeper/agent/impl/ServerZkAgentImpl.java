@@ -1,5 +1,7 @@
 package com.github.dapeng.zookeeper.agent.impl;
 
+import com.github.dapeng.api.Container;
+import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.Service;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
@@ -70,6 +72,11 @@ public class ServerZkAgentImpl implements ServerZkAgent {
             String instanceInfo = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
             String path = RUNTIME_PATH + "/" + serverName + "/" + instanceInfo;
             //String servicePath = RUNTIME_PATH + "/" + serverName;
+
+            if (ContainerFactory.getContainer().status() == Container.STATUS_SHUTTING || ContainerFactory.getContainer().status() == Container.STATUS_DOWN) {
+                logger.warn("Container is shutting down");
+                return;
+            }
 
             // 注册服务 runtime 实例 到 zk  临时节点
             if (usingFallbackZk) {
