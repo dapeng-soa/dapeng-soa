@@ -2,8 +2,6 @@ package com.github.dapeng.impl.plugins.netty;
 
 
 import com.github.dapeng.api.Container;
-import com.github.dapeng.zookeeper.common.ConfigKey;
-import com.github.dapeng.zookeeper.common.ZkConfig;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
@@ -14,6 +12,8 @@ import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.ExceptionUtil;
 import com.github.dapeng.zookeeper.agent.impl.ServerZkAgentImpl;
+import com.github.dapeng.zookeeper.common.ConfigKey;
+import com.github.dapeng.zookeeper.common.ZkConfig;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -375,6 +376,11 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
      * @return
      */
     private Optional<Long> getZkTimeout(String serviceName, String version, String methodName, ConfigKey configKey) {
-        return Optional.of(ZkConfig.timeHelper((String) ServerZkAgentImpl.getServerZkAgentInstance().getZkClient().getServiceConfig(serviceName, configKey, methodName, null)));
+        //return Optional.of(ZkConfig.timeHelper((String) ServerZkAgentImpl.getServerZkAgentInstance().getZkClient().getServiceConfig(serviceName, configKey, methodName, null)));
+        Object timeout = ServerZkAgentImpl.getServerZkAgentInstance().getZkClient().getServiceConfig(serviceName, configKey, methodName, null);
+        if (Objects.nonNull(timeout)) {
+            return Optional.of(ZkConfig.timeHelper((String) timeout));
+        }
+        return Optional.empty();
     }
 }

@@ -81,6 +81,8 @@ public class ClientZkAgentImpl implements ClientZkAgent {
         String serviceName = runtimeInstance.service;
         //修改 zkDataContext RuntimeInstance
         List<RuntimeInstance> runtimeInstanceList = usingFallbackZk ? fallbackZk.getZkDataContext().getRuntimeInstancesMap().get(serviceName) : masterZk.getZkDataContext().getRuntimeInstancesMap().get(serviceName);
+        if (runtimeInstanceList == null || runtimeInstanceList.isEmpty()) return;
+
         for (RuntimeInstance instance : runtimeInstanceList) {
             if (instance.getInstanceInfo().equalsIgnoreCase(runtimeInstance.getInstanceInfo())) {
                 instance.increaseActiveCount();
@@ -112,6 +114,8 @@ public class ClientZkAgentImpl implements ClientZkAgent {
         String serviceName = runtimeInstance.service;
         //修改 zkDataContext RuntimeInstance
         List<RuntimeInstance> runtimeInstanceList = usingFallbackZk ? fallbackZk.getZkDataContext().getRuntimeInstancesMap().get(serviceName) : masterZk.getZkDataContext().getRuntimeInstancesMap().get(serviceName);
+        if (runtimeInstanceList == null || runtimeInstanceList.isEmpty()) return;
+
         for (RuntimeInstance instance : runtimeInstanceList) {
             if (instance.getInstanceInfo().equalsIgnoreCase(runtimeInstance.getInstanceInfo())) {
                 instance.decreaseActiveCount();

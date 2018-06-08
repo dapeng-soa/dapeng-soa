@@ -19,6 +19,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
@@ -370,6 +371,10 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * @return
      */
     private Optional<Long> getZkTimeout(String serviceName, String version, String methodName) {
-        return Optional.of(ZkConfig.timeHelper((String) clientZkAgent.getZkClient().getServiceConfig(serviceName, ConfigKey.TimeOut, methodName, null)));
+        Object timeout = clientZkAgent.getZkClient().getServiceConfig(serviceName, ConfigKey.TimeOut, methodName, null);
+        if (Objects.nonNull(timeout)) {
+            return Optional.of(ZkConfig.timeHelper((String) timeout));
+        }
+        return Optional.empty();
     }
 }

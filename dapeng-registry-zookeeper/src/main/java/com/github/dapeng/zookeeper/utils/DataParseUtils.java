@@ -485,8 +485,8 @@ public class DataParseUtils {
      * @return
      */
     public static String doParseWeightData(String weightData) {
-        String[] arr = weightData.trim().split("=");
         if (StringUtils.isNotBlank(weightData)) {
+            String[] arr = weightData.trim().split("=");
             return arr.length < 2 ? arr[0].trim() : arr[1].trim();
         } else {
             return "";
