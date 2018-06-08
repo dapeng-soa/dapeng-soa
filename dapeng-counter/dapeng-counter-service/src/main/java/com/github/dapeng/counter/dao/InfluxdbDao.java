@@ -59,8 +59,7 @@ public class InfluxdbDao {
                 Point.Builder commit = Point.measurement(dataPoint.bizTag);
                 dataPoint.values.forEach(commit::addField);
                 dataPoint.tags.forEach(commit::tag);
-                commit.time(dataPoint.getTimestamp() == 0 ? now + increment.get() : dataPoint.getTimestamp(), TimeUnit.MILLISECONDS);
-                increment.incrementAndGet();
+                commit.time(dataPoint.getTimestamp() == 0 ? now + increment.incrementAndGet() : dataPoint.getTimestamp(), TimeUnit.MILLISECONDS);
                 influxDB.write(dataPoint.database, "", commit.build());
             });
         } finally {
