@@ -50,10 +50,10 @@ process_exit() {
 
 trap 'kill ${!};process_exit' SIGTERM
 
-nohup java -server $JVM_OPTS $SOA_BASE $DEBUG_OPTS $USER_OPTS  $E_JAVA_OPTS -cp ./dapeng-bootstrap.jar com.github.dapeng.bootstrap.Bootstrap >> $logdir/console.log 2>&1 &
+nohup java -server $JVM_OPTS $SOA_BASE $DEBUG_OPTS $USER_OPTS  $E_JAVA_OPTS -cp ./dapeng-bootstrap.jar com.github.dapeng.bootstrap.Bootstrap >> $LOGDIR/console.log 2>&1 &
 pid="$!"
-echo $pid > $logdir/pid.txt
+echo $pid > $LOGDIR/pid.txt
 
-nohup sh /opt/fluent-bit/fluent-bit.sh >> $logdir/fluent-bit.log 2>&1 &
+nohup sh /opt/fluent-bit/fluent-bit.sh >> $LOGDIR/fluent-bit.log 2>&1 &
 
 wait $pid
