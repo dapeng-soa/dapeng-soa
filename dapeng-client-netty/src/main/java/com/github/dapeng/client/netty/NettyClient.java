@@ -144,8 +144,8 @@ public class NettyClient {
             ByteBuf respByteBuf = future.get(timeout, TimeUnit.MILLISECONDS);
             return respByteBuf;
         } catch (TimeoutException e) {
-            LOGGER.error("请求服务[" + service + "]超时，seqid:" + seqid);
-            throw new SoaException(SoaCode.TimeOut.getCode(), "请求服务[" + service + "]超时");
+            LOGGER.error("请求服务超时[" + service + "]，seqid:" + seqid);
+            throw new SoaException(SoaCode.TimeOut.getCode(), "请求服务超时[" + service + "]");
         } catch (Throwable e) {
             throw new SoaException(SoaCode.UnKnown, e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage());
         } finally {
