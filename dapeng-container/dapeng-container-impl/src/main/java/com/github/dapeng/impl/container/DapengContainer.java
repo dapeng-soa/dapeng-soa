@@ -188,11 +188,12 @@ public class DapengContainer implements Container {
             registerPlugin(logbackPlugin);
         }
 
+        registerPlugin(nettyPlugin);
         registerPlugin(zookeeperPlugin);
         registerPlugin(springAppLoader);
         registerPlugin(taskSchedulePlugin);
-        registerPlugin(nettyPlugin);
         registerPlugin(mbeanAgentPlugin);
+
 
         //add messagePlugin
 //        registerPlugin(messagePlugin);
