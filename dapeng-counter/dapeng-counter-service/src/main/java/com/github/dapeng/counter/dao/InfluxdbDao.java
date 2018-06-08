@@ -8,8 +8,12 @@ import org.influxdb.InfluxDBFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * author with struy.
@@ -29,10 +33,11 @@ public class InfluxdbDao {
         if (null == influxDB) {
             influxDB = getInfluxDBConnection();
         }
+        long now = System.currentTimeMillis();
         Point.Builder commit = Point.measurement(dataPoint.bizTag);
         dataPoint.values.forEach(commit::addField);
         dataPoint.tags.forEach(commit::tag);
-        commit.time(dataPoint.getTimestamp(), TimeUnit.MILLISECONDS);
+        commit.time(dataPoint.getTimestamp() == 0 ? now : dataPoint.getTimestamp(), TimeUnit.MILLISECONDS);
         try {
             influxDB.write(dataPoint.database, "", commit.build());
         } finally {
@@ -48,11 +53,14 @@ public class InfluxdbDao {
             if (null == influxDB) {
                 influxDB = getInfluxDBConnection();
             }
+            long now = System.currentTimeMillis();
+            AtomicLong increment = new AtomicLong(0);
             dataPoints.forEach(dataPoint -> {
                 Point.Builder commit = Point.measurement(dataPoint.bizTag);
                 dataPoint.values.forEach(commit::addField);
                 dataPoint.tags.forEach(commit::tag);
-                commit.time(dataPoint.getTimestamp(), TimeUnit.MILLISECONDS);
+                commit.time(dataPoint.getTimestamp() == 0 ? now + increment.get() : dataPoint.getTimestamp(), TimeUnit.MILLISECONDS);
+                increment.incrementAndGet();
                 influxDB.write(dataPoint.database, "", commit.build());
             });
         } finally {
