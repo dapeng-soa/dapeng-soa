@@ -96,7 +96,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         if(Integer.parseInt(tarArr[0]) != Integer.parseInt(reqArr[0])){
             return false;
         }
-        if(Integer.parseInt(tarArr[1]) >= Integer.parseInt(reqArr[1])  && Integer.parseInt(tarArr[2]) >= Integer.parseInt(reqArr[2]) ){
+        if((Integer.parseInt(tarArr[1])*10 + Integer.parseInt(tarArr[2]))>= (Integer.parseInt(reqArr[1])*10 + Integer.parseInt(reqArr[2]))){
             return true;
         }
 

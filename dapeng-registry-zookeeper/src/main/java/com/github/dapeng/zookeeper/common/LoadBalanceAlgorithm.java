@@ -1,10 +1,11 @@
 package com.github.dapeng.zookeeper.common;
 
 import com.github.dapeng.core.RuntimeInstance;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
+
 
 /**
  * runtimes 负载均衡策略
@@ -16,6 +17,11 @@ public class LoadBalanceAlgorithm {
 
     private static int lastIndex = -1;
     private static int currentWeight = 0;
+    private static boolean isSame = true;
+    private static int gcdWeight = 1;
+    private static int maxWeight = 0;
+    private static int totalWeight = 0;
+    private static int[] weights;
 
     /**
      * 带权重的随机算法
@@ -28,18 +34,19 @@ public class LoadBalanceAlgorithm {
 
         if(instances.size() > 0) {
             int length = instances.size();
-            boolean sameWeight = true;
-            int totalWeight = 0;
-            final  Random random = new Random();
-            for (int i = 0; i < length; i++) {
-                int tempWeight = instances.get(i).weight;
-                totalWeight += tempWeight;
-                if (sameWeight && i > 0 && tempWeight != instances.get(i - 1).weight) {
-                    sameWeight = false;
+            final Random random = new Random();
+            if (SoaSystemEnvProperties.SOA_CHANGE_WEIGHE) {
+                totalWeight = 0;
+                for (int i = 0; i < length; i++) {
+                    int tempWeight = instances.get(i).weight;
+                    totalWeight += tempWeight;
+                    if (isSame && i > 0 && tempWeight != instances.get(i - 1).weight) {
+                        isSame = false;
+                    }
                 }
+                SoaSystemEnvProperties.SOA_CHANGE_WEIGHE = false;
             }
-
-            if (totalWeight > 0 && !sameWeight) {
+            if (totalWeight > 0 && !isSame) {
                 int offset = random.nextInt(totalWeight);
                 for (int i = 0; i < length; i++){
                     offset -= instances.get(i).weight;
@@ -86,31 +93,32 @@ public class LoadBalanceAlgorithm {
 
         RuntimeInstance result = null;
 
-/*        if (instances.size() > 0) {
-            roundRobinIndex = new AtomicInteger(roundRobinIndex.incrementAndGet() % instances.size());
-            result = instances.get(roundRobinIndex.get());
-        }*/
-
         if (instances.size() >0){
+
             int length = instances.size();
-            int []weights = new int[length];
-            int maxWeight = 0;
-            int minweight = Integer.MAX_VALUE;
-            for (int i = 0; i < length; i++){
-                int tempWeight = instances.get(i).weight;
-                maxWeight = Math.max(maxWeight,tempWeight);
-                minweight = Math.min(minweight,tempWeight);
-                weights[i] = tempWeight;
+            if (SoaSystemEnvProperties.SOA_CHANGE_WEIGHE) {
+                weights = new int[length];
+                maxWeight = 0;
+                int minweight = Integer.MAX_VALUE;
+                for (int i = 0; i < length; i++) {
+                    int tempWeight = instances.get(i).weight;
+                    maxWeight = Math.max(maxWeight, tempWeight);
+                    minweight = Math.min(minweight, tempWeight);
+                    weights[i] = tempWeight;
+                }
+                isSame = (minweight == maxWeight);
+                //计算权重最大公约数
+                gcdWeight = gcdWeight(weights,weights.length);
+                SoaSystemEnvProperties.SOA_CHANGE_WEIGHE = false;
             }
 
             //实例权重相同
-            if (minweight == maxWeight){
+            if (isSame){
                 return  instances.get((++lastIndex) % length);
             }
-            //计算权重最大公约数
-            int gcdWeight = gcdWeight(weights,weights.length);
 
-            if(lastIndex > length){
+
+            if(lastIndex >= length){
                 lastIndex = length -1;
             }
             while (true){

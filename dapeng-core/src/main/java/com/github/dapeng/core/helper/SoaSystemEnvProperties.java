@@ -120,6 +120,10 @@ public class SoaSystemEnvProperties {
      * 默认的服务实例的权重
      */
     public static  final Integer SOA_INSTANCE_WEIGHT = Integer.valueOf(get(KEY_SOA_INSTANCE_WEIGHT,"100"));
+    /**
+     * 记录权重是否修改
+    * */
+    public static boolean SOA_CHANGE_WEIGHE = true;
 
 
     public static String get(String key) {

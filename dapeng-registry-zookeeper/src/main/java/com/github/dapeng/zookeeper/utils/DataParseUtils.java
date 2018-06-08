@@ -116,6 +116,7 @@ public class DataParseUtils {
 
         ZkServiceInfo zkServiceInfo = new ZkServiceInfo(serviceName, host, Integer.parseInt(port), versionName);
         RuntimeInstance runtimeInstance = new RuntimeInstance(serviceName, host, Integer.parseInt(port), versionName, temp_seqid,doParseWeightData(weightData));
+        SoaSystemEnvProperties.SOA_CHANGE_WEIGHE = true;//运行实例改变，权重相应改变
         switch (monitorType) {
             //添加数据
             case TYPE_ADDED:
