@@ -2,6 +2,7 @@ package com.github.dapeng.client.netty;
 
 import com.github.dapeng.core.SoaCode;
 import com.github.dapeng.core.SoaException;
+import com.github.dapeng.core.TransactionContext;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.AbstractByteBufAllocator;
@@ -18,6 +19,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.util.Map;
 import java.util.concurrent.*;
@@ -144,9 +146,17 @@ public class NettyClient {
             ByteBuf respByteBuf = future.get(timeout, TimeUnit.MILLISECONDS);
             return respByteBuf;
         } catch (TimeoutException e) {
-            LOGGER.error("请求服务[" + service + "]超时，seqid:" + seqid);
-            throw new SoaException(SoaCode.TimeOut.getCode(), "请求服务[" + service + "]超时");
+            // 如果在服务里面, 那么不清理MDC
+            if (!TransactionContext.hasCurrentInstance()) {
+                MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+            }
+            LOGGER.error("请求服务超时[" + service + "]，seqid:" + seqid);
+            throw new SoaException(SoaCode.TimeOut.getCode(), "请求服务超时[" + service + "]");
         } catch (Throwable e) {
+            // 如果在服务里面, 那么不清理MDC
+            if (!TransactionContext.hasCurrentInstance()) {
+                MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+            }
             throw new SoaException(SoaCode.UnKnown, e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage());
         } finally {
             RequestQueue.remove(seqid);
