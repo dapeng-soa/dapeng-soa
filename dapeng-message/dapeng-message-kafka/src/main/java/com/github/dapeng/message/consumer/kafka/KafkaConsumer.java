@@ -28,12 +28,17 @@ public class KafkaConsumer extends Thread {
 
     private List<ConsumerContext> customers = new ArrayList<>();
 
-    private String groupId, topic;
+    private String groupId;
 
-    public KafkaConsumer(String groupId, String topic) {
+    private List<String>topics;
+
+    public KafkaConsumer(String groupId) {
         this.groupId = groupId;
-        this.topic = topic;
         init();
+    }
+
+    public void setTopics(List<String> topics) {
+        this.topics = topics;
     }
 
     private String kafkaConnect = SoaSystemEnvProperties.SOA_KAFKA_PORT;
@@ -45,7 +50,7 @@ public class KafkaConsumer extends Thread {
         logger.info(new StringBuffer("[KafkaConsumer] [init] ")
                 .append("kafkaConnect(").append(kafkaConnect)
                 .append(") groupId(").append(groupId)
-                .append(") topic(").append(topic).append(")").toString());
+                .append(")").append(")").toString());
 
         Properties props = new Properties();
         props.put("bootstrap.servers", kafkaConnect);
@@ -63,9 +68,9 @@ public class KafkaConsumer extends Thread {
     public void run() {
 
         try {
-            logger.info("[KafkaConsumer][{}][run] ", groupId + ":" + topic);
+            logger.info("[KafkaConsumer][{}][run] ", groupId );
 
-            consumer.subscribe(Arrays.asList(topic));
+            consumer.subscribe(topics);
             while (true) {
                 ConsumerRecords<ByteBuffer, ByteBuffer> records = consumer.poll(100);
                 for (ConsumerRecord<ByteBuffer, ByteBuffer> record : records) {
@@ -73,7 +78,7 @@ public class KafkaConsumer extends Thread {
                 }
             }
         } catch (Exception e) {
-            logger.error("[KafkaConsumer][{}][run] " + e.getMessage(), groupId + ":" + topic, e);
+            logger.error("[KafkaConsumer][{}][run] " + e.getMessage(), groupId , e);
         }
     }
 
@@ -85,7 +90,7 @@ public class KafkaConsumer extends Thread {
      */
     private void receive(ByteBuffer message) {
 
-        logger.info("KafkaConsumer groupId({}) topic({}) 收到消息", groupId, topic);
+        logger.info("KafkaConsumer groupId({}) 收到消息", groupId);
         for (ConsumerContext customer : customers) {
             dealMessage(customer, message);
         }

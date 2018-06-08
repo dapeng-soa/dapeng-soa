@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -50,6 +51,7 @@ public class KafkaMessagePlugin implements Plugin{
                         Annotation messageConsumer = ifaceClass.getAnnotation(MessageConsumerClass);
                         String groupId = (String) messageConsumer.getClass().getDeclaredMethod("groupId").invoke(messageConsumer);
 
+                        List<String>topics = new ArrayList<>();
                         for (Method method : ifaceClass.getMethods()) {
                             if (method.isAnnotationPresent(MessageConsumerActionClass)) {
 
@@ -57,11 +59,13 @@ public class KafkaMessagePlugin implements Plugin{
 
                                 Annotation annotation = method.getAnnotation(MessageConsumerActionClass);
                                 String topic = (String) annotation.getClass().getDeclaredMethod("topic").invoke(annotation);
+                                if (!topics.contains(topic)){
+                                    topics.add(topic);
+                                }
                                 SoaFunctionDefinition functionDefinition = (SoaFunctionDefinition)definition.functions.get(methodName);
 
                                 ConsumerContext consumerContext = new ConsumerContext();
                                 consumerContext.setGroupId(groupId);
-                                consumerContext.setTopic(topic);
                                 consumerContext.setIface(definition.iface);
                                 consumerContext.setSoaFunctionDefinition(functionDefinition);
 
@@ -70,6 +74,8 @@ public class KafkaMessagePlugin implements Plugin{
                                 LOGGER.info("添加消息订阅({})({})", ifaceClass.getName(), method.getName());
                             }
                         }
+                        consumerService.setTopics(topics);
+                        consumerService.start();
                     }
                 }
 

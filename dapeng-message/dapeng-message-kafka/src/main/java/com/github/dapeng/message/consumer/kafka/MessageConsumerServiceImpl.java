@@ -6,8 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Proxy;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by tangliu on 2016/9/12.
@@ -17,24 +16,22 @@ public class MessageConsumerServiceImpl implements MessageConsumerService {
 
     public static final Map<String, KafkaConsumer> TOPIC_CONSUMERS = new HashMap<>();
 
+    public static final List<String> TOPICS = new ArrayList<>();
     @Override
     public void addConsumer(ConsumerContext context) {
 
         String groupId = context.getGroupId();
-        String topic = context.getTopic();
 
         Class<?> ifaceClass = context.getIface().getClass();
 
         try {
             String className = context.getIface() instanceof Proxy ? ((Class) ifaceClass.getMethod("getTargetClass").invoke(context.getIface())).getName() : ifaceClass.getName();
             groupId = "".equals(groupId) ? className : ifaceClass.getName();
-            String consumerKey = groupId + ":" + topic;
-
+            String consumerKey = groupId ;
             if (TOPIC_CONSUMERS.containsKey(consumerKey)) {
                 TOPIC_CONSUMERS.get(consumerKey).addCustomer(context);
             } else {
-                KafkaConsumer consumer = new KafkaConsumer(groupId, topic);
-                consumer.start();
+                KafkaConsumer consumer = new KafkaConsumer(groupId);
                 consumer.addCustomer(context);
                 TOPIC_CONSUMERS.put(consumerKey, consumer);
             }
@@ -47,8 +44,7 @@ public class MessageConsumerServiceImpl implements MessageConsumerService {
     @Override
     public void removeConsumer(ConsumerContext context) {
         String groupId = context.getGroupId();
-        String topic = context.getTopic();
-        String consumerKey = groupId + ":" + topic;
+        String consumerKey = groupId ;
 
         TOPIC_CONSUMERS.remove(consumerKey);
     }
@@ -56,5 +52,19 @@ public class MessageConsumerServiceImpl implements MessageConsumerService {
     @Override
     public void clearConsumers() {
         TOPIC_CONSUMERS.clear();
+    }
+
+    @Override
+    public void start() {
+        for (String key : TOPIC_CONSUMERS.keySet()) {
+            KafkaConsumer consumer = TOPIC_CONSUMERS.get(key);
+            consumer.setTopics(TOPICS);
+            consumer.start();
+        }
+    }
+
+    @Override
+    public void setTopics(List<String> topics) {
+        TOPICS.addAll(topics);
     }
 }
