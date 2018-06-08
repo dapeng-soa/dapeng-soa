@@ -19,6 +19,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
@@ -86,6 +87,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     /**
      * 版本 兼容(主版本不兼容，副版本向下兼容)
+     *
      * @param reqVersion
      * @param targetVersion
      * @return
@@ -93,10 +95,10 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private boolean checkVersion(String reqVersion, String targetVersion) {
         String[] reqArr = reqVersion.split("[.]");
         String[] tarArr = targetVersion.split("[.]");
-        if(Integer.parseInt(tarArr[0]) != Integer.parseInt(reqArr[0])){
+        if (Integer.parseInt(tarArr[0]) != Integer.parseInt(reqArr[0])) {
             return false;
         }
-        if((Integer.parseInt(tarArr[1])*10 + Integer.parseInt(tarArr[2]))>= (Integer.parseInt(reqArr[1])*10 + Integer.parseInt(reqArr[2]))){
+        if (Integer.parseInt(tarArr[1]) * 10 + Integer.parseInt(tarArr[2]) >= Integer.parseInt(reqArr[1]) * 10 + Integer.parseInt(reqArr[2])) {
             return true;
         }
 
@@ -369,6 +371,10 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * @return
      */
     private Optional<Long> getZkTimeout(String serviceName, String version, String methodName) {
-        return Optional.of(ZkConfig.timeHelper((String) clientZkAgent.getZkClient().getServiceConfig(serviceName, ConfigKey.TimeOut, methodName, null)));
+        Object timeout = clientZkAgent.getZkClient().getServiceConfig(serviceName, ConfigKey.TimeOut, methodName, null);
+        if (Objects.nonNull(timeout)) {
+            return Optional.of(ZkConfig.timeHelper((String) timeout));
+        }
+        return Optional.empty();
     }
 }

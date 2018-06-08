@@ -78,6 +78,21 @@ public class ZkServiceInfo {
         return serviceName + ":" + versionName + "[" + host + ":" + port + "]";
     }
 
+
+    public boolean isEqual(ZkServiceInfo zkServiceInfo) {
+       /* if (!versionName.equals(zkServiceInfo.versionName))
+            return false;
+
+        if (!host.equals(zkServiceInfo.host))
+            return false;
+
+        if (port != zkServiceInfo.port)
+            return false;*/
+
+        return this.getZkServiceInfo().equals(zkServiceInfo.getZkServiceInfo());
+    }
+
+
     /**********Status  enum**********/
     public enum Status {
         CREATED, ACTIVE, CANCELED
