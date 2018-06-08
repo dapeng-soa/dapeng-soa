@@ -37,18 +37,23 @@ JMX="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=1091 -Dc
 JVM_OPTS="-Dfile.encoding=UTF-8 -Dsun.jun.encoding=UTF-8 -Dname=$PRGNAME -Dio.netty.leakDetectionLevel=advanced -Xms512M -Xmx1024M -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDateStamps -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintGCDetails -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+UseParallelGC -XX:+UseParallelOldGC -Dlog.dir=$PRGDIR/.."
 SOA_BASE="-Dsoa.base=$PRGDIR/../ -Dsoa.run.mode=native"
 
+# SIGTERM-handler  graceful-shutdown
+pid=0
 process_exit() {
- ps -ef| grep ${PRGNAME} |grep -v grep |awk '{print $1}' | xargs kill
+ if [ $pid -ne 0 ]; then
+  kill -SIGTERM "$pid"
+  wait "$pid"
+ fi
+ exit 143; # 128 + 15 -- SIGTERM
 }
 
-trap 'process_exit' SIGTERM SIGINT
+
+trap 'kill ${!};process_exit' SIGTERM
 
 nohup java -server $JVM_OPTS $SOA_BASE $DEBUG_OPTS $USER_OPTS  $E_JAVA_OPTS -cp ./dapeng-bootstrap.jar com.github.dapeng.bootstrap.Bootstrap >> $logdir/console.log 2>&1 &
-echo $! > $logdir/pid.txt
+pid="$!"
+echo $pid > $logdir/pid.txt
 
 nohup sh /opt/fluent-bit/fluent-bit.sh >> $logdir/fluent-bit.log 2>&1 &
 
-## use while loop to prevent the bash exit..
-while [ 1 == 1 ];do
-    sleep 3;
-done;
+wait $pid
