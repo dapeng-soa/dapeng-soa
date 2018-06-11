@@ -26,7 +26,8 @@ import java.util.stream.Collectors;
 
 public class TaskSchedulePlugin implements AppListener, Plugin {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TaskSchedulePlugin.class);
+    //private static final Logger LOGGER = LoggerFactory.getLogger(TaskSchedulePlugin.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger("container.scheduled.task");
 
     private final Container container;
 
@@ -107,7 +108,7 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
             String methodName = method.getName();
             if (method.getParameterCount() > 0) {
                 LOGGER.error("定时任务({}:{}) 方法定义有误,定时任务方法不能有参数.", ifaceClass.getName(), methodName);
-                throw new IllegalArgumentException("定时任务("+ifaceClass.getName()+":"+methodName+") 方法定义有误,定时任务方法不能有参数.");
+                throw new IllegalArgumentException("定时任务(" + ifaceClass.getName() + ":" + methodName + ") 方法定义有误,定时任务方法不能有参数.");
             }
             ScheduledTaskCron cron = method.getAnnotation(ScheduledTaskCron.class);
             String cronStr = cron.cron();
