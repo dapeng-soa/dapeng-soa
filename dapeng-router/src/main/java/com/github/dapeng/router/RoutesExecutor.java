@@ -237,6 +237,10 @@ public class RoutesExecutor {
      * @return
      */
     private static boolean matcherPattern(Pattern pattern, String value) {
+        if (value == null) {
+            return false;
+        }
+
         if (pattern instanceof StringPattern) {
             String content = ((StringPattern) pattern).content;
             return content.equals(value);
@@ -254,11 +258,17 @@ public class RoutesExecutor {
             return regex.matcher(value).matches();
 
         } else if (pattern instanceof RangePattern) {
-            RangePattern range = ((RangePattern) pattern);
-            long valueAsLong = Long.parseLong(value);
-            long from = range.from;
-            long to = range.to;
-            return valueAsLong <= to && valueAsLong >= from;
+            try {
+                RangePattern range = ((RangePattern) pattern);
+                long from = range.from;
+                long to = range.to;
+
+                long valueAsLong = Long.parseLong(value);
+                return valueAsLong <= to && valueAsLong >= from;
+            } catch (Exception e) {
+                logger.error("[RangePattern]::throw exception:" + e.getMessage(), e);
+            }
+            return false;
         } else if (pattern instanceof ModePattern) {
             ModePattern mode = ((ModePattern) pattern);
             try {
@@ -273,14 +283,21 @@ public class RoutesExecutor {
                     return result == to;
                 }
             } catch (NumberFormatException e) {
-                logger.error("输入参数 value 应为数字类型的id ，but get {}", value);
+                logger.error("[ModePattern]::输入参数 value 应为数字类型的id ，but get {}", value);
+            } catch (Exception e) {
+                logger.error("[ModePattern]::throw exception:" + e.getMessage(), e);
             }
             return false;
         } else if (pattern instanceof NumberPattern) {
-            NumberPattern number = ((NumberPattern) pattern);
-            long valueAsLong = Long.parseLong(value);
-            long numberLong = number.number;
-            return valueAsLong == numberLong;
+            try {
+                NumberPattern number = ((NumberPattern) pattern);
+                long valueAsLong = Long.parseLong(value);
+                long numberLong = number.number;
+                return valueAsLong == numberLong;
+            } catch (Exception e) {
+                logger.error("[NumberPattern]::throw exception:" + e.getMessage(), e);
+            }
+            return false;
         }
 
         return false;
