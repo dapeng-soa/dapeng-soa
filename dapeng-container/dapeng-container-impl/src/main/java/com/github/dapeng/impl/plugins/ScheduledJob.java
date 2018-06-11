@@ -25,7 +25,6 @@ import java.util.concurrent.TimeUnit;
 @DisallowConcurrentExecution
 public class ScheduledJob implements Job {
 
-    //private static final Logger logger = LoggerFactory.getLogger(TaskSchedulePlugin.class);
     private static final Logger logger = LoggerFactory.getLogger("container.scheduled.task");
 
     @Override
@@ -43,7 +42,7 @@ public class ScheduledJob implements Job {
         /**
          * 添加sessionTid
          */
-        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
+        InvocationContext invocationContext = InvocationContextImpl.Factory.createNewInstance();
         invocationContext.sessionTid(DapengUtil.generateTid());
         MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().orElse("0"));
 
@@ -63,11 +62,12 @@ public class ScheduledJob implements Job {
                 functionDefinition.apply(iface, null);
             }
             logger.info("定时任务({})执行完成,cost({}ms)", context.getJobDetail().getKey().getName(), stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
-            MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         } catch (Exception e) {
-            MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
             logger.error("定时任务({})执行异常,cost({}ms)", context.getJobDetail().getKey().getName(), stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
             logger.error(e.getMessage(), e);
+        } finally {
+            MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+            InvocationContextImpl.Factory.removeCurrentInstance();
         }
 
     }
