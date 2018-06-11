@@ -44,18 +44,26 @@ public class RoutesExecutor {
         StringBuilder logAppend = new StringBuilder();
         instances.forEach(ins -> logAppend.append(ins.toString() + " "));
         logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes$开始过滤：过滤前 size  {}，实例: {}", instances.size(), logAppend.toString());
+        boolean isMatched = false;
         for (Route route : routes) {
-            boolean isMatched = matchCondition(ctx, route.getLeft());
-            // 匹配成功，执行右边逻辑
-            if (isMatched) {
-                instances = matchThenRouteIp(instances, route);
+            try {
+                isMatched = matchCondition(ctx, route.getLeft());
+                // 匹配成功，执行右边逻辑
+                if (isMatched) {
+                    instances = matchThenRouteIp(instances, route);
 
-                StringBuilder append = new StringBuilder();
-                instances.forEach(ins -> append.append(ins.toString() + " "));
-                logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes过滤结果 size: {}, 实例: {}", instances.size(), append.toString());
-                break;
-            } else {
-                logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes路由没有过滤, size {}", instances.size());
+                    if (logger.isDebugEnabled()) {
+                        StringBuilder append = new StringBuilder();
+                        instances.forEach(ins -> append.append(ins.toString() + " "));
+                        logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes过滤结果 size: {}, 实例: {}",
+                                instances.size(), append.toString());
+                    }
+                    break;
+                } else {
+                    logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes路由没有过滤, size {}", instances.size());
+                }
+            } catch (Throwable ex) {
+                logger.error(ex.getMessage(), ex);
             }
         }
         return instances;
@@ -237,7 +245,7 @@ public class RoutesExecutor {
      * @return
      */
     private static boolean matcherPattern(Pattern pattern, String value) {
-        if (value == null) {
+        if (value == null || value.trim().equals("")) {
             return false;
         }
 
@@ -258,17 +266,13 @@ public class RoutesExecutor {
             return regex.matcher(value).matches();
 
         } else if (pattern instanceof RangePattern) {
-            try {
                 RangePattern range = ((RangePattern) pattern);
                 long from = range.from;
                 long to = range.to;
 
                 long valueAsLong = Long.parseLong(value);
                 return valueAsLong <= to && valueAsLong >= from;
-            } catch (Exception e) {
-                logger.error("[RangePattern]::throw exception:" + e.getMessage(), e);
-            }
-            return false;
+
         } else if (pattern instanceof ModePattern) {
             ModePattern mode = ((ModePattern) pattern);
             try {
