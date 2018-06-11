@@ -148,6 +148,16 @@
         </dependency>
         <dependency>
             <groupId>com.github.dapeng</groupId>
+            <artifactId>dapeng-utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.dapeng</groupId>
+            <artifactId>dapeng-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.dapeng</groupId>
             <artifactId>dapeng-spring</artifactId>
             <version>${project.version}</version>
         </dependency>
