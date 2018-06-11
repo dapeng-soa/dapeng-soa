@@ -25,7 +25,8 @@ import java.util.concurrent.TimeUnit;
 @DisallowConcurrentExecution
 public class ScheduledJob implements Job {
 
-    private static final Logger logger = LoggerFactory.getLogger(TaskSchedulePlugin.class);
+    //private static final Logger logger = LoggerFactory.getLogger(TaskSchedulePlugin.class);
+    private static final Logger logger = LoggerFactory.getLogger("container.scheduled.task");
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
