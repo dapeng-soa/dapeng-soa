@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.github.dapeng.util.ExceptionUtil.convertToSoaException;
+import static io.netty.channel.ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE;
 
 /**
  * @author ever
@@ -59,7 +60,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             if (requestTimestampMap == null) {
                 requestTimestampMap = new HashMap<>(64);
             }
-            requestTimestampMap.put(transactionContext.getSeqid(), System.currentTimeMillis());
+            requestTimestampMap.put(transactionContext.seqId(), System.currentTimeMillis());
 
             requestTimestampAttr.set(requestTimestampMap);
 
@@ -80,7 +81,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
 
             TransactionContext.Factory.removeCurrentInstance();
 
-            ctx.writeAndFlush(responseWrapper);
+            ctx.writeAndFlush(responseWrapper).addListener(FIRE_EXCEPTION_ON_FAILURE);
         }
     }
 
@@ -124,12 +125,13 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         contentProtocol.readMessageEnd();
 
         if (LOGGER.isDebugEnabled()) {
-            String debugLog = "request[seqId:" + context.getSeqid() + "]:"
+            String debugLog = "request[seqId:" + context.seqId() + "]:"
                     + "service[" + soaHeader.getServiceName()
                     + "]:version[" + soaHeader.getVersionName()
                     + "]:method[" + soaHeader.getMethodName() + "]"
-                    + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                    + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
+                    + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "") + " "
+                    + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "") + " "
+                    + (soaHeader.getUserIp().isPresent() ? " userIp:" + soaHeader.getUserIp().get() : "");
             LOGGER.debug(getClass().getSimpleName() + "::decode " + debugLog + ", payload:\n" + args);
         }
         return args;
@@ -151,6 +153,9 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         }
         if (soaHeader.getCallerTid().isPresent()) {
             ctx.callerTid(soaHeader.getCallerTid().get());
+        }
+        if (soaHeader.getTimeout().isPresent()) {
+            ctx.timeout(soaHeader.getTimeout().get());
         }
 
         ctx.calleeTid(DapengUtil.generateTid());

@@ -53,7 +53,7 @@ public interface TransactionContext {
 
     SoaHeader getHeader();
 
-    int getSeqid();
+    int seqId();
 
     boolean isSoaGlobalTransactional();
 
@@ -82,6 +82,9 @@ public interface TransactionContext {
     Optional<Integer> timeout();
 
     String calleeTid();
+
+    void setAttribute(String key, Object value);
+    Object getAttribute(String key);
 
     TransactionContext calleeTid(String calleeTid);
 

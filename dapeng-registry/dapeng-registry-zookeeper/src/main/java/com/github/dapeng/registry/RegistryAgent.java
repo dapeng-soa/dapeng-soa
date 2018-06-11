@@ -27,6 +27,13 @@ public interface RegistryAgent {
     void registerService(String serverName, String versionName);
 
     /**
+     * 卸载服务
+     * @param serverName
+     * @param versionName
+     */
+    void unregisterService(String serverName, String versionName);
+
+    /**
      * 注册服务集合
      */
     void registerAllServices();

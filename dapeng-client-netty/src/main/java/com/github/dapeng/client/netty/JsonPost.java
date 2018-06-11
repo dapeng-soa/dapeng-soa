@@ -25,7 +25,7 @@ public class JsonPost {
 
     private boolean doNotThrowError = false;
 
-    private final static ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class, JsonPost.class.getClassLoader());
+    private final static SoaConnectionPoolFactory factory = ServiceLoader.load(SoaConnectionPoolFactory.class, JsonPost.class.getClassLoader()).iterator().next();
 
 
     private SoaConnectionPool pool;
@@ -34,7 +34,7 @@ public class JsonPost {
 
     public JsonPost(final String serviceName, final String version, final String methodName) {
         this.methodName = methodName;
-        this.pool = factories.iterator().next().getPool();
+        this.pool = factory.getPool();
         this.clientInfo = this.pool.registerClientInfo(serviceName, version);
     }
 
@@ -70,7 +70,9 @@ public class JsonPost {
 
         final long beginTime = System.currentTimeMillis();
 
-        LOGGER.info("soa-request: " + jsonParameter);
+        LOGGER.info("soa-request: service:[" + service.namespace + "." + service.name
+                + ":" + service.meta.version + "], method:" + methodName + ", param:"
+                + jsonParameter);
 
         String jsonResponse = post(clientInfo.serviceName, clientInfo.version,
                 methodName, jsonParameter, jsonEncoder, jsonDecoder);
@@ -99,8 +101,11 @@ public class JsonPost {
             jsonResponse = result.equals("{}") ? "{\"status\":1}" : result.substring(0, result.lastIndexOf('}')) + ",\"status\":1}";
 
         } catch (SoaException e) {
-
-            LOGGER.error(e.getMsg(), e);
+            if (e.getCode().startsWith("Err-Core")) {
+                LOGGER.error(e.getMsg(), e);
+            } else {
+                LOGGER.error(e.getMsg());
+            }
             if (doNotThrowError) {
                 jsonResponse = String.format("{\"responseCode\":\"%s\", \"responseMsg\":\"%s\", \"success\":\"%s\", \"status\":0}", e.getCode(), e.getMsg(), "{}");
             } else {

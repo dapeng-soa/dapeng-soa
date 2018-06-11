@@ -74,6 +74,8 @@ public class SoaHeaderHelper {
             header.addCookies(invocationCtxProxy.cookies());
         }
 
+        header.addCookies(invocationContext.cookies());
+
         if (invocationContext.callerMid().isPresent()) {
             header.setCallerMid(invocationContext.callerMid());
         }
@@ -99,16 +101,22 @@ public class SoaHeaderHelper {
             TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
             SoaHeader oriHeader = transactionContext.getHeader();
 
-            if (!header.getOperatorId().isPresent()) {
-                header.setOperatorId(oriHeader.getOperatorId());
-            }
-            if (!header.getUserId().isPresent()) {
-                header.setUserId(oriHeader.getUserId());
-            }
-            if (!header.getUserIp().isPresent()) {
-                header.setUserIp(oriHeader.getUserIp());
-            }
+            // 部分场景下(例如定时任务, 事件等容器发起的请求)
+            if (oriHeader != null) {
+                if (!header.getOperatorId().isPresent()) {
+                    header.setOperatorId(oriHeader.getOperatorId());
+                }
+                if (!header.getUserId().isPresent()) {
+                    header.setUserId(oriHeader.getUserId());
+                }
+                if (!header.getUserIp().isPresent()) {
+                    header.setUserIp(oriHeader.getUserIp());
+                }
+                if (!oriHeader.getCookies().isEmpty()) {
+                    header.addCookies(oriHeader.getCookies());
+                }
 
+            }
             // 传递tid
             header.setSessionTid(transactionContext.sessionTid());
             invocationContext.callerTid(transactionContext.calleeTid());

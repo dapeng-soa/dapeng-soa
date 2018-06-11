@@ -6,7 +6,8 @@ import com.github.dapeng.impl.plugins.monitor.mbean.ContainerRuntimeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.*;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 
 /**
@@ -21,7 +22,7 @@ public class MbeanAgentPlugin implements Plugin {
     private ObjectName mName = null;
     private final Container container;
 
-    public MbeanAgentPlugin(Container container){
+    public MbeanAgentPlugin(Container container) {
         this.container = container;
     }
 
@@ -33,18 +34,18 @@ public class MbeanAgentPlugin implements Plugin {
             server.registerMBean(new ContainerRuntimeInfo(container), mName);
             LOGGER.info("::registerMBean dapengContainerMBean success");
         } catch (Exception e) {
-            LOGGER.info("::registerMBean dapengContainerMBean error [{}]",e.getMessage());
+            LOGGER.info("::registerMBean dapengContainerMBean error [" + e.getMessage() + "]", e);
         }
     }
 
     @Override
     public void stop() {
-        if (null != mName){
+        if (null != mName) {
             try {
                 server.unregisterMBean(mName);
                 LOGGER.info("::unregisterMBean dapengContainerMBean success");
             } catch (Exception e) {
-                LOGGER.info("::unregisterMBean dapengContainerMBean error [{}]",e.getMessage());
+                LOGGER.info("::unregisterMBean dapengContainerMBean error [" + e.getMessage() + "]", e);
             }
         }
     }

@@ -7,7 +7,7 @@
     <groupId>com.github.dapeng</groupId>
     <artifactId>dapeng-parent</artifactId>
     <packaging>pom</packaging>
-    <version>2.0.2</version>
+    <version>2.0.0</version>
 
     <name>dapeng</name>
     <description>一个简单、易用、多特性的SOA框架</description>
@@ -39,26 +39,24 @@
             <name>ever</name>
             <email>439674061@qq.com</email>
         </developer>
-        <developer>
-            <name>maple</name>
-            <email>295482300@qq.com</email>
-        </developer>
     </developers>
 
     <scm>
-        <connection>scm:https://github.com/dapeng-soa/dapeng-soa.git</connection>
-        <developerConnection>scm:https://github.com/dapeng-soa/dapeng-soa.git</developerConnection>
-        <url>https://github.com/dapeng-soa/dapeng-soa.git</url>
+        <connection>scm:git:https://github.com/dapeng-soa/dapeng-soa.git</connection>
+        <developerConnection>scm:git:https://github.com/dapeng-soa/dapeng-soa.git</developerConnection>
+        <url>https://github.com/dapeng-soa/dapeng-soa</url>
     </scm>
 
     <modules>
         <module>dapeng-core</module>
         <module>dapeng-spring</module>
+        <!--<module>dapeng-zookeeper</module>-->
         <module>dapeng-maven-plugin</module>
         <module>dapeng-registry</module>
         <module>dapeng-code-generator</module>
         <module>dapeng-api-doc</module>
-        <module>dapeng-router</module>
+        <module>dapeng-route</module>
+        <!--<module>dapeng-tools</module>-->
         <module>dapeng-message</module>
         <!--<module>dapeng-service-invoke</module>-->
         <module>dapeng-container</module>
@@ -67,6 +65,7 @@
         <module>dapeng-transaction</module>
         <module>dapeng-json</module>
         <!--<module>dapeng-demo</module>-->
+        <module>dapeng-monitor-filter</module>
         <module>dapeng-counter</module>
     </modules>
 
@@ -79,72 +78,39 @@
 
     <profiles>
         <profile>
-            <id>release</id>
+            <id>today-release</id>
             <distributionManagement>
-                <snapshotRepository>
-                    <id>oss</id>
-                    <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-                </snapshotRepository>
                 <repository>
-                    <id>oss</id>
-                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                    <id>today-dev</id>
+                    <name>Nexus Releases Repository</name>
+                    <url>http://nexus.today36524.com/repository/maven-releases/</url>
                 </repository>
+
+                <snapshotRepository>
+                    <id>today-dev</id>
+                    <name>Nexus Snapshots Repository</name>
+                    <url>http://nexus.today36524.com/repository/maven-snapshots/</url>
+                </snapshotRepository>
             </distributionManagement>
 
-            <dependencies>
-                <dependency>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-gpg-plugin</artifactId>
-                    <version>1.6</version>
-                </dependency>
-            </dependencies>
             <build>
                 <plugins>
-                    <!-- Source -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>2.4</version>
-                        <executions>
-                            <execution>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <!-- Javadoc -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.10.3</version>
+                        <artifactId>maven-compiler-plugin</artifactId>
                         <configuration>
-                            <additionalparam>-Xdoclint:none</additionalparam>
+                            <source>1.8</source>
+                            <target>1.8</target>
                         </configuration>
-                        <executions>
-                            <execution>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
                     </plugin>
-                    <!-- Gpg Signature -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
+                        <artifactId>maven-release-plugin</artifactId>
+                        <version>2.5.3</version>
+                        <configuration>
+                            <tagNameFormat>v@{project.version}</tagNameFormat>
+                            <autoVersionSubmodules>true</autoVersionSubmodules>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
@@ -152,18 +118,18 @@
 
 
         <profile>
-            <id>test</id>
+            <id>today</id>
             <distributionManagement>
                 <repository>
-                    <id>nexus-releases</id>
+                    <id>today-dev</id>
                     <name>Nexus Releases Repository</name>
-                    <url>http://nexus.oa.dapeng.com/repository/maven-releases/</url>
+                    <url>http://nexus.today36524.com/repository/maven-releases/</url>
                 </repository>
 
                 <snapshotRepository>
-                    <id>nexus-snapshots</id>
+                    <id>today-dev</id>
                     <name>Nexus Snapshots Repository</name>
-                    <url>http://nexus.oa.dapeng.com/repository/maven-snapshots/</url>
+                    <url>http://nexus.today36524.com/repository/maven-snapshots/</url>
                 </snapshotRepository>
             </distributionManagement>
 
@@ -208,7 +174,7 @@
     <repositories>
         <repository>
             <id>maven-dapeng-com</id>
-            <url>http://nexus.oa.dapeng.com/repository/maven-public/</url>
+            <url>http://nexus.today36524.com/repository/maven-public/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
@@ -320,35 +286,6 @@
                     <verbose>false</verbose>
                     <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
-            </plugin>
-            <!--源码打包插件-->
-            <!--<plugin>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>2.1</version>
-                <configuration>
-                    <attach>true</attach>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>install</phase>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>-->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>2.4</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

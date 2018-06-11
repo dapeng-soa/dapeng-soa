@@ -27,6 +27,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
+import static io.netty.channel.ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE;
 
 /**
  * @author lihuimin
@@ -90,7 +91,11 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        LOGGER.error(cause.getMessage(), cause);
+        // Uncaught exceptions from inbound handlers will propagate up to this handler
+        TransactionContext tranCtx = TransactionContextImpl.Factory.currentInstance();
+        // short error log and detail error log, for the sake of elasticsearch indexing
+        LOGGER.error("exceptionCaught:seqId:" + (tranCtx==null?"":tranCtx.seqId()) + ", channel:" + ctx.channel() + ", msg:" + cause.getMessage());
+        LOGGER.error("exceptionCaught:seqId:" + (tranCtx==null?"":tranCtx.seqId()) + ", " + cause.getMessage(), cause);
         ctx.close();
     }
 
@@ -105,10 +110,10 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             //check if request expired
             final long waitingTime = System.currentTimeMillis() - invokeTime;
             //fixme if zk down ?
-            long timeout = getTimeout(soaHeader);
+            long timeout = soaHeader.getTimeout().map(Long::valueOf).orElse(getTimeout(soaHeader));
             if (waitingTime > timeout) {
                 if (LOGGER.isDebugEnabled()) {
-                    int seqId = transactionContext.getSeqid();
+                    int seqId = transactionContext.seqId();
                     String debugLog = "request[seqId=" + seqId + ", waitingTime=" + waitingTime + "] timeout:"
                             + "service[" + soaHeader.getServiceName()
                             + "]:version[" + soaHeader.getVersionName()
@@ -164,6 +169,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
      * @param e
      */
     private void writeErrorMessage(ChannelHandlerContext ctx, TransactionContext transactionContext, SoaException e) {
+        LOGGER.error("writeErrorMessage: " + ctx.channel(), e);
 
         attachErrorInfo(transactionContext, e);
 
@@ -171,7 +177,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                 Optional.ofNullable(null),
                 Optional.ofNullable(null));
 
-        ctx.writeAndFlush(responseWrapper);
+        ctx.writeAndFlush(responseWrapper).addListener(FIRE_EXCEPTION_ON_FAILURE);
     }
 
 
@@ -277,7 +283,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             try {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(SoaServerHandler.class.getSimpleName() + "$dispatchFilter::onEntry[seqId:"
-                            + transactionContext.getSeqid() + ", async:" + serviceDef.isAsync + "]");
+                            + transactionContext.seqId() + ", async:" + serviceDef.isAsync + "]");
                 }
                 if (serviceDef.isAsync) {
                     SoaFunctionDefinition.Async asyncFunc = (SoaFunctionDefinition.Async) soaFunction;
@@ -320,7 +326,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             try {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(SoaServerHandler.class.getSimpleName() + "$dispatchFilter::onExit[seqId:"
-                            + transactionContext.getSeqid() + "]");
+                            + transactionContext.seqId() + "]");
                 }
                 prev.onExit(filterContext);
             } catch (TException e) {

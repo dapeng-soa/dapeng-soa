@@ -65,7 +65,7 @@ public class SoaMessageProcessor {
         headerProtocol.writeByte(STX);
         headerProtocol.writeByte(VERSION);
         headerProtocol.writeByte(context.codecProtocol().getCode());
-        headerProtocol.writeI32(context.getSeqid());
+        headerProtocol.writeI32(context.seqId());
 
         switch (context.codecProtocol()) {
             case Binary:

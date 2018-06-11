@@ -77,7 +77,7 @@ public class TransactionPlugin implements Plugin {
     public void stop() {
         LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::stop");
         if (context != null) {
-            context.stop();
+            context.close();
         }
     }
 

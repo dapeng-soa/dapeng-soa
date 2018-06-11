@@ -2,7 +2,6 @@ package com.github.dapeng.client.netty;
 
 import com.github.dapeng.client.filter.LogFilter;
 import com.github.dapeng.core.*;
-import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.filter.*;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.org.apache.thrift.TException;
@@ -16,7 +15,6 @@ import org.slf4j.MDC;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -299,19 +297,18 @@ public abstract class SoaBaseConnection implements SoaConnection {
         final int readerIndex = responseBuf.readerIndex();
         try {
             SoaMessageParser parser = new SoaMessageParser(responseBuf, responseSerializer).parseHeader();
-            // TODO fill InvocationContext.lastInfo from response.Header
             SoaHeader respHeader = parser.getHeader();
             InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-            InvocationInfoImpl info = (InvocationInfoImpl) invocationContext.lastInvocationInfo();
-            fillLastInvocationInfo(info, respHeader);
-            if ("0000".equals(respHeader.getRespCode().get())) {
+            InvocationInfoImpl lastInfo = (InvocationInfoImpl) invocationContext.lastInvocationInfo();
+            fillLastInvocationInfo(lastInfo, respHeader);
+            if (SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE.equals(lastInfo.responseCode())) {
                 parser.parseBody();
                 RESP resp = (RESP) parser.getBody();
                 assert (resp != null);
                 return new Result<>(resp, null);
             } else {
                 return new Result<>(null, new SoaException(
-                        (respHeader.getRespCode().isPresent()) ? respHeader.getRespCode().get() : SoaCode.UnKnown.getCode(),
+                        lastInfo.responseCode(),
                         (respHeader.getRespMessage().isPresent()) ? respHeader.getRespMessage().get() : SoaCode.UnKnown.getMsg()));
             }
 
@@ -375,5 +372,6 @@ public abstract class SoaBaseConnection implements SoaConnection {
         info.calleeTime1(respHeader.getCalleeTime1().orElse(0));
         info.calleeTime2(respHeader.getCalleeTime2().orElse(0));
         info.loadBalanceStrategy(invocationContext.loadBalanceStrategy().orElse(null));
+        info.responseCode(respHeader.getRespCode().orElse(SoaCode.UnKnown.getCode()));
     }
 }

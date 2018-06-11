@@ -1,5 +1,6 @@
 package com.github.dapeng.router;
 
+import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.IPUtils;
@@ -22,6 +23,7 @@ import static com.github.dapeng.core.helper.IPUtils.matchIpWithMask;
 public class RoutesExecutor {
 
     private static Logger logger = LoggerFactory.getLogger(RoutesExecutor.class);
+    private static final String COOKIE_PREFIX = "cookie_";
 
     /**
      * 解析 路由规则
@@ -39,13 +41,18 @@ public class RoutesExecutor {
      * 执行 路由规则 匹配， 返回 经过路由后的 实例列表
      */
     public static List<RuntimeInstance> executeRoutes(InvocationContextImpl ctx, List<Route> routes, List<RuntimeInstance> instances) {
-        logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes$开始过滤：过滤前 size  {}", instances.size());
+        StringBuilder logAppend = new StringBuilder();
+        instances.forEach(ins -> logAppend.append(ins.toString() + " "));
+        logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes$开始过滤：过滤前 size  {}，实例: {}", instances.size(), logAppend.toString());
         for (Route route : routes) {
             boolean isMatched = matchCondition(ctx, route.getLeft());
             // 匹配成功，执行右边逻辑
             if (isMatched) {
                 instances = matchThenRouteIp(instances, route);
-                logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes过滤结果 size: {}", instances.size());
+
+                StringBuilder append = new StringBuilder();
+                instances.forEach(ins -> append.append(ins.toString() + " "));
+                logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes过滤结果 size: {}, 实例: {}", instances.size(), append.toString());
                 break;
             } else {
                 logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes路由没有过滤, size {}", instances.size());
@@ -176,9 +183,13 @@ public class RoutesExecutor {
 
     /**
      * match on Matcher.id
+     * <p>
+     * service -> ctx.serviceName
      *
      * @param ctx
      * @param matcher
+     * @skuId -> args.skuId
+     * cookie_posid -> cookies.posid
      */
     private static String getValueFromInvocationCtx(InvocationContextImpl ctx, Matcher matcher) {
         // IdToken name
@@ -201,6 +212,16 @@ public class RoutesExecutor {
                 ctxValue = ctx.calleeIp().orElse("");
                 break;
             default:
+                if (id.startsWith(COOKIE_PREFIX)) {
+                    String cookie = id.substring(COOKIE_PREFIX.length());
+                    InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
+                    if (invocationContext != null) {
+                        logger.debug("cookies content: {}", invocationContext.cookie(cookie));
+                        return invocationContext.cookie(cookie);
+                    } else {
+                        return null;
+                    }
+                }
                 ctxValue = null;
                 break;
 

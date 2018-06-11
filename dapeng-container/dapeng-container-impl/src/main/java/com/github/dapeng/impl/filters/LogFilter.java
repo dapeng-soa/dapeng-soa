@@ -10,7 +10,6 @@ import com.github.dapeng.core.filter.FilterContext;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.plugins.netty.NettyChannelKeys;
 import com.github.dapeng.org.apache.thrift.TException;
-import com.google.common.base.Joiner;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.Attribute;
 import org.slf4j.Logger;
@@ -20,7 +19,6 @@ import org.slf4j.MDC;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -43,18 +41,19 @@ public class LogFilter implements Filter {
             switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().orElse("0"));
 
             if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.getSeqid() + "]");
+                LOGGER.trace(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.seqId() + "]");
             }
 
 
             SoaHeader soaHeader = transactionContext.getHeader();
 
-            String infoLog = "request[seqId:" + transactionContext.getSeqid() + "]:"
+            String infoLog = "request[seqId:" + transactionContext.seqId() + "]:"
                     + "service[" + soaHeader.getServiceName()
                     + "]:version[" + soaHeader.getVersionName()
                     + "]:method[" + soaHeader.getMethodName() + "]"
-                    + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                    + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
+                    + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "") + " "
+                    + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "") + " "
+                    + (soaHeader.getUserIp().isPresent() ? " userIp:" + soaHeader.getUserIp().get() : "");
 
 
             application.info(this.getClass(), infoLog);
@@ -89,7 +88,7 @@ public class LogFilter implements Filter {
 
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(getClass().getSimpleName()
-                        + "::onExit:[seqId:" + transactionContext.getSeqid()
+                        + "::onExit:[seqId:" + transactionContext.seqId()
                         + ", execption:" + transactionContext.soaException()
                         + ",\n result:" + filterContext.getAttribute("result") + "]\n");
             }
@@ -105,7 +104,7 @@ public class LogFilter implements Filter {
             Long requestTimestamp = 0L;
             if (requestTimestampMap != null) {
                 //each per request take the time then remove it
-                requestTimestamp = requestTimestampMap.get(transactionContext.getSeqid());
+                requestTimestamp = requestTimestampMap.get(transactionContext.seqId());
 
                 if (requestTimestamp == null) {
                     requestTimestamp = 0L;
@@ -115,7 +114,7 @@ public class LogFilter implements Filter {
             }
 
             Long cost = System.currentTimeMillis() - requestTimestamp;
-            String infoLog = "response[seqId:" + transactionContext.getSeqid() + ", respCode:" + soaHeader.getRespCode().get() + "]:"
+            String infoLog = "response[seqId:" + transactionContext.seqId() + ", respCode:" + soaHeader.getRespCode().get() + "]:"
                     + "service[" + soaHeader.getServiceName()
                     + "]:version[" + soaHeader.getVersionName()
                     + "]:method[" + soaHeader.getMethodName() + "]"

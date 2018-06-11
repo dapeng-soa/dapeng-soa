@@ -23,15 +23,8 @@ import org.slf4j.LoggerFactory;
  * @date 2017/12/7
  */
 public class NettyPlugin implements AppListener, Plugin {
-    private final boolean MONITOR_ENABLE = SoaSystemEnvProperties.SOA_MONITOR_ENABLE;
-
     private final Container container;
-
-    public NettyPlugin(Container container) {
-        this.container = container;
-        container.registerAppListener(this);
-    }
-
+    private final boolean MONITOR_ENABLE = SoaSystemEnvProperties.SOA_MONITOR_ENABLE;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NettyPlugin.class);
 
@@ -41,6 +34,11 @@ public class NettyPlugin implements AppListener, Plugin {
     private final EventLoopGroup workerGroup = new NioEventLoopGroup();
 
     private ServerBootstrap bootstrap;
+
+    public NettyPlugin(Container container) {
+        this.container = container;
+        container.registerAppListener(this);
+    }
 
     @Override
     public void start() {
@@ -58,39 +56,34 @@ public class NettyPlugin implements AppListener, Plugin {
                             SoaSystemEnvProperties.SOA_POOLED_BYTEBUF ?
                                     PooledByteBufAllocator.DEFAULT : UnpooledByteBufAllocator.DEFAULT;
 
-                    // netty连接数统计
-                    NettyConnectCounter channelCounter = new NettyConnectCounter();
-                    //流量统计
-                    ChannelHandler flowCounter = null;
-                    if (MONITOR_ENABLE) flowCounter = new SoaFlowCounter();
+                    //链路控制
+                    ChannelHandler soaLinkStateHandler = new SoaLinkStateHandler();
                     //编解码器
                     ChannelHandler soaMsgDecoder = new SoaMsgDecoder(container);
                     ChannelHandler soaMsgEncoder = new SoaMsgEncoder(container);
-                    //心跳处理
-                    ChannelHandler soaIdleHandler = new SoaIdleHandler();
+
                     //业务处理器
                     ChannelHandler soaServerHandler = new SoaServerHandler(container);
-                    ChannelHandler soaFlowCounter = flowCounter;
+                    ChannelHandler soaInvokeCounter = MONITOR_ENABLE ? new SoaInvokeCounter() : null;
 
                     bootstrap.group(bossGroup, workerGroup)
                             .channel(NioServerSocketChannel.class)
                             .childHandler(new ChannelInitializer<SocketChannel>() {
                                 @Override
                                 protected void initChannel(SocketChannel ch) throws Exception {
-                                    ch.pipeline().addLast(HandlerConstants.SOA_CHANNEL_COUNTER_HANDLER, channelCounter);
                                     // 超时设置
                                     ch.pipeline().addLast(HandlerConstants.IDLE_STATE_HANDLER, new IdleStateHandler(20, 0, 0));
                                     //粘包和断包处理
                                     ch.pipeline().addLast(HandlerConstants.SOA_FRAME_DECODER_HANDLER, new SoaFrameDecoder());
-                                    // 流量统计
-                                    if (null != soaFlowCounter)
-                                        ch.pipeline().addLast(HandlerConstants.SOA_FLOW_COUNTER_HANDLER, soaFlowCounter);
+                                    // 链路监控检测
+                                    ch.pipeline().addLast(HandlerConstants.SOA_IDLE_HANDLER, soaLinkStateHandler);
                                     ch.pipeline().addLast(HandlerConstants.SOA_MSG_ENCODER_HANDLER, soaMsgEncoder);
                                     ch.pipeline().addLast(HandlerConstants.SOA_MSG_DECODER_HANDLER, soaMsgDecoder);
                                     // 服务调用统计
-                                    if (MONITOR_ENABLE)
-                                        ch.pipeline().addLast(HandlerConstants.SOA_INVOKE_COUNTER_HANDLER, new SoaInvokeCounter());
-                                    ch.pipeline().addLast(HandlerConstants.SOA_IDLE_HANDLER, soaIdleHandler);
+                                    if (MONITOR_ENABLE) {
+                                        ch.pipeline().addLast(HandlerConstants.SOA_INVOKE_COUNTER_HANDLER, soaInvokeCounter);
+                                    }
+
                                     ch.pipeline().addLast(HandlerConstants.SOA_SERVER_HANDLER, soaServerHandler);
                                 }
                             })

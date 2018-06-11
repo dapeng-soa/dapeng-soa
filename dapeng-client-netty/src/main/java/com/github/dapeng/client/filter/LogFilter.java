@@ -61,13 +61,13 @@ public class LogFilter implements Filter {
             InvocationInfoImpl invocationInfo = (InvocationInfoImpl) invocationContext.lastInvocationInfo();
             invocationInfo.serviceTime(System.currentTimeMillis() - startTime);
 
-            String infoLog = "response[seqId:" + invocationContext.seqId() + ", server: " + filterContext.getAttribute("serverInfo") + "]:"
+            String infoLog = "response[seqId:" + invocationContext.seqId() + ", respCode:" + invocationInfo.responseCode() + ", server: " + filterContext.getAttribute("serverInfo") + "]:"
                     + "service[" + invocationContext.serviceName()
                     + "]:version[" + invocationContext.versionName()
                     + "]:method[" + invocationContext.methodName()
                     + "] cost[total:" + invocationInfo.serviceTime()
                     + ", calleeTime1:" + invocationInfo.calleeTime1()
-                    + ", calleeTime2" + invocationInfo.calleeTime2();
+                    + ", calleeTime2:" + invocationInfo.calleeTime2();
 
             LOGGER.info(getClass().getSimpleName() + "::onExit," + infoLog);
         } finally {
@@ -76,7 +76,10 @@ public class LogFilter implements Filter {
             } catch (TException e) {
                 LOGGER.error(e.getMessage(), e);
             } finally {
-                MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+                // 如果在服务里面, 那么不清理MDC
+                if (!TransactionContext.hasCurrentInstance()) {
+                    MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+                }
             }
         }
     }

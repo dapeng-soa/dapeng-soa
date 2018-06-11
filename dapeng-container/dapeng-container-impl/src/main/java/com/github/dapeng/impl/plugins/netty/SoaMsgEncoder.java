@@ -69,7 +69,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     Long requestTimestamp = 0L;
                     if (requestTimestampMap != null) {
                         //each per request take the time then remove it
-                        requestTimestamp = requestTimestampMap.remove(transactionContext.getSeqid());
+                        requestTimestamp = requestTimestampMap.remove(transactionContext.seqId());
 
                         if (requestTimestamp == null) {
                             requestTimestamp = 0L;
@@ -92,14 +92,14 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     transport.flush();
 
                     if (LOGGER.isDebugEnabled()) {
-                        String infoLog = "response[seqId:" + transactionContext.getSeqid() + ", respCode:" + respCode.get() + "]:"
+                        String debugLog = "response[seqId:" + transactionContext.seqId() + ", respCode:" + respCode.get() + "]:"
                                 + "service[" + soaHeader.getServiceName()
                                 + "]:version[" + soaHeader.getVersionName()
                                 + "]:method[" + soaHeader.getMethodName() + "]"
                                 + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
                                 + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
-                        LOGGER.debug(getClass().getSimpleName() + "::encode " + infoLog + ", payload:\n" + result);
-                        LOGGER.debug(getClass().getSimpleName() + "::encode " + DumpUtil.dumpToStr(out));
+                        LOGGER.debug(getClass().getSimpleName() + "::encode:" + debugLog + ", payload[seqId:" + transactionContext.seqId() + "]:\n" + result);
+                        LOGGER.debug(getClass().getSimpleName() + "::encode, payloadAsByteBuf:\n" + DumpUtil.dumpToStr(out));
                     }
                 } catch (Throwable e) {
                     SoaException soaException = ExceptionUtil.convertToSoaException(e);
@@ -160,13 +160,18 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
 
             transport.flush();
 
-            String infoLog = "response[seqId:" + transactionContext.getSeqid() + ", respCode:" + soaHeader.getRespCode().get() + "]:"
+            String infoLog = "response[seqId:" + transactionContext.seqId() + ", respCode:" + soaHeader.getRespCode().get() + "]:"
                     + "service[" + soaHeader.getServiceName()
                     + "]:version[" + soaHeader.getVersionName()
                     + "]:method[" + soaHeader.getMethodName() + "]"
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
                     + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
-            application.error(this.getClass(), infoLog, soaException);
+            // 根据respCode判断是否是业务异常还是运行时异常
+            if (soaHeader.getRespCode().get().startsWith("Err-Core")) {
+                application.error(this.getClass(), infoLog, soaException);
+            } else {
+                application.info(this.getClass(), infoLog);
+            }
 
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(getClass() + " " + infoLog + ", payload:\n" + soaException.getMessage());
