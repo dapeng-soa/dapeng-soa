@@ -29,7 +29,8 @@ import java.util.stream.Collectors;
  */
 public class TaskSchedulePlugin implements AppListener, Plugin {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TaskSchedulePlugin.class);
+    //private static final Logger LOGGER = LoggerFactory.getLogger(TaskSchedulePlugin.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger("container.scheduled.task");
 
     private final Container container;
 
