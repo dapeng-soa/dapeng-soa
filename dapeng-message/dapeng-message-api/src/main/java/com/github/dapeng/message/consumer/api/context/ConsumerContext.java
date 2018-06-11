@@ -16,6 +16,7 @@ public class ConsumerContext {
     Object action;
     Object consumer;
     String groupId;
+    String topic;
 
 
     public Object getIface() {
@@ -58,4 +59,11 @@ public class ConsumerContext {
         this.groupId = groupId;
     }
 
+    public String getTopic() {
+        return topic;
+    }
+
+    public void setTopic(String topic) {
+        this.topic = topic;
+    }
 }

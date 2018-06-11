@@ -74,7 +74,8 @@ public class KafkaConsumer extends Thread {
             while (true) {
                 ConsumerRecords<ByteBuffer, ByteBuffer> records = consumer.poll(100);
                 for (ConsumerRecord<ByteBuffer, ByteBuffer> record : records) {
-                    receive(record.value());
+                    String topic = record.topic();
+                    receive(record.value(),topic);
                 }
             }
         } catch (Exception e) {
@@ -88,11 +89,13 @@ public class KafkaConsumer extends Thread {
      *
      * @param message
      */
-    private void receive(ByteBuffer message) {
+    private void receive(ByteBuffer message,String topic) {
 
         logger.info("KafkaConsumer groupId({}) 收到消息", groupId);
         for (ConsumerContext customer : customers) {
-            dealMessage(customer, message);
+            if (customer.getTopic().equals(topic)) {
+                dealMessage(customer, message);
+            }
         }
     }
 
@@ -114,7 +117,7 @@ public class KafkaConsumer extends Thread {
     }
 
 
-    private void dealMessage(ConsumerContext customer, ByteBuffer message) {
+    private void dealMessage(ConsumerContext customer, ByteBuffer message ) {
 
         SoaFunctionDefinition.Sync functionDefinition = (SoaFunctionDefinition.Sync)customer.getSoaFunctionDefinition();
         Object iface = customer.getIface();

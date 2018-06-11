@@ -68,6 +68,7 @@ public class KafkaMessagePlugin implements Plugin{
                                 consumerContext.setGroupId(groupId);
                                 consumerContext.setIface(definition.iface);
                                 consumerContext.setSoaFunctionDefinition(functionDefinition);
+                                consumerContext.setTopic(topic);
 
                                 consumerService.addConsumer(consumerContext);
 
