@@ -45,8 +45,8 @@ public interface InvocationContext {
      * @param sessionTid
      * @return
      */
-    InvocationContext sessionTid(final String sessionTid);
-    Optional<String> sessionTid();
+    InvocationContext sessionTid(final Long sessionTid);
+    Optional<Long> sessionTid();
 
     /**
      * 设置服务会话发起人Id, 特指前台用户,可用于频率控制
@@ -63,8 +63,8 @@ public interface InvocationContext {
      * @param userIp
      * @return
      */
-    InvocationContext userIp(final String userIp);
-    Optional<String> userIp();
+    InvocationContext userIp(final Integer userIp);
+    Optional<Integer> userIp();
 
     /**
      * 服务会话发起操作人Id, 特指后台用户
@@ -106,8 +106,8 @@ public interface InvocationContext {
      * @param calleeIp
      * @return
      */
-    InvocationContext calleeIp(final String calleeIp);
-    Optional<String> calleeIp();
+    InvocationContext calleeIp(final Integer calleeIp);
+    Optional<Integer> calleeIp();
 
     /**
      * 设置服务端口
@@ -122,8 +122,8 @@ public interface InvocationContext {
      * 调用端tid
      * @return
      */
-    InvocationContext callerTid(final String callerTid);
-    String callerTid();
+    InvocationContext callerTid(final Long callerTid);
+    long callerTid();
 
     /**
      * 设置调用端moudleId
@@ -176,14 +176,14 @@ public interface InvocationContext {
          *
          * @return
          */
-        String calleeTid();
+        long calleeTid();
 
         /**
          * 服务IP
          *
          * @return
          */
-        String calleeIp();
+        int calleeIp();
 
         /**
          * 服务端口
@@ -238,13 +238,13 @@ public interface InvocationContext {
          * 服务会话Id
          * @return
          */
-        Optional<String> sessionTid();
+        Optional<Long> sessionTid();
 
         /**
          * 服务会话发起者Ip
          * @return
          */
-        Optional<String> userIp();
+        Optional<Integer> userIp();
 
         /**
          * 服务会话发起者id, 特指前台用户
