@@ -3,6 +3,7 @@ package com.github.dapeng.client.netty;
 import com.github.dapeng.client.filter.LogFilter;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.filter.*;
+import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.util.DumpUtil;
@@ -176,7 +177,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     }
 
                     responseBufFuture.whenComplete((realResult, ex) -> {
-                        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().orElse("0"));
+                        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().map(DapengUtil::tidAsString).orElse("0"));
                         if (ex != null) {
                             SoaException soaException = convertToSoaException(ex);
                             Result<RESP> result = new Result<>(null, soaException);
@@ -365,8 +366,8 @@ public abstract class SoaBaseConnection implements SoaConnection {
      */
     private void fillLastInvocationInfo(InvocationInfoImpl info, SoaHeader respHeader) {
         InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-        info.calleeTid(respHeader.getCallerTid().orElse(""));
-        info.calleeIp(respHeader.getCalleeIp().orElse(""));
+        info.calleeTid(respHeader.getCallerTid().orElse(0L));
+        info.calleeIp(respHeader.getCalleeIp().orElse(0));
         info.calleePort(respHeader.getCalleePort().orElse(0));
         info.calleeMid(respHeader.getCalleeMid().orElse(""));
         info.calleeTime1(respHeader.getCalleeTime1().orElse(0));

@@ -23,22 +23,23 @@ public class DapengUtil {
      *
      * @return
      */
-    public static String generateTid() {
-        int high = localIp ^ processId;
+    public static long generateTid() {
+        long high = (long)(localIp ^ processId);
         int low = seqId.getAndIncrement();
+        return ((high << 32) & 0xFFFF0000) | (low & 0xFFFF);
+    }
 
+    public static String tidAsString(long tid) {
         StringBuilder sb = new StringBuilder();
 
-        append(sb, (byte) ((high >> 24) & 0xFF));
-        append(sb, (byte) ((high >> 16) & 0xFF));
-        append(sb, (byte) ((high >> 8) & 0xFF));
-        append(sb, (byte) ((high) & 0xFF));
-
-        append(sb, (byte) ((low >> 24) & 0xFF));
-        append(sb, (byte) ((low >> 16) & 0xFF));
-        append(sb, (byte) ((low >> 8) & 0xFF));
-        append(sb, (byte) ((low) & 0xFF));
-
+        append(sb, (byte)((tid >> 56) & 0xff));
+        append(sb, (byte)((tid >> 48) & 0xff));
+        append(sb, (byte)((tid >> 40) & 0xff));
+        append(sb, (byte)((tid >> 32) & 0xff));
+        append(sb, (byte)((tid >> 24) & 0xff));
+        append(sb, (byte)((tid >> 16) & 0xff));
+        append(sb, (byte)((tid >> 8) & 0xff));
+        append(sb, (byte)((tid ) & 0xff));
         return sb.toString();
     }
 
@@ -59,5 +60,11 @@ public class DapengUtil {
         RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
         return Integer.valueOf(runtimeMXBean.getName().split("@")[0])
                 .intValue();
+    }
+
+    public static void main(String[] args) {
+        long tid = generateTid();
+        System.out.println(tid);
+        System.out.println(tidAsString(tid));
     }
 }

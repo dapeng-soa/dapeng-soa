@@ -3,6 +3,8 @@ package com.github.dapeng.impl.plugins.netty;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.*;
+import com.github.dapeng.core.helper.DapengUtil;
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.ExceptionUtil;
@@ -41,7 +43,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                           SoaResponseWrapper wrapper,
                           ByteBuf out) throws Exception {
         TransactionContext transactionContext = wrapper.transactionContext;
-        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().orElse("0"));
+        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().map(DapengUtil::tidAsString).orElse("0"));
 
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(getClass().getSimpleName() + "::encode");
@@ -79,7 +81,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     }
                     Long cost = System.currentTimeMillis() - requestTimestamp;
                     soaHeader.setCalleeTime2(cost.intValue());
-                    soaHeader.setCalleeIp(Optional.ofNullable(SoaSystemEnvProperties.SOA_CONTAINER_IP));
+                    soaHeader.setCalleeIp(Optional.ofNullable(IPUtils.transferIp(SoaSystemEnvProperties.SOA_CONTAINER_IP)));
                     soaHeader.setCalleePort(Optional.ofNullable(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
                     Joiner joiner = Joiner.on(":");
                     soaHeader.setCalleeMid(joiner.join(soaHeader.getServiceName(),soaHeader.getMethodName(),soaHeader.getVersionName()));
