@@ -43,7 +43,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                           SoaResponseWrapper wrapper,
                           ByteBuf out) throws Exception {
         TransactionContext transactionContext = wrapper.transactionContext;
-        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().map(DapengUtil::tidAsString).orElse("0"));
+        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
 
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(getClass().getSimpleName() + "::encode");

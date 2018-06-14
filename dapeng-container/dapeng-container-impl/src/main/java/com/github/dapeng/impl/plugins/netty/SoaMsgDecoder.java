@@ -98,7 +98,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
 
         updateTransactionCtx((TransactionContextImpl)context, soaHeader);
 
-        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, context.sessionTid().map(DapengUtil::tidAsString).orElse("0"));
+        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, context.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
 
         Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 

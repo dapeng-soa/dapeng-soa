@@ -39,8 +39,8 @@ public class LogFilter implements Filter {
 
         try {
             // 容器的IO线程MDC以及应用的MDC(不同classLoader)设置
-            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().map(DapengUtil::tidAsString).orElse("0"));
-            switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::tidAsString).orElse("0"));
+            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
+            switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
 
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.seqId() + "]");
@@ -68,7 +68,7 @@ public class LogFilter implements Filter {
                 boolean isAsync = (Boolean) filterContext.getAttribute("isAsync");
                 if (isAsync) {
                     MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
-                    switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::tidAsString).orElse("0"));
+                    switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
                 }
             }
         }
@@ -84,8 +84,8 @@ public class LogFilter implements Filter {
 
         try {
             if (isAsync) {
-                MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().map(DapengUtil::tidAsString).orElse("0"));
-                switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::tidAsString).orElse("0"));
+                MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
+                switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
             }
 
             if (LOGGER.isTraceEnabled()) {
@@ -131,7 +131,7 @@ public class LogFilter implements Filter {
             } catch (TException e) {
                 LOGGER.error(e.getMessage(), e);
             } finally {
-                switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::tidAsString).orElse("0"));
+                switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
 
                 MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
             }
