@@ -58,7 +58,7 @@ public class SoaHeaderHelper {
 
         header.setCallerIp(IPUtils.localIpAsInt());
 
-        if (invocationContext.callerTid() > 0) {
+        if (invocationContext.callerTid() != 0) {
             header.setCallerTid(Optional.of(invocationContext.callerTid()));
         }
 
