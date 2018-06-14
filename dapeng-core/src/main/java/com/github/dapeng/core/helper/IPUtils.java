@@ -104,21 +104,4 @@ public class IPUtils {
         return ((ip4address[0] & 0xff) << 24) | ((ip4address[1] & 0xff) << 16)
                 | ((ip4address[2] & 0xff) << 8) | (ip4address[3] & 0xff);
     }
-
-    public static void main(String[] args) throws UnknownHostException {
-//        String destination = "1.2.3/24";
-//
-//        int mask = 24;
-//
-//        String tagetIpSeg = "1.2.3.0";
-//
-//        String callerIp = "1.2.3.128";
-//        String serverIp = "1.2.3.64";
-//
-//        int maskIp = (0xFFFFFFFF << (32 - mask));
-//
-//        System.out.println((transferIp(serverIp) & maskIp) == (transferIp(callerIp) & maskIp));
-        System.out.println(transferIp("192.168.10.130"));
-        System.out.println(transferIp(transferIp("192.168.10.130")));
-    }
 }
