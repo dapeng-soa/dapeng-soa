@@ -61,10 +61,4 @@ public class DapengUtil {
         return Integer.valueOf(runtimeMXBean.getName().split("@")[0])
                 .intValue();
     }
-
-    public static void main(String[] args) {
-        long tid = generateTid();
-        System.out.println(tid);
-        System.out.println(longToHexStr(tid));
-    }
 }
