@@ -1,9 +1,12 @@
 package com.github.dapeng.core;
 
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.*;
 
 import java.util.Optional;
+
+import static com.github.dapeng.core.helper.DapengUtil.longToHexStr;
 
 /**
  * Created by tangliu on 2016/1/11.
@@ -58,6 +61,8 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                 case 5:
                     if (schemeField.type == TType.STRING) {
                         bean.setCallerIp(iprot.readString());
+                    } else if (schemeField.type == TType.I32) {
+                        bean.setCallerIp(IPUtils.transferIp(iprot.readI32()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
@@ -72,6 +77,8 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                 case 7:
                     if (schemeField.type == TType.STRING) {
                         bean.setSessionTid(Optional.of(iprot.readString()));
+                    } else if (schemeField.type == TType.I64) {
+                        bean.setSessionTid(Optional.of(longToHexStr(iprot.readI64())));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
@@ -79,6 +86,8 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                 case 8:
                     if (schemeField.type == TType.STRING) {
                         bean.setUserIp(Optional.of(iprot.readString()));
+                    } else if (schemeField.type == TType.I32) {
+                        bean.setUserIp(Optional.of(IPUtils.transferIp(iprot.readI32())));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
@@ -114,6 +123,8 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                 case 13:
                     if (schemeField.type == TType.STRING) {
                         bean.setCalleeTid(iprot.readString());
+                    } else if (schemeField.type == TType.I64) {
+                        bean.setCalleeTid(longToHexStr(iprot.readI64()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
@@ -121,6 +132,8 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                 case 14:
                     if (schemeField.type == TType.STRING) {
                         bean.setCalleeIp(Optional.of(iprot.readString()));
+                    } else if (schemeField.type == TType.I32) {
+                        bean.setCalleeIp(Optional.of(IPUtils.transferIp(iprot.readI32())));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
