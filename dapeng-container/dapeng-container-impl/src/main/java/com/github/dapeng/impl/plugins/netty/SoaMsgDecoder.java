@@ -71,6 +71,9 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
 
             SoaHeader soaHeader = transactionContext.getHeader();
+            if (soaHeader == null) {
+                //todo
+            }
             soaHeader.setRespCode(soaException.getCode());
             soaHeader.setRespMessage(soaException.getMessage());
 
