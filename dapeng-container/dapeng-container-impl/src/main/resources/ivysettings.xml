@@ -21,7 +21,7 @@
 	
 	<!-- public -->
 	<resolvers>
-		<ibiblio name="mvn1" m2compatible="true" root="http://nexus.today36524.com/repository/maven-public/" />
+		<ibiblio name="mvn1" m2compatible="true" root="http://nexus.today36524.td/repository/maven-public/" />
 	</resolvers>
 	
 	<resolvers>
