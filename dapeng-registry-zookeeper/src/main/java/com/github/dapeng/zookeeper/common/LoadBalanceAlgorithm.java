@@ -37,13 +37,14 @@ public class LoadBalanceAlgorithm {
             final Random random = new Random();
             if (SoaSystemEnvProperties.SOA_CHANGE_WEIGHE) {
                 totalWeight = 0;
+                int minweight = Integer.MAX_VALUE;
                 for (int i = 0; i < length; i++) {
                     int tempWeight = instances.get(i).weight;
                     totalWeight += tempWeight;
-                    if (isSame && i > 0 && tempWeight != instances.get(i - 1).weight) {
-                        isSame = false;
-                    }
+                    maxWeight = Math.max(maxWeight, tempWeight);
+                    minweight = Math.min(minweight, tempWeight);
                 }
+                isSame = (minweight == maxWeight);
                 SoaSystemEnvProperties.SOA_CHANGE_WEIGHE = false;
             }
             if (totalWeight > 0 && !isSame) {
@@ -55,6 +56,7 @@ public class LoadBalanceAlgorithm {
                     }
                 }
             }else {
+                result = instances.get(random.nextInt(length));
                 return instances.get(random.nextInt(length));
             }
         }

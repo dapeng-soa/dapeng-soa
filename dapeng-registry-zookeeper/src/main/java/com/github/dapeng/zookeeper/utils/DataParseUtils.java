@@ -2,6 +2,7 @@ package com.github.dapeng.zookeeper.utils;
 
 import com.github.dapeng.core.FreqControlRule;
 import com.github.dapeng.core.RuntimeInstance;
+import com.github.dapeng.core.Weight;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.MasterHelper;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
@@ -116,7 +117,7 @@ public class DataParseUtils {
 
         ZkServiceInfo zkServiceInfo = new ZkServiceInfo(serviceName, host, Integer.parseInt(port), versionName);
 
-        RuntimeInstance runtimeInstance = new RuntimeInstance(serviceName, host, Integer.parseInt(port), versionName, temp_seqid,doParseWeightData(weightData));
+        RuntimeInstance runtimeInstance = new RuntimeInstance(serviceName, host, Integer.parseInt(port), versionName, temp_seqid);
         SoaSystemEnvProperties.SOA_CHANGE_WEIGHE = true;//运行实例改变，权重相应改变
         switch (monitorType) {
             //添加数据
@@ -139,7 +140,7 @@ public class DataParseUtils {
 
             //数据更新
             case TYPE_UPDATED:
-                if (StringUtils.isNotBlank(weightData)) {
+/*                if (StringUtils.isNotBlank(weightData)) {
                     int weight = Integer.parseInt(doParseWeightData(weightData));
                     runtimeInstanceList = zkDataContext.getRuntimeInstancesMap().get(serviceName);
                     for (RuntimeInstance instance : runtimeInstanceList) {
@@ -148,10 +149,10 @@ public class DataParseUtils {
                         }
                     }
                 }
-                logger.info("update instance:{} weight", path);
+                logger.info("update instance:{} weight", path);*/
                 /*zkDataContext.getRuntimeInstancesMap().get(serviceName).add(runtimeInstance);
                 zkDataContext.getServicesMap().get(serviceName).add(zkServiceInfo);*/
-                //  logger.info("the path [{}] is protected.. it can not be update.", RUNTIME_PATH);
+                  logger.info("the path [{}] is protected.. it can not be update.", RUNTIME_PATH);
                 break;
 
             //数据删除
@@ -181,6 +182,7 @@ public class DataParseUtils {
     //zk config 监听
     private static void configsDataChanged(String path, String data, ZkDataContext zkDataContext) {
         logger.info("the zk path[{}] has changed, then start sync zkDataContext[configsMap]..", CONFIG_PATH);
+        SoaSystemEnvProperties.SOA_CHANGE_WEIGHE = true; //配置信息更改，可能权重信息也更改
         //全局配置，格式  timeout/800ms;loadBalance/random
         if (path.equalsIgnoreCase(CONFIG_PATH)) {
             String[] confArr = data.split("[;]");
@@ -200,6 +202,7 @@ public class DataParseUtils {
             list.toArray(arr);
             String serviceName = arr[3];
 
+            List<Weight> weights = new ArrayList<>();
             ConfigKey configKey = null;
             //1.按';'分割不同功能配置
             String[] confArr = data.split("[;]");
@@ -213,7 +216,12 @@ public class DataParseUtils {
                         if (Objects.isNull(configKey)) {
                             logger.info("the config[{}] is not found in the ConfigKey,Please check whether the input is incorrect...", itemArr[0]);
                         } else {
-                            zkDataContext.setConfigData(ZkDataContext.ConfigLevel.SERVICE, serviceName, null, configKey, itemArr[1]);
+                            if (configKey.getValue().equals("weight")){
+                                Weight weight = doParseWeightData(item);
+                                weights.add(weight);
+                            }else {
+                                zkDataContext.setConfigData(ZkDataContext.ConfigLevel.SERVICE, serviceName, null, configKey, itemArr[1]);
+                            }
                         }
                     } else {//方法级别
                         String[] itemArr = item.split("[:]");
@@ -225,6 +233,7 @@ public class DataParseUtils {
                     }
                 }
             }
+            zkDataContext.setWeightMap(serviceName,weights);
         }
         logger.info("*********** the zk path[{}] has changed,sync zkDataContext[configsMap] succeed.. ", CONFIG_PATH);
     }
@@ -486,13 +495,23 @@ public class DataParseUtils {
      * @param weightData
      * @return
      */
-    public static String doParseWeightData(String weightData) {
-        if (StringUtils.isNotBlank(weightData)) {
-            String[] arr = weightData.trim().split("=");
-            return arr.length < 2 ? arr[0].trim() : arr[1].trim();
-        } else {
-            return "";
+    public static Weight doParseWeightData(String weightData) {
+        Weight weight = new Weight();
+        String[] strArr = weightData.split("[/]");
+        if (strArr.length >= 3) {
+            if (strArr.length == 3) {
+                weight.ip = strArr[1];
+                weight.port = -1;
+                weight.weight = Integer.parseInt(strArr[2]);
+            } else {
+                weight.ip = strArr[1];
+                weight.port = Integer.parseInt(strArr[2]);
+                weight.weight = Integer.parseInt(strArr[3]);
+            }
+        }else {
+            weight = null;
         }
+        return weight;
     }
 
 }

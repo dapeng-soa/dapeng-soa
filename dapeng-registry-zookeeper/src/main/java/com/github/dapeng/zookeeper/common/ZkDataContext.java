@@ -2,6 +2,7 @@ package com.github.dapeng.zookeeper.common;
 
 import com.github.dapeng.core.FreqControlRule;
 import com.github.dapeng.core.RuntimeInstance;
+import com.github.dapeng.core.Weight;
 import com.github.dapeng.router.Route;
 
 import java.util.ArrayList;
@@ -54,7 +55,7 @@ public class ZkDataContext {
 
 
     /**
-     * 路由配置信息
+     * 限流配置信息
      * key [serviceName]
      * value [FreqControlRule]
      */
@@ -65,6 +66,10 @@ public class ZkDataContext {
      * 白名单配置 列表
      */
     private final List<String> whiteList = new ArrayList<>();
+    /**
+     * 权重配置信息
+     */
+    private final ConcurrentHashMap<String,List<Weight>> weightMap = new ConcurrentHashMap<>(16);
 
 
     /********setter getter *************************************/
@@ -91,7 +96,9 @@ public class ZkDataContext {
     public ConcurrentHashMap<String, List<RuntimeInstance>> getRuntimeInstancesMap() {
         return runtimeInstancesMap;
     }
-
+    public ConcurrentHashMap<String, List<Weight>> getWeightMap() {
+        return weightMap;
+    }
 
     public void setConfigData(ConfigLevel configLevel, String serviceName, String method, ConfigKey configKey, String configData) {
         switch (configLevel) {
@@ -149,6 +156,11 @@ public class ZkDataContext {
             default:
                 break;
         }
+    }
+
+    public void setWeightMap(String serviceName,List<Weight> weights){
+
+        this.weightMap.put(serviceName,weights);
     }
 
     /**********ConfigLevel  enum**********/

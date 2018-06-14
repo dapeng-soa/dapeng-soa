@@ -15,6 +15,7 @@ import com.github.dapeng.zookeeper.agent.impl.ClientZkAgentImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -265,6 +266,25 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         if (logger.isDebugEnabled()) {
             logger.debug("request loadBalance strategy is {}", balance);
         }
+
+        //权重改变才重新赋值
+        if(SoaSystemEnvProperties.SOA_CHANGE_WEIGHE ) {
+            List<Weight> weights = clientZkAgent.getZkClient().getZkDataContext().getWeightMap().get(serviceName);
+            for (RuntimeInstance runtimeInstance : compatibles) {
+                for (Weight weight : weights) {
+                    if (weight.ip.equals(runtimeInstance.ip)) {
+                        if (weight.port == runtimeInstance.port) {
+                            runtimeInstance.weight = weight.weight;
+                            break;
+                        } else if (weight.port == -1) {
+                            runtimeInstance.weight = weight.weight;
+                        }
+                    }
+                }
+            }
+        }
+
+
         RuntimeInstance instance = null;
 
         switch (balance) {
