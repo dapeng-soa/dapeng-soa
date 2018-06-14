@@ -42,6 +42,20 @@ public class DapengUtil {
         return sb.toString();
     }
 
+    public static String longToHexStr(long tid) {
+        StringBuilder sb = new StringBuilder();
+
+        append(sb, (byte)((tid >> 56) & 0xff));
+        append(sb, (byte)((tid >> 48) & 0xff));
+        append(sb, (byte)((tid >> 40) & 0xff));
+        append(sb, (byte)((tid >> 32) & 0xff));
+        append(sb, (byte)((tid >> 24) & 0xff));
+        append(sb, (byte)((tid >> 16) & 0xff));
+        append(sb, (byte)((tid >> 8) & 0xff));
+        append(sb, (byte)((tid ) & 0xff));
+        return sb.toString();
+    }
+
     static void append(StringBuilder buffer, byte b) {
         int h = (b & 0xFF) >> 4;
         int l = b & 0x0F;
