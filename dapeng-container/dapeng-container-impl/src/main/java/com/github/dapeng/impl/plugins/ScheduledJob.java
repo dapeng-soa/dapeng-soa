@@ -44,7 +44,7 @@ public class ScheduledJob implements Job {
          */
         InvocationContext invocationContext = InvocationContextImpl.Factory.createNewInstance();
         invocationContext.sessionTid(DapengUtil.generateTid());
-        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().map(DapengUtil::tidAsString).orElse("0"));
+        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
 
 
         logger.info("定时任务({})开始执行", context.getJobDetail().getKey().getName());

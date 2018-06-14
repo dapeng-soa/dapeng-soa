@@ -177,7 +177,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     }
 
                     responseBufFuture.whenComplete((realResult, ex) -> {
-                        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().map(DapengUtil::tidAsString).orElse("0"));
+                        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
                         if (ex != null) {
                             SoaException soaException = convertToSoaException(ex);
                             Result<RESP> result = new Result<>(null, soaException);

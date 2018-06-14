@@ -1,5 +1,8 @@
 package com.github.dapeng.core;
 
+import com.github.dapeng.core.helper.DapengUtil;
+import com.github.dapeng.core.helper.IPUtils;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -29,9 +32,8 @@ import java.util.Optional;
  *   6.4 calleeTime1,//服务提供方消耗时间（从接收到请求 到 发送响应）,单位毫秒
  *   6.5 calleeTime2,//服务提供方消耗时间（从开始处理请求到处理请求完成）,单位毫秒
  * </pre>
- *
+ * <p>
  * SoaHeader用于包装需传递到服务提供方的信息
- *
  *
  * @author tangliu
  * @date 2016/1/11
@@ -124,18 +126,18 @@ public class SoaHeader {
         sb.append("\"").append("serviceName").append("\":\"").append(this.serviceName).append("\",");
         sb.append("\"").append("methodName").append("\":\"").append(this.methodName).append("\",");
         sb.append("\"").append("versionName").append("\":\"").append(this.versionName).append("\",");
-        sb.append("\"").append("sessionTid").append("\":\"").append(this.sessionTid.isPresent() ? this.sessionTid.get() : null).append("\",");
+        sb.append("\"").append("sessionTid").append("\":\"").append(this.sessionTid.isPresent() ? DapengUtil.longToHexStr(this.sessionTid.get()) : null).append("\",");
         sb.append("\"").append("userId").append("\":\"").append(this.userId.isPresent() ? this.userId.get() : null).append("\",");
-        sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? this.userIp.get() : null).append("\",");
+        sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? IPUtils.transferIp(this.userIp.get()) : null).append("\",");
         sb.append("\"").append("operatorId").append("\":").append(this.operatorId.isPresent() ? this.operatorId.get() : null).append(",");
         sb.append("\"").append("timeout").append("\":\"").append(this.timeout.isPresent() ? this.timeout.get() : null).append("\",");
-        sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid.isPresent() ? this.callerTid.get() : null).append("\",");
+        sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid.isPresent() ? DapengUtil.longToHexStr(this.callerTid.get()) : null).append("\",");
         sb.append("\"").append("callerMid").append("\":\"").append(this.callerMid.isPresent() ? this.callerMid.get() : null).append("\",");
-        sb.append("\"").append("callerIp").append("\":\"").append(this.callerIp).append("\",");
+        sb.append("\"").append("callerIp").append("\":\"").append(this.callerIp.isPresent() ? IPUtils.transferIp(this.callerIp.get()) : null).append("\",");
         sb.append("\"").append("callerPort").append("\":\"").append(this.callerPort).append("\",");
-        sb.append("\"").append("calleeTid").append("\":\"").append(this.calleeTid.isPresent() ? this.calleeTid.get() : null).append("\",");
+        sb.append("\"").append("calleeTid").append("\":\"").append(this.calleeTid.isPresent() ? DapengUtil.longToHexStr(this.calleeTid.get()) : null).append("\",");
         sb.append("\"").append("calleeMid").append("\":\"").append(this.calleeMid.isPresent() ? this.calleeMid.get() : null).append("\",");
-        sb.append("\"").append("calleeIp").append("\":\"").append(this.calleeIp.isPresent() ? this.calleeIp.get() : null).append("\",");
+        sb.append("\"").append("calleeIp").append("\":\"").append(this.calleeIp.isPresent() ? IPUtils.transferIp(this.calleeIp.get()) : null).append("\",");
         sb.append("\"").append("calleePort").append("\":\"").append(this.calleePort.isPresent() ? this.calleePort.get() : null).append("\",");
         sb.append("\"").append("calleeTime1").append("\":\"").append(this.calleeTime1.isPresent() ? this.calleeTime1.get() : null).append("\",");
         sb.append("\"").append("calleeTime2").append("\":\"").append(this.calleeTime2.isPresent() ? this.calleeTime2.get() : null).append("\",");
@@ -309,7 +311,7 @@ public class SoaHeader {
     public void setCallerPort(Optional<Integer> callerPort) {
         this.callerPort = callerPort;
     }
-    
+
 
     public Optional<Integer> getTransactionId() {
         return transactionId;
