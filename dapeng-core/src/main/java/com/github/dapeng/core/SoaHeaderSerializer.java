@@ -251,7 +251,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
             oprot.writeFieldEnd();
         }
         if (bean.getCallerIp().isPresent()) {
-            oprot.writeFieldBegin(new TField("callerIp", TType.STRING, (short) 5));
+            oprot.writeFieldBegin(new TField("callerIp", TType.I32, (short) 5));
             oprot.writeI32(bean.getCallerIp().get());
             oprot.writeFieldEnd();
         }
@@ -261,17 +261,17 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
             oprot.writeFieldEnd();
         }
         if (bean.getSessionTid().isPresent()) {
-            oprot.writeFieldBegin(new TField("sessionTid", TType.STRING, (short) 7));
+            oprot.writeFieldBegin(new TField("sessionTid", TType.I64, (short) 7));
             oprot.writeI64(bean.getSessionTid().get());
             oprot.writeFieldEnd();
         }
         if (bean.getUserIp().isPresent()) {
-            oprot.writeFieldBegin(new TField("userIp", TType.STRING, (short) 8));
+            oprot.writeFieldBegin(new TField("userIp", TType.I32, (short) 8));
             oprot.writeI32(bean.getUserIp().get());
             oprot.writeFieldEnd();
         }
         if (bean.getCallerTid().isPresent()) {
-            oprot.writeFieldBegin(new TField("callerTid", TType.STRING, (short) 9));
+            oprot.writeFieldBegin(new TField("callerTid", TType.I64, (short) 9));
             oprot.writeI64(bean.getCallerTid().get());
             oprot.writeFieldEnd();
         }
@@ -291,12 +291,12 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
             oprot.writeFieldEnd();
         }
         if (bean.getCalleeTid().isPresent()) {
-            oprot.writeFieldBegin(new TField("calleeTid", TType.STRING, (short) 13));
+            oprot.writeFieldBegin(new TField("calleeTid", TType.I64, (short) 13));
             oprot.writeI64(bean.getCalleeTid().get());
             oprot.writeFieldEnd();
         }
         if (bean.getCalleeIp().isPresent()) {
-            oprot.writeFieldBegin(new TField("calleeIp", TType.STRING, (short) 14));
+            oprot.writeFieldBegin(new TField("calleeIp", TType.I32, (short) 14));
             oprot.writeI32(bean.getCalleeIp().get());
             oprot.writeFieldEnd();
         }
