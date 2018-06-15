@@ -24,3 +24,4 @@ dapeng.iml
 .DS_Store
 **/.DS_Store
 dapeng-client-netty/src/test
+dapeng-core/src/test
