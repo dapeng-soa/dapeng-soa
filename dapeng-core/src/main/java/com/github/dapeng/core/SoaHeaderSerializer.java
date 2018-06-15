@@ -95,7 +95,9 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                 case 9:
                     if (schemeField.type == TType.STRING) {
                         bean.setCallerTid(Optional.of(iprot.readString()));
-                    } else {
+                    } else if (schemeField.type == TType.I64) {
+                        bean.setCallerTid(Optional.of(longToHexStr(iprot.readI64())));
+                    }  else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
                     break;
