@@ -311,44 +311,46 @@ public class ServerCounterContainer {
         long now = System.currentTimeMillis();
         AtomicLong increment = new AtomicLong(0);
         invocationDatas.forEach((serviceBasicInfo, serviceProcessData) -> {
-            final Long iTotalTime = elapses.stream()
+            final Optional<Long> iTotalTime = elapses.stream()
                     .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost))
-                    .reduce((m, n) -> (m + n)).get();
-            final Long iMinTime = elapses.stream()
-                    .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost))
-                    .sorted()
-                    .min(Comparator.naturalOrder()).get();
-            final Long iMaxTime = elapses.stream()
-                    .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost))
-                    .sorted()
-                    .max(Comparator.naturalOrder()).get();
-            final Long iAverageTime = iTotalTime / elapses.stream()
-                    .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost)).count();
+                    .reduce((m, n) -> (m + n));
+            if (iTotalTime.isPresent()) {
+                final Long iMinTime = elapses.stream()
+                        .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost))
+                        .sorted()
+                        .min(Comparator.naturalOrder()).get();
+                final Long iMaxTime = elapses.stream()
+                        .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost))
+                        .sorted()
+                        .max(Comparator.naturalOrder()).get();
+                final Long iAverageTime = iTotalTime.get() / elapses.stream()
+                        .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost)).count();
 
-            DataPoint point = new DataPoint();
-            point.setDatabase(DATA_BASE);
-            point.setBizTag("dapeng_service_process");
-            Map<String, String> tags = new HashMap<>(8);
-            tags.put("period", String.valueOf(PERIOD));
-            tags.put("analysis_time", String.valueOf(now));
-            tags.put("service_name", serviceBasicInfo.getServiceName());
-            tags.put("method_name", serviceProcessData.getMethodName());
-            tags.put("version_name", serviceProcessData.getVersionName());
-            tags.put("server_ip", NODE_IP);
-            tags.put("server_port", NODE_PORT);
-            point.setTags(tags);
-            Map<String, Long> fields = new HashMap<>(8);
-            fields.put("i_min_time", iMinTime);
-            fields.put("i_max_time", iMaxTime);
-            fields.put("i_average_time", iAverageTime);
-            fields.put("i_total_time", iTotalTime);
-            fields.put("total_calls", (long) serviceProcessData.getTotalCalls().get());
-            fields.put("succeed_calls", (long) serviceProcessData.getSucceedCalls().get());
-            fields.put("fail_calls", (long) serviceProcessData.getFailCalls().get());
-            point.setValues(fields);
-            point.setTimestamp(now + increment.incrementAndGet());
+                DataPoint point = new DataPoint();
+                point.setDatabase(DATA_BASE);
+                point.setBizTag("dapeng_service_process");
+                Map<String, String> tags = new HashMap<>(8);
+                tags.put("period", String.valueOf(PERIOD));
+                tags.put("analysis_time", String.valueOf(now));
+                tags.put("service_name", serviceBasicInfo.getServiceName());
+                tags.put("method_name", serviceProcessData.getMethodName());
+                tags.put("version_name", serviceProcessData.getVersionName());
+                tags.put("server_ip", NODE_IP);
+                tags.put("server_port", NODE_PORT);
+                point.setTags(tags);
+                Map<String, Long> fields = new HashMap<>(8);
+                fields.put("i_min_time", iMinTime);
+                fields.put("i_max_time", iMaxTime);
+                fields.put("i_average_time", iAverageTime);
+                fields.put("i_total_time", iTotalTime.get());
+                fields.put("total_calls", (long) serviceProcessData.getTotalCalls().get());
+                fields.put("succeed_calls", (long) serviceProcessData.getSucceedCalls().get());
+                fields.put("fail_calls", (long) serviceProcessData.getFailCalls().get());
+                point.setValues(fields);
+                point.setTimestamp(now + increment.incrementAndGet());
 
-            points.add(point);
+                points.add(point);
+            }
         });
 
         elapses.clear();
