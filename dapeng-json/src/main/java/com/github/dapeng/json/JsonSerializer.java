@@ -1097,7 +1097,7 @@ class TJsonCompressProtocolUtil {
      * @param elemType type of the collection Element
      * @throws TException
      */
-    public static void writeCollectionBegin(byte elemType, ByteBuf byteBuf) throws TException {
+    static void writeCollectionBegin(byte elemType, ByteBuf byteBuf) throws TException {
         writeByteDirect((byte) (0xf0 | TCompactProtocol.ttypeToCompactType[elemType]), byteBuf);
         //write 3 byte with 0x0 to hold the collectionSize
         writeFixedLengthVarint32(3, byteBuf);
@@ -1110,7 +1110,7 @@ class TJsonCompressProtocolUtil {
      * @param byteBuf
      * @throws TException
      */
-    public static void reWriteCollectionBegin(int size, ByteBuf byteBuf) throws TException {
+    static void reWriteCollectionBegin(int size, ByteBuf byteBuf) throws TException {
         //Actually we should only change the collection length.
         byteBuf.writerIndex(byteBuf.writerIndex() + 1);
         reWriteVarint32(size, byteBuf);
@@ -1122,7 +1122,7 @@ class TJsonCompressProtocolUtil {
      *
      * @throws TException
      */
-    public static void writeMapBegin(byte keyType, byte valueType, ByteBuf byteBuf) throws TException {
+    static void writeMapBegin(byte keyType, byte valueType, ByteBuf byteBuf) throws TException {
         /**
          * origin implementation:
          *  if (map.size == 0) {
@@ -1147,7 +1147,7 @@ class TJsonCompressProtocolUtil {
      * @param byteBuf byteBuf which has reset the writerIndex to before collection
      * @throws TException
      */
-    public static void reWriteMapBegin(int size, ByteBuf byteBuf) throws TException {
+    static void reWriteMapBegin(int size, ByteBuf byteBuf) throws TException {
         if (size > 0) {
             reWriteVarint32(size, byteBuf);
         } else {
