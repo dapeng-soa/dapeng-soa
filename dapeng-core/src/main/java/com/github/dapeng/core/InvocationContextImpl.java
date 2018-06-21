@@ -228,7 +228,7 @@ public class InvocationContextImpl implements InvocationContext {
 
     @Override
     public InvocationContext cookies(Map<String, String> cookies) {
-        cookies.putAll(cookies);
+        this.cookies.putAll(cookies);
         return this;
     }
 

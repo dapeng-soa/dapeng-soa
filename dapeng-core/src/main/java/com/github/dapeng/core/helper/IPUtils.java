@@ -120,5 +120,6 @@ public class IPUtils {
 //        System.out.println((transferIp(serverIp) & maskIp) == (transferIp(callerIp) & maskIp));
         System.out.println(transferIp("192.168.10.130"));
         System.out.println(transferIp(transferIp("192.168.10.130")));
+        System.out.println(transferIp(-1062729090));
     }
 }
