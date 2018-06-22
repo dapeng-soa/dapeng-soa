@@ -21,6 +21,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import static com.github.dapeng.core.SoaCode.NoRouting;
+import static com.github.dapeng.core.SoaCode.UnKnown;
+
 /**
  * @author lihuimin
  * @date 2017/12/22
@@ -33,8 +36,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         final String serviceName;
         final String version;
 
-        public ClientInfoWeakRef(SoaConnectionPool.ClientInfo referent,
-                                 ReferenceQueue<? super SoaConnectionPool.ClientInfo> q) {
+        ClientInfoWeakRef(SoaConnectionPool.ClientInfo referent,
+                          ReferenceQueue<? super SoaConnectionPool.ClientInfo> q) {
             super(referent, q);
             this.serviceName = referent.serviceName;
             this.version = referent.version;
@@ -97,7 +100,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         if (Integer.parseInt(tarArr[0]) != Integer.parseInt(reqArr[0])) {
             return false;
         }
-        return  ((Integer.parseInt(tarArr[1]) * 10 + Integer.parseInt(tarArr[2]))
+        return ((Integer.parseInt(tarArr[1]) * 10 + Integer.parseInt(tarArr[2]))
                 >= (Integer.parseInt(reqArr[1]) * 10 + Integer.parseInt(reqArr[2])));
     }
 
@@ -160,7 +163,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     private SoaConnection findConnection(String service,
                                          String version,
-                                         String method) {
+                                         String method) throws SoaException {
         ZkServiceInfo zkInfo = zkInfos.get(service);
 
         if (zkInfo == null || zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
@@ -184,10 +187,15 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         // router
         List<RuntimeInstance> routedInstances = router(service, method, version, compatibles);
 
+        if (routedInstances == null || routedInstances.isEmpty()) {
+            logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + "], not found available instances by routing rules");
+            throw new SoaException(NoRouting, "服务 [ " + service + " ] 无可用实例:路由规则没有解析到可运行的实例");
+        }
+
         RuntimeInstance inst = loadBalance(service, version, method, routedInstances);
         if (inst == null) {
-            logger.error(getClass().getSimpleName() + "::findConnection[service:" + service + "], instance not found");
-            return null;
+            // should not reach here
+            throw new SoaException(UnKnown, "服务 [ " + service + " ] 无可用实例:负载均衡没有找到合适的运行实例");
         }
 
         inst.getActiveCount().incrementAndGet();

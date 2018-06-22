@@ -24,7 +24,7 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerRuntimeInfo.class);
     private LoggerContext loggerContext = null;
     private final static String METHOD_NAME_KEY = "method_name";
-    private final static String containerVersion = "2.0.4";
+    private final static String containerVersion = "2.0.5";
     private final static ServerCounterContainer counterContainer = ServerCounterContainer.getInstance();
     private final Container container;
 

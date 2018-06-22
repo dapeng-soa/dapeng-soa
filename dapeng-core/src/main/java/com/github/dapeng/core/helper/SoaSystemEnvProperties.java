@@ -32,9 +32,8 @@ public class SoaSystemEnvProperties {
 
     private static final String KEY_SOA_REMOTING_MODE = "soa.remoting.mode";
     private static final String KEY_SOA_MONITOR_ENABLE = "soa.monitor.enable";
+    private static final String KEY_SOA_FREQ_LIMIT_ENABLE = "soa.freq.limit.enable";
     private static final String KEY_SOA_SERVICE_CALLERFROM = "soa.service.callerfrom";
-    //    private static final String KEY_SOA_SERVICE_CLIENT_TIMEOUT = "soa.service.client.timeout";
-//    private static final String KEY_SOA_SERVICE_SERVER_TIMEOUT = "soa.service.server.timeout";
     private static final String KEY_SOA_SERVICE_TIMEOUT = "soa.service.timeout";
 
     private static final String KEY_SOA_CORE_POOL_SIZE = "soa.core.pool.size";
@@ -50,10 +49,17 @@ public class SoaSystemEnvProperties {
      */
     private static final String KEY_SOA_EVENTBUS_PERIOD = "soa.eventbus.publish.period";
 
-    //    public static final String SOA_SERVICE_IP = get(KEY_SOA_SERVICE_IP, "127.0.0.1");
-//    public static final boolean SOA_SERVICE_IP_ISCONFIG = get(KEY_SOA_SERVICE_IP) != null;
-//
-//    public static final Integer SOA_SERVICE_PORT = Integer.valueOf(get(KEY_SOA_SERVICE_PORT, "9090"));
+    /**
+     * 服务实例权重
+     */
+    private static final String KEY_SOA_INSTANCE_WEIGHT = "soa.instance.weight";
+
+    /**
+     * 默认最大处理时间， 超过即认为是慢服务
+     */
+    private static final String KEY_SOA_MAX_PROCESS_TIME = "soa.max.process.time";
+    private static final String KEY_SOA_SLOW_SERVICE_CHECK_ENABLE = "slow.service.check.enable";
+
     public static final String SOA_ZOOKEEPER_HOST = get(KEY_SOA_ZOOKEEPER_HOST, "127.0.0.1:2181");
     public static final boolean SOA_POOLED_BYTEBUF = get(KEY_SOA_BYTEBUF_ALLOCATOR, "pooled").equals("pooled");
     //    public static final String SOA_ZOOKEEPER_REGISTRY_HOST = get(KEY_SOA_ZOOKEEPER_REGISTRY_HOST, SOA_ZOOKEEPER_HOST);
@@ -77,6 +83,7 @@ public class SoaSystemEnvProperties {
     public static final Integer SOA_APIDOC_PORT = Integer.valueOf(get(KEY_SOA_APIDOC_PORT, "8080"));
     public static final String SOA_REMOTING_MODE = get(KEY_SOA_REMOTING_MODE, "remote");
     public static final boolean SOA_MONITOR_ENABLE = Boolean.valueOf(get(KEY_SOA_MONITOR_ENABLE, "false"));
+    public static final boolean SOA_FREQ_LIMIT_ENABLE = Boolean.valueOf(get(KEY_SOA_FREQ_LIMIT_ENABLE, "false"));
     public static final String SOA_SERVICE_CALLERFROM = get(KEY_SOA_SERVICE_CALLERFROM, "unknown");
     public static final Long SOA_SERVICE_TIMEOUT = Long.valueOf(get(KEY_SOA_SERVICE_TIMEOUT, "0"));
 
@@ -93,11 +100,27 @@ public class SoaSystemEnvProperties {
 
     public static final String SOA_EVENTBUS_PERIOD = get(KEY_SOA_EVENTBUS_PERIOD, "1000");
 
+    /**
+     * 默认服务处理最大时间为10s, 超过即认为是慢服务
+     */
+    public static final long SOA_MAX_PROCESS_TIME = Long.valueOf(get(KEY_SOA_MAX_PROCESS_TIME, "10000"));
+    public static final boolean SOA_SLOW_SERVICE_CHECK_ENABLE = Boolean.valueOf(get(KEY_SOA_SLOW_SERVICE_CHECK_ENABLE, "false"));
+
 
     /**
      * 正常返回的时候的response code
      */
     public static final String SOA_NORMAL_RESP_CODE = "0000";
+
+    /**
+     * 默认的服务实例的权重
+     */
+    public static final Integer SOA_INSTANCE_WEIGHT = Integer.valueOf(get(KEY_SOA_INSTANCE_WEIGHT, "100"));
+    /**
+     * 记录权重是否修改
+     */
+    public static boolean SOA_CHANGE_WEIGHE = true;
+
 
     public static String get(String key) {
         return get(key, null);
