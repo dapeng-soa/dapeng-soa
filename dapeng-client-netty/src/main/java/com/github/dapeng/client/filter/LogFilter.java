@@ -67,7 +67,8 @@ public class LogFilter implements Filter {
                     + "]:method[" + invocationContext.methodName()
                     + "] cost[total:" + invocationInfo.serviceTime()
                     + ", calleeTime1:" + invocationInfo.calleeTime1()
-                    + ", calleeTime2:" + invocationInfo.calleeTime2();
+                    + ", calleeTime2:" + invocationInfo.calleeTime2()
+                    + ", calleeIp: " + invocationInfo.calleeIp();
 
             LOGGER.info(getClass().getSimpleName() + "::onExit," + infoLog);
         } finally {

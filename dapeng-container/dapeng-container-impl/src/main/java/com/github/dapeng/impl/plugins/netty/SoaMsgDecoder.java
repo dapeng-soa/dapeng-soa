@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import static com.github.dapeng.util.ExceptionUtil.convertToSoaException;
 import static io.netty.channel.ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE;
@@ -52,6 +53,14 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             Object request = parseSoaMsg(msg);
 
             final TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
+
+            String methodName = transactionContext.getHeader().getMethodName();
+
+            //TODO 将容器线程池信息 transactionContext 进行共享  echo实现方法时可以直接从 transactionContext中拿到 【数据库连接池信息暂时拿不到】
+            if (methodName.equalsIgnoreCase("echo")) {
+                transactionContext.setAttribute("container-threadPool-info", DumpUtil.dumpThreadPool((ThreadPoolExecutor) container.getDispatcher()));
+            }
+
             /**
              * use AttributeMap to share common data on different  ChannelHandlers
              */
@@ -97,9 +106,9 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
 
         // parser.service, version, method, header, bodyProtocol
         SoaHeader soaHeader = parser.parseSoaMessage(context);
-        ((TransactionContextImpl)context).setHeader(soaHeader);
+        ((TransactionContextImpl) context).setHeader(soaHeader);
 
-        updateTransactionCtx((TransactionContextImpl)context, soaHeader);
+        updateTransactionCtx((TransactionContextImpl) context, soaHeader);
 
         MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, context.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
 
