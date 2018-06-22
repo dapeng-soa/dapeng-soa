@@ -100,7 +100,7 @@
     <!--<appender-ref ref="KAFKACONSUMER"/>-->
     <!--</logger>-->
 
-    <logger name="container.scheduled.task" additivity="true">
+    <logger name="container.scheduled.task" additivity="false">
         <level value="INFO"/>
         <appender-ref ref="SCHEDULEDTASK"/>
     </logger>
