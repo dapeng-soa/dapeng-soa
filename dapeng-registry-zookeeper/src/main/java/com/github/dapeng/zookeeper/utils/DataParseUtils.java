@@ -113,10 +113,9 @@ public class DataParseUtils {
         String host = innstanceInfo[0];
         String port = innstanceInfo[1];
         String versionName = innstanceInfo[2];
-        String temp_seqid = innstanceInfo[3];
+        String temp_seqid = innstanceInfo.length == 4 ? innstanceInfo[3] : "";
 
         ZkServiceInfo zkServiceInfo = new ZkServiceInfo(serviceName, host, Integer.parseInt(port), versionName);
-
         RuntimeInstance runtimeInstance = new RuntimeInstance(serviceName, host, Integer.parseInt(port), versionName, temp_seqid);
         SoaSystemEnvProperties.SOA_CHANGE_WEIGHE = true;//运行实例改变，权重相应改变
         switch (monitorType) {
