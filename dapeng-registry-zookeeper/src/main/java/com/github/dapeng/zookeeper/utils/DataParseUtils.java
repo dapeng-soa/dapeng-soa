@@ -183,20 +183,22 @@ public class DataParseUtils {
     private static void configsDataChanged(String path, String data, ZkDataContext zkDataContext) {
         logger.info("the zk path[{}] has changed, then start sync zkDataContext[configsMap]..", CONFIG_PATH);
         SoaSystemEnvProperties.SOA_CHANGE_WEIGHE = true; //配置信息更改，可能权重信息也更改
-        //全局配置，格式  timeout/800ms;loadBalance/random
+        //全局配置，格式  timeout/800ms\nloadBalance/random    每行一条配置信息
         if (path.equalsIgnoreCase(CONFIG_PATH)) {
-            String[] confArr = data.split("[;]");
+            String[] confArr = data.split("\n|\r|\r\n");
             for (String itemConfig : confArr) {
-                String[] itemArr = itemConfig.split("[/]");
-                ConfigKey itemKey = ConfigKey.getConfigKeyByValue(itemArr[0]);
-                if (Objects.isNull(itemKey)) {
-                    logger.info("the config[{}] is not found in the ConfigKey,Please check whether the input is incorrect...", itemArr[0]);
-                } else {
-                    zkDataContext.setConfigData(ZkDataContext.ConfigLevel.GLOBAL, null, null, itemKey, itemArr[1]);
+                if (!"".equals(itemConfig)) {
+                    String[] itemArr = itemConfig.split("[/]");
+                    ConfigKey itemKey = ConfigKey.getConfigKeyByValue(itemArr[0]);
+                    if (Objects.isNull(itemKey)) {
+                        logger.info("the config[{}] is not found in the ConfigKey,Please check whether the input is incorrect...", itemArr[0]);
+                    } else {
+                        zkDataContext.setConfigData(ZkDataContext.ConfigLevel.GLOBAL, null, null, itemKey, itemArr[1]);
+                    }
                 }
             }
         } else {
-            //服务级别和方法级别   timeout/800ms,register:4001ms,modifySupplier:200ms;loadBalance/leastActive,createSupplier:random,modifySupplier:roundRobin;
+            //服务级别和方法级别   timeout/800ms,register:4001ms,modifySupplier:200ms\nloadBalance/leastActive,createSupplier:random,modifySupplier:roundRobin
             List list = Splitter.on("/").trimResults().omitEmptyStrings().splitToList(path);
             String[] arr = new String[list.size()];
             list.toArray(arr);
@@ -204,31 +206,32 @@ public class DataParseUtils {
 
             List<Weight> weights = new ArrayList<>();
             ConfigKey configKey = null;
-            //1.按';'分割不同功能配置
-            String[] confArr = data.split("[;]");
-            for (String itemConfig : confArr) {//格式: timeout/800ms,register:4001ms,modifySupplier:200ms
-                //2.按','区分 服务级别和方法级别
-                String[] itemConfigArr = itemConfig.split("[,]");
-                for (String item : itemConfigArr) {//格式: timeout/800ms register:4001ms  modifySupplier:200ms
-                    if (item.contains("/")) {//服务级别
-                        String[] itemArr = item.split("[/]");
-                        configKey = ConfigKey.getConfigKeyByValue(itemArr[0]);
-                        if (Objects.isNull(configKey)) {
-                            logger.info("the config[{}] is not found in the ConfigKey,Please check whether the input is incorrect...", itemArr[0]);
-                        } else {
-                            if (configKey.getValue().equals("weight")){
-                                Weight weight = doParseWeightData(item);
-                                weights.add(weight);
-                            }else {
-                                zkDataContext.setConfigData(ZkDataContext.ConfigLevel.SERVICE, serviceName, null, configKey, itemArr[1]);
+
+            String[] confArr = data.split("\n|\r|\r\n");  //每行一条配置，按换行符\n分割不同的配置
+            for (String itemConfig : confArr) {
+                if (!"".equals(itemConfig)) {
+                    String[] itemConfigArr = itemConfig.split(",");
+                    for (String item : itemConfigArr) {//格式: timeout/800ms register:4001ms  modifySupplier:200ms
+                        if (item.contains("/")) {//服务级别
+                            String[] itemArr = item.split("[/]");
+                            configKey = ConfigKey.getConfigKeyByValue(itemArr[0]);
+                            if (Objects.isNull(configKey)) {
+                                logger.info("the config[{}] is not found in the ConfigKey,Please check whether the input is incorrect...", itemArr[0]);
+                            } else {
+                                if (configKey.getValue().equals("weight")) {
+                                    Weight weight = doParseWeightData(item);
+                                    weights.add(weight);
+                                } else {
+                                    zkDataContext.setConfigData(ZkDataContext.ConfigLevel.SERVICE, serviceName, null, configKey, itemArr[1]);
+                                }
                             }
-                        }
-                    } else {//方法级别
-                        String[] itemArr = item.split("[:]");
-                        if (itemArr.length >= 2) {
-                            zkDataContext.setConfigData(ZkDataContext.ConfigLevel.METHOD, serviceName, itemArr[0], configKey, itemArr[1]);
-                        } else {
-                            logger.info("the config[{}] is incorrect...", item);
+                        } else {//方法级别
+                            String[] itemArr = item.split("[:]");
+                            if (itemArr.length >= 2) {
+                                zkDataContext.setConfigData(ZkDataContext.ConfigLevel.METHOD, serviceName, itemArr[0], configKey, itemArr[1]);
+                            } else {
+                                logger.info("the config[{}] is incorrect...", item);
+                            }
                         }
                     }
                 }
