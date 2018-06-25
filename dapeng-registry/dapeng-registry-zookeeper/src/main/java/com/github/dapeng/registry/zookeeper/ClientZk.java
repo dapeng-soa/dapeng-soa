@@ -172,7 +172,7 @@ public class ClientZk extends CommonZk {
      * @param zkInfo
      */
     private void syncZkRuntimeInfo(ZkServiceInfo zkInfo) {
-        String servicePath = SERVICE_PATH + "/" + zkInfo.service;
+        String servicePath = RUNTIME_PATH + "/" + zkInfo.service;
         int retry = 5;
         do {
             try {
@@ -277,7 +277,7 @@ public class ClientZk extends CommonZk {
      */
     private void getServiceInfoByServiceName(String serviceName) {
 
-        String servicePath = SERVICE_PATH + "/" + serviceName;
+        String servicePath = RUNTIME_PATH + "/" + serviceName;
         try {
             if (zk == null) {
                 init();

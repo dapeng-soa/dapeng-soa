@@ -2,6 +2,7 @@ package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
+import com.github.dapeng.core.FreqControlRule;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.core.helper.MasterHelper;
@@ -10,6 +11,7 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,11 @@ public class ServerZk extends CommonZk {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerZk.class);
 
     private RegistryAgent registryAgent;
+
+    /**
+     * 路由配置信息
+     */
+    private final Map<String, List<FreqControlRule>> freqControlMap = new ConcurrentHashMap<>(16);
 
     /**
      * zk 配置 缓存 ，根据 serivceName + versionName 作为 key
@@ -61,7 +68,7 @@ public class ServerZk extends CommonZk {
                     case SyncConnected:
                         semaphore.countDown();
                         //创建根节点
-                        create(SERVICE_PATH, null, false);
+                        create(RUNTIME_PATH, null, false);
                         create(CONFIG_PATH, null, false);
                         create(ROUTES_PATH, null, false);
                         zkConfigMap.clear();
@@ -361,5 +368,100 @@ public class ServerZk extends CommonZk {
         syncZkConfigInfo(info);
         zkConfigMap.put(serviceName, info);
         return info;
+    }
+
+    /**
+     * 获取 zookeeper 上的 限流规则 freqRule
+     *
+     * @return
+     */
+    public List<FreqControlRule> getFreqControl(String service) {
+        if (freqControlMap.get(service) == null) {
+            try {
+                byte[] data = zk.getData(FREQ_PATH + "/" + service, event -> {
+                    if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                        LOGGER.info("freq 节点 data 发生变更，重新获取信息");
+                        freqControlMap.remove(service);
+                        getFreqControl(service);
+                    }
+                }, null);
+                List<FreqControlRule> freqControlRules = processFreqRuleData(service, data, freqControlMap);
+                return freqControlRules;
+            } catch (KeeperException | InterruptedException e) {
+                LOGGER.error("获取route service 节点: {} 出现异常", service);
+            }
+        } else {
+            LOGGER.debug("获取route信息, service: {} , route size {}", service, freqControlMap.get(service).size());
+            return this.freqControlMap.get(service);
+        }
+        return new ArrayList<>();
+    }
+
+    /**
+     * process zk data freqControl 限流规则信息
+     *
+     * @param service
+     * @param data
+     * @return
+     */
+    public static List<FreqControlRule> processFreqRuleData(String service, byte[] data, Map<String, List<FreqControlRule>> freqControlMap) {
+        List<FreqControlRule> freqControlRules = null;
+        try {
+            String ruleData = new String(data, "utf-8");
+            freqControlRules = doParseRuleData(ruleData);
+
+            freqControlMap.put(service, freqControlRules);
+        } catch (Exception e) {
+            LOGGER.error("parser freq rule 信息 失败，请检查 rule data 写法是否正确!");
+        }
+        return freqControlRules;
+
+    }
+
+    /**
+     * 解析 zookeeper 上 配置的 ruleData数据 为FreqControlRule对象
+     *
+     * @param ruleData data from zk node
+     * @return
+     */
+    private static List<FreqControlRule> doParseRuleData(String ruleData) {
+        List<FreqControlRule> datasOfRule = new ArrayList<>();
+        String[] str = ruleData.split("\n|\r|\r\n");
+
+        for (int i = 0; i < str.length; i++) {
+            if (str[i].indexOf("rule") != -1) {
+                FreqControlRule rule = new FreqControlRule();
+                for (int j = 0; j < 5; j++) {
+                    if (str[++i].indexOf("match_app") != -1) {
+                        rule.app = str[i].split("=")[1].trim();
+                    } else if (str[i].indexOf("rule_type") != -1) {
+                        rule.ruleType = str[i].split("=")[1].trim();
+                    } else if (str[i].indexOf("min_interval") != -1) {
+                        rule.minInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[0]);
+                        rule.maxReqForMinInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[1]);
+                    } else if (str[i].indexOf("mid_interval") != -1) {
+                        rule.midInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[0]);
+                        rule.maxReqForMidInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[1]);
+                    } else if (str[i].indexOf("max_interval") != -1) {
+                        rule.maxInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[0]);
+                        rule.maxReqForMaxInterval = Integer.parseInt(str[i].split("=")[1].trim().split(",")[1]);
+                    }
+                }
+                datasOfRule.add(rule);
+            }
+        }
+        return datasOfRule;
+    }
+
+
+    /**
+     * 将配置信息中的时间单位ms 字母替换掉  100ms -> 100
+     *
+     * @param number
+     * @return
+     */
+    private static Long timeHelper(String number) {
+        number = number.replaceAll("[^(0-9)]", "");
+        return Long.valueOf(number);
     }
 }
