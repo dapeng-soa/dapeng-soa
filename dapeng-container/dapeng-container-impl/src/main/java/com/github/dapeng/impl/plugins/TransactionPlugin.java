@@ -1,10 +1,10 @@
 package com.github.dapeng.impl.plugins;
 
 import com.github.dapeng.core.Plugin;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.transaction.api.GlobalTransactionFactory;
 import com.github.dapeng.transaction.api.service.GlobalTransactionProcessService;
 import com.github.dapeng.transaction.api.service.GlobalTransactionService;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -29,7 +29,6 @@ public class TransactionPlugin implements Plugin {
 
     private ClassPathXmlApplicationContext context;
 
-
     @Override
     public void start() {
         if (SoaSystemEnvProperties.SOA_TRANSACTIONAL_ENABLE) {
@@ -43,7 +42,6 @@ public class TransactionPlugin implements Plugin {
                 List<String> xmlPaths = new ArrayList<>();
 
                 Enumeration<URL> resources = TransactionPlugin.class.getClassLoader().getResources(configPath);
-
 
                 while (resources.hasMoreElements()) {
                     URL nextElement = resources.nextElement();
@@ -79,7 +77,7 @@ public class TransactionPlugin implements Plugin {
     public void stop() {
         LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::stop");
         if (context != null) {
-            context.stop();
+            context.close();
         }
     }
 

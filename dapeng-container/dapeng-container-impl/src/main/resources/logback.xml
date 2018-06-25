@@ -4,7 +4,7 @@
     <!-- 控制台日志打印 -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <Pattern>%d{MM-dd HH:mm:ss SSS} %t %p - %m%n</Pattern>
+            <Pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</Pattern>
         </layout>
         <!-- @see http://logback.qos.ch/manual/filters.html#levelFilter -->
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
@@ -19,7 +19,7 @@
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p - %m%n</pattern>
+            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</pattern>
         </encoder>
     </appender>
 
@@ -30,7 +30,7 @@
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p - %m%n</pattern>
+            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</pattern>
         </encoder>
     </appender>
 
@@ -41,7 +41,7 @@
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p - %m%n</pattern>
+            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</pattern>
         </encoder>
     </appender>
 
@@ -52,7 +52,7 @@
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p - %m%n</pattern>
+            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</pattern>
         </encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>ERROR</level>
@@ -66,7 +66,7 @@
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p - %m%n</pattern>
+            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</pattern>
         </encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>INFO</level>
@@ -91,7 +91,7 @@
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p - %m%n</pattern>
+            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</pattern>
         </encoder>
     </appender>
 
@@ -100,7 +100,7 @@
     <!--<appender-ref ref="KAFKACONSUMER"/>-->
     <!--</logger>-->
 
-    <logger name="container.scheduled.task" additivity="true">
+    <logger name="container.scheduled.task" additivity="false">
         <level value="INFO"/>
         <appender-ref ref="SCHEDULEDTASK"/>
     </logger>

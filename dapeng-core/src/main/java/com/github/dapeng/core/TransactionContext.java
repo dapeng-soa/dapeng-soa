@@ -5,165 +5,112 @@ import com.github.dapeng.core.enums.CodecProtocol;
 import java.util.Optional;
 
 /**
+ * <pre>
+ * web	service1	service2	service3	service4
+ *  |_____m1()
+ *         |___________m2()
+ *         |            |______________________m4()
+ *         |_______________________m3()
+ *
+ * 1. 服务session: 如上图是一个服务会话,由服务发起者(web)一次服务调用引发的一系列服务调用
+ * 2. 服务调用者: 单次服务调用的调用端(例如对于1.2的服务会话中, web以及service2都是服务调用端),对应信息有caller的相关字段
+ * 3. 服务发起者: 服务调用的最初发起者, 发起者也是调用者, 但是它调用的服务可能引发一连串的服务调用(也就是一次服务会话), 从而产生若干服务调用者. 上图三个服务会话的发起者都是web层, 对应信息有userId,userIp
+ * 4. caller信息:
+ *   4.1 callerMid: 服务全限定名, serviceName:method:version, web->URL, script, task
+ *   4.2 callerIp: ip
+ *   4.3 callerPort:
+ *   4.4 callerTid: 服务调用者的tid,一般指服务实现者的tid.
+ *   4.5 serviceTime: 服务调用耗时(从发出请求到收到响应,包括网络开销)
+ * 5. sessionTid: 由服务发起者创建的全局唯一id, 通过InvocationContext传递,用于跟踪一次完整的服务调用过程. 当SessionTid为0时，服务实现端会使用当前创建的Tid作为sessionTid
+ * 6. callee信息, 通过InvocationContext的lastInfo返回:
+ *   6.1 calleeId: 服务全限定名, serviceName:method:version, web->URL, script, task
+ *   6.2 calleeUri: ip:port
+ *   6.3 calleeTid: 服务被调者的tid
+ *   6.4 calleeTime1,//服务提供方消耗时间（从接收到请求 到 发送响应）,单位毫秒
+ *   6.5 calleeTime2,//服务提供方消耗时间（从开始处理请求到处理请求完成）,单位毫秒
+ * </pre>
+ * <p>
+ * TransactionContext 用于在服务提供方保存一些服务调用信息.
+ * 对应服务调用方的类为{@code InvocationContext}.
  * 服务端上下文
  *
  * @author craneding
  * @date 15/9/24
  */
-public class TransactionContext {
+public interface TransactionContext {
 
-    private CodecProtocol codecProtocol = CodecProtocol.CompressedBinary;
+    Optional<String> callerMid();
 
-    private SoaHeader header;
+    Optional<String> callerIp();
 
-    private Integer seqid;
+    Optional<Long> operatorId();
 
-    private boolean isSoaGlobalTransactional;
+    Optional<Long> userId();
 
-    private Integer currentTransactionSequence = 0;
+    TransactionContext codecProtocol(CodecProtocol codecProtocol);
 
-    private Integer currentTransactionId = 0;
+    CodecProtocol codecProtocol();
 
-    private SoaException soaException;
+    SoaHeader getHeader();
 
-    private Optional<String> callerFrom = Optional.empty();
+    int seqId();
 
-    private Optional<String> callerIp = Optional.empty();
+    boolean isSoaGlobalTransactional();
 
-    private Optional<Integer> operatorId = Optional.empty();
+    TransactionContext setSoaGlobalTransactional(boolean soaGlobalTransactional);
 
-    private Optional<String> operatorName = Optional.empty();
+    int currentTransactionSequence();
 
-    private Optional<Integer> customerId = Optional.empty();
+    TransactionContext currentTransactionSequence(int currentTransactionSequence);
 
-    private Optional<String> customerName = Optional.empty();
+    int currentTransactionId();
 
-    public Optional<String> getCallerFrom() {
-        return callerFrom;
-    }
+    TransactionContext currentTransactionId(int currentTransactionId);
 
-    public void setCallerFrom(Optional<String> callerFrom) {
-        this.callerFrom = callerFrom;
-    }
+    SoaException soaException();
 
-    public Optional<String> getCallerIp() {
-        return callerIp;
-    }
+    TransactionContext soaException(SoaException soaException);
 
-    public void setCallerIp(Optional<String> callerIp) {
-        this.callerIp = callerIp;
-    }
+    Optional<Integer> callerPort();
 
-    public Optional<Integer> getOperatorId() {
-        return operatorId;
-    }
+    Optional<String> sessionTid();
 
-    public void setOperatorId(Optional<Integer> operatorId) {
-        this.operatorId = operatorId;
-    }
+    Optional<String> userIp();
 
-    public Optional<String> getOperatorName() {
-        return operatorName;
-    }
+    Optional<String> callerTid();
 
-    public void setOperatorName(Optional<String> operatorName) {
-        this.operatorName = operatorName;
-    }
+    Optional<Integer> timeout();
 
-    public Optional<Integer> getCustomerId() {
-        return customerId;
-    }
+    String calleeTid();
 
-    public void setCustomerId(Optional<Integer> customerId) {
-        this.customerId = customerId;
-    }
+    void setAttribute(String key, Object value);
+    Object getAttribute(String key);
 
-    public Optional<String> getCustomerName() {
-        return customerName;
-    }
+    TransactionContext calleeTid(String calleeTid);
 
-    public void setCustomerName(Optional<String> customerName) {
-        this.customerName = customerName;
-    }
-
-    public void setCodecProtocol(CodecProtocol codecProtocol) {
-        this.codecProtocol = codecProtocol;
-    }
-
-    public CodecProtocol getCodecProtocol() {
-        return codecProtocol;
-    }
-
-    public SoaHeader getHeader() {
-        return header;
-    }
-
-    public void setHeader(SoaHeader header) {
-        this.header = header;
-    }
-
-    public Integer getSeqid() {
-        return seqid;
-    }
-
-    public void setSeqid(Integer seqid) {
-        this.seqid = seqid;
-    }
-
-    public boolean isSoaGlobalTransactional() {
-        return isSoaGlobalTransactional;
-    }
-
-    public void setSoaGlobalTransactional(boolean soaGlobalTransactional) {
-        isSoaGlobalTransactional = soaGlobalTransactional;
-    }
-
-    public Integer getCurrentTransactionSequence() {
-        return currentTransactionSequence;
-    }
-
-    public void setCurrentTransactionSequence(Integer currentTransactionSequence) {
-        this.currentTransactionSequence = currentTransactionSequence;
-    }
-
-    public Integer getCurrentTransactionId() {
-        return currentTransactionId;
-    }
-
-    public void setCurrentTransactionId(Integer currentTransactionId) {
-        this.currentTransactionId = currentTransactionId;
-    }
-
-    public SoaException getSoaException() {
-        return soaException;
-    }
-
-    public void setSoaException(SoaException soaException) {
-        this.soaException = soaException;
-    }
-
-    public static class Factory {
+    class Factory {
         private static ThreadLocal<TransactionContext> threadLocal = new ThreadLocal<>();
 
         /**
          * 确保在业务线程入口设置context
+         *
          * @return
          */
         public static TransactionContext createNewInstance() {
-            assert(threadLocal.get() == null);
+            assert (threadLocal.get() == null);
 
-            TransactionContext context = new TransactionContext();
+            TransactionContext context = new TransactionContextImpl();
             threadLocal.set(context);
             return context;
         }
 
-        public static TransactionContext setCurrentInstance(TransactionContext context) {
+        public static TransactionContext currentInstance(TransactionContext context) {
             threadLocal.set(context);
 
             return context;
         }
 
-        public static TransactionContext getCurrentInstance() {
+        public static TransactionContext currentInstance() {
             TransactionContext context = threadLocal.get();
 
             if (context == null) {
@@ -186,10 +133,7 @@ public class TransactionContext {
      *
      * @return
      */
-    public static boolean hasCurrentInstance() {
-        if (Factory.threadLocal.get() == null)
-            return false;
-        else
-            return true;
+    static boolean hasCurrentInstance() {
+        return TransactionContext.Factory.threadLocal.get() != null;
     }
 }

@@ -17,6 +17,14 @@ import java.util.concurrent.Executor;
  * 所有的组件的注册，卸载动作都应该由Container来负责，
  */
 public interface Container {
+    /**
+     * 容器状态
+     */
+    int STATUS_UNKNOWN = 0;
+    int STATUS_CREATING = 1;
+    int STATUS_RUNNING = 2;
+    int STATUS_SHUTTING = 3;
+    int STATUS_DOWN = 4;
 
     /**
      * 注册应用程序监听器，
@@ -79,10 +87,12 @@ public interface Container {
 
     Map<ProcessorKey, SoaServiceDefinition<?>> getServiceProcessors();
 
+    // fixme @Deprecated
     void registerAppProcessors(Map<ProcessorKey, SoaServiceDefinition<?>> processors);
 
     public Application getApplication(ProcessorKey key);
 
+    // fixme @Deprecated
     public void registerAppMap(Map<ProcessorKey,Application> applicationMap);
 
     public Executor getDispatcher();
@@ -90,4 +100,15 @@ public interface Container {
     public List<Filter> getFilters();
 
     void startup();
+
+    /**
+     * 0:unknow;
+     * 1:creating;
+     * 2:running;
+     * 3:shutting
+     * 4:down
+     *
+     * @return status of container
+     */
+    int status();
 }

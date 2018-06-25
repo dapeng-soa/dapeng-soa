@@ -1,10 +1,9 @@
 package com.github.dapeng.impl.plugins.netty;
 
 import com.github.dapeng.core.SoaException;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.util.DumpUtil;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import org.slf4j.Logger;
@@ -37,7 +36,8 @@ import static com.github.dapeng.core.SoaProtocolConstants.STX;
 public class SoaFrameDecoder extends ByteToMessageDecoder {
     private final static Logger LOGGER = LoggerFactory.getLogger(SoaFrameDecoder.class);
 
-    public SoaFrameDecoder() {
+    SoaFrameDecoder() {
+        ensureNotSharable();
         setSingleDecode(false);
     }
 

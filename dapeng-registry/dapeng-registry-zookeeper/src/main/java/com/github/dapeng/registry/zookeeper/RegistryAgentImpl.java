@@ -1,11 +1,12 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.api.Container;
+import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.Service;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.*;
-import com.github.dapeng.route.Route;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +27,7 @@ public class RegistryAgentImpl implements RegistryAgent {
 
     private final String RUNTIME_PATH = "/soa/runtime/services";
     private final String CONFIG_PATH = "/soa/config/services";
+    private final static String ROUTES_PATH = "/soa/config/routes";
 
     private final boolean isClient;
     private final ServerZk serverZk = new ServerZk(this);
@@ -67,6 +69,18 @@ public class RegistryAgentImpl implements RegistryAgent {
     }
 
     @Override
+    public void unregisterService(String serverName, String versionName) {
+        try {
+            //fixme
+            String path = "/soa/runtime/services/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
+            LOGGER.info(" logger zookeeper unRegister service: " + path);
+//            serverZk.zk.delete(path, -1);
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    @Override
     public void registerService(String serverName, String versionName) {
         try {
             String path = RUNTIME_PATH + "/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
@@ -74,11 +88,19 @@ public class RegistryAgentImpl implements RegistryAgent {
             String instanceInfo = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
 
             RegisterContext registerContext = new RegisterContext(serverName, versionName, servicePath, instanceInfo);
+            if (ContainerFactory.getContainer().status() == Container.STATUS_SHUTTING
+                    || ContainerFactory.getContainer().status() == Container.STATUS_DOWN) {
+                LOGGER.warn("Container is shutting down");
+                return;
+            }
             // 注册服务 runtime 实例 到 zk
             serverZk.create(path, registerContext, true);
 
             // 创建  zk  config 服务 持久节点  eg:  /soa/config/com.github.dapeng.soa.UserService
             serverZk.create(CONFIG_PATH + "/" + serverName, null, false);
+
+            // 创建路由节点
+            serverZk.create(ROUTES_PATH + "/" + serverName, null, false);
 
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
@@ -122,11 +144,6 @@ public class RegistryAgentImpl implements RegistryAgent {
     @Override
     public ZkServiceInfo getConfig(boolean usingFallback, String serviceKey) {
         return serverZk.getConfigData(serviceKey);
-    }
-
-    @Override
-    public List<Route> getRoutes(boolean usingFallback) {
-        return null;
     }
 
 

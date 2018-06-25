@@ -18,7 +18,7 @@ public class GlobalTransactionTemplate {
 
     public <T> T execute(GlobalTransactionCallback<T> action) throws TException {
         final GlobalTransactionService service = GlobalTransactionFactory.getGlobalTransactionService();
-        final TransactionContext context = TransactionContext.Factory.getCurrentInstance();
+        final TransactionContext context = TransactionContext.Factory.currentInstance();
 
         boolean success = false;
 
@@ -32,15 +32,15 @@ public class GlobalTransactionTemplate {
 
             globalTransaction = service.create(globalTransaction);
 
-            context.setCurrentTransactionSequence(0);
-            context.setCurrentTransactionId(globalTransaction.getId());
+            context.currentTransactionSequence(0);
+            context.currentTransactionId(globalTransaction.getId());
 
             success = action.doInTransaction();
 
             return null;
         } finally {
             if (globalTransaction.getId() != null) {
-                service.update(globalTransaction.getId(), context.getCurrentTransactionSequence(), success ? TGlobalTransactionsStatus.Success : TGlobalTransactionsStatus.Fail);
+                service.update(globalTransaction.getId(), context.currentTransactionSequence(), success ? TGlobalTransactionsStatus.Success : TGlobalTransactionsStatus.Fail);
             }
         }
     }

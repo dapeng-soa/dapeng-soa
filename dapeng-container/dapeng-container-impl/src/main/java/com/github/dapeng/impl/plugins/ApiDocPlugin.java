@@ -4,7 +4,7 @@ import com.github.dapeng.api.AppListener;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.core.Plugin;
 import com.github.dapeng.api.events.AppEvent;
-import com.github.dapeng.util.SoaSystemEnvProperties;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.doc.ApiWebSite;
 import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;

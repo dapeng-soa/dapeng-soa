@@ -7,7 +7,7 @@
     <groupId>com.github.dapeng</groupId>
     <artifactId>dapeng-parent</artifactId>
     <packaging>pom</packaging>
-    <version>2.0.1</version>
+    <version>2.0.2</version>
 
     <name>dapeng</name>
     <description>一个简单、易用、多特性的SOA框架</description>
@@ -54,13 +54,11 @@
     <modules>
         <module>dapeng-core</module>
         <module>dapeng-spring</module>
-        <!--<module>dapeng-zookeeper</module>-->
         <module>dapeng-maven-plugin</module>
         <module>dapeng-registry</module>
         <module>dapeng-code-generator</module>
         <module>dapeng-api-doc</module>
-        <module>dapeng-route</module>
-        <!--<module>dapeng-tools</module>-->
+        <module>dapeng-router</module>
         <module>dapeng-message</module>
         <!--<module>dapeng-service-invoke</module>-->
         <module>dapeng-container</module>

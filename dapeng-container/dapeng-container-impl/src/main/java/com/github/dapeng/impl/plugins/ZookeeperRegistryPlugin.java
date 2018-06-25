@@ -10,7 +10,6 @@ import com.github.dapeng.core.ServiceInfo;
 import com.github.dapeng.impl.container.DapengApplication;
 import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.registry.RegistryAgentProxy;
-import com.github.dapeng.registry.ZkNodeConfigContext;
 import com.github.dapeng.registry.zookeeper.RegistryAgentImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,11 +71,17 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
     @Override
     public void stop() {
         LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::stop");
+        // fixme move to SpringApp
         container.getApplications().forEach(app -> {
             app.getServiceInfos()
                     .forEach(s -> unRegisterService(s.serviceName, s.version));
         });
         registryAgent.stop();
+        try {
+            Thread.sleep(4000);
+        } catch (InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
     }
 
     public void registerService(String serviceName, String version) {
@@ -86,7 +91,7 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
 
     public void unRegisterService(String serviceName, String version) {
         LOGGER.info(getClass().getSimpleName() + "::unRegisterService [serviceName:" + serviceName + ", version:" + version + "]");
-        // TODO do something real?
+        registryAgent.unregisterService(serviceName,version);
     }
 
 }

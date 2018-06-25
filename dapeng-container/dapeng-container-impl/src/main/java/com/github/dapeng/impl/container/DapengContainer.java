@@ -10,11 +10,12 @@ import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.ContainerFilter;
 import com.github.dapeng.core.filter.Filter;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.filters.FilterLoader;
 import com.github.dapeng.impl.plugins.*;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,10 @@ public class DapengContainer implements Container {
     private final  List<ClassLoader> pluginClassLoaders;
     private List<Filter> filters = new ArrayList<>();
 
+    /**
+     * 容器状态, 初始状态为STATUS_UNKNOWN
+     */
+    private static int status = STATUS_UNKNOWN;
 
     private final static CountDownLatch SHUTDOWN_SIGNAL = new CountDownLatch(1);
 
@@ -187,6 +192,7 @@ public class DapengContainer implements Container {
     @Override
     public void startup() {
         LOGGER.info(getClass().getSimpleName() + "::startup begin");
+        status = STATUS_CREATING;
         //3. 初始化appLoader,dapengPlugin 应该用serviceLoader的方式去加载
         Plugin springAppLoader = new SpringAppLoader(this, applicationCls);
         Plugin zookeeperPlugin = new ZookeeperRegistryPlugin(this);
@@ -219,6 +225,8 @@ public class DapengContainer implements Container {
         registerPlugin(pluginLoader);
         registerPlugin(mbeanAgentPlugin);
 
+        //add messagePlugin
+//        registerPlugin(messagePlugin);
 
         if ("plugin".equals(RUN_MODE)) {
             Plugin apiDocPlugin = new ApiDocPlugin(this);
@@ -233,9 +241,12 @@ public class DapengContainer implements Container {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.warn("Container graceful shutdown begin.");
-            getPlugins().forEach(Plugin::stop);
+            status = STATUS_SHUTTING;
+            // fixme not so graceful
+            getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
+            Lists.reverse(getPlugins()).stream().filter(plugin -> !(plugin instanceof ZookeeperRegistryPlugin)).forEach(Plugin::stop);
             try {
-                Thread.sleep(10000);
+                Thread.sleep(4000);
             } catch (InterruptedException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -245,11 +256,18 @@ public class DapengContainer implements Container {
 
         try {
             LOGGER.warn(getClass().getSimpleName() + "::startup end");
+            status = STATUS_RUNNING;
             SHUTDOWN_SIGNAL.await();
             LOGGER.warn(getClass().getSimpleName() + "::startup quit");
+            status = STATUS_DOWN;
         } catch (InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
         }
+    }
+
+    @Override
+    public int status() {
+        return status;
     }
 
     public static InputStream loadInputStreamInClassLoader(String path) throws FileNotFoundException {

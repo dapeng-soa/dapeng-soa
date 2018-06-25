@@ -3,18 +3,16 @@ package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
-import com.github.dapeng.registry.*;
-
-import com.github.dapeng.route.Route;
-import com.github.dapeng.route.RouteExecutor;
-import com.github.dapeng.util.SoaSystemEnvProperties;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.github.dapeng.router.Route;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author lihuimin
@@ -29,6 +27,12 @@ public class ZkClientAgentImpl implements ZkClientAgent {
     private final boolean usingFallbackZk = SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_ISCONFIG;
 
     private ClientZk masterZk, fallbackZk;
+
+    /**
+     * 路由配置信息
+     */
+    private final Map<String, List<Route>> routesMap = new ConcurrentHashMap<>(16);
+
 
     public ZkClientAgentImpl() {
         start();
@@ -80,25 +84,20 @@ public class ZkClientAgentImpl implements ZkClientAgent {
 
         //使用路由规则，过滤可用服务器
         // fixme 在runtime跟config变化的时候才需要计算可用节点信息
-        InvocationContext context = InvocationContextImpl.Factory.getCurrentInstance();
-        List<Route> routes = usingFallbackZk ? fallbackZk.getRoutes() : masterZk.getRoutes();
-        List<RuntimeInstance> runtimeList = new ArrayList<>();
+        InvocationContext context = InvocationContextImpl.Factory.currentInstance();
+//        List<Route> routes = usingFallbackZk ? fallbackZk.getRoutes() : masterZk.getRoutes();
+//        List<RuntimeInstance> runtimeList = new ArrayList<>();
 
         if (zkInfo.getStatus() == ZkServiceInfo.Status.ACTIVE && zkInfo.getRuntimeInstances() != null) {
-            for (RuntimeInstance instance : zkInfo.getRuntimeInstances()) {
-                try {
-                    InetAddress inetAddress = InetAddress.getByName(instance.ip);
-                    if (RouteExecutor.isServerMatched(context, routes, inetAddress)) {
-                        runtimeList.add(instance);
-                    }
-                } catch (UnknownHostException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-            }
-            zkInfo.setRuntimeInstances(runtimeList);
+
             LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo succeed");
         } else {
             LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo failed");
         }
+    }
+
+    @Override
+    public List<Route> getRoutes(String service) {
+        return masterZk.getRoutes(service);
     }
 }

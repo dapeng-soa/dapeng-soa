@@ -1,6 +1,7 @@
 package com.github.dapeng.json;
 
 import com.github.dapeng.core.*;
+import com.github.dapeng.core.helper.SoaHeaderHelper;
 import com.github.dapeng.core.metadata.*;
 import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.org.apache.thrift.TException;
@@ -25,12 +26,14 @@ public class JsonSerializer implements BeanSerializer<String> {
     private ByteBuf requestByteBuf;
     private final Service service;
     private final Method method;
-    private final InvocationContext invocationCtx = InvocationContextImpl.Factory.getCurrentInstance();
+    private final String version;
+    private final InvocationContext invocationCtx = InvocationContextImpl.Factory.currentInstance();
 
-    public JsonSerializer(Service service, Method method, Struct struct) {
+    public JsonSerializer(Service service, Method method, String version, Struct struct) {
         this.struct = struct;
         this.service = service;
         this.method = method;
+        this.version = version;
     }
 
     // thrift -> json
@@ -122,7 +125,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                 if (!skip) {
                     String subStructName = fieldDataType.qualifiedName;
                     Struct subStruct = findStruct(subStructName, service);
-                    new JsonSerializer(service, method, subStruct).read(iproto, writer);
+                    new JsonSerializer(service, method, version, subStruct).read(iproto, writer);
                 } else {
                     TProtocolUtil.skip(iproto, TType.STRUCT);
                 }
@@ -200,7 +203,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                 readField(iproto, metadataType, elemType, writer, false);
             } else {
                 if (struct != null) {
-                    new JsonSerializer(service, method, struct).read(iproto, writer);
+                    new JsonSerializer(service, method, version, struct).read(iproto, writer);
                 } else if (isCollectionKind(metadataType.kind)) {
                     //处理List<list<>>
                     TList list = iproto.readListBegin();
@@ -376,7 +379,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                 case HEADER_END:
                     break;
                 case BODY_BEGIN:
-                    new SoaHeaderSerializer().write(buildSoaHeader(), new TBinaryProtocol(oproto.getTransport()));
+                    new SoaHeaderSerializer().write(SoaHeaderHelper.buildHeader(service.namespace + "." + service.name, version, method.name), new TBinaryProtocol(oproto.getTransport()));
 
                     //初始化当前数据节点
                     DataType initDataType = new DataType();
@@ -565,7 +568,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     } else if ("body".equals(name)) {
                         parsePhase = ParsePhase.BODY_BEGIN;
                     } else {
-                        logger.warn("skip field(" + name + ")@pase:" + parsePhase);
+                        logger.debug("skip field(" + name + ")@pase:" + parsePhase);
                     }
                     break;
                 case HEADER:
@@ -575,7 +578,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     if ("body".equals(name)) {
                         parsePhase = ParsePhase.BODY_BEGIN;
                     } else {
-                        logger.warn("skip field(" + name + ")@pase:" + parsePhase);
+                        logger.debug("skip field(" + name + ")@pase:" + parsePhase);
                     }
                     break;
                 case BODY:
@@ -601,7 +604,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                         Field field = findField(name, current.struct);
                         if (field == null) {
                             foundField = false;
-                            logger.info("field(" + name + ") not found. just skip");
+                            logger.debug("field(" + name + ") not found. just skip");
                             return;
                         }
 
@@ -615,7 +618,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     }
                     break;
                 case BODY_END:
-                    logger.warn("skip field(" + name + ")@pase:" + parsePhase);
+                    logger.debug("skip field(" + name + ")@pase:" + parsePhase);
                     break;
                 default:
                     logAndThrowTException();
@@ -668,7 +671,7 @@ public class JsonSerializer implements BeanSerializer<String> {
         public void onBoolean(boolean value) throws TException {
             switch (parsePhase) {
                 case HEADER:
-                    logger.warn("skip boolean(" + value + ")@pase:" + parsePhase + " field:" + current.fieldName);
+                    logger.debug("skip boolean(" + value + ")@pase:" + parsePhase + " field:" + current.fieldName);
                     break;
                 case BODY:
                     if (!foundField) {
@@ -681,7 +684,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     oproto.writeBool(value);
                     break;
                 default:
-                    logger.warn("skip boolean(" + value + ")@pase:" + parsePhase + " for field:" + current.fieldName);
+                    logger.debug("skip boolean(" + value + ")@pase:" + parsePhase + " for field:" + current.fieldName);
             }
 
         }
@@ -729,7 +732,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     }
                     break;
                 default:
-                    logger.warn("skip number(" + value + ")@pase:" + parsePhase + " Field:" + current.fieldName);
+                    logger.debug("skip number(" + value + ")@pase:" + parsePhase + " Field:" + current.fieldName);
             }
         }
 
@@ -773,7 +776,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     }
                     break;
                 default:
-                    logger.warn("skip number(" + value + ")@pase:" + parsePhase + " Field:" + current.fieldName);
+                    logger.debug("skip number(" + value + ")@pase:" + parsePhase + " Field:" + current.fieldName);
             }
         }
 
@@ -789,7 +792,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     foundNull = true;
                     //reset writerIndex, skip the field
                     requestByteBuf.writerIndex(current.byteBufPositionBefore);
-                    if (invocationCtx.getCodecProtocol() == CompressedBinary) {
+                    if (invocationCtx.codecProtocol() == CompressedBinary) {
                         ((TCompactProtocol)oproto).resetLastFieldId();
                     }
                     break;
@@ -848,7 +851,7 @@ public class JsonSerializer implements BeanSerializer<String> {
 
                     break;
                 default:
-                    logger.warn("skip boolean(" + value + ")@pase:" + parsePhase + " Field:" + current.fieldName);
+                    logger.debug("skip boolean(" + value + ")@pase:" + parsePhase + " Field:" + current.fieldName);
             }
         }
 
@@ -893,7 +896,7 @@ public class JsonSerializer implements BeanSerializer<String> {
             }
 
             if (current.dataType.kind == DataType.KIND.MAP
-                    && invocationCtx.getCodecProtocol() == CompressedBinary
+                    && invocationCtx.codecProtocol() == CompressedBinary
                     && elCount == 0) {
                 requestByteBuf.writerIndex(beginPosition + 1);
             } else {
@@ -902,7 +905,7 @@ public class JsonSerializer implements BeanSerializer<String> {
         }
 
         private void writeMapBegin(byte keyType, byte valueType, int defaultSize) throws TException {
-            switch (invocationCtx.getCodecProtocol()) {
+            switch (invocationCtx.codecProtocol()) {
                 case Binary:
                     oproto.writeMapBegin(new TMap(keyType, valueType, defaultSize));
                     break;
@@ -914,7 +917,7 @@ public class JsonSerializer implements BeanSerializer<String> {
         }
 
         private void reWriteMapBegin(byte keyType, byte valueType, int size) throws TException {
-            switch (invocationCtx.getCodecProtocol()) {
+            switch (invocationCtx.codecProtocol()) {
                 case Binary:
                     oproto.writeMapBegin(new TMap(keyType, valueType, size));
                     break;
@@ -933,7 +936,7 @@ public class JsonSerializer implements BeanSerializer<String> {
          * @throws TException
          */
         private void writeCollectionBegin(byte valueType, int defaultSize) throws TException {
-            switch (invocationCtx.getCodecProtocol()) {
+            switch (invocationCtx.codecProtocol()) {
                 case Binary:
                     oproto.writeListBegin(new TList(valueType, defaultSize));
                     break;
@@ -945,7 +948,7 @@ public class JsonSerializer implements BeanSerializer<String> {
         }
 
         private void reWriteCollectionBegin(byte valueType, int size) throws TException {
-            switch (invocationCtx.getCodecProtocol()) {
+            switch (invocationCtx.codecProtocol()) {
                 case Binary:
                     oproto.writeListBegin(new TList(valueType, size));
                     break;
@@ -957,22 +960,12 @@ public class JsonSerializer implements BeanSerializer<String> {
         }
 
         private void fillStringToInvocationCtx(String value) {
-            if ("serviceName".equals(currentHeaderName)) {
-                invocationCtx.setServiceName(value);
-            } else if ("methodName".equals(currentHeaderName)) {
-                invocationCtx.setMethodName(value);
-            } else if ("versionName".equals(currentHeaderName)) {
-                invocationCtx.setVersionName(value);
-            } else if ("calleeIp".equals(currentHeaderName)) {
-                invocationCtx.setCalleeIp(Optional.of(value));
-            } else if ("callerFrom".equals(currentHeaderName)) {
-                invocationCtx.setCallerFrom(Optional.of(value));
-            } else if ("callerIp".equals(currentHeaderName)) {
-                invocationCtx.setCallerFrom(Optional.of(value));
-            } else if ("customerName".equals(currentHeaderName)) {
-                invocationCtx.setCustomerName(Optional.of(value));
+            if ("calleeIp".equals(currentHeaderName)) {
+                invocationCtx.calleeIp(value);
+            } else if ("callerMid".equals(currentHeaderName)) {
+                invocationCtx.callerMid(value);
             } else {
-                logger.warn("skip field(" + currentHeaderName + ")@pase:" + parsePhase);
+                logger.debug("skip field(" + currentHeaderName + ")@pase:" + parsePhase);
             }
         }
 
@@ -987,35 +980,13 @@ public class JsonSerializer implements BeanSerializer<String> {
             throw ex;
         }
 
-        private SoaHeader buildSoaHeader() {
-            SoaHeader header = new SoaHeader();
-            header.setServiceName(invocationCtx.getServiceName());
-            header.setVersionName(invocationCtx.getVersionName());
-            header.setMethodName(invocationCtx.getMethodName());
-
-            header.setCallerFrom(invocationCtx.getCallerFrom());
-            header.setCallerIp(invocationCtx.getCallerIp());
-            header.setCustomerId(invocationCtx.getCustomerId());
-            header.setCustomerName(invocationCtx.getCustomerName());
-            header.setOperatorId(invocationCtx.getOperatorId());
-            header.setOperatorName(invocationCtx.getOperatorName());
-            header.setTransactionId(invocationCtx.getTransactionId());
-
-
-            header.setTransactionId(invocationCtx.getTransactionId());
-
-            return header;
-        }
-
         private void fillIntToInvocationCtx(int value) {
             if ("calleePort".equals(currentHeaderName)) {
-                invocationCtx.setCalleePort(Optional.of(value));
+                invocationCtx.calleePort(value);
             } else if ("operatorId".equals(currentHeaderName)) {
-                invocationCtx.setOperatorId(Optional.of(value));
-            } else if ("customerId".equals(currentHeaderName)) {
-                invocationCtx.setCustomerId(Optional.of(value));
-            } else if ("transactionSequence".equals(currentHeaderName)) {
-                invocationCtx.setTransactionSequence(Optional.of(value));
+                invocationCtx.operatorId(Long.valueOf(value));
+            } else if ("userId".equals(currentHeaderName)) {
+                invocationCtx.userId(Long.valueOf(value));
             } else {
                 logger.warn("skip field(" + currentHeaderName + ")@pase:" + parsePhase);
             }

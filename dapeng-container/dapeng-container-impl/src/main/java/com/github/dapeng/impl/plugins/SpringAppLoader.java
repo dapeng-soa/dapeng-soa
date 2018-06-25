@@ -58,21 +58,23 @@ public class SpringAppLoader implements Plugin {
                 Application application = new DapengApplication(appInfos.values().stream().collect(Collectors.toList()),
                         appClassLoader);
 
-                Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitionMap = toSoaServiceDefinitionMap(appInfos, processorMap);
-                container.registerAppProcessors(serviceDefinitionMap);
-
-                // IApplication app = new ...
-                if (!application.getServiceInfos().isEmpty()) {
-                    container.registerApplication(application);
-                    container.registerAppMap(toApplicationMap(serviceDefinitionMap, application));
-                }
-
-                LOGGER.info(" ------------ SpringClassLoader: " + ContainerFactory.getContainer().getApplications());
-
                 //Start spring context
                 LOGGER.info(" start to boot app");
                 Method startMethod = appCtxClass.getMethod("start");
                 startMethod.invoke(springCtx);
+
+                // IApplication app = new ...
+                if (!application.getServiceInfos().isEmpty()) {
+                    // fixme only registerApplication
+                    Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitionMap = toSoaServiceDefinitionMap(appInfos, processorMap);
+                    container.registerAppProcessors(serviceDefinitionMap);
+
+                    container.registerAppMap(toApplicationMap(serviceDefinitionMap, application));
+                    container.registerApplication(application); //fire a zk event
+                }
+
+                LOGGER.info(" ------------ SpringClassLoader: " + ContainerFactory.getContainer().getApplications());
+
 
             } catch (Exception e) {
                 LOGGER.error(e.getMessage(), e);
@@ -93,21 +95,18 @@ public class SpringAppLoader implements Plugin {
     @Override
     public void stop() {
         LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::stop");
-        LOGGER.warn("Gracefully shutdown not implemented yet");
-        // TODO stop or close??
-//        springCtxs.forEach(springCtx -> {
-//            LOGGER.info(" stop unload app");
-//            try {
-//                Method stopMethod = springCtx.getClass().getMethod("stop");
-//                stopMethod.invoke(springCtx);
-//            } catch (NoSuchMethodException e) {
-//                LOGGER.error(e.getMessage(), e);
-//            } catch (IllegalAccessException e) {
-//                LOGGER.error(e.getMessage(), e);
-//            } catch (InvocationTargetException e) {
-//                LOGGER.error(e.getMessage(), e);
-//            }
-//        });
+        springCtxs.forEach(context -> {
+            try {
+                LOGGER.info(" start to close SpringApplication.....");
+                Method method = context.getClass().getMethod("close");
+                method.invoke(context);
+            } catch (NoSuchMethodException e) {
+                LOGGER.info(" failed to get context close method.....");
+            } catch (IllegalAccessException|InvocationTargetException e) {
+                LOGGER.info(e.getMessage());
+            }
+        });
+        LOGGER.warn("Plugin:SpringAppLoader stoped..");
     }
 
     private Map<String, ServiceInfo> toServiceInfos(Map<String, SoaServiceDefinition<?>> processorMap)

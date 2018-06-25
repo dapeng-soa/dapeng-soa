@@ -2,7 +2,8 @@ package com.github.dapeng.client.netty;
 
 import com.github.dapeng.core.SoaCode;
 import com.github.dapeng.core.SoaException;
-import com.github.dapeng.util.SoaSystemEnvProperties;
+import com.github.dapeng.core.TransactionContext;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.AbstractByteBufAllocator;
 import io.netty.buffer.ByteBuf;
@@ -18,6 +19,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.util.Map;
 import java.util.concurrent.*;
@@ -117,7 +119,16 @@ public class NettyClient {
         return bootstrap;
     }
 
-    public ByteBuf send(Channel channel, int seqid, ByteBuf request, long timeout) throws SoaException {
+    /**
+     * @param channel
+     * @param seqid
+     * @param request
+     * @param timeout
+     * @param service 传入 service 参数 是为了返回服务超时信息更具体
+     * @return
+     * @throws SoaException
+     */
+    public ByteBuf send(Channel channel, int seqid, ByteBuf request, long timeout, String service) throws SoaException {
 
         //means that this channel is not idle and would not managered by IdleConnectionManager
         IdleConnectionManager.remove(channel);
@@ -126,14 +137,26 @@ public class NettyClient {
 
         RequestQueue.put(seqid, future);
 
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("NettyClient::send, timeout:" + timeout + ", seqId:" + seqid + ",  to: " + channel.remoteAddress());
+        }
+
         try {
             channel.writeAndFlush(request);
             ByteBuf respByteBuf = future.get(timeout, TimeUnit.MILLISECONDS);
             return respByteBuf;
         } catch (TimeoutException e) {
-            LOGGER.error("请求超时，seqid:"+seqid);
-            throw new SoaException(SoaCode.TimeOut.getCode(), SoaCode.TimeOut.getMsg());
+            // 如果在服务里面, 那么不清理MDC
+            if (!TransactionContext.hasCurrentInstance()) {
+                MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+            }
+            LOGGER.error("请求服务超时[" + service + "]，seqid:" + seqid);
+            throw new SoaException(SoaCode.TimeOut.getCode(), "请求服务超时[" + service + "]");
         } catch (Throwable e) {
+            // 如果在服务里面, 那么不清理MDC
+            if (!TransactionContext.hasCurrentInstance()) {
+                MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+            }
             throw new SoaException(SoaCode.UnKnown, e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage());
         } finally {
             RequestQueue.remove(seqid);
@@ -197,6 +220,7 @@ public class NettyClient {
 
     /**
      * 同步连接并返回channel
+     *
      * @param host
      * @param port
      * @return
