@@ -6,6 +6,7 @@ import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.TransactionContext;
 import com.github.dapeng.impl.filters.freq.ShmManager;
 import com.github.dapeng.registry.RegistryAgent;
+import com.github.dapeng.registry.zookeeper.ServerZkAgentImpl;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -29,8 +30,8 @@ public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         final TransactionContext context = TransactionContext.Factory.currentInstance();
-        RegistryAgent registryAgent = ServerZkAgentImpl.getInstance();
-        List<FreqControlRule> freqRules = serverZkAgent.getZkClient().getFreqControlRule(context.getHeader().getServiceName());
+        RegistryAgent serverZkAgent = ServerZkAgentImpl.getInstance();
+        List<FreqControlRule> freqRules = serverZkAgent.getFreqControlRule(false, context.getHeader().getServiceName());
         boolean freqResult = processFreqControl(freqRules, manager, context);
 
         if (freqResult) {
@@ -63,8 +64,8 @@ public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
                     freqKey = 0;
                     break;
                 case "callerIp":
-                    String callerIp = context.callerIp().orElse("0");
-                    freqKey = callerIp.hashCode();
+                    int callerIp = context.callerIp().orElse(0);
+                    freqKey = callerIp;
                     break;
                 case "callerMid":
                     String callerMid = context.callerMid().orElse("0");
@@ -92,7 +93,9 @@ public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
                 result = manager.reportAndCheck(rule, freqKey);
             }
             if (!result) {
-                LOGGER.debug("processFreqControl,[app/ruleType/key:mincount/midcount/maxcount]:{}", manager.getCounterInfo(rule.app, rule.ruleType, freqKey));
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("processFreqControl,[app/ruleType/key:mincount/midcount/maxcount]:{}", manager.getCounterInfo(rule.app, rule.ruleType, freqKey));
+                }
                 return result;
             }
             access = result;

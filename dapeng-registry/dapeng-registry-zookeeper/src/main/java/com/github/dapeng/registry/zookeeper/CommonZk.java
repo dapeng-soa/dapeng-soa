@@ -22,9 +22,10 @@ public class CommonZk {
     protected String zkHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
 
 
-    protected final static String SERVICE_PATH = "/soa/runtime/services";
+    protected final static String RUNTIME_PATH = "/soa/runtime/services";
     protected final static String CONFIG_PATH = "/soa/config/services";
     protected final static String ROUTES_PATH = "/soa/config/routes";
+    protected final static String FREQ_PATH = "/soa/config/freq";
 
 
     protected ZooKeeper zk;

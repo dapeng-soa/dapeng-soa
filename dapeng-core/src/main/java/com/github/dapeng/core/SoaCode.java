@@ -13,7 +13,8 @@ public enum SoaCode implements SoaBaseCodeInterface {
     TimeOut("Err-Core-003", "请求超时"),
     NotMatchedService("Err-Core-004","没有对应的服务或者没有对应的服务版本"),
     NotMatchedMethod("Err-Core-005","没有对应的方法"),
-    NoRouting("Err-Core-006", "没有可用路由");
+    NoRouting("Err-Core-006", "没有可用路由"),
+    FreqControl("Error-Core-006", "当前请求服务实例过多被限流");
 
     private String code;
     private String msg;
