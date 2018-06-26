@@ -21,8 +21,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import static com.github.dapeng.core.SoaCode.NoRouting;
-import static com.github.dapeng.core.SoaCode.UnKnown;
+import static com.github.dapeng.core.SoaCode.*;
 
 /**
  * @author lihuimin
@@ -184,6 +183,10 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
                 .filter(rt -> checkVersion(version, rt.version))
                 .collect(Collectors.toList());
+        if (compatibles.isEmpty()) {
+            logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + "], not found compatible  instances by version");
+            throw new SoaException(NoVersion, "服务 [ " + service + " ] 无可用实例:没找到版本兼容的可运行实例");
+        }
         // router
         List<RuntimeInstance> routedInstances = router(service, method, version, compatibles);
 
@@ -195,7 +198,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         RuntimeInstance inst = loadBalance(service, version, method, routedInstances);
         if (inst == null) {
             // should not reach here
-            throw new SoaException(UnKnown, "服务 [ " + service + " ] 无可用实例:负载均衡没有找到合适的运行实例");
+            throw new SoaException(NotFoundServer, "服务 [ " + service + " ] 无可用实例:负载均衡没有找到合适的运行实例");
         }
 
         inst.getActiveCount().incrementAndGet();
