@@ -185,14 +185,14 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 .collect(Collectors.toList());
         if (compatibles.isEmpty()) {
             logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + "], not found compatible  instances by version");
-            throw new SoaException(NoVersion, "服务 [ " + service + " ] 无可用实例:没找到版本兼容的可运行实例");
+            throw new SoaException(NoMatchedVersion, "服务 [ " + service + " ] 无可用实例:没找到版本兼容的可运行实例");
         }
         // router
         List<RuntimeInstance> routedInstances = router(service, method, version, compatibles);
 
         if (routedInstances == null || routedInstances.isEmpty()) {
             logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + "], not found available instances by routing rules");
-            throw new SoaException(NoRouting, "服务 [ " + service + " ] 无可用实例:路由规则没有解析到可运行的实例");
+            throw new SoaException(NoMatchedRouting, "服务 [ " + service + " ] 无可用实例:路由规则没有解析到可运行的实例");
         }
 
         RuntimeInstance inst = loadBalance(service, version, method, routedInstances);
