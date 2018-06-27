@@ -14,7 +14,6 @@ import com.github.dapeng.impl.filters.FilterLoader;
 import com.github.dapeng.impl.plugins.*;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -193,7 +192,6 @@ public class DapengContainer implements Container {
             Plugin logbackPlugin = new LogbackPlugin();
             registerPlugin(logbackPlugin);
         }
-
         registerPlugin(nettyPlugin);
         registerPlugin(zookeeperPlugin);
         registerPlugin(springAppLoader);
@@ -218,8 +216,10 @@ public class DapengContainer implements Container {
             LOGGER.warn("Container graceful shutdown begin.");
             status = STATUS_SHUTTING;
             // fixme not so graceful
-            getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
-            Lists.reverse(getPlugins()).stream().filter(plugin -> !(plugin instanceof ZookeeperRegistryPlugin)).forEach(Plugin::stop);
+            getPlugins().stream().filter(plugin -> (plugin instanceof ZookeeperRegistryPlugin)
+                    || (plugin instanceof TaskSchedulePlugin)).forEach(Plugin::stop);
+            getPlugins().stream().filter(plugin -> !(plugin instanceof ZookeeperRegistryPlugin)
+                    && !(plugin instanceof TaskSchedulePlugin)).forEach(Plugin::stop);
             try {
                 Thread.sleep(4000);
             } catch (InterruptedException e) {
@@ -238,6 +238,18 @@ public class DapengContainer implements Container {
         } catch (InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
         }
+    }
+
+    @Override
+    public void online() {
+        status = STATUS_RUNNING;
+    }
+
+    @Override
+    public void offline() {
+        //todo 服务端暂无法知道服务的节点个数
+        status = STATUS_OFFLINE;
+
     }
 
     @Override

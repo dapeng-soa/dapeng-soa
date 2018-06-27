@@ -71,7 +71,7 @@ public class SpringAppLoader implements Plugin {
                     container.registerAppProcessors(serviceDefinitionMap);
 
                     container.registerAppMap(toApplicationMap(serviceDefinitionMap, application));
-                    container.registerApplication(application); //fire a zk event
+                    container.registerApplication(application);
                 }
 
                 LOGGER.info(" ------------ SpringClassLoader: " + ContainerFactory.getContainer().getApplications());
@@ -96,6 +96,7 @@ public class SpringAppLoader implements Plugin {
     @Override
     public void stop() {
         LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::stop");
+        container.getApplications().forEach(container::unregisterApplication);
         springCtxs.forEach(context -> {
             try {
                 LOGGER.info(" start to close SpringApplication.....");

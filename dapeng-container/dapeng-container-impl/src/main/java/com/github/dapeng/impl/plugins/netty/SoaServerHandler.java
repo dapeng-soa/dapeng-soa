@@ -8,6 +8,7 @@ import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.*;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.filters.HeadFilter;
+import com.github.dapeng.impl.plugins.monitor.ServerCounterContainer;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.zookeeper.ServerZkAgentImpl;
@@ -89,8 +90,15 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
+    /**
+     * Unhandled RuntimeException will come here
+     * @param ctx
+     * @param cause
+     * @throws Exception
+     */
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        ServerCounterContainer.getInstance().decreaseReq();
         // Uncaught exceptions from inbound handlers will propagate up to this handler
         TransactionContext tranCtx = TransactionContextImpl.Factory.currentInstance();
         // short error log and detail error log, for the sake of elasticsearch indexing

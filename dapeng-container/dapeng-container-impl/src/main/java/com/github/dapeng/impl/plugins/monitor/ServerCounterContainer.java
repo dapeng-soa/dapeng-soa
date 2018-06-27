@@ -48,6 +48,10 @@ public class ServerCounterContainer {
      */
     private Map<Integer, Map<ServiceBasicInfo, ServiceProcessData>> serviceInvocationDatas = new HashMap<>(64);
 
+    /**
+     * 请求计数器
+     */
+    private AtomicInteger reqCounter = new AtomicInteger(0);
 
     private final String DATA_BASE = MonitorFilterProperties.SOA_MONITOR_INFLUXDB_DATABASE;
     private final String NODE_IP = SoaSystemEnvProperties.SOA_CONTAINER_IP;
@@ -532,6 +536,30 @@ public class ServerCounterContainer {
             LOGGER.debug(Thread.currentThread().getName() + " no more points, total points:" + uploadCounter.get()
                     + " uploaded, now release the lock.");
         }
+    }
+
+    /**
+     * 增加请求计数
+     * @return
+     */
+    public int increaseReq() {
+        return reqCounter.incrementAndGet();
+    }
+
+    /**
+     * 减少请求计数
+     * @return
+     */
+    public int decreaseReq() {
+        return reqCounter.decrementAndGet();
+    }
+
+    /**
+     * 获取请求计数
+     * @return
+     */
+    public int getReqCount() {
+        return reqCounter.get();
     }
 
     private ServiceProcessData createNewData(ServiceBasicInfo basicInfo) {

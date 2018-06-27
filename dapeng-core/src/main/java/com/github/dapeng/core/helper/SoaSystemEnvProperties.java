@@ -40,6 +40,7 @@ public class SoaSystemEnvProperties {
     private static final String KEY_SOA_MAX_READ_BUFFER_SIZE = "soa.max.read.buffer.size";
     private static final String KEY_SOA_LOCAL_HOST_NAME = "soa.local.host.name";
     private static final String KEY_SOA_TRANSACTIONAL_ENABLE = "soa.transactional.enable";
+    private static final String KEY_SOA_GC_RADAR_ALERT_LEVEL = "soa.gc.radar.alert.level";
 
     private static final String KEY_SOA_FILTER_EXCLUDES = "soa.filter.excludes";
     private static final String KEY_SOA_FILTER_INCLUDES = "soa.filter.includes";
@@ -92,7 +93,10 @@ public class SoaSystemEnvProperties {
 
     public static final String SOA_LOCAL_HOST_NAME = get(KEY_SOA_LOCAL_HOST_NAME);
     public static final boolean SOA_TRANSACTIONAL_ENABLE = Boolean.valueOf(get(KEY_SOA_TRANSACTIONAL_ENABLE, "true"));
-
+    /**
+     * 年老代内存占用超过80%的话, 预警full gc
+     */
+    public static final int SOA_GC_RADAR_ALERT_LEVEL = Integer.valueOf(get(KEY_SOA_GC_RADAR_ALERT_LEVEL, "80"));
     public static final String SOA_FILTER_EXCLUDES = get(KEY_SOA_FILTER_EXCLUDES, "");
     public static final String SOA_FILTER_INCLUDES = get(KEY_SOA_FILTER_INCLUDES, "");
 

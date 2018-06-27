@@ -33,6 +33,7 @@ public class SoaLinkStateHandler extends ChannelDuplexHandler {
         try {
             long requestFlow = (long) ((ByteBuf) msg).readableBytes();
             counterContainer.addRequestFlow(requestFlow);
+            counterContainer.increaseReq();
         } finally {
             ctx.fireChannelRead(msg);
         }
@@ -46,6 +47,7 @@ public class SoaLinkStateHandler extends ChannelDuplexHandler {
         try {
             long responseFlow = (long) ((ByteBuf) msg).readableBytes();
             counterContainer.addResponseFlow(responseFlow);
+            counterContainer.decreaseReq();
         } finally {
             ctx.write(msg, promise);
         }

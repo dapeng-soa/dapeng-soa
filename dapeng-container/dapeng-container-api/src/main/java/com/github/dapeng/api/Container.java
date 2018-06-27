@@ -21,8 +21,9 @@ public interface Container {
     int STATUS_UNKNOWN = 0;
     int STATUS_CREATING = 1;
     int STATUS_RUNNING = 2;
-    int STATUS_SHUTTING = 3;
-    int STATUS_DOWN = 4;
+    int STATUS_OFFLINE = 3;
+    int STATUS_SHUTTING = 4;
+    int STATUS_DOWN = 5;
 
     /**
      * 注册应用程序监听器，
@@ -94,6 +95,12 @@ public interface Container {
     List<Filter> getFilters();
 
     void startup();
+
+    /**
+     * 容器临时上线下线
+     */
+    void online();
+    void offline();
 
     /**
      * 0:unknow;
