@@ -125,7 +125,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             }
             return clientInfo;
         }
-
     }
 
     @Override

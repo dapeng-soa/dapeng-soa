@@ -21,79 +21,86 @@ public interface Container {
     int STATUS_UNKNOWN = 0;
     int STATUS_CREATING = 1;
     int STATUS_RUNNING = 2;
-    int STATUS_SHUTTING = 3;
-    int STATUS_DOWN = 4;
+    int STATUS_OFFLINE = 3;
+    int STATUS_SHUTTING = 4;
+    int STATUS_DOWN = 5;
 
     /**
      * 注册应用程序监听器，
      * @param listener
      */
-    public void registerAppListener(AppListener listener);
+    void registerAppListener(AppListener listener);
 
     /**
      * 卸载用用程序监听器
      * @param listener
      */
-    public void unregisterAppListener(AppListener listener);
+    void unregisterAppListener(AppListener listener);
 
     /**
      * 注册应用程序（保存容器具体的应用信息）
      * @param app
      */
-    public void registerApplication(Application app);
+    void registerApplication(Application app);
 
     /**
      * 卸载应用程序
      * @param app
      */
-    public void unregisterApplication(Application app);
+    void unregisterApplication(Application app);
 
     /**
      * 注册插件(like: Zookeeper,netty..etc.)
      * @param plugin
      */
-    public void registerPlugin(Plugin plugin);
+    void registerPlugin(Plugin plugin);
 
     /**
      * 卸载插件
      * @param plugin
      */
-    public void unregisterPlugin(Plugin plugin);
+    void unregisterPlugin(Plugin plugin);
 
     /**
      * 注册Filter(like: monitor)
      */
-    public void registerFilter(Filter filter);
+    void registerFilter(Filter filter);
 
     /**
      * 卸载Filter
      * @param filter
      */
-    public void unregisterFilter(Filter filter);
+    void unregisterFilter(Filter filter);
 
     /**
      * 获取应用程序的相关信息
      * @return
      */
-    public List<Application> getApplications();
+    List<Application> getApplications();
 
-    public List<Plugin> getPlugins();
+    List<Plugin> getPlugins();
 
     Map<ProcessorKey, SoaServiceDefinition<?>> getServiceProcessors();
 
     // fixme @Deprecated
     void registerAppProcessors(Map<ProcessorKey, SoaServiceDefinition<?>> processors);
 
-    public Application getApplication(ProcessorKey key);
+    Application getApplication(ProcessorKey key);
 
     // fixme @Deprecated
-    public void registerAppMap(Map<ProcessorKey,Application> applicationMap);
+    void registerAppMap(Map<ProcessorKey,Application> applicationMap);
 
-    public Executor getDispatcher();
+    Executor getDispatcher();
 
-    public List<Filter> getFilters();
+    List<Filter> getFilters();
 
     void startup();
+
+    /**
+     * 容器临时上线下线
+     */
+    void online();
+    void offline();
 
     /**
      * 0:unknow;

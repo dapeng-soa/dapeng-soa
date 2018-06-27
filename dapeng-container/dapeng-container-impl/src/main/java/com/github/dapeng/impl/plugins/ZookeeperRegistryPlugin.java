@@ -59,29 +59,23 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
 
         registryAgent.setProcessorMap(ContainerFactory.getContainer().getServiceProcessors());
         registryAgent.start();
-
-        container.getApplications().forEach(app -> {
-            List<ServiceInfo> serviceInfos = app.getServiceInfos();
-            serviceInfos.forEach(serviceInfo -> {
-                registerService(serviceInfo.serviceName, serviceInfo.version);
-            });
-        });
     }
 
     @Override
     public void stop() {
         LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::stop");
+        container.unregisterAppListener(this);
         // fixme move to SpringApp
-        container.getApplications().forEach(app -> {
-            app.getServiceInfos()
-                    .forEach(s -> unRegisterService(s.serviceName, s.version));
-        });
+//        container.getApplications().forEach(app -> {
+//            app.getServiceInfos()
+//                    .forEach(s -> unRegisterService(s.serviceName, s.version));
+//        });
         registryAgent.stop();
-        try {
-            Thread.sleep(4000);
-        } catch (InterruptedException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
+//        try {
+//            Thread.sleep(4000);
+//        } catch (InterruptedException e) {
+//            LOGGER.error(e.getMessage(), e);
+//        }
     }
 
     public void registerService(String serviceName, String version) {
