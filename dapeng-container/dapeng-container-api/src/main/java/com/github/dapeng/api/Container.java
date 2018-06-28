@@ -21,7 +21,7 @@ public interface Container {
     int STATUS_UNKNOWN = 0;
     int STATUS_CREATING = 1;
     int STATUS_RUNNING = 2;
-    int STATUS_OFFLINE = 3;
+    int STATUS_PAUSE = 3;
     int STATUS_SHUTTING = 4;
     int STATUS_DOWN = 5;
 
@@ -99,8 +99,8 @@ public interface Container {
     /**
      * 容器临时上线下线
      */
-    void online();
-    void offline();
+    void resume();
+    void pause();
 
     /**
      * 0:unknow;

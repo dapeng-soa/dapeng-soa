@@ -7,12 +7,17 @@ import com.github.dapeng.api.events.AppEvent;
 import com.github.dapeng.api.events.AppEventType;
 import com.github.dapeng.core.Application;
 import com.github.dapeng.core.ProcessorKey;
+import com.github.dapeng.core.RuntimeInstance;
+import com.github.dapeng.core.ServiceInfo;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.Filter;
+import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.filters.FilterLoader;
 import com.github.dapeng.impl.plugins.*;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
+import com.github.dapeng.registry.zookeeper.ServerZkAgent;
+import com.github.dapeng.registry.zookeeper.ServerZkAgentImpl;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
@@ -24,6 +29,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 public class DapengContainer implements Container {
 
@@ -103,8 +109,7 @@ public class DapengContainer implements Container {
 
     @Override
     public List<Plugin> getPlugins() {
-        //TODO: should return the bean copy..not the real one.
-        return this.plugins;
+        return Collections.unmodifiableList(this.plugins);
     }
 
     @Override
@@ -241,16 +246,54 @@ public class DapengContainer implements Container {
     }
 
     @Override
-    public void online() {
-        status = STATUS_RUNNING;
+    public void resume() {
+        if (status == STATUS_PAUSE) {
+            ServerZkAgent serverZkAgent = ServerZkAgentImpl.getInstance();
+            for (Application application : applicationMap.values()) {
+                for (ServiceInfo serviceInfo : application.getServiceInfos()) {
+                    serverZkAgent.resume(serviceInfo.serviceName, serviceInfo.version);
+                }
+            }
+            status = STATUS_RUNNING;
+        }
     }
 
+    /**
+     * 服务集群符合以下条件的实例存在的话,将会执行暂停操作:
+     * 1. 扣除本节点实例
+     * 2. 扣除不兼容的版本
+     */
     @Override
-    public void offline() {
-        //todo 服务端暂无法知道服务的节点个数
-        status = STATUS_OFFLINE;
-
-    }
+    public void pause() {
+        ServerZkAgent serverZkAgent = ServerZkAgentImpl.getInstance();
+        // 是否存在单节点实例
+        boolean singleNodeExists = false;
+        if (!applicationMap.isEmpty()) {
+            for (Application application : applicationMap.values()) {
+                if (!application.getServiceInfos().isEmpty()) {
+                    ServiceInfo serviceInfo = application.getServiceInfos().get(0);
+                    List<RuntimeInstance> runtimeInstances = serverZkAgent.getRuntimeInstances(serviceInfo.serviceName);
+                    if (runtimeInstances.stream().filter(runtimeInstance ->
+                                    (!(runtimeInstance.ip.equals(SoaSystemEnvProperties.SOA_CONTAINER_IP))
+                                            && (runtimeInstance.port != SoaSystemEnvProperties.SOA_CONTAINER_PORT))
+                                            || DapengUtil.checkVersionCompatibility(serviceInfo.version, runtimeInstance.version))
+                            .collect(Collectors.toList()).isEmpty()) {
+                        LOGGER.warn("No more other nodes, should not pause current node:" + serviceInfo.toString());
+                        singleNodeExists = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!singleNodeExists) {
+            status =STATUS_PAUSE;
+            for (Application application : applicationMap.values()) {
+                for (ServiceInfo serviceInfo : application.getServiceInfos()) {
+                    serverZkAgent.pause(serviceInfo.serviceName, serviceInfo.version);
+                }
+            }
+        }
+}
 
     @Override
     public int status() {

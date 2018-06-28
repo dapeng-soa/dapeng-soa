@@ -6,20 +6,17 @@ import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.Plugin;
 import com.github.dapeng.api.events.AppEvent;
-import com.github.dapeng.core.ServiceInfo;
 import com.github.dapeng.impl.container.DapengApplication;
-import com.github.dapeng.registry.RegistryAgent;
+import com.github.dapeng.registry.zookeeper.ServerZkAgent;
 import com.github.dapeng.registry.zookeeper.ServerZkAgentImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 public class ZookeeperRegistryPlugin implements AppListener, Plugin {
     private static final Logger LOGGER = LoggerFactory.getLogger(ZookeeperRegistryPlugin.class);
 
     private final Container container;
-    private final RegistryAgent registryAgent = ServerZkAgentImpl.getInstance();
+    private final ServerZkAgent serverZkAgent = ServerZkAgentImpl.getInstance();
 
     public ZookeeperRegistryPlugin(Container container) {
         this.container = container;
@@ -52,8 +49,8 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
     public void start() {
         LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
 
-        registryAgent.setProcessorMap(ContainerFactory.getContainer().getServiceProcessors());
-        registryAgent.start();
+        serverZkAgent.setProcessorMap(ContainerFactory.getContainer().getServiceProcessors());
+        serverZkAgent.start();
     }
 
     @Override
@@ -65,7 +62,7 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
 //            app.getServiceInfos()
 //                    .forEach(s -> unRegisterService(s.serviceName, s.version));
 //        });
-        registryAgent.stop();
+        serverZkAgent.stop();
 //        try {
 //            Thread.sleep(4000);
 //        } catch (InterruptedException e) {
@@ -75,12 +72,11 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
 
     public void registerService(String serviceName, String version) {
         LOGGER.info(getClass().getSimpleName() + "::appRegistered [serviceName:" + serviceName + ", version:" + version + "]");
-        registryAgent.registerService(serviceName, version);
+        serverZkAgent.registerService(serviceName, version);
     }
 
     public void unRegisterService(String serviceName, String version) {
         LOGGER.info(getClass().getSimpleName() + "::unRegisterService [serviceName:" + serviceName + ", version:" + version + "]");
-        registryAgent.unregisterService(serviceName,version);
+        serverZkAgent.unregisterService(serviceName,version);
     }
-
 }

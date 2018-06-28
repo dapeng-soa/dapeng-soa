@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,6 +21,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static com.github.dapeng.core.SoaCode.*;
+import static com.github.dapeng.core.helper.DapengUtil.checkVersionCompatibility;
 
 /**
  * @author lihuimin
@@ -85,24 +85,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         cleanThread.start();
     }
 
-
-    /**
-     * 版本 兼容(主版本不兼容，副版本向下兼容)
-     *
-     * @param reqVersion
-     * @param targetVersion
-     * @return
-     */
-    private boolean checkVersion(String reqVersion, String targetVersion) {
-        String[] reqArr = reqVersion.split("[.]");
-        String[] tarArr = targetVersion.split("[.]");
-        if (Integer.parseInt(tarArr[0]) != Integer.parseInt(reqArr[0])) {
-            return false;
-        }
-        return ((Integer.parseInt(tarArr[1]) * 10 + Integer.parseInt(tarArr[2]))
-                >= (Integer.parseInt(reqArr[1]) * 10 + Integer.parseInt(reqArr[2])));
-    }
-
     @Override
     public synchronized ClientInfo registerClientInfo(String serviceName, String version) {
         final String key = serviceName + ":" + version;
@@ -117,7 +99,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
             clientInfos.put(key, clientInfoRef);
 
-            ZkServiceInfo zkInfo = new ZkServiceInfo(serviceName, new ArrayList<>());
+            ZkServiceInfo zkInfo = new ZkServiceInfo(serviceName);
             zkAgent.syncService(zkInfo);
 
             if (zkInfo.getStatus() == ZkServiceInfo.Status.ACTIVE) {
@@ -169,7 +151,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             // 1. target service not exists
             logger.error(getClass().getSimpleName() + "::findConnection-0[service: " + service + "], zkInfo not found, now reSyncService");
 
-            zkInfo = new ZkServiceInfo(service, new ArrayList<>());
+            zkInfo = new ZkServiceInfo(service);
             zkAgent.syncService(zkInfo);
             if (zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
                 logger.error(getClass().getSimpleName() + "::findConnection-1[service: " + service + "], zkInfo not found");
@@ -180,7 +162,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
 
         List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
-                .filter(rt -> checkVersion(version, rt.version))
+                .filter(rt -> checkVersionCompatibility(version, rt.version))
                 .collect(Collectors.toList());
         if (compatibles.isEmpty()) {
             logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + "], not found compatible  instances by version");

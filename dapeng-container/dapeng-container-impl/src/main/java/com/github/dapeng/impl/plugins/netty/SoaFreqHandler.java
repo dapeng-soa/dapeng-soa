@@ -5,7 +5,7 @@ import com.github.dapeng.core.SoaCode;
 import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.TransactionContext;
 import com.github.dapeng.impl.filters.freq.ShmManager;
-import com.github.dapeng.registry.RegistryAgent;
+import com.github.dapeng.registry.zookeeper.ServerZkAgent;
 import com.github.dapeng.registry.zookeeper.ServerZkAgentImpl;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -30,7 +30,7 @@ public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         final TransactionContext context = TransactionContext.Factory.currentInstance();
-        RegistryAgent serverZkAgent = ServerZkAgentImpl.getInstance();
+        ServerZkAgent serverZkAgent = ServerZkAgentImpl.getInstance();
         List<FreqControlRule> freqRules = serverZkAgent.getFreqControlRule(false, context.getHeader().getServiceName());
         boolean freqResult = processFreqControl(freqRules, manager, context);
 

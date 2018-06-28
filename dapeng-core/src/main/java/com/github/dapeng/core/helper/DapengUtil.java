@@ -43,7 +43,24 @@ public class DapengUtil {
         return sb.toString();
     }
 
-    static void append(StringBuilder buffer, byte b) {
+    /**
+     * 版本 兼容(主版本不兼容，副版本向下兼容)
+     *
+     * @param reqVersion
+     * @param targetVersion
+     * @return
+     */
+    public static boolean checkVersionCompatibility(String reqVersion, String targetVersion) {
+        String[] reqArr = reqVersion.split("[.]");
+        String[] tarArr = targetVersion.split("[.]");
+        if (Integer.parseInt(tarArr[0]) != Integer.parseInt(reqArr[0])) {
+            return false;
+        }
+        return ((Integer.parseInt(tarArr[1]) * 10 + Integer.parseInt(tarArr[2]))
+                >= (Integer.parseInt(reqArr[1]) * 10 + Integer.parseInt(reqArr[2])));
+    }
+
+    private static void append(StringBuilder buffer, byte b) {
         int h = (b & 0xFF) >> 4;
         int l = b & 0x0F;
 

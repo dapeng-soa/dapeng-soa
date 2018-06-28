@@ -23,7 +23,7 @@ import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_GC_RADAR_
  */
 public class GcMonitorPlugin implements Plugin {
     private static final Logger LOGGER = LoggerFactory.getLogger(GcMonitorPlugin.class);
-    private final Container container;
+    private Container container;
     private final List<GarbageCollectorMXBean> gcbeans;
     private final int memWaterMark = SOA_GC_RADAR_ALERT_LEVEL;
 
@@ -79,15 +79,11 @@ public class GcMonitorPlugin implements Plugin {
         long memUsed = membefore.getUsed();
         long percent = (memUsed * 100L) / memCommitted;
         if (percent >= memWaterMark) {
-            if (containerStatus() == Container.STATUS_RUNNING) {
-
+            if (container.status() == Container.STATUS_RUNNING) {
+                container.pause();
             }
-        } else if (containerStatus() == Container.STATUS_OFFLINE) {
-            //Do something
+        } else if (container.status() == Container.STATUS_PAUSE) {
+            container.resume();
         }
     };
-
-    private int containerStatus() {
-        return container.status();
-    }
 }

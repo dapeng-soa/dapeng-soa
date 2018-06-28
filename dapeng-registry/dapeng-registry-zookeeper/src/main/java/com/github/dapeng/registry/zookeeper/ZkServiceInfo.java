@@ -3,9 +3,7 @@ package com.github.dapeng.registry.zookeeper;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author lihuimin
@@ -25,20 +23,14 @@ public class ZkServiceInfo {
     /**
      * instances list
      */
-    private List<RuntimeInstance> runtimeInstances;
+    private List<RuntimeInstance> runtimeInstances = new ArrayList<>(16);
 
     public ZkServiceInfo(String service) {
         this.service = service;
     }
 
-    public ZkServiceInfo(String service, List<RuntimeInstance> runtimeInstances) {
-
-        this.service = service;
-        this.runtimeInstances = runtimeInstances;
-    }
-
     public List<RuntimeInstance> getRuntimeInstances() {
-        return runtimeInstances;
+        return Collections.unmodifiableList(runtimeInstances);
     }
 
     public void setRuntimeInstances(List<RuntimeInstance> runtimeInstances) {

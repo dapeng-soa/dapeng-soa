@@ -3,8 +3,8 @@ package com.github.dapeng.registry.zookeeper;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.FreqControlRule;
+import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.core.helper.MasterHelper;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
@@ -31,7 +31,7 @@ public class ServerZk extends CommonZk {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerZk.class);
 
-    private RegistryAgent registryAgent;
+    private ServerZkAgent registryAgent;
 
     /**
      * 路由配置信息
@@ -41,9 +41,9 @@ public class ServerZk extends CommonZk {
     /**
      * zk 配置 缓存 ，根据 serivceName + versionName 作为 key
      */
-    public final ConcurrentMap<String, ZkServiceInfo> zkConfigMap = new ConcurrentHashMap();
+    private final ConcurrentMap<String, ZkServiceInfo> zkConfigMap = new ConcurrentHashMap();
 
-    public ServerZk(RegistryAgent registryAgent) {
+    public ServerZk(ServerZkAgent registryAgent) {
         this.registryAgent = registryAgent;
     }
 
@@ -51,7 +51,8 @@ public class ServerZk extends CommonZk {
      * zk 客户端实例化
      * 使用 CountDownLatch 门闩 锁，保证zk连接成功后才返回
      */
-    public void connect() {
+    @Override
+    protected void connect() {
         try {
             CountDownLatch semaphore = new CountDownLatch(1);
 
@@ -140,9 +141,6 @@ public class ServerZk extends CommonZk {
         }
         if (ephemeral) {
             createEphemeral(path + ":", context);
-
-            //添加 watch ，监听子节点变化
-//            watchInstanceChange(context);
         } else {
             createPersistent(path, "");
 
@@ -160,6 +158,7 @@ public class ServerZk extends CommonZk {
             }
             return false;
         } catch (Throwable t) {
+            LOGGER.error(t.getMessage(), t);
         }
         return false;
     }
@@ -175,9 +174,10 @@ public class ServerZk extends CommonZk {
                 //Children发生变化，则重新获取最新的services列表
                 if (event.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
                     LOGGER.info("容器状态:{}, {}子节点发生变化，重新获取子节点...", ContainerFactory.getContainer().status(), event.getPath());
-                    if (ContainerFactory.getContainer().status() == Container.STATUS_SHUTTING
-                            || ContainerFactory.getContainer().status() == Container.STATUS_DOWN) {
-                        LOGGER.warn("Container is shutting down");
+                    int containerStatus = ContainerFactory.getContainer().status();
+                    if (containerStatus == Container.STATUS_SHUTTING
+                            || containerStatus == Container.STATUS_DOWN) {
+                        LOGGER.warn("Container is not running:" + containerStatus);
                         return;
                     }
                     watchInstanceChange(context);
@@ -308,7 +308,7 @@ public class ServerZk extends CommonZk {
     private static Map<String, Boolean> isMaster = MasterHelper.isMaster;
 
     /**
-     * @param children     当前方法下的实例列表，        eg 127.0.0.1:9081:1.0.0,192.168.1.12:9081:1.0.0
+     * @param children     当前方法下的实例列表，        eg 127.0.0.1:9081:1:1.0.0,192.168.1.12:9081:1:1.0.0
      * @param serviceKey   当前服务信息                eg com.github.user.UserService:1.0.0
      * @param instanceInfo 当前服务节点实例信息         eg  192.168.10.17:9081:1.0.0
      */
@@ -344,7 +344,7 @@ public class ServerZk extends CommonZk {
                 LOGGER.info("({})竞选master失败，当前节点为({})", serviceKey);
             }
         } catch (NumberFormatException e) {
-            LOGGER.error("临时节点格式不正确,请使用新版，正确格式为 etc. 192.168.100.1:9081:1.0.0:0000000022");
+            LOGGER.error("临时节点格式不正确,请使用新版，正确格式为 etc. 192.168.100.1:1:9081:1.0.0:1:0000000022");
         }
     }
 
@@ -368,6 +368,18 @@ public class ServerZk extends CommonZk {
         syncZkConfigInfo(info);
         zkConfigMap.put(serviceName, info);
         return info;
+    }
+
+    protected List<RuntimeInstance> getRuntimeInstances(String serviceName) {
+        ZkServiceInfo info = zkConfigMap.get(serviceName);
+        if (info != null) {
+            return Collections.unmodifiableList(info.getRuntimeInstances());
+        }
+
+        info = new ZkServiceInfo(serviceName);
+        syncZkRuntimeInfo(info);
+        zkConfigMap.put(serviceName, info);
+        return Collections.unmodifiableList(info.getRuntimeInstances());
     }
 
     /**

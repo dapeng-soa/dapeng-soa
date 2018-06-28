@@ -1,7 +1,8 @@
-package com.github.dapeng.registry;
+package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.FreqControlRule;
 import com.github.dapeng.core.ProcessorKey;
+import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
 
@@ -14,7 +15,7 @@ import java.util.Map;
  * @author craneding
  * @date 16/3/1
  */
-public interface RegistryAgent {
+public interface ServerZkAgent {
 
     void start();
 
@@ -23,17 +24,17 @@ public interface RegistryAgent {
     /**
      * 注册服务
      *
-     * @param serverName  服务名
+     * @param serviceName  服务名
      * @param versionName 版本号
      */
-    void registerService(String serverName, String versionName);
+    void registerService(String serviceName, String versionName);
 
     /**
      * 卸载服务
-     * @param serverName
+     * @param serviceName
      * @param versionName
      */
-    void unregisterService(String serverName, String versionName);
+    void unregisterService(String serviceName, String versionName);
 
     /**
      * 注册服务集合
@@ -52,6 +53,12 @@ public interface RegistryAgent {
      */
     Map<ProcessorKey, SoaServiceDefinition<?>> getProcessorMap();
 
+    /**
+     * 获取某服务的runtime节点信息
+     * @param serviceName
+     * @return
+     */
+    List<RuntimeInstance> getRuntimeInstances(String serviceName);
 
     /**
      * 获取配置
@@ -72,4 +79,10 @@ public interface RegistryAgent {
      * @see com.github.dapeng.impl.plugins.netty
      */
     List<FreqControlRule> getFreqControlRule(boolean usingFallback, String serviceKey);
+
+    /**
+     * 服务节点对外暂停/恢复提供服务
+     */
+    void pause(String serviceName, String versionName);
+    void resume(String serviceName, String versionName);
 }
