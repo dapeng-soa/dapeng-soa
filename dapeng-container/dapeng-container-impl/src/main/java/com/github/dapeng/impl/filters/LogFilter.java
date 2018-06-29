@@ -10,10 +10,7 @@ import com.github.dapeng.core.filter.FilterContext;
 import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.github.dapeng.impl.plugins.netty.NettyChannelKeys;
 import com.github.dapeng.org.apache.thrift.TException;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.Attribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -77,7 +74,6 @@ public class LogFilter implements Filter {
     @Override
     public void onExit(FilterContext filterContext, FilterChain prev) {
         TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
-        ChannelHandlerContext channelHandlerContext = (ChannelHandlerContext) filterContext.getAttribute("channelHandlerContext");
         Application application = (Application) filterContext.getAttribute("application");
 
         boolean isAsync = (Boolean) filterContext.getAttribute("isAsync");
@@ -97,23 +93,7 @@ public class LogFilter implements Filter {
 
             SoaHeader soaHeader = transactionContext.getHeader();
 
-            /**
-             * use AttributeMap to share common data on different  ChannelHandlers
-             */
-            Attribute<Map<Integer, Long>> requestTimestampAttr = channelHandlerContext.channel().attr(NettyChannelKeys.REQUEST_TIMESTAMP);
-            Map<Integer, Long> requestTimestampMap = requestTimestampAttr.get();
-
-            Long requestTimestamp = 0L;
-            if (requestTimestampMap != null) {
-                //each per request take the time then remove it
-                requestTimestamp = requestTimestampMap.get(transactionContext.seqId());
-
-                if (requestTimestamp == null) {
-                    requestTimestamp = 0L;
-                }
-            } else {
-                LOGGER.warn(getClass().getSimpleName() + "::encode no requestTimestampMap found!");
-            }
+            Long requestTimestamp = (Long)transactionContext.getAttribute("dapeng_request_timestamp");
 
             Long cost = System.currentTimeMillis() - requestTimestamp;
             String infoLog = "response[seqId:" + transactionContext.seqId() + ", respCode:" + soaHeader.getRespCode().get() + "]:"
