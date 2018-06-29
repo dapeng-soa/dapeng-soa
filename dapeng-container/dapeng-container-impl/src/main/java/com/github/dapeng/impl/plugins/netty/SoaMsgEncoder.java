@@ -63,22 +63,17 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
 
                     TSoaTransport transport = new TSoaTransport(out);
                     SoaMessageProcessor messageProcessor = new SoaMessageProcessor(transport);
-                    Attribute<Map<Integer, Long>> requestTimestampAttr = channelHandlerContext.channel().attr(NettyChannelKeys.REQUEST_TIMESTAMP);
-                    Map<Integer, Long> requestTimestampMap = requestTimestampAttr.get();
 
-                    Long requestTimestamp = 0L;
-                    if (requestTimestampMap != null) {
-                        //each per request take the time then remove it
-                        requestTimestamp = requestTimestampMap.remove(transactionContext.seqId());
+                    //todo remove the try..catch
+                    try {
+                        Long requestTimestamp = (Long) transactionContext.getAttribute("dapeng_request_timestamp");
 
-                        if (requestTimestamp == null) {
-                            requestTimestamp = 0L;
-                        }
-                    } else {
-                        LOGGER.warn(getClass().getSimpleName() + "::encode no requestTimestampMap found!");
+                        Long cost = System.currentTimeMillis() - requestTimestamp;
+                        soaHeader.setCalleeTime2(cost.intValue());
+                    } catch (Exception e) {
+                        LOGGER.error(e.getMessage(), e);
+                        soaHeader.setCalleeTime2(0);
                     }
-                    Long cost = System.currentTimeMillis() - requestTimestamp;
-                    soaHeader.setCalleeTime2(cost.intValue());
                     soaHeader.setCalleeIp(Optional.ofNullable(SoaSystemEnvProperties.SOA_CONTAINER_IP));
                     soaHeader.setCalleePort(Optional.ofNullable(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
                     Joiner joiner = Joiner.on(":");
@@ -96,8 +91,10 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                                 + "service[" + soaHeader.getServiceName()
                                 + "]:version[" + soaHeader.getVersionName()
                                 + "]:method[" + soaHeader.getMethodName() + "]"
-                                + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                                + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
+                                + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : ",")
+                                + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : ",")
+                                + " calleeTime1:" + soaHeader.getCalleeTime1().orElse(-1) + ","
+                                + " calleeTime2:" + soaHeader.getCalleeTime2().orElse(-1);
                         LOGGER.debug(getClass().getSimpleName() + "::encode:" + debugLog + ", payload[seqId:" + transactionContext.seqId() + "]:\n" + result);
                         LOGGER.debug(getClass().getSimpleName() + "::encode, payloadAsByteBuf:\n" + DumpUtil.dumpToStr(out));
                     }
