@@ -190,6 +190,7 @@ public class DapengContainer implements Container {
         Plugin taskSchedulePlugin = new TaskSchedulePlugin(this);
         Plugin nettyPlugin = new NettyPlugin(this);
         Plugin mbeanAgentPlugin = new MbeanAgentPlugin(this);
+        Plugin gcMonitorPlugin = new GcMonitorPlugin(this);
         //add messagePlugin
 //        Plugin messagePlugin = new KafkaMessagePlugin();
         // TODO
@@ -202,6 +203,7 @@ public class DapengContainer implements Container {
         registerPlugin(springAppLoader);
         registerPlugin(taskSchedulePlugin);
         registerPlugin(mbeanAgentPlugin);
+        registerPlugin(gcMonitorPlugin);
 
         //add messagePlugin
 //        registerPlugin(messagePlugin);
