@@ -33,7 +33,6 @@ public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
         RegistryAgent serverZkAgent = ServerZkAgentImpl.getInstance();
         List<FreqControlRule> freqRules = serverZkAgent.getFreqControlRule(false, context.getHeader().getServiceName());
         boolean freqResult = processFreqControl(freqRules, manager, context);
-
         if (freqResult) {
             ctx.fireChannelRead(msg);
         } else {

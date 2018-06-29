@@ -31,7 +31,7 @@ public class SubPool {
         try {
             connectionLock.lock();
             if (soaConnection == null) {
-                soaConnection = new SoaConnectionImpl(ip, port, this);
+                soaConnection = new SoaConnectionImpl(ip, port);
             }
         } finally {
             connectionLock.unlock();

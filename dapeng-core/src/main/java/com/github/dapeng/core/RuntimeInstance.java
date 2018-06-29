@@ -1,5 +1,7 @@
 package com.github.dapeng.core;
 
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -14,6 +16,7 @@ public class RuntimeInstance {
     public final String version;
     public final String ip;
     public final int port;
+    public int weight;
 
     /**
      * 该服务实例在某客户端的调用计数
@@ -25,6 +28,7 @@ public class RuntimeInstance {
         this.version = version;
         this.ip = ip;
         this.port = port;
+        this.weight = SoaSystemEnvProperties.SOA_INSTANCE_WEIGHT;
     }
 
     public AtomicInteger getActiveCount() {
