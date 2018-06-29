@@ -129,12 +129,12 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
             if (application == null) {
-                throw new SoaException(SoaCode.NotMatchedService);
+                throw new SoaException(SoaCode.NoMatchedService);
             }
             SoaFunctionDefinition<I, REQ, RESP> soaFunction = (SoaFunctionDefinition<I, REQ, RESP>) serviceDef.functions.get(soaHeader.getMethodName());
 
             if (soaFunction == null) {
-                throw new SoaException(SoaCode.NotMatchedMethod);
+                throw new SoaException(SoaCode.NoMatchedMethod);
             }
 
             HeadFilter headFilter = new HeadFilter();

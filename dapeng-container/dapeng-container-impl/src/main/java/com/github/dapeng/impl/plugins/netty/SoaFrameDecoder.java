@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+import static com.github.dapeng.core.SoaCode.ReqBufferOverFlow;
 import static com.github.dapeng.core.SoaProtocolConstants.ETX;
 import static com.github.dapeng.core.SoaProtocolConstants.STX;
 
@@ -57,7 +58,7 @@ public class SoaFrameDecoder extends ByteToMessageDecoder {
         }
 
         if (length > SoaSystemEnvProperties.SOA_MAX_READ_BUFFER_SIZE)
-            throw new SoaException("error", "Exceeds the maximum length:(" + length + " > " + SoaSystemEnvProperties.SOA_MAX_READ_BUFFER_SIZE + ")");
+            throw new SoaException(ReqBufferOverFlow, "Exceeds the maximum length:(" + length + " > " + SoaSystemEnvProperties.SOA_MAX_READ_BUFFER_SIZE + ")");
 
         // waiting for complete
         if (in.readableBytes() < length) {
