@@ -12,12 +12,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
-import io.netty.util.Attribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import java.util.Map;
 import java.util.Optional;
 
 import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
@@ -64,7 +62,8 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
 
                     TSoaTransport transport = new TSoaTransport(out);
                     SoaMessageProcessor messageProcessor = new SoaMessageProcessor(transport);
-                    Attribute<Map<Integer, Long>> requestTimestampAttr = channelHandlerContext.channel().attr(NettyChannelKeys.REQUEST_TIMESTAMP);
+                    Long requestTimestamp = 0L;
+                    /*Attribute<Map<Integer, Long>> requestTimestampAttr = channelHandlerContext.channel().attr(NettyChannelKeys.REQUEST_TIMESTAMP);
                     Map<Integer, Long> requestTimestampMap = requestTimestampAttr.get();
 
                     Long requestTimestamp = 0L;
@@ -77,7 +76,8 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                         }
                     } else {
                         LOGGER.warn(getClass().getSimpleName() + "::encode no requestTimestampMap found!");
-                    }
+                    }*/
+                    requestTimestamp=Long.parseLong(transactionContext.getAttribute(transactionContext.seqId()+"").toString());
                     Long cost = System.currentTimeMillis() - requestTimestamp;
                     soaHeader.setCalleeTime2(cost.intValue());
                     soaHeader.setCalleeIp(Optional.ofNullable(IPUtils.transferIp(SoaSystemEnvProperties.SOA_CONTAINER_IP)));

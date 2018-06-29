@@ -16,14 +16,11 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
-import io.netty.util.Attribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -62,16 +59,16 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             /**
              * use AttributeMap to share common data on different  ChannelHandlers
              */
-            Attribute<Map<Integer, Long>> requestTimestampAttr = ctx.channel().attr(NettyChannelKeys.REQUEST_TIMESTAMP);
+            /*Attribute<Map<Integer, Long>> requestTimestampAttr = ctx.channel().attr(NettyChannelKeys.REQUEST_TIMESTAMP);
 
             Map<Integer, Long> requestTimestampMap = requestTimestampAttr.get();
             if (requestTimestampMap == null) {
-                requestTimestampMap = new HashMap<>(64);
+                requestTimestampMap = new ConcurrentHashMap<>(64);
             }
             requestTimestampMap.put(transactionContext.seqId(), System.currentTimeMillis());
 
-            requestTimestampAttr.set(requestTimestampMap);
-
+            requestTimestampAttr.set(requestTimestampMap);*/
+            transactionContext.setAttribute(transactionContext.seqId()+"",System.currentTimeMillis());
             out.add(request);
         } catch (Throwable e) {
 
