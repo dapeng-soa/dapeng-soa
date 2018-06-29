@@ -16,14 +16,11 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
-import io.netty.util.Attribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -51,7 +48,6 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             }
 
             Object request = parseSoaMsg(msg);
-
             final TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
 
             String methodName = transactionContext.getHeader().getMethodName();
@@ -61,18 +57,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
                 transactionContext.setAttribute("container-threadPool-info", DumpUtil.dumpThreadPool((ThreadPoolExecutor) container.getDispatcher()));
             }
 
-            /**
-             * use AttributeMap to share common data on different  ChannelHandlers
-             */
-            Attribute<Map<Integer, Long>> requestTimestampAttr = ctx.channel().attr(NettyChannelKeys.REQUEST_TIMESTAMP);
-
-            Map<Integer, Long> requestTimestampMap = requestTimestampAttr.get();
-            if (requestTimestampMap == null) {
-                requestTimestampMap = new HashMap<>(64);
-            }
-            requestTimestampMap.put(transactionContext.seqId(), System.currentTimeMillis());
-
-            requestTimestampAttr.set(requestTimestampMap);
+            transactionContext.setAttribute("dapeng_request_timestamp", System.currentTimeMillis());
 
             out.add(request);
         } catch (Throwable e) {
