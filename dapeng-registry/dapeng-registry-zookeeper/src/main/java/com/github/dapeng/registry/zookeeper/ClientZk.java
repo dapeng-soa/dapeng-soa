@@ -1,6 +1,8 @@
 package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.RuntimeInstance;
+import com.github.dapeng.core.Weight;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.version.Version;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.ServiceInfo;
@@ -185,6 +187,7 @@ public class ClientZk extends CommonZk {
                 try {
                     childrens = zk.getChildren(servicePath, watchedEvent -> {
                         if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
+                            SoaSystemEnvProperties.SOA_CHANGE_WEIGHE = true;
                             if (zkInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
                                 LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:{}子节点发生变化，重新获取信息", watchedEvent.getPath());
                                 syncZkRuntimeInfo(zkInfo);

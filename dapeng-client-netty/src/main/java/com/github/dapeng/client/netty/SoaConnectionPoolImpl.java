@@ -7,6 +7,8 @@ import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.zookeeper.*;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
+import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
+import org.apache.zookeeper.server.ZKDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -161,6 +163,21 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         return connection.sendAsync(service, version, method, request, requestSerializer, responseSerializer, timeout);
     }
 
+    @Override
+    public RuntimeInstance getRuntimeInstance(String serviceName, String serviceIp, int servicePort) {
+        ZkServiceInfo zkInfo = zkInfos.get(serviceName);
+        if (zkInfo == null) {
+            return null;
+        }
+        List<RuntimeInstance> runtimeInstances = zkInfo.getRuntimeInstances();
+        for (RuntimeInstance runtimeInstance : runtimeInstances){
+            if (runtimeInstance.ip.equals(serviceIp)&&runtimeInstance.port == servicePort){
+                return runtimeInstance;
+            }
+        }
+        return null;
+    }
+
     private SoaConnection findConnection(String service,
                                          String version,
                                          String method) throws SoaException {
@@ -177,16 +194,14 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 logger.error(getClass().getSimpleName() + "::findConnection-1[service: " + service + "], zkInfo not found");
                 return null;
             }
-
             zkInfos.put(service, zkInfo);
         }
 
-        List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
+            List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
                 .filter(rt -> checkVersion(version, rt.version))
                 .collect(Collectors.toList());
         // router
         List<RuntimeInstance> routedInstances = router(service, method, version, compatibles);
-
         if (routedInstances == null || routedInstances.isEmpty()) {
             logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + "], not found available instances by routing rules");
             throw new SoaException(NoRouting, "服务 [ " + service + " ] 无可用实例:路由规则没有解析到可运行的实例");
@@ -198,7 +213,16 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             throw new SoaException(UnKnown, "服务 [ " + service + " ] 无可用实例:负载均衡没有找到合适的运行实例");
         }
 
-        inst.getActiveCount().incrementAndGet();
+
+
+        //在途请求数+1
+        inst.increaseActiveCount();
+
+        for (RuntimeInstance runtimeInstance : zkInfo.getRuntimeInstances()){
+            System.out.println(runtimeInstance);
+            System.out.println(runtimeInstance.weight);
+        }
+
 
         IpPort ipPort = new IpPort(inst.ip, inst.port);
         SubPool subPool = subPools.get(ipPort);
@@ -289,6 +313,12 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         if (logger.isDebugEnabled()) {
             logger.debug("request loadBalance strategy is {}", balance);
+        }
+
+        for (RuntimeInstance runtimeInstance : zkServiceInfo.getRuntimeInstances()){
+            System.out.println("*--*-*-*-*-");
+            System.out.println(runtimeInstance);
+            System.out.println(runtimeInstance.weight);
         }
 
         RuntimeInstance instance = null;

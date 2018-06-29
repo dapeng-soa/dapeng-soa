@@ -8,6 +8,8 @@ import org.apache.zookeeper.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.CountDownLatch;
+
 /**
  * 描述:
  *
@@ -32,10 +34,11 @@ public class CommonZk {
 
 
     protected void syncZkConfigInfo(ZkServiceInfo zkInfo) {
+        zkInfo.syncConfigFlag = new CountDownLatch(1);
         //1.获取 globalConfig  异步模式
         zk.getData(CONFIG_PATH, watchedEvent -> {
             if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
-
+                SoaSystemEnvProperties.SOA_CHANGE_WEIGHE = true;
                 if (zkInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
                     logger.info(getClass().getSimpleName() + "::syncZkConfigInfo[" + zkInfo.service + "]: {} 节点内容发生变化，重新获取配置信息", watchedEvent.getPath());
                     syncZkConfigInfo(zkInfo);
@@ -52,6 +55,7 @@ public class CommonZk {
         // zk config 有具体的service节点存在时，这一步在异步callback中进行判断
         zk.getData(configPath, watchedEvent -> {
             if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                SoaSystemEnvProperties.SOA_CHANGE_WEIGHE = true;
                 logger.info(watchedEvent.getPath() + "'s data changed, reset zkConfigMap in memory");
                 syncZkConfigInfo(zkInfo);
             }
