@@ -2,12 +2,11 @@ package com.github.dapeng.impl.filters.slow.service;
 
 import com.github.dapeng.core.SoaHeader;
 import com.github.dapeng.core.TransactionContext;
-import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.filter.FilterContext;
 
 import java.util.Optional;
 
-public class Task {
+public class SlowServiceCheckTask {
 
     private String serviceName;
 
@@ -39,7 +38,7 @@ public class Task {
 
     private Thread currentThread;
 
-    public Task(FilterContext ctx) {
+    public SlowServiceCheckTask(FilterContext ctx) {
         TransactionContext context = (TransactionContext) ctx.getAttribute("context");
         this.startTime = System.currentTimeMillis();
         this.seqId = context.seqId();
@@ -59,16 +58,13 @@ public class Task {
         this.callerTid = soaHeader.getCallerTid();
         this.callerMid = soaHeader.getCallerMid();
 
-        //设置request
-        Object req = ctx.getAttribute("request");
-        this.request = req;
     }
 
     public String serviceName() {
         return serviceName;
     }
 
-    public Task serviceName(String serviceName) {
+    public SlowServiceCheckTask serviceName(String serviceName) {
         this.serviceName = serviceName;
         return this;
     }
@@ -78,7 +74,7 @@ public class Task {
         return versionName;
     }
 
-    public Task versionName(String versionName) {
+    public SlowServiceCheckTask versionName(String versionName) {
         this.versionName = versionName;
         return this;
     }
@@ -87,7 +83,7 @@ public class Task {
         return methodName;
     }
 
-    public Task methodName(String methodName) {
+    public SlowServiceCheckTask methodName(String methodName) {
         this.methodName = methodName;
         return this;
     }
@@ -97,7 +93,7 @@ public class Task {
         return startTime;
     }
 
-    public Task startTime(long startTime) {
+    public SlowServiceCheckTask startTime(long startTime) {
         this.startTime = startTime;
         return this;
     }
@@ -106,7 +102,7 @@ public class Task {
         return userId;
     }
 
-    public Task userId(Optional<Long> userId) {
+    public SlowServiceCheckTask userId(Optional<Long> userId) {
         this.userId = userId;
         return this;
     }
@@ -115,7 +111,7 @@ public class Task {
         return userIp;
     }
 
-    public Task userIp(Optional<Integer> userIp) {
+    public SlowServiceCheckTask userIp(Optional<Integer> userIp) {
         this.userIp = userIp;
         return this;
     }
@@ -124,7 +120,7 @@ public class Task {
         return operatorId;
     }
 
-    public Task operatorId(Optional<Long> operatorId) {
+    public SlowServiceCheckTask operatorId(Optional<Long> operatorId) {
         this.operatorId = operatorId;
         return this;
     }
@@ -133,7 +129,7 @@ public class Task {
         return timeout;
     }
 
-    public Task timeout(Optional<Integer> timeout) {
+    public SlowServiceCheckTask timeout(Optional<Integer> timeout) {
         this.timeout = timeout;
         return this;
     }
@@ -142,7 +138,7 @@ public class Task {
         return calleeIp;
     }
 
-    public Task calleeIp(Optional<Integer> calleeIp) {
+    public SlowServiceCheckTask calleeIp(Optional<Integer> calleeIp) {
         this.calleeIp = calleeIp;
         return this;
     }
@@ -151,7 +147,7 @@ public class Task {
         return calleePort;
     }
 
-    public Task calleePort(Optional<Integer> calleePort) {
+    public SlowServiceCheckTask calleePort(Optional<Integer> calleePort) {
         this.calleePort = calleePort;
         return this;
     }
@@ -160,7 +156,7 @@ public class Task {
         return this.callerTid;
     }
 
-    public Task callerTid(Optional<Long> callerTid) {
+    public SlowServiceCheckTask callerTid(Optional<Long> callerTid) {
         this.callerTid = callerTid;
         return this;
     }
@@ -169,7 +165,7 @@ public class Task {
         return callerMid;
     }
 
-    public Task callerMid(Optional<String> callerMid) {
+    public SlowServiceCheckTask callerMid(Optional<String> callerMid) {
         this.callerMid = callerMid;
         return this;
     }
@@ -178,7 +174,7 @@ public class Task {
         return seqId;
     }
 
-    public Task seqId(int seqId) {
+    public SlowServiceCheckTask seqId(int seqId) {
         this.seqId = seqId;
         return this;
     }
@@ -187,7 +183,7 @@ public class Task {
         return currentThread;
     }
 
-    public Task currentThread(Thread currentThread) {
+    public SlowServiceCheckTask currentThread(Thread currentThread) {
         this.currentThread = currentThread;
         return this;
     }
@@ -219,7 +215,7 @@ public class Task {
                 .append(" callerTid: ").append(callerTid).append(",")
                 .append(" callerMid: ").append(callerMid).append("]");
 
-        sb.append(" \n request: ").append(request.toString());
+        sb.append(" \n");
         return sb.toString();
     }
 }
