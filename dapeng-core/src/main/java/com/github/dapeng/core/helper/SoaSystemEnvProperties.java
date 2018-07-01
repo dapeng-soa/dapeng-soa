@@ -107,7 +107,7 @@ public class SoaSystemEnvProperties {
     /**
      * 默认服务处理最大时间为10s, 超过即认为是慢服务
      */
-    public static final long SOA_MAX_PROCESS_TIME = Long.valueOf(get(KEY_SOA_MAX_PROCESS_TIME, "10000"));
+    public static final long SOA_MAX_PROCESS_TIME = Long.valueOf(get(KEY_SOA_MAX_PROCESS_TIME, "1000"));
     public static final boolean SOA_SLOW_SERVICE_CHECK_ENABLE = Boolean.valueOf(get(KEY_SOA_SLOW_SERVICE_CHECK_ENABLE, "false"));
 
 
