@@ -83,6 +83,7 @@ public class WatcherUtils {
      * loadbalance/LeastActive,createSupplier:Random,modifySupplier:RoundRobin
      * weight/192.168.4.107/9095/700
      * weight/192.168.4.107/500
+     *
      * @param data
      * @param zkInfo
      */
@@ -93,7 +94,7 @@ public class WatcherUtils {
 
             String[] properties = configData.split("\n|\r|\r\n");
 
-            if (!zkInfo.weightServiceConfigs.isEmpty()){
+            if (!zkInfo.weightServiceConfigs.isEmpty()) {
                 zkInfo.weightServiceConfigs.clear();
             }
             for (String property : properties) {
@@ -145,7 +146,7 @@ public class WatcherUtils {
                     }
                 }
             }
-            syncZkRuntimeInstanceWeight(zkInfo,isGlobal);
+            syncZkRuntimeInstanceWeight(zkInfo, isGlobal);
             LOGGER.info("get config from {} with data [{}]", zkInfo.service, configData);
         } catch (UnsupportedEncodingException e) {
             LOGGER.error(e.getMessage(), e);
@@ -155,9 +156,10 @@ public class WatcherUtils {
 
     /**
      * 将zk config 中的权重设置，同步到运行实例中
+     *
      * @param zkInfo
      */
-    private static void syncZkRuntimeInstanceWeight(ZkServiceInfo zkInfo,boolean isGlobal){
+    private static void syncZkRuntimeInstanceWeight(ZkServiceInfo zkInfo, boolean isGlobal) {
 
         if (zkInfo != null) {
             List<RuntimeInstance> runtimeInstances = zkInfo.getRuntimeInstances();
@@ -184,8 +186,8 @@ public class WatcherUtils {
     }
 
     /**
-     *
      * parse zk weight config
+     *
      * @param weightData
      * @return
      */
@@ -193,11 +195,11 @@ public class WatcherUtils {
         Weight weight = new Weight();
         String[] strArr = weightData.split("[/]");
         if (strArr.length >= 2) {
-            if (strArr.length == 2){
+            if (strArr.length == 2) {
                 weight.ip = "";
                 weight.port = -1;
                 weight.weight = Integer.parseInt(strArr[1]);
-            }else if (strArr.length == 3) {
+            } else if (strArr.length == 3) {
                 weight.ip = strArr[1];
                 weight.port = -1;
                 weight.weight = Integer.parseInt(strArr[2]);
@@ -206,7 +208,7 @@ public class WatcherUtils {
                 weight.port = Integer.parseInt(strArr[2]);
                 weight.weight = Integer.parseInt(strArr[3]);
             }
-        }else {
+        } else {
             weight = null;
         }
         return weight;
