@@ -82,8 +82,14 @@ public class GcDemo {
                             long memMax = memdetail.getMax();
                             long memUsed = memdetail.getUsed();
                             MemoryUsage before = membefore.get(name);
-                            long beforepercent = ((before.getUsed() * 1000L) / before.getCommitted());
-                            long percent = ((memUsed * 1000L) / before.getCommitted()); //>100% when it gets expanded
+                            long beforepercent = 1;
+                            long percent =1;
+                            if (before.getCommitted() == 0) {
+                                System.out.println(".....zero");
+                            }else {
+                                beforepercent = ((before.getUsed() * 1000L) / before.getCommitted());
+                                percent = ((memUsed * 1000L) / before.getCommitted()); //>100% when it gets expanded
+                            }
                             System.out.println(name + ":" + before.getUsed() + "->" + memUsed + (memCommitted == memMax ? "(fully expanded)" : "(still expandable)") + "used: " + (beforepercent / 10) + "." + (beforepercent % 10) + "%->" + (percent / 10) + "." + (percent % 10) + "%(" + ((memUsed / 1048576) + 1) + "MB) / ");
                         }
                         totalGcDuration += info.getGcInfo().getDuration();
