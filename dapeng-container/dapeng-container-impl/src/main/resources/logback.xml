@@ -26,7 +26,7 @@
     <appender name="SLOWTIMEFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <prudent>false</prudent>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${soa.base}/logs/slowtime-dapeng-container.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${soa.base}/logs/slow-service.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
@@ -110,7 +110,7 @@
         <appender-ref ref="SIMPLEFILE"/>
     </logger>
 
-    <logger name="container.slowtime.log" additivity="true">
+    <logger name="container.slowtime.log" additivity="false">
         <level value="INFO"/>
         <appender-ref ref="SLOWTIMEFILE"/>
     </logger>
