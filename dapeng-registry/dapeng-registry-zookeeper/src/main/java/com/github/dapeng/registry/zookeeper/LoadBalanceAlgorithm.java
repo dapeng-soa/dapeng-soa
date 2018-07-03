@@ -15,11 +15,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class LoadBalanceAlgorithm {
     private static int lastIndex = -1;
     private static int currentWeight = 0;
-    private static boolean isSame = true;
-    private static int gcdWeight = 1;
-    private static int maxWeight = 0;
-    private static int totalWeight = 0;
-    private static int[] weights;
 
 
     /**
@@ -34,18 +29,18 @@ public class LoadBalanceAlgorithm {
         if(instances.size() > 0) {
             int length = instances.size();
             final Random random = new Random();
-            if (SoaSystemEnvProperties.SOA_CHANGE_WEIGHE) {
-                totalWeight = 0;
-                int minWeight = Integer.MAX_VALUE;
-                for (int i = 0; i < length; i++) {
-                    int tempWeight = instances.get(i).weight;
-                    totalWeight += tempWeight;
-                    maxWeight = Math.max(maxWeight, tempWeight);
-                    minWeight = Math.min(minWeight, tempWeight);
-                }
-                isSame = (minWeight == maxWeight);
-                SoaSystemEnvProperties.SOA_CHANGE_WEIGHE = false;
+
+            int totalWeight = 0;
+            int minWeight = Integer.MAX_VALUE;
+            int maxWeight = 0;
+            for (int i = 0; i < length; i++) {
+                int tempWeight = instances.get(i).weight;
+                totalWeight += tempWeight;
+                maxWeight = Math.max(maxWeight, tempWeight);
+                minWeight = Math.min(minWeight, tempWeight);
             }
+            boolean isSame = (minWeight == maxWeight);
+
             if (totalWeight > 0 && !isSame) {
                 int offset = random.nextInt(totalWeight);
                 for (int i = 0; i < length; i++){
@@ -55,7 +50,6 @@ public class LoadBalanceAlgorithm {
                     }
                 }
             }else {
-         //       result = instances.get(random.nextInt(length));
                 return instances.get(random.nextInt(length));
             }
         }
@@ -66,18 +60,13 @@ public class LoadBalanceAlgorithm {
     public static RuntimeInstance leastActive(List<RuntimeInstance> instances) {
         RuntimeInstance result = null;
         if (instances.size() > 0) {
-
-            SoaSystemEnvProperties.SOA_CHANGE_WEIGHE = false;
-
             int index = 0;
-
             for (int i = 1; i < instances.size(); i++) {
                 if (instances.get(i).getActiveCount().intValue() < instances.get(index).getActiveCount().intValue()) {
                     index = i;
                 }
             }
             result = instances.get(index);
-
         }
         return result;
     }
@@ -92,23 +81,19 @@ public class LoadBalanceAlgorithm {
         RuntimeInstance result = null;
 
         if (instances.size() >0){
-
             int length = instances.size();
-            if (SoaSystemEnvProperties.SOA_CHANGE_WEIGHE) {
-                weights = new int[length];
-                maxWeight = 0;
-                int minWeight = Integer.MAX_VALUE;
-                for (int i = 0; i < length; i++) {
-                    int tempWeight = instances.get(i).weight;
-                    maxWeight = Math.max(maxWeight, tempWeight);
-                    minWeight = Math.min(minWeight, tempWeight);
-                    weights[i] = tempWeight;
-                }
-                isSame = (minWeight == maxWeight);
-                //计算权重最大公约数
-                gcdWeight = gcdWeight(weights,weights.length);
-                SoaSystemEnvProperties.SOA_CHANGE_WEIGHE = false;
+            int[] weights = new int[length];
+            int maxWeight = 0;
+            int minWeight = Integer.MAX_VALUE;
+            for (int i = 0; i < length; i++) {
+                int tempWeight = instances.get(i).weight;
+                maxWeight = Math.max(maxWeight, tempWeight);
+                minWeight = Math.min(minWeight, tempWeight);
+                weights[i] = tempWeight;
             }
+            boolean isSame = (minWeight == maxWeight);
+            //计算权重最大公约数
+            int gcdWeight = gcdWeight(weights,weights.length);
 
             //实例权重相同
             if (isSame){
