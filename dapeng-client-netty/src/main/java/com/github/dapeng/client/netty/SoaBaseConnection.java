@@ -169,7 +169,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     } catch (Exception e) {
                         LOGGER.error(e.getMessage(), e);
                         Result<RESP> result = new Result<>(null,
-                                new SoaException(SoaCode.UnKnown, SoaCode.UnKnown.getMsg()));
+                                new SoaException(SoaCode.ClientUnKnown, SoaCode.ClientUnKnown.getMsg()));
                         ctx.setAttribute("result", result);
                         onExit(ctx, getPrevChain(ctx));
                         return;
@@ -268,7 +268,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
         if (ex instanceof SoaException) {
             soaException = (SoaException) ex;
         } else {
-            soaException = new SoaException(SoaCode.UnKnown.getCode(), ex.getMessage());
+            soaException = new SoaException(SoaCode.ClientUnKnown.getCode(), ex.getMessage());
         }
         return soaException;
     }
@@ -292,7 +292,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
     private <RESP> Result<RESP> processResponse(ByteBuf responseBuf, BeanSerializer<RESP> responseSerializer) {
         if (responseBuf == null) {
-            return new Result<>(null, new SoaException(SoaCode.TimeOut));
+            return new Result<>(null, new SoaException(SoaCode.ReqTimeOut));
         }
         final int readerIndex = responseBuf.readerIndex();
         try {
@@ -309,7 +309,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
             } else {
                 return new Result<>(null, new SoaException(
                         lastInfo.responseCode(),
-                        (respHeader.getRespMessage().isPresent()) ? respHeader.getRespMessage().get() : SoaCode.UnKnown.getMsg()));
+                        (respHeader.getRespMessage().isPresent()) ? respHeader.getRespMessage().get() : SoaCode.ClientUnKnown.getMsg()));
             }
 
         } catch (SoaException ex) {
@@ -318,7 +318,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
             LOGGER.error("通讯包解析出错:\n" + ex.getMessage(), ex);
             LOGGER.error(DumpUtil.dumpToStr(responseBuf.readerIndex(readerIndex)));
             return new Result<>(null,
-                    new SoaException(SoaCode.UnKnown, "通讯包解析出错"));
+                    new SoaException(SoaCode.ClientUnKnown, "通讯包解析出错"));
         } finally {
             if (responseBuf != null) {
                 responseBuf.release();
@@ -372,6 +372,6 @@ public abstract class SoaBaseConnection implements SoaConnection {
         info.calleeTime1(respHeader.getCalleeTime1().orElse(0));
         info.calleeTime2(respHeader.getCalleeTime2().orElse(0));
         info.loadBalanceStrategy(invocationContext.loadBalanceStrategy().orElse(null));
-        info.responseCode(respHeader.getRespCode().orElse(SoaCode.UnKnown.getCode()));
+        info.responseCode(respHeader.getRespCode().orElse(SoaCode.ClientUnKnown.getCode()));
     }
 }

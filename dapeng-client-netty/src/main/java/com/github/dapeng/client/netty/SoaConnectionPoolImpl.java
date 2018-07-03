@@ -97,7 +97,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         if (Integer.parseInt(tarArr[0]) != Integer.parseInt(reqArr[0])) {
             return false;
         }
-        return  ((Integer.parseInt(tarArr[1]) * 10 + Integer.parseInt(tarArr[2]))
+        return ((Integer.parseInt(tarArr[1]) * 10 + Integer.parseInt(tarArr[2]))
                 >= (Integer.parseInt(reqArr[1]) * 10 + Integer.parseInt(reqArr[2])));
     }
 
@@ -160,7 +160,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     private SoaConnection findConnection(String service,
                                          String version,
-                                         String method) {
+                                         String method) throws SoaException {
         ZkServiceInfo zkInfo = zkInfos.get(service);
 
         if (zkInfo == null || zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
@@ -219,7 +219,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * @param compatibles
      * @return
      */
-    private List<RuntimeInstance> router(String service, String method, String version, List<RuntimeInstance> compatibles) {
+    private List<RuntimeInstance> router(String service, String method, String version, List<RuntimeInstance> compatibles) throws SoaException {
         InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         List<Route> routes = zkAgent.getRoutes(service);
         if (routes == null || routes.size() == 0) {
@@ -230,6 +230,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             context.methodName(method);
             context.versionName(version);
             List<RuntimeInstance> runtimeInstances = RoutesExecutor.executeRoutes(context, routes, compatibles);
+            if (runtimeInstances.size() == 0) {
+                throw new SoaException(SoaCode.NoMatchedRouting);
+            }
             return runtimeInstances;
         }
     }

@@ -139,7 +139,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         SoaException soaException = transactionContext.soaException();
         if (soaException == null) {
             soaException = new SoaException(soaHeader.getRespCode().get(),
-                    soaHeader.getRespMessage().orElse(SoaCode.UnKnown.getMsg()));
+                    soaHeader.getRespMessage().orElse(SoaCode.ServerUnKnown.getMsg()));
             transactionContext.soaException(soaException);
         }
 

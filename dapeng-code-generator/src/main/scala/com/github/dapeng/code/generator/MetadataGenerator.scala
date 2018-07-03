@@ -56,7 +56,7 @@ class MetadataGenerator extends CodeGenerator {
           println(s" Re-Gen Xml次数:$reGenCount")
           generateXmlFile(service, outDir, reGenCount)
         }else{
-          throw new SoaException(SoaCode.UnKnown, s"${service.namespace}.${service.name}.xml 文件生成有误")
+          throw new SoaException(SoaCode.ClientUnKnown, s"${service.namespace}.${service.name}.xml 文件生成有误")
         }
       }else{
         println(s"检查xml格式=>${service.namespace}.${service.name}.xml 无误")

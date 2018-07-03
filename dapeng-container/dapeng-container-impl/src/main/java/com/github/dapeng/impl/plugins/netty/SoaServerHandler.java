@@ -82,7 +82,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                 LOGGER.error("should not come here. soaHeader is null");
                 ((TransactionContextImpl) transactionContext).setHeader(new SoaHeader());
             }
-            writeErrorMessage(channelHandlerContext, transactionContext, new SoaException(SoaCode.UnKnown.getCode(), "读请求异常", ex));
+            writeErrorMessage(channelHandlerContext, transactionContext, new SoaException(SoaCode.ServerUnKnown.getCode(), "读请求异常", ex));
         } finally {
             TransactionContext.Factory.removeCurrentInstance();
             MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
@@ -123,18 +123,18 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
                     LOGGER.debug(getClass().getSimpleName() + "::processRequest " + debugLog);
                 }
-                throw new SoaException(SoaCode.TimeOut, "服务端请求超时");
+                throw new SoaException(SoaCode.ServerReqTimeOut, "服务端请求超时");
             }
 
             Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
             if (application == null) {
-                throw new SoaException(SoaCode.NotMatchedService);
+                throw new SoaException(SoaCode.NoMatchedService);
             }
             SoaFunctionDefinition<I, REQ, RESP> soaFunction = (SoaFunctionDefinition<I, REQ, RESP>) serviceDef.functions.get(soaHeader.getMethodName());
 
             if (soaFunction == null) {
-                throw new SoaException(SoaCode.NotMatchedMethod);
+                throw new SoaException(SoaCode.NoMatchedMethod);
             }
 
             HeadFilter headFilter = new HeadFilter();
