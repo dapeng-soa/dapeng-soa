@@ -1,10 +1,6 @@
 package com.github.dapeng.client.netty;
 
 
-import com.github.dapeng.zookeeper.common.ConfigKey;
-import com.github.dapeng.zookeeper.common.LoadBalanceAlgorithm;
-import com.github.dapeng.zookeeper.common.ZkConfig;
-import com.github.dapeng.zookeeper.common.ZkServiceInfo;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
@@ -12,10 +8,13 @@ import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
 import com.github.dapeng.zookeeper.agent.ClientZkAgent;
 import com.github.dapeng.zookeeper.agent.impl.ClientZkAgentImpl;
+import com.github.dapeng.zookeeper.common.ConfigKey;
+import com.github.dapeng.zookeeper.common.LoadBalanceAlgorithm;
+import com.github.dapeng.zookeeper.common.ZkConfig;
+import com.github.dapeng.zookeeper.common.ZkServiceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.List;
