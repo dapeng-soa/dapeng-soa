@@ -122,12 +122,12 @@ service HelloService {
 
 > 打包服务接口代码工程(`dapeng-code-generator`): `mvn clean package`
 >
-> 输出的可执行jar包目录: `dapeng-code-generator/target/dapeng-code-generator-2.0.5-jar-with-dependencies.jar`
+> 输出的可执行jar包目录: `dapeng-code-generator/target/dapeng-code-generator-2.0.6-jar-with-dependencies.jar`
 
 打印帮助命令
 
 ```
-java -jar dapeng-code-generator-2.0.5-jar-with-dependencies.jar
+java -jar dapeng-code-generator-2.0.6-jar-with-dependencies.jar
 
 -----------------------------------------------------------------------
  args: -gen metadata,js,json file
@@ -152,7 +152,7 @@ java -jar dapeng-code-generator-2.0.5-jar-with-dependencies.jar
 生成thrift idl 定义服务接口代码
 
 ```
-java -jar dapeng-code-generator-2.0.5-jar-with-dependencies.jar -gen java -out F:\hello F:\hello\hello_domain.thrift,F:\hello\hello_service.thrift
+java -jar dapeng-code-generator-2.0.6-jar-with-dependencies.jar -gen java -out F:\hello F:\hello\hello_domain.thrift,F:\hello\hello_service.thrift
 
 # 说明：
 # 1. `-gen java` 表示生成java代码； 
@@ -171,7 +171,7 @@ java -jar dapeng-code-generator-2.0.5-jar-with-dependencies.jar -gen java -out F
 <dependency>
     <groupId>com.github.dapeng</groupId>
     <artifactId>dapeng-remoting-api</artifactId>
-    <version>2.0.5</version>
+    <version>2.0.6</version>
 </dependency>
 ```
 
@@ -196,7 +196,7 @@ java -jar dapeng-code-generator-2.0.5-jar-with-dependencies.jar -gen java -out F
 <dependency>
     <groupId>com.github.dapeng</groupId>
     <artifactId>dapeng-spring</artifactId>
-    <version>2.0.5</version>
+    <version>2.0.6</version>
 </dependency>
 ```
 
@@ -292,7 +292,7 @@ mvn compile dapeng:run -Dsoa.remoting.mode=local
 
 # 第二种
 cd hello-service
-mvn compile com.github.dapeng:dapeng-maven-plugin:2.0.5:run -Dsoa.remoting.mode=local
+mvn compile com.github.dapeng:dapeng-maven-plugin:2.0.6:run -Dsoa.remoting.mode=local
 ```
 
 * 远程模式(需要启动zookeeper)
@@ -307,7 +307,7 @@ mvn compile dapeng:run
 
 # 第二种
 cd hello-service
-mvn compile com.github.dapeng:dapeng-maven-plugin:2.0.5:run
+mvn compile com.github.dapeng:dapeng-maven-plugin:2.0.6:run
 ```
 
 * 启动可选参数
@@ -332,12 +332,12 @@ mvn compile com.github.dapeng:dapeng-maven-plugin:2.0.5:run
 <dependency>
     <groupId>com.github.dapeng</groupId>
     <artifactId>dapeng-com.github.dapeng.registry.registry-zookeeper</artifactId>
-    <version>2.0.5</version>
+    <version>2.0.6</version>
 </dependency>
 <dependency>
     <groupId>com.github.dapeng</groupId>
     <artifactId>dapeng-remoting-netty</artifactId>
-    <version>2.0.5</version>
+    <version>2.0.6</version>
 </dependency>
 ```
 
