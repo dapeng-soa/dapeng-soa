@@ -34,7 +34,6 @@ public class CommonZk {
 
 
     protected void syncZkConfigInfo(ZkServiceInfo zkInfo) {
-        zkInfo.syncConfigFlag = new CountDownLatch(1);
         //1.获取 globalConfig  异步模式
         zk.getData(CONFIG_PATH, watchedEvent -> {
             if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {

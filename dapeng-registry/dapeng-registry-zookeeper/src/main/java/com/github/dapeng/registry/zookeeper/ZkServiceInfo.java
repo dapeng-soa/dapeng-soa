@@ -26,9 +26,6 @@ public class ZkServiceInfo {
 
     private Status status = Status.CREATED;
 
-    public CountDownLatch syncRuntimeFlag= null;
-    public CountDownLatch syncConfigFlag = null;
-
     /**
      * instances list
      */
