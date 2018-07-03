@@ -217,7 +217,7 @@ public class RoutesExecutor {
                 ctxValue = ctx.userId().map(userId -> userId.toString()).orElse("");
                 break;
             case "calleeIp":
-                ctxValue = ctx.calleeIp().map(calleeIp->String.valueOf(calleeIp)).orElse("");
+                ctxValue = ctx.calleeIp().map(String::valueOf).orElse("");
                 break;
             default:
                 if (id.startsWith(COOKIE_PREFIX)) {
