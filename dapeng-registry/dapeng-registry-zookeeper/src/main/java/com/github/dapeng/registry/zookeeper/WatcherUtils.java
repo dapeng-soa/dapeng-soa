@@ -94,14 +94,13 @@ public class WatcherUtils {
 
             String[] properties = configData.split("\n|\r|\r\n");
 
-            if (!zkInfo.weightServiceConfigs.isEmpty()){
+            if (!isGlobal && !zkInfo.weightServiceConfigs.isEmpty()){
                 zkInfo.weightServiceConfigs.clear();
             }
             for (String property : properties) {
                 if (!"".equals(property)) {
                     String typeValue = property.split("/")[0];
                     if (typeValue.equals(ConfigKey.TimeOut.getValue())) {
-
                         if (isGlobal) {
                             String value = property.split("/")[1];
                             zkInfo.timeConfig.globalConfig = timeHelper(value);
@@ -119,7 +118,6 @@ public class WatcherUtils {
                         }
 
                     } else if (typeValue.equals(ConfigKey.LoadBalance.getValue())) {
-
                         if (isGlobal) {
                             String value = property.split("/")[1];
                             zkInfo.loadbalanceConfig.globalConfig = LoadBalanceStrategy.findByValue(value);
@@ -146,7 +144,7 @@ public class WatcherUtils {
                     }
                 }
             }
-            recalculateRuntimeInstanceWeight(zkInfo,isGlobal);
+            recalculateRuntimeInstanceWeight(zkInfo);
             LOGGER.info("get config from {} with data [{}]", zkInfo.service, configData);
         } catch (UnsupportedEncodingException e) {
             LOGGER.error(e.getMessage(), e);
@@ -158,16 +156,15 @@ public class WatcherUtils {
      * 将zk config 中的权重设置，同步到运行实例中
      * @param zkInfo
      */
-    private static void recalculateRuntimeInstanceWeight(ZkServiceInfo zkInfo,boolean isGlobal){
-
+    public static void recalculateRuntimeInstanceWeight(ZkServiceInfo zkInfo){
         if (zkInfo != null) {
             List<RuntimeInstance> runtimeInstances = zkInfo.getRuntimeInstances();
             if (runtimeInstances != null && runtimeInstances.size() > 0) {
                 for (RuntimeInstance runtimeInstance : runtimeInstances) {
-                    if (isGlobal && zkInfo.weightGlobalConfig.ip != null) {
+                    if (zkInfo.weightGlobalConfig.ip != null) {   //没有全局配置的情况下ip = null，有全局配置ip = ""
                         runtimeInstance.weight = zkInfo.weightGlobalConfig.weight;
                     }
-                    if (!isGlobal && zkInfo.weightServiceConfigs != null) {
+                    if (zkInfo.weightServiceConfigs != null) {
                         List<Weight> weights = zkInfo.weightServiceConfigs;
                         for (Weight weight : weights) {
                             if (weight.ip.equals(runtimeInstance.ip)) {

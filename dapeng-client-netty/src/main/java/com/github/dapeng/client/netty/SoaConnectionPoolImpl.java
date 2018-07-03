@@ -218,12 +218,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         //在途请求数+1
         inst.increaseActiveCount();
 
-        for (RuntimeInstance runtimeInstance : zkInfo.getRuntimeInstances()){
-            System.out.println(runtimeInstance);
-            System.out.println(runtimeInstance.weight);
-        }
-
-
         IpPort ipPort = new IpPort(inst.ip, inst.port);
         SubPool subPool = subPools.get(ipPort);
         if (subPool == null) {
@@ -313,12 +307,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         if (logger.isDebugEnabled()) {
             logger.debug("request loadBalance strategy is {}", balance);
-        }
-
-        for (RuntimeInstance runtimeInstance : zkServiceInfo.getRuntimeInstances()){
-            System.out.println("*--*-*-*-*-");
-            System.out.println(runtimeInstance);
-            System.out.println(runtimeInstance.weight);
         }
 
         RuntimeInstance instance = null;
