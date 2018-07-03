@@ -14,9 +14,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.github.dapeng.core.enums.CodecProtocol.CompressedBinary;
+import static com.github.dapeng.core.helper.IPUtils.transferIp;
 import static com.github.dapeng.util.MetaDataUtil.*;
 
 /**
+ * todo not support header.
  * @author ever
  */
 public class JsonSerializer implements BeanSerializer<String> {
@@ -961,7 +963,7 @@ public class JsonSerializer implements BeanSerializer<String> {
 
         private void fillStringToInvocationCtx(String value) {
             if ("calleeIp".equals(currentHeaderName)) {
-                invocationCtx.calleeIp(value);
+                invocationCtx.calleeIp(transferIp(value));
             } else if ("callerMid".equals(currentHeaderName)) {
                 invocationCtx.callerMid(value);
             } else {
