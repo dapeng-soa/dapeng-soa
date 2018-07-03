@@ -11,6 +11,7 @@ import com.github.dapeng.router.RoutesExecutor;
 import org.apache.zookeeper.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.rmi.log.ReliableLog;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -191,6 +192,7 @@ public class ClientZk extends CommonZk {
                             if (zkInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
                                 LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:{}子节点发生变化，重新获取信息", watchedEvent.getPath());
                                 syncZkRuntimeInfo(zkInfo);
+                                WatcherUtils.recalculateRuntimeInstanceWeight(zkInfo);
                             }
                         }
                     });
