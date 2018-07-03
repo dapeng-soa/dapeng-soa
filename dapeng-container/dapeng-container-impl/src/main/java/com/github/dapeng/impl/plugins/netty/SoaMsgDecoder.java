@@ -91,7 +91,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
         if (application == null) {
-            throw new SoaException(SoaCode.NotMatchedService);
+            throw new SoaException(SoaCode.NoMatchedService);
         }
 
         SoaServiceDefinition processor = container.getServiceProcessors().get(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
@@ -99,7 +99,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         SoaFunctionDefinition<I, REQ, RESP> soaFunction = (SoaFunctionDefinition<I, REQ, RESP>) processor.functions.get(soaHeader.getMethodName());
 
         if (soaFunction == null) {
-            throw new SoaException(SoaCode.NotMatchedMethod);
+            throw new SoaException(SoaCode.NoMatchedMethod);
         }
 
         TProtocol contentProtocol = parser.getContentProtocol();
