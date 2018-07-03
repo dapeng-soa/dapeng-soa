@@ -46,7 +46,7 @@ public class TransactionContextImpl implements TransactionContext {
     /**
      * 服务会话ID, 在某次服务调用中会一直蔓延至本次服务调用引发的所有服务调用
      */
-    private Optional<String> sessionTid = Optional.empty();
+    private Optional<Long> sessionTid = Optional.empty();
     /**
      * 服务会话发起人Id, 特指前台用户
      */
@@ -54,7 +54,7 @@ public class TransactionContextImpl implements TransactionContext {
     /**
      * 服务会话发起人Ip
      */
-    private Optional<String> userIp = Optional.empty();
+    private Optional<Integer> userIp = Optional.empty();
     /**
      * 服务会话发起操作人Id, 特指后台用户
      */
@@ -63,11 +63,11 @@ public class TransactionContextImpl implements TransactionContext {
     /**
      * 调用者Tid
      */
-    private Optional<String> callerTid = Optional.empty();
+    private Optional<Long> callerTid = Optional.empty();
     /**
      * 调用者ip
      */
-    private Optional<String> callerIp = Optional.empty();
+    private Optional<Integer> callerIp = Optional.empty();
     /**
      * 调用者port, 只有dapeng服务作为调用者的时候才有这个值
      */
@@ -88,7 +88,7 @@ public class TransactionContextImpl implements TransactionContext {
     /**
      * 用于服务调用传递. 当本服务作为调用者调用其它服务时, callerTid=calleeTid
      */
-    private String calleeTid;
+    private long calleeTid;
 
 
     private SoaHeader header;
@@ -118,11 +118,11 @@ public class TransactionContextImpl implements TransactionContext {
     }
 
     @Override
-    public Optional<String> callerIp() {
+    public Optional<Integer> callerIp() {
         return callerIp;
     }
 
-    public TransactionContextImpl callerIp(String callerIp) {
+    public TransactionContextImpl callerIp(Integer callerIp) {
         this.callerIp = Optional.ofNullable(callerIp);
         return this;
     }
@@ -233,31 +233,31 @@ public class TransactionContextImpl implements TransactionContext {
     }
 
     @Override
-    public Optional<String> sessionTid() {
+    public Optional<Long> sessionTid() {
         return sessionTid;
     }
 
-    public TransactionContextImpl sessionTid(String sessionTid) {
+    public TransactionContextImpl sessionTid(Long sessionTid) {
         this.sessionTid = Optional.ofNullable(sessionTid);
         return this;
     }
 
     @Override
-    public Optional<String> userIp() {
+    public Optional<Integer> userIp() {
         return userIp;
     }
 
-    public TransactionContextImpl userIp(String userIp) {
+    public TransactionContextImpl userIp(Integer userIp) {
         this.userIp = Optional.ofNullable(userIp);
         return this;
     }
 
     @Override
-    public Optional<String> callerTid() {
+    public Optional<Long> callerTid() {
         return callerTid;
     }
 
-    public TransactionContextImpl callerTid(String callerTid) {
+    public TransactionContextImpl callerTid(Long callerTid) {
         this.callerTid = Optional.ofNullable(callerTid);
         return this;
     }
@@ -273,7 +273,7 @@ public class TransactionContextImpl implements TransactionContext {
     }
 
     @Override
-    public String calleeTid() {
+    public long calleeTid() {
         return calleeTid;
     }
 
@@ -288,7 +288,7 @@ public class TransactionContextImpl implements TransactionContext {
     }
 
     @Override
-    public TransactionContextImpl calleeTid(String calleeTid) {
+    public TransactionContextImpl calleeTid(Long calleeTid) {
         this.calleeTid = calleeTid;
         return this;
     }
