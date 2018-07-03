@@ -35,17 +35,15 @@ public class LoadBalanceAlgorithm {
             int length = instances.size();
             final Random random = new Random();
             if (SoaSystemEnvProperties.SOA_CHANGE_WEIGHE) {
-                System.out.println("-*-*-*-*-");
-                System.out.println("random");
                 totalWeight = 0;
-                int minweight = Integer.MAX_VALUE;
+                int minWeight = Integer.MAX_VALUE;
                 for (int i = 0; i < length; i++) {
                     int tempWeight = instances.get(i).weight;
                     totalWeight += tempWeight;
                     maxWeight = Math.max(maxWeight, tempWeight);
-                    minweight = Math.min(minweight, tempWeight);
+                    minWeight = Math.min(minWeight, tempWeight);
                 }
-                isSame = (minweight == maxWeight);
+                isSame = (minWeight == maxWeight);
                 SoaSystemEnvProperties.SOA_CHANGE_WEIGHE = false;
             }
             if (totalWeight > 0 && !isSame) {
@@ -99,14 +97,14 @@ public class LoadBalanceAlgorithm {
             if (SoaSystemEnvProperties.SOA_CHANGE_WEIGHE) {
                 weights = new int[length];
                 maxWeight = 0;
-                int minweight = Integer.MAX_VALUE;
+                int minWeight = Integer.MAX_VALUE;
                 for (int i = 0; i < length; i++) {
                     int tempWeight = instances.get(i).weight;
                     maxWeight = Math.max(maxWeight, tempWeight);
-                    minweight = Math.min(minweight, tempWeight);
+                    minWeight = Math.min(minWeight, tempWeight);
                     weights[i] = tempWeight;
                 }
-                isSame = (minweight == maxWeight);
+                isSame = (minWeight == maxWeight);
                 //计算权重最大公约数
                 gcdWeight = gcdWeight(weights,weights.length);
                 SoaSystemEnvProperties.SOA_CHANGE_WEIGHE = false;
