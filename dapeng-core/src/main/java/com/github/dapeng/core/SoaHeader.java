@@ -1,8 +1,13 @@
 package com.github.dapeng.core;
 
+import com.github.dapeng.core.helper.IPUtils;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import static com.github.dapeng.core.helper.DapengUtil.longToHexStr;
+import static com.github.dapeng.core.helper.IPUtils.transferIp;
 
 /**
  * <pre>
@@ -32,7 +37,6 @@ import java.util.Optional;
  *
  * SoaHeader用于包装需传递到服务提供方的信息
  *
- * //fixme IP用Int来传输
  *
  * @author tangliu
  * @date 2016/1/11
@@ -57,7 +61,7 @@ public class SoaHeader {
     /**
      * 服务会话ID, 在某次服务调用中会一直蔓延至本次服务调用引发的所有服务调用
      */
-    private Optional<String> sessionTid = Optional.empty();
+    private Optional<Long> sessionTid = Optional.empty();
     /**
      * 服务会话发起人Id, 特指前台用户
      */
@@ -65,14 +69,14 @@ public class SoaHeader {
     /**
      * 服务会话发起人Ip
      */
-    private Optional<String> userIp = Optional.empty();
+    private Optional<Integer> userIp = Optional.empty();
     /**
      * 服务会话发起操作人Id, 特指后台用户
      */
     private Optional<Long> operatorId = Optional.empty();
 
 
-    private Optional<String> callerTid = Optional.empty();
+    private Optional<Long> callerTid = Optional.empty();
 
     private Optional<Integer> timeout = Optional.empty();
     /**
@@ -81,10 +85,9 @@ public class SoaHeader {
     private Optional<String> callerMid = Optional.empty();
 
     /**
-     * todo 用int类型传输ip
      * 调用者ip
      */
-    private Optional<String> callerIp = Optional.empty();
+    private Optional<Integer> callerIp = Optional.empty();
     /**
      * 调用者port, 只有在dapeng容器内才需要设置这个值
      */
@@ -101,9 +104,8 @@ public class SoaHeader {
      */
     private Optional<String> respMessage = Optional.empty();
 
-    private Optional<String> calleeTid = Optional.empty();
-    //todo 用int类型传输IP
-    private Optional<String> calleeIp = Optional.empty();
+    private Optional<Long> calleeTid = Optional.empty();
+    private Optional<Integer> calleeIp = Optional.empty();
     private Optional<Integer> calleePort = Optional.empty();
     private Optional<String> calleeMid = Optional.empty();
     private Optional<Integer> calleeTime1 = Optional.empty();
@@ -127,18 +129,18 @@ public class SoaHeader {
         sb.append("\"").append("serviceName").append("\":\"").append(this.serviceName).append("\",");
         sb.append("\"").append("methodName").append("\":\"").append(this.methodName).append("\",");
         sb.append("\"").append("versionName").append("\":\"").append(this.versionName).append("\",");
-        sb.append("\"").append("sessionTid").append("\":\"").append(this.sessionTid.isPresent() ? this.sessionTid.get() : null).append("\",");
+        sb.append("\"").append("sessionTid").append("\":\"").append(this.sessionTid.isPresent() ? longToHexStr(this.sessionTid.get()) : null).append("\",");
         sb.append("\"").append("userId").append("\":\"").append(this.userId.isPresent() ? this.userId.get() : null).append("\",");
-        sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? this.userIp.get() : null).append("\",");
+        sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? transferIp(this.userIp.get()) : null).append("\",");
         sb.append("\"").append("operatorId").append("\":").append(this.operatorId.isPresent() ? this.operatorId.get() : null).append(",");
         sb.append("\"").append("timeout").append("\":\"").append(this.timeout.isPresent() ? this.timeout.get() : null).append("\",");
-        sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid.isPresent() ? this.callerTid.get() : null).append("\",");
+        sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid.isPresent() ? longToHexStr(this.callerTid.get()) : null).append("\",");
         sb.append("\"").append("callerMid").append("\":\"").append(this.callerMid.isPresent() ? this.callerMid.get() : null).append("\",");
-        sb.append("\"").append("callerIp").append("\":\"").append(this.callerIp).append("\",");
+        sb.append("\"").append("callerIp").append("\":\"").append(this.callerIp.isPresent()? transferIp(this.callerIp.get()) : null).append("\",");
         sb.append("\"").append("callerPort").append("\":\"").append(this.callerPort).append("\",");
-        sb.append("\"").append("calleeTid").append("\":\"").append(this.calleeTid.isPresent() ? this.calleeTid.get() : null).append("\",");
+        sb.append("\"").append("calleeTid").append("\":\"").append(this.calleeTid.isPresent() ? longToHexStr(this.calleeTid.get()) : null).append("\",");
         sb.append("\"").append("calleeMid").append("\":\"").append(this.calleeMid.isPresent() ? this.calleeMid.get() : null).append("\",");
-        sb.append("\"").append("calleeIp").append("\":\"").append(this.calleeIp.isPresent() ? this.calleeIp.get() : null).append("\",");
+        sb.append("\"").append("calleeIp").append("\":\"").append(this.calleeIp.isPresent() ? transferIp(this.calleeIp.get()) : null).append("\",");
         sb.append("\"").append("calleePort").append("\":\"").append(this.calleePort.isPresent() ? this.calleePort.get() : null).append("\",");
         sb.append("\"").append("calleeTime1").append("\":\"").append(this.calleeTime1.isPresent() ? this.calleeTime1.get() : null).append("\",");
         sb.append("\"").append("calleeTime2").append("\":\"").append(this.calleeTime2.isPresent() ? this.calleeTime2.get() : null).append("\",");
@@ -177,11 +179,11 @@ public class SoaHeader {
         this.versionName = versionName;
     }
 
-    public Optional<String> getSessionTid() {
+    public Optional<Long> getSessionTid() {
         return sessionTid;
     }
 
-    public void setSessionTid(Optional<String> sessionTid) {
+    public void setSessionTid(Optional<Long> sessionTid) {
         this.sessionTid = sessionTid;
     }
 
@@ -193,11 +195,11 @@ public class SoaHeader {
         this.userId = userId;
     }
 
-    public Optional<String> getUserIp() {
+    public Optional<Integer> getUserIp() {
         return userIp;
     }
 
-    public void setUserIp(Optional<String> userIp) {
+    public void setUserIp(Optional<Integer> userIp) {
         this.userIp = userIp;
     }
 
@@ -209,11 +211,11 @@ public class SoaHeader {
         this.operatorId = operatorId;
     }
 
-    public Optional<String> getCallerTid() {
+    public Optional<Long> getCallerTid() {
         return callerTid;
     }
 
-    public void setCallerTid(Optional<String> callerTid) {
+    public void setCallerTid(Optional<Long> callerTid) {
         this.callerTid = callerTid;
     }
 
@@ -249,19 +251,19 @@ public class SoaHeader {
         this.respMessage = Optional.ofNullable(respMessage);
     }
 
-    public Optional<String> getCalleeTid() {
+    public Optional<Long> getCalleeTid() {
         return calleeTid;
     }
 
-    public void setCalleeTid(String calleeTid) {
+    public void setCalleeTid(Long calleeTid) {
         this.calleeTid = Optional.ofNullable(calleeTid);
     }
 
-    public Optional<String> getCalleeIp() {
+    public Optional<Integer> getCalleeIp() {
         return calleeIp;
     }
 
-    public void setCalleeIp(Optional<String> calleeIp) {
+    public void setCalleeIp(Optional<Integer> calleeIp) {
         this.calleeIp = calleeIp;
     }
 
@@ -281,7 +283,7 @@ public class SoaHeader {
         this.calleeMid = Optional.ofNullable(calleeMid);
     }
 
-    public Optional<String> getCallerIp() {
+    public Optional<Integer> getCallerIp() {
         return this.callerIp;
     }
 
@@ -305,7 +307,7 @@ public class SoaHeader {
         this.calleeTime2 = Optional.ofNullable(calleeTime2);
     }
 
-    public void setCallerIp(String callerIp) {
+    public void setCallerIp(Integer callerIp) {
         this.callerIp = Optional.ofNullable(callerIp);
     }
 

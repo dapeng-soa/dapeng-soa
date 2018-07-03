@@ -23,23 +23,10 @@ public class DapengUtil {
      *
      * @return
      */
-    public static String generateTid() {
-        int high = localIp ^ processId;
+    public static long generateTid() {
+        long high = (long)(localIp ^ processId);
         int low = seqId.getAndIncrement();
-
-        StringBuilder sb = new StringBuilder();
-
-        append(sb, (byte) ((high >> 24) & 0xFF));
-        append(sb, (byte) ((high >> 16) & 0xFF));
-        append(sb, (byte) ((high >> 8) & 0xFF));
-        append(sb, (byte) ((high) & 0xFF));
-
-        append(sb, (byte) ((low >> 24) & 0xFF));
-        append(sb, (byte) ((low >> 16) & 0xFF));
-        append(sb, (byte) ((low >> 8) & 0xFF));
-        append(sb, (byte) ((low) & 0xFF));
-
-        return sb.toString();
+        return ((high << 32) & 0xFFFF0000) | (low & 0xFFFF);
     }
 
     public static String longToHexStr(long tid) {
