@@ -266,9 +266,130 @@ class JavaCodecGenerator extends CodeGenerator {
             return bean == null ? "null" : bean.toString();
           </block>
         </block>
+
+        //10. echo_args
+        public static class echo_args <block></block>
+
+        //11. echo_result.
+        public static class echo_result <block>
+
+          private String success;
+
+          public String getSuccess() <block>
+            return success;
+          </block>
+
+          public void setSuccess(String success) <block>
+            this.success = success;
+          </block>
+        </block>
+
+        //12. echo_argsSerializer
+        public static class echo_argsSerializer implements BeanSerializer{lt}echo_args{gt} <block>
+
+          @Override
+          public echo_args read(TProtocol iprot) throws TException <block>
+
+            echo_args bean =new echo_args();
+            com.github.dapeng.org.apache.thrift.protocol.TField schemeField;
+            iprot.readStructBegin();
+
+            while (true) <block>
+              schemeField = iprot.readFieldBegin();
+              if (schemeField.type == com.github.dapeng.org.apache.thrift.protocol.TType.STOP) <block>
+                break;
+              </block>
+              switch (schemeField.id) <block>
+                default:
+                com.github.dapeng.org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+
+              </block>
+              iprot.readFieldEnd();
+            </block>
+            iprot.readStructEnd();
+
+            validate(bean);
+            return bean;
+          </block>
+
+          @Override
+          public void write(echo_args bean, TProtocol oprot) throws TException <block>
+
+            validate(bean);
+            oprot.writeStructBegin(new com.github.dapeng.org.apache.thrift.protocol.TStruct("echo_args"));
+            oprot.writeFieldStop();
+            oprot.writeStructEnd();
+          </block>
+
+          public void validate(echo_args bean) throws TException <block></block>
+
+          @Override
+          public String toString(echo_args bean) <block>
+            return bean == null ? "null" : bean.toString();
+          </block>
+        </block>
+
+        //13. echo_resultSerializer
+        public static class echo_resultSerializer implements BeanSerializer{lt}echo_result{gt} <block>
+          @Override
+          public echo_result read(TProtocol iprot) throws TException <block>
+
+            echo_result bean = new echo_result();
+            com.github.dapeng.org.apache.thrift.protocol.TField schemeField;
+            iprot.readStructBegin();
+
+            while (true) <block>
+              schemeField = iprot.readFieldBegin();
+              if (schemeField.type == com.github.dapeng.org.apache.thrift.protocol.TType.STOP) <block>
+                break;
+              </block>
+
+              switch (schemeField.id) <block>
+                case 0:  //SUCCESS
+                if (schemeField.type == com.github.dapeng.org.apache.thrift.protocol.TType.STRING) <block>
+                  bean.setSuccess(iprot.readString());
+                </block> else <block>
+                  com.github.dapeng.org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+                </block>
+                break;
+                default:
+                com.github.dapeng.org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              </block>
+              iprot.readFieldEnd();
+            </block>
+            iprot.readStructEnd();
+
+            validate(bean);
+            return bean;
+          </block>
+
+          @Override
+          public void write(echo_result bean, TProtocol oprot) throws TException <block>
+
+            validate(bean);
+            oprot.writeStructBegin(new com.github.dapeng.org.apache.thrift.protocol.TStruct("echo_result"));
+
+            oprot.writeFieldBegin(new com.github.dapeng.org.apache.thrift.protocol.TField("success", com.github.dapeng.org.apache.thrift.protocol.TType.STRING, (short) 0));
+            oprot.writeString(bean.getSuccess());
+            oprot.writeFieldEnd();
+
+            oprot.writeFieldStop();
+            oprot.writeStructEnd();
+          </block>
+
+          public void validate(echo_result bean) throws TException <block>
+
+            if (bean.getSuccess() == null)
+            throw new SoaException(SoaCode.RespFieldNull, "success字段不允许为空");
+          </block>
+
+          @Override
+          public String toString(echo_result bean) <block>
+            return bean == null ? "null" : bean.toString();
+          </block>
+        </block>
+
        </block>
-
-
       </div>
     }
   }
@@ -372,6 +493,26 @@ class JavaCodecGenerator extends CodeGenerator {
 
         </block>
 
+
+        public static class echo{lt}I extends {service.namespace}.{service.name}{gt} extends SoaFunctionDefinition.Sync{lt}I, echo_args, echo_result{gt} <block>
+          public echo() <block>
+            super("echo", new echo_argsSerializer(), new echo_resultSerializer());
+          </block>
+
+          @Override
+          public echo_result apply(I iface, echo_args args) <block>
+            echo_result result = new echo_result();
+
+            String echoMsg = (String) TransactionContext.Factory.currentInstance().getAttribute("container-threadPool-info");
+            //result.setSuccess("PONG");
+            result.setSuccess(echoMsg);
+            return result;
+
+          </block>
+
+        </block>
+
+
         @SuppressWarnings("unchecked")
         public static class Processor{lt}I extends {service.getNamespace + "." + service.name}{gt} extends SoaServiceDefinition{lt}{service.getNamespace + "." + service.name}{gt}
         <block>
@@ -392,6 +533,7 @@ class JavaCodecGenerator extends CodeGenerator {
             })
             }
             processMap.put("getServiceMetadata", new getServiceMetadata());
+            processMap.put("echo", new echo());
             return processMap;
           </block>
         </block>
@@ -503,6 +645,28 @@ class JavaCodecGenerator extends CodeGenerator {
 
         </block>
 
+        public static class echo{lt}I extends {service.namespace}.{service.name}Async{gt} extends SoaFunctionDefinition.Async{lt}I, echo_args, echo_result{gt} <block>
+          public echo() <block>
+            super("echo", new echo_argsSerializer(), new echo_resultSerializer());
+          </block>
+
+          @Override
+          public CompletableFuture{lt}echo_result{gt} apply(I iface, echo_args args) <block>
+            echo_result result = new echo_result();
+            CompletableFuture{lt}echo_result{gt} resultFuture = new CompletableFuture{lt}{gt}();
+
+            String echoMsg = (String) TransactionContext.Factory.currentInstance().getAttribute("container-threadPool-info");
+            result.setSuccess(echoMsg);
+            //result.setSuccess("PONG");
+            resultFuture.complete(result);
+            return resultFuture;
+          </block>
+
+        </block>
+
+
+
+
         @SuppressWarnings("unchecked")
         public static class Processor{lt}I extends {service.getNamespace + "." + service.name}Async{gt} extends SoaServiceDefinition{lt}{service.getNamespace + "." + service.name}Async{gt}
         <block>
@@ -523,6 +687,7 @@ class JavaCodecGenerator extends CodeGenerator {
             })
             }
             processMap.put("getServiceMetadata", new getServiceMetadata());
+            processMap.put("echo", new echo());
             return processMap;
           </block>
         </block>
