@@ -41,7 +41,7 @@ public class SoaHeaderHelper {
     public static void resetSoaHeader(SoaHeader header) {
         //TODO
         if (!header.getOperatorId().isPresent()) {
-            header.setOperatorId(Optional.of(0L));
+            header.setOperatorId(Optional.of(0));
         }
     }
 
@@ -59,6 +59,12 @@ public class SoaHeaderHelper {
         header.setCallerIp(IPUtils.localIp());
         header.setCallerTid(Optional.ofNullable(invocationContext.callerTid()));
 
+        header.setCustomerId(invocationContext.customerId());
+        header.setCustomerName(invocationContext.customerName());
+
+        header.setOperatorId(invocationContext.operatorId());
+        header.setOperatorName(invocationContext.operatorName());
+
 
         /**
          * 如果有invocationCtxProxy(一般在web或者三方系统)
@@ -68,7 +74,9 @@ public class SoaHeaderHelper {
             header.setUserIp(invocationCtxProxy.userIp());
             header.setUserId(invocationCtxProxy.userId());
             header.setOperatorId(invocationCtxProxy.operatorId());
-
+            header.setOperatorName(invocationContext.operatorName());
+            header.setCustomerId(invocationContext.customerId());
+            header.setCustomerName(invocationContext.customerName());
             header.setCallerMid(invocationCtxProxy.callerMid());
 
             header.addCookies(invocationCtxProxy.cookies());
@@ -80,9 +88,19 @@ public class SoaHeaderHelper {
             header.setCallerMid(invocationContext.callerMid());
         }
 
-
         if (invocationContext.operatorId().isPresent()) {
             header.setOperatorId(invocationContext.operatorId());
+        }
+        if (invocationContext.operatorName().isPresent()) {
+            header.setOperatorName(invocationContext.operatorName());
+        }
+
+        if (invocationContext.customerId().isPresent()) {
+            header.setCustomerId(invocationContext.customerId());
+        }
+
+        if (invocationContext.customerName().isPresent()) {
+            header.setCustomerName(invocationContext.customerName());
         }
         if (invocationContext.userId().isPresent()) {
             header.setUserId(invocationContext.userId());

@@ -3,6 +3,7 @@ package com.github.dapeng.impl.filters;
 
 import com.github.dapeng.core.BeanSerializer;
 import com.github.dapeng.core.TransactionContext;
+import com.github.dapeng.core.filter.ContainerFilter;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.filter.FilterChain;
 import com.github.dapeng.core.filter.FilterContext;
@@ -16,7 +17,7 @@ import java.util.Optional;
 
 import static io.netty.channel.ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE;
 
-public class HeadFilter implements Filter {
+public class HeadFilter implements ContainerFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(HeadFilter.class);
 
     @Override

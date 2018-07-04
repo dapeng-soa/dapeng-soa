@@ -111,6 +111,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             final long waitingTime = System.currentTimeMillis() - invokeTime;
             //fixme if zk down ?
             long timeout = soaHeader.getTimeout().map(Long::valueOf).orElse(getTimeout(soaHeader));
+            boolean logFormatEnable = SoaSystemEnvProperties.SOA_LOG_FORMAT_ENABLE;
+
             if (waitingTime > timeout) {
                 if (LOGGER.isDebugEnabled()) {
                     int seqId = transactionContext.seqId();
@@ -119,6 +121,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             + "]:version[" + soaHeader.getVersionName()
                             + "]:method[" + soaHeader.getMethodName() + "]"
                             + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
+                            + (soaHeader.getOperatorName().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "")
                             + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
 
                     LOGGER.debug(getClass().getSimpleName() + "::processRequest " + debugLog);
@@ -152,6 +155,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             filterContext.setAttribute("soaHeader",soaHeader);
             filterContext.setAttribute("waitingTime",waitingTime);
             filterContext.setAttribute("startTime",invokeTime);
+            filterContext.setAttribute("args",args);
             sharedChain.onEntry(filterContext);
         } catch (SoaException e) {
             // can't reach the headFilter

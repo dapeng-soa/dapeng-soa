@@ -984,7 +984,7 @@ public class JsonSerializer implements BeanSerializer<String> {
             if ("calleePort".equals(currentHeaderName)) {
                 invocationCtx.calleePort(value);
             } else if ("operatorId".equals(currentHeaderName)) {
-                invocationCtx.operatorId(Long.valueOf(value));
+                invocationCtx.operatorId(value);
             } else if ("userId".equals(currentHeaderName)) {
                 invocationCtx.userId(Long.valueOf(value));
             } else {

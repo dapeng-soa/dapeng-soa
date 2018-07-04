@@ -1,2 +1,3 @@
 com.github.dapeng.impl.filters.SoaGlobalTransactionalFilter
 com.github.dapeng.impl.filters.SimpleLogFilter
+com.github.dapeng.impl.filters.LogFilter

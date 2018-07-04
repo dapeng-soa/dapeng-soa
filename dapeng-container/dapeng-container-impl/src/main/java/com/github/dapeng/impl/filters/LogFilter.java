@@ -4,6 +4,7 @@ package com.github.dapeng.impl.filters;
 import com.github.dapeng.core.Application;
 import com.github.dapeng.core.SoaHeader;
 import com.github.dapeng.core.TransactionContext;
+import com.github.dapeng.core.filter.ContainerFilter;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.filter.FilterChain;
 import com.github.dapeng.core.filter.FilterContext;
@@ -25,14 +26,16 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Ever
  * @date 2018-04-11
  */
-public class LogFilter implements Filter {
+public class LogFilter implements ContainerFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(LogFilter.class);
     private static final Map<ClassLoader, MdcCtxInfo> mdcCtxInfoCache = new ConcurrentHashMap<>(16);
+    private static final boolean logFormatEnable = SoaSystemEnvProperties.SOA_LOG_FORMAT_ENABLE;
 
     @Override
     public void onEntry(FilterContext filterContext, FilterChain next) {
         TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
         Application application = (Application) filterContext.getAttribute("application");
+        Object args = filterContext.getAttribute("args");
 
 
         try {
@@ -44,7 +47,6 @@ public class LogFilter implements Filter {
                 LOGGER.trace(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.seqId() + "]");
             }
 
-
             SoaHeader soaHeader = transactionContext.getHeader();
 
             String infoLog = "request[seqId:" + transactionContext.seqId() + "]:"
@@ -52,8 +54,10 @@ public class LogFilter implements Filter {
                     + "]:version[" + soaHeader.getVersionName()
                     + "]:method[" + soaHeader.getMethodName() + "]"
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "") + " "
+                    + (soaHeader.getOperatorName().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "") + " "
                     + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "") + " "
-                    + (soaHeader.getUserIp().isPresent() ? " userIp:" + soaHeader.getUserIp().get() : "");
+                    + (soaHeader.getUserIp().isPresent() ? " userIp:" + soaHeader.getUserIp().get() : "") + " "
+                    + (args != null ? " args:[" + (logFormatEnable ? formatToString(args.toString()) :args.toString()) + "]" : "");
 
 
             application.info(this.getClass(), infoLog);
@@ -77,6 +81,7 @@ public class LogFilter implements Filter {
         TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
         ChannelHandlerContext channelHandlerContext = (ChannelHandlerContext) filterContext.getAttribute("channelHandlerContext");
         Application application = (Application) filterContext.getAttribute("application");
+        Object result = filterContext.getAttribute("result");
 
         boolean isAsync = (Boolean) filterContext.getAttribute("isAsync");
 
@@ -119,7 +124,9 @@ public class LogFilter implements Filter {
                     + "]:version[" + soaHeader.getVersionName()
                     + "]:method[" + soaHeader.getMethodName() + "]"
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
+                    + (soaHeader.getOperatorName().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "")
                     + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : ""
+                    + (result != null ? " result:[" + (logFormatEnable ? formatToString(result.toString()) : result.toString()) + "]" : "")
                     + " cost:" + cost + "ms");
             soaHeader.setCalleeTime1(cost.intValue());
             application.info(this.getClass(), infoLog);
@@ -184,6 +191,23 @@ public class LogFilter implements Filter {
                 InvocationTargetException e) {
             LOGGER.error(getClass().getSimpleName() + "::switchMdcToAppClassLoader," + e.getMessage(), e);
         }
+
+
+    }
+
+    private static String formatToString(String msg) {
+        if (msg == null)
+            return msg;
+
+        msg = msg.indexOf("\r\n") != -1 ? msg.replaceAll("\r\n", "") : msg;
+
+        int len = msg.length();
+        int max_len = 128;
+
+        if (len > max_len)
+            msg = msg.substring(0, 128) + "...(" + len + ")";
+
+        return msg;
     }
 
 }

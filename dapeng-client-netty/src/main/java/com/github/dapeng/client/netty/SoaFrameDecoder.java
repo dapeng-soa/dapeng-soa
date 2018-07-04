@@ -85,6 +85,9 @@ public class SoaFrameDecoder extends ByteToMessageDecoder {
          */
         in.readerIndex(readerIndex + length + Integer.BYTES);
 
+        LOGGER.info("-------------------------Receive response:");
+        DumpUtil.dump(msg);
+
         out.add(msg);
     }
 

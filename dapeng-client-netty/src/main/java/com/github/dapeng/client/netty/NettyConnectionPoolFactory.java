@@ -1,8 +1,7 @@
 package com.github.dapeng.client.netty;
 
-import com.github.dapeng.core.SoaConnectionPoolFactory;
-import com.github.dapeng.core.SoaConnectionPoolFactory;
 import com.github.dapeng.core.SoaConnectionPool;
+import com.github.dapeng.core.SoaConnectionPoolFactory;
 
 /**
  * Created by lihuimin on 2017/12/24.

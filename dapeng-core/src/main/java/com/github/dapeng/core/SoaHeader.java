@@ -69,7 +69,22 @@ public class SoaHeader {
     /**
      * 服务会话发起操作人Id, 特指后台用户
      */
-    private Optional<Long> operatorId = Optional.empty();
+    private Optional<Integer> operatorId = Optional.empty();
+
+    /**
+     * 操作人名称
+     */
+    private Optional<String> operatorName = Optional.empty();
+
+    /**
+     * 客户编号
+     */
+    private Optional<Integer> customerId = Optional.empty();
+
+    /**
+     * 客户名称
+     */
+    private Optional<String> customerName = Optional.empty();
 
 
     private Optional<String> callerTid = Optional.empty();
@@ -90,6 +105,11 @@ public class SoaHeader {
      */
     private Optional<Integer> callerPort = Optional.empty();
 
+    /**
+     * 调用源
+     */
+    private Optional<String> callerFrom = Optional.empty();
+
 
     /**
      * 返回码
@@ -100,6 +120,12 @@ public class SoaHeader {
      * 返回信息
      */
     private Optional<String> respMessage = Optional.empty();
+
+
+    /**
+     * SessionId
+     */
+    private Optional<String> sessionId = Optional.empty();
 
     private Optional<String> calleeTid = Optional.empty();
     //todo 用int类型传输IP
@@ -131,11 +157,16 @@ public class SoaHeader {
         sb.append("\"").append("userId").append("\":\"").append(this.userId.isPresent() ? this.userId.get() : null).append("\",");
         sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? this.userIp.get() : null).append("\",");
         sb.append("\"").append("operatorId").append("\":").append(this.operatorId.isPresent() ? this.operatorId.get() : null).append(",");
+        sb.append("\"").append("operatorName").append("\":\"").append(this.operatorName.isPresent() ? this.operatorName.get() : null).append("\",");
+        sb.append("\"").append("customerId").append("\":").append(this.customerId.isPresent() ? this.customerId.get() : null).append(",");
+        sb.append("\"").append("customerName").append("\":\"").append(this.customerName.isPresent() ? this.customerName.get() : null).append("\",");
+        sb.append("\"").append("sessionId").append("\":\"").append(this.sessionId.isPresent() ? this.sessionId.get() : null).append("\",");
         sb.append("\"").append("timeout").append("\":\"").append(this.timeout.isPresent() ? this.timeout.get() : null).append("\",");
         sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid.isPresent() ? this.callerTid.get() : null).append("\",");
         sb.append("\"").append("callerMid").append("\":\"").append(this.callerMid.isPresent() ? this.callerMid.get() : null).append("\",");
         sb.append("\"").append("callerIp").append("\":\"").append(this.callerIp).append("\",");
         sb.append("\"").append("callerPort").append("\":\"").append(this.callerPort).append("\",");
+        sb.append("\"").append("callerFrom").append("\":\"").append(this.callerFrom).append("\",");
         sb.append("\"").append("calleeTid").append("\":\"").append(this.calleeTid.isPresent() ? this.calleeTid.get() : null).append("\",");
         sb.append("\"").append("calleeMid").append("\":\"").append(this.calleeMid.isPresent() ? this.calleeMid.get() : null).append("\",");
         sb.append("\"").append("calleeIp").append("\":\"").append(this.calleeIp.isPresent() ? this.calleeIp.get() : null).append("\",");
@@ -201,12 +232,36 @@ public class SoaHeader {
         this.userIp = userIp;
     }
 
-    public Optional<Long> getOperatorId() {
+    public Optional<Integer> getOperatorId() {
         return operatorId;
     }
 
-    public void setOperatorId(Optional<Long> operatorId) {
+    public void setOperatorId(Optional<Integer> operatorId) {
         this.operatorId = operatorId;
+    }
+
+    public Optional<String> getOperatorName() {
+        return operatorName;
+    }
+
+    public void setOperatorName(Optional<String> operatorName) {
+        this.operatorName = operatorName;
+    }
+
+    public Optional<Integer> getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(Optional<Integer> customerId) {
+        this.customerId = customerId;
+    }
+
+    public Optional<String> getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(Optional<String> customerName) {
+        this.customerName = customerName;
     }
 
     public Optional<String> getCallerTid() {
@@ -289,6 +344,8 @@ public class SoaHeader {
         return this.callerPort;
     }
 
+    public Optional<String> getCallerFrom(){return this.callerFrom;}
+
     public Optional<Integer> getCalleeTime1() {
         return calleeTime1;
     }
@@ -312,6 +369,8 @@ public class SoaHeader {
     public void setCallerPort(Optional<Integer> callerPort) {
         this.callerPort = callerPort;
     }
+
+    public void setCallerFrom(Optional<String>callerFrom){this.callerFrom = callerFrom;}
     
 
     public Optional<Integer> getTransactionId() {
@@ -328,6 +387,14 @@ public class SoaHeader {
 
     public void setTransactionSequence(Integer transactionSequence) {
         this.transactionSequence = Optional.ofNullable(transactionSequence);
+    }
+
+    public Optional<String> getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(Optional<String> sessionId) {
+        this.sessionId = sessionId;
     }
 
     /**

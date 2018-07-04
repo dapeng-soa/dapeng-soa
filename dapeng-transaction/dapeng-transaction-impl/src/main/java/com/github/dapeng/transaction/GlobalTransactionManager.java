@@ -259,7 +259,7 @@ public class GlobalTransactionManager {
         }
 
         //获取服务的ip和端口
-        JsonPost jsonPost = new JsonPost(process.getServiceName(), process.getVersionName(), process.getMethodName());
+        JsonPost jsonPost = new JsonPost(process.getServiceName(), process.getVersionName(), rollbackOrForward ? process.getRollbackMethodName() : process.getMethodName());
 
         InvocationContextImpl invocationContext = (InvocationContextImpl)InvocationContextImpl.Factory.currentInstance();
         invocationContext.serviceName(process.getServiceName());
@@ -270,9 +270,9 @@ public class GlobalTransactionManager {
         invocationContext.transactionSequence(process.getTransactionSequence());
 
         if (rollbackOrForward) {
-            responseJson = jsonPost.callServiceMethod("{}", service);
+            responseJson = jsonPost.callServiceMethod("{\"body\": { }}", service);
         } else {
-            responseJson = jsonPost.callServiceMethod(process.getRequestJson(), service);
+            responseJson = jsonPost.callServiceMethod("{\"body\":"+ process.getRequestJson() +"}", service);
         }
 
         return responseJson;

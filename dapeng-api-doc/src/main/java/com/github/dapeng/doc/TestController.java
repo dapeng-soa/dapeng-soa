@@ -91,11 +91,12 @@ public class TestController {
         }
 
         if (parameters.contains("operatorId")) {
-            invocationCtx.operatorId(Long.valueOf(req.getParameter("operatorId")));
+            invocationCtx.operatorId(Integer.valueOf(req.getParameter("operatorId")));
         }
 
         if (parameters.contains("userId")) {
             invocationCtx.userId(Long.valueOf(req.getParameter("userId")));
         }
+
     }
 }

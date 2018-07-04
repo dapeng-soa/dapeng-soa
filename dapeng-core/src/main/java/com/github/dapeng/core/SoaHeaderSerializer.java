@@ -141,8 +141,8 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     }
                     break;
                 case 15:
-                    if (schemeField.type == TType.I64) {
-                        bean.setOperatorId(Optional.of(iprot.readI64()));
+                    if (schemeField.type == TType.I32) {
+                        bean.setOperatorId(Optional.of(iprot.readI32()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
@@ -197,6 +197,34 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     }
                     break;
                 case 23:
+                    if (schemeField.type == TType.STRING) {
+                        bean.setOperatorName(Optional.of(iprot.readString()));
+                    } else {
+                        TProtocolUtil.skip(iprot, schemeField.type);
+                    }
+                    break;
+                case 24:
+                    if (schemeField.type == TType.I32) {
+                        bean.setCustomerId(Optional.of(iprot.readI32()));
+                    } else {
+                        TProtocolUtil.skip(iprot, schemeField.type);
+                    }
+                    break;
+                case 25:
+                    if (schemeField.type == TType.STRING) {
+                        bean.setCustomerName(Optional.of(iprot.readString()));
+                    } else {
+                        TProtocolUtil.skip(iprot, schemeField.type);
+                    }
+                    break;
+                case 26:
+                    if (schemeField.type == TType.STRING) {
+                        bean.setSessionId(Optional.of(iprot.readString()));
+                    } else {
+                        TProtocolUtil.skip(iprot, schemeField.type);
+                    }
+                    break;
+                case 27:
                     if (schemeField.type == com.github.dapeng.org.apache.thrift.protocol.TType.MAP) {
                         com.github.dapeng.org.apache.thrift.protocol.TMap _map0 = iprot.readMapBegin();
                         java.util.Map<String, String> elem0 = new java.util.HashMap<>(_map0.size);
@@ -301,7 +329,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
             oprot.writeFieldEnd();
         }
         if (bean.getOperatorId().isPresent()) {
-            oprot.writeFieldBegin(new TField("operatorId", TType.I64, (short) 15));
+            oprot.writeFieldBegin(new TField("operatorId", TType.I32, (short) 15));
             oprot.writeI64(bean.getOperatorId().get());
             oprot.writeFieldEnd();
         }
@@ -337,8 +365,32 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
         }
 
         if (bean.getCalleeTime2().isPresent()) {
-            oprot.writeFieldBegin(new TField("calleeTime1", TType.I32, (short) 22));
+            oprot.writeFieldBegin(new TField("calleeTime2", TType.I32, (short) 22));
             oprot.writeI32(bean.getCalleeTime2().get());
+            oprot.writeFieldEnd();
+        }
+
+        if(bean.getOperatorName().isPresent()){
+            oprot.writeFieldBegin(new TField("operatorName", TType.STRING, (short) 23));
+            oprot.writeString(bean.getOperatorName().get());
+            oprot.writeFieldEnd();
+        }
+
+        if (bean.getCustomerId().isPresent()) {
+            oprot.writeFieldBegin(new TField("customerId", TType.I32, (short) 24));
+            oprot.writeI64(bean.getCustomerId().get());
+            oprot.writeFieldEnd();
+        }
+
+        if(bean.getCustomerName().isPresent()){
+            oprot.writeFieldBegin(new TField("customerName", TType.STRING, (short) 25));
+            oprot.writeString(bean.getCustomerName().get());
+            oprot.writeFieldEnd();
+        }
+
+        if(bean.getSessionId().isPresent()){
+            oprot.writeFieldBegin(new TField("sessionId", TType.STRING, (short) 26));
+            oprot.writeString(bean.getSessionId().get());
             oprot.writeFieldEnd();
         }
 

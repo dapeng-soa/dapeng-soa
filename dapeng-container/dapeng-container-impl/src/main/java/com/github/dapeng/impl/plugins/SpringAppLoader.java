@@ -2,16 +2,14 @@ package com.github.dapeng.impl.plugins;
 
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
-import com.github.dapeng.core.Plugin;
 import com.github.dapeng.core.*;
-import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.impl.container.DapengApplication;
-import org.apache.kafka.common.protocol.types.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;

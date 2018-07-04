@@ -16,30 +16,4 @@
         <module>dapeng-registry-zookeeper</module>
     </modules>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.github.dapeng</groupId>
-                <artifactId>dapeng-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.github.dapeng</groupId>
-                <artifactId>dapeng-utils</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.github.dapeng</groupId>
-                <artifactId>dapeng-router</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.github.dapeng</groupId>
-                <artifactId>dapeng-container-api</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-        </dependencies>
-    </dependencyManagement>
 </project>

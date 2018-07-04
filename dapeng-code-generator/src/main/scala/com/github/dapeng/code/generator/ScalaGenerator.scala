@@ -317,7 +317,7 @@ class ScalaGenerator extends CodeGenerator {
 
             if(method.doc != null && method.doc.contains("@IsSoaTransactionProcess")){
               <div>
-                if(InvocationContextImpl.Factory.getCurrentInstance.getMethodName().equals("{method.name}"))<block>
+                if(InvocationContextImpl.Factory.currentInstance().methodName().equals("{method.name}"))<block>
                 isSoaTransactionalProcess = true</block>
               </div>}
           }}}
@@ -332,9 +332,9 @@ class ScalaGenerator extends CodeGenerator {
             def {method.name}({toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
               <div>{nameAsId(field.name)}:{toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}) : {toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)} = <block>
 
-              val context = InvocationContextImpl.Factory.getCurrentInstance
-              context.setMethodName("{method.name}")
-              context.setSoaTransactionProcess(isSoaTransactionalProcess)
+              val context = InvocationContextImpl.Factory.currentInstance()
+              context.methodName("{method.name}")
+              context.isSoaTransactionProcess(isSoaTransactionalProcess)
               val response = pool.send(
               serviceName,
               version,
@@ -408,7 +408,7 @@ class ScalaGenerator extends CodeGenerator {
 
             if(method.doc != null && method.doc.contains("@IsSoaTransactionProcess")){
               <div>
-                if(InvocationContextImpl.Factory.getCurrentInstance.getMethodName().equals("{method.name}"))<block>
+                if(InvocationContextImpl.Factory.currentInstance().methodName().equals("{method.name}"))<block>
                 isSoaTransactionalProcess = true</block>
               </div>}
           }}}
@@ -443,9 +443,9 @@ class ScalaGenerator extends CodeGenerator {
             def {method.name}({toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
             <div>{nameAsId(field.name)}:{toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}) : Future[{toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)}] = <block>
 
-            val context = InvocationContextImpl.Factory.getCurrentInstance
-            context.setMethodName("{method.name}")
-            context.setSoaTransactionProcess(isSoaTransactionalProcess)
+            val context = InvocationContextImpl.Factory.currentInstance()
+            context.methodName("{method.name}")
+            context.isSoaTransactionProcess(isSoaTransactionalProcess)
             val response = pool.sendAsync(
             serviceName,
             version,
@@ -483,17 +483,16 @@ class ScalaGenerator extends CodeGenerator {
       object {enum.name} <block>
 
       {
-      toEnumItemArrayBuffer(enum.enumItems).map{(enumItem: EnumItem)=>{
-        if(enumItem.doc != null)
-          <div>
-            val {enumItem.label} = new {enum.name}({enumItem.value}, "{enumItem.doc.trim.replace("*","")}")
-          </div>
-        else
-          <div>
-            val {enumItem.label} = new {enum.name}({enumItem.value},"")
-          </div>
-      }
-      }
+        toEnumItemArrayBuffer(enum.enumItems).map{(enumItem: EnumItem)=>{
+          if(enumItem.doc != null)
+            <div>
+              val {enumItem.label} = new {enum.name}({enumItem.value}, "{enumItem.doc.trim.replace("*","")}")
+            </div>
+          else
+            <div>
+              val {enumItem.label} = new {enum.name}({enumItem.value},"")
+            </div>
+        }}
       }
       <div>val UNDEFINED = new {enum.name}(-1,"UNDEFINED") // undefined enum
       </div>
@@ -517,18 +516,6 @@ class ScalaGenerator extends CodeGenerator {
           case {toEnumItemArrayBuffer(enum.enumItems).map(_.value).mkString(" | ")} => false
           case _ => true
         </block>
-      </block>
-
-      def findByLabel(name: String): {enum.name} = <block>
-        name match <block>
-          {toEnumItemArrayBuffer(enum.enumItems).filterNot(i => i.doc.trim.isEmpty).map { (enumItem: EnumItem) => {
-            <div>case "{enumItem.doc.trim.replace("*","")}" => {enumItem.label}
-            </div>
-          }
-          }}
-          case _ => UNDEFINED
-        </block>
-
       </block>
 
     </block>

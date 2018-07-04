@@ -33,7 +33,7 @@ public class SimpleLogFilter implements ContainerFilter{
             StringBuilder builder = new StringBuilder("DONE")
                     .append(" ").append(channelHandlerContext.channel().remoteAddress())
                     .append(" ").append(channelHandlerContext.channel().localAddress())
-                    .append(" ").append(context.getSeqid())
+                    .append(" ").append(context.seqId())
                     .append(" ").append(soaHeader.getServiceName()).append(".").append(soaHeader.getMethodName()).append(":").append(soaHeader.getVersionName())
                     .append(" ").append(soaHeader.getRespCode())
                     .append(" ").append(soaHeader.getRespMessage())

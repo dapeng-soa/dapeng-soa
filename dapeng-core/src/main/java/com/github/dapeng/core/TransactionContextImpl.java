@@ -58,8 +58,13 @@ public class TransactionContextImpl implements TransactionContext {
     /**
      * 服务会话发起操作人Id, 特指后台用户
      */
-    private Optional<Long> operatorId = Optional.empty();
+    private Optional<Integer> operatorId = Optional.empty();
 
+    private Optional<String> operatorName = Optional.empty();
+
+    private Optional<Integer> customerId = Optional.empty();
+
+    private Optional<String> customerName = Optional.empty();
     /**
      * 调用者Tid
      */
@@ -68,6 +73,11 @@ public class TransactionContextImpl implements TransactionContext {
      * 调用者ip
      */
     private Optional<String> callerIp = Optional.empty();
+
+    /**
+     * 调用源
+     */
+    private Optional<String> callerFrom = Optional.empty();
     /**
      * 调用者port, 只有dapeng服务作为调用者的时候才有这个值
      */
@@ -128,14 +138,53 @@ public class TransactionContextImpl implements TransactionContext {
     }
 
     @Override
-    public Optional<Long> operatorId() {
+    public Optional<String> callerFrom() {
+        return callerFrom;
+    }
+
+    public TransactionContextImpl callerFrom(String callerFrom) {
+        this.callerFrom = Optional.ofNullable(callerFrom);
+        return this;
+    }
+    @Override
+    public Optional<Integer> operatorId() {
         return operatorId;
     }
 
-    public TransactionContextImpl operatorId(Long operatorId) {
+    public TransactionContextImpl operatorId(Integer operatorId) {
         this.operatorId = Optional.ofNullable(operatorId);
         return this;
     }
+    @Override
+    public Optional<String> operatorName() {
+        return operatorName;
+    }
+
+    public  TransactionContextImpl operatorName(String operatorName){
+        this.operatorName = Optional.ofNullable(operatorName);
+        return this;
+    }
+
+    @Override
+    public Optional<Integer> customerId() {
+        return customerId;
+    }
+
+    public TransactionContextImpl customerId(Integer customerId) {
+        this.customerId = Optional.ofNullable(customerId);
+        return this;
+    }
+
+    @Override
+    public Optional<String> customerName() {
+        return customerName;
+    }
+
+    public  TransactionContextImpl customerName(String customerName){
+        this.customerName = Optional.ofNullable(customerName);
+        return this;
+    }
+
 
     @Override
     public Optional<Long> userId() {
@@ -163,6 +212,7 @@ public class TransactionContextImpl implements TransactionContext {
         return header;
     }
 
+    @Override
     public TransactionContextImpl setHeader(SoaHeader header) {
         this.header = header;
         return  this;

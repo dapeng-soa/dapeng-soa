@@ -1,4 +1,4 @@
-package com.github.dapeng.util;
+package com.github.dapeng.core.helper;
 
 /**
  * Soa System Env Properties
@@ -41,6 +41,8 @@ public class SoaSystemEnvProperties {
     private static final String KEY_SOA_MAX_READ_BUFFER_SIZE = "soa.max.read.buffer.size";
     private static final String KEY_SOA_LOCAL_HOST_NAME = "soa.local.host.name";
     private static final String KEY_SOA_TRANSACTIONAL_ENABLE = "soa.transactional.enable";
+    private static final String KEY_SOA_LOG_FORMAT_ENABLE = "soa.log.format.enable";
+
 
     private static final String KEY_SOA_FILTER_EXCLUDES = "soa.filter.excludes";
     private static final String KEY_SOA_FILTER_INCLUDES = "soa.filter.includes";
@@ -67,7 +69,7 @@ public class SoaSystemEnvProperties {
     public static final String SOA_KAFKA_PORT = get(KEY_SOA_KAFKA_HOST, "127.0.0.1:9092");
 
     public static final long SOA_MAX_TIMEOUT = 300000L;
-    public static final long SOA_DEFAULT_TIMEOUT = 1000L;
+    public static final long SOA_DEFAULT_TIMEOUT = 15000L;
 
 
     public static final boolean SOA_CONTAINER_USETHREADPOOL = Boolean.valueOf(get(KEY_SOA_CONTAINER_USETHREADPOOL, Boolean.TRUE.toString()));
@@ -85,7 +87,7 @@ public class SoaSystemEnvProperties {
 
     public static final String SOA_LOCAL_HOST_NAME = get(KEY_SOA_LOCAL_HOST_NAME);
     public static final boolean SOA_TRANSACTIONAL_ENABLE = Boolean.valueOf(get(KEY_SOA_TRANSACTIONAL_ENABLE, "true"));
-    public static final boolean SOA_LOG_FORMAT_ENABLE = Boolean.valueOf(get(KEY_SOA_LOG_FORMAT_ENABLE, "true"));
+        public static final boolean SOA_LOG_FORMAT_ENABLE = Boolean.valueOf(get(KEY_SOA_LOG_FORMAT_ENABLE, "true"));
 
 
     public static final String SOA_FILTER_EXCLUDES = get(KEY_SOA_FILTER_EXCLUDES, "");

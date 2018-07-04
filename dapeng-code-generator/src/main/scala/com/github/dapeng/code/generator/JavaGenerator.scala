@@ -242,7 +242,7 @@ class JavaGenerator extends CodeGenerator {
         toMethodArrayBuffer(service.methods).map{(method:Method)=>{
 
           if(method.doc != null && method.doc.contains("@IsSoaTransactionProcess"))
-            <div>if(InvocationContextImpl.Factory.getCurrentInstance().getMethodName().equals("{method.name}"))
+            <div>if(InvocationContextImpl.Factory.currentInstance().methodName().equals("{method.name}"))
               <block>return true;</block></div>
         }}
         }
@@ -261,9 +261,9 @@ class JavaGenerator extends CodeGenerator {
               <div>{toDataTypeTemplate(field.getDataType())} {field.name}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}) throws SoaException<block>
 
               String methodName = "{method.name}";
-              InvocationContext context = InvocationContextImpl.Factory.getCurrentInstance();
-              context.setMethodName(methodName);
-              context.setSoaTransactionProcess(isSoaTransactionalProcess());
+              InvocationContext context = InvocationContextImpl.Factory.currentInstance();
+              context.methodName(methodName);
+              context.isSoaTransactionProcess(isSoaTransactionalProcess());
 
               {method.getRequest.name} {method.getRequest.name} = new {method.getRequest.name}();
               {
@@ -351,7 +351,7 @@ class JavaGenerator extends CodeGenerator {
         toMethodArrayBuffer(service.methods).map{(method:Method)=>{
 
           if(method.doc != null && method.doc.contains("@IsSoaTransactionProcess"))
-            <div>if(InvocationContextImpl.Factory.getCurrentInstance().getMethodName().equals("{method.name}"))
+            <div>if(InvocationContextImpl.Factory.currentInstance().methodName().equals("{method.name}"))
               <block>return true;</block></div>
         }}
         }
@@ -369,9 +369,9 @@ class JavaGenerator extends CodeGenerator {
               <div>{toDataTypeTemplate(field.getDataType())} {field.name}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}) throws SoaException<block>
 
               String methodName = "{method.name}";
-              InvocationContext context = InvocationContextImpl.Factory.getCurrentInstance();
-              context.setMethodName(methodName);
-              context.setSoaTransactionProcess(isSoaTransactionalProcess());
+              InvocationContext context = InvocationContextImpl.Factory.currentInstance();
+              context.methodName(methodName);
+              context.isSoaTransactionProcess(isSoaTransactionalProcess());
               {method.getRequest.name} {method.getRequest.name} = new {method.getRequest.name}();
               {
               toFieldArrayBuffer(method.getRequest.getFields).map{(field: Field)=>{

@@ -9,10 +9,10 @@ import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.ContainerFilter;
 import com.github.dapeng.core.filter.FilterChain;
 import com.github.dapeng.core.filter.FilterContext;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.transaction.api.GlobalTransactionCallbackWithoutResult;
 import com.github.dapeng.transaction.api.GlobalTransactionTemplate;
-import com.github.dapeng.util.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +28,7 @@ public class SoaGlobalTransactionalFilter implements ContainerFilter {
 
     @Override
     public void onEntry(FilterContext ctx, FilterChain next) throws SoaException {
-        TransactionContext context = TransactionContext.Factory.getCurrentInstance();
+        TransactionContext context = TransactionContext.Factory.currentInstance();
 
         SoaHeader soaHeader = (SoaHeader) ctx.getAttribute("soaHeader");
         SoaServiceDefinition serviceDef = (SoaServiceDefinition) ctx.getAttribute("serviceDef");

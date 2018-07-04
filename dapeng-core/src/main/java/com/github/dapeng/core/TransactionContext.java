@@ -43,7 +43,15 @@ public interface TransactionContext {
 
     Optional<String> callerIp();
 
-    Optional<Long> operatorId();
+    Optional<String> callerFrom();
+
+    Optional<Integer> operatorId();
+
+    Optional<String> operatorName();
+
+    Optional<Integer> customerId();
+
+    Optional<String> customerName();
 
     Optional<Long> userId();
 
@@ -52,6 +60,8 @@ public interface TransactionContext {
     CodecProtocol codecProtocol();
 
     SoaHeader getHeader();
+
+    TransactionContextImpl setHeader(SoaHeader header);
 
     int seqId();
 
