@@ -106,6 +106,14 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         REQ args;
         try {
             args = soaFunction.reqSerializer.read(contentProtocol);
+        } catch (SoaException e) {
+            if (e.getCode().equals(SoaCode.StructFieldNull.getCode())) {
+                e.setCode(SoaCode.ServerReqFieldNull.getCode());
+                e.setMsg(SoaCode.ServerReqFieldNull.getMsg());
+            }
+            //反序列化出错
+            LOGGER.error(DumpUtil.dumpToStr(msg));
+            throw e;
         } catch (TProtocolException | OutOfMemoryError e) {
             //反序列化出错
             LOGGER.error(DumpUtil.dumpToStr(msg));

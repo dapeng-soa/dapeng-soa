@@ -15,6 +15,7 @@ public enum SoaCode implements SoaBaseCodeInterface {
     ReqTimeOut("Err-Core-406", "请求超时"),
     ReqFieldNull("Err-Core-411" , "请求对象字段不允许为空"),
     RespFieldNull("Err-Core-412" , "响应对象字段不允许为空"),
+    RespDecodeError("Err-Core-413", "响应通讯包解析出错"),
 
     // 服务端
     ServerUnKnown("Err-Core-500", "系统出错了!"),
@@ -24,8 +25,10 @@ public enum SoaCode implements SoaBaseCodeInterface {
     ServerReqTimeOut("Err-Core-506", "请求超时"),
     ReqBufferOverFlow("Err-Core-510", "请求过大"),
     ServerReqFieldNull("Err-Core-511", "请求对象字段不允许为空"),
-    ServerRespFieldNull("Err-Core-512", "响应对象字段不允许为空");
+    ServerRespFieldNull("Err-Core-512", "响应对象字段不允许为空"),
 
+    // 通用错误码
+    StructFieldNull("Err-Core-600", "结构体字段不允许为空");
     private String code;
     private String msg;
 

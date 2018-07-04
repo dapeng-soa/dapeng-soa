@@ -166,16 +166,16 @@
       public void validate(com.github.dapeng.basic.api.counter.domain.DataPoint bean) throws TException{
       
               if(bean.getBizTag() == null)
-              throw new SoaException(SoaCode.ReqFieldNull, "bizTag字段不允许为空");
+              throw new SoaException(SoaCode.StructFieldNull, "bizTag字段不允许为空");
             
               if(bean.getValues() == null)
-              throw new SoaException(SoaCode.ReqFieldNull, "values字段不允许为空");
+              throw new SoaException(SoaCode.StructFieldNull, "values字段不允许为空");
             
               if(bean.getTags() == null)
-              throw new SoaException(SoaCode.ReqFieldNull, "tags字段不允许为空");
+              throw new SoaException(SoaCode.StructFieldNull, "tags字段不允许为空");
             
               if(bean.getDatabase() == null)
-              throw new SoaException(SoaCode.ReqFieldNull, "database字段不允许为空");
+              throw new SoaException(SoaCode.StructFieldNull, "database字段不允许为空");
             
     }
     

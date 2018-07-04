@@ -319,7 +319,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
             LOGGER.error("通讯包解析出错:\n" + ex.getMessage(), ex);
             LOGGER.error(DumpUtil.dumpToStr(responseBuf.readerIndex(readerIndex)));
             return new Result<>(null,
-                    new SoaException(SoaCode.ClientUnKnown, "通讯包解析出错"));
+                    new SoaException(SoaCode.RespDecodeError, SoaCode.RespDecodeError.getCode()));
         } finally {
             if (responseBuf != null) {
                 responseBuf.release();
