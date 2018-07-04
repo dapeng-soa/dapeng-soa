@@ -76,14 +76,22 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                         LOGGER.error(e.getMessage(), e);
                         soaHeader.setCalleeTime2(0);
                     }
-                    soaHeader.setCalleeIp(Optional.ofNullable(IPUtils.transferIp(SoaSystemEnvProperties.SOA_CONTAINER_IP)));
-                    soaHeader.setCalleePort(Optional.ofNullable(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
+                    soaHeader.setCalleeIp(Optional.of(IPUtils.transferIp(SoaSystemEnvProperties.SOA_CONTAINER_IP)));
+                    soaHeader.setCalleePort(Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
                     Joiner joiner = Joiner.on(":");
                     soaHeader.setCalleeMid(joiner.join(soaHeader.getServiceName(),soaHeader.getMethodName(),soaHeader.getVersionName()));
                     soaHeader.setCalleeTid(transactionContext.calleeTid());
                     messageProcessor.writeHeader(transactionContext);
                     if (serializer != null && result != null) {
-                        messageProcessor.writeBody(serializer, result);
+                        try {
+                            messageProcessor.writeBody(serializer, result);
+                        } catch (SoaException e) {
+                            if (e.getCode().equals(SoaCode.StructFieldNull.getCode())) {
+                                e.setCode(SoaCode.ServerRespFieldNull.getCode());
+                                e.setMsg(SoaCode.ServerRespFieldNull.getMsg());
+                            }
+                            throw e;
+                        }
                     }
                     messageProcessor.writeMessageEnd();
                     transport.flush();

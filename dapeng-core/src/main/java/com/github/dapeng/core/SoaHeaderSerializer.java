@@ -369,13 +369,13 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
     @Override
     public void validate(SoaHeader bean) throws TException {
         if (bean.getServiceName() == null) {
-            throw new SoaException(SoaCode.ServerReqFieldNull, "serviceName字段不允许为空");
+            throw new SoaException(SoaCode.ReqFieldNull, "serviceName字段不允许为空");
         }
         if (bean.getMethodName() == null) {
-            throw new SoaException(SoaCode.ServerReqFieldNull, "methodName字段不允许为空");
+            throw new SoaException(SoaCode.ReqFieldNull, "methodName字段不允许为空");
         }
         if (bean.getVersionName() == null) {
-            throw new SoaException(SoaCode.ServerReqFieldNull, "versionName字段不允许为空");
+            throw new SoaException(SoaCode.ReqFieldNull, "versionName字段不允许为空");
         }
     }
 

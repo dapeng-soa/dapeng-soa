@@ -93,7 +93,7 @@
       public void validate(submitPoint_args bean) throws TException{
       
               if(bean.getDataPoint() == null)
-              throw new SoaException(SoaCode.ReqFieldNull, "dataPoint字段不允许为空");
+              throw new SoaException(SoaCode.StructFieldNull, "dataPoint字段不允许为空");
             
                 if(bean.getDataPoint() != null)
                 new com.github.dapeng.basic.api.counter.domain.serializer.DataPointSerializer().validate(bean.getDataPoint());
@@ -258,7 +258,7 @@
       public void validate(submitPoints_args bean) throws TException{
       
               if(bean.getDataPoints() == null)
-              throw new SoaException(SoaCode.ReqFieldNull, "dataPoints字段不允许为空");
+              throw new SoaException(SoaCode.StructFieldNull, "dataPoints字段不允许为空");
             
     }
     
@@ -463,16 +463,16 @@
       public void validate(queryPoints_args bean) throws TException{
       
               if(bean.getCondition() == null)
-              throw new SoaException(SoaCode.ReqFieldNull, "condition字段不允许为空");
+              throw new SoaException(SoaCode.StructFieldNull, "condition字段不允许为空");
             
                 if(bean.getCondition() != null)
                 new com.github.dapeng.basic.api.counter.domain.serializer.DataPointSerializer().validate(bean.getCondition());
               
               if(bean.getBeginTimeStamp() == null)
-              throw new SoaException(SoaCode.ReqFieldNull, "beginTimeStamp字段不允许为空");
+              throw new SoaException(SoaCode.StructFieldNull, "beginTimeStamp字段不允许为空");
             
               if(bean.getEndTimeStamp() == null)
-              throw new SoaException(SoaCode.ReqFieldNull, "endTimeStamp字段不允许为空");
+              throw new SoaException(SoaCode.StructFieldNull, "endTimeStamp字段不允许为空");
             
     }
     
@@ -555,7 +555,7 @@
       public void validate(queryPoints_result bean) throws TException{
       
               if(bean.getSuccess() == null)
-              throw new SoaException(SoaCode.ReqFieldNull, "success字段不允许为空");
+              throw new SoaException(SoaCode.StructFieldNull, "success字段不允许为空");
             
     }
     
@@ -681,7 +681,7 @@
           public void validate(getServiceMetadata_result bean) throws TException {
 
             if (bean.getSuccess() == null)
-            throw new SoaException(SoaCode.RespFieldNull, "success字段不允许为空");
+            throw new SoaException(SoaCode.StructFieldNull, "success字段不允许为空");
           }
 
           @Override
