@@ -56,7 +56,7 @@ nohup java -server $JVM_OPTS $GC_OPTS $NETTY_OPTS $SOA_BASE $DEBUG_OPTS $USER_OP
 pid="$!"
 echo $pid > $LOGDIR/pid.txt
 
-fluentBitEnable = "$fluent_bit_enable"
+fluentBitEnable="$fluent_bit_enable"
 if [ "$fluentBitEnable" == "" ]; then
     fluentBitEnable="false"
 fi
