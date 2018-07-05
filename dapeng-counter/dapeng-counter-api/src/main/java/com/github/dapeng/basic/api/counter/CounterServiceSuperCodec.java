@@ -90,6 +90,7 @@
       oprot.writeStructEnd();
     }
     
+      @Override
       public void validate(submitPoint_args bean) throws TException{
       
               if(bean.getDataPoint() == null)
@@ -157,6 +158,7 @@
     }
     
             
+      @Override
       public void validate(submitPoint_result bean) throws TException{
       
     }
@@ -255,6 +257,7 @@
       oprot.writeStructEnd();
     }
     
+      @Override
       public void validate(submitPoints_args bean) throws TException{
       
               if(bean.getDataPoints() == null)
@@ -319,6 +322,7 @@
     }
     
             
+      @Override
       public void validate(submitPoints_result bean) throws TException{
       
     }
@@ -460,6 +464,7 @@
       oprot.writeStructEnd();
     }
     
+      @Override
       public void validate(queryPoints_args bean) throws TException{
       
               if(bean.getCondition() == null)
@@ -552,6 +557,7 @@
     }
     
             
+      @Override
       public void validate(queryPoints_result bean) throws TException{
       
               if(bean.getSuccess() == null)
@@ -622,6 +628,7 @@
             oprot.writeStructEnd();
           }
 
+          @Override
           public void validate(getServiceMetadata_args bean) throws TException {}
 
           @Override
@@ -678,6 +685,7 @@
             oprot.writeStructEnd();
           }
 
+          @Override
           public void validate(getServiceMetadata_result bean) throws TException {
 
             if (bean.getSuccess() == null)

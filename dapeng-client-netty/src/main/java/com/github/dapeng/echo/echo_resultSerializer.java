@@ -53,6 +53,7 @@ public class echo_resultSerializer implements BeanSerializer<echo_result> {
         oprot.writeStructEnd();
     }
 
+    @Override
     public void validate(echo_result bean) throws TException {
 
         if (bean.getSuccess() == null)
