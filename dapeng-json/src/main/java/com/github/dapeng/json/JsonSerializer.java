@@ -490,7 +490,7 @@ public class JsonSerializer implements BeanSerializer<String> {
             if (!mandatoryMissFileds.isEmpty()) {
                 String fieldName = current.fieldName;
                 String struct = current.struct.name;
-                TException ex = new TException("JsonError, please check:"
+                SoaException ex = new SoaException(SoaCode.ReqFieldNull.getCode(),"JsonError, please check:"
                         + struct + "." + fieldName
                         + ", struct mandatory fields missing:"
                         + mandatoryMissFileds.stream().map(field -> field.name + ", ").collect(Collectors.toList()));
