@@ -124,7 +124,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             //反序列化出错
             LOGGER.error(DumpUtil.dumpToStr(msg));
             throw e;
-        } catch (TProtocolException | OutOfMemoryError e) {
+        } catch (TException | OutOfMemoryError e) {
             //反序列化出错
             LOGGER.error(DumpUtil.dumpToStr(msg));
             throw e;
