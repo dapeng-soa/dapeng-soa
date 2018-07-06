@@ -26,7 +26,7 @@ public enum SoaCode implements SoaBaseCodeInterface {
     ReqBufferOverFlow("Err-Core-510", "请求过大"),
     ServerReqFieldNull("Err-Core-511", "请求对象字段不允许为空"),
     ServerRespFieldNull("Err-Core-512", "响应对象字段不允许为空"),
-
+    ReqDecodeError("Err-Core-513", "请求通讯包解析出错"),
     // 通用错误码
     StructFieldNull("Err-Core-600", "结构体字段不允许为空");
     private String code;
