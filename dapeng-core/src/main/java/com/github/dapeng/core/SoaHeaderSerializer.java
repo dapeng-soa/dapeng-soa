@@ -225,6 +225,13 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     }
                     break;
                 case 27:
+                    if (schemeField.type == TType.STRING) {
+                        bean.setCallerFrom(Optional.of(iprot.readString()));
+                    }else {
+                        TProtocolUtil.skip(iprot, schemeField.type);
+                    }
+                    break;
+                case 28:
                     if (schemeField.type == com.github.dapeng.org.apache.thrift.protocol.TType.MAP) {
                         com.github.dapeng.org.apache.thrift.protocol.TMap _map0 = iprot.readMapBegin();
                         java.util.Map<String, String> elem0 = new java.util.HashMap<>(_map0.size);
@@ -391,6 +398,12 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
         if(bean.getSessionId().isPresent()){
             oprot.writeFieldBegin(new TField("sessionId", TType.STRING, (short) 26));
             oprot.writeString(bean.getSessionId().get());
+            oprot.writeFieldEnd();
+        }
+
+        if(bean.getCallerFrom().isPresent()){
+            oprot.writeFieldBegin(new TField("callerFrom", TType.STRING, (short) 27));
+            oprot.writeString(bean.getCallerFrom().get());
             oprot.writeFieldEnd();
         }
 
