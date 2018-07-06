@@ -6,6 +6,7 @@ import com.github.dapeng.core.SoaHeader;
 import com.github.dapeng.core.helper.SoaHeaderHelper;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.org.apache.thrift.TException;
+import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.SoaMessageBuilder;
 import io.netty.buffer.AbstractByteBufAllocator;
 import io.netty.buffer.ByteBuf;

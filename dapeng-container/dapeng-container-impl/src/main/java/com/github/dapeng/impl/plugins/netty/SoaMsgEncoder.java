@@ -95,8 +95,6 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     messageProcessor.writeMessageEnd();
                     transport.flush();
 
-                    LOGGER.info("-------------------write response:");
-                    DumpUtil.dump(out);
                     if (LOGGER.isDebugEnabled()) {
                         String debugLog = "response[seqId:" + transactionContext.seqId() + ", respCode:" + respCode.get() + "]:"
                                 + "service[" + soaHeader.getServiceName()

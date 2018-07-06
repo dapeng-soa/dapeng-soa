@@ -330,7 +330,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
         }
         if (bean.getOperatorId().isPresent()) {
             oprot.writeFieldBegin(new TField("operatorId", TType.I32, (short) 15));
-            oprot.writeI64(bean.getOperatorId().get());
+            oprot.writeI32(bean.getOperatorId().get());
             oprot.writeFieldEnd();
         }
         if (bean.getCalleePort().isPresent()) {

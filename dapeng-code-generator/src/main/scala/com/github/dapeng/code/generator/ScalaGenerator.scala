@@ -317,7 +317,7 @@ class ScalaGenerator extends CodeGenerator {
 
             if(method.doc != null && method.doc.contains("@IsSoaTransactionProcess")){
               <div>
-                if(InvocationContextImpl.Factory.currentInstance().methodName().equals("{method.name}"))<block>
+                if(InvocationContextImpl.Factory.getCurrentInstance.getMethodName().equals("{method.name}"))<block>
                 isSoaTransactionalProcess = true</block>
               </div>}
           }}}
@@ -408,7 +408,7 @@ class ScalaGenerator extends CodeGenerator {
 
             if(method.doc != null && method.doc.contains("@IsSoaTransactionProcess")){
               <div>
-                if(InvocationContextImpl.Factory.currentInstance().methodName().equals("{method.name}"))<block>
+                if(InvocationContextImpl.Factory.getCurrentInstance.getMethodName().equals("{method.name}"))<block>
                 isSoaTransactionalProcess = true</block>
               </div>}
           }}}
