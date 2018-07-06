@@ -127,7 +127,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         } catch (TException | OutOfMemoryError e) {
             //反序列化出错
             LOGGER.error(DumpUtil.dumpToStr(msg));
-            throw e;
+            throw new SoaException(SoaCode.ReqDecodeError.getCode(), SoaCode.ReqDecodeError.getMsg(), e);
         }
         contentProtocol.readMessageEnd();
 
