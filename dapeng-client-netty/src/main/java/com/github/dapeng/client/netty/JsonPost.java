@@ -79,7 +79,7 @@ public class JsonPost {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("soa-response: " + jsonResponse + " cost:" + (System.currentTimeMillis() - beginTime) + "ms");
         } else {
-            LOGGER.info("soa-response: " + DumpUtil.formatToString(jsonResponse) + (System.currentTimeMillis() - beginTime) + "ms");
+            LOGGER.info("soa-response: " + DumpUtil.formatToString(jsonResponse) + " cost:" + (System.currentTimeMillis() - beginTime) + "ms");
         }
 
         return jsonResponse;
