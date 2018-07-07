@@ -7,7 +7,6 @@ import java.io.ByteArrayOutputStream;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- *
  * @author lihuimin
  * @date 2017/12/21
  */
@@ -34,7 +33,7 @@ public class DumpUtil {
         StringBuilder sb = new StringBuilder();
 
         // XX XX XX XX XX XX XX XX  XX XX XX XX XX XX XX XX  ASCII....
-        sb.append("=======[\n");
+        sb.append("=======[" + availabe + "\n");
         int i = 0;
         for (; i < availabe; i++) {
             byte b = buffer.getByte(readerIndex + i);
