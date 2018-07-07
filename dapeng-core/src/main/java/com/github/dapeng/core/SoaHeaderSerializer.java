@@ -1,12 +1,10 @@
 package com.github.dapeng.core;
 
-import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.*;
 
 import java.util.Optional;
 
-import static com.github.dapeng.core.helper.DapengUtil.longToHexStr;
 import static com.github.dapeng.core.helper.IPUtils.transferIp;
 
 /**
@@ -369,13 +367,13 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
     @Override
     public void validate(SoaHeader bean) throws TException {
         if (bean.getServiceName() == null) {
-            throw new SoaException(SoaCode.ReqFieldNull, "serviceName字段不允许为空");
+            throw new SoaException(SoaCode.StructFieldNull, "serviceName字段不允许为空");
         }
         if (bean.getMethodName() == null) {
-            throw new SoaException(SoaCode.ReqFieldNull, "methodName字段不允许为空");
+            throw new SoaException(SoaCode.StructFieldNull, "methodName字段不允许为空");
         }
         if (bean.getVersionName() == null) {
-            throw new SoaException(SoaCode.ReqFieldNull, "versionName字段不允许为空");
+            throw new SoaException(SoaCode.StructFieldNull, "versionName字段不允许为空");
         }
     }
 
