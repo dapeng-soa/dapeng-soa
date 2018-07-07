@@ -74,9 +74,10 @@ public class SoaHeaderHelper {
             header.setUserIp(invocationCtxProxy.userIp());
             header.setUserId(invocationCtxProxy.userId());
             header.setOperatorId(invocationCtxProxy.operatorId());
-            header.setOperatorName(invocationContext.operatorName());
-            header.setCustomerId(invocationContext.customerId());
-            header.setCustomerName(invocationContext.customerName());
+            header.setOperatorName(invocationCtxProxy.operatorName());
+            header.setCustomerId(invocationCtxProxy.customerId());
+            header.setCustomerName(invocationCtxProxy.customerName());
+            header.setCallerFrom(invocationCtxProxy.callerFrom());
             header.setCallerMid(invocationCtxProxy.callerMid());
 
             header.addCookies(invocationCtxProxy.cookies());
