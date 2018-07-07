@@ -95,7 +95,7 @@ public class SoaHeaderHelper {
         }
         if (invocationContext.sessionTid().isPresent()) {
             header.setSessionTid(invocationContext.sessionTid());
-        }
+    }
 
         /**
          * 如果容器内调用其它服务, 将原始的调用者信息传递
