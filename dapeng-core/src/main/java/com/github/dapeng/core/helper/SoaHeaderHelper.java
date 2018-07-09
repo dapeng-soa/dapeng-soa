@@ -5,6 +5,7 @@ import com.github.dapeng.core.SoaHeader;
 import com.github.dapeng.core.TransactionContext;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * @author tangliu
@@ -64,7 +65,6 @@ public class SoaHeaderHelper {
 
         header.setOperatorId(invocationContext.operatorId());
         header.setOperatorName(invocationContext.operatorName());
-
 
         /**
          * 如果有invocationCtxProxy(一般在web或者三方系统)
@@ -141,6 +141,14 @@ public class SoaHeaderHelper {
             invocationContext.callerTid(transactionContext.calleeTid());
 
             header.setCallerPort(Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
+
+            if (!header.getCallerFrom().isPresent())
+                header.setCallerFrom(Optional.of(SoaSystemEnvProperties.SOA_SERVICE_CALLERFROM));
+
+
+            if (!header.getSessionId().isPresent()) {
+                header.setSessionId(Optional.of(UUID.randomUUID().toString()));
+            }
         }
         return header;
     }
