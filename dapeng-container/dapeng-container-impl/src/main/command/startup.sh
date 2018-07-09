@@ -37,7 +37,7 @@ JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=109
 JVM_OPTS=" -Xms256M -Xmx256M -Dfile.encoding=UTF-8 -Dsun.jun.encoding=UTF-8"
 NETTY_OPTS=" -Dio.netty.leakDetectionLevel=advanced "
 GC_OPTS=" -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+UseParallelGC -XX:+UseParallelOldGC -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDateStamps -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintGCDetails -Dlog.dir=$PRGDIR/.."
-SOA_BASE="-Dsoa.base=$PRGDIR/../ -Dsoa.run.mode=native"
+SOA_BASE="-Dsoa.base=$PRGDIR/../ -Dsoa.run.mode=native -javaagent:/opt/skywalking-agent/skywalking-agent.jar"
 
 # SIGTERM-handler  graceful-shutdown
 pid=0
