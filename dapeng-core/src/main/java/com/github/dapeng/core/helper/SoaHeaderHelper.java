@@ -134,6 +134,18 @@ public class SoaHeaderHelper {
                 if (!oriHeader.getCookies().isEmpty()) {
                     header.addCookies(oriHeader.getCookies());
                 }
+                if (!oriHeader.getCallerFrom().isPresent()){
+                    header.setCallerFrom(oriHeader.getCallerFrom());
+                }
+                if (!oriHeader.getOperatorName().isPresent()){
+                    header.setOperatorName(oriHeader.getOperatorName());
+                }
+                if (!oriHeader.getCustomerId().isPresent()){
+                    header.setCustomerId(oriHeader.getCustomerId());
+                }
+                if (!oriHeader.getCustomerName().isPresent()){
+                    header.setCustomerName(oriHeader.getCustomerName());
+                }
 
             }
             // 传递tid
@@ -142,13 +154,13 @@ public class SoaHeaderHelper {
 
             header.setCallerPort(Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
 
-            if (!header.getCallerFrom().isPresent())
-                header.setCallerFrom(Optional.of(SoaSystemEnvProperties.SOA_SERVICE_CALLERFROM));
+        }
+        if (!header.getCallerFrom().isPresent())
+            header.setCallerFrom(Optional.of(SoaSystemEnvProperties.SOA_SERVICE_CALLERFROM));
 
 
-            if (!header.getSessionId().isPresent()) {
-                header.setSessionId(Optional.of(UUID.randomUUID().toString()));
-            }
+        if (!header.getSessionId().isPresent()) {
+            header.setSessionId(Optional.of(UUID.randomUUID().toString()));
         }
         return header;
     }
