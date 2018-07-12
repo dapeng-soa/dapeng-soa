@@ -385,7 +385,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
 
         if (bean.getCustomerId().isPresent()) {
             oprot.writeFieldBegin(new TField("customerId", TType.I32, (short) 24));
-            oprot.writeI64(bean.getCustomerId().get());
+            oprot.writeI32(bean.getCustomerId().get());
             oprot.writeFieldEnd();
         }
 
