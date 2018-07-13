@@ -2,7 +2,9 @@ package com.github.dapeng.core.helper;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.github.dapeng.core.helper.IPUtils.localIpAsInt;
@@ -17,16 +19,16 @@ public class DapengUtil {
     private static int processId = getProcessId() << 16;
     private static int localIp = localIpAsInt();
     /**
-     * 生成TransactionId. 这是一个长度为12的16进制字符串,
+     * 生成TransactionId. 这是一个长度为16的16进制字符串(共64bit),
      * 可用于sessionTid, callerTid, calleeTid
-     * byte[0-3] ip^ pid<<16  byte[4-7] sequenceno顺序递增, Integer.MAX_VALUE重置
+     * byte[0-3] ip^ pid<<32  byte[4-7] sequenceno顺序递增, Integer.MAX_VALUE重置
      *
      * @return
      */
     public static long generateTid() {
         long high = (long)(localIp ^ processId);
         int low = seqId.getAndIncrement();
-        return ((high << 32) & 0xFFFF0000) | (low & 0xFFFF);
+        return ((high << 32) & 0xFFFF_FFFF_0000_0000L) | (low & 0xFFFF_FFFF);
     }
 
     public static String longToHexStr(long tid) {
@@ -56,7 +58,7 @@ public class DapengUtil {
      *
      * @return
      */
-    public static int getProcessId() {
+    private static int getProcessId() {
         RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
         return Integer.valueOf(runtimeMXBean.getName().split("@")[0])
                 .intValue();
