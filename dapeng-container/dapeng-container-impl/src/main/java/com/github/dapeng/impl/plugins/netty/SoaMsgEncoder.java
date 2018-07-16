@@ -88,6 +88,10 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     soaHeader.setOperatorName(transactionContext.operatorName());
                     soaHeader.setCustomerId(transactionContext.customerId());
                     soaHeader.setCustomerName(transactionContext.customerName());
+                    soaHeader.setCallerFrom(transactionContext.callerFrom());
+                    if (transactionContext.callerIp().isPresent()) {
+                        soaHeader.setCallerIp(transactionContext.callerIp().get());
+                    }
                     messageProcessor.writeHeader(transactionContext);
                     if (serializer != null && result != null) {
                         messageProcessor.writeBody(serializer, result);
