@@ -590,20 +590,40 @@ class ScalaGenerator extends CodeGenerator {
             * {method.doc}
             **/
             {
-            if (method.annotations != null) {
-              import collection.JavaConverters._
+            if (method.annotations != null||(method.doc != null && method.doc.contains("@SoaGlobalTransactional"))) {
+              if(method.annotations != null&&(method.doc != null && method.doc.contains("@SoaGlobalTransactional"))){
+                import collection.JavaConverters._
 
-              val methods = classOf[CustomConfig].getDeclaredMethods.map(i => "core." + i.getName -> i.getReturnType.getName).toMap
+                val methods = classOf[CustomConfig].getDeclaredMethods.map(i => "core." + i.getName -> i.getReturnType.getName).toMap
 
-              val annotationValue = method.annotations.asScala.map(i => {
-                if (methods.contains(i.key)) {
-                  i.key.substring(i.key.lastIndexOf(".") + 1) + "=" + getInstanceTypeValue(i.value, methods.get(i.key).get)
-                } else {""}
-              }).filterNot(_.isEmpty).mkString("(",",",")")
-              <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
+                val annotationValue = method.annotations.asScala.map(i => {
+                  if (methods.contains(i.key)) {
+                    i.key.substring(i.key.lastIndexOf(".") + 1) + "=" + getInstanceTypeValue(i.value, methods.get(i.key).get)
+                  } else {
+                    ""
+                  }
+                }).filterNot(_.isEmpty).mkString("(", ",", ")")
+
+                <div>@SoaGlobalTransactional @com.github.dapeng.core.CustomConfig{annotationValue}</div>
+
+              }else if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")){
+                <div>@SoaGlobalTransactional</div>
+              }else if(method.annotations != null){
+                import collection.JavaConverters._
+
+                val methods = classOf[CustomConfig].getDeclaredMethods.map(i => "core." + i.getName -> i.getReturnType.getName).toMap
+
+                val annotationValue = method.annotations.asScala.map(i => {
+                  if (methods.contains(i.key)) {
+                    i.key.substring(i.key.lastIndexOf(".") + 1) + "=" + getInstanceTypeValue(i.value, methods.get(i.key).get)
+                  } else {
+                    ""
+                  }
+                }).filterNot(_.isEmpty).mkString("(", ",", ")")
+                <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
+              }
             }
             }
-            {if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div>}
             <div>@throws[com.github.dapeng.core.SoaException]</div>
             def {method.name}(
             {toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
@@ -657,8 +677,10 @@ class ScalaGenerator extends CodeGenerator {
           /**
           * {method.doc}
           **/
-            {
-            if (method.annotations != null) {
+
+          {
+          if (method.annotations != null||(method.doc != null && method.doc.contains("@SoaGlobalTransactional"))) {
+            if(method.annotations != null&&(method.doc != null && method.doc.contains("@SoaGlobalTransactional"))){
               import collection.JavaConverters._
 
               val methods = classOf[CustomConfig].getDeclaredMethods.map(i => "core." + i.getName -> i.getReturnType.getName).toMap
@@ -666,12 +688,31 @@ class ScalaGenerator extends CodeGenerator {
               val annotationValue = method.annotations.asScala.map(i => {
                 if (methods.contains(i.key)) {
                   i.key.substring(i.key.lastIndexOf(".") + 1) + "=" + getInstanceTypeValue(i.value, methods.get(i.key).get)
-                } else {""}
-              }).filterNot(_.isEmpty).mkString("(",",",")")
+                } else {
+                  ""
+                }
+              }).filterNot(_.isEmpty).mkString("(", ",", ")")
+
+              <div>@SoaGlobalTransactional @com.github.dapeng.core.CustomConfig{annotationValue}</div>
+
+            }else if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")){
+              <div>@SoaGlobalTransactional</div>
+            }else if(method.annotations != null){
+              import collection.JavaConverters._
+
+              val methods = classOf[CustomConfig].getDeclaredMethods.map(i => "core." + i.getName -> i.getReturnType.getName).toMap
+
+              val annotationValue = method.annotations.asScala.map(i => {
+                if (methods.contains(i.key)) {
+                  i.key.substring(i.key.lastIndexOf(".") + 1) + "=" + getInstanceTypeValue(i.value, methods.get(i.key).get)
+                } else {
+                  ""
+                }
+              }).filterNot(_.isEmpty).mkString("(", ",", ")")
               <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
             }
-            }
-          {if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div>}
+          }
+          }
           <div>@throws[com.github.dapeng.core.SoaException]</div>
           def {method.name}(
           {toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{

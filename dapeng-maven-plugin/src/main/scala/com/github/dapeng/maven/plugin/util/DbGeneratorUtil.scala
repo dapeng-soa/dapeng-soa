@@ -321,6 +321,7 @@ object DbGeneratorUtil {
 
   def tableNameConvert(tableName: String): String = {
     if (tableName.endsWith("ies")) tableName.substring(0, tableName.length - 3) + "y"
+    else if (tableName.endsWith("ouses")) tableName.substring(0, tableName.length - 3) + "ouse"
     else if (tableName.endsWith("ses")) tableName.substring(0, tableName.length - 3) + "s"
     else if (tableName.endsWith("shes")) tableName.substring(0, tableName.length - 4) + "sh"
     else if (tableName.endsWith("ches")) tableName.substring(0, tableName.length - 4) + "ch"

@@ -1,5 +1,5 @@
 #soa-container:base
-FROM docker.oa.isuwang.com:5000/system/jdk8:3.0
+FROM docker.oa.isuwang.com:5000/system/jdk8:4.0
 MAINTAINER ever@iplas.com.cn
 
 # Setting Envirnoment
