@@ -230,7 +230,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * @param compatibles
      * @return
      */
-    private List<RuntimeInstance> router(String service, String method, String version, List<RuntimeInstance> compatibles) {
+    private List<RuntimeInstance> router(String service, String method, String version, List<RuntimeInstance> compatibles) throws SoaException {
         InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         List<Route> routes = zkAgent.getRoutes(service);
         if (routes == null || routes.size() == 0) {
@@ -241,6 +241,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             context.methodName(method);
             context.versionName(version);
             List<RuntimeInstance> runtimeInstances = RoutesExecutor.executeRoutes(context, routes, compatibles);
+            if (runtimeInstances.size() == 0) {
+                throw new SoaException(SoaCode.NoMatchedRouting);
+            }
             return runtimeInstances;
         }
     }

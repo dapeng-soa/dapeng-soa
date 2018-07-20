@@ -7,6 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.github.dapeng.core.helper.DapengUtil.longToHexStr;
+import static com.github.dapeng.core.helper.IPUtils.transferIp;
+
 /**
  * <pre>
  * web	service1	service2	service3	service4
@@ -35,6 +38,10 @@ import java.util.Optional;
  * <p>
  * SoaHeader用于包装需传递到服务提供方的信息
  *
+<<<<<<< HEAD
+=======
+ *
+>>>>>>> master
  * @author tangliu
  * @date 2016/1/11
  */

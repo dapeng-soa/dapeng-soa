@@ -83,7 +83,15 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     soaHeader.setCalleeTid(transactionContext.calleeTid());
                     messageProcessor.writeHeader(transactionContext);
                     if (serializer != null && result != null) {
-                        messageProcessor.writeBody(serializer, result);
+                        try {
+                            messageProcessor.writeBody(serializer, result);
+                        } catch (SoaException e) {
+                            if (e.getCode().equals(SoaCode.StructFieldNull.getCode())) {
+                                e.setCode(SoaCode.ServerRespFieldNull.getCode());
+                                e.setMsg(SoaCode.ServerRespFieldNull.getMsg());
+                            }
+                            throw e;
+                        }
                     }
                     messageProcessor.writeMessageEnd();
                     transport.flush();
@@ -141,7 +149,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         SoaException soaException = transactionContext.soaException();
         if (soaException == null) {
             soaException = new SoaException(soaHeader.getRespCode().get(),
-                    soaHeader.getRespMessage().orElse(SoaCode.UnKnown.getMsg()));
+                    soaHeader.getRespMessage().orElse(SoaCode.ServerUnKnown.getMsg()));
             transactionContext.soaException(soaException);
         }
 
@@ -166,7 +174,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
                     + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
             // 根据respCode判断是否是业务异常还是运行时异常
-            if (soaHeader.getRespCode().get().startsWith("Err-Core")) {
+            if (DapengUtil.isDapengCoreException(soaException)) {
                 application.error(this.getClass(), infoLog, soaException);
             } else {
                 application.info(this.getClass(), infoLog);
