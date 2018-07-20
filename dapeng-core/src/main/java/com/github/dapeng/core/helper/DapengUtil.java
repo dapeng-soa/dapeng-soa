@@ -1,5 +1,7 @@
 package com.github.dapeng.core.helper;
 
+import com.github.dapeng.core.SoaException;
+
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.HashSet;
@@ -53,6 +55,19 @@ public class DapengUtil {
 
         buffer.append(h >= 10 ? (char) (h - 10 + 'a') : (char) (h + '0'));
         buffer.append(l >= 10 ? (char) (l - 10 + 'a') : (char) (l + '0'));
+    }
+
+    /**
+     * 判断是否是框架异常还是业务异常
+     * @param e
+     * @return
+     */
+    public static boolean isDapengCoreException(Throwable e) {
+        if (e instanceof SoaException) {
+            return ((SoaException) e).getCode().startsWith("Err-Core");
+        }
+
+        return false;
     }
 
     /**
