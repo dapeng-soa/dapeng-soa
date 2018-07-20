@@ -180,6 +180,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             zkInfos.put(service, zkInfo);
         }
 
+        //todo 线程安全问题
         List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
                 .filter(rt -> checkVersion(version, rt.version))
                 .collect(Collectors.toList());
