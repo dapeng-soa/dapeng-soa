@@ -1,8 +1,10 @@
 package com.github.dapeng.client.netty;
 
+import com.github.dapeng.core.SoaCode;
 import com.github.dapeng.core.SoaConnectionPool;
 import com.github.dapeng.core.SoaConnectionPoolFactory;
 import com.github.dapeng.core.SoaException;
+import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.metadata.Method;
 import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.json.JsonSerializer;
@@ -58,8 +60,9 @@ public class JsonPost {
                 .collect(Collectors.toList());
 
         if (targetMethods.isEmpty()) {
-            return "method:" + methodName + " for service:"
-                    + clientInfo.serviceName + " not found";
+            return String.format("{\"responseCode\":\"%s\", \"responseMsg\":\"%s\", \"success\":\"{}\", \"status\":0}",
+                    SoaCode.ClientNoMatchedMethod,
+                    "method:" + methodName + " for service:" + clientInfo.serviceName + " not found");
         }
 
         Method method = targetMethods.get(0);
@@ -101,7 +104,7 @@ public class JsonPost {
             jsonResponse = result.equals("{}") ? "{\"status\":1}" : result.substring(0, result.lastIndexOf('}')) + ",\"status\":1}";
 
         } catch (SoaException e) {
-            if (e.getCode().startsWith("Err-Core")) {
+            if (DapengUtil.isDapengCoreException(e)) {
                 LOGGER.error(e.getMsg(), e);
             } else {
                 LOGGER.error(e.getMsg());
