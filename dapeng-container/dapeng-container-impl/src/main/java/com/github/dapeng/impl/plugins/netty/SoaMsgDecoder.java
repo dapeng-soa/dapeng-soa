@@ -48,15 +48,13 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             }
 
             Object request = parseSoaMsg(msg);
-            final TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
 
+            final TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
             String methodName = transactionContext.getHeader().getMethodName();
 
-            //TODO 将容器线程池信息 transactionContext 进行共享  echo实现方法时可以直接从 transactionContext中拿到 【数据库连接池信息暂时拿不到】
             if (methodName.equalsIgnoreCase("echo")) {
                 transactionContext.setAttribute("container-threadPool-info", DumpUtil.dumpThreadPool((ThreadPoolExecutor) container.getDispatcher()));
             }
-
             transactionContext.setAttribute("dapeng_request_timestamp", System.currentTimeMillis());
 
             out.add(request);
@@ -115,10 +113,18 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         REQ args;
         try {
             args = soaFunction.reqSerializer.read(contentProtocol);
-        } catch (TProtocolException | OutOfMemoryError e) {
+        } catch (SoaException e) {
+            if (e.getCode().equals(SoaCode.StructFieldNull.getCode())) {
+                e.setCode(SoaCode.ServerReqFieldNull.getCode());
+                e.setMsg(SoaCode.ServerReqFieldNull.getMsg());
+            }
             //反序列化出错
             LOGGER.error(DumpUtil.dumpToStr(msg));
             throw e;
+        } catch (TException | OutOfMemoryError e) {
+            //反序列化出错
+            LOGGER.error(DumpUtil.dumpToStr(msg));
+            throw new SoaException(SoaCode.ReqDecodeError.getCode(), SoaCode.ReqDecodeError.getMsg(), e);
         }
         contentProtocol.readMessageEnd();
 

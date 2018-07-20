@@ -40,6 +40,7 @@ public class echo_argsSerializer implements BeanSerializer<echo_args> {
         oprot.writeStructEnd();
     }
 
+    @Override
     public void validate(echo_args bean) throws TException {}
 
     @Override
