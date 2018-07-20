@@ -15,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import static com.github.dapeng.core.helper.IPUtils.transferIp;
+
 /**
  * @author Ever
  * @date 2018-04-11
@@ -68,7 +70,7 @@ public class LogFilter implements Filter {
                     + "] cost[total:" + invocationInfo.serviceTime()
                     + ", calleeTime1:" + invocationInfo.calleeTime1()
                     + ", calleeTime2:" + invocationInfo.calleeTime2()
-                    + ", calleeIp: " + invocationInfo.calleeIp();
+                    + ", calleeIp: " + transferIp(invocationInfo.calleeIp());
 
             LOGGER.info(getClass().getSimpleName() + "::onExit," + infoLog);
         } finally {
