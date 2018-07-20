@@ -1,6 +1,7 @@
 package com.github.dapeng.impl.filters.freq;
 
 import com.github.dapeng.core.FreqControlRule;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.Unsafe;
@@ -110,7 +111,7 @@ public class ShmManager {
         f.setAccessible(true);
         unsafe = (Unsafe) f.get(null);
 
-        File file = new File(System.getProperty("user.home") + "/shm.data");
+        File file = new File(SoaSystemEnvProperties.SOA_FREQ_SHM_DATA);
         RandomAccessFile access = new RandomAccessFile(file, "rw");
 
         buffer = access.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, TOTAL_MEM_BYTES);
