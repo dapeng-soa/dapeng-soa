@@ -1,4 +1,4 @@
-package com.github.dapeng.registry.zookeeper;
+package com.github.dapeng.registry.etcd.agent;
 
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
@@ -6,66 +6,45 @@ import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.Service;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.github.dapeng.registry.*;
+import com.github.dapeng.registry.RegisterInfo;
+import com.github.dapeng.registry.RegistryServerAgent;
+import com.github.dapeng.registry.etcd.EtcdServerRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * RegistryAgent using Synchronous zookeeper requesting
+ * desc: etcd registry
  *
- * @author tangliu
- * @date 2016-08-12
+ * @author hz.lei
+ * @since 2018年07月19日 下午5:24
  */
-public class RegistryAgentImpl implements RegistryServerAgent {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(RegistryAgentImpl.class);
+public class EtcdRegistryAgentImpl implements RegistryServerAgent {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EtcdRegistryAgentImpl.class);
 
     private final String RUNTIME_PATH = "/soa/runtime/services";
     private final String CONFIG_PATH = "/soa/config/services";
     private final static String ROUTES_PATH = "/soa/config/routes";
 
-    private final boolean isClient;
-    private final ServerZk serverZk = new ServerZk(this);
-    /**
-     * 灰度环境下访问生产环境的zk?
-     */
-    private ServerZk zooKeeperMasterClient = null;
-
+    private final EtcdServerRegistry etcdServerRegistry = new EtcdServerRegistry(this);
 
     private Map<ProcessorKey, SoaServiceDefinition<?>> processorMap;
 
 
-    public RegistryAgentImpl() {
-        this(true);
-    }
-
-    public RegistryAgentImpl(boolean isClient) {
-        this.isClient = isClient;
-    }
-
     @Override
     public void start() {
-
-        if (!isClient) {
-            serverZk.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
-            serverZk.connect();
-
-            if (SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_ISCONFIG) {
-                zooKeeperMasterClient = new ServerZk(this);
-                zooKeeperMasterClient.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_HOST);
-                zooKeeperMasterClient.connect();
-            }
-        }
+        etcdServerRegistry.setEtcdRegisterHost(SoaSystemEnvProperties.SOA_ETCD_HOST);
+        etcdServerRegistry.connect();
     }
 
     @Override
     public void stop() {
-        serverZk.destroy();
+        etcdServerRegistry.destroy();
     }
 
     @Override
@@ -83,28 +62,24 @@ public class RegistryAgentImpl implements RegistryServerAgent {
     @Override
     public void registerService(String serverName, String versionName) {
         try {
-            String path = RUNTIME_PATH + "/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
-            String servicePath = RUNTIME_PATH + "/" + serverName;
-            String instanceInfo = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
+            String instancePath = MessageFormat.format("{0}/{1}/{2}:{3}:{4}", RUNTIME_PATH, serverName, SoaSystemEnvProperties.SOA_CONTAINER_IP, SoaSystemEnvProperties.SOA_CONTAINER_PORT, versionName);
+            String servicePath = MessageFormat.format("{0}/{1}", RUNTIME_PATH, serverName);
 
-            RegisterContext registerContext = new RegisterContext(serverName, versionName, servicePath, instanceInfo);
             if (ContainerFactory.getContainer().status() == Container.STATUS_SHUTTING
                     || ContainerFactory.getContainer().status() == Container.STATUS_DOWN) {
                 LOGGER.warn("Container is shutting down");
                 return;
             }
-            // 注册服务 runtime 实例 到 zk
-            serverZk.create(path, registerContext, true);
-
-            // 创建  zk  config 服务 持久节点  eg:  /soa/config/com.github.dapeng.soa.UserService
-            serverZk.create(CONFIG_PATH + "/" + serverName, null, false);
-
-            // 创建路由节点
-            serverZk.create(ROUTES_PATH + "/" + serverName, null, false);
-
+            // 注册服务 runtime 实例 到 etcd
+            etcdServerRegistry.register(servicePath, instancePath);
+            // 创建  etcd  config 服务 持久节点  eg:  /soa/config/com.github.dapeng.soa.UserService
+            etcdServerRegistry.register(MessageFormat.format("{0}/{1}", CONFIG_PATH, serverName), null);
+            // 创建路由节点 etcd
+            etcdServerRegistry.register(MessageFormat.format("{0}/{1}", ROUTES_PATH, serverName), null);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
+
     }
 
     @Override
@@ -114,9 +89,7 @@ public class RegistryAgentImpl implements RegistryServerAgent {
             return;
         }
 
-        services.forEach(service -> {
-            registerService(service.name(), service.version());
-        });
+        services.forEach(service -> registerService(service.name(), service.version()));
 
         //如果开启了全局事务，将事务服务也注册到zookeeper,为了主从竞选，只有主全局事务管理器会执行
         if (SoaSystemEnvProperties.SOA_TRANSACTIONAL_ENABLE) {
@@ -143,7 +116,7 @@ public class RegistryAgentImpl implements RegistryServerAgent {
      */
     @Override
     public RegisterInfo getConfig(boolean usingFallback, String serviceKey) {
-        return serverZk.getConfigData(serviceKey);
+        return etcdServerRegistry.getConfigData(serviceKey);
     }
 
 
@@ -173,6 +146,5 @@ public class RegistryAgentImpl implements RegistryServerAgent {
         }
         return services;
     }
-
 
 }

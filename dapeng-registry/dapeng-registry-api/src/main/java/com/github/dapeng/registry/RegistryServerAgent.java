@@ -2,20 +2,25 @@ package com.github.dapeng.registry;
 
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
-import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
 
 import java.util.Map;
 
 /**
- * Registry Agent
+ * desc: 服务端 注册到注册中心 agent
  *
- * @author craneding
- * @date 16/3/1
+ * @author hz.lei
+ * @since 2018年07月19日 下午4:09
  */
-public interface RegistryAgent {
+public interface RegistryServerAgent {
 
+    /**
+     * start
+     */
     void start();
 
+    /**
+     * stop
+     */
     void stop();
 
     /**
@@ -28,6 +33,7 @@ public interface RegistryAgent {
 
     /**
      * 卸载服务
+     *
      * @param serverName
      * @param versionName
      */
@@ -58,7 +64,5 @@ public interface RegistryAgent {
      * @param serviceKey
      * @return
      */
-    ZkServiceInfo getConfig(boolean usingFallback, String serviceKey);
-
-
+    RegisterInfo getConfig(boolean usingFallback, String serviceKey);
 }

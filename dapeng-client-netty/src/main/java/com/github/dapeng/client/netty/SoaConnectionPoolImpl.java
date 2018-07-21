@@ -4,6 +4,8 @@ import com.github.dapeng.core.*;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.ConfigKey;
+import com.github.dapeng.registry.RegisterInfo;
+import com.github.dapeng.registry.RegistryClientAgent;
 import com.github.dapeng.registry.zookeeper.*;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
@@ -41,16 +43,16 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
     }
 
-    private Map<String, ZkServiceInfo> zkInfos = new ConcurrentHashMap<>();
+    private Map<String, RegisterInfo> zkInfos = new ConcurrentHashMap<>();
     private Map<IpPort, SubPool> subPools = new ConcurrentHashMap<>();
-    private ZkClientAgent zkAgent = new ZkClientAgentImpl();
+    private RegistryClientAgent zkAgent = new ZkClientAgentImpl();
 
     private ReentrantLock subPoolLock = new ReentrantLock();
 
     private Map<String, ClientInfoWeakRef> clientInfos = new ConcurrentHashMap<>(16);
     private final ReferenceQueue<ClientInfo> referenceQueue = new ReferenceQueue<>();
 
-    Thread cleanThread = new Thread(() -> {
+    private Thread cleanThread = new Thread(() -> {
         while (true) {
             try {
                 ClientInfoWeakRef clientInfoRef = (ClientInfoWeakRef) referenceQueue.remove(1000);
@@ -63,7 +65,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 }
 
                 clientInfos.remove(key);
-                ZkServiceInfo zkServiceInfo = zkInfos.remove(clientInfoRef.serviceName);
+                RegisterInfo zkServiceInfo = zkInfos.remove(clientInfoRef.serviceName);
 
                 if (zkServiceInfo != null) {
                     zkAgent.cancelSyncService(zkServiceInfo);
@@ -115,10 +117,10 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
             clientInfos.put(key, clientInfoRef);
 
-            ZkServiceInfo zkInfo = new ZkServiceInfo(serviceName, new ArrayList<>());
+            RegisterInfo zkInfo = new RegisterInfo(serviceName, new ArrayList<>());
             zkAgent.syncService(zkInfo);
 
-            if (zkInfo.getStatus() == ZkServiceInfo.Status.ACTIVE) {
+            if (zkInfo.getStatus() == RegisterInfo.Status.ACTIVE) {
                 zkInfos.put(serviceName, zkInfo);
             } else {
                 //todo ??
@@ -161,16 +163,16 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private SoaConnection findConnection(String service,
                                          String version,
                                          String method) throws SoaException {
-        ZkServiceInfo zkInfo = zkInfos.get(service);
+        RegisterInfo zkInfo = zkInfos.get(service);
 
-        if (zkInfo == null || zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
+        if (zkInfo == null || zkInfo.getStatus() != RegisterInfo.Status.ACTIVE) {
             //todo should find out why zkInfo is null
             // 1. target service not exists
             logger.error(getClass().getSimpleName() + "::findConnection-0[service: " + service + "], zkInfo not found, now reSyncService");
 
-            zkInfo = new ZkServiceInfo(service, new ArrayList<>());
+            zkInfo = new RegisterInfo(service, new ArrayList<>());
             zkAgent.syncService(zkInfo);
-            if (zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
+            if (zkInfo.getStatus() != RegisterInfo.Status.ACTIVE) {
                 logger.error(getClass().getSimpleName() + "::findConnection-1[service: " + service + "], zkInfo not found");
                 return null;
             }
@@ -249,7 +251,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      */
     private RuntimeInstance loadBalance(String serviceName, String version, String methodName, List<RuntimeInstance> compatibles) {
 
-        ZkServiceInfo zkServiceInfo = zkInfos.get(serviceName);
+        RegisterInfo zkServiceInfo = zkInfos.get(serviceName);
         //方法级别
         LoadBalanceStrategy methodLB = null;
         //服务配置
@@ -396,7 +398,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * @return
      */
     private Optional<Long> getZkTimeout(String serviceName, String version, String methodName) {
-        ZkServiceInfo configInfo = zkInfos.get(serviceName);
+        RegisterInfo configInfo = zkInfos.get(serviceName);
         //方法级别
         Long methodTimeOut = null;
         //服务配置

@@ -2,6 +2,8 @@ package com.github.dapeng.registry;
 
 /**
  * Created by tangliu on 2016/2/16.
+ *
+ * @author tangliu
  */
 public enum ConfigKey {
 

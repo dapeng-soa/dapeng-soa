@@ -4,9 +4,9 @@ package com.github.dapeng.registry.zookeeper;
 import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.github.dapeng.registry.RegisterInfo;
+import com.github.dapeng.registry.RegistryClientAgent;
 import com.github.dapeng.router.Route;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author lihuimin
  * @date 2017/12/24
  */
-public class ZkClientAgentImpl implements ZkClientAgent {
+public class ZkClientAgentImpl implements RegistryClientAgent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ZkClientAgentImpl.class);
     /**
@@ -63,19 +63,20 @@ public class ZkClientAgentImpl implements ZkClientAgent {
 
     }
 
+
     @Override
-    public void cancelSyncService(ZkServiceInfo zkInfo) {
+    public void cancelSyncService(RegisterInfo zkInfo) {
         //fixme should remove the debug log
         LOGGER.info("cancelSyncService:[" + zkInfo.service + "]");
-        zkInfo.setStatus(ZkServiceInfo.Status.CANCELED);
+        zkInfo.setStatus(RegisterInfo.Status.CANCELED);
     }
 
     @Override
-    public void syncService(ZkServiceInfo zkInfo) {
-        if (zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
+    public void syncService(RegisterInfo zkInfo) {
+        if (zkInfo.getStatus() != RegisterInfo.Status.ACTIVE) {
             LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo just created, now sync with zk");
             masterZk.syncServiceZkInfo(zkInfo);
-            if (zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE && usingFallbackZk) {
+            if (zkInfo.getStatus() != RegisterInfo.Status.ACTIVE && usingFallbackZk) {
                 fallbackZk.syncServiceZkInfo(zkInfo);
             }
 
@@ -88,7 +89,7 @@ public class ZkClientAgentImpl implements ZkClientAgent {
 //        List<Route> routes = usingFallbackZk ? fallbackZk.getRoutes() : masterZk.getRoutes();
 //        List<RuntimeInstance> runtimeList = new ArrayList<>();
 
-        if (zkInfo.getStatus() == ZkServiceInfo.Status.ACTIVE && zkInfo.getRuntimeInstances() != null) {
+        if (zkInfo.getStatus() == RegisterInfo.Status.ACTIVE && zkInfo.getRuntimeInstances() != null) {
 
             LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo succeed");
         } else {

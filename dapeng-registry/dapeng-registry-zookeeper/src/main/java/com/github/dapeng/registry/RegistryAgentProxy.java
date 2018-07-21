@@ -2,35 +2,19 @@ package com.github.dapeng.registry;
 
 /**
  * Registry Agent Proxy
- * Fixme Server side only now
+ * 只针对服务端注册中心使用
+ *
  * @author craneding
  * @date 16/3/1
  */
 public class RegistryAgentProxy {
-    private static RegistryAgent registryAgentServer = null;
-    private static RegistryAgent registryAgentClient = null;
+    private static RegistryServerAgent registryAgentServer = null;
 
-    public enum Type {
-        Server, Client
+    public static RegistryServerAgent getCurrentInstance() {
+        return RegistryAgentProxy.registryAgentServer;
     }
 
-    /*
-    public static synchronized void loadImpl(Class<?> clazz) throws IllegalAccessException, InstantiationException {
-        if (RegistryAgentProxy.registryAgent != null)
-            throw new RuntimeException("com.github.dapeng.registry.registry agent is exist.");
-
-        RegistryAgentProxy.registryAgent = (RegistryAgent) clazz.newInstance();
-    }
-    */
-
-    public static RegistryAgent getCurrentInstance(Type type) {
-        return type == Type.Server ? RegistryAgentProxy.registryAgentServer : RegistryAgentProxy.registryAgentClient;
-    }
-
-    public static void setCurrentInstance(Type type, RegistryAgent registryAgent) {
-        if (type == Type.Server)
-            RegistryAgentProxy.registryAgentServer = registryAgent;
-        else
-            RegistryAgentProxy.registryAgentClient = registryAgent;
+    public static void setCurrentInstance(RegistryServerAgent registryAgent) {
+        RegistryAgentProxy.registryAgentServer = registryAgent;
     }
 }

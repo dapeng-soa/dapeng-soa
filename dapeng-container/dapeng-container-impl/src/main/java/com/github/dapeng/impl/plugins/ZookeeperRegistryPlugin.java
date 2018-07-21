@@ -8,19 +8,24 @@ import com.github.dapeng.api.Plugin;
 import com.github.dapeng.api.events.AppEvent;
 import com.github.dapeng.core.ServiceInfo;
 import com.github.dapeng.impl.container.DapengApplication;
-import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.registry.RegistryAgentProxy;
+import com.github.dapeng.registry.RegistryServerAgent;
 import com.github.dapeng.registry.zookeeper.RegistryAgentImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+/**
+ * 注册中心 注册插件 Plugin
+ *
+ * @author xx
+ */
 public class ZookeeperRegistryPlugin implements AppListener, Plugin {
     private static final Logger LOGGER = LoggerFactory.getLogger(ZookeeperRegistryPlugin.class);
 
     private final Container container;
-    private final RegistryAgent registryAgent = new RegistryAgentImpl(false);
+    private final RegistryServerAgent registryAgent = new RegistryAgentImpl(false);
 
     public ZookeeperRegistryPlugin(Container container) {
         this.container = container;
@@ -55,7 +60,7 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
         /**
          * set RegistryAgentImpl ,SoaServerHandler 会用到
          */
-        RegistryAgentProxy.setCurrentInstance(RegistryAgentProxy.Type.Server, registryAgent);
+        RegistryAgentProxy.setCurrentInstance(registryAgent);
 
         registryAgent.setProcessorMap(ContainerFactory.getContainer().getServiceProcessors());
         registryAgent.start();
@@ -91,7 +96,7 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
 
     public void unRegisterService(String serviceName, String version) {
         LOGGER.info(getClass().getSimpleName() + "::unRegisterService [serviceName:" + serviceName + ", version:" + version + "]");
-        registryAgent.unregisterService(serviceName,version);
+        registryAgent.unregisterService(serviceName, version);
     }
 
 }

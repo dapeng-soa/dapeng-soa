@@ -1,4 +1,4 @@
-package com.github.dapeng.registry.zookeeper;
+package com.github.dapeng.registry;
 
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
@@ -8,17 +8,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author lihuimin
- * @date 2017/12/25
+ * desc: 注册到注册中心的 服务的信息 --> ZKServiceInfo、EtcdServiceInfo
+ *
+ * @author hz.lei
+ * @since 2018年07月19日 下午3:57
  */
-public class ZkServiceInfo  {
-
+public class RegisterInfo {
     public enum Status {
 
         CREATED, ACTIVE, CANCELED,
     }
 
-    final String service;
+    public final String service;
 
     private Status status = Status.CREATED;
 
@@ -27,11 +28,11 @@ public class ZkServiceInfo  {
      */
     private List<RuntimeInstance> runtimeInstances;
 
-    public ZkServiceInfo(String service) {
+    public RegisterInfo(String service) {
         this.service = service;
     }
 
-    public ZkServiceInfo(String service, List<RuntimeInstance> runtimeInstances) {
+    public RegisterInfo(String service, List<RuntimeInstance> runtimeInstances) {
 
         this.service = service;
         this.runtimeInstances = runtimeInstances;
@@ -78,5 +79,4 @@ public class ZkServiceInfo  {
         public Map<String, T> serviceConfigs = new HashMap<>();
         public Map<String, T> instanceConfigs = new HashMap<>();
     }
-
 }

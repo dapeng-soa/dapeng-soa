@@ -1,6 +1,7 @@
 package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.github.dapeng.registry.RegisterInfo;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
@@ -30,12 +31,12 @@ public class CommonZk {
     protected ZooKeeper zk;
 
 
-    protected void syncZkConfigInfo(ZkServiceInfo zkInfo) {
+    protected void syncZkConfigInfo(RegisterInfo zkInfo) {
         //1.获取 globalConfig  异步模式
         zk.getData(CONFIG_PATH, watchedEvent -> {
             if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
 
-                if (zkInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
+                if (zkInfo.getStatus() != RegisterInfo.Status.CANCELED) {
                     logger.info(getClass().getSimpleName() + "::syncZkConfigInfo[" + zkInfo.service + "]: {} 节点内容发生变化，重新获取配置信息", watchedEvent.getPath());
                     syncZkConfigInfo(zkInfo);
                 }
@@ -95,13 +96,13 @@ public class CommonZk {
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 logger.error("读取配置节点data时连接丢失，重新获取!");
-                syncZkConfigInfo((ZkServiceInfo) ctx);
+                syncZkConfigInfo((RegisterInfo) ctx);
                 break;
             case NONODE:
                 logger.error("全局配置节点不存在");
                 break;
             case OK:
-                WatcherUtils.processZkConfig(data, (ZkServiceInfo) ctx, true);
+                WatcherUtils.processZkConfig(data, (RegisterInfo) ctx, true);
                 break;
             default:
                 break;
@@ -114,13 +115,13 @@ public class CommonZk {
     private AsyncCallback.DataCallback serviceConfigDataCb = (rc, path, ctx, data, stat) -> {
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
-                syncZkConfigInfo((ZkServiceInfo) ctx);
+                syncZkConfigInfo((RegisterInfo) ctx);
                 break;
             case NONODE:
                 logger.error("服务 [{}] 的service配置节点不存在，无法获取service级配置信息 ", ((ZkServiceInfo) ctx).service);
                 break;
             case OK:
-                WatcherUtils.processZkConfig(data, (ZkServiceInfo) ctx, false);
+                WatcherUtils.processZkConfig(data, (RegisterInfo) ctx, false);
 
                 break;
             default:

@@ -3,6 +3,7 @@ package com.github.dapeng.registry.zookeeper;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.version.Version;
 import com.github.dapeng.registry.ConfigKey;
+import com.github.dapeng.registry.RegisterInfo;
 import com.github.dapeng.registry.ServiceInfo;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
@@ -150,7 +151,7 @@ public class ClientZk extends CommonZk {
      *
      * @param zkInfo
      */
-    public void syncServiceZkInfo(ZkServiceInfo zkInfo) {
+    public void syncServiceZkInfo(RegisterInfo zkInfo) {
         try {
             // sync runtimeList
             syncZkRuntimeInfo(zkInfo);
@@ -162,7 +163,7 @@ public class ClientZk extends CommonZk {
         }
         //判断,runtimeList size
         if (zkInfo.getRuntimeInstances().size() > 0) {
-            zkInfo.setStatus(ZkServiceInfo.Status.ACTIVE);
+            zkInfo.setStatus(RegisterInfo.Status.ACTIVE);
         }
     }
 
@@ -171,7 +172,7 @@ public class ClientZk extends CommonZk {
      *
      * @param zkInfo
      */
-    private void syncZkRuntimeInfo(ZkServiceInfo zkInfo) {
+    private void syncZkRuntimeInfo(RegisterInfo zkInfo) {
         String servicePath = SERVICE_PATH + "/" + zkInfo.service;
         int retry = 5;
         do {
@@ -185,7 +186,7 @@ public class ClientZk extends CommonZk {
                 try {
                     childrens = zk.getChildren(servicePath, watchedEvent -> {
                         if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-                            if (zkInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
+                            if (zkInfo.getStatus() != RegisterInfo.Status.CANCELED) {
                                 LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:{}子节点发生变化，重新获取信息", watchedEvent.getPath());
                                 syncZkRuntimeInfo(zkInfo);
                             }
@@ -197,7 +198,7 @@ public class ClientZk extends CommonZk {
                 }
 
                 if (childrens.size() == 0) {
-                    zkInfo.setStatus(ZkServiceInfo.Status.CANCELED);
+                    zkInfo.setStatus(RegisterInfo.Status.CANCELED);
                     zkInfo.getRuntimeInstances().clear();
                     LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:no service instances found");
                     return;
@@ -216,7 +217,7 @@ public class ClientZk extends CommonZk {
                 StringBuilder logBuffer = new StringBuilder();
                 zkInfo.getRuntimeInstances().forEach(info -> logBuffer.append(info.toString()));
                 LOGGER.info("<-> syncZkRuntimeInfo 触发服务实例同步，目前服务实例列表:" + zkInfo.service + " -> " + logBuffer);
-                zkInfo.setStatus(ZkServiceInfo.Status.ACTIVE);
+                zkInfo.setStatus(RegisterInfo.Status.ACTIVE);
                 return;
             } catch (KeeperException | InterruptedException e) {
                 LOGGER.error(e.getMessage(), e);
@@ -229,10 +230,10 @@ public class ClientZk extends CommonZk {
     }
 
 
-    private Watcher runtimeWatcher(ZkServiceInfo zkInfo) {
+    private Watcher runtimeWatcher(RegisterInfo zkInfo) {
         return watchedEvent -> {
             if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-                if (zkInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
+                if (zkInfo.getStatus() != RegisterInfo.Status.CANCELED) {
                     LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:{}子节点发生变化，重新获取信息", watchedEvent.getPath());
                     syncZkRuntimeInfo(zkInfo);
                 }

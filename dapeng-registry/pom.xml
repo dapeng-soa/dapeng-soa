@@ -14,10 +14,22 @@
 
     <modules>
         <module>dapeng-registry-zookeeper</module>
+        <module>dapeng-registry-etcd</module>
+        <module>dapeng-registry-api</module>
     </modules>
+
+    <properties>
+        <jetcd.version>0.0.1</jetcd.version>
+    </properties>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>com.coreos</groupId>
+                <artifactId>jetcd-core</artifactId>
+                <version>${jetcd.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>com.github.dapeng</groupId>
                 <artifactId>dapeng-core</artifactId>

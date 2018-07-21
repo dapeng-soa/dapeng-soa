@@ -1,4 +1,4 @@
-package com.github.dapeng.registry.zookeeper;
+package com.github.dapeng.registry;
 
 /**
  * 描述:  服务注册上下文，包括服务名，版本，注册到zk 的 path

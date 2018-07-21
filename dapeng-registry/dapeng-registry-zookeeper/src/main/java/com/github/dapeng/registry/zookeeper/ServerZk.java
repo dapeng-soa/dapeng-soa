@@ -3,8 +3,10 @@ package com.github.dapeng.registry.zookeeper;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.core.helper.MasterHelper;
+import com.github.dapeng.registry.RegisterContext;
+import com.github.dapeng.registry.RegisterInfo;
+import com.github.dapeng.registry.RegistryServerAgent;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
@@ -29,14 +31,14 @@ public class ServerZk extends CommonZk {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerZk.class);
 
-    private RegistryAgent registryAgent;
+    private RegistryServerAgent registryAgent;
 
     /**
      * zk 配置 缓存 ，根据 serivceName + versionName 作为 key
      */
-    public final ConcurrentMap<String, ZkServiceInfo> zkConfigMap = new ConcurrentHashMap();
+    public final ConcurrentMap<String, RegisterInfo> zkConfigMap = new ConcurrentHashMap();
 
-    public ServerZk(RegistryAgent registryAgent) {
+    public ServerZk(RegistryServerAgent registryAgent) {
         this.registryAgent = registryAgent;
     }
 
@@ -352,12 +354,12 @@ public class ServerZk extends CommonZk {
      * @param serviceName
      * @return
      */
-    protected ZkServiceInfo getConfigData(String serviceName) {
-        ZkServiceInfo info = zkConfigMap.get(serviceName);
+    protected RegisterInfo getConfigData(String serviceName) {
+        RegisterInfo info = zkConfigMap.get(serviceName);
         if (info != null) {
             return info;
         }
-        info = new ZkServiceInfo(serviceName);
+        info = new RegisterInfo(serviceName);
         syncZkConfigInfo(info);
         zkConfigMap.put(serviceName, info);
         return info;

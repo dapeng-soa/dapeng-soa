@@ -9,12 +9,14 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>dapeng-registry-zookeeper</artifactId>
+    <artifactId>dapeng-registry-etcd</artifactId>
 
     <dependencies>
+        <!--etcd java client-->
         <dependency>
-            <groupId>org.apache.zookeeper</groupId>
-            <artifactId>zookeeper</artifactId>
+            <groupId>com.coreos</groupId>
+            <artifactId>jetcd-core</artifactId>
+            <version>0.0.2</version>
         </dependency>
 
         <dependency>
@@ -57,4 +59,5 @@
             <scope>compile</scope>
         </dependency>
     </dependencies>
+
 </project>

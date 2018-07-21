@@ -10,6 +10,7 @@ import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.filters.HeadFilter;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.registry.ConfigKey;
+import com.github.dapeng.registry.RegisterInfo;
 import com.github.dapeng.registry.RegistryAgentProxy;
 import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
 import com.github.dapeng.util.DumpUtil;
@@ -94,8 +95,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         // Uncaught exceptions from inbound handlers will propagate up to this handler
         TransactionContext tranCtx = TransactionContextImpl.Factory.currentInstance();
         // short error log and detail error log, for the sake of elasticsearch indexing
-        LOGGER.error("exceptionCaught:seqId:" + (tranCtx==null?"":tranCtx.seqId()) + ", channel:" + ctx.channel() + ", msg:" + cause.getMessage());
-        LOGGER.error("exceptionCaught:seqId:" + (tranCtx==null?"":tranCtx.seqId()) + ", " + cause.getMessage(), cause);
+        LOGGER.error("exceptionCaught:seqId:" + (tranCtx == null ? "" : tranCtx.seqId()) + ", channel:" + ctx.channel() + ", msg:" + cause.getMessage());
+        LOGGER.error("exceptionCaught:seqId:" + (tranCtx == null ? "" : tranCtx.seqId()) + ", " + cause.getMessage(), cause);
         ctx.close();
     }
 
@@ -213,7 +214,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     private long getTimeout(SoaHeader soaHeader) {
         long timeout = 0L;
         String serviceKey = soaHeader.getServiceName();
-        ZkServiceInfo configInfo = RegistryAgentProxy.getCurrentInstance(RegistryAgentProxy.Type.Server).getConfig(false, serviceKey);
+        RegisterInfo configInfo = RegistryAgentProxy.getCurrentInstance().getConfig(false, serviceKey);
 
         long envTimeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT;
         if (null != configInfo) {
@@ -261,8 +262,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         private final SoaFunctionDefinition<I, REQ, RESP> soaFunction;
 
         DispatchFilter(SoaServiceDefinition<I> serviceDef,
-                              SoaFunctionDefinition<I, REQ, RESP> soaFunction,
-                              REQ args) {
+                       SoaFunctionDefinition<I, REQ, RESP> soaFunction,
+                       REQ args) {
 
             this.serviceDef = serviceDef;
             this.args = args;
