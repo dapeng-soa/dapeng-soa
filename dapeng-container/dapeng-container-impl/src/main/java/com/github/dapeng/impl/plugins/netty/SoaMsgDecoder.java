@@ -10,7 +10,6 @@ import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
-import com.github.dapeng.org.apache.thrift.protocol.TProtocolException;
 import com.github.dapeng.util.DumpUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
@@ -106,7 +105,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         SoaFunctionDefinition<I, REQ, RESP> soaFunction = (SoaFunctionDefinition<I, REQ, RESP>) processor.functions.get(soaHeader.getMethodName());
 
         if (soaFunction == null) {
-            throw new SoaException(SoaCode.NoMatchedMethod);
+            throw new SoaException(SoaCode.ServerNoMatchedMethod);
         }
 
         TProtocol contentProtocol = parser.getContentProtocol();

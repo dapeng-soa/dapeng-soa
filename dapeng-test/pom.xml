@@ -42,7 +42,7 @@
 
         <dependency>
             <groupId>com.github.dapeng</groupId>
-            <artifactId>dapeng-container-api</artifactId>
+            <artifactId>dapeng-container-impl</artifactId>
             <version>${project.version}</version>
         </dependency>
 

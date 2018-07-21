@@ -147,20 +147,23 @@ public class ShmManager {
         int nodePageIndex = nodePageHash % NODE_PAGE_COUNT;
         int now = (int) (System.currentTimeMillis() / 1000) % 86400;
 
-        LOGGER.debug("reportAndCheck, rule:{}, nodePageHash:{}, nodePageIndex:{}, timestamp:{}, appId/ruleTypeId/key:{}/{}/{}",
-                rule, nodePageHash, nodePageIndex, now, appId, ruleTypeId, key);
+        if (LOGGER.isDebugEnabled())
+            LOGGER.debug("reportAndCheck, rule:{}, nodePageHash:{}, nodePageIndex:{}, timestamp:{}, appId/ruleTypeId/key:{}/{}/{}",
+                    rule, nodePageHash, nodePageIndex, now, appId, ruleTypeId, key);
 
         long t1 = System.nanoTime();
 
         try {
             getSpinNodePageLock(nodePageIndex);
-            LOGGER.debug("reportAndCheck, acquire spin lock cost:{}", System.nanoTime() - t1);
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("reportAndCheck, acquire spin lock cost:{}", System.nanoTime() - t1);
 
             CounterNode node = null;
             long nodeAddr = homeAddr + NODE_PAGE_OFFSET + 1024 * nodePageIndex + 16;
 
             NodePageMeta nodePageMeta = getNodePageMeta(nodePageIndex);
-            LOGGER.debug("reportAndCheck, nodePageMeta:{}, cost:{}", nodePageMeta, System.nanoTime() - t1);
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("reportAndCheck, nodePageMeta:{}, cost:{}", nodePageMeta, System.nanoTime() - t1);
 
             if (nodePageMeta.nodes == 0) {
                 nodePageMeta = new NodePageMeta(nodePageHash, (short) 1);
@@ -172,20 +175,24 @@ public class ShmManager {
                 node = createNodeIfNotExist(appId, ruleTypeId, key,
                         nodePageMeta, now,
                         nodeAddr, rule);
-                LOGGER.debug("createNodeIfNotExist returned");
+                if (LOGGER.isDebugEnabled())
+                    LOGGER.debug("createNodeIfNotExist returned");
             }
 
             result = node.minCount <= rule.maxReqForMinInterval
                     && node.midCount <= rule.maxReqForMidInterval
                     && node.maxCount <= rule.maxReqForMaxInterval;
             updateNodePageMeta(nodePageMeta, nodePageIndex);
-            LOGGER.debug("updateNodePageMeta nodePageIndex = {}", nodePageIndex);
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("updateNodePageMeta nodePageIndex = {}", nodePageIndex);
         } finally {
             freeNodePageLock(nodePageIndex);
-            LOGGER.debug("freeNodePageLock {}", nodePageIndex);
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("freeNodePageLock {}", nodePageIndex);
         }
 
-        LOGGER.debug("reportAndCheck end, result:{}, cost:{}", result, System.nanoTime() - t1);
+        if (LOGGER.isDebugEnabled())
+            LOGGER.debug("reportAndCheck end, result:{}, cost:{}", result, System.nanoTime() - t1);
         return result;
     }
 
@@ -357,12 +364,14 @@ public class ShmManager {
 
             node = new CounterNode(appId, ruleTypeId, key, now,
                     minCount, midCount, maxCount);
-            LOGGER.debug("createNodeIfNotExist, found node:{}, index:{}, cost:{}", node, index, System.nanoTime() - t1);
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("createNodeIfNotExist, found node:{}, index:{}, cost:{}", node, index, System.nanoTime() - t1);
             break;
         }
 
         if (node == null) {
-            LOGGER.debug("createNodeIfNotExist, node not found, index:{}, cost:{}", nodePageMeta.nodes, System.nanoTime() - t1);
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("createNodeIfNotExist, node not found, index:{}, cost:{}", nodePageMeta.nodes, System.nanoTime() - t1);
             node = insertCounterNode(appId, ruleTypeId, key, now, nodeAddr);
 
             nodePageMeta.increaseNode();
@@ -393,7 +402,8 @@ public class ShmManager {
         addr += Integer.BYTES;
         putInt(addr, node.maxCount);
 
-        LOGGER.debug("insertCounterNode node:{}, cost:{}", node, System.nanoTime() - t1);
+        if (LOGGER.isDebugEnabled())
+            LOGGER.debug("insertCounterNode node:{}, cost:{}", node, System.nanoTime() - t1);
         return node;
     }
 
@@ -414,7 +424,8 @@ public class ShmManager {
             markNodes.add(markNode);
         }
         long postion = eliminateNode(markNodes);
-        LOGGER.debug("eliminateAndInsertNode, index:{}, cost:{}", nodePageMeta.nodes, System.nanoTime() - t1);
+        if (LOGGER.isDebugEnabled())
+            LOGGER.debug("eliminateAndInsertNode, index:{}, cost:{}", nodePageMeta.nodes, System.nanoTime() - t1);
         return insertCounterNode(appId, ruleTypeId, key, now, postion);
     }
 
@@ -566,11 +577,13 @@ public class ShmManager {
      */
     private short allocId(final String key) {
         Short id = localStringIdCache.get(key);
-        LOGGER.debug("allocId, from cache, key:{} -> {}", key, id);
+        if (LOGGER.isDebugEnabled())
+            LOGGER.debug("allocId, from cache, key:{} -> {}", key, id);
         if (id == null) {
             long t1 = System.nanoTime();
             id = allocIdAndCache(key, false);
-            LOGGER.debug("allocId, from shm, key:{} -> {}, cost:{}",
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("allocId, from shm, key:{} -> {}, cost:{}",
                     key, id, System.nanoTime() - t1);
         }
 
@@ -590,7 +603,8 @@ public class ShmManager {
         try {
             long t1 = System.nanoTime();
             getSpinRootLock(key.hashCode());
-            LOGGER.debug("allocIdAndCache acquire spinRootLock cost:{}", System.nanoTime() - t1);
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("allocIdAndCache acquire spinRootLock cost:{}", System.nanoTime() - t1);
 
             short dictionaryItemInfoSize = (short) Short.BYTES * 3;
             long dictionaryItemAddr = homeAddr + DICTION_ROOT_OFFSET;
@@ -613,7 +627,8 @@ public class ShmManager {
                         }
                     }
                     if (foundId) {
-                        LOGGER.debug("allocIdAndCache found existId:{} for key:{}, cost:{}", id, key, System.nanoTime() - t1);
+                        if (LOGGER.isDebugEnabled())
+                            LOGGER.debug("allocIdAndCache found existId:{} for key:{}, cost:{}", id, key, System.nanoTime() - t1);
                         return id;
                     }
                 }
@@ -646,7 +661,8 @@ public class ShmManager {
             putShort(homeAddr + 8, (short) (nextUtf8offset + keyBytes.length));
             putShort(homeAddr + 10, id);
 
-            LOGGER.debug("allocIdAndCache create id:{} for key:{}, cost:{}", id, key, System.nanoTime() - t1);
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("allocIdAndCache create id:{} for key:{}, cost:{}", id, key, System.nanoTime() - t1);
         } catch (UnsupportedEncodingException e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
@@ -757,58 +773,5 @@ public class ShmManager {
 
     private void putByte(long addr, byte value) {
         unsafe.putByte(null, addr, value);
-    }
-
-
-    public static void main(String[] args) throws InterruptedException {
-        final ShmManager manager = ShmManager.getInstance();
-
-        final FreqControlRule rule = new FreqControlRule();
-        rule.app = "com.today.hello";
-        rule.ruleType = "callId";
-        rule.minInterval = 60;
-        rule.maxReqForMinInterval = 20;
-        rule.midInterval = 3600;
-        rule.maxReqForMidInterval = 100;
-        rule.maxInterval = 86400;
-        rule.maxReqForMaxInterval = 500;
-
-        long t1 = System.currentTimeMillis();
-        for (int i = 0; i < 10000; i++) {
-            for (int j = 0; j < 100; j++) {
-                manager.reportAndCheck(rule, j);
-
-            }
-        }
-        long t2 = System.currentTimeMillis();
-
-        System.out.println((t2 - t1));
-
-
-       /* new Thread( ()-> { ttt(manager, rule, 100); }).start();
-        new Thread( ()-> { ttt(manager, rule, 101); }).start();
-        new Thread( ()-> { ttt(manager, rule, 102); }).start();
-        new Thread( ()-> { ttt(manager, rule, 103); }).start();*/
-
-
-//        System.out.println("cost1:" + (System.currentTimeMillis() - t1));
-//
-//
-//        for (int j = 0; j < 10; j++) {
-//            t1 = System.currentTimeMillis();
-//            for (int i = 0; i < 1000000; i++) {
-//                manager.reportAndCheck(rule, 100);
-//            }
-//            System.out.println("cost2:" + (System.currentTimeMillis() - t1));
-//        }
-    }
-
-    static void ttt(ShmManager manager, FreqControlRule rule, int key) {
-        long t1 = System.currentTimeMillis();
-        for (int i = 0; i < 1000000; i++) {
-            manager.reportAndCheck(rule, key);
-        }
-        long t2 = System.currentTimeMillis();
-        System.out.println(Thread.currentThread() + " cost:" + (t2 - t1) + "ms");
     }
 }
