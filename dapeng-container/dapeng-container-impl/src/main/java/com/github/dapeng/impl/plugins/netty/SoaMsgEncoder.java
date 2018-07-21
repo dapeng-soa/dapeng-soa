@@ -66,20 +66,14 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     TSoaTransport transport = new TSoaTransport(out);
                     SoaMessageProcessor messageProcessor = new SoaMessageProcessor(transport);
 
-                    //todo remove the try..catch
-                    try {
-                        Long requestTimestamp = (Long) transactionContext.getAttribute("dapeng_request_timestamp");
+                    Long requestTimestamp = (Long) transactionContext.getAttribute("dapeng_request_timestamp");
 
-                        Long cost = System.currentTimeMillis() - requestTimestamp;
-                        soaHeader.setCalleeTime2(cost.intValue());
-                    } catch (Exception e) {
-                        LOGGER.error(e.getMessage(), e);
-                        soaHeader.setCalleeTime2(0);
-                    }
-                    soaHeader.setCalleeIp(Optional.ofNullable(IPUtils.transferIp(SoaSystemEnvProperties.SOA_CONTAINER_IP)));
-                    soaHeader.setCalleePort(Optional.ofNullable(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
+                    Long cost = System.currentTimeMillis() - requestTimestamp;
+                    soaHeader.setCalleeTime2(cost.intValue());
+                    soaHeader.setCalleeIp(Optional.of(IPUtils.transferIp(SoaSystemEnvProperties.SOA_CONTAINER_IP)));
+                    soaHeader.setCalleePort(Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
                     Joiner joiner = Joiner.on(":");
-                    soaHeader.setCalleeMid(joiner.join(soaHeader.getServiceName(),soaHeader.getMethodName(),soaHeader.getVersionName()));
+                    soaHeader.setCalleeMid(joiner.join(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName()));
                     soaHeader.setCalleeTid(transactionContext.calleeTid());
                     messageProcessor.writeHeader(transactionContext);
                     if (serializer != null && result != null) {

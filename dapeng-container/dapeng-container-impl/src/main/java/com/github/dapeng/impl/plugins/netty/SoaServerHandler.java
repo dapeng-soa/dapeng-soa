@@ -134,7 +134,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             SoaFunctionDefinition<I, REQ, RESP> soaFunction = (SoaFunctionDefinition<I, REQ, RESP>) serviceDef.functions.get(soaHeader.getMethodName());
 
             if (soaFunction == null) {
-                throw new SoaException(SoaCode.NoMatchedMethod);
+                throw new SoaException(SoaCode.ServerNoMatchedMethod);
             }
 
             HeadFilter headFilter = new HeadFilter();

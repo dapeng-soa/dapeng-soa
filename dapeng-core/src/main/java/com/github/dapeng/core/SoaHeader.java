@@ -38,10 +38,6 @@ import static com.github.dapeng.core.helper.IPUtils.transferIp;
  * <p>
  * SoaHeader用于包装需传递到服务提供方的信息
  *
-<<<<<<< HEAD
-=======
- *
->>>>>>> master
  * @author tangliu
  * @date 2016/1/11
  */

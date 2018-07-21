@@ -61,7 +61,7 @@ public class JsonPost {
 
         if (targetMethods.isEmpty()) {
             return String.format("{\"responseCode\":\"%s\", \"responseMsg\":\"%s\", \"success\":\"{}\", \"status\":0}",
-                    SoaCode.ClientNoMatchedMethod,
+                    SoaCode.NoMatchedMethod,
                     "method:" + methodName + " for service:" + clientInfo.serviceName + " not found");
         }
 
