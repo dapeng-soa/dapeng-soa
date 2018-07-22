@@ -89,7 +89,7 @@ public class ShmManager {
             init();
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e);
+            System.exit(-1);
         }
     }
 
