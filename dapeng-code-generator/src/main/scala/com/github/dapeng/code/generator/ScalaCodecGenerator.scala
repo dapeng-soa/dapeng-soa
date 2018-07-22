@@ -371,19 +371,6 @@ class ScalaCodecGenerator extends CodeGenerator {
           </block>
         </block>
 
-        class echo extends SoaFunctionDefinition.Sync[{service.namespace}.{service.name}, echo_args, echo_result](
-        "echo", new echo_argsSerializer(), new echo_resultSerializer()) <block>
-
-
-          @throws[TException]
-          override def apply(iface: {service.namespace}.{service.name}, args: echo_args): echo_result = <block>
-
-            echo_result(TransactionContext.Factory.currentInstance().getAttribute("container-threadPool-info")+"")
-            //echo_result("PONG")
-
-          </block>
-        </block>
-
       class Processor(iface: {service.getNamespace}.{service.name}, ifaceClass: Class[{service.getNamespace}.{service.name}] ) extends
         SoaServiceDefinition(iface,classOf[{service.getNamespace}.{service.name}], Processor.getProcessMap)
 
