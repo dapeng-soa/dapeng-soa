@@ -7,7 +7,9 @@ import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.data.KeyValue;
 import com.coreos.jetcd.kv.GetResponse;
 import com.coreos.jetcd.kv.PutResponse;
+import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
+import com.coreos.jetcd.watch.WatchEvent;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.helper.MasterHelper;
@@ -48,7 +50,7 @@ public class EtcdServerRegistry {
     /**
      * zk 配置 缓存 ，根据 serivceName + versionName 作为 key
      */
-    public final ConcurrentMap<String, RegisterInfo> zkConfigMap = new ConcurrentHashMap();
+    public final ConcurrentMap<String, RegisterInfo> zkConfigMap = new ConcurrentHashMap<>();
 
     public EtcdServerRegistry(RegistryServerAgent registryAgent) {
         this.registryAgent = registryAgent;
@@ -103,41 +105,16 @@ public class EtcdServerRegistry {
     }
 
 
-    /*public void register(String serviceName, int port) throws Exception {
-        // 服务注册的key为:    /dubbomesh/com.some.package.IHelloService/192.168.100.100:2000
-        String strKey = MessageFormat.format("/{0}/{1}/{2}:{3}", rootPath, serviceName, IpHelper.getHostIp(), String.valueOf(port));
-        ByteSequence key = ByteSequence.fromString(strKey);
-        String weight = System.getProperty("lb.weight");
-        ByteSequence val;
-        if (StringUtils.isEmpty(weight)) {
-            weight = "1";
-            val = ByteSequence.fromString(weight);
-            logger.warn("未设置provider权重，默认设置为1");
-        } else {
-            val = ByteSequence.fromString(weight);
-        }
-        kv.put(key, val, PutOption.newBuilder().withLeaseId(leaseId).build()).get();
-        kv.txn();
-        logger.info("Register a new service at:{},weight:{}", strKey, weight);
-    }*/
-
-
     /**
      * 关闭 etcd 连接
      */
     public void destroy() {
         if (client != null) {
-            logger.info("ServerZk closing connection to zookeeper {}", etcdRegisterHost);
+            logger.info("etcdServiceRegister  closing connection to etcd server  {}", etcdRegisterHost);
             client.close();
             client = null;
         }
     }
-
-
-    //～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～
-    //                           that's begin                                      ～
-    //                                                                             ～
-    //～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～
 
 
     /**
@@ -162,13 +139,49 @@ public class EtcdServerRegistry {
             logger.info("节点 {} 创建成功,返回内容: {}\n", instanceKey, putResponse.toString());
 
         }
+
     }
 
 
     /**
      * 监听服务节点下面的子节点（临时节点，实例信息）变化
      */
-    public void watchInstChange(RegisterContext context) {
+    public void watchChildenInst(RegisterContext context) {
+        //
+        EtcdUtils.etcdWatch(client.getWatchClient(), context.getServicePath(), Boolean.TRUE, events -> {
+            ByteSequence key = ByteSequence.fromString(context.getServicePath());
+
+            CompletableFuture<GetResponse> responseFuture = kv.get(key, GetOption.newBuilder().withPrefix(key).build());
+            List<KeyValue> kvs = responseFuture.get().getKvs();
+
+
+
+
+            List<Endpoint> endpoints = new ArrayList<>();
+//        int i = 20880;
+            for (com.coreos.jetcd.data.KeyValue kv : response.getKvs()) {
+                String s = kv.getKey().toStringUtf8();
+                int index = s.lastIndexOf("/");
+                String endpointStr = s.substring(index + 1, s.length());
+
+                String host = endpointStr.split(":")[0];
+                int port = Integer.valueOf(endpointStr.split(":")[1]);
+                int weight = Integer.parseInt(kv.getValue().toStringUtf8());
+                Endpoint endpoint = new Endpoint(host, port);
+//            Endpoint endpoint = new Endpoint(host,i);
+//            i++;
+                endpoint.setWeight(weight);
+                endpoints.add(endpoint);
+            }
+            logger.info("endpoints size:{}", endpoints.size());
+            logger.info("endpoints contents:{}", endpoints.toString());
+            return endpoints;
+
+
+
+        });
+
+
         //Children发生变化，则重新获取最新的services列表
         logger.info("容器状态:{}, {}子节点发生变化，重新获取子节点...", ContainerFactory.getContainer().status());
 
@@ -191,30 +204,6 @@ public class EtcdServerRegistry {
     }
 
 
-    /**
-     * 异步添加持久化的节点
-     *
-     * @param path
-     * @param data
-     */
-    private void createPersistent(String path, String data) {
-        Stat stat = exists(path);
-
-        if (stat == null) {
-            zk.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, persistNodeCreateCallback, data);
-        }
-    }
-
-    private Stat exists(String path) {
-        Stat stat = null;
-        try {
-            stat = zk.exists(path, false);
-        } catch (KeeperException | InterruptedException e) {
-        }
-        return stat;
-    }
-
-
     //-----竞选master---
     private static Map<String, Boolean> isMaster = MasterHelper.isMaster;
 
@@ -234,7 +223,7 @@ public class EtcdServerRegistry {
          * 根据 lastIndexOf :  之后的数字进行排序，由小到大，每次取zk临时有序节点中的序列最小的节点作为master
          */
         try {
-            Collections.sort(children, (o1, o2) -> {
+            children.sort((o1, o2) -> {
                 Integer int1 = Integer.valueOf(o1.substring(o1.lastIndexOf(":") + 1));
                 Integer int2 = Integer.valueOf(o2.substring(o2.lastIndexOf(":") + 1));
                 return int1 - int2;

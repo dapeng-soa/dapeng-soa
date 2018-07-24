@@ -3,6 +3,7 @@ package com.github.dapeng.registry.etcd;
 import com.coreos.jetcd.watch.WatchEvent;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * desc: watch callback
@@ -16,6 +17,6 @@ public interface WatchCallback {
      *
      * @param events event
      */
-    void callback(List<WatchEvent> events);
+    void callback(List<WatchEvent> events) throws ExecutionException, InterruptedException;
 
 }
