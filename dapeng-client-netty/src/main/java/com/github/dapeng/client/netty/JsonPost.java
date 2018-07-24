@@ -65,7 +65,8 @@ public class JsonPost {
         }
 
         try {
-            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, InvocationContextImpl.Factory.currentInstance().sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
+            String sessionTid = InvocationContextImpl.Factory.currentInstance().sessionTid().map(DapengUtil::longToHexStr).orElse("0");
+            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
 
             Method method = targetMethods.get(0);
 
@@ -82,7 +83,7 @@ public class JsonPost {
             String jsonResponse = post(clientInfo.serviceName, clientInfo.version,
                     methodName, jsonParameter, jsonEncoder, jsonDecoder);
             //MDC will be remove by client filter
-            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, InvocationContextImpl.Factory.currentInstance().sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
+            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("soa-response: " + jsonResponse + " cost:" + (System.currentTimeMillis() - beginTime) + "ms");
             } else {
