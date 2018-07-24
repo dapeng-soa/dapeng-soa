@@ -177,12 +177,12 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
             zkInfos.put(service, zkInfo);
         }
-        //考虑出现Con异常后的
+        //当zk上服务节点发生变化的时候, 会导致这里拿不到服务运行时实例.
+        //目前简单重试三次处理
         List<RuntimeInstance> compatibles = retryGetConnection(zkInfo, version);
-        if (compatibles == null) {
+        if (compatibles == null || compatibles.isEmpty()) {
             return null;
         }
-
 
         // router
         List<RuntimeInstance> routedInstances = router(service, method, version, compatibles);
@@ -231,7 +231,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                     return compatibles;
                 }
             } catch (Exception e) {
-                logger.error(e.getMessage(), e);
+                logger.error(e.getMessage());
                 try {
                     Thread.sleep(50);
                 } catch (InterruptedException ignored) {
