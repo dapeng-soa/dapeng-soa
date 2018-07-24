@@ -179,15 +179,13 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
             zkInfos.put(service, zkInfo);
         }
-
-        //todo 线程安全问题
-        List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
-                .filter(rt -> checkVersion(version, rt.version))
-                .collect(Collectors.toList());
-        if (compatibles.isEmpty()) {
-            logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + "], not found compatible  instances by version");
-            throw new SoaException(NoMatchedVersion, "服务 [ " + service + " ] 无可用实例:没找到版本兼容的可运行实例");
+        //当zk上服务节点发生变化的时候, 会导致这里拿不到服务运行时实例.
+        //目前简单重试三次处理
+        List<RuntimeInstance> compatibles = retryGetConnection(zkInfo, version);
+        if (compatibles == null || compatibles.isEmpty()) {
+            return null;
         }
+
         // router
         List<RuntimeInstance> routedInstances = router(service, method, version, compatibles);
 
@@ -220,6 +218,35 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
 
         return subPool.getConnection();
+    }
+
+    /**
+     * 如果出现异常（ConcurrentModifyException）,或获取到的实例为0，进行重试
+     *
+     * @param zkInfo
+     * @param version
+     */
+    private List<RuntimeInstance> retryGetConnection(ZkServiceInfo zkInfo, String version) {
+        int retry = 1;
+        do {
+            try {
+                List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
+                        .filter(rt -> checkVersion(version, rt.version))
+                        .collect(Collectors.toList());
+
+                if (compatibles.size() > 0) {
+                    return compatibles;
+                }
+            } catch (Exception e) {
+                logger.error("zkInfo get connection 出现异常: " + e.getMessage());
+            }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException ignored) {
+            }
+        } while (retry++ <= 3);
+        logger.warn("retryGetConnection::重试3次获取 connection 失败");
+        return null;
     }
 
     /**
