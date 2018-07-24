@@ -177,10 +177,13 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
             zkInfos.put(service, zkInfo);
         }
+        //考虑出现Con异常后的
+        List<RuntimeInstance> compatibles = retryGetConnection(zkInfo, version);
+        if (compatibles == null) {
+            return null;
+        }
 
-        List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
-                .filter(rt -> checkVersion(version, rt.version))
-                .collect(Collectors.toList());
+
         // router
         List<RuntimeInstance> routedInstances = router(service, method, version, compatibles);
 
@@ -208,6 +211,35 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
 
         return subPool.getConnection();
+    }
+
+    /**
+     * 如果出现异常（ConcurrentModifyException）,或获取到的实例为0，进行重试
+     *
+     * @param zkInfo
+     * @param version
+     */
+    private List<RuntimeInstance> retryGetConnection(ZkServiceInfo zkInfo, String version) {
+        int retry = 0;
+        do {
+            try {
+                List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
+                        .filter(rt -> checkVersion(version, rt.version))
+                        .collect(Collectors.toList());
+
+                if (compatibles.size() > 0) {
+                    return compatibles;
+                }
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException ignored) {
+                }
+            }
+        } while (retry++ < 3);
+
+        return null;
     }
 
     /**
