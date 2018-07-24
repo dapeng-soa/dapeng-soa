@@ -220,7 +220,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * @param version
      */
     private List<RuntimeInstance> retryGetConnection(ZkServiceInfo zkInfo, String version) {
-        int retry = 0;
+        int retry = 1;
         do {
             try {
                 List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
@@ -231,14 +231,14 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                     return compatibles;
                 }
             } catch (Exception e) {
-                logger.error(e.getMessage());
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException ignored) {
-                }
+                logger.error("zkInfo get connection 出现异常: " + e.getMessage());
             }
-        } while (retry++ < 3);
-
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException ignored) {
+            }
+        } while (retry++ <= 3);
+        logger.warn("retryGetConnection::重试3次获取 connection 失败");
         return null;
     }
 
