@@ -307,7 +307,7 @@ public class ServerZk extends CommonZk {
      * @param serviceKey   当前服务信息                eg com.github.user.UserService:1.0.0
      * @param instanceInfo 当前服务节点实例信息         eg  192.168.10.17:9081:1.0.0
      */
-    public void checkIsMaster(List<String> children, String serviceKey, String instanceInfo) {
+    private void checkIsMaster(List<String> children, String serviceKey, String instanceInfo) {
         if (children.size() <= 0) {
             return;
         }
@@ -320,7 +320,7 @@ public class ServerZk extends CommonZk {
          * 根据 lastIndexOf :  之后的数字进行排序，由小到大，每次取zk临时有序节点中的序列最小的节点作为master
          */
         try {
-            Collections.sort(children, (o1, o2) -> {
+            children.sort((o1, o2) -> {
                 Integer int1 = Integer.valueOf(o1.substring(o1.lastIndexOf(":") + 1));
                 Integer int2 = Integer.valueOf(o2.substring(o2.lastIndexOf(":") + 1));
                 return int1 - int2;

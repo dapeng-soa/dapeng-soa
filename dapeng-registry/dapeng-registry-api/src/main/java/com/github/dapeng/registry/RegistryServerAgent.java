@@ -65,4 +65,7 @@ public interface RegistryServerAgent {
      * @return
      */
     RegisterInfo getConfig(boolean usingFallback, String serviceKey);
+
+
+
 }

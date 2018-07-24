@@ -9,9 +9,6 @@ import com.coreos.jetcd.kv.GetResponse;
 import com.coreos.jetcd.kv.PutResponse;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
-import com.coreos.jetcd.watch.WatchEvent;
-import com.github.dapeng.api.Container;
-import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.helper.MasterHelper;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.RegisterContext;
@@ -22,12 +19,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+
 
 /**
  * desc: EtcdServerRegistry
@@ -147,60 +143,28 @@ public class EtcdServerRegistry {
      * 监听服务节点下面的子节点（临时节点，实例信息）变化
      */
     public void watchChildenInst(RegisterContext context) {
-        //
         EtcdUtils.etcdWatch(client.getWatchClient(), context.getServicePath(), Boolean.TRUE, events -> {
-            ByteSequence key = ByteSequence.fromString(context.getServicePath());
+            try {
 
-            CompletableFuture<GetResponse> responseFuture = kv.get(key, GetOption.newBuilder().withPrefix(key).build());
-            List<KeyValue> kvs = responseFuture.get().getKvs();
+                ByteSequence key = ByteSequence.fromString(context.getServicePath());
 
+                CompletableFuture<GetResponse> responseFuture = kv.get(key, GetOption.newBuilder().withPrefix(key).build());
+                List<KeyValue> kvs = responseFuture.get().getKvs();
 
+                List<String> children = kvs.stream()
+                        .map(KeyValue::getKey)
+                        .map(ByteSequence::toStringUtf8)
+                        .map(EtcdUtils::getInstData)
+                        .collect(Collectors.toList());
 
-
-            List<Endpoint> endpoints = new ArrayList<>();
-//        int i = 20880;
-            for (com.coreos.jetcd.data.KeyValue kv : response.getKvs()) {
-                String s = kv.getKey().toStringUtf8();
-                int index = s.lastIndexOf("/");
-                String endpointStr = s.substring(index + 1, s.length());
-
-                String host = endpointStr.split(":")[0];
-                int port = Integer.valueOf(endpointStr.split(":")[1]);
-                int weight = Integer.parseInt(kv.getValue().toStringUtf8());
-                Endpoint endpoint = new Endpoint(host, port);
-//            Endpoint endpoint = new Endpoint(host,i);
-//            i++;
-                endpoint.setWeight(weight);
-                endpoints.add(endpoint);
+                if (children.size() > 0) {
+                    checkIsMaster(children, MasterHelper.generateKey(context.getService(), context.getVersion()), context.getInstanceInfo());
+                }
+                logger.info("children size:{}", children.size());
+            } catch (InterruptedException | ExecutionException e) {
+                logger.error(e.getMessage(), e);
             }
-            logger.info("endpoints size:{}", endpoints.size());
-            logger.info("endpoints contents:{}", endpoints.toString());
-            return endpoints;
-
-
-
         });
-
-
-        //Children发生变化，则重新获取最新的services列表
-        logger.info("容器状态:{}, {}子节点发生变化，重新获取子节点...", ContainerFactory.getContainer().status());
-
-        if (ContainerFactory.getContainer().status() == Container.STATUS_SHUTTING
-                || ContainerFactory.getContainer().status() == Container.STATUS_DOWN) {
-            logger.warn("Container is shutting down");
-            return;
-        }
-        List<String> children = new ArrayList<>();
-        EtcdUtils.etcdWatch(client.getWatchClient(), context.getServicePath(), true, events -> {
-            events.forEach(event -> {
-                String value = event.getKeyValue().getValue().toStringUtf8();
-                children.add(value);
-            });
-        });
-        if (children.size() > 0) {
-            checkIsMaster(children.stream().map(EtcdUtils::getInstData).collect(Collectors.toList()),
-                    MasterHelper.generateKey(context.getService(), context.getVersion()), context.getInstanceInfo());
-        }
     }
 
 
@@ -212,7 +176,7 @@ public class EtcdServerRegistry {
      * @param serviceKey   当前服务信息                eg com.github.user.UserService:1.0.0
      * @param instanceInfo 当前服务节点实例信息         eg  192.168.10.17:9081:1.0.0
      */
-    public void checkIsMaster(List<String> children, String serviceKey, String instanceInfo) {
+    private void checkIsMaster(List<String> children, String serviceKey, String instanceInfo) {
         if (children.size() <= 0) {
             return;
         }
@@ -257,24 +221,24 @@ public class EtcdServerRegistry {
      * @param serviceName
      * @return
      */
-    protected RegisterInfo getConfigData(String serviceName) {
+    public RegisterInfo getConfigData(String serviceName) {
 
         RegisterInfo info = zkConfigMap.get(serviceName);
         if (info != null) {
             return info;
         }
         info = new RegisterInfo(serviceName);
-        syncZkConfigInfo(info);
+        syncEtcdConfigData(info);
         zkConfigMap.put(serviceName, info);
         return info;
     }
 
     /**
-     * sync service
+     * sync etcd config
      *
      * @param zkInfo
      */
-    private void syncZkConfigInfo(RegisterInfo zkInfo) {
+    private void syncEtcdConfigData(RegisterInfo zkInfo) {
         try {
             String configPath = MessageFormat.format("{0}/{1}", CONFIG_PATH, zkInfo.service);
 

@@ -17,6 +17,6 @@ public interface WatchCallback {
      *
      * @param events event
      */
-    void callback(List<WatchEvent> events) throws ExecutionException, InterruptedException;
+    void callback(List<WatchEvent> events);
 
 }
