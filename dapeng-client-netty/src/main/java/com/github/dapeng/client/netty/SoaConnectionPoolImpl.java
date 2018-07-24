@@ -231,15 +231,14 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                     return compatibles;
                 }
             } catch (Exception e) {
-                logger.error(e.getMessage(), e);
+                logger.error("zkInfo get connection 出现异常: " + e.getMessage(), e);
             }
-            logger.debug("retryGetConnection::获取到的实例数为0,重试 {} 次", retry);
             try {
                 Thread.sleep(50);
             } catch (InterruptedException ignored) {
             }
         } while (retry++ <= 3);
-
+        logger.warn("retryGetConnection::重试3次获取 connection 失败");
         return null;
     }
 
