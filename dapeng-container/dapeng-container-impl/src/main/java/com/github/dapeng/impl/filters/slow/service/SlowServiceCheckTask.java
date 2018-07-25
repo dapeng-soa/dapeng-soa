@@ -3,40 +3,42 @@ package com.github.dapeng.impl.filters.slow.service;
 import com.github.dapeng.core.SoaHeader;
 import com.github.dapeng.core.TransactionContext;
 import com.github.dapeng.core.filter.FilterContext;
+import com.github.dapeng.core.helper.DapengUtil;
+import com.github.dapeng.core.helper.IPUtils;
 
 import java.util.Optional;
 
 public class SlowServiceCheckTask {
 
-    private String serviceName;
+    protected final String serviceName;
 
-    private String versionName;
+    protected final String versionName;
 
-    private String methodName;
+    protected final String methodName;
 
-    private Object request;
+    protected final long startTime;
 
-    private long startTime;
+    protected final Optional<Long> userId;
 
-    private Optional<Long> userId = Optional.empty();
+    protected final Optional<Integer> userIp;
 
-    private Optional<Integer> userIp = Optional.empty();
+    protected final Optional<Long> operatorId;
 
-    private Optional<Long> operatorId = Optional.empty();
+    protected final Optional<Integer> timeout;
 
-    private Optional<Integer> timeout = Optional.empty();
+    protected final Optional<Integer> calleeIp;
 
-    private Optional<Integer> calleeIp = Optional.empty();
+    protected final Optional<Integer> calleePort;
 
-    private Optional<Integer> calleePort = Optional.empty();
+    protected final Optional<Long> callerTid;
 
-    private Optional<Long> callerTid = Optional.empty();
+    protected final Optional<String> callerMid;
 
-    private Optional<String> callerMid = Optional.empty();
+    protected final Optional<Long> sessionTid;
 
-    private int seqId;
+    protected final int seqId;
 
-    private Thread currentThread;
+    protected final Thread currentThread;
 
     public SlowServiceCheckTask(FilterContext ctx) {
         TransactionContext context = (TransactionContext) ctx.getAttribute("context");
@@ -56,147 +58,8 @@ public class SlowServiceCheckTask {
         this.calleeIp = soaHeader.getCalleeIp();
         this.calleePort = soaHeader.getCalleePort();
         this.callerTid = soaHeader.getCallerTid();
-        this.callerMid = soaHeader.getCallerMid();
-
+        this.sessionTid = soaHeader.getSessionTid();
     }
-
-    public String serviceName() {
-        return serviceName;
-    }
-
-    public SlowServiceCheckTask serviceName(String serviceName) {
-        this.serviceName = serviceName;
-        return this;
-    }
-
-
-    public String versionName() {
-        return versionName;
-    }
-
-    public SlowServiceCheckTask versionName(String versionName) {
-        this.versionName = versionName;
-        return this;
-    }
-
-    public String methodName() {
-        return methodName;
-    }
-
-    public SlowServiceCheckTask methodName(String methodName) {
-        this.methodName = methodName;
-        return this;
-    }
-
-
-    public long startTime() {
-        return startTime;
-    }
-
-    public SlowServiceCheckTask startTime(long startTime) {
-        this.startTime = startTime;
-        return this;
-    }
-
-    public Optional<Long> userId() {
-        return userId;
-    }
-
-    public SlowServiceCheckTask userId(Optional<Long> userId) {
-        this.userId = userId;
-        return this;
-    }
-
-    public Optional<Integer> userIp() {
-        return userIp;
-    }
-
-    public SlowServiceCheckTask userIp(Optional<Integer> userIp) {
-        this.userIp = userIp;
-        return this;
-    }
-
-    public Optional<Long> operatorId() {
-        return operatorId;
-    }
-
-    public SlowServiceCheckTask operatorId(Optional<Long> operatorId) {
-        this.operatorId = operatorId;
-        return this;
-    }
-
-    public Optional<Integer> timeout() {
-        return timeout;
-    }
-
-    public SlowServiceCheckTask timeout(Optional<Integer> timeout) {
-        this.timeout = timeout;
-        return this;
-    }
-
-    public Optional<Integer> calleeIp() {
-        return calleeIp;
-    }
-
-    public SlowServiceCheckTask calleeIp(Optional<Integer> calleeIp) {
-        this.calleeIp = calleeIp;
-        return this;
-    }
-
-    public Optional<Integer> calleePort() {
-        return calleePort;
-    }
-
-    public SlowServiceCheckTask calleePort(Optional<Integer> calleePort) {
-        this.calleePort = calleePort;
-        return this;
-    }
-
-    public Optional<Long> callerTid() {
-        return this.callerTid;
-    }
-
-    public SlowServiceCheckTask callerTid(Optional<Long> callerTid) {
-        this.callerTid = callerTid;
-        return this;
-    }
-
-    public Optional<String> callerMid() {
-        return callerMid;
-    }
-
-    public SlowServiceCheckTask callerMid(Optional<String> callerMid) {
-        this.callerMid = callerMid;
-        return this;
-    }
-
-    public int seqId() {
-        return seqId;
-    }
-
-    public SlowServiceCheckTask seqId(int seqId) {
-        this.seqId = seqId;
-        return this;
-    }
-
-    public Thread currentThread() {
-        return currentThread;
-    }
-
-    public SlowServiceCheckTask currentThread(Thread currentThread) {
-        this.currentThread = currentThread;
-        return this;
-    }
-
-    public Object request() {
-        return request;
-    }
-
-    public Object request(Object request) {
-        this.request = request;
-        return this;
-    }
-
 
     @Override
     public String toString() {
@@ -205,12 +68,13 @@ public class SlowServiceCheckTask {
                 .append(" versionName: ").append(versionName).append(",")
                 .append(" methodName: ").append(methodName).append(",")
                 .append(" seqId: ").append(seqId).append(",")
+                .append(" sessionTid: ").append(sessionTid.map(DapengUtil::longToHexStr).orElse("-")).append(",")
                 .append(" startTime: ").append(startTime).append(",")
-                .append(" userId: ").append(userId).append(",")
-                .append(" userIp: ").append(userIp).append(",")
-                .append(" operatorId: ").append(operatorId).append(",")
-                .append(" timeout: ").append(timeout).append(",")
-                .append(" calleeIp: ").append(calleeIp).append(",")
+                .append(" userId: ").append(userId.orElse(0L)).append(",")
+                .append(" userIp: ").append(userIp.map(IPUtils::transferIp).orElse("-")).append(",")
+                .append(" operatorId: ").append(operatorId.orElse(0L)).append(",")
+                .append(" timeout: ").append(timeout.orElse(0)).append(",")
+                .append(" calleeIp: ").append(calleeIp.map(IPUtils::transferIp).orElse("-")).append(",")
                 .append(" calleePort: ").append(calleePort).append(",")
                 .append(" callerTid: ").append(callerTid).append(",")
                 .append(" callerMid: ").append(callerMid).append("]");
