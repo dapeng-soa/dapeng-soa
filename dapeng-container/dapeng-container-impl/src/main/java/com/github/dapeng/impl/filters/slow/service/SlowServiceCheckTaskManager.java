@@ -59,7 +59,7 @@ public class SlowServiceCheckTaskManager {
 
     private static void checkSampleTask() throws InterruptedException {
         final List<SlowServiceCheckTask> tasksCopy = new ArrayList<>(tasks);
-        logger.info("start check slow service  at [" + getCurrentTime() + "] Task queue " + tasksCopy.size());
+        //logger.info("start check slow service  at [" + getCurrentTime() + "] Task queue " + tasksCopy.size());
         final Iterator<SlowServiceCheckTask> iterator = tasksCopy.iterator();
 
         while (iterator.hasNext()) {
