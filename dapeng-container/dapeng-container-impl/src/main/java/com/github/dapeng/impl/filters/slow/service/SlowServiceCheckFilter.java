@@ -19,6 +19,7 @@ public class SlowServiceCheckFilter implements Filter {
             ctx.setAttach(this, "slowServiceCheckTask", task);
             SlowServiceCheckTaskManager.addTask(task);
             if (!SlowServiceCheckTaskManager.hasStarted()) {
+                //fixme lifecycle
                 SlowServiceCheckTaskManager.start();
                 logger.info("slow service check started");
             }
