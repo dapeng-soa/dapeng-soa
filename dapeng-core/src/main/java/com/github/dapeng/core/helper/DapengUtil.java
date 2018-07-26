@@ -1,5 +1,7 @@
 package com.github.dapeng.core.helper;
 
+import com.github.dapeng.core.SoaException;
+
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.HashSet;
@@ -18,6 +20,7 @@ public class DapengUtil {
     private static AtomicInteger seqId = new AtomicInteger(random);
     private static int processId = getProcessId() << 16;
     private static int localIp = localIpAsInt();
+
     /**
      * 生成TransactionId. 这是一个长度为16的16进制字符串(共64bit),
      * 可用于sessionTid, callerTid, calleeTid
@@ -26,22 +29,23 @@ public class DapengUtil {
      * @return
      */
     public static long generateTid() {
-        long high = (long)(localIp ^ processId);
+        int high = localIp ^ processId;
         int low = seqId.getAndIncrement();
-        return ((high << 32) & 0xFFFF_FFFF_0000_0000L) | (low & 0xFFFF_FFFF);
+        long tid = 0xffff_ffff_ffff_ffffL;
+        return ((tid & high) << 32) | ((tid >>> 32) & low);
     }
 
     public static String longToHexStr(long tid) {
         StringBuilder sb = new StringBuilder();
 
-        append(sb, (byte)((tid >> 56) & 0xff));
-        append(sb, (byte)((tid >> 48) & 0xff));
-        append(sb, (byte)((tid >> 40) & 0xff));
-        append(sb, (byte)((tid >> 32) & 0xff));
-        append(sb, (byte)((tid >> 24) & 0xff));
-        append(sb, (byte)((tid >> 16) & 0xff));
-        append(sb, (byte)((tid >> 8) & 0xff));
-        append(sb, (byte)((tid ) & 0xff));
+        append(sb, (byte) ((tid >> 56) & 0xff));
+        append(sb, (byte) ((tid >> 48) & 0xff));
+        append(sb, (byte) ((tid >> 40) & 0xff));
+        append(sb, (byte) ((tid >> 32) & 0xff));
+        append(sb, (byte) ((tid >> 24) & 0xff));
+        append(sb, (byte) ((tid >> 16) & 0xff));
+        append(sb, (byte) ((tid >> 8) & 0xff));
+        append(sb, (byte) ((tid) & 0xff));
         return sb.toString();
     }
 
@@ -49,8 +53,21 @@ public class DapengUtil {
         int h = (b & 0xFF) >> 4;
         int l = b & 0x0F;
 
-        buffer.append(h >= 10 ? (char)(h - 10 + 'a') : (char)(h + '0'));
-        buffer.append(l >= 10 ? (char)(l - 10 + 'a') : (char)(l + '0'));
+        buffer.append(h >= 10 ? (char) (h - 10 + 'a') : (char) (h + '0'));
+        buffer.append(l >= 10 ? (char) (l - 10 + 'a') : (char) (l + '0'));
+    }
+
+    /**
+     * 判断是否是框架异常还是业务异常
+     * @param e
+     * @return
+     */
+    public static boolean isDapengCoreException(Throwable e) {
+        if (e instanceof SoaException) {
+            return ((SoaException) e).getCode().startsWith("Err-Core");
+        }
+
+        return false;
     }
 
     /**

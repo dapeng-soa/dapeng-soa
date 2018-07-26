@@ -7,6 +7,7 @@ import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.Plugin;
 import com.github.dapeng.api.events.AppEvent;
 import com.github.dapeng.core.ServiceInfo;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.container.DapengApplication;
 import com.github.dapeng.registry.RegistryAgentProxy;
 import com.github.dapeng.registry.RegistryServerAgent;
@@ -30,6 +31,10 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
     public ZookeeperRegistryPlugin(Container container) {
         this.container = container;
         container.registerAppListener(this);
+        if (SoaSystemEnvProperties.SOA_CONTAINER_IP.trim().equals("")) {
+            LOGGER.error("soa_container_ip is empty, exit..");
+            System.exit(-1);
+        }
     }
 
     @Override

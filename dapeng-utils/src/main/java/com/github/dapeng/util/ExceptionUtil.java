@@ -1,5 +1,6 @@
 package com.github.dapeng.util;
 
+import com.github.dapeng.core.SoaBaseCodeInterface;
 import com.github.dapeng.core.SoaCode;
 import com.github.dapeng.core.SoaException;
 
@@ -11,6 +12,8 @@ public class ExceptionUtil {
         SoaException soaException;
         if (ex instanceof SoaException) {
             soaException = (SoaException) ex;
+        } else if (ex instanceof SoaBaseCodeInterface) {
+            soaException = new SoaException((SoaBaseCodeInterface)ex);
         } else {
             soaException = new SoaException(SoaCode.ServerUnKnown.getCode(),
                     ex.getCause() != null ? ex.getCause().toString() : (ex.getMessage() == null ? SoaCode.ServerUnKnown.getMsg() : ex.getMessage()), ex);

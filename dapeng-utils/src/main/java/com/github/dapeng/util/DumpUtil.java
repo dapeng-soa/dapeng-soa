@@ -77,16 +77,16 @@ public class DumpUtil {
      */
     public static String dumpThreadPool(ThreadPoolExecutor poolExecutor) {
         StringBuilder sb = new StringBuilder();
-        sb.append(" shutdown / terminating / terminated[")
-                .append(poolExecutor.isShutdown()).append(" / ")
-                .append(poolExecutor.isTerminating()).append(" / ")
+        sb.append(" shutdown/terminating/terminated[")
+                .append(poolExecutor.isShutdown()).append("/")
+                .append(poolExecutor.isTerminating()).append("/")
                 .append(poolExecutor.isTerminated()).append("]");
-        sb.append(" -activeCount / poolSize[")
-                .append(poolExecutor.getActiveCount()).append(" / ")
+        sb.append(" -activeCount/poolSize[")
+                .append(poolExecutor.getActiveCount()).append("/")
                 .append(poolExecutor.getPoolSize()).append("]");
-        sb.append(" -waitingTasks / completeTasks / totalTasks[")
-                .append(poolExecutor.getQueue().size()).append(" / ")
-                .append(poolExecutor.getCompletedTaskCount()).append(" / ")
+        sb.append(" -waitingTasks/completeTasks/totalTasks[")
+                .append(poolExecutor.getQueue().size()).append("/")
+                .append(poolExecutor.getCompletedTaskCount()).append("/")
                 .append(poolExecutor.getTaskCount()).append("]");
         return sb.toString();
     }
