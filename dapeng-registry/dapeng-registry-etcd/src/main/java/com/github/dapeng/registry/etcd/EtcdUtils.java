@@ -1,17 +1,26 @@
 package com.github.dapeng.registry.etcd;
 
+import com.coreos.jetcd.Client;
 import com.coreos.jetcd.Watch;
 import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.data.KeyValue;
+import com.coreos.jetcd.kv.GetResponse;
+import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.WatchOption;
 import com.coreos.jetcd.watch.WatchEvent;
+import com.github.dapeng.core.helper.MasterHelper;
+import com.github.dapeng.registry.RegisterContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * desc: EtcdUtils
@@ -64,6 +73,20 @@ public class EtcdUtils {
             return instData;
         }
         return null;
+    }
+
+    /**
+     * get data by key
+     */
+    public void getDataByKey(Client client, String dataPath) {
+        GetResponse response = client.getKVClient().get(dataPath).get();
+        KeyValue keyValue = response.getKvs().get(0);
+        String value = keyValue.getValue().toStringUtf8();
+
+
+        EtcdUtils.etcdWatch(client.getWatchClient(), dataPath, Boolean.FALSE, events -> {
+            getDataByKey(client, dataPath);
+        });
     }
 
 
