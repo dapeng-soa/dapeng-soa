@@ -55,8 +55,9 @@ public class EtcdUtils {
                 } else {
                     watcher = watch.watch(ByteSequence.fromString(key));
                 }
-                List<WatchEvent> events = watcher.listen().getEvents();
-                callback.callback(events);
+//                List<WatchEvent> events = watcher.listen().getEvents();
+                watcher.listen();
+                callback.callback();
             } catch (InterruptedException e) {
                 logger.error(e.getMessage(), e);
             }
@@ -75,19 +76,7 @@ public class EtcdUtils {
         return null;
     }
 
-    /**
-     * get data by key
-     */
-    public void getDataByKey(Client client, String dataPath) {
-        GetResponse response = client.getKVClient().get(dataPath).get();
-        KeyValue keyValue = response.getKvs().get(0);
-        String value = keyValue.getValue().toStringUtf8();
 
-
-        EtcdUtils.etcdWatch(client.getWatchClient(), dataPath, Boolean.FALSE, events -> {
-            getDataByKey(client, dataPath);
-        });
-    }
 
 
     public static void processEtcdConfig(String value) {

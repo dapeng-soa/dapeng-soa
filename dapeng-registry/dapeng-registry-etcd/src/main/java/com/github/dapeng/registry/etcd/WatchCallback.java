@@ -14,9 +14,12 @@ import java.util.concurrent.ExecutionException;
 public interface WatchCallback {
     /**
      * 回调
-     *
-     * @param events event
+     * <p>
+     * //     * @param events event
      */
-    void callback(List<WatchEvent> events);
+//    void callback(List<WatchEvent> events);
+
+
+    void callback();
 
 }

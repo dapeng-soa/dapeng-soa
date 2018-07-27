@@ -2,6 +2,7 @@ package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.RegisterInfo;
+import com.github.dapeng.registry.RegistryDataUtils;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
@@ -102,7 +103,7 @@ public class CommonZk {
                 logger.error("全局配置节点不存在");
                 break;
             case OK:
-                WatcherUtils.processZkConfig(data, (RegisterInfo) ctx, true);
+                RegistryDataUtils.processZkConfig(data, (RegisterInfo) ctx, true);
                 break;
             default:
                 break;
@@ -121,7 +122,7 @@ public class CommonZk {
                 logger.error("服务 [{}] 的service配置节点不存在，无法获取service级配置信息 ", ((ZkServiceInfo) ctx).service);
                 break;
             case OK:
-                WatcherUtils.processZkConfig(data, (RegisterInfo) ctx, false);
+                RegistryDataUtils.processZkConfig(data, (RegisterInfo) ctx, false);
 
                 break;
             default:

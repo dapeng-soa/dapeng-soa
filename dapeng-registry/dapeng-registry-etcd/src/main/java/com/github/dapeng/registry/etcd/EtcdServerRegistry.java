@@ -143,7 +143,7 @@ public class EtcdServerRegistry {
      * 监听服务节点下面的子节点（临时节点，实例信息）变化
      */
     public void watchChildenInst(RegisterContext context) {
-        EtcdUtils.etcdWatch(client.getWatchClient(), context.getServicePath(), Boolean.TRUE, events -> {
+        EtcdUtils.etcdWatch(client.getWatchClient(), context.getServicePath(), Boolean.TRUE, () -> {
             try {
 
                 ByteSequence key = ByteSequence.fromString(context.getServicePath());
@@ -242,12 +242,8 @@ public class EtcdServerRegistry {
         try {
             String configPath = MessageFormat.format("{0}/{1}", CONFIG_PATH, zkInfo.service);
 
-            EtcdUtils.etcdWatch(client.getWatchClient(), configPath, false, events -> {
-                //
-                events.forEach(event -> {
-                    KeyValue kv = event.getKeyValue();
-
-                });
+            EtcdUtils.etcdWatch(client.getWatchClient(), configPath, false, () -> {
+                syncEtcdConfigData(zkInfo);
             });
             String data = getEtcdValue(configPath, false);
             EtcdUtils.processEtcdConfig(data);

@@ -5,6 +5,7 @@ import com.github.dapeng.core.version.Version;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.RegisterInfo;
 import com.github.dapeng.registry.ServiceInfo;
+import com.github.dapeng.registry.RegistryDataUtils;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
 import org.apache.zookeeper.*;
@@ -292,41 +293,10 @@ public class ClientZk extends CommonZk {
             });
 
             LOGGER.info("获取{}的子节点成功", servicePath);
-            WatcherUtils.resetServiceInfoByName(serviceName, servicePath, children, caches);
+            RegistryDataUtils.resetServiceInfoByName(serviceName, servicePath, children, caches);
 
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
-
-
-    /*
-
-    public void getRoutesAsync() {
-        zk.getData(ROUTES_PATH, event -> {
-            if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
-                LOGGER.info("routes 节点 data 发现变更，重新获取信息");
-                routes.clear();
-                getRoutesAsync();
-            }
-        }, routeDataCb, null);
-    }
-
-    private AsyncCallback.DataCallback routeDataCb = (rc, path, ctx, data, stat) -> {
-        switch (KeeperException.Code.get(rc)) {
-            case CONNECTIONLOSS:
-                getRoutesAsync();
-                break;
-            case NONODE:
-                LOGGER.error("服务 [{}] 的service配置节点不存在，无法获取service级配置信息 ", ((ZkServiceInfo) ctx).service);
-                break;
-            case OK:
-                processRouteData(data);
-                break;
-            default:
-                break;
-        }
-    };
-
-    */
 }

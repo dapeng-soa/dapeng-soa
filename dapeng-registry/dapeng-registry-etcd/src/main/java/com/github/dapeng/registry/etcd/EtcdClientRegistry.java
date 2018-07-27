@@ -10,7 +10,7 @@ import com.coreos.jetcd.options.GetOption;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.RegisterInfo;
-import com.github.dapeng.registry.RegisterUtils;
+import com.github.dapeng.registry.RegistryDataUtils;
 import com.github.dapeng.registry.ServiceInfo;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
@@ -89,11 +89,11 @@ public class EtcdClientRegistry {
     public List<Route> getRoutes(Client client, String servicePath) {
         if (routesMap.get(servicePath) == null) {
             try {
-                GetResponse response = client.getKVClient().get(ByteSequence.fromString(servicePath)).get();
+                GetResponse response = kv.get(ByteSequence.fromString(servicePath)).get();
                 String routeData = response.getKvs().get(0).getValue().toStringUtf8();
                 List<Route> routes = processRouteData(servicePath, routeData);
 
-                EtcdUtils.etcdWatch(client.getWatchClient(), servicePath, Boolean.FALSE, events -> {
+                EtcdUtils.etcdWatch(client.getWatchClient(), servicePath, Boolean.FALSE, () -> {
                     getRoutes(client, servicePath);
                 });
                 LOGGER.warn("ClientZk::getRoutes routes changes:" + routes);
@@ -160,14 +160,14 @@ public class EtcdClientRegistry {
         ByteSequence byteSeq = ByteSequence.fromString(servicePath);
 
         try {
-            GetResponse response = client.getKVClient().get(byteSeq, GetOption.newBuilder().withPrefix(byteSeq).build()).get();
+            GetResponse response = kv.get(byteSeq, GetOption.newBuilder().withPrefix(byteSeq).build()).get();
             children = response.getKvs().stream()
                     .map(KeyValue::getValue)
                     .map(ByteSequence::toStringUtf8)
                     .collect(Collectors.toList());
 
 
-            EtcdUtils.etcdWatch(client.getWatchClient(), servicePath, Boolean.TRUE, events -> {
+            EtcdUtils.etcdWatch(client.getWatchClient(), servicePath, Boolean.TRUE, () -> {
                 syncEtcdRuntimeService(zkInfo);
             });
 
@@ -209,23 +209,57 @@ public class EtcdClientRegistry {
 
 
         if (client == null) {
-            LOGGER.info(getClass().getSimpleName() + "::syncEtcdRuntimeService[" + zkInfo.service + "]:zk is null, now init()");
+            LOGGER.info(getClass().getSimpleName() + "::syncEtcdRuntimeService[" + zkInfo.service + "]:etcd is null, now init()");
             init();
         }
 
         List<String> children;
         ByteSequence byteSeq = ByteSequence.fromString(CONFIG_PATH);
 
-        GetResponse response = client.getKVClient().get(byteSeq).get();
+        GetResponse response = kv.get(byteSeq).get();
         String globalData = response.getKvs().get(0).getValue().toStringUtf8();
-        RegisterUtils.processZkConfig(globalData, zkInfo, true);
 
-        EtcdUtils.etcdWatch(client.getWatchClient(), servicePath, Boolean.TRUE, events -> {
+        RegistryDataUtils.processZkConfig(globalData, zkInfo, true);
+
+        EtcdUtils.etcdWatch(client.getWatchClient(), servicePath, Boolean.TRUE, () -> {
             syncEtcdRuntimeService(zkInfo);
         });
 
 
     }
+
+
+
+
+    /*private void getServiceInfoByServiceName(String serviceName) {
+
+        String servicePath = SERVICE_PATH + "/" + serviceName;
+        try {
+            if (client == null) {
+                LOGGER.info(getClass().getSimpleName() + "::getServiceInfoByServiceName[" + serviceName + "]:etcd is null, now init()");
+                init();
+            }
+            ByteSequence byteSeq = ByteSequence.fromString(servicePath);
+
+            GetResponse response = client.getKVClient().get(byteSeq, GetOption.newBuilder().withPrefix(byteSeq).build()).get();
+
+            List<String> children = response.getKvs().stream()
+                    .map(KeyValue::getKey)
+                    .map(ByteSequence::toStringUtf8)
+                    .map(EtcdUtils::getInstData)
+                    .collect(Collectors.toList());
+
+            EtcdUtils.etcdWatch(client.getWatchClient(), servicePath, Boolean.TRUE, () -> {
+                getServiceInfoByServiceName(serviceName);
+            });
+
+            LOGGER.info("获取{}的子节点成功", servicePath);
+            RegistryDataUtils.resetServiceInfoByName(serviceName, servicePath, children, caches);
+
+        } catch (ExecutionException | InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }*/
 
 
 }
