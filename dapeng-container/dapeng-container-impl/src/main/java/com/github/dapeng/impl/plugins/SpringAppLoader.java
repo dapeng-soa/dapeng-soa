@@ -3,11 +3,11 @@ package com.github.dapeng.impl.plugins;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.Plugin;
+import com.github.dapeng.core.lifecycyle.Lifecycle;
 import com.github.dapeng.core.*;
-import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.impl.container.DapengApplication;
-import org.apache.kafka.common.protocol.types.Field;
+import com.github.dapeng.core.lifecycyle.LifecycleProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +24,7 @@ public class SpringAppLoader implements Plugin {
     private final Container container;
     private final List<ClassLoader> appClassLoaders;
     private List<Object> springCtxs = new ArrayList<>();
+
 
     public SpringAppLoader(Container container, List<ClassLoader> appClassLoaders) {
         this.container = container;
@@ -54,6 +55,11 @@ public class SpringAppLoader implements Plugin {
 
                 Map<String, SoaServiceDefinition<?>> processorMap = (Map<String, SoaServiceDefinition<?>>)
                         method.invoke(springCtx, appClassLoader.loadClass(SoaServiceDefinition.class.getName()));
+
+                //获取所有实现了lifecycle的bean
+                LifecycleProcessor.getInstance().lifecycles = (Map<String, Lifecycle>)
+                        method.invoke(springCtx, appClassLoader.loadClass(Lifecycle.class.getName()));
+
                 //TODO: 需要构造Application对象
                 Map<String, ServiceInfo> appInfos = toServiceInfos(processorMap);
                 Application application = new DapengApplication(appInfos.values().stream().collect(Collectors.toList()),
@@ -84,6 +90,8 @@ public class SpringAppLoader implements Plugin {
             }
         }
     }
+
+
 
     private Map<ProcessorKey, Application> toApplicationMap(Map<ProcessorKey,
             SoaServiceDefinition<?>> serviceDefinitionMap, Application application) {
