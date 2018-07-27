@@ -43,7 +43,11 @@ public class SoaConnectionImpl extends SoaBaseConnection {
         } catch (TException e) {
             LOGGER.error(e.getMessage(), e);
             requestBuf.release();
-            throw new SoaException(e);
+            if (e instanceof SoaException) {
+                throw (SoaException)e;
+            } else {
+                throw new SoaException(e);
+            }
         }
     }
 }
