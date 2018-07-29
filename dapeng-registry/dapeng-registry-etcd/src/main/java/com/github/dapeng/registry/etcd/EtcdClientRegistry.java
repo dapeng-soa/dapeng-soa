@@ -86,7 +86,7 @@ public class EtcdClientRegistry {
     /**
      * get data by key
      */
-    public List<Route> getRoutes(Client client, String servicePath) {
+    public List<Route> getRoutes(String servicePath) {
         if (routesMap.get(servicePath) == null) {
             try {
                 GetResponse response = kv.get(ByteSequence.fromString(servicePath)).get();
@@ -94,7 +94,7 @@ public class EtcdClientRegistry {
                 List<Route> routes = processRouteData(servicePath, routeData);
 
                 EtcdUtils.etcdWatch(client.getWatchClient(), servicePath, Boolean.FALSE, () -> {
-                    getRoutes(client, servicePath);
+                    getRoutes(servicePath);
                 });
                 LOGGER.warn("ClientZk::getRoutes routes changes:" + routes);
                 return routes;

@@ -1,0 +1,2 @@
+com.github.dapeng.registry.etcd.agent.EtcdRegistryAgentImpl
+com.github.dapeng.registry.zookeeper.RegistryAgentImpl

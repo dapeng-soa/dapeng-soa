@@ -151,16 +151,10 @@ public class EtcdServerRegistry {
                 CompletableFuture<GetResponse> responseFuture = kv.get(key, GetOption.newBuilder().withPrefix(key).build());
                 List<KeyValue> kvs = responseFuture.get().getKvs();
 
-                List<String> children = kvs.stream()
-                        .map(KeyValue::getKey)
-                        .map(ByteSequence::toStringUtf8)
-                        .map(EtcdUtils::getInstData)
-                        .collect(Collectors.toList());
-
-                if (children.size() > 0) {
-                    checkIsMaster(children, MasterHelper.generateKey(context.getService(), context.getVersion()), context.getInstanceInfo());
+                if (kvs.size() > 0) {
+                    checkIsMaster(kvs, MasterHelper.generateKey(context.getService(), context.getVersion()), context.getInstanceInfo());
                 }
-                logger.info("children size:{}", children.size());
+                logger.info("children size:{}", kvs.size());
             } catch (InterruptedException | ExecutionException e) {
                 logger.error(e.getMessage(), e);
             }
@@ -176,7 +170,7 @@ public class EtcdServerRegistry {
      * @param serviceKey   当前服务信息                eg com.github.user.UserService:1.0.0
      * @param instanceInfo 当前服务节点实例信息         eg  192.168.10.17:9081:1.0.0
      */
-    private void checkIsMaster(List<String> children, String serviceKey, String instanceInfo) {
+    private void checkIsMaster(List<KeyValue> children, String serviceKey, String instanceInfo) {
         if (children.size() <= 0) {
             return;
         }
@@ -187,18 +181,17 @@ public class EtcdServerRegistry {
          * 根据 lastIndexOf :  之后的数字进行排序，由小到大，每次取zk临时有序节点中的序列最小的节点作为master
          */
         try {
-            children.sort((o1, o2) -> {
-                Integer int1 = Integer.valueOf(o1.substring(o1.lastIndexOf(":") + 1));
-                Integer int2 = Integer.valueOf(o2.substring(o2.lastIndexOf(":") + 1));
-                return int1 - int2;
+            children.sort((c1, c2) -> {
+                long longC1 = c1.getCreateRevision();
+                long longC2 = c2.getCreateRevision();
+                return (int) (longC1 - longC2);
             });
 
-            String firstNode = children.get(0);
+            String firstNode = children.get(0).getKey().toStringUtf8();
             logger.info("serviceInfo firstNode {}", firstNode);
 
-            String firstInfo = firstNode.replace(firstNode.substring(firstNode.lastIndexOf(":")), "");
 
-            if (firstInfo.equals(instanceInfo)) {
+            if (firstNode.equals(instanceInfo)) {
                 isMaster.put(serviceKey, true);
                 logger.info("({})竞选master成功, master({})", serviceKey, CURRENT_CONTAINER_ADDR);
             } else {
@@ -261,10 +254,8 @@ public class EtcdServerRegistry {
             String value = response.getKvs().get(0).getValue().toStringUtf8();
             logger.info("Get data from etcdServer, key:{}, value:{}", key, value);
             return value;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        } catch (InterruptedException | ExecutionException e) {
+            logger.error(e.getMessage(), e);
         }
         return null;
     }

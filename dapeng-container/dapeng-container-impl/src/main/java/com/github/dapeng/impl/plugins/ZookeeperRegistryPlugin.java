@@ -11,11 +11,11 @@ import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.container.DapengApplication;
 import com.github.dapeng.registry.RegistryAgentProxy;
 import com.github.dapeng.registry.RegistryServerAgent;
-import com.github.dapeng.registry.zookeeper.RegistryAgentImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.ServiceLoader;
 
 /**
  * 注册中心 注册插件 Plugin
@@ -26,10 +26,15 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
     private static final Logger LOGGER = LoggerFactory.getLogger(ZookeeperRegistryPlugin.class);
 
     private final Container container;
-    private final RegistryServerAgent registryAgent = new RegistryAgentImpl(false);
+    private final RegistryServerAgent registryAgent;
+
 
     public ZookeeperRegistryPlugin(Container container) {
         this.container = container;
+        //spi
+        ServiceLoader<RegistryServerAgent> factories = ServiceLoader.load(RegistryServerAgent.class, getClass().getClassLoader());
+        registryAgent = factories.iterator().next();
+
         container.registerAppListener(this);
         if (SoaSystemEnvProperties.SOA_CONTAINER_IP.trim().equals("")) {
             LOGGER.error("soa_container_ip is empty, exit..");

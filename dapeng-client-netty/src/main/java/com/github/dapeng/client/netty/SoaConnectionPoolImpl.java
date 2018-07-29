@@ -14,10 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
@@ -45,7 +42,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     private Map<String, RegisterInfo> zkInfos = new ConcurrentHashMap<>();
     private Map<IpPort, SubPool> subPools = new ConcurrentHashMap<>();
-    private RegistryClientAgent zkAgent = new ZkClientAgentImpl();
+    //spi
+    private RegistryClientAgent clientAgent;
 
     private ReentrantLock subPoolLock = new ReentrantLock();
 
@@ -68,7 +66,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 RegisterInfo zkServiceInfo = zkInfos.remove(clientInfoRef.serviceName);
 
                 if (zkServiceInfo != null) {
-                    zkAgent.cancelSyncService(zkServiceInfo);
+                    clientAgent.cancelSyncService(zkServiceInfo);
                 }
             } catch (Throwable e) {
                 logger.error(e.getMessage(), e);
@@ -83,6 +81,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         cleanThread.setDaemon(true);
         cleanThread.start();
+        //spi
+        ServiceLoader<RegistryClientAgent> factories = ServiceLoader.load(RegistryClientAgent.class, getClass().getClassLoader());
+        clientAgent = factories.iterator().next();
     }
 
 
@@ -118,7 +119,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             clientInfos.put(key, clientInfoRef);
 
             RegisterInfo zkInfo = new RegisterInfo(serviceName, new ArrayList<>());
-            zkAgent.syncService(zkInfo);
+            clientAgent.syncService(zkInfo);
 
             if (zkInfo.getStatus() == RegisterInfo.Status.ACTIVE) {
                 zkInfos.put(serviceName, zkInfo);
@@ -171,7 +172,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             logger.error(getClass().getSimpleName() + "::findConnection-0[service: " + service + "], zkInfo not found, now reSyncService");
 
             zkInfo = new RegisterInfo(service, new ArrayList<>());
-            zkAgent.syncService(zkInfo);
+            clientAgent.syncService(zkInfo);
             if (zkInfo.getStatus() != RegisterInfo.Status.ACTIVE) {
                 logger.error(getClass().getSimpleName() + "::findConnection-1[service: " + service + "], zkInfo not found");
                 return null;
@@ -221,7 +222,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * @param zkInfo
      * @param version
      */
-    private List<RuntimeInstance> retryGetConnection(ZkServiceInfo zkInfo, String version) {
+    private List<RuntimeInstance> retryGetConnection(RegisterInfo zkInfo, String version) {
         int retry = 1;
         do {
             try {
@@ -255,7 +256,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      */
     private List<RuntimeInstance> router(String service, String method, String version, List<RuntimeInstance> compatibles) throws SoaException {
         InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-        List<Route> routes = zkAgent.getRoutes(service);
+        List<Route> routes = clientAgent.getRoutes(service);
         if (routes == null || routes.size() == 0) {
             logger.debug("router 获取 路由信息为空或size为0,跳过router,服务实例数：{}", compatibles.size());
             return compatibles;
