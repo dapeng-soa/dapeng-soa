@@ -499,11 +499,8 @@ public class JsonSerializer implements BeanSerializer<String> {
                         + struct + "." + fieldName
                         + ", struct mandatory fields missing:"
                         + mandatoryMissFileds.stream().map(field -> field.name + ", ").collect(Collectors.toList()));
-<<<<<<< HEAD
                 logger.error(ex.getMessage());
-=======
                 //logger.error(ex.getMessage(), ex);
->>>>>>> cd2dd96c83b062c41110426f06f26c284c3ee781
                 throw ex;
             }
         }
