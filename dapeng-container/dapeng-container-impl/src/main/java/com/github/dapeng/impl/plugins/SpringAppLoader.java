@@ -57,8 +57,8 @@ public class SpringAppLoader implements Plugin {
                         method.invoke(springCtx, appClassLoader.loadClass(SoaServiceDefinition.class.getName()));
 
                 //获取所有实现了lifecycle的bean
-                LifecycleProcessor.getInstance().lifecycles = (Map<String, Lifecycle>)
-                        method.invoke(springCtx, appClassLoader.loadClass(Lifecycle.class.getName()));
+                LifecycleProcessor.getInstance().addLifecycles(((Map<String, Lifecycle>)
+                        method.invoke(springCtx, appClassLoader.loadClass(Lifecycle.class.getName()))).values());
 
                 //TODO: 需要构造Application对象
                 Map<String, ServiceInfo> appInfos = toServiceInfos(processorMap);

@@ -1,57 +1,50 @@
 package com.github.dapeng.core.lifecycyle;
 
-import java.util.HashMap;
-import java.util.Map;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
+import java.util.*;
 
 /**
- * @Author: hui
- * @Date: 2018/7/26 0026 9:36
- * @Description:
+ * @author hui
+ * @date 2018/7/26 0026 9:36
  */
 
-public class LifecycleProcessor  {
-
+public class LifecycleProcessor {
     private static LifecycleProcessor instance = new LifecycleProcessor();
 
-    public  Map<String,Lifecycle> lifecycles = new HashMap<>();
+    private List<Lifecycle> lifecycles = new ArrayList<>(16);
 
-    private LifecycleProcessor(){}
+    private LifecycleProcessor() {
+    }
 
-    public static LifecycleProcessor getInstance(){
+    public static LifecycleProcessor getInstance() {
         return instance;
     }
 
     /**
-     *对业务不同事件的响应
+     * 对业务不同事件的响应
      */
-    public void onLifecycleEvent(LifecycleEvent event){
-        switch (event){
+    public void onLifecycleEvent(LifecycleEvent event) {
+        switch (event) {
             case START:
-                for (Map.Entry<String, Lifecycle> entry : lifecycles.entrySet()) {
-                    Lifecycle bean = entry.getValue();
-                    bean.onStart();
-                }
+                lifecycles.forEach(Lifecycle::onStart);
                 break;
             case PAUSE:
-                for (Map.Entry<String, Lifecycle> entry : lifecycles.entrySet()) {
-                    Lifecycle bean = entry.getValue();
-                    bean.onPause();
-                }
+                lifecycles.forEach(Lifecycle::onPause);
                 break;
             case MASTER_CHANGE:
-                for (Map.Entry<String, Lifecycle> entry : lifecycles.entrySet()) {
-                    Lifecycle bean = entry.getValue();
-                    bean.onMasterChange();
-                }
+                lifecycles.forEach(Lifecycle::onMasterChange);
                 break;
             case STOP:
-                for (Map.Entry<String, Lifecycle> entry : lifecycles.entrySet()) {
-                    Lifecycle bean = entry.getValue();
-                    bean.onStop();
-                }
+                lifecycles.forEach(Lifecycle::onStop);
                 break;
+            default:
+                throw new NotImplementedException();
         }
+    }
 
+    public void addLifecycles(final Collection<Lifecycle> lifecycles) {
+        this.lifecycles.addAll(lifecycles);
     }
 }
 
