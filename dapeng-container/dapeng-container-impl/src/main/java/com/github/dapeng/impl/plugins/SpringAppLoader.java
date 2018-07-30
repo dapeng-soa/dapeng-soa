@@ -3,11 +3,11 @@ package com.github.dapeng.impl.plugins;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.Plugin;
-import com.github.dapeng.core.lifecycyle.Lifecycle;
+import com.github.dapeng.core.lifecycle.LifeCycleAware;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.impl.container.DapengApplication;
-import com.github.dapeng.core.lifecycyle.LifecycleProcessor;
+import com.github.dapeng.core.lifecycle.LifeCycleProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,8 +57,8 @@ public class SpringAppLoader implements Plugin {
                         method.invoke(springCtx, appClassLoader.loadClass(SoaServiceDefinition.class.getName()));
 
                 //获取所有实现了lifecycle的bean
-                LifecycleProcessor.getInstance().addLifecycles(((Map<String, Lifecycle>)
-                        method.invoke(springCtx, appClassLoader.loadClass(Lifecycle.class.getName()))).values());
+                LifeCycleProcessor.getInstance().addLifecycles(((Map<String, LifeCycleAware>)
+                        method.invoke(springCtx, appClassLoader.loadClass(LifeCycleAware.class.getName()))).values());
 
                 //TODO: 需要构造Application对象
                 Map<String, ServiceInfo> appInfos = toServiceInfos(processorMap);
@@ -142,7 +142,7 @@ public class SpringAppLoader implements Plugin {
             /**
              * customConfig 封装到 ServiceInfo 中
              */
-            Map<String, Optional<CustomConfigInfo>> methodsConfigMap = new HashMap<>();
+            Map<String, Optional<CustomConfigInfo>> methodsConfigMap = new HashMap<>(16);
 
             processor.functions.forEach((key, function) -> {
                 methodsConfigMap.put(key, function.getCustomConfigInfo());

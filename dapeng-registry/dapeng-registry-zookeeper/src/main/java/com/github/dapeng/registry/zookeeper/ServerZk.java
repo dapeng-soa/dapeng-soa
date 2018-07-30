@@ -5,8 +5,8 @@ import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.FreqControlRule;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.github.dapeng.core.lifecycyle.LifecycleEvent;
-import com.github.dapeng.core.lifecycyle.LifecycleProcessor;
+import com.github.dapeng.core.lifecycle.LifeCycleEvent;
+import com.github.dapeng.core.lifecycle.LifeCycleProcessor;
 import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.core.helper.MasterHelper;
 import org.apache.zookeeper.*;
@@ -184,16 +184,18 @@ public class ServerZk extends CommonZk {
                     watchInstanceChange(context);
                 }
             });
+            boolean _isMaster = false;
             if (children.size() > 0) {
-                checkIsMaster(children, MasterHelper.generateKey(context.getService(), context.getVersion()), context.getInstanceInfo());
+                _isMaster = checkIsMaster(children, MasterHelper.generateKey(context.getService(), context.getVersion()), context.getInstanceInfo());
             }
             //masterChange响应
-          LifecycleProcessor.getInstance().onLifecycleEvent(LifecycleEvent.MASTER_CHANGE);
+            LifeCycleProcessor.getInstance().onLifecycleEvent(
+                    new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.MASTER_CHANGE,
+                            context.getService(), _isMaster));
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
             create(context.getServicePath() + "/" + context.getInstanceInfo(), context, true);
         }
-
     }
 
 
@@ -314,11 +316,12 @@ public class ServerZk extends CommonZk {
      * @param serviceKey   当前服务信息                eg com.github.user.UserService:1.0.0
      * @param instanceInfo 当前服务节点实例信息         eg  192.168.10.17:9081:1.0.0
      */
-    public void checkIsMaster(List<String> children, String serviceKey, String instanceInfo) {
+    public boolean checkIsMaster(List<String> children, String serviceKey, String instanceInfo) {
         if (children.size() <= 0) {
-            return;
+            return false;
         }
 
+        boolean _isMaster = false;
 
         /**
          * 排序规则
@@ -340,14 +343,18 @@ public class ServerZk extends CommonZk {
 
             if (firstInfo.equals(instanceInfo)) {
                 isMaster.put(serviceKey, true);
+                _isMaster = true;
                 LOGGER.info("({})竞选master成功, master({})", serviceKey, CURRENT_CONTAINER_ADDR);
             } else {
                 isMaster.put(serviceKey, false);
+                _isMaster = false;
                 LOGGER.info("({})竞选master失败，当前节点为({})", serviceKey);
             }
         } catch (NumberFormatException e) {
             LOGGER.error("临时节点格式不正确,请使用新版，正确格式为 etc. 192.168.100.1:9081:1.0.0:0000000022");
         }
+
+        return _isMaster;
     }
 
 
