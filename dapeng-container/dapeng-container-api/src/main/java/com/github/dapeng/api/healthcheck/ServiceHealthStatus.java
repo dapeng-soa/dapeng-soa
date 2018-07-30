@@ -1,4 +1,4 @@
-package com.github.dapeng.api;
+package com.github.dapeng.api.healthcheck;
 
 /**
  * 服务健康度枚举
