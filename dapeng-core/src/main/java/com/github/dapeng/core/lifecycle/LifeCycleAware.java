@@ -29,4 +29,8 @@ public interface LifeCycleAware {
      */
     void onStop(LifeCycleEvent event);
 
+    /**
+     * 配置变化
+     */
+
 }
