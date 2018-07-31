@@ -11,6 +11,7 @@ public class LifeCycleEvent {
         START,
         PAUSE,
         MASTER_CHANGE,
+        CONFIG_CHANGE,
         STOP
     }
 
