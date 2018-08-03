@@ -8,9 +8,11 @@ import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.github.dapeng.impl.plugins.monitor.DapengDoctorImpl;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
 import com.github.dapeng.util.DumpUtil;
+import com.google.gson.Gson;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -20,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -52,7 +55,11 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             String methodName = transactionContext.getHeader().getMethodName();
 
             if (methodName.equalsIgnoreCase("echo")) {
-                transactionContext.setAttribute("container-threadPool-info", DumpUtil.dumpThreadPool((ThreadPoolExecutor) container.getDispatcher()));
+                //String echoInfo = DumpUtil.dumpThreadPool((ThreadPoolExecutor) container.getDispatcher());
+                Map<String,Object> diagnoseMap = DapengDoctorImpl.getInstance().diagnoseReport();
+                diagnoseMap.put("service",transactionContext.getHeader().getServiceName());
+                Gson gson = new Gson();
+                transactionContext.setAttribute("container-threadPool-info", gson.toJson(diagnoseMap));
             }
             transactionContext.setAttribute("dapeng_request_timestamp", System.currentTimeMillis());
 
