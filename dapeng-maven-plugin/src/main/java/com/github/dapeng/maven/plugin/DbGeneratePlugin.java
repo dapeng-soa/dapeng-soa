@@ -34,8 +34,11 @@ public class DbGeneratePlugin extends AbstractMojo {
         Option<Connection> connection = connectJdbc();
         if (connection.isDefined()){
             if (!tableName.isEmpty()){
-                System.out.println(" Found Specific tableName:"+tableName+", start to generateDbEntity..");
-                generateDbClass(tableName,db,connection.get(),packageName,baseTargetPath);
+                String [] tables = tableName.split(",");
+                for(int i=0;i<tables.length;i++){
+                    System.out.println(" Found Specific tableName:"+tables[i]+", start to generateDbEntity..");
+                    generateDbClass(tables[i],db,connection.get(),packageName,baseTargetPath);
+                }
 
             }else {
                 System.out.println(" No specific tableName found. will generate "+ db +" all tables..");
