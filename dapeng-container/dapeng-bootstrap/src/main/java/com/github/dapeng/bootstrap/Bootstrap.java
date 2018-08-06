@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Bootstrap {
-    private static final String ENGINE_PATH = System.getProperty("soa.base", new File(Bootstrap.class.getProtectionDomain().getCodeSource().getLocation().getFile()).getParentFile().getParentFile().getParent() + "/dapeng-container-impl/target/dapeng-container/");
+    public static final String ENGINE_PATH = System.getProperty("soa.base", new File(Bootstrap.class.getProtectionDomain().getCodeSource().getLocation().getFile()).getParentFile().getParentFile().getParent() + "/dapeng-container-impl/target/dapeng-container/");
 
 
     public static void main(String[] args) throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
@@ -58,6 +58,10 @@ public class Bootstrap {
         Method createContainerMethod = containerFactoryClz.getMethod("createContainer", List.class, ClassLoader.class);
         createContainerMethod.invoke(containerFactoryClz, applicationCls, containerCl);
 
+        Class<?> doctorFactoryClz = containerCl.loadClass("com.github.dapeng.api.healthcheck.DoctorFactory");
+        Method createDoctorMethod = doctorFactoryClz.getMethod("createDoctor", List.class, ClassLoader.class);
+        createDoctorMethod.invoke(doctorFactoryClz, applicationCls, containerCl);
+
         Method getContainerMethod = containerFactoryClz.getMethod("getContainer");
         Object container = getContainerMethod.invoke(containerFactoryClz);
 
@@ -84,7 +88,7 @@ public class Bootstrap {
         return urlsList;
     }
 
-    private static List<URL> findJarURLs(File file) throws MalformedURLException {
+    public static List<URL> findJarURLs(File file) throws MalformedURLException {
         final List<URL> urlList = new ArrayList<>();
 
         if (file != null && file.exists()) {
