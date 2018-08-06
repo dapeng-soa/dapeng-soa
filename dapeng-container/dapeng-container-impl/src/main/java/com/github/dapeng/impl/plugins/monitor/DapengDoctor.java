@@ -2,12 +2,10 @@ package com.github.dapeng.impl.plugins.monitor;
 
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
-import com.github.dapeng.api.healthcheck.DapengDoctor;
+import com.github.dapeng.api.healthcheck.Doctor;
 import com.github.dapeng.api.healthcheck.ServiceHealthStatus;
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
 import com.google.common.base.Joiner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -19,17 +17,15 @@ import java.util.concurrent.ThreadPoolExecutor;
  * @Date: 2018/8/2 11:07
  */
 
-public  class DapengDoctorImpl implements DapengDoctor {
+public  class DapengDoctor implements Doctor {
 
 
     public static Map<String, String> map = new HashMap<>();
 
-    private DapengDoctorImpl() {
-
+    public DapengDoctor() {
     }
 
-    public static DapengDoctorImpl getInstance() {
-        return new DapengDoctorImpl();
+    public DapengDoctor(List<ClassLoader> applicationCls) {
     }
 
     @Override

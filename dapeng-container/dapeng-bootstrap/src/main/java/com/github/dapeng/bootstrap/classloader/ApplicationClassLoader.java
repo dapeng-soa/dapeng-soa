@@ -1,7 +1,12 @@
 package com.github.dapeng.bootstrap.classloader;
 
+import com.github.dapeng.bootstrap.Bootstrap;
+
+import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.List;
 
 /**
  * App Class Loader
@@ -34,8 +39,18 @@ public class ApplicationClassLoader extends URLClassLoader {
             return coreClassLoader.loadClass(name);
         }
 
-        Class clz =  super.loadClass(name, resolve);
+        if (name.startsWith("com.github.dapeng.api")) {
+            List<URL> containerURLs = null;
+            try {
+                containerURLs = Bootstrap.findJarURLs(new File(Bootstrap.ENGINE_PATH, "bin/lib"));
+                ClassLoader platformClassLoader = new ContainerClassLoader((URL[])containerURLs.toArray(new URL[containerURLs.size()]), this.coreClassLoader);
+                return platformClassLoader.loadClass(name);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
 
+        }
+        Class clz =  super.loadClass(name, resolve);
         return clz;
     }
 }

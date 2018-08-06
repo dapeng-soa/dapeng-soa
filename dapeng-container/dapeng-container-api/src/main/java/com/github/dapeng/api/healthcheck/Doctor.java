@@ -6,7 +6,7 @@ import java.util.Map;
  * @author ever
  * @date 2018/07/26
  */
-public interface  DapengDoctor {
+public interface Doctor {
 
 
     /**
