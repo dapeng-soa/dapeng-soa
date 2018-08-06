@@ -82,9 +82,9 @@ public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
                     freqKey = context.userIp().orElse(0);
                     if (rule.targets != null && !rule.targets.contains(freqKey)) {
                         flag = false;
-                    } else {
+                    } /*else {
                         freqKey = Math.abs(freqKey);
-                    }
+                    }*/
                     break;
                 default:
                     freqKey = 0;

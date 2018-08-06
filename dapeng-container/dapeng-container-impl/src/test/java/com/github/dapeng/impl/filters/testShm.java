@@ -23,7 +23,8 @@ public class testShm {
         Field nodePageCountRef = shmManagerRef.getClass().getDeclaredField("NODE_PAGE_COUNT");
         nodePageCountRef.setAccessible(true);
 
-        int nodePageHash = (appId << 16 | ruleTypeId) ^ key;
+        int keyTemp = key < 0 ? Math.abs(key):key;
+        int nodePageHash = (appId << 16 | ruleTypeId) ^ keyTemp;
         int nodePageIndex = nodePageHash % (int)nodePageCountRef.get(shmManagerRef);
 
         Method getSpinNodePageLock = shmManagerRef.getClass().getDeclaredMethod("getSpinNodePageLock",int.class);
@@ -60,7 +61,7 @@ public class testShm {
         Method getShort = shmManagerRef.getClass().getDeclaredMethod("getShort",long.class);
         getShort.setAccessible(true);
         Method getInt = shmManagerRef.getClass().getDeclaredMethod("getInt",long.class);
-        Method getLong = shmManagerRef.getClass().getDeclaredMethod("getLong",long.class);
+//        Method getLong = shmManagerRef.getClass().getDeclaredMethod("getLong",long.class);
         getInt.setAccessible(true);
 
         for (int index = 0; index < nodePageMeta.nodes; index++) {
@@ -226,10 +227,11 @@ public class testShm {
 
         System.out.println("test callerIp:----------------------------------------");
 
+        int key = IPUtils.transferIp("255.255.255.255");
         for (int i = 0; i < 100; i++){
 
-            result = manager.reportAndCheck(rule, 2145463247);
-            node = checkNodeCount(rule,2145463247);
+            result = manager.reportAndCheck(rule, key);
+            node = checkNodeCount(rule,key);
 
             if ( i == 0){
                 System.out.println(" first call :");
@@ -586,9 +588,9 @@ public class testShm {
         long t1 = System.nanoTime();
         for (int i = 0; i <500; i++) {
             manager.reportAndCheck(rule, 215);
-            node = checkNodeCount(rule,215);
         }
-        System.out.println("app:" + rule.app + ", ruleType:" + rule.ruleType + ", key:214"+ ", freqRule:["
+        node = checkNodeCount(rule,215);
+        System.out.println("app:" + rule.app + ", ruleType:" + rule.ruleType + ", key:215"+ ", freqRule:["
                 + rule.minInterval + "," + rule.maxReqForMinInterval + "/"
                 + rule.midInterval + "," + rule.maxReqForMidInterval + "/"
                 + rule.maxInterval + "," + rule.maxReqForMaxInterval + "];");
@@ -607,12 +609,13 @@ public class testShm {
         rule.maxInterval = 86400;
         rule.maxReqForMaxInterval = 100;
 
+        int key = IPUtils.transferIp("192.168.35.36");
         t1 = System.nanoTime();
         for (int i = 0; i <500; i++) {
-            manager.reportAndCheck(rule, 2147463647);
-            node = checkNodeCount(rule,2147463647);
+            manager.reportAndCheck(rule, key);
         }
-        System.out.println("app:" + rule.app + ", ruleType:" + rule.ruleType + ", key:2147463647"+ ", freqRule:["
+        node = checkNodeCount(rule,key);
+        System.out.println("app:" + rule.app + ", ruleType:" + rule.ruleType + ", key:192.168.35.36"+ ", freqRule:["
                 + rule.minInterval + "," + rule.maxReqForMinInterval + "/"
                 + rule.midInterval + "," + rule.maxReqForMidInterval + "/"
                 + rule.maxInterval + "," + rule.maxReqForMaxInterval + "];");
@@ -633,9 +636,8 @@ public class testShm {
         t1 = System.nanoTime();
         for (int i = 0; i <500; i++) {
             manager.reportAndCheck(rule, 400);
-            node = checkNodeCount(rule,400);
-
         }
+        node = checkNodeCount(rule,400);
         System.out.println("app:" + rule.app + ", ruleType:" + rule.ruleType + ", key:400"+ ", freqRule:["
                 + rule.minInterval + "," + rule.maxReqForMinInterval + "/"
                 + rule.midInterval + "," + rule.maxReqForMidInterval + "/"
@@ -645,6 +647,31 @@ public class testShm {
                 " midcount = " +  node.midCount +
                 " maxcount = " +  node.maxCount);
         System.out.println();
+
+        rule.app = "com.today.servers4";
+        rule.ruleType = "callIp";
+        rule.minInterval = 60;
+        rule.maxReqForMinInterval = 10;
+        rule.midInterval = 3600;
+        rule.maxReqForMidInterval = 50;
+        rule.maxInterval = 86400;
+        rule.maxReqForMaxInterval = 80;
+        t1 = System.nanoTime();
+        key = IPUtils.transferIp("192.168.4.107");
+        for (int i = 0; i <50; i++) {
+            manager.reportAndCheck(rule, key);
+        }
+        node = checkNodeCount(rule,key);
+        System.out.println("app:" + rule.app + ", ruleType:" + rule.ruleType + ", key:192.168.4.107"+ ", freqRule:["
+                + rule.minInterval + "," + rule.maxReqForMinInterval + "/"
+                + rule.midInterval + "," + rule.maxReqForMidInterval + "/"
+                + rule.maxInterval + "," + rule.maxReqForMaxInterval + "];");
+        System.out.println( " cost = "+ (System.nanoTime() - t1));
+        System.out.println( " mincout = " +  node.minCount +
+                " midcount = " +  node.midCount +
+                " maxcount = " +  node.maxCount);
+        System.out.println();
+
     }
 
     private static void testShmSingSame() throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
@@ -723,15 +750,15 @@ public class testShm {
 
     public static void main(String[] args) throws NoSuchMethodException, NoSuchFieldException, IllegalAccessException, InvocationTargetException, InterruptedException {
 
-/*          testShmCallerId();
+        //  testShmCallerId();
 
           testShmCallerIp();
 
-          testShmId();
+        //  testShmId();
 
-          testShmSingDiff();*/
+         // testShmSingDiff();
 
-          testShmSingSame();
+       //   testShmSingSame();
 
 /*
           testShmPerformance();

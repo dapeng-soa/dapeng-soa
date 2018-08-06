@@ -64,6 +64,11 @@ public class ShmManager {
      * 整块共享内存的大小(4K+12K+128K+128M)
      */
     private final static int TOTAL_MEM_BYTES = 134365184;
+
+    /**
+    * 基准时间 2018-08-01 00:00:00
+    */
+    private final static long BASE_TIME_MILLIS = 1533052800000L;
     /**
      * 内存操作对象
      */
@@ -141,10 +146,12 @@ public class ShmManager {
         boolean result;
         short appId = allocId(rule.app);
         short ruleTypeId = allocId(rule.ruleType);
-
-        int nodePageHash = (appId << 16 | ruleTypeId) ^ key;
+        //key若为负数，则取绝对值用于计算nodePageHash，主要针对IP地址为负数的情况
+        int keyTemp = key < 0 ? Math.abs(key):key;
+        int nodePageHash = (appId << 16 | ruleTypeId) ^ keyTemp;
         int nodePageIndex = nodePageHash % NODE_PAGE_COUNT;
-        int now = (int) (System.currentTimeMillis() / 1000) % 86400;
+        //以2018-08-01 00:00:00 为基准，计算到目前时间的秒数
+        int now = (int) ((System.currentTimeMillis() - BASE_TIME_MILLIS) / 1000);
 
         LOGGER.debug("reportAndCheck, rule:{}, nodePageHash:{}, nodePageIndex:{}, timestamp:{}, appId/ruleTypeId/key:{}/{}/{}",
                 rule, nodePageHash, nodePageIndex, now, appId, ruleTypeId, key);
@@ -210,7 +217,8 @@ public class ShmManager {
             return "[" + app + "/" + ruleType + "/" + key + ":0/0/0]";
         }
 
-        int nodePageHash = (appId << 16 | ruleTypeId) ^ key;
+        int keyTemp = key < 0 ? Math.abs(key):key;
+        int nodePageHash = (appId << 16 | ruleTypeId) ^ keyTemp;
         int nodePageIndex = nodePageHash % NODE_PAGE_COUNT;
         long nodeAddr = homeAddr + NODE_PAGE_OFFSET + 1024 * nodePageIndex + 16;
         NodePageMeta nodePageMeta = getNodePageMeta(nodePageIndex);
@@ -323,11 +331,10 @@ public class ShmManager {
             }
 
             nodeAddr += Integer.BYTES;
-            long lastTimeStame = getAndSetInt(nodeAddr, now);
-
-            boolean isSameMin = now / rule.minInterval == lastTimeStame / rule.minInterval;
-            boolean isSameMid = now / rule.midInterval == lastTimeStame / rule.midInterval;
-            boolean isSameMax = now / rule.maxInterval == lastTimeStame / rule.maxInterval;
+            long lastTimeStamp = getAndSetInt(nodeAddr, now);
+            boolean isSameMin = (now % 86400) / rule.minInterval == (lastTimeStamp % 86400) / rule.minInterval;
+            boolean isSameMid = (now % 86400) / rule.midInterval == (lastTimeStamp % 86400) / rule.midInterval;
+            boolean isSameMax = now / 86400 == lastTimeStamp / 86400;
 
             int minCount, midCount, maxCount;
             nodeAddr += Integer.BYTES;
@@ -451,9 +458,9 @@ public class ShmManager {
      * @param now
      */
     private void processNodeRate(CounterNode node, MarkNode markNode, FreqControlRule rule, int now) {
-        boolean isSameMin = now / rule.minInterval == node.timestamp / rule.minInterval;
-        boolean isSameMid = now / rule.midInterval == node.timestamp / rule.midInterval;
-        boolean isSameMax = now / rule.maxInterval == node.timestamp / rule.maxInterval;
+        boolean isSameMin = (now % 86400) / rule.minInterval == (node.timestamp % 86400) / rule.minInterval;
+        boolean isSameMid = (now % 86400) / rule.midInterval == (node.timestamp % 86400) / rule.midInterval;
+        boolean isSameMax = now / 86400 == node.timestamp / 86400;
 
         int minCount = node.minCount;
         int midCount = node.midCount;
