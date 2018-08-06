@@ -25,9 +25,6 @@ public  class DapengDoctor implements Doctor {
     public DapengDoctor() {
     }
 
-    public DapengDoctor(List<ClassLoader> applicationCls) {
-    }
-
     @Override
     public void report(ServiceHealthStatus status, String remark, Class<?> serviceClass) {
         Class[] clazz = serviceClass.getInterfaces();

@@ -1,6 +1,5 @@
 package com.github.dapeng.api.healthcheck;
 
-import java.util.List;
 
 /**
  * @Author: zhup
@@ -8,6 +7,6 @@ import java.util.List;
  */
 
 public interface DoctorFactorySpi {
-    Doctor createInstance(List<ClassLoader> applicationCls);
+    Doctor createInstance();
 }
 

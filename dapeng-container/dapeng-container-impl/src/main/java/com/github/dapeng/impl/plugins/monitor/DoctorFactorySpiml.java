@@ -14,7 +14,7 @@ public class DoctorFactorySpiml implements DoctorFactorySpi {
     public DoctorFactorySpiml() {
     }
 
-    public Doctor createInstance(List<ClassLoader> applicationCls) {
-        return new DapengDoctor(applicationCls);
+    public Doctor createInstance() {
+        return new DapengDoctor();
     }
 }
