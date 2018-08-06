@@ -59,8 +59,8 @@ public class Bootstrap {
         createContainerMethod.invoke(containerFactoryClz, applicationCls, containerCl);
 
         Class<?> doctorFactoryClz = containerCl.loadClass("com.github.dapeng.api.healthcheck.DoctorFactory");
-        Method createDoctorMethod = doctorFactoryClz.getMethod("createDoctor", List.class, ClassLoader.class);
-        createDoctorMethod.invoke(doctorFactoryClz, applicationCls, containerCl);
+        Method createDoctorMethod = doctorFactoryClz.getMethod("createDoctor", ClassLoader.class);
+        createDoctorMethod.invoke(doctorFactoryClz, containerCl);
 
         Method getContainerMethod = containerFactoryClz.getMethod("getContainer");
         Object container = getContainerMethod.invoke(containerFactoryClz);
