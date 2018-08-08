@@ -72,6 +72,10 @@ public class ServiceCache {
             if (metadata != null) {
                 try (StringReader reader = new StringReader(metadata)) {
                     Service serviceData = JAXB.unmarshal(reader, Service.class);
+
+                    //替换为注册的版本号
+                    serviceData.getMeta().setVersion(serviceInfo.version);
+
                     Map<String, Service> services = loadResource(serviceData);
                     ServiceCache.services.putAll(services);
                 } catch (Exception e) {

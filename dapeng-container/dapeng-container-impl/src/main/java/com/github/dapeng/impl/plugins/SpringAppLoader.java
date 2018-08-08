@@ -3,11 +3,11 @@ package com.github.dapeng.impl.plugins;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.Plugin;
-import com.github.dapeng.core.lifecycle.LifeCycleAware;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
-import com.github.dapeng.impl.container.DapengApplication;
+import com.github.dapeng.core.lifecycle.LifeCycleAware;
 import com.github.dapeng.core.lifecycle.LifeCycleProcessor;
+import com.github.dapeng.impl.container.DapengApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,18 +52,20 @@ public class SpringAppLoader implements Plugin {
                 springCtxs.add(springCtx);
 
                 Method method = appCtxClass.getMethod("getBeansOfType", Class.class);
-
-                Map<String, SoaServiceDefinition<?>> processorMap = (Map<String, SoaServiceDefinition<?>>)
-                        method.invoke(springCtx, appClassLoader.loadClass(SoaServiceDefinition.class.getName()));
+                Map<String, List<SoaServiceDefinition<?>>> serviceProcessorListMap = (Map<String, List<SoaServiceDefinition<?>>>) method.invoke(springCtx, appClassLoader.loadClass(ArrayList.class.getName()));
 
                 //获取所有实现了lifecycle的bean
-                LifeCycleProcessor.getInstance().addLifecycles(((Map<String, LifeCycleAware>)
-                        method.invoke(springCtx, appClassLoader.loadClass(LifeCycleAware.class.getName()))).values());
+                LifeCycleProcessor.getInstance().addLifecycles(((Map<String, LifeCycleAware>) method.invoke(springCtx, appClassLoader.loadClass(LifeCycleAware.class.getName()))).values());
+
+                List<ServiceInfo> serviceInfoList = new ArrayList<>();
+                Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitionMap = new HashMap<>(16);
+                Map<ProcessorKey, Application> applicationMap = new HashMap<>(16);
+
+                //解析serviceProcessorListMap
+                parseSoaServiceDefinitionMap(serviceProcessorListMap, serviceInfoList, serviceDefinitionMap);
 
                 //TODO: 需要构造Application对象
-                Map<String, ServiceInfo> appInfos = toServiceInfos(processorMap);
-                Application application = new DapengApplication(appInfos.values().stream().collect(Collectors.toList()),
-                        appClassLoader);
+                Application application = new DapengApplication(serviceInfoList, appClassLoader);
 
                 //Start spring context
                 LOGGER.info(" start to boot app");
@@ -73,16 +75,12 @@ public class SpringAppLoader implements Plugin {
                 // IApplication app = new ...
                 if (!application.getServiceInfos().isEmpty()) {
                     // fixme only registerApplication
-                    Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitionMap = toSoaServiceDefinitionMap(appInfos, processorMap);
                     container.registerAppProcessors(serviceDefinitionMap);
-
-                    container.registerAppMap(toApplicationMap(serviceDefinitionMap, application));
+                    container.registerAppMap(buildApplicationMap(serviceDefinitionMap, application));
                     container.registerApplication(application); //fire a zk event
                 }
 
                 LOGGER.info(" ------------ SpringClassLoader: " + ContainerFactory.getContainer().getApplications());
-
-
             } catch (Exception e) {
                 LOGGER.error(e.getMessage(), e);
             } finally {
@@ -92,10 +90,7 @@ public class SpringAppLoader implements Plugin {
     }
 
 
-
-    private Map<ProcessorKey, Application> toApplicationMap(Map<ProcessorKey,
-            SoaServiceDefinition<?>> serviceDefinitionMap, Application application) {
-
+    private Map<ProcessorKey, Application> buildApplicationMap(Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitionMap, Application application) {
         Map<ProcessorKey, Application> map = serviceDefinitionMap.keySet().stream().
                 collect(Collectors.toMap(Function.identity(), processorKey -> application));
         return map;
@@ -111,70 +106,30 @@ public class SpringAppLoader implements Plugin {
                 method.invoke(context);
             } catch (NoSuchMethodException e) {
                 LOGGER.info(" failed to get context close method.....");
-            } catch (IllegalAccessException|InvocationTargetException e) {
+            } catch (IllegalAccessException | InvocationTargetException e) {
                 LOGGER.info(e.getMessage());
             }
         });
         LOGGER.warn("Plugin:SpringAppLoader stoped..");
     }
 
-    private Map<String, ServiceInfo> toServiceInfos(Map<String, SoaServiceDefinition<?>> processorMap)
-            throws Exception {
+    private void parseSoaServiceDefinitionMap(Map<String, List<SoaServiceDefinition<?>>> serviceProcessorListMap, List<ServiceInfo> serviceInfoList, Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitionMap) throws Exception {
+        //合并serviceProcessorListMap 中的List
+       /* List<SoaServiceDefinition<?>> serviceDefinitionList = new ArrayList<>();
+        serviceProcessorListMap.values().forEach(serviceDefinitionList::addAll);
+        List<SoaServiceDefinition<?>> serviceDefinitionList1 = Stream.of(serviceProcessorListMap.values()).flatMap(Collection::stream).flatMap(Collection::stream).collect(Collectors.toList());*/
+        List<SoaServiceDefinition<?>> serviceDefinitionList = serviceProcessorListMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
 
-        Map<String, ServiceInfo> serviceInfoMap = new HashMap<>(processorMap.size());
-        for (Map.Entry<String, SoaServiceDefinition<?>> processorEntry : processorMap.entrySet()) {
-            String processorKey = processorEntry.getKey();
-            SoaServiceDefinition<?> processor = processorEntry.getValue();
-
-            long count = new ArrayList<>(Arrays.asList(processor.iface.getClass().getInterfaces()))
-                    .stream()
-                    .filter(m -> "org.springframework.aop.framework.Advised".equals(m.getName()))
-                    .count();
-
-            Class<?> ifaceClass = (Class) (count > 0 ?
-                    processor.iface.getClass().getMethod("getTargetClass").invoke(processor.iface) :
-                    processor.iface.getClass());
-
-            Service service = processor.ifaceClass.getAnnotation(Service.class);
-            // TODO
-            assert (service != null);
-
-            /**
-             * customConfig 封装到 ServiceInfo 中
-             */
-            Map<String, Optional<CustomConfigInfo>> methodsConfigMap = new HashMap<>(16);
-
-            processor.functions.forEach((key, function) -> {
-                methodsConfigMap.put(key, function.getCustomConfigInfo());
-            });
-
-            ServiceInfo serviceInfo = new ServiceInfo(service.name(), service.version(),
-                    "service", ifaceClass, processor.getConfigInfo(), methodsConfigMap);
-
-            serviceInfoMap.put(processorKey, serviceInfo);
+        for (SoaServiceDefinition<?> soaServiceDefinition : serviceDefinitionList) {
+            ServiceInfo serviceInfo = parseSoaServiceDefinition(soaServiceDefinition);
+            serviceInfoList.add(serviceInfo);
+            serviceDefinitionMap.put(new ProcessorKey(serviceInfo.serviceName, serviceInfo.version), soaServiceDefinition);
         }
-
-        return serviceInfoMap;
     }
-
-
-    private Map<ProcessorKey, SoaServiceDefinition<?>> toSoaServiceDefinitionMap(
-            Map<String, ServiceInfo> serviceInfoMap,
-            Map<String, SoaServiceDefinition<?>> processorMap) {
-
-        Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitions = serviceInfoMap.entrySet().stream()
-                .collect(Collectors.toMap(
-                        entry -> new ProcessorKey(entry.getValue().serviceName, entry.getValue().version),
-                        entry -> processorMap.get(entry.getKey())));
-        return serviceDefinitions;
-    }
-
 
     private Object getSpringContext(String configPath, ClassLoader appClassLoader, Constructor<?> constructor) throws Exception {
         List<String> xmlPaths = new ArrayList<>();
-
         Enumeration<URL> resources = appClassLoader.getResources(configPath);
-
         while (resources.hasMoreElements()) {
             URL nextElement = resources.nextElement();
             // not load dapeng-soa-transaction-impl
@@ -186,4 +141,38 @@ public class SpringAppLoader implements Plugin {
         return context;
     }
 
+    /**
+     * 解析 SoaServiceDefinition<?>  => ServiceInfo
+     *
+     * @param soaServiceDefinition
+     * @return ServiceInfo
+     * @throws Exception
+     */
+    private ServiceInfo parseSoaServiceDefinition(SoaServiceDefinition<?> soaServiceDefinition) throws Exception {
+        long count = new ArrayList<>(Arrays.asList(soaServiceDefinition.iface.getClass().getInterfaces()))
+                .stream()
+                .filter(m -> "org.springframework.aop.framework.Advised".equals(m.getName()))
+                .count();
+
+        Class<?> ifaceClass = (Class) (count > 0 ?
+                soaServiceDefinition.iface.getClass().getMethod("getTargetClass").invoke(soaServiceDefinition.iface) :
+                soaServiceDefinition.iface.getClass());
+
+        Service service = soaServiceDefinition.ifaceClass.getAnnotation(Service.class);
+        // TODO
+        assert (service != null);
+
+        /**
+         * customConfig 封装到 ServiceInfo 中
+         */
+        Map<String, Optional<CustomConfigInfo>> methodsConfigMap = new HashMap<>(16);
+        soaServiceDefinition.functions.forEach((key, function) -> methodsConfigMap.put(key, function.getCustomConfigInfo()));
+
+        //判断有没有 接口实现的版本号   默认为IDL定义的版本号
+        String serviceVersion = service.version();
+        if (ifaceClass.isAnnotationPresent(ServiceVersion.class)) {
+            serviceVersion = ifaceClass.getAnnotationsByType(ServiceVersion.class)[0].version();
+        }
+        return new ServiceInfo(service.name(), serviceVersion, "service", ifaceClass, soaServiceDefinition.getConfigInfo(), methodsConfigMap);
+    }
 }

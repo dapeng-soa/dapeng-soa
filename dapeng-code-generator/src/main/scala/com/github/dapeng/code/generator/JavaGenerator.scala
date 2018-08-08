@@ -238,6 +238,15 @@ class JavaGenerator extends CodeGenerator {
         this.clientInfo = this.pool.registerClientInfo(serviceName,version);
       </block>
 
+      public {service.name}Client(String serviceVersion) <block>
+        this.serviceName = "{service.namespace + "." + service.name }";
+        this.version = serviceVersion;
+
+        ServiceLoader{lt}SoaConnectionPoolFactory{gt} factories = ServiceLoader.load(SoaConnectionPoolFactory.class,getClass().getClassLoader());
+        this.pool = factories.iterator().next().getPool();
+        this.clientInfo = this.pool.registerClientInfo(serviceName,version);
+      </block>
+
       {
       toMethodArrayBuffer(service.methods).map{(method:Method)=>{
         <div>
@@ -337,6 +346,15 @@ class JavaGenerator extends CodeGenerator {
       public {service.name}AsyncClient() <block>
         this.serviceName = "{service.namespace + "." + service.name }";
         this.version = "{service.meta.version}";
+
+        ServiceLoader{lt}SoaConnectionPoolFactory{gt} factories = ServiceLoader.load(SoaConnectionPoolFactory.class,getClass().getClassLoader());
+        this.pool = factories.iterator().next().getPool();
+        this.clientInfo = this.pool.registerClientInfo(serviceName,version);
+      </block>
+
+      public {service.name}AsyncClient(String serviceVersion) <block>
+        this.serviceName = "{service.namespace + "." + service.name }";
+        this.version = serviceVersion;
 
         ServiceLoader{lt}SoaConnectionPoolFactory{gt} factories = ServiceLoader.load(SoaConnectionPoolFactory.class,getClass().getClassLoader());
         this.pool = factories.iterator().next().getPool();
