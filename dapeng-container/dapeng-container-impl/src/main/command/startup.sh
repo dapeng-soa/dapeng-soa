@@ -33,8 +33,10 @@ do
 done
 
 #DEBUG="-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9997"
-JMX="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=1091 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
-JVM_OPTS="-Dfile.encoding=UTF-8 -Dsun.jun.encoding=UTF-8 -Dname=$PRGNAME -Dio.netty.leakDetectionLevel=advanced -Xms512M -Xmx1024M -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDateStamps -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintGCDetails -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+UseParallelGC -XX:+UseParallelOldGC -Dlog.dir=$PRGDIR/.."
+JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=1091 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
+JVM_OPTS=" -Xms256M -Xmx256M -Dfile.encoding=UTF-8 -Dsun.jun.encoding=UTF-8"
+NETTY_OPTS=" -Dio.netty.leakDetectionLevel=advanced "
+GC_OPTS=" -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+UseParallelGC -XX:+UseParallelOldGC -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDateStamps -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintGCDetails -Dlog.dir=$PRGDIR/.."
 SOA_BASE="-Dsoa.base=$PRGDIR/../ -Dsoa.run.mode=native"
 
 # SIGTERM-handler  graceful-shutdown
@@ -54,6 +56,14 @@ nohup java -server $JVM_OPTS $SOA_BASE $DEBUG_OPTS $USER_OPTS  $E_JAVA_OPTS -cp 
 pid="$!"
 echo $pid > $LOGDIR/pid.txt
 
-nohup sh /opt/fluent-bit/fluent-bit.sh >> $LOGDIR/fluent-bit.log 2>&1 &
+fluentBitEnable="$fluent_bit_enable"
+
+if [ "$fluentBitEnable" == "" ]; then
+    fluentBitEnable="false"
+fi
+
+if [ "$fluentBitEnable" == "true" ]; then
+   nohup sh /opt/fluent-bit/fluent-bit.sh >> $LOGDIR/fluent-bit.log 2>&1 &
+fi
 
 wait $pid
