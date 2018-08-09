@@ -200,8 +200,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         // checkVersion
         String finalVersion = version;
         List<RuntimeInstance> checkVersionInstances = compatibles.stream().filter(rt -> checkVersion(finalVersion, rt.version)).collect(Collectors.toList());
-        if (checkVersionInstances == null || compatibles.isEmpty()) {
-            logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + "], not found available version of instances");
+        if (checkVersionInstances == null || checkVersionInstances.isEmpty()) {
+            logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + ":" + version + "], not found available version of instances");
             throw new SoaException(NoMatchedService, "服务 [ " + service + ":" + version + "] 无可用实例:没有找到对应的服务版本");
         }
 
