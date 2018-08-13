@@ -3,6 +3,7 @@ package com.github.dapeng.registry.zookeeper;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.FreqControlRule;
+import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.lifecycle.LifeCycleEvent;
@@ -20,6 +21,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+
+import static com.github.dapeng.core.SoaCode.FreqConfigError;
 
 
 /**
@@ -380,6 +383,7 @@ public class ServerZk extends CommonZk {
     }
 
     /**
+     * TODO 有比较严重的性能问题
      * 获取 zookeeper 上的 限流规则 freqRule
      *
      * @return
@@ -456,11 +460,11 @@ public class ServerZk extends CommonZk {
                             if (Pattern.matches(pattern2, s[1].trim())) {
                                 rule.ruleType = s[1].trim().split("\\[")[0];
                                 String[] str1 = s[1].trim().split("\\[")[1].trim().split("\\]")[0].trim().split(",");
-                                for (int k = 0; k < str1.length; k++) {
-                                    if (!str1[k].contains(".")) {
-                                        rule.targets.add(Integer.parseInt(str1[k].trim()));
+                                for (String aStr1 : str1) {
+                                    if (!aStr1.contains(".")) {
+                                        rule.targets.add(Integer.parseInt(aStr1.trim()));
                                     } else {
-                                        rule.targets.add(IPUtils.transferIp(str1[k].trim()));
+                                        rule.targets.add(IPUtils.transferIp(aStr1.trim()));
                                     }
                                 }
                             } else {
@@ -480,6 +484,8 @@ public class ServerZk extends CommonZk {
                             rule.maxInterval = Integer.parseInt(s[1].trim().split(",")[0]);
                             rule.maxReqForMaxInterval = Integer.parseInt(s[1].trim().split(",")[1]);
                             break;
+                        default:
+                            LOGGER.warn("FreqConfig parse error:" + str[i]);
                     }
                     if (i == str.length - 1) {
                         i++;
@@ -491,7 +497,7 @@ public class ServerZk extends CommonZk {
                         rule.midInterval == 0 ||
                         rule.maxInterval == 0) {
                     LOGGER.error("doParseRuleData, 限流规则解析失败。rule:{}", rule);
-                    throw new Exception();
+                    throw new SoaException(FreqConfigError);
                 }
                 datasOfRule.add(rule);
             } else {
