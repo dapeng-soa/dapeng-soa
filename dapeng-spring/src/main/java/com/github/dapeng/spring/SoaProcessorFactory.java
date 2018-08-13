@@ -1,17 +1,19 @@
 package com.github.dapeng.spring;
 
-import com.github.dapeng.core.CustomConfig;
-import com.github.dapeng.core.CustomConfigInfo;
+import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
-import com.github.dapeng.core.Processor;
-import com.github.dapeng.core.Service;
+import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
@@ -22,8 +24,8 @@ import static java.util.stream.Collectors.toList;
  * @author craneding
  * @date 16/1/19
  */
-public class SoaProcessorFactory implements FactoryBean<SoaServiceDefinition<?>> {
-
+public class SoaProcessorFactory implements FactoryBean<List<SoaServiceDefinition<?>>> {
+    private static final Logger logger = LoggerFactory.getLogger(SoaProcessorFactory.class);
     private Object serviceRef;
     private String refId;
 
@@ -34,7 +36,7 @@ public class SoaProcessorFactory implements FactoryBean<SoaServiceDefinition<?>>
 
     @Override
     @SuppressWarnings("unchecked")
-    public SoaServiceDefinition<?> getObject() throws Exception {
+    public List<SoaServiceDefinition<?>> getObject() throws Exception {
         final Class<?> aClass = serviceRef.getClass();
         final List<Class<?>> interfaces = Arrays.asList(aClass.getInterfaces());
 
@@ -47,13 +49,55 @@ public class SoaProcessorFactory implements FactoryBean<SoaServiceDefinition<?>>
         }
 
         Class<?> interfaceClass = filterInterfaces.get(filterInterfaces.size() - 1);
+        List<SoaServiceDefinition<?>> soaServiceDefinitionList = new ArrayList<>(16);
 
+        Set<Class<?>> serviceImplClasses = new Reflections(aClass).getSubTypesOf((Class<Object>) interfaceClass);
+
+        boolean flag = false;
+        if (serviceImplClasses.size() > 1) {
+            flag = true;
+            logger.warn("*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*");
+            logger.warn("**** interface:{}  存在多个实现版本 ,请检查是否合理 ", interfaceClass.getName());
+        }
+
+        for (Class<?> serviceImpl : serviceImplClasses) {
+            ServiceVersion serviceVersion = serviceImpl.isAnnotationPresent(ServiceVersion.class) ? serviceImpl.getAnnotationsByType(ServiceVersion.class)[0] : null;
+            if (flag) {
+                String version = serviceVersion != null ? serviceVersion.version() : "缺失";
+                boolean isRegister = serviceVersion != null ? serviceVersion.isRegister() : true;
+                logger.warn("---- class {}:version:{}:isRegister:{}", serviceImpl.getName(), version, isRegister);
+            }
+            if (serviceVersion != null && !serviceVersion.isRegister()) {
+                continue;
+            }
+            soaServiceDefinitionList.add(getServiceProcess(interfaceClass, serviceImpl.getConstructor().newInstance()));
+        }
+
+        if (flag) {
+            logger.warn("*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*");
+        }
+        return soaServiceDefinitionList;
+    }
+
+    @Override
+    public Class<?> getObjectType() {
+        return ArrayList.class;
+    }
+
+    @Override
+    public boolean isSingleton() {
+        return true;
+    }
+
+
+    /**
+     * @return
+     */
+    private SoaServiceDefinition<?> getServiceProcess(Class<?> interfaceClass, Object serviceImplClass) throws Exception {
         Processor processor = interfaceClass.getAnnotation(Processor.class);
-
-
         Class<?> processorClass = Class.forName(processor.className(), true, interfaceClass.getClassLoader());
         Constructor<?> constructor = processorClass.getConstructor(interfaceClass, Class.class);
-        SoaServiceDefinition tProcessor = (SoaServiceDefinition) constructor.newInstance(serviceRef, interfaceClass);
+        SoaServiceDefinition tProcessor = (SoaServiceDefinition) constructor.newInstance(serviceImplClass, interfaceClass);
         /**
          * idl service custom config
          */
@@ -78,18 +122,7 @@ public class SoaProcessorFactory implements FactoryBean<SoaServiceDefinition<?>>
             SoaFunctionDefinition functionDefinition = (SoaFunctionDefinition) tProcessor.functions.get(method.getName());
             functionDefinition.setCustomConfigInfo(new CustomConfigInfo(customConfig.timeout()));
         });
-
         return tProcessor;
-    }
-
-    @Override
-    public Class<?> getObjectType() {
-        return SoaServiceDefinition.class;
-    }
-
-    @Override
-    public boolean isSingleton() {
-        return true;
     }
 
 }
