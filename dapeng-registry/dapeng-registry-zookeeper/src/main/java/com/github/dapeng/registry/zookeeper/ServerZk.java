@@ -438,7 +438,7 @@ public class ServerZk extends CommonZk {
      * @return
      */
     private static List<FreqControlRule> doParseRuleData(String ruleData) throws Exception {
-        LOGGER.debug("doParseRuleData,限流规则解析前：{}", ruleData);
+        LOGGER.debug("doParseRuleData,限流规则解析前ruleData: {}", ruleData);
         List<FreqControlRule> datasOfRule = new ArrayList<>();
         String[] str = ruleData.split("\n|\r|\r\n");
         String pattern1 = "^\\[.*\\]$";
@@ -504,19 +504,7 @@ public class ServerZk extends CommonZk {
                 i++;
             }
         }
-        LOGGER.debug("doParseRuleData,限流规则解析后：{}", datasOfRule);
+        LOGGER.debug("doParseRuleData限流规则解析后内容: {}", datasOfRule);
         return datasOfRule;
-    }
-
-
-    /**
-     * 将配置信息中的时间单位ms 字母替换掉  100ms -> 100
-     *
-     * @param number
-     * @return
-     */
-    private static Long timeHelper(String number) {
-        number = number.replaceAll("[^(0-9)]", "");
-        return Long.valueOf(number);
     }
 }
