@@ -26,12 +26,13 @@ import java.util.List;
 public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(SoaFreqHandler.class.getName());
     private static ShmManager manager = ShmManager.getInstance();
+    private static RegistryAgent serverZkAgent = ServerZkAgentImpl.getInstance();
 
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         final TransactionContext context = TransactionContext.Factory.currentInstance();
-        RegistryAgent serverZkAgent = ServerZkAgentImpl.getInstance();
+
         List<FreqControlRule> freqRules = serverZkAgent.getFreqControlRule(false, context.getHeader().getServiceName());
         boolean freqResult = processFreqControl(freqRules, manager, context);
 
