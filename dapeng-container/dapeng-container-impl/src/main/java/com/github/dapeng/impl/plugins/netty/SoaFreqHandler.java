@@ -10,6 +10,7 @@ import com.github.dapeng.registry.zookeeper.ServerZkAgentImpl;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import org.codehaus.janino.IClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,50 +57,52 @@ public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
         }
         boolean access = false;
         for (FreqControlRule rule : freqRules) {
-            boolean flag = true;
-            boolean result = true;
-            int freqKey;
-            switch (rule.ruleType) {
-                case "all":
-                    freqKey = 0;
-                    break;
-                case "callerIp":
-                    int callerIp = context.callerIp().orElse(0);
-                    freqKey = callerIp;
-                    break;
-                case "callerMid":
-                    String callerMid = context.callerMid().orElse("0");
-                    freqKey = callerMid.hashCode();
-                    break;
-                case "userId":
-                    Long userId = context.userId().orElse(0L);
-                    freqKey = userId.intValue();
-                    if (rule.targets != null && !rule.targets.contains(freqKey)) {
-                        flag = false;
-                    }
-                    break;
-                case "userIp":
-                    freqKey = context.userIp().orElse(0);
-                    if (rule.targets != null && !rule.targets.contains(freqKey)) {
-                        flag = false;
-                    } /*else {
-                        freqKey = Math.abs(freqKey);
-                    }*/
-                    break;
-                default:
-                    freqKey = 0;
-            }
-            if (flag) {
-                result = manager.reportAndCheck(rule, freqKey);
-            }
-            if (!result) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("processFreqControl,[app/ruleType/key:mincount/midcount/maxcount]:{}", manager.getCounterInfo(rule.app, rule.ruleType, freqKey));
+            if (context.getHeader().getServiceName().equals(rule.app) || context.getHeader().getMethodName().equals(rule.app)){
+                boolean flag = true;
+                boolean result = true;
+                int freqKey;
+                switch (rule.ruleType) {
+                    case "all":
+                        freqKey = 0;
+                        break;
+                    case "callerIp":
+                        int callerIp = context.callerIp().orElse(0);
+                        freqKey = callerIp;
+                        break;
+                    case "callerMid":
+                        String callerMid = context.callerMid().orElse("0");
+                        freqKey = callerMid.hashCode();
+                        break;
+                    case "userId":
+                        Long userId = context.userId().orElse(0L);
+                        freqKey = userId.intValue();
+                        if (rule.targets != null && !rule.targets.contains(freqKey)) {
+                            flag = false;
+                        }
+                        break;
+                    case "userIp":
+                        freqKey = context.userIp().orElse(0);
+                        if (rule.targets != null && !rule.targets.contains(freqKey)) {
+                            flag = false;
+                        } /*else {
+                            freqKey = Math.abs(freqKey);
+                        }*/
+                        break;
+                    default:
+                        freqKey = 0;
                 }
-                return result;
-            }
-            access = result;
+                if (flag) {
+                    result = manager.reportAndCheck(rule, freqKey);
+                }
+                if (!result) {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("processFreqControl,[app/ruleType/key:mincount/midcount/maxcount]:{}", manager.getCounterInfo(rule.app, rule.ruleType, freqKey));
+                    }
+                    return result;
+                }
+                access = result;
         }
+    }
         return access;
     }
 }
