@@ -51,7 +51,9 @@ public class SoaProcessorFactory implements FactoryBean<List<SoaServiceDefinitio
         Class<?> interfaceClass = filterInterfaces.get(filterInterfaces.size() - 1);
         List<SoaServiceDefinition<?>> soaServiceDefinitionList = new ArrayList<>(16);
 
-        Set<Class<?>> serviceImplClasses = new Reflections(aClass).getSubTypesOf((Class<Object>) interfaceClass);
+        //Set<Class<?>> serviceImplClasses = new Reflections(aClass).getSubTypesOf((Class<Object>) interfaceClass);
+        String serviceImplName = serviceRef.toString().substring(0, serviceRef.toString().lastIndexOf("@"));
+        Set<Class<?>> serviceImplClasses = new Reflections(Class.forName(serviceImplName)).getSubTypesOf((Class<Object>) interfaceClass);
 
         boolean flag = false;
         if (serviceImplClasses.size() > 1) {
