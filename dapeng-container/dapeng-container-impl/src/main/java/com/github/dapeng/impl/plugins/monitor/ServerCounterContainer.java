@@ -288,8 +288,8 @@ public class ServerCounterContainer {
             fields.put("min_request_flow", minRequestFlow);
             fields.put("sum_request_flow", sumRequestFlow);
             fields.put("avg_request_flow", avgRequestFlow);
-            fields.put("max_response_flow", minResponseFlow);
-            fields.put("min_response_flow", maxResponseFlow);
+            fields.put("max_response_flow", maxResponseFlow);
+            fields.put("min_response_flow", minResponseFlow);
             fields.put("sum_response_flow", sumResponseFlow);
             fields.put("avg_response_flow", avgResponseFlow);
             point.setValues(fields);
