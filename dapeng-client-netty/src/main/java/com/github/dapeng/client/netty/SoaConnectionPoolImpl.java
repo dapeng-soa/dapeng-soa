@@ -4,7 +4,10 @@ import com.github.dapeng.core.*;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.ConfigKey;
-import com.github.dapeng.registry.zookeeper.*;
+import com.github.dapeng.registry.zookeeper.ClientZkAgent;
+import com.github.dapeng.registry.zookeeper.ClientZkAgentImpl;
+import com.github.dapeng.registry.zookeeper.LoadBalanceAlgorithm;
+import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
 import org.slf4j.Logger;
@@ -137,11 +140,15 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                                  BeanSerializer<RESP> responseSerializer)
             throws SoaException {
         SoaConnection connection = findConnection(service, version, method);
+        String serverVersion = InvocationContextImpl.Factory.currentInstance().versionName();
         if (connection == null) {
             throw new SoaException(SoaCode.NotFoundServer, "服务 [ " + service + " ] 无可用实例");
         }
-        long timeout = getTimeout(service, version, method);
-        return connection.send(service, version, method, request, requestSerializer, responseSerializer, timeout);
+        long timeout = getTimeout(service, serverVersion, method);
+        if (logger.isDebugEnabled()) {
+            logger.debug("findConnection:serviceName:{},methodName:{},version:[{} -> {}] ,TimeOut:{}", service, method, version, serverVersion, timeout);
+        }
+        return connection.send(service, serverVersion, method, request, requestSerializer, responseSerializer, timeout);
     }
 
     @Override
@@ -153,11 +160,15 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                                               BeanSerializer<RESP> responseSerializer) throws SoaException {
 
         SoaConnection connection = findConnection(service, version, method);
+        String serverVersion = InvocationContextImpl.Factory.currentInstance().versionName();
         if (connection == null) {
             throw new SoaException(SoaCode.NotFoundServer, "服务 [ " + service + " ] 无可用实例");
         }
-        long timeout = getTimeout(service, version, method);
-        return connection.sendAsync(service, version, method, request, requestSerializer, responseSerializer, timeout);
+        long timeout = getTimeout(service, serverVersion, method);
+        if (logger.isDebugEnabled()) {
+            logger.debug("findConnection:serviceName:{},methodName:{},version:[{} -> {}] ,TimeOut:{}", service, method, version, serverVersion, timeout);
+        }
+        return connection.sendAsync(service, serverVersion, method, request, requestSerializer, responseSerializer, timeout);
     }
 
     private SoaConnection findConnection(String service,
@@ -186,14 +197,22 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             return null;
         }
 
-        // router
-        List<RuntimeInstance> routedInstances = router(service, method, version, compatibles);
+        // checkVersion
+        String finalVersion = version;
+        List<RuntimeInstance> checkVersionInstances = compatibles.stream().filter(rt -> checkVersion(finalVersion, rt.version)).collect(Collectors.toList());
+        if (checkVersionInstances == null || checkVersionInstances.isEmpty()) {
+            logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + ":" + version + "], not found available version of instances");
+            throw new SoaException(NoMatchedService, "服务 [ " + service + ":" + version + "] 无可用实例:没有找到对应的服务版本");
+        }
 
+        // router
+        List<RuntimeInstance> routedInstances = router(service, method, version, checkVersionInstances);
         if (routedInstances == null || routedInstances.isEmpty()) {
             logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + "], not found available instances by routing rules");
             throw new SoaException(NoMatchedRouting, "服务 [ " + service + " ] 无可用实例:路由规则没有解析到可运行的实例");
         }
 
+        //loadBalance
         RuntimeInstance inst = loadBalance(service, version, method, routedInstances);
         if (inst == null) {
             // should not reach here
@@ -217,6 +236,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             }
         }
 
+        // TODO: 2018-08-04  服务端需要返回来正确的版本号
+        InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        context.versionName(inst.version);
         return subPool.getConnection();
     }
 
@@ -230,10 +252,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         int retry = 1;
         do {
             try {
-                List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
-                        .filter(rt -> checkVersion(version, rt.version))
-                        .collect(Collectors.toList());
-
+                List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances();
                 if (compatibles.size() > 0) {
                     return compatibles;
                 }
@@ -452,9 +471,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             globalTimeOut = configInfo.timeConfig.globalConfig;
         }
 
-        logger.debug("request:serviceName:{},methodName:{}," +
+        /*logger.debug("request:serviceName:{},methodName:{},version:{}," +
                         " methodTimeOut:{},serviceTimeOut:{},globalTimeOut:{}",
-                serviceName, methodName, methodTimeOut, serviceTimeOut, globalTimeOut);
+                serviceName, methodName, version, methodTimeOut, serviceTimeOut, globalTimeOut);*/
 
         if (methodTimeOut != null) {
 
