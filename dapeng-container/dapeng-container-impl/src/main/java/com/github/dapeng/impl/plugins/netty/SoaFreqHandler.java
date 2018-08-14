@@ -1,9 +1,6 @@
 package com.github.dapeng.impl.plugins.netty;
 
-import com.github.dapeng.core.FreqControlRule;
-import com.github.dapeng.core.SoaCode;
-import com.github.dapeng.core.SoaException;
-import com.github.dapeng.core.TransactionContext;
+import com.github.dapeng.core.*;
 import com.github.dapeng.impl.filters.freq.ShmManager;
 import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.registry.zookeeper.ServerZkAgentImpl;
@@ -12,8 +9,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 /**
  * 描述: 服务限流 handler
@@ -25,19 +20,23 @@ import java.util.List;
 public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
     private static final Logger LOGGER = LoggerFactory.getLogger(SoaFreqHandler.class.getName());
     private static ShmManager manager = ShmManager.getInstance();
+    private static RegistryAgent serverZkAgent = ServerZkAgentImpl.getInstance();
 
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        final TransactionContext context = TransactionContext.Factory.currentInstance();
-        RegistryAgent serverZkAgent = ServerZkAgentImpl.getInstance();
-        List<FreqControlRule> freqRules = serverZkAgent.getFreqControlRule(false, context.getHeader().getServiceName());
-        boolean freqResult = processFreqControl(freqRules, manager, context);
+        boolean freqResult = true;
 
-        if (freqResult) {
-            ctx.fireChannelRead(msg);
-        } else {
-            throw new SoaException(SoaCode.FreqLimited, "当前服务在一定时间内请求次数过多，被限流");
+        try {
+            freqResult = processServiceFreqControl();
+        } catch (Throwable e) {
+            LOGGER.error(SoaCode.FreqControlError.toString(), e);
+        } finally {
+            if (freqResult) {
+                ctx.fireChannelRead(msg);
+            } else {
+                throw new SoaException(SoaCode.FreqLimited, "当前服务在一定时间内请求次数过多，被限流");
+            }
         }
     }
 
@@ -45,61 +44,78 @@ public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
     /**
      * 限流逻辑，判断当前请求是否被限流，返回 true false
      *
-     * @param freqRules 限流规则 from zookeeper
-     * @param manager   限流 manager
-     * @param context   服务端上下文
      * @return result boolean
      */
-    private boolean processFreqControl(List<FreqControlRule> freqRules, ShmManager manager, TransactionContext context) {
-        if (freqRules.isEmpty()) {
+    private boolean processServiceFreqControl() {
+        final TransactionContext context = TransactionContext.Factory.currentInstance();
+        final ServiceFreqControl freqControl = serverZkAgent.getFreqControlRule(false, context.getHeader().getServiceName());
+
+        String method = context.getHeader().getMethodName();
+        if (freqControl.globalRules.isEmpty() && !freqControl.rules4methods.containsKey(method)) {
             return true;
         }
-        boolean access = false;
-        for (FreqControlRule rule : freqRules) {
-            boolean flag = true;
-            boolean result = true;
-            int freqKey;
-            switch (rule.ruleType) {
-                case "all":
-                    freqKey = 0;
-                    break;
-                case "callerIp":
-                    int callerIp = context.callerIp().orElse(0);
-                    freqKey = callerIp;
-                    break;
-                case "callerMid":
-                    String callerMid = context.callerMid().orElse("0");
-                    freqKey = callerMid.hashCode();
-                    break;
-                case "userId":
-                    Long userId = context.userId().orElse(0L);
-                    freqKey = userId.intValue();
-                    if (rule.targets != null && !rule.targets.contains(freqKey)) {
-                        flag = false;
-                    }
-                    break;
-                case "userIp":
-                    freqKey = context.userIp().orElse(0);
-                    if (rule.targets != null && !rule.targets.contains(freqKey)) {
-                        flag = false;
-                    } else {
-                        freqKey = Math.abs(freqKey);
-                    }
-                    break;
-                default:
-                    freqKey = 0;
-            }
-            if (flag) {
-                result = manager.reportAndCheck(rule, freqKey);
-            }
-            if (!result) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("processFreqControl,[app/ruleType/key:mincount/midcount/maxcount]:{}", manager.getCounterInfo(rule.app, rule.ruleType, freqKey));
+        if (freqControl.rules4methods.containsKey(method)) {
+            for (FreqControlRule rule : freqControl.rules4methods.get(method)) {
+                if (!processFreqControl(rule, context)) {
+                    return false;
                 }
-                return result;
             }
-            access = result;
+        } else {
+            for (FreqControlRule rule : freqControl.globalRules) {
+                if (!processFreqControl(rule, context)) {
+                    return false;
+                }
+            }
         }
-        return access;
+        return true;
+    }
+
+    private boolean processFreqControl(FreqControlRule rule, TransactionContext context) {
+        // 是否需要执行限流规则(对于指定ip,id等的规则来说)
+        boolean shouldProcess = true;
+        int freqKey;
+        switch (rule.ruleType) {
+            case "all":
+                freqKey = 0;
+                break;
+            case "callerIp":
+                int callerIp = context.callerIp().orElse(0);
+                freqKey = callerIp;
+                break;
+            case "callerMid":
+                String callerMid = context.callerMid().orElse("0");
+                freqKey = callerMid.hashCode();
+                break;
+            case "userId":
+                Long userId = context.userId().orElse(0L);
+                freqKey = userId.intValue();
+                if (rule.targets != null && !rule.targets.contains(freqKey)) {
+                    // 当前请求不属于限流目标范围内, 不需要执行限流规则
+                    shouldProcess = false;
+                }
+                break;
+            case "userIp":
+                freqKey = context.userIp().orElse(0);
+                if (rule.targets != null && !rule.targets.contains(freqKey)) {
+                    // 当前请求不属于限流目标范围内, 不需要执行限流规则
+                    shouldProcess = false;
+                }
+                break;
+            default:
+                freqKey = 0;
+        }
+
+        // 限流结果
+        boolean result = true;
+        if (shouldProcess) {
+            result = manager.reportAndCheck(rule, freqKey);
+        }
+        if (!result) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("processFreqControl,[app/ruleType/key:mincount/midcount/maxcount]:{}", manager.getCounterInfo(rule.app, rule.ruleType, freqKey));
+            }
+        }
+
+        return result;
     }
 }

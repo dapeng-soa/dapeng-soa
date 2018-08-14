@@ -3,6 +3,8 @@ package com.github.dapeng.registry.zookeeper;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.FreqControlRule;
+import com.github.dapeng.core.ServiceFreqControl;
+import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.lifecycle.LifeCycleEvent;
@@ -21,6 +23,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import static com.github.dapeng.core.SoaCode.FreqConfigError;
+
 
 /**
  * 服务端  zk 服务注册
@@ -37,7 +41,7 @@ public class ServerZk extends CommonZk {
     /**
      * 路由配置信息
      */
-    private final Map<String, List<FreqControlRule>> freqControlMap = new ConcurrentHashMap<>(16);
+    private final Map<String, ServiceFreqControl> freqControlMap = new ConcurrentHashMap<>(16);
 
     /**
      * zk 配置 缓存 ，根据 serivceName + versionName 作为 key
@@ -384,7 +388,7 @@ public class ServerZk extends CommonZk {
      *
      * @return
      */
-    public List<FreqControlRule> getFreqControl(String service) {
+    public ServiceFreqControl getFreqControl(String service) {
         if (freqControlMap.get(service) == null) {
             try {
                 byte[] data = zk.getData(FREQ_PATH + "/" + service, event -> {
@@ -394,16 +398,19 @@ public class ServerZk extends CommonZk {
                         getFreqControl(service);
                     }
                 }, null);
-                List<FreqControlRule> freqControlRules = processFreqRuleData(service, data, freqControlMap);
-                return freqControlRules;
+                ServiceFreqControl serviceFreqControl = processFreqRuleData(service, data, freqControlMap);
+                return serviceFreqControl;
             } catch (KeeperException | InterruptedException e) {
-                LOGGER.error("获取route service 节点: {} 出现异常", service);
+                LOGGER.error("获取freq 节点: {} 出现异常", service);
+                return new ServiceFreqControl(service, new ArrayList<>(8), new HashMap<>(8));
             }
         } else {
-            LOGGER.debug("获取route信息, service: {} , route size {}", service, freqControlMap.get(service).size());
-            return this.freqControlMap.get(service);
+            ServiceFreqControl serviceFreqControl = freqControlMap.get(service);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("获取freq信息, service: {} , freq: {}", service, serviceFreqControl);
+            }
+            return serviceFreqControl;
         }
-        return new ArrayList<>();
     }
 
     /**
@@ -413,17 +420,17 @@ public class ServerZk extends CommonZk {
      * @param data
      * @return
      */
-    public static List<FreqControlRule> processFreqRuleData(String service, byte[] data, Map<String, List<FreqControlRule>> freqControlMap) {
-        List<FreqControlRule> freqControlRules = null;
+    public static synchronized ServiceFreqControl processFreqRuleData(String service, byte[] data, Map<String, ServiceFreqControl> freqControlMap) {
+        ServiceFreqControl serviceFreqControl = null;
         try {
             String ruleData = new String(data, "utf-8");
-            freqControlRules = doParseRuleData(ruleData);
+            serviceFreqControl = doParseRuleData(service, ruleData);
 
-            freqControlMap.put(service, freqControlRules);
+            freqControlMap.put(service, serviceFreqControl);
         } catch (Exception e) {
             LOGGER.error("parser freq rule 信息 失败，请检查 rule data 写法是否正确!");
         }
-        return freqControlRules;
+        return serviceFreqControl;
 
     }
 
@@ -433,17 +440,19 @@ public class ServerZk extends CommonZk {
      * @param ruleData data from zk node
      * @return
      */
-    private static List<FreqControlRule> doParseRuleData(String ruleData) throws Exception {
-        LOGGER.debug("doParseRuleData,限流规则解析前：{}", ruleData);
-        List<FreqControlRule> datasOfRule = new ArrayList<>();
+    private static ServiceFreqControl doParseRuleData(final String serviceName, final String ruleData) throws Exception {
+        LOGGER.debug("doParseRuleData,限流规则解析前ruleData: {}", ruleData);
+        List<FreqControlRule> rules4service = new ArrayList<>(16);
+        Map<String, List<FreqControlRule>> rules4method = new HashMap<>(16);
         String[] str = ruleData.split("\n|\r|\r\n");
         String pattern1 = "^\\[.*\\]$";
         String pattern2 = "^[a-zA-Z]+\\[.*\\]$";
 
+
         for (int i = 0; i < str.length; ) {
             if (Pattern.matches(pattern1, str[i])) {
                 FreqControlRule rule = new FreqControlRule();
-                rule.targets = new HashSet<>();
+                rule.targets = new HashSet<>(16);
 
                 while (!Pattern.matches(pattern1, str[++i])) {
                     if ("".equals(str[i].trim())) continue;
@@ -456,11 +465,11 @@ public class ServerZk extends CommonZk {
                             if (Pattern.matches(pattern2, s[1].trim())) {
                                 rule.ruleType = s[1].trim().split("\\[")[0];
                                 String[] str1 = s[1].trim().split("\\[")[1].trim().split("\\]")[0].trim().split(",");
-                                for (int k = 0; k < str1.length; k++) {
-                                    if (!str1[k].contains(".")) {
-                                        rule.targets.add(Integer.parseInt(str1[k].trim()));
+                                for (String aStr1 : str1) {
+                                    if (!aStr1.contains(".")) {
+                                        rule.targets.add(Integer.parseInt(aStr1.trim()));
                                     } else {
-                                        rule.targets.add(IPUtils.transferIp(str1[k].trim()));
+                                        rule.targets.add(IPUtils.transferIp(aStr1.trim()));
                                     }
                                 }
                             } else {
@@ -480,6 +489,8 @@ public class ServerZk extends CommonZk {
                             rule.maxInterval = Integer.parseInt(s[1].trim().split(",")[0]);
                             rule.maxReqForMaxInterval = Integer.parseInt(s[1].trim().split(",")[1]);
                             break;
+                        default:
+                            LOGGER.warn("FreqConfig parse error:" + str[i]);
                     }
                     if (i == str.length - 1) {
                         i++;
@@ -491,26 +502,28 @@ public class ServerZk extends CommonZk {
                         rule.midInterval == 0 ||
                         rule.maxInterval == 0) {
                     LOGGER.error("doParseRuleData, 限流规则解析失败。rule:{}", rule);
-                    throw new Exception();
+                    throw new SoaException(FreqConfigError);
                 }
-                datasOfRule.add(rule);
+                if (rule.app.equals("*")) {
+                    rule.app = serviceName;
+                    rules4service.add(rule);
+                } else {
+                    if (rules4method.containsKey(rule.app)) {
+                        rules4method.get(rule.app).add(rule);
+                    } else {
+                        List<FreqControlRule> rules = new ArrayList<>(8);
+                        rules.add(rule);
+                        rules4method.put(rule.app, rules);
+                    }
+                }
+
             } else {
                 i++;
             }
         }
-        LOGGER.debug("doParseRuleData,限流规则解析后：{}", datasOfRule);
-        return datasOfRule;
-    }
 
-
-    /**
-     * 将配置信息中的时间单位ms 字母替换掉  100ms -> 100
-     *
-     * @param number
-     * @return
-     */
-    private static Long timeHelper(String number) {
-        number = number.replaceAll("[^(0-9)]", "");
-        return Long.valueOf(number);
+        ServiceFreqControl freqControl = new ServiceFreqControl(serviceName, rules4service, rules4method);
+        LOGGER.debug("doParseRuleData限流规则解析后内容: {}", freqControl);
+        return freqControl;
     }
 }

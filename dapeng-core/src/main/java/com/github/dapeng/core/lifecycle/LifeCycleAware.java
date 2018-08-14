@@ -32,5 +32,6 @@ public interface LifeCycleAware {
     /**
      * 配置变化
      */
+    void onConfigChange(LifeCycleEvent event);
 
 }
