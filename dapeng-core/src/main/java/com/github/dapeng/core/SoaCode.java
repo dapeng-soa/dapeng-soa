@@ -19,9 +19,6 @@ public enum SoaCode implements SoaBaseCodeInterface {
 
     // 服务端
     ServerUnKnown("Err-Core-500", "系统出错了!"),
-    ShmInitError("Err-Core-501", "限流模块初始化失败"),
-    FreqLimited("Err-Core-502", "客户端已被限流"),
-    FreqConfigError("Err-Core-503", "限流规则解析出错"),
     NoMatchedService("Err-Core-504", "没有对应的服务或者没有对应的服务版本"),
     ServerNoMatchedMethod("Err-Core-505", "没有对应的方法"),
     ServerReqTimeOut("Err-Core-506", "请求超时"),
@@ -29,6 +26,10 @@ public enum SoaCode implements SoaBaseCodeInterface {
     ServerReqFieldNull("Err-Core-511", "请求对象字段不允许为空"),
     ServerRespFieldNull("Err-Core-512", "响应对象字段不允许为空"),
     ReqDecodeError("Err-Core-513", "请求通讯包解析出错"),
+    ShmInitError("Err-Core-520", "限流模块初始化失败"),
+    FreqLimited("Err-Core-521", "客户端已被限流"),
+    FreqConfigError("Err-Core-522", "限流规则解析出错"),
+    FreqControlError("Err-Core-523", "限流处理出错"),
     // 通用错误码
     StructFieldNull("Err-Core-600", "结构体字段不允许为空");
     private String code;
@@ -49,4 +50,8 @@ public enum SoaCode implements SoaBaseCodeInterface {
         return msg;
     }
 
+    @Override
+    public String toString() {
+        return code + ":" + msg;
+    }
 }

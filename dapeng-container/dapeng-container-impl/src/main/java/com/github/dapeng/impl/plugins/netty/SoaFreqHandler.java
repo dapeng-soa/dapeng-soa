@@ -25,12 +25,18 @@ public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        boolean freqResult = processServiceFreqControl();
+        boolean freqResult = true;
 
-        if (freqResult) {
-            ctx.fireChannelRead(msg);
-        } else {
-            throw new SoaException(SoaCode.FreqLimited, "当前服务在一定时间内请求次数过多，被限流");
+        try {
+            freqResult = processServiceFreqControl();
+        } catch (Throwable e) {
+            LOGGER.error(SoaCode.FreqControlError.toString(), e);
+        } finally {
+            if (freqResult) {
+                ctx.fireChannelRead(msg);
+            } else {
+                throw new SoaException(SoaCode.FreqLimited, "当前服务在一定时间内请求次数过多，被限流");
+            }
         }
     }
 
@@ -65,8 +71,8 @@ public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
     }
 
     private boolean processFreqControl(FreqControlRule rule, TransactionContext context) {
-        boolean flag = true;
-        boolean result = true;
+        // 是否需要执行限流规则(对于指定ip,id等的规则来说)
+        boolean shouldProcess = true;
         int freqKey;
         switch (rule.ruleType) {
             case "all":
@@ -84,19 +90,24 @@ public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
                 Long userId = context.userId().orElse(0L);
                 freqKey = userId.intValue();
                 if (rule.targets != null && !rule.targets.contains(freqKey)) {
-                    flag = false;
+                    // 当前请求不属于限流目标范围内, 不需要执行限流规则
+                    shouldProcess = false;
                 }
                 break;
             case "userIp":
                 freqKey = context.userIp().orElse(0);
                 if (rule.targets != null && !rule.targets.contains(freqKey)) {
-                    flag = false;
+                    // 当前请求不属于限流目标范围内, 不需要执行限流规则
+                    shouldProcess = false;
                 }
                 break;
             default:
                 freqKey = 0;
         }
-        if (flag) {
+
+        // 限流结果
+        boolean result = true;
+        if (shouldProcess) {
             result = manager.reportAndCheck(rule, freqKey);
         }
         if (!result) {

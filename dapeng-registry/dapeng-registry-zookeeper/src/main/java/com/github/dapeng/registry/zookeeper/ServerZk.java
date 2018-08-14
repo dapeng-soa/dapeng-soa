@@ -505,6 +505,7 @@ public class ServerZk extends CommonZk {
                     throw new SoaException(FreqConfigError);
                 }
                 if (rule.app.equals("*")) {
+                    rule.app = serviceName;
                     rules4service.add(rule);
                 } else {
                     if (rules4method.containsKey(rule.app)) {
