@@ -88,24 +88,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         cleanThread.start();
     }
 
-
-    /**
-     * 版本 兼容(主版本不兼容，副版本向下兼容)
-     *
-     * @param reqVersion
-     * @param targetVersion
-     * @return
-     */
-    private boolean checkVersion(String reqVersion, String targetVersion) {
-        String[] reqArr = reqVersion.split("[.]");
-        String[] tarArr = targetVersion.split("[.]");
-        if (Integer.parseInt(tarArr[0]) != Integer.parseInt(reqArr[0])) {
-            return false;
-        }
-        return ((Integer.parseInt(tarArr[1]) * 10 + Integer.parseInt(tarArr[2]))
-                >= (Integer.parseInt(reqArr[1]) * 10 + Integer.parseInt(reqArr[2])));
-    }
-
     @Override
     public synchronized ClientInfo registerClientInfo(String serviceName, String version) {
         final String key = serviceName + ":" + version;
@@ -171,9 +153,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         return connection.sendAsync(service, serverVersion, method, request, requestSerializer, responseSerializer, timeout);
     }
 
-    private SoaConnection findConnection(String service,
-                                         String version,
-                                         String method) throws SoaException {
+    private SoaConnection findConnection(final String service,
+                                         final String version,
+                                         final String method) throws SoaException {
         ZkServiceInfo zkInfo = zkInfos.get(service);
 
         if (zkInfo == null || zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
@@ -192,14 +174,13 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
         //当zk上服务节点发生变化的时候, 会导致这里拿不到服务运行时实例.
         //目前简单重试三次处理
-        List<RuntimeInstance> compatibles = retryGetConnection(zkInfo, version);
+        List<RuntimeInstance> compatibles = retryGetConnection(zkInfo);
         if (compatibles == null || compatibles.isEmpty()) {
             return null;
         }
 
         // checkVersion
-        String finalVersion = version;
-        List<RuntimeInstance> checkVersionInstances = compatibles.stream().filter(rt -> checkVersion(finalVersion, rt.version)).collect(Collectors.toList());
+        List<RuntimeInstance> checkVersionInstances = compatibles.stream().filter(rt -> checkVersion(version, rt.version)).collect(Collectors.toList());
         if (checkVersionInstances == null || checkVersionInstances.isEmpty()) {
             logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + ":" + version + "], not found available version of instances");
             throw new SoaException(NoMatchedService, "服务 [ " + service + ":" + version + "] 无可用实例:没有找到对应的服务版本");
@@ -243,18 +224,34 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     }
 
     /**
+     * 版本 兼容(主版本不兼容，副版本向下兼容)
+     *
+     * @param reqVersion
+     * @param targetVersion
+     * @return
+     */
+    private boolean checkVersion(String reqVersion, String targetVersion) {
+        String[] reqArr = reqVersion.split("[.]");
+        String[] tarArr = targetVersion.split("[.]");
+        if (Integer.parseInt(tarArr[0]) != Integer.parseInt(reqArr[0])) {
+            return false;
+        }
+        return ((Integer.parseInt(tarArr[1]) * 10 + Integer.parseInt(tarArr[2]))
+                >= (Integer.parseInt(reqArr[1]) * 10 + Integer.parseInt(reqArr[2])));
+    }
+
+    /**
      * 如果出现异常（ConcurrentModifyException）,或获取到的实例为0，进行重试
      *
      * @param zkInfo
-     * @param version
      */
-    private List<RuntimeInstance> retryGetConnection(ZkServiceInfo zkInfo, String version) {
+    private List<RuntimeInstance> retryGetConnection(ZkServiceInfo zkInfo) {
         int retry = 1;
         do {
             try {
-                List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances();
-                if (compatibles.size() > 0) {
-                    return compatibles;
+                List<RuntimeInstance> runtimeInstances = zkInfo.getRuntimeInstances();
+                if (runtimeInstances.size() > 0) {
+                    return runtimeInstances;
                 }
             } catch (Exception e) {
                 logger.error("zkInfo get connection 出现异常: " + e.getMessage());
