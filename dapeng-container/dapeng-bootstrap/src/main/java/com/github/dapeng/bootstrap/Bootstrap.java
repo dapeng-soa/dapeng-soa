@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Bootstrap {
-    public static final String ENGINE_PATH = System.getProperty("soa.base", new File(Bootstrap.class.getProtectionDomain().getCodeSource().getLocation().getFile()).getParentFile().getParentFile().getParent() + "/dapeng-container-impl/target/dapeng-container/");
+    private static final String ENGINE_PATH = System.getProperty("soa.base", new File(Bootstrap.class.getProtectionDomain().getCodeSource().getLocation().getFile()).getParentFile().getParentFile().getParent() + "/dapeng-container-impl/target/dapeng-container/");
 
 
     public static void main(String[] args) throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
@@ -58,10 +58,6 @@ public class Bootstrap {
         Method createContainerMethod = containerFactoryClz.getMethod("createContainer", List.class, ClassLoader.class);
         createContainerMethod.invoke(containerFactoryClz, applicationCls, containerCl);
 
-        Class<?> doctorFactoryClz = containerCl.loadClass("com.github.dapeng.api.healthcheck.DoctorFactory");
-        Method createDoctorMethod = doctorFactoryClz.getMethod("createDoctor", ClassLoader.class);
-        createDoctorMethod.invoke(doctorFactoryClz, containerCl);
-
         Method getContainerMethod = containerFactoryClz.getMethod("getContainer");
         Object container = getContainerMethod.invoke(containerFactoryClz);
 
@@ -88,7 +84,7 @@ public class Bootstrap {
         return urlsList;
     }
 
-    public static List<URL> findJarURLs(File file) throws MalformedURLException {
+    private static List<URL> findJarURLs(File file) throws MalformedURLException {
         final List<URL> urlList = new ArrayList<>();
 
         if (file != null && file.exists()) {
@@ -97,8 +93,8 @@ public class Bootstrap {
             } else if (file.isDirectory()) {
                 File[] files = file.listFiles();
                 if (files != null) {
-                    for (int i = 0; i < files.length; i++) {
-                        urlList.addAll(findJarURLs(files[i]));
+                    for (File file1 : files) {
+                        urlList.addAll(findJarURLs(file1));
                     }
                 }
             }

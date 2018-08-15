@@ -9,11 +9,11 @@ import java.util.List;
  * @Author: zhup
  * @Date: 2018/8/6 17:53
  */
-
 public class DoctorFactorySpiml implements DoctorFactorySpi {
-    public DoctorFactorySpiml() {
+    private DoctorFactorySpiml() {
     }
 
+    @Override
     public Doctor createInstance() {
         return new DapengDoctor();
     }

@@ -20,9 +20,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 public  class DapengDoctor implements Doctor {
 
 
-    public static Map<String, String> map = new HashMap<>();
+    private Map<String, String> map = new HashMap<>(16);
 
-    public DapengDoctor() {
+    DapengDoctor() {
     }
 
     @Override
@@ -32,9 +32,9 @@ public  class DapengDoctor implements Doctor {
     }
 
 
-    //@Override
+    @Override
     public Map<String, Object> diagnoseReport() {
-        Map<String, Object> diagnoseMap = new HashMap<>();
+        Map<String, Object> diagnoseMap = new HashMap<>(16);
         Map tasksInfo = mapTasksInfo();
         Map gcInfo = mapGCInfo();
         Map flowsInfo = mapFlows();
@@ -54,7 +54,7 @@ public  class DapengDoctor implements Doctor {
      * @return
      */
     private Map<String, Object> mapTasksInfo() {
-        Map<String, Object> taskMap = new HashMap<>();
+        Map<String, Object> taskMap = new HashMap<>(4);
         Container container = ContainerFactory.getContainer();
         ThreadPoolExecutor poolExecutor = (ThreadPoolExecutor) container.getDispatcher();
         taskMap.put("waitingQueue", poolExecutor.getQueue().size());
@@ -69,7 +69,7 @@ public  class DapengDoctor implements Doctor {
      * @return
      */
     private Map<String, String> mapGCInfo() {
-        Map<String, String> gdMap = new HashMap<>();
+        Map<String, String> gdMap = new HashMap<>(4);
         //todo gc待实现
         gdMap.put("gcInfos", "0/0");
         return gdMap;
@@ -81,7 +81,7 @@ public  class DapengDoctor implements Doctor {
      * @return
      */
     private Map<String, Object> mapFlows() {
-        Map<String, Object> flowMap = new HashMap<>();
+        Map<String, Object> flowMap = new HashMap<>(8);
         List<DataPoint> dataPointsList = ServerCounterContainer.getInstance().invokePointsOfLastMinute();
         if (dataPointsList.size() > 0) {
             DataPoint dataPoint = dataPointsList.get(dataPointsList.size() - 1);
@@ -100,7 +100,7 @@ public  class DapengDoctor implements Doctor {
      * @return
      */
     private Map<String, Object> mapErrors() {
-        Map<String, Object> errorsMap = new HashMap<>();
+        Map<String, Object> errorsMap = new HashMap<>(8);
         return errorsMap;
     }
 }
