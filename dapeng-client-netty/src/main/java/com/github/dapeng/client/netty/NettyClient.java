@@ -116,6 +116,7 @@ public class NettyClient {
                         new SoaClientHandler(callBack));
             }
         });
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
         return bootstrap;
     }
 
@@ -228,6 +229,11 @@ public class NettyClient {
      */
     public Channel connect(String host, int port) throws InterruptedException {
         return bootstrap.connect(host, port).sync().channel();
+    }
+
+    public void shutdown() {
+        LOGGER.warn("NettyClient shutdown gracefully");
+        workerGroup.shutdownGracefully();
     }
 
 }

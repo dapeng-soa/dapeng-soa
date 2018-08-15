@@ -301,7 +301,7 @@ public class ServerCounterContainer {
         }
     }
 
-    private List<DataPoint> invokePointsOfLastMinute() {
+    public List<DataPoint> invokePointsOfLastMinute() {
         int currentMinuteOfHour = currentMinuteOfHour();
         int oneMinuteBefore = (currentMinuteOfHour == 0) ? 59 : (currentMinuteOfHour - 1);
 
