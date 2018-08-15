@@ -101,7 +101,7 @@ public class SpringAppLoader implements Plugin {
                 method.invoke(context);
             } catch (NoSuchMethodException e) {
                 LOGGER.info(" failed to get context close method.....");
-            } catch (IllegalAccessException|InvocationTargetException e) {
+            } catch (IllegalAccessException | InvocationTargetException e) {
                 LOGGER.info(e.getMessage());
             }
         });
@@ -138,12 +138,16 @@ public class SpringAppLoader implements Plugin {
                 methodsConfigMap.put(key, function.getCustomConfigInfo());
             });
 
-            ServiceInfo serviceInfo = new ServiceInfo(service.name(), service.version(),
-                    "service", ifaceClass, processor.getConfigInfo(), methodsConfigMap);
+            //判断有没有 接口实现的版本号   默认为IDL定义的版本号
+            ServiceVersion serviceVersionAnnotation = ifaceClass.isAnnotationPresent(ServiceVersion.class) ? ifaceClass.getAnnotationsByType(ServiceVersion.class)[0] : null;
 
-            serviceInfoMap.put(processorKey, serviceInfo);
+            String version = serviceVersionAnnotation != null ? serviceVersionAnnotation.version() : service.version();
+            if (serviceVersionAnnotation == null || serviceVersionAnnotation.isRegister()) {
+                ServiceInfo serviceInfo = new ServiceInfo(service.name(), version, "service", ifaceClass, processor.getConfigInfo(), methodsConfigMap);
+                serviceInfoMap.put(processorKey, serviceInfo);
+            }
+
         }
-
         return serviceInfoMap;
     }
 
