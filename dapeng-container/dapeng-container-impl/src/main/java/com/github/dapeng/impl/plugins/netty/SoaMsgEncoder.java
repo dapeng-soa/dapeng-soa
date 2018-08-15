@@ -179,7 +179,12 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
             // 根据respCode判断是否是业务异常还是运行时异常
             if (soaHeader.getRespCode().get().startsWith("Err-Core")) {
-                application.error(this.getClass(), infoLog, soaException);
+                if (application != null) {
+                    application.error(this.getClass(), infoLog, soaException);
+                }else{
+                    LOGGER.error(infoLog,soaException);
+                }
+
             } else {
                 application.info(this.getClass(), infoLog);
             }
