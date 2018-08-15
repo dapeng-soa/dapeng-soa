@@ -39,17 +39,6 @@ public class ApplicationClassLoader extends URLClassLoader {
             return coreClassLoader.loadClass(name);
         }
 
-        if (name.startsWith("com.github.dapeng.api")) {
-            List<URL> containerURLs = null;
-            try {
-                containerURLs = Bootstrap.findJarURLs(new File(Bootstrap.ENGINE_PATH, "bin/lib"));
-                ClassLoader platformClassLoader = new ContainerClassLoader((URL[])containerURLs.toArray(new URL[containerURLs.size()]), this.coreClassLoader);
-                return platformClassLoader.loadClass(name);
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-
-        }
         Class clz =  super.loadClass(name, resolve);
         return clz;
     }

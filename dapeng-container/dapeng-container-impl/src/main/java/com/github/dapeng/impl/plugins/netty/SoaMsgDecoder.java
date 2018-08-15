@@ -36,7 +36,7 @@ import static io.netty.channel.ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE;
 @ChannelHandler.Sharable
 public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SoaMsgDecoder.class);
-
+    private final Gson gson = new Gson();
     private final Container container;
 
     SoaMsgDecoder(Container container) {
@@ -51,21 +51,25 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             }
 
             Object request = parseSoaMsg(msg);
-
             final TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
-            String methodName = transactionContext.getHeader().getMethodName();
 
-            if (methodName.equalsIgnoreCase("echo")) {
-                String echoInfo = DumpUtil.dumpThreadPool((ThreadPoolExecutor) container.getDispatcher());
-                Map<String,Object> diagnoseMap = DoctorFactory.getDoctor().diagnoseReport();
-                diagnoseMap.put("service",transactionContext.getHeader().getServiceName());
-                diagnoseMap.put("container_info",echoInfo);
-                Gson gson = new Gson();
-                transactionContext.setAttribute("container-threadPool-info", gson.toJson(diagnoseMap));
+            try {
+                String methodName = transactionContext.getHeader().getMethodName();
+
+                if ("echo".equalsIgnoreCase(methodName)) {
+                    String echoInfo = DumpUtil.dumpThreadPool((ThreadPoolExecutor) container.getDispatcher());
+                    Map<String, Object> diagnoseMap = DoctorFactory.getDoctor().diagnoseReport();
+                    diagnoseMap.put("service", transactionContext.getHeader().getServiceName());
+                    diagnoseMap.put("container_info", echoInfo);
+                    transactionContext.setAttribute("container-threadPool-info", gson.toJson(diagnoseMap));
+                }
+            } catch (Throwable e) {
+                LOGGER.error(e.getMessage(), e);
+            } finally {
+                transactionContext.setAttribute("dapeng_request_timestamp", System.currentTimeMillis());
+
+                out.add(request);
             }
-            transactionContext.setAttribute("dapeng_request_timestamp", System.currentTimeMillis());
-
-            out.add(request);
         } catch (Throwable e) {
 
             SoaException soaException = convertToSoaException(e);

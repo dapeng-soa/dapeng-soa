@@ -9,14 +9,16 @@ import java.util.ServiceLoader;
 
 public class DoctorFactory {
 
-    public static volatile Doctor doctor;
+    private static Doctor doctor;
 
     public static void createDoctor(ClassLoader containerCl) {
         if (doctor == null) {
             synchronized (DoctorFactory.class) {
-                ServiceLoader<DoctorFactorySpi> doctorFactorySpis = ServiceLoader.load(DoctorFactorySpi.class, containerCl);
-                assert doctorFactorySpis.iterator().hasNext();
-                doctor = doctorFactorySpis.iterator().next().createInstance();
+                if (doctor == null) {
+                    ServiceLoader<DoctorFactorySpi> doctorFactorySpis = ServiceLoader.load(DoctorFactorySpi.class, containerCl);
+                    assert doctorFactorySpis.iterator().hasNext();
+                    doctor = doctorFactorySpis.iterator().next().createInstance();
+                }
             }
         }
     }
