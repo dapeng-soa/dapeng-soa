@@ -5,6 +5,8 @@ import com.github.dapeng.api.Container;
 import com.github.dapeng.api.Plugin;
 import com.github.dapeng.api.events.AppEvent;
 import com.github.dapeng.api.events.AppEventType;
+import com.github.dapeng.api.healthcheck.DoctorFactory;
+import com.github.dapeng.client.netty.NettyClientFactory;
 import com.github.dapeng.core.Application;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
@@ -180,6 +182,7 @@ public class DapengContainer implements Container {
     public void startup() {
         LOGGER.info(getClass().getSimpleName() + "::startup begin");
         status = STATUS_CREATING;
+        DoctorFactory.createDoctor(this.getClass().getClassLoader());
         //3. 初始化appLoader,dapengPlugin 应该用serviceLoader的方式去加载
         Plugin springAppLoader = new SpringAppLoader(this, applicationCls);
         Plugin zookeeperPlugin = new ZookeeperRegistryPlugin(this);

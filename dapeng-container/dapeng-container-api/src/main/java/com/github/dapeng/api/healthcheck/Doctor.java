@@ -1,10 +1,13 @@
 package com.github.dapeng.api.healthcheck;
 
+import java.util.Map;
+
 /**
  * @author ever
  * @date 2018/07/26
  */
-public interface DapengDoctor {
+public interface Doctor {
+
 
     /**
      * 上层业务汇报接口
@@ -49,5 +52,5 @@ public interface DapengDoctor {
      *  </pre>
      * @return
      */
-    String diagnoseReport();
+    Map<String,Object> diagnoseReport();
 }
