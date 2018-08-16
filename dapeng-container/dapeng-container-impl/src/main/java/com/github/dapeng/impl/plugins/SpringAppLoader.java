@@ -5,6 +5,8 @@ import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.Plugin;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
+import com.github.dapeng.core.lifecycle.LifeCycleAware;
+import com.github.dapeng.core.lifecycle.LifeCycleProcessor;
 import com.github.dapeng.impl.container.DapengApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +54,12 @@ public class SpringAppLoader implements Plugin {
 
                 Map<String, SoaServiceDefinition<?>> processorMap = (Map<String, SoaServiceDefinition<?>>)
                         method.invoke(springCtx, appClassLoader.loadClass(SoaServiceDefinition.class.getName()));
+
+                //获取所有实现了lifecycle的bean
+                LifeCycleProcessor.getInstance().addLifecycles(((Map<String, LifeCycleAware>)
+                        method.invoke(springCtx, appClassLoader.loadClass(LifeCycleAware.class.getName()))).values());
+
+
                 //TODO: 需要构造Application对象
                 Map<String, ServiceInfo> appInfos = toServiceInfos(processorMap);
                 Application application = new DapengApplication(appInfos.values().stream().collect(Collectors.toList()),
