@@ -72,7 +72,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
 
             SoaHeader soaHeader = transactionContext.getHeader();
             if (soaHeader == null) {
-                //todo
+                soaHeader = new SoaHeader();
             }
             soaHeader.setRespCode(soaException.getCode());
             soaHeader.setRespMessage(soaException.getMessage());
