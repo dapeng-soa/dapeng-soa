@@ -3,7 +3,7 @@ package com.github.dapeng.impl.plugins.monitor;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.healthcheck.Doctor;
-import com.github.dapeng.api.healthcheck.ServiceHealthStatus;
+import com.github.dapeng.core.enums.ServiceHealthStatus;
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
 import com.google.common.base.Joiner;
 
@@ -17,7 +17,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  * @Date: 2018/8/2 11:07
  */
 
-public  class DapengDoctor implements Doctor {
+public class DapengDoctor implements Doctor {
 
 
     private Map<String, String> map = new HashMap<>(16);

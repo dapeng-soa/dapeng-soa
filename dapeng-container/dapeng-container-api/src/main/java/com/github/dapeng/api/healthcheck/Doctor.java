@@ -1,5 +1,7 @@
 package com.github.dapeng.api.healthcheck;
 
+import com.github.dapeng.core.enums.ServiceHealthStatus;
+
 import java.util.Map;
 
 /**
@@ -11,9 +13,10 @@ public interface Doctor {
 
     /**
      * 上层业务汇报接口
+     *
      * @param serviceClass 服务实现类
-     * @param status 状态
-     * @param remark 具体的信息, 例如: 三方接口xxx不可用
+     * @param status       状态
+     * @param remark       具体的信息, 例如: 三方接口xxx不可用
      */
     void report(ServiceHealthStatus status, String remark, Class<?> serviceClass);
 
@@ -50,7 +53,8 @@ public interface Doctor {
      *     "gcInfos": "2048/0",     //minorGc, majorGc
      *  }
      *  </pre>
+     *
      * @return
      */
-    Map<String,Object> diagnoseReport();
+    Map<String, Object> diagnoseReport();
 }
