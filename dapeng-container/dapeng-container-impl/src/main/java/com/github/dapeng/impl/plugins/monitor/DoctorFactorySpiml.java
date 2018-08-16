@@ -10,9 +10,6 @@ import java.util.List;
  * @Date: 2018/8/6 17:53
  */
 public class DoctorFactorySpiml implements DoctorFactorySpi {
-    private DoctorFactorySpiml() {
-    }
-
     @Override
     public Doctor createInstance() {
         return new DapengDoctor();
