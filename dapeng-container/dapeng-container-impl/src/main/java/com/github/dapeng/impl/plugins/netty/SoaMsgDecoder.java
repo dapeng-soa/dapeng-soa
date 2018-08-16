@@ -176,5 +176,6 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
 
         ctx.calleeTid(DapengUtil.generateTid());
         ctx.sessionTid(soaHeader.getSessionTid().orElse(ctx.calleeTid()));
+        ctx.setAttribute("dapengDoctor", DoctorFactory.getDoctor());
     }
 }
