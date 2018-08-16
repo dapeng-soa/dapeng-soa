@@ -67,6 +67,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             out.add(request);
         } catch (Throwable e) {
 
+            LOGGER.error(e.getMessage(),e);
             SoaException soaException = convertToSoaException(e);
             TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
 
