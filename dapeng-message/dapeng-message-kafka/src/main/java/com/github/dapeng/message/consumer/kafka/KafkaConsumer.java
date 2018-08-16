@@ -174,9 +174,7 @@ public class KafkaConsumer extends Thread {
         }
 
         try {
-            logger.info("{}收到kafka消息，执行{}方法", ifaceClass.getName(), functionDefinition.methodName);
             functionDefinition.apply(iface, argsParam);
-            logger.info("{}收到kafka消息，执行{}方法完成", ifaceClass.getName(), functionDefinition.methodName);
         } catch (Exception e) {
             logger.error("{}收到kafka消息，执行{}方法异常", ifaceClass.getName(), functionDefinition.methodName);
             logger.error(e.getMessage(), e);
