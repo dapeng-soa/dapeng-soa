@@ -1,5 +1,6 @@
 package com.github.dapeng.core.helper;
 
+import com.github.dapeng.core.SoaCode;
 import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.enums.ServiceHealthStatus;
 
@@ -92,17 +93,13 @@ public class DapengUtil {
      * @param remark
      * @param serviceClass
      */
-    public static void report(Object doctor, ServiceHealthStatus status, String remark, Class<?> serviceClass) {
+    public static void report(Object doctor, ServiceHealthStatus status, String remark, Class<?> serviceClass) throws SoaException {
         if (doctor.getClass().getName().equals("com.github.dapeng.impl.plugins.monitor.DapengDoctor")) {
             try {
                 Method method = doctor.getClass().getDeclaredMethod("report", ServiceHealthStatus.class, String.class, Class.class);
                 method.invoke(doctor, status, remark, serviceClass);
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                throw new SoaException(SoaCode.HealthCheckError);
             }
         }
     }
