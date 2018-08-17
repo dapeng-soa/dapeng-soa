@@ -122,6 +122,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                                  BeanSerializer<RESP> responseSerializer)
             throws SoaException {
         SoaConnection connection = findConnection(service, version, method);
+        // 选好的服务版本(可能不同于请求的版本)
         String serverVersion = InvocationContextImpl.Factory.currentInstance().versionName();
         if (connection == null) {
             throw new SoaException(SoaCode.NotFoundServer, "服务 [ " + service + " ] 无可用实例");
@@ -200,7 +201,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             throw new SoaException(NotFoundServer, "服务 [ " + service + " ] 无可用实例:负载均衡没有找到合适的运行实例");
         }
 
-        inst.getActiveCount().incrementAndGet();
+        inst.increaseActiveCount();
 
         IpPort ipPort = new IpPort(inst.ip, inst.port);
         SubPool subPool = subPools.get(ipPort);

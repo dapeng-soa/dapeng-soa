@@ -27,8 +27,8 @@ public class RuntimeInstance {
         this.port = port;
     }
 
-    public AtomicInteger getActiveCount() {
-        return activeCount;
+    public int getActiveCount() {
+        return activeCount.get();
     }
 
     /**
