@@ -1,12 +1,13 @@
 package com.github.dapeng.core.helper;
 
 import com.github.dapeng.core.SoaException;
+import com.github.dapeng.core.enums.ServiceHealthStatus;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
-import java.util.HashSet;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.github.dapeng.core.helper.IPUtils.localIpAsInt;
@@ -59,6 +60,7 @@ public class DapengUtil {
 
     /**
      * 判断是否是框架异常还是业务异常
+     *
      * @param e
      * @return
      */
@@ -79,5 +81,29 @@ public class DapengUtil {
         RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
         return Integer.valueOf(runtimeMXBean.getName().split("@")[0])
                 .intValue();
+    }
+
+
+    /**
+     * 提供业务健康度上报
+     *
+     * @param doctor
+     * @param status
+     * @param remark
+     * @param serviceClass
+     */
+    public static void report(Object doctor, ServiceHealthStatus status, String remark, Class<?> serviceClass) {
+        if (doctor.getClass().getName().equals("com.github.dapeng.impl.plugins.monitor.DapengDoctor")) {
+            try {
+                Method method = doctor.getClass().getDeclaredMethod("report", ServiceHealthStatus.class, String.class, Class.class);
+                method.invoke(doctor, status, remark, serviceClass);
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

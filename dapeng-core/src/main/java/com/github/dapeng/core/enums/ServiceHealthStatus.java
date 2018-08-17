@@ -1,4 +1,4 @@
-package com.github.dapeng.api.healthcheck;
+package com.github.dapeng.core.enums;
 
 /**
  * 服务健康度枚举
