@@ -83,14 +83,15 @@ public class NettyPlugin implements AppListener, Plugin {
                                     ch.pipeline().addLast(HandlerConstants.SOA_IDLE_HANDLER, soaLinkStateHandler);
                                     ch.pipeline().addLast(HandlerConstants.SOA_MSG_ENCODER_HANDLER, soaMsgEncoder);
                                     ch.pipeline().addLast(HandlerConstants.SOA_MSG_DECODER_HANDLER, soaMsgDecoder);
-                                    // 服务调用统计
-                                    if (MONITOR_ENABLE) {
-                                        ch.pipeline().addLast(HandlerConstants.SOA_INVOKE_COUNTER_HANDLER, soaInvokeCounter);
-                                    }
 
                                     if (FREQ_LIMIT_ENABLE) {
                                         // 添加服务限流handler
                                         ch.pipeline().addLast(HandlerConstants.SOA_FREQ_HANDLER, freqHandler);
+                                    }
+
+                                    // 服务调用统计
+                                    if (MONITOR_ENABLE) {
+                                        ch.pipeline().addLast(HandlerConstants.SOA_INVOKE_COUNTER_HANDLER, soaInvokeCounter);
                                     }
 
                                     ch.pipeline().addLast(HandlerConstants.SOA_SERVER_HANDLER, soaServerHandler);

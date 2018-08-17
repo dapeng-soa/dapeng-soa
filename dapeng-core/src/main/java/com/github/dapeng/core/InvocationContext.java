@@ -269,19 +269,4 @@ public interface InvocationContext {
          */
         Map<String, String> cookies();
     }
-
-
-    /*
-        InvocationContext context = InvocationContextFactory.getInvocationContext();
-
-        context.calleeIp("....");
-        context.timeout(10s);
-
-        someclient.somethod();
-
-        context.getLastInfo().calleeIp();
-        context.getLastInfo().getTid();
-
-     */
-
 }

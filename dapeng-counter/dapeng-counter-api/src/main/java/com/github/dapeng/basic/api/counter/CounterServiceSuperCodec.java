@@ -93,7 +93,7 @@
       public void validate(submitPoint_args bean) throws TException{
       
               if(bean.getDataPoint() == null)
-              throw new SoaException(SoaCode.NotNull, "dataPoint字段不允许为空");
+              throw new SoaException(SoaCode.StructFieldNull, "dataPoint字段不允许为空");
             
                 if(bean.getDataPoint() != null)
                 new com.github.dapeng.basic.api.counter.domain.serializer.DataPointSerializer().validate(bean.getDataPoint());
@@ -258,7 +258,7 @@
       public void validate(submitPoints_args bean) throws TException{
       
               if(bean.getDataPoints() == null)
-              throw new SoaException(SoaCode.NotNull, "dataPoints字段不允许为空");
+              throw new SoaException(SoaCode.StructFieldNull, "dataPoints字段不允许为空");
             
     }
     
@@ -463,16 +463,16 @@
       public void validate(queryPoints_args bean) throws TException{
       
               if(bean.getCondition() == null)
-              throw new SoaException(SoaCode.NotNull, "condition字段不允许为空");
+              throw new SoaException(SoaCode.StructFieldNull, "condition字段不允许为空");
             
                 if(bean.getCondition() != null)
                 new com.github.dapeng.basic.api.counter.domain.serializer.DataPointSerializer().validate(bean.getCondition());
               
               if(bean.getBeginTimeStamp() == null)
-              throw new SoaException(SoaCode.NotNull, "beginTimeStamp字段不允许为空");
+              throw new SoaException(SoaCode.StructFieldNull, "beginTimeStamp字段不允许为空");
             
               if(bean.getEndTimeStamp() == null)
-              throw new SoaException(SoaCode.NotNull, "endTimeStamp字段不允许为空");
+              throw new SoaException(SoaCode.StructFieldNull, "endTimeStamp字段不允许为空");
             
     }
     
@@ -555,7 +555,7 @@
       public void validate(queryPoints_result bean) throws TException{
       
               if(bean.getSuccess() == null)
-              throw new SoaException(SoaCode.NotNull, "success字段不允许为空");
+              throw new SoaException(SoaCode.StructFieldNull, "success字段不允许为空");
             
     }
     
@@ -681,7 +681,7 @@
           public void validate(getServiceMetadata_result bean) throws TException {
 
             if (bean.getSuccess() == null)
-            throw new SoaException(SoaCode.NotNull, "success字段不允许为空");
+            throw new SoaException(SoaCode.StructFieldNull, "success字段不允许为空");
           }
 
           @Override
@@ -689,7 +689,128 @@
             return bean == null ? "null" : bean.toString();
           }
         }
+
+        //10. echo_args
+        public static class echo_args {}
+
+        //11. echo_result.
+        public static class echo_result {
+
+          private String success;
+
+          public String getSuccess() {
+            return success;
+          }
+
+          public void setSuccess(String success) {
+            this.success = success;
+          }
+        }
+
+        //12. echo_argsSerializer
+        public static class echo_argsSerializer implements BeanSerializer<echo_args> {
+
+          @Override
+          public echo_args read(TProtocol iprot) throws TException {
+
+            echo_args bean =new echo_args();
+            com.github.dapeng.org.apache.thrift.protocol.TField schemeField;
+            iprot.readStructBegin();
+
+            while (true) {
+              schemeField = iprot.readFieldBegin();
+              if (schemeField.type == com.github.dapeng.org.apache.thrift.protocol.TType.STOP) {
+                break;
+              }
+              switch (schemeField.id) {
+                default:
+                com.github.dapeng.org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+
+              }
+              iprot.readFieldEnd();
+            }
+            iprot.readStructEnd();
+
+            validate(bean);
+            return bean;
+          }
+
+          @Override
+          public void write(echo_args bean, TProtocol oprot) throws TException {
+
+            validate(bean);
+            oprot.writeStructBegin(new com.github.dapeng.org.apache.thrift.protocol.TStruct("echo_args"));
+            oprot.writeFieldStop();
+            oprot.writeStructEnd();
+          }
+
+          public void validate(echo_args bean) throws TException {}
+
+          @Override
+          public String toString(echo_args bean) {
+            return bean == null ? "null" : bean.toString();
+          }
+        }
+
+        //13. echo_resultSerializer
+        public static class echo_resultSerializer implements BeanSerializer<echo_result> {
+          @Override
+          public echo_result read(TProtocol iprot) throws TException {
+
+            echo_result bean = new echo_result();
+            com.github.dapeng.org.apache.thrift.protocol.TField schemeField;
+            iprot.readStructBegin();
+
+            while (true) {
+              schemeField = iprot.readFieldBegin();
+              if (schemeField.type == com.github.dapeng.org.apache.thrift.protocol.TType.STOP) {
+                break;
+              }
+
+              switch (schemeField.id) {
+                case 0:  //SUCCESS
+                if (schemeField.type == com.github.dapeng.org.apache.thrift.protocol.TType.STRING) {
+                  bean.setSuccess(iprot.readString());
+                } else {
+                  com.github.dapeng.org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+                }
+                break;
+                default:
+                com.github.dapeng.org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              iprot.readFieldEnd();
+            }
+            iprot.readStructEnd();
+
+            validate(bean);
+            return bean;
+          }
+
+          @Override
+          public void write(echo_result bean, TProtocol oprot) throws TException {
+
+            validate(bean);
+            oprot.writeStructBegin(new com.github.dapeng.org.apache.thrift.protocol.TStruct("echo_result"));
+
+            oprot.writeFieldBegin(new com.github.dapeng.org.apache.thrift.protocol.TField("success", com.github.dapeng.org.apache.thrift.protocol.TType.STRING, (short) 0));
+            oprot.writeString(bean.getSuccess());
+            oprot.writeFieldEnd();
+
+            oprot.writeFieldStop();
+            oprot.writeStructEnd();
+          }
+
+          public void validate(echo_result bean) throws TException {
+
+            if (bean.getSuccess() == null)
+            throw new SoaException(SoaCode.RespFieldNull, "success字段不允许为空");
+          }
+
+          @Override
+          public String toString(echo_result bean) {
+            return bean == null ? "null" : bean.toString();
+          }
+        }
+
        }
-
-
       

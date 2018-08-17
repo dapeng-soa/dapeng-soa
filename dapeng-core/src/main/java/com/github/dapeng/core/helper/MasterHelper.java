@@ -12,7 +12,7 @@ public class MasterHelper {
 
     /**
      * 根据serviceName, versionName，判断当前服务是否集群中的master
-     *
+     *  todo 服务版本号是否作为master判断的依据??
      * @param servieName
      * @param versionName
      * @return

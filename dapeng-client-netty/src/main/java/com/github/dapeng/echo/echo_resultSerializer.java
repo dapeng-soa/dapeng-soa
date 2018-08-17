@@ -53,10 +53,11 @@ public class echo_resultSerializer implements BeanSerializer<echo_result> {
         oprot.writeStructEnd();
     }
 
+    @Override
     public void validate(echo_result bean) throws TException {
 
         if (bean.getSuccess() == null)
-            throw new SoaException(SoaCode.NotNull, "success字段不允许为空");
+            throw new SoaException(SoaCode.RespFieldNull, "success字段不允许为空");
     }
 
     @Override

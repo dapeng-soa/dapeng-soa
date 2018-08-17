@@ -7,6 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.github.dapeng.core.helper.DapengUtil.longToHexStr;
+import static com.github.dapeng.core.helper.IPUtils.transferIp;
+
 /**
  * <pre>
  * web	service1	service2	service3	service4

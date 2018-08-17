@@ -3,6 +3,8 @@ package com.github.dapeng.impl.plugins.monitor;
 import com.github.dapeng.basic.api.counter.CounterServiceClient;
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
 import com.github.dapeng.basic.api.counter.service.CounterService;
+import com.github.dapeng.core.InvocationContext;
+import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.plugins.monitor.config.MonitorFilterProperties;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -286,8 +288,8 @@ public class ServerCounterContainer {
             fields.put("min_request_flow", minRequestFlow);
             fields.put("sum_request_flow", sumRequestFlow);
             fields.put("avg_request_flow", avgRequestFlow);
-            fields.put("max_response_flow", minResponseFlow);
-            fields.put("min_response_flow", maxResponseFlow);
+            fields.put("max_response_flow", maxResponseFlow);
+            fields.put("min_response_flow", minResponseFlow);
             fields.put("sum_response_flow", sumResponseFlow);
             fields.put("avg_response_flow", avgResponseFlow);
             point.setValues(fields);
@@ -299,7 +301,7 @@ public class ServerCounterContainer {
         }
     }
 
-    private List<DataPoint> invokePointsOfLastMinute() {
+    public List<DataPoint> invokePointsOfLastMinute() {
         int currentMinuteOfHour = currentMinuteOfHour();
         int oneMinuteBefore = (currentMinuteOfHour == 0) ? 59 : (currentMinuteOfHour - 1);
 
@@ -481,6 +483,8 @@ public class ServerCounterContainer {
     private void submitFlowPoint() {
         AtomicInteger uploadCounter = new AtomicInteger(0);
         DataPoint point = flowDataQueue.peek();
+        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
+        invocationContext.timeout(5000);
         while (point != null) {
             try {
                 CounterClientFactory.COUNTER_CLIENT.submitPoint(point);
@@ -494,6 +498,7 @@ public class ServerCounterContainer {
                     LOGGER.debug(Thread.currentThread().getName()
                             + " points:" + uploadCounter.get() + " uploaded before error, now release the lock.");
                 }
+                InvocationContextImpl.Factory.removeCurrentInstance();
                 return;
             }
         }
@@ -501,11 +506,14 @@ public class ServerCounterContainer {
             LOGGER.debug(Thread.currentThread().getName() + " no more points, total points:"
                     + uploadCounter.get() + "  uploaded");
         }
+        InvocationContextImpl.Factory.removeCurrentInstance();
     }
 
     private void submitInvokePoints() {
         AtomicInteger uploadCounter = new AtomicInteger(0);
         List<DataPoint> points = invokeDataQueue.peek();
+        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
+        invocationContext.timeout(5000);
         while (points != null) {
             try {
                 if (!points.isEmpty()) {
@@ -532,6 +540,7 @@ public class ServerCounterContainer {
             LOGGER.debug(Thread.currentThread().getName() + " no more points, total points:" + uploadCounter.get()
                     + " uploaded, now release the lock.");
         }
+        InvocationContextImpl.Factory.removeCurrentInstance();
     }
 
     private ServiceProcessData createNewData(ServiceBasicInfo basicInfo) {

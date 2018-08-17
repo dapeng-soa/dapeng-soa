@@ -1,9 +1,7 @@
 package com.github.dapeng.util;
 
 import com.github.dapeng.client.netty.TSoaTransport;
-import com.github.dapeng.core.BeanSerializer;
-import com.github.dapeng.core.SoaHeader;
-import com.github.dapeng.core.SoaHeaderSerializer;
+import com.github.dapeng.core.*;
 import com.github.dapeng.core.enums.CodecProtocol;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TBinaryProtocol;
@@ -87,7 +85,15 @@ public class SoaMessageParser<RESP> {
 
     public SoaMessageParser<RESP> parseBody() throws TException {
         if (bodySerializer != null) {
-            this.body = bodySerializer.read(bodyProtocol);
+            try {
+                this.body = bodySerializer.read(bodyProtocol);
+            } catch (SoaException e) {
+                if (e.getCode().equals(SoaCode.StructFieldNull.getCode())) {
+                    e.setCode(SoaCode.ReqFieldNull.getCode());
+                    e.setMsg(SoaCode.ReqFieldNull.getMsg());
+                }
+                throw e;
+            }
         }
         byte etx = this.headerProtocol.readByte();
         if (etx != ETX) {

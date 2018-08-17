@@ -6,10 +6,11 @@ import com.github.dapeng.org.apache.thrift.protocol.*;
 
 import java.util.Optional;
 
-import static com.github.dapeng.core.helper.DapengUtil.longToHexStr;
+import static com.github.dapeng.core.helper.IPUtils.transferIp;
 
 /**
- * Created by tangliu on 2016/1/11.
+ * @author tangliu
+ * @date 2016/1/11
  * SoaHeader序列化和反序列化
  */
 public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
@@ -97,7 +98,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                         bean.setCallerTid(Optional.of(Long.parseUnsignedLong(iprot.readString(), 16)));
                     } else if (schemeField.type == TType.I64) {
                         bean.setCallerTid(Optional.of(iprot.readI64()));
-                    }  else {
+                    } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
                     break;
@@ -367,13 +368,13 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
     @Override
     public void validate(SoaHeader bean) throws TException {
         if (bean.getServiceName() == null) {
-            throw new SoaException(SoaCode.NotNull, "serviceName字段不允许为空");
+            throw new SoaException(SoaCode.StructFieldNull, "serviceName字段不允许为空");
         }
         if (bean.getMethodName() == null) {
-            throw new SoaException(SoaCode.NotNull, "methodName字段不允许为空");
+            throw new SoaException(SoaCode.StructFieldNull, "methodName字段不允许为空");
         }
         if (bean.getVersionName() == null) {
-            throw new SoaException(SoaCode.NotNull, "versionName字段不允许为空");
+            throw new SoaException(SoaCode.StructFieldNull, "versionName字段不允许为空");
         }
     }
 

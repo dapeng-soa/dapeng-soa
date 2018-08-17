@@ -2,6 +2,7 @@ package com.github.dapeng.registry;
 
 import com.github.dapeng.core.FreqControlRule;
 import com.github.dapeng.core.ProcessorKey;
+import com.github.dapeng.core.ServiceFreqControl;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
 
@@ -71,5 +72,5 @@ public interface RegistryAgent {
      * @return
      * @see com.github.dapeng.impl.plugins.netty
      */
-    List<FreqControlRule> getFreqControlRule(boolean usingFallback, String serviceKey);
+    ServiceFreqControl getFreqControlRule(boolean usingFallback, String serviceKey);
 }

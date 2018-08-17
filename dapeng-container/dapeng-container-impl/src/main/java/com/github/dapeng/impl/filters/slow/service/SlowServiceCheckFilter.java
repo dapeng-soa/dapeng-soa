@@ -8,6 +8,10 @@ import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @author huyj
+ * @Created 2018/6/26 14:14
+ */
 public class SlowServiceCheckFilter implements Filter {
 
     private static final Logger logger = LoggerFactory.getLogger("container.slowtime.log");
@@ -19,6 +23,7 @@ public class SlowServiceCheckFilter implements Filter {
             ctx.setAttach(this, "slowServiceCheckTask", task);
             SlowServiceCheckTaskManager.addTask(task);
             if (!SlowServiceCheckTaskManager.hasStarted()) {
+                //fixme lifecycle
                 SlowServiceCheckTaskManager.start();
                 logger.info("slow service check started");
             }

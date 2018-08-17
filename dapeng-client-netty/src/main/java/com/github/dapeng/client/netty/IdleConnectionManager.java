@@ -29,7 +29,9 @@ public class IdleConnectionManager {
             channels.put(channel, count);
         } else {
             AtomicInteger count = channels.get(channel);
-            count.incrementAndGet();
+            if (count != null) {
+                count.incrementAndGet();
+            }
         }
 
         //channels.putIfAbsent(channel, new AtomicInteger(0)).incrementAndGet();

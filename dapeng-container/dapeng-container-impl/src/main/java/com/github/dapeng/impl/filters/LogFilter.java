@@ -43,7 +43,6 @@ public class LogFilter implements Filter {
                 LOGGER.trace(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.seqId() + "]");
             }
 
-
             SoaHeader soaHeader = transactionContext.getHeader();
 
             String infoLog = "request[seqId:" + transactionContext.seqId() + "]:"

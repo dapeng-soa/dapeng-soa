@@ -5,6 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.SimpleDateFormat;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,22 +19,22 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SlowServiceCheckTaskManager {
 
     private static final Logger logger = LoggerFactory.getLogger("container.slowtime.log");
-    private static boolean live = false;
+    private static volatile boolean live = false;
     private static List<SlowServiceCheckTask> tasks = Collections.synchronizedList(new ArrayList<>());
     private static Map<Thread, String> lastStackInfo = new ConcurrentHashMap<>();
     private static final long DEFAULT_SLEEP_TIME = 3000L;
     private static final long MAX_PROCESS_TIME = SoaSystemEnvProperties.SOA_MAX_PROCESS_TIME;
 
-    public static void addTask(SlowServiceCheckTask task) {
+    static void addTask(SlowServiceCheckTask task) {
         tasks.add(task);
     }
 
-    public static void remove(SlowServiceCheckTask task) {
-        lastStackInfo.remove(task.currentThread());
+    static void remove(SlowServiceCheckTask task) {
+        lastStackInfo.remove(task.currentThread);
         tasks.remove(task);
     }
 
-    public static boolean hasStarted() {
+    static boolean hasStarted() {
         return live;
     }
 
@@ -57,30 +61,30 @@ public class SlowServiceCheckTaskManager {
         tasks.clear();
     }
 
-    private static void checkSampleTask() throws InterruptedException {
+    private static void checkSampleTask() {
         final List<SlowServiceCheckTask> tasksCopy = new ArrayList<>(tasks);
-        logger.info("start check slow service  at [" + getCurrentTime() + "] Task queue " + tasksCopy.size());
         final Iterator<SlowServiceCheckTask> iterator = tasksCopy.iterator();
 
+        final long currentTime = System.currentTimeMillis();
+        final String currentTimeAsString = getCurrentTime();
         while (iterator.hasNext()) {
-            final long currentTime = System.currentTimeMillis();
             final SlowServiceCheckTask task = iterator.next();
 
-            final long ptime = currentTime - task.startTime();
+            final long ptime = currentTime - task.startTime;
             if (ptime >= MAX_PROCESS_TIME) {
 //            if (true) {
-                final StackTraceElement[] stackElements = task.currentThread().getStackTrace();
+                final StackTraceElement[] stackElements = task.currentThread.getStackTrace();
                 if (stackElements != null && stackElements.length > 0) {
                     final StringBuilder builder = new StringBuilder(task.toString());
-                    builder.append("--[" + getCurrentTime() + "]:task info:[" + task.serviceName() + ":" + task.methodName() + ":" + task.versionName() + "]").append("\n");
+                    builder.append("--[" + currentTimeAsString + "]:task info:[" + task.serviceName + ":" + task.methodName + ":" + task.versionName + "]").append("\n");
 
                     final String firstStackInfo = stackElements[0].toString();
-                    if (lastStackInfo.containsKey(task.currentThread()) && lastStackInfo.get(task.currentThread()).equals(firstStackInfo)) {
+                    if (lastStackInfo.containsKey(task.currentThread) && lastStackInfo.get(task.currentThread).equals(firstStackInfo)) {
                         builder.append("Same as last check...");
                     } else {
                         builder.append("-- The task has been executed ").append(ptime).append("ms and Currently is executing:");
-                        lastStackInfo.put(task.currentThread(), firstStackInfo);
-                        builder.append("\n   at ").append(firstStackInfo.toString());
+                        lastStackInfo.put(task.currentThread, firstStackInfo);
+                        builder.append("\n   at ").append(firstStackInfo);
                         for (int i = 1; i < stackElements.length; i++) {
                             builder.append("\n   at " + stackElements[i]);
                         }
@@ -89,13 +93,14 @@ public class SlowServiceCheckTaskManager {
                     logger.error("SlowProcess:{}", builder.toString());
                 }
             } else {
-                lastStackInfo.remove(task.currentThread());
+                lastStackInfo.remove(task.currentThread);
             }
         }
         tasksCopy.clear();
     }
 
     private static String getCurrentTime() {
-        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS").format(new Date());
+        return LocalDateTime.now(ZoneId.of("Asia/Shanghai"))
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS"));
     }
 }

@@ -5,6 +5,7 @@ import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.FreqControlRule;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.Service;
+import com.github.dapeng.core.ServiceFreqControl;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.*;
@@ -146,7 +147,7 @@ public class ServerZkAgentImpl implements RegistryAgent {
     }
 
     @Override
-    public List<FreqControlRule> getFreqControlRule(boolean usingFallback, String serviceKey) {
+    public ServiceFreqControl getFreqControlRule(boolean usingFallback, String serviceKey) {
         return serverZk.getFreqControl(serviceKey);
     }
 
