@@ -13,7 +13,9 @@ import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
 import io.netty.buffer.ByteBuf;
 
 /**
- * Created by lihuimin on 2017/12/22.
+ *
+ * @author lihuimin
+ * @date 2017/12/22
  */
 public class SoaMessageBuilder<T> {
 
@@ -93,7 +95,17 @@ public class SoaMessageBuilder<T> {
             default:
                 throw new TException("通讯协议不正确(包体协议)");
         }
-        bodySerializer.write(body, bodyProtocol);
+
+        try {
+            bodySerializer.write(body, bodyProtocol);
+        } catch (SoaException e) {
+            // 异常转换, 让异常更加明确
+            if (e.getCode().equals(SoaCode.StructFieldNull.getCode())) {
+                e.setCode(SoaCode.ReqFieldNull.getCode());
+                e.setMsg(SoaCode.ReqFieldNull.getMsg());
+            }
+            throw e;
+        }
 
         headerProtocol.writeByte(ETX);
         transport.flush();

@@ -31,8 +31,8 @@ public class RuntimeInstance {
         this.weight = SoaSystemEnvProperties.SOA_INSTANCE_WEIGHT;
     }
 
-    public AtomicInteger getActiveCount() {
-        return activeCount;
+    public int getActiveCount() {
+        return activeCount.get();
     }
 
     /**

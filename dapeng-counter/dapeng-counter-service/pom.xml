@@ -46,6 +46,10 @@
             <version>${slf4j-version}</version>
         </dependency>
         <dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>janino</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.github.dapeng</groupId>
             <artifactId>dapeng-utils</artifactId>
             <version>${project.version}</version>

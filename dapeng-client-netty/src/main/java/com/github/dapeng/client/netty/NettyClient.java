@@ -83,7 +83,7 @@ public class NettyClient {
             while (fwt != null && fwt.expired < now) {
                 CompletableFuture future = fwt.future;
                 if (future.isDone() == false) {
-                    future.completeExceptionally(new SoaException(SoaCode.TimeOut));
+                    future.completeExceptionally(new SoaException(SoaCode.ReqTimeOut));
                 }
 
                 FUTURES_CACHES_WITH_TIMEOUT.remove();
@@ -116,6 +116,7 @@ public class NettyClient {
                         new SoaClientHandler(callBack));
             }
         });
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
         return bootstrap;
     }
 
@@ -151,13 +152,13 @@ public class NettyClient {
                 MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
             }
             LOGGER.error("请求服务超时[" + service + "]，seqid:" + seqid);
-            throw new SoaException(SoaCode.TimeOut.getCode(), "请求服务超时[" + service + "]");
+            throw new SoaException(SoaCode.ReqTimeOut.getCode(), "请求服务超时[" + service + "]");
         } catch (Throwable e) {
             // 如果在服务里面, 那么不清理MDC
             if (!TransactionContext.hasCurrentInstance()) {
                 MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
             }
-            throw new SoaException(SoaCode.UnKnown, e.getMessage() == null ? SoaCode.UnKnown.getMsg() : e.getMessage());
+            throw new SoaException(SoaCode.ClientUnKnown, e.getMessage() == null ? SoaCode.ClientUnKnown.getMsg() : e.getMessage());
         } finally {
             RequestQueue.remove(seqid);
         }
@@ -228,6 +229,11 @@ public class NettyClient {
      */
     public Channel connect(String host, int port) throws InterruptedException {
         return bootstrap.connect(host, port).sync().channel();
+    }
+
+    public void shutdown() {
+        LOGGER.warn("NettyClient shutdown gracefully");
+        workerGroup.shutdownGracefully();
     }
 
 }
