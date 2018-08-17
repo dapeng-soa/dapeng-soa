@@ -278,8 +278,6 @@ public class ServerCounterContainer {
             point.setBizTag("dapeng_node_flow");
             long now = System.currentTimeMillis();
             Map<String, String> tags = new HashMap<>(4);
-            tags.put("period", String.valueOf(PERIOD));
-            tags.put("analysis_time", String.valueOf(now));
             tags.put("node_ip", NODE_IP);
             tags.put("node_port", String.valueOf(NODE_PORT));
             point.setTags(tags);
@@ -332,8 +330,6 @@ public class ServerCounterContainer {
                 point.setDatabase(DATA_BASE);
                 point.setBizTag("dapeng_service_process");
                 Map<String, String> tags = new HashMap<>(8);
-                tags.put("period", String.valueOf(PERIOD));
-                tags.put("analysis_time", String.valueOf(now));
                 tags.put("service_name", serviceBasicInfo.getServiceName());
                 tags.put("method_name", serviceProcessData.getMethodName());
                 tags.put("version_name", serviceProcessData.getVersionName());
