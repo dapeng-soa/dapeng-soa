@@ -36,7 +36,7 @@ public class LoadBalanceAlgorithm {
             int index = 0;
 
             for (int i = 1; i < instances.size(); i++) {
-                if (instances.get(i).getActiveCount().intValue() < instances.get(index).getActiveCount().intValue()) {
+                if (instances.get(i).getActiveCount() < instances.get(index).getActiveCount()) {
                     index = i;
                 }
             }
