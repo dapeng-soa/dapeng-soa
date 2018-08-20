@@ -534,7 +534,7 @@ class JavaGenerator extends CodeGenerator {
 
           new {struct.namespace}.serializer.{struct.name}Serializer().write(bean, protocol);
           transport.flush();
-          return transport.getBuffer();
+          return transport.getByteBuf();
         </block>
 
         public static {struct.name} getBeanFromBytes(byte[] bytes) throws TException <block>
