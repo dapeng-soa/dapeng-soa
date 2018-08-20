@@ -551,7 +551,7 @@ class ScalaGenerator extends CodeGenerator {
 
             new {struct.name}Serializer().write(bean, protocol)
             transport.flush()
-            transport.getBuffer
+            transport.getByteBuf
           </block>
 
           def getBeanFromBytes(bytes: Array[Byte]): {struct.name} = <block>
