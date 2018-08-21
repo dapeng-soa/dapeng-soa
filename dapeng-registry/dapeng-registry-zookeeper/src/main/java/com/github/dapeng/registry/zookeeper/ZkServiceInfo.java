@@ -77,9 +77,9 @@ public class ZkServiceInfo {
     /**
      * weight zk config
      */
-    public Weight weightGlobalConfig = new Weight();
+    public List<Weight> weightGlobalConfig = new ArrayList<>(16);
 
-    public List<Weight> weightServiceConfigs = new ArrayList<>();
+    public List<Weight> weightServiceConfigs = new ArrayList<>(16);
 
     /**
      * config class

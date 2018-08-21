@@ -136,7 +136,7 @@ public class WatcherUtils {
                         }
                     } else if (typeValue.equals(ConfigKey.Weight.getValue())) {
                         if (isGlobal) {
-                            zkInfo.weightGlobalConfig = doParseWeightData(property);
+                            zkInfo.weightGlobalConfig.add(doParseWeightData(property));
 
                         } else {
                             zkInfo.weightServiceConfigs.add(doParseWeightData(property));
@@ -161,10 +161,22 @@ public class WatcherUtils {
             List<RuntimeInstance> runtimeInstances = zkInfo.getRuntimeInstances();
             if (runtimeInstances != null && runtimeInstances.size() > 0) {
                 for (RuntimeInstance runtimeInstance : runtimeInstances) {
-                    if (zkInfo.weightGlobalConfig.ip != null) {   //没有全局配置的情况下ip = null，有全局配置ip = ""
-                        runtimeInstance.weight = zkInfo.weightGlobalConfig.weight;
+                    //全局配置
+                    if (!zkInfo.weightGlobalConfig.isEmpty()) {
+                        List<Weight> weights = zkInfo.weightServiceConfigs;
+                        for (Weight weight : weights) {
+                            if (weight.ip.equals(runtimeInstance.ip)) {
+                                if (weight.port == runtimeInstance.port){
+                                    runtimeInstance.weight = weight.weight;
+                                    break;
+                                }else if(weight.port == -1){
+                                    runtimeInstance.weight = weight.weight;
+                                }
+                            }
+                        }
                     }
-                    if (zkInfo.weightServiceConfigs != null) {
+                    //对服务的配置
+                    if (!zkInfo.weightServiceConfigs.isEmpty()) {
                         List<Weight> weights = zkInfo.weightServiceConfigs;
                         for (Weight weight : weights) {
                             if (weight.ip.equals(runtimeInstance.ip)) {
@@ -180,6 +192,7 @@ public class WatcherUtils {
                 }
             }
         }
+
     }
 
     /**
@@ -189,21 +202,15 @@ public class WatcherUtils {
      * @return
      */
     public static Weight doParseWeightData(String weightData) {
-        Weight weight = new Weight();
-        String[] strArr = weightData.split("[/]");
-        if (strArr.length >= 2) {
-            if (strArr.length == 2){                   //weight/600  global weight config
-                weight.ip = "";
-                weight.port = -1;
-                weight.weight = Integer.parseInt(strArr[1]);
-            }else if (strArr.length == 3) {              //weight/192.168.4.107/500       service weight config2
-                weight.ip = strArr[1];
-                weight.port = -1;
-                weight.weight = Integer.parseInt(strArr[2]);
-            } else {                                   //   weight/192.168.4.107/9095/700  service weight config1
-                weight.ip = strArr[1];
-                weight.port = Integer.parseInt(strArr[2]);
-                weight.weight = Integer.parseInt(strArr[3]);
+        Weight weight;
+        String[] strArr = weightData.split("/");
+        if (strArr.length >= 3) {
+            if (strArr.length == 3) {
+                //weight/192.168.4.107/500       service weight config2
+                weight = new Weight(strArr[1],-1,Integer.parseInt(strArr[2]));
+            } else {
+                //weight/192.168.4.107/9095/700  service weight config1
+                weight = new Weight(strArr[1], Integer.parseInt(strArr[2]),Integer.parseInt(strArr[3]));
             }
         }else {
             weight = null;
