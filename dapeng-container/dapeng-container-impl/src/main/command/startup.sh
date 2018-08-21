@@ -52,7 +52,7 @@ process_exit() {
 
 trap 'kill ${!};process_exit' SIGTERM
 
-nohup java -server $JVM_OPTS $SOA_BASE $DEBUG_OPTS $USER_OPTS  $E_JAVA_OPTS -cp ./dapeng-bootstrap.jar com.github.dapeng.bootstrap.Bootstrap >> $LOGDIR/console.log 2>&1 &
+nohup java -server $JVM_OPTS $GC_OPTS $NETTY_OPTS $SOA_BASE $DEBUG_OPTS $USER_OPTS  $E_JAVA_OPTS -cp ./dapeng-bootstrap.jar com.github.dapeng.bootstrap.Bootstrap >> $LOGDIR/console.log 2>&1 &
 pid="$!"
 echo $pid > $LOGDIR/pid.txt
 
