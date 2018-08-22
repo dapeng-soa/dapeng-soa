@@ -153,11 +153,13 @@ public class ServerCounterContainer {
     }
 
     public void addRequestFlow(long requestSize) {
-        reqFlows.get(currentMinuteOfHour()).add(requestSize);
+        if (MONITOR_ENABLE)
+            reqFlows.get(currentMinuteOfHour()).add(requestSize);
     }
 
     public void addResponseFlow(long responseSize) {
-        respFlows.get(currentMinuteOfHour()).add(responseSize);
+        if (MONITOR_ENABLE)
+            respFlows.get(currentMinuteOfHour()).add(responseSize);
     }
 
     public int increaseActiveChannelAndGet() {
