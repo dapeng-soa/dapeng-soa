@@ -131,7 +131,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
         assert (result != null);
 
         //请求响应，在途请求-1
-        RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service,host, port);
+        RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service, host, port);
         if (runtimeInstance == null) {
             LOGGER.error("SoaBaseConnection::runtimeInstance not found.");
         } else {
@@ -269,7 +269,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         assert (resultFuture != null);
         //请求响应，在途请求-1
-        RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service,host, port);
+        RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service, host, port);
         if (runtimeInstance == null) {
             LOGGER.error("SoaBaseConnection::runtimeInstance not found.");
         } else {
@@ -324,10 +324,9 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 assert (resp != null);
                 return new Result<>(resp, null);
             } else {
-                String respMessage = respHeader.getRespMessage().get().contains("\n")?respHeader.getRespMessage().get().replaceAll("\n", "") : respHeader.getRespMessage().get();
                 return new Result<>(null, new SoaException(
                         lastInfo.responseCode(),
-                        (respHeader.getRespMessage().isPresent()) ?respMessage: SoaCode.ClientUnKnown.getMsg()));
+                        (respHeader.getRespMessage().isPresent()) ? respHeader.getRespMessage().get() : SoaCode.ClientUnKnown.getMsg()));
             }
 
         } catch (SoaException ex) {

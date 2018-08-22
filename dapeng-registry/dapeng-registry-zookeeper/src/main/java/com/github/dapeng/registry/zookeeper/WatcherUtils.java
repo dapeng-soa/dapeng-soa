@@ -163,7 +163,7 @@ public class WatcherUtils {
                 for (RuntimeInstance runtimeInstance : runtimeInstances) {
                     //全局配置
                     if (!zkInfo.weightGlobalConfig.isEmpty()) {
-                        List<Weight> weights = zkInfo.weightServiceConfigs;
+                        List<Weight> weights = zkInfo.weightGlobalConfig;
                         for (Weight weight : weights) {
                             if (weight.ip.equals(runtimeInstance.ip)) {
                                 if (weight.port == runtimeInstance.port){
