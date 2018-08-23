@@ -538,9 +538,28 @@ class ScalaGenerator extends CodeGenerator {
       <div>package {struct.namespace}
 
         import com.github.dapeng.core.BeanSerializer
+        import com.github.dapeng.org.apache.thrift.protocol.TCompactProtocol
+        import com.github.dapeng.util.TCommonTransport
+        import {struct.namespace}.serializer.{struct.name}Serializer
         object {struct.name} <block>
           implicit val x: BeanSerializer[{struct.namespace}.{struct.name}] = new {struct.namespace}.serializer.{struct.name}Serializer
-      </block>
+
+          def getBytesFromBean(bean: {struct.name}): Array[Byte] = <block>
+            val bytes = new Array[Byte](8192)
+            val transport = new TCommonTransport(bytes, TCommonTransport.Type.Write)
+            val protocol = new TCompactProtocol(transport)
+
+            new {struct.name}Serializer().write(bean, protocol)
+            transport.flush()
+            transport.getByteBuf
+          </block>
+
+          def getBeanFromBytes(bytes: Array[Byte]): {struct.name} = <block>
+            val transport = new TCommonTransport(bytes, TCommonTransport.Type.Read)
+            val protocol = new TCompactProtocol(transport)
+            new {struct.name}Serializer().read(protocol)
+          </block>
+        </block>
 
         /**
         {notice}
