@@ -82,8 +82,6 @@ public class JsonPost {
 
             String jsonResponse = post(clientInfo.serviceName, clientInfo.version,
                     methodName, jsonParameter, jsonEncoder, jsonDecoder);
-            //MDC will be remove by client filter
-            //MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("soa-response: " + jsonResponse + " cost:" + (System.currentTimeMillis() - beginTime) + "ms");
             } else {
@@ -104,11 +102,12 @@ public class JsonPost {
      */
     private String post(String serviceName, String version, String method, String requestJson, JsonSerializer jsonEncoder, JsonSerializer jsonDecoder) throws Exception {
 
-        String jsonResponse = "{}";
+        String jsonResponse;
         String sessionTid = MDC.get(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         try {
             String result = this.pool.send(serviceName, version, method, requestJson, jsonEncoder, jsonDecoder);
             jsonResponse = result.equals("{}") ? "{\"status\":1}" : result.substring(0, result.lastIndexOf('}')) + ",\"status\":1}";
+            //MDC will be remove by client filter
             MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
         } catch (SoaException e) {
             MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);

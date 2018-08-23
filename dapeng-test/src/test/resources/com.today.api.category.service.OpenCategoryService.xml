@@ -1,0 +1,2299 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<service namespace="com.today.api.category.service" name="OpenCategoryService">
+    <doc>
+
+ 商品类目服务
+</doc>
+    <meta>
+        <version>1.0.0</version>
+        <timeout>30000</timeout>
+    </meta>
+    <methods>
+        <method name="getCategoryById">
+            <doc>
+
+# 通过Id查询类目详情
+## 业务描述
+    通过Id查询类目详情
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    类目ID
+## 前置检查
+     1.类目ID的有效性
+##  权限检查
+    分权限查询
+##  逻辑处理
+     无
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    类目详细信息
+</doc>
+            <request name="getCategoryById_args">
+                <fields>
+                    <field tag="1" name="categoryId" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LONG</kind>
+                        </dataType>
+                        <doc> 类目Id</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="getCategoryById_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.vo.TCategory</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="checkAttributesKey">
+            <doc>
+
+#  校验属性字符串的正确性
+## 业务描述
+   校验属性字符串的正确性
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    1.categoryId 类目Id
+    2.key 存储字符串
+## 前置检查
+     无
+##  权限检查
+    用户业务权限检查
+##  逻辑处理
+    1.存储格式：id:(value)|id:(value,...)
+    2.必填的属性是否有值
+    3.必选的属性填的值是否有效
+      当属性为枚举时 校验 value 是否是存在于attributeValue中
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    无
+</doc>
+            <request name="checkAttributesKey_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.request.CheckAttributesKeyRequest</ref>
+                        </dataType>
+                        <doc> skuId </doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="checkAttributesKey_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.response.CheckAttributesKeyResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="getAttributeAndValueByCategoryId">
+            <doc>
+
+#  通过categoryId查询属性和属性值
+## 业务描述
+   通过categoryId查询属性和属性值
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    1.categoryId 类目Id
+
+## 前置检查
+     无
+##  权限检查
+    用户业务权限检查
+##  逻辑处理
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    AttributeAndValueByCategoryIdResponse
+</doc>
+            <request name="getAttributeAndValueByCategoryId_args">
+                <fields>
+                    <field tag="1" name="categoryId" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LONG</kind>
+                        </dataType>
+                        <doc> categoryId </doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="getAttributeAndValueByCategoryId_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.response.GetAttributeAndValueByCategoryIdResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="getCategoryTree">
+            <doc>
+
+#  获取全量类目树
+## 业务描述
+   获取全量类目树
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    类目层级名称
+## 前置检查
+    无
+##  权限检查
+    用户业务权限检查
+##  逻辑处理
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    List[GetCategoryTreeItem]
+</doc>
+            <request name="getCategoryTree_args">
+                <fields>
+                    <field tag="1" name="categoryHierarchyName" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRING</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="getCategoryTree_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRUCT</kind>
+<ref>com.today.api.category.response.GetCategoryTreeItem</ref>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listCategory">
+            <doc>
+
+# 批量查询类目详情
+## 业务描述
+    商品类目查询
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    查询类目ID集合
+## 前置检查
+     1.类目ID的有效性
+##  权限检查
+    分权限查询
+##  逻辑处理
+     无
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    类目列表信息
+</doc>
+            <request name="listCategory_args">
+                <fields>
+                    <field tag="1" name="categoryIds" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>LONG</kind>
+                            </valueType>
+                        </dataType>
+                        <doc> 类目Id集合</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listCategory_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRUCT</kind>
+<ref>com.today.api.category.vo.TCategory</ref>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listCategoryTree">
+            <doc>
+
+#  获取类目树
+## 业务描述
+   通过 categoryCode 查询该类目所有的父级类目
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    1:string categoryCode
+## 前置检查
+    categoryCode的有效性
+##  权限检查
+    用户业务权限检查
+##  逻辑处理
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    list&lt;category_vo.TCategory&gt;
+##  负责人 李晶莹
+    jyli@today36524.com.cn
+</doc>
+            <request name="listCategoryTree_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.request.ListCategoryTreeRequest</ref>
+                        </dataType>
+                        <doc> 商品类目ID</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listCategoryTree_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRUCT</kind>
+<ref>com.today.api.category.vo.TCategory</ref>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listCategoryTreeByBatch">
+            <doc>
+
+#  获取类目树
+## 业务描述
+   通过 categoryCodeList 批量获取类目树
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    1: list&lt;string&gt; categoryCodeList
+## 前置检查
+    categoryCode的有效性
+##  权限检查
+    用户业务权限检查
+##  逻辑处理
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    category_response.ListCategoryTreeByBatchResponse
+##  负责人 李晶莹
+    jyli@today36524.com.cn
+</doc>
+            <request name="listCategoryTreeByBatch_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRING</kind>
+                            </valueType>
+                        </dataType>
+                        <doc> 商品类目code集合</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listCategoryTreeByBatch_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRUCT</kind>
+<ref>com.today.api.category.response.ListCategoryTreeByBatchResponse</ref>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listLeafCategoryById">
+            <doc>
+
+#  获取当前类目下的所有叶子类目
+## 业务描述
+   通过 categoryId 获取对应的所有叶子类目(同一个父类目下平级子类目的所有叶子类目)
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    1: i64 categoryId
+## 前置检查
+    categoryId的有效性
+##  权限检查
+    用户业务权限检查
+##  逻辑处理
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    list&lt;i64&gt;
+</doc>
+            <request name="listLeafCategoryById_args">
+                <fields>
+                    <field tag="1" name="categoryId" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LONG</kind>
+                        </dataType>
+                        <doc> 类目id</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listLeafCategoryById_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRUCT</kind>
+<ref>com.today.api.category.vo.TCategory</ref>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="parseSkuAttributesKey">
+            <doc>
+
+#  根据存储格式解析属性列表
+## 业务描述
+    根据存储格式解析属性列表
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    1.categoryId 类目Id
+    2.key 存储字符串
+## 前置检查
+     1.categoryId  商品类目ID的有效性
+##  权限检查
+    用户业务权限检查
+##  逻辑处理
+    1.存储格式：id:value;id:value1|value2...
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    无
+</doc>
+            <request name="parseSkuAttributesKey_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.request.ParseSkuAttributesKeyRequest</ref>
+                        </dataType>
+                        <doc> skuId </doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="parseSkuAttributesKey_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.response.ParseSkuAttributesKeyResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="getCategoryByCode">
+            <doc>
+
+# 通过Code查询类目详情
+## 业务描述
+    通过Code查询类目详情
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    类目Code
+## 前置检查
+     无
+##  权限检查
+    分权限查询
+##  逻辑处理
+     无
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    类目详细信息
+</doc>
+            <request name="getCategoryByCode_args">
+                <fields>
+                    <field tag="1" name="categoryCode" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRING</kind>
+                        </dataType>
+                        <doc> 类目Code</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="getCategoryByCode_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.vo.TCategory</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listCategoryByCode">
+            <doc>
+
+# 批量查询类目详情
+## 业务描述
+    商品类目查询
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    查询类目Code集合
+## 前置检查
+     无
+##  权限检查
+    分权限查询
+##  逻辑处理
+     无
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    类目列表信息
+</doc>
+            <request name="listCategoryByCode_args">
+                <fields>
+                    <field tag="1" name="categoryCodes" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRING</kind>
+                            </valueType>
+                        </dataType>
+                        <doc> 类目Code集合</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listCategoryByCode_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRUCT</kind>
+<ref>com.today.api.category.vo.TCategory</ref>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listLeafCategoryByCode">
+            <doc>
+
+#  获取当前类目下的所有叶子类目
+## 业务描述
+   通过 categoryCode 获取对应的所有叶子类目(同一个父类目下平级子类目的所有叶子类目)
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    1: string categoryCode
+## 前置检查
+    无
+##  权限检查
+    用户业务权限检查
+##  逻辑处理
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    list&lt;i64&gt;
+</doc>
+            <request name="listLeafCategoryByCode_args">
+                <fields>
+                    <field tag="1" name="categoryCode" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRING</kind>
+                        </dataType>
+                        <doc> 类目code</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listLeafCategoryByCode_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRUCT</kind>
+<ref>com.today.api.category.vo.TCategory</ref>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listChildCategoryByCode">
+            <doc>
+
+# 下级类目列表查询
+## 业务描述
+    商品类目查询
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    查询类目Code
+## 前置检查
+     无
+##  权限检查
+    分权限查询
+##  逻辑处理
+     1.只查询有效的类目信息,根据上级类目ID,查下级类目,只查下一层
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    商品列表信息
+</doc>
+            <request name="listChildCategoryByCode_args">
+                <fields>
+                    <field tag="1" name="categoryCode" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRING</kind>
+                        </dataType>
+                        <doc> 查询请求</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listChildCategoryByCode_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRUCT</kind>
+<ref>com.today.api.category.vo.TCategory</ref>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listChildCategory">
+            <doc>
+
+# 下级类目列表查询
+## 业务描述
+    商品类目查询
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    查询类目ID
+## 前置检查
+     无
+##  权限检查
+    分权限查询
+##  逻辑处理
+     1.只查询有效的类目信息,根据上级类目ID,查下级类目,只查下一层
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    商品列表信息
+</doc>
+            <request name="listChildCategory_args">
+                <fields>
+                    <field tag="1" name="categoryId" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LONG</kind>
+                        </dataType>
+                        <doc> 查询请求</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listChildCategory_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRUCT</kind>
+<ref>com.today.api.category.vo.TCategory</ref>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listCategoryDetailBySkuNos">
+            <doc>
+
+# 通过skuNos批量查询一二三级类目
+## 业务描述
+    商品类目查询
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    查询类目ID
+## 前置检查
+     无
+##  权限检查
+    分权限查询
+##  逻辑处理
+     1.只查询有效的类目信息,根据上级类目ID,查下级类目,只查三层
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    商品类目信息
+</doc>
+            <request name="listCategoryDetailBySkuNos_args">
+                <fields>
+                    <field tag="1" name="skuNos" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRING</kind>
+                            </valueType>
+                        </dataType>
+                        <doc> 查询请求</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listCategoryDetailBySkuNos_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRUCT</kind>
+<ref>com.today.api.category.response.SkuCategoryItem</ref>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="getFilteredCategoryTree">
+            <doc>
+
+#  获取过滤后的有效类目树
+## 业务描述
+   通过请求的叶子类目集合，过滤类目树
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    类目层级名称，叶子类目集合
+## 前置检查
+    无
+##  权限检查
+    用户业务权限检查
+##  逻辑处理
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    List[GetCategoryTreeItem]
+</doc>
+            <request name="getFilteredCategoryTree_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.request.GetFilteredCategoryTreeRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="getFilteredCategoryTree_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRUCT</kind>
+<ref>com.today.api.category.response.GetCategoryTreeItem</ref>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="getInventoryAccountByLeafCategoryCode">
+            <doc>
+
+#  查询叶子类目所对应的口座信息
+## 业务描述
+   查询叶子类目所对应的口座信息
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    叶子类目的code
+## 前置检查
+    无
+##  权限检查
+    用户业务权限检查
+##  逻辑处理
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    category_response.GetInventoryAccountByLeafCategoryCodeResponse
+</doc>
+            <request name="getInventoryAccountByLeafCategoryCode_args">
+                <fields>
+                    <field tag="1" name="leafCategoryCode" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRING</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="getInventoryAccountByLeafCategoryCode_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.vo.TCategoryProperty</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listInventoryAccountCategoryTree">
+            <doc>
+
+#  返回口座已关联类目的树结构
+## 业务描述
+    根据口座类目关联信息表返回口座类目关联关系树
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+## 前置检查
+##  权限检查
+    用户业务权限检查
+##  逻辑处理
+## 数据库变更
+##  事务处理
+    无
+##  输出
+    无
+</doc>
+            <request name="listInventoryAccountCategoryTree_args">
+                <fields/>
+            </request>
+            <response name="listInventoryAccountCategoryTree_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.response.ListInventoryAccountCategoryTreeResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+    </methods>
+    <structs>
+        <struct namespace="com.today.api.category.request" name="GetFilteredCategoryTreeRequest">
+            <fields>
+                <field tag="1" name="categoryHierarchyName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+  类目导航信息
+</doc>
+                </field>
+                <field tag="2" name="oneCategoryCodes" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRING</kind>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 大类类目code集合
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.category.vo" name="TCategoryProperty">
+            <doc>
+
+  CategoryProperty
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ id
+</doc>
+                </field>
+                <field tag="2" name="parentId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 父级Id
+</doc>
+                </field>
+                <field tag="3" name="categoryId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 类目id
+</doc>
+                </field>
+                <field tag="4" name="categoryCode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 类目code
+</doc>
+                </field>
+                <field tag="5" name="inventoryAccountValue" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 口座类型字典值
+</doc>
+                </field>
+                <field tag="6" name="createdAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 创建时间
+</doc>
+                </field>
+                <field tag="7" name="createdBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台创建人(公司员工 id)
+</doc>
+                </field>
+                <field tag="8" name="updatedAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 更新时间
+</doc>
+                </field>
+                <field tag="9" name="updatedBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台更新人(公司员工 id)
+</doc>
+                </field>
+                <field tag="10" name="remark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 备注
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.category.request" name="ListCategoryTreeRequest">
+            <fields>
+                <field tag="1" name="categoryCode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 类目Code
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.category.response" name="InventoryAccountCategoryItem">
+            <doc>
+
+ 口座类目信息
+</doc>
+            <fields>
+                <field tag="1" name="rootCategoryId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 根类目id
+</doc>
+                </field>
+                <field tag="2" name="rootCategoryName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 根类目名称
+</doc>
+                </field>
+                <field tag="3" name="rootCategoryCode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 根类目code
+</doc>
+                </field>
+                <field tag="4" name="inventoryAccountCategoryList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.vo.TCategory</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 口座关联的二级分类
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.category.response" name="GetAttributeAndValueByCategoryIdResponse">
+            <fields>
+                <field tag="1" name="categoryId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 类目ID
+</doc>
+                </field>
+                <field tag="2" name="categoryName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 类目名称
+</doc>
+                </field>
+                <field tag="3" name="primaryAttributesKeyList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.response.ParseAttributesKeyItem</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 关键属性
+</doc>
+                </field>
+                <field tag="4" name="sellAttributesKeyList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.response.ParseAttributesKeyItem</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 销售属性
+</doc>
+                </field>
+                <field tag="5" name="normalAttributesKeyList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.response.ParseAttributesKeyItem</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 非关键属性
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.category.request" name="ParseSkuAttributesKeyRequest">
+            <fields>
+                <field tag="1" name="skuAttributesKeyList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.request.SkuAttributesKeyItem</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 解析请求列表
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.category.response" name="CheckAttributesKeyResponse">
+            <fields>
+                <field tag="1" name="checkResult" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BOOLEAN</kind>
+                    </dataType>
+                    <doc>
+
+  校验结果
+</doc>
+                </field>
+                <field tag="2" name="attributesNameList" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRING</kind>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+  校验失败属性名称集合
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.category.response" name="ListCategoryTreeByBatchResponse">
+            <doc>
+
+ 批量获取类目树返回体
+</doc>
+            <fields>
+                <field tag="1" name="categoryCode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 类目 Code
+</doc>
+                </field>
+                <field tag="2" name="categoryList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.vo.TCategory</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 类目 list
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.category.vo" name="TAttributeValue">
+            <doc>
+
+  AttributeValue
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ id
+</doc>
+                </field>
+                <field tag="2" name="attributeId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 属性 ID
+</doc>
+                </field>
+                <field tag="3" name="name" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 属性值
+</doc>
+                </field>
+                <field tag="4" name="status" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.category.enums.AttributeValueStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 状态,1:生效(valid);90:删除(delete);99:无效(invalid)
+</doc>
+                </field>
+                <field tag="5" name="createdAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 创建时间
+</doc>
+                </field>
+                <field tag="6" name="createdBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台创建人(公司员工 id)
+</doc>
+                </field>
+                <field tag="7" name="updatedAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 更新时间
+</doc>
+                </field>
+                <field tag="8" name="updatedBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台更新人(公司员工 id)
+</doc>
+                </field>
+                <field tag="9" name="remark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 备注
+</doc>
+                </field>
+                <field tag="10" name="sort" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 排序
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.category.response" name="GetCategoryTreeItem">
+            <doc>
+
+ 类目树节点返回体
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ id
+</doc>
+                </field>
+                <field tag="2" name="hierarchyId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 类目层级Id
+</doc>
+                </field>
+                <field tag="3" name="parentId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 父级 Id
+</doc>
+                </field>
+                <field tag="4" name="parentName" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 父类目名称
+</doc>
+                </field>
+                <field tag="5" name="parentCode" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 父类目编号,由父到子,每四位一级0001000100010001 -
+</doc>
+                </field>
+                <field tag="6" name="name" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 类目名称
+</doc>
+                </field>
+                <field tag="7" name="code" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 类目编号由父到子,每四位一级0001000100010001 -
+</doc>
+                </field>
+                <field tag="8" name="type" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.category.enums.CategoryTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 类目类型,1:发布类目节点(publish_category);2:展示类目节点(front_category);3:发布目录(publish_menu);4:展示目录(front_menu)
+</doc>
+                </field>
+                <field tag="9" name="level" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 类目层级
+</doc>
+                </field>
+                <field tag="10" name="flag" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 二进制标识位
+</doc>
+                </field>
+                <field tag="11" name="status" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.category.enums.CategoryStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 状态,1:生效(valid);90:删除(delete);99:无效(invalid)
+</doc>
+                </field>
+                <field tag="12" name="createdAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 创建时间
+</doc>
+                </field>
+                <field tag="13" name="createdBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台创建人(公司员工 id)
+</doc>
+                </field>
+                <field tag="14" name="updatedAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 更新时间
+</doc>
+                </field>
+                <field tag="15" name="updatedBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台更新人(公司员工 id)
+</doc>
+                </field>
+                <field tag="16" name="remark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 备注
+</doc>
+                </field>
+                <field tag="17" name="childCategory" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.response.GetCategoryTreeItem</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 子类目
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.category.response" name="ListInventoryAccountCategoryTreeResponse">
+            <doc>
+
+ 口座关联类目树结构返回
+</doc>
+            <fields>
+                <field tag="1" name="inventoryAccountRelateCategoryList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.response.InventoryAccountRelateCategoryItem</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 口座关联类目信息
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.category.response" name="SkuCategoryItem">
+            <doc>
+
+ 商品所属一二三级类目返回体
+</doc>
+            <fields>
+                <field tag="1" name="skuNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品编号
+</doc>
+                </field>
+                <field tag="2" name="inventoryAccountValue" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 口座字典值
+</doc>
+                </field>
+                <field tag="3" name="firstCategoryId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 一级类目id
+</doc>
+                </field>
+                <field tag="4" name="firstCategoryCode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 一级类目code
+</doc>
+                </field>
+                <field tag="5" name="firstCategoryName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 一级类目名称
+</doc>
+                </field>
+                <field tag="6" name="secondCategoryId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 二级类目id
+</doc>
+                </field>
+                <field tag="7" name="secondCategoryCode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 二级类目code
+</doc>
+                </field>
+                <field tag="8" name="secondCategoryName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 二级类目名称
+</doc>
+                </field>
+                <field tag="9" name="thirdCategoryId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 三级类目id
+</doc>
+                </field>
+                <field tag="10" name="thirdCategoryCode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 三级类目code
+</doc>
+                </field>
+                <field tag="11" name="thirdCategoryName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 三级类目名称
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.category.vo" name="TCategory">
+            <doc>
+
+  Category
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ id
+</doc>
+                </field>
+                <field tag="2" name="hierarchyId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 类目层级Id
+</doc>
+                </field>
+                <field tag="3" name="parentId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 父级 Id
+</doc>
+                </field>
+                <field tag="4" name="parentName" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 父类目名称
+</doc>
+                </field>
+                <field tag="5" name="parentCode" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 父类目编号,由父到子,每四位一级0001000100010001 -
+</doc>
+                </field>
+                <field tag="6" name="name" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 类目名称
+</doc>
+                </field>
+                <field tag="7" name="code" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 类目编号由父到子,每四位一级0001000100010001 -
+</doc>
+                </field>
+                <field tag="8" name="type" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.category.enums.CategoryTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 类目类型,1:发布类目节点(publish_category);2:展示类目节点(front_category);3:发布目录(publish_menu);4:展示目录(front_menu)
+</doc>
+                </field>
+                <field tag="9" name="level" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 类目层级
+</doc>
+                </field>
+                <field tag="10" name="flag" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 二进制标识位
+</doc>
+                </field>
+                <field tag="11" name="status" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.category.enums.CategoryStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 状态,1:生效(valid);90:删除(delete);99:无效(invalid)
+</doc>
+                </field>
+                <field tag="12" name="createdAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 创建时间
+</doc>
+                </field>
+                <field tag="13" name="createdBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台创建人(公司员工 id)
+</doc>
+                </field>
+                <field tag="14" name="updatedAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 更新时间
+</doc>
+                </field>
+                <field tag="15" name="updatedBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台更新人(公司员工 id)
+</doc>
+                </field>
+                <field tag="16" name="remark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 备注
+</doc>
+                </field>
+                <field tag="17" name="isChild" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 是否子节点(1:是;0:不是)
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.category.response" name="ParseSkuAttributesKeyResponse">
+            <doc>
+
+  解析后的数据
+</doc>
+            <fields>
+                <field tag="1" name="skuAttributesList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.response.SkuAttributes</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+  解析后的数据列表
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.category.response" name="ParseAttributesKeyItem">
+            <doc>
+
+ 解析后的数据项
+</doc>
+            <fields>
+                <field tag="1" name="categoryId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 类目Id
+</doc>
+                </field>
+                <field tag="2" name="categoryName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 类目名称
+</doc>
+                </field>
+                <field tag="3" name="attributeId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 属性Id
+</doc>
+                </field>
+                <field tag="4" name="attributeName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 属性名称
+</doc>
+                </field>
+                <field tag="5" name="attributeValueList" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.vo.TAttributeValue</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 选项值
+</doc>
+                </field>
+                <field tag="6" name="valueList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRING</kind>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 值
+</doc>
+                </field>
+                <field tag="7" name="isRequired" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.category.enums.CategoryAttributeIsRequiredEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 是否是必填项,1:是(yes);2:不是(no)
+</doc>
+                </field>
+                <field tag="8" name="dataType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.category.enums.CategoryAttributeDataTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 数据类型,1:单一值(single);2:多值(multi)
+</doc>
+                </field>
+                <field tag="9" name="attributeType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.category.enums.AttributeTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 属性数据类型,1:字符(string);2:数值(number);3:枚举(enum)
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.category.response" name="InventoryAccountRelateCategoryItem">
+            <doc>
+
+ 当前口座下关联的所有类目信息
+</doc>
+            <fields>
+                <field tag="1" name="inventoryAccountCode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 口座字典编码
+</doc>
+                </field>
+                <field tag="2" name="inventoryAccountValue" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 口座字典值
+</doc>
+                </field>
+                <field tag="3" name="inventoryAccountName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 口座中文名
+</doc>
+                </field>
+                <field tag="4" name="inventoryAccountCategoryList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.response.InventoryAccountCategoryItem</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 口座关联的类目信息
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.category.request" name="CheckAttributesKeyRequest">
+            <fields>
+                <field tag="1" name="categoryId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 类目Id
+</doc>
+                </field>
+                <field tag="2" name="key" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 属性字符串
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.category.request" name="SkuAttributesKeyItem">
+            <fields>
+                <field tag="1" name="skuId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 商品Id
+</doc>
+                </field>
+                <field tag="2" name="categoryId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 类目Id
+</doc>
+                </field>
+                <field tag="3" name="primaryKey" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 关键属性字符串
+</doc>
+                </field>
+                <field tag="4" name="sellKey" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 销售属性字符串
+</doc>
+                </field>
+                <field tag="5" name="normalKey" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 非关键属性字符串
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.category.response" name="SkuAttributes">
+            <fields>
+                <field tag="1" name="skuId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 商品Id
+</doc>
+                </field>
+                <field tag="2" name="categoryId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 类目Id
+</doc>
+                </field>
+                <field tag="3" name="categoryName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 类目名称
+</doc>
+                </field>
+                <field tag="4" name="primaryAttributesKeyList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.response.ParseAttributesKeyItem</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 关键属性
+</doc>
+                </field>
+                <field tag="5" name="sellAttributesKeyList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.response.ParseAttributesKeyItem</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 销售属性
+</doc>
+                </field>
+                <field tag="6" name="normalAttributesKeyList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.category.response.ParseAttributesKeyItem</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 非关键属性
+</doc>
+                </field>
+            </fields>
+        </struct>
+    </structs>
+    <enums>
+        <tenum namespace="com.today.api.category.enums" name="AttributeTypeEnum">
+            <doc>
+
+ 数据类型
+</doc>
+            <items>
+                <item>
+                    <label>STRING</label>
+                    <value>1</value>
+                    <doc>
+
+ 字符
+</doc>
+                </item>
+                <item>
+                    <label>NUMBER</label>
+                    <value>2</value>
+                    <doc>
+
+ 数值
+</doc>
+                </item>
+                <item>
+                    <label>ENUM</label>
+                    <value>3</value>
+                    <doc>
+
+ 枚举
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.category.enums" name="CategoryTypeEnum">
+            <doc>
+
+ 类目类型
+</doc>
+            <items>
+                <item>
+                    <label>PUBLISH_CATEGORY</label>
+                    <value>1</value>
+                    <doc>
+
+ 发布类目节点
+</doc>
+                </item>
+                <item>
+                    <label>FRONT_CATEGORY</label>
+                    <value>2</value>
+                    <doc>
+
+ 展示类目节点
+</doc>
+                </item>
+                <item>
+                    <label>PUBLISH_MENU</label>
+                    <value>3</value>
+                    <doc>
+
+ 发布目录
+</doc>
+                </item>
+                <item>
+                    <label>FRONT_MENU</label>
+                    <value>4</value>
+                    <doc>
+
+ 展示目录
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.category.enums" name="CategoryStatusEnum">
+            <doc>
+
+ 状态
+</doc>
+            <items>
+                <item>
+                    <label>VALID</label>
+                    <value>1</value>
+                    <doc>
+
+ 生效
+</doc>
+                </item>
+                <item>
+                    <label>DELETE</label>
+                    <value>90</value>
+                    <doc>
+
+ 删除
+</doc>
+                </item>
+                <item>
+                    <label>INVALID</label>
+                    <value>99</value>
+                    <doc>
+
+ 无效
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.category.enums" name="CategoryAttributeIsRequiredEnum">
+            <doc>
+
+ 是否是必填项
+</doc>
+            <items>
+                <item>
+                    <label>YES</label>
+                    <value>1</value>
+                    <doc>
+
+ 是
+</doc>
+                </item>
+                <item>
+                    <label>NO</label>
+                    <value>2</value>
+                    <doc>
+
+ 不是
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.category.enums" name="CategoryAttributeDataTypeEnum">
+            <doc>
+
+ 数据类型
+</doc>
+            <items>
+                <item>
+                    <label>SINGLE</label>
+                    <value>1</value>
+                    <doc>
+
+ 单一值
+</doc>
+                </item>
+                <item>
+                    <label>MULTI</label>
+                    <value>2</value>
+                    <doc>
+
+ 多值
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.category.enums" name="AttributeValueStatusEnum">
+            <doc>
+
+ 状态
+</doc>
+            <items>
+                <item>
+                    <label>VALID</label>
+                    <value>1</value>
+                    <doc>
+
+ 生效
+</doc>
+                </item>
+                <item>
+                    <label>DELETE</label>
+                    <value>90</value>
+                    <doc>
+
+ 删除
+</doc>
+                </item>
+                <item>
+                    <label>INVALID</label>
+                    <value>99</value>
+                    <doc>
+
+ 无效
+</doc>
+                </item>
+            </items>
+        </tenum>
+    </enums>
+    <annotations>
+        <annotation key="group" value="Category"/>
+    </annotations>
+</service>
