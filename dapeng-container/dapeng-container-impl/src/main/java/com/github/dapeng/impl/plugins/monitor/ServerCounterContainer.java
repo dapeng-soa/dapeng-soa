@@ -23,6 +23,31 @@ import java.util.concurrent.locks.ReentrantLock;
  * @date 2017-05-29
  */
 public class ServerCounterContainer {
+
+    static class TLNode {
+        Thread owner;
+        long min;
+        long max;
+        long sum;
+        long count;
+
+        public void add(long value) {
+            if (count == 0) {
+                min = value;
+                max = value;
+                sum = value;
+                count = 1;
+            } else {
+                min = (value < min) ? value : min;
+                max = (value > max) ? value : max;
+                sum += value;
+                count += 1;
+            }
+        }
+    }
+
+//    static TLNode tlNodes[];
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerCounterContainer.class);
     private final boolean MONITOR_ENABLE = SoaSystemEnvProperties.SOA_MONITOR_ENABLE;
     private final static ServerCounterContainer instance = new ServerCounterContainer();
