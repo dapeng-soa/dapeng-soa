@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <contextName>counterService</contextName>
+    <!-- 控制台日志打印 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</Pattern>
+        </layout>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>OFF</level>
+        </filter>
+    </appender>
+
+    <appender name="DETAILFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <prudent>true</prudent>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${soa.base}/logs/detail-counter-service.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</pattern>
+        </encoder>
+    </appender>
+
+    <!--<appender name="SQLFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">-->
+    <!--<prudent>true</prudent>-->
+    <!--<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">-->
+    <!--<fileNamePattern>${soa.base}/logs/sql-crm-service.%d{yyyy-MM-dd}.log</fileNamePattern>-->
+    <!--<maxHistory>30</maxHistory>-->
+    <!--</rollingPolicy>-->
+    <!--<encoder>-->
+    <!--<pattern>%d{MM-dd HH:mm:ss SSS} %t %p - %m%n</pattern>-->
+    <!--</encoder>-->
+    <!--</appender>-->
+
+    <!--<logger name="wangzx.scala_commons.sql" level="OFF"/>-->
+
+    <!--<logger name="druid.sql" additivity="true">-->
+    <!--<level value="DEBUG"/>-->
+    <!--<appender-ref ref="SQLFILE"/>-->
+    <!--</logger>-->
+
+    <!--<logger name="druid.sql.DataSource" level="OFF"/>-->
+    <!--<logger name="druid.sql.Connection" level="OFF"/>-->
+    <!--<logger name="druid.sql.ResultSet" level="OFF"/>-->
+
+    <!--<logger name="druid.sql.Statement" additivity="true">-->
+    <!--<level value="DEBUG"/>-->
+    <!--<appender-ref ref="SQLFILE"/>-->
+    <!--</logger>-->
+    <logger name="druid.sql" level="OFF"/>
+
+    <root level="INFO">
+        <if condition='!property("soa.run.mode").equals("native")'>
+            <then>
+                <appender-ref ref="STDOUT"/>
+            </then>
+        </if>
+        <appender-ref ref="DETAILFILE"/>
+    </root>
+    <jmxConfigurator />
+</configuration>

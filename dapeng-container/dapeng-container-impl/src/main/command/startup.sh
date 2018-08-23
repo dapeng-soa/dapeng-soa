@@ -35,7 +35,9 @@ done
 #DEBUG="-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9997"
 JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=1091 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
 NETTY_OPTS=" -Dio.netty.leakDetectionLevel=advanced "
-GC_OPTS=" -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDateStamps -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintGCDetails -XX:+PrintPromotionFailure -XX:+PrintGCApplicationStoppedTime -Dlog.dir=$PRGDIR/.."
+#GC_OPTS=" -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDateStamps -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintGCDetails -XX:+PrintPromotionFailure -XX:+PrintGCApplicationStoppedTime -Dlog.dir=$PRGDIR/.."
+GC_OPTS=" -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDateStamps -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintPromotionFailure -XX:+PrintGCApplicationStoppedTime -XX:+PrintGCDetails -Dlog.dir=$PRGDIR/.."
+
 
 #预分配内存, 会造成jvm进程启动的时候慢一点, 但运行时减轻gc停顿, 减少内存碎片
 MEM_OPTS="-XX:NewRatio=1 -XX:+AlwaysPreTouch"
@@ -47,13 +49,14 @@ MEM_OPTS="$MEM_OPTS -Xss256k"
 
 #CMSInitiatingOccupancyFraction 设置年老代空间被使用75%后出发CMS收集器
 #UseCMSInitiatingOccupancyOnly 只在达到阈值后才触发CMS
-GC_OPTS="$GC_OPTS -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=75 -XX:+UseCMSInitiatingOccupancyOnly"
+#GC_OPTS="$GC_OPTS -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=75 -XX:+UseCMSInitiatingOccupancyOnly"
+GC_OPTS="$GC_OPTS -XX:+UseParallelGC -XX:+UseParallelOldGC"
 
 # System.gc() 使用CMS算法
-GC_OPTS="$GC_OPTS -XX:+ExplicitGCInvokesConcurrent"
+#GC_OPTS="$GC_OPTS -XX:+ExplicitGCInvokesConcurrent"
 
 # CMS中的下列阶段并发执行
-GC_OPTS="$GC_OPTS -XX:+ParallelRefProcEnabled -XX:+CMSParallelInitialMarkEnabled"
+#GC_OPTS="$GC_OPTS -XX:+ParallelRefProcEnabled -XX:+CMSParallelInitialMarkEnabled"
 
 # 根据应用的对象生命周期设定，减少事实上的老生代对象在新生代停留时间，加快YGC速度
 GC_OPTS="$GC_OPTS -XX:MaxTenuringThreshold=3"
