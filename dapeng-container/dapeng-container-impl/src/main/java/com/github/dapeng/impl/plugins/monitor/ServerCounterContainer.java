@@ -171,7 +171,8 @@ public class ServerCounterContainer {
     }
 
     public void addServiceElapseInfo(final ServiceBasicInfo serviceBasicInfo, final long cost) {
-        serviceElapses.get(currentMinuteOfHour()).add(new ElapseInfo(serviceBasicInfo, cost));
+        if (MONITOR_ENABLE)
+            serviceElapses.get(currentMinuteOfHour()).add(new ElapseInfo(serviceBasicInfo, cost));
     }
 
     public void addRequestFlow(long requestSize) {
