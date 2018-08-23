@@ -495,6 +495,9 @@ class JavaGenerator extends CodeGenerator {
       <div>package {struct.namespace};
 
         import java.util.Optional;
+        import com.github.dapeng.org.apache.thrift.TException;
+        import com.github.dapeng.org.apache.thrift.protocol.TCompactProtocol;
+        import com.github.dapeng.util.TCommonTransport;
 
         /**
         {notice}
@@ -523,6 +526,22 @@ class JavaGenerator extends CodeGenerator {
         }
         }
         }
+
+        public static byte[] getBytesFromBean({struct.name} bean) throws TException <block>
+          byte[] bytes = new byte[]<block></block>;
+          TCommonTransport transport = new TCommonTransport(bytes, TCommonTransport.Type.Write);
+          TCompactProtocol protocol = new TCompactProtocol(transport);
+
+          new {struct.namespace}.serializer.{struct.name}Serializer().write(bean, protocol);
+          transport.flush();
+          return transport.getByteBuf();
+        </block>
+
+        public static {struct.name} getBeanFromBytes(byte[] bytes) throws TException <block>
+          TCommonTransport transport = new TCommonTransport(bytes, TCommonTransport.Type.Read);
+          TCompactProtocol protocol = new TCompactProtocol(transport);
+          return new {struct.namespace}.serializer.{struct.name}Serializer().read(protocol);
+        </block>
 
         public String toString()<block>
           StringBuilder stringBuilder = new StringBuilder("<block>");
