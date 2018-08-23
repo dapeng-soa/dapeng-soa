@@ -176,7 +176,7 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     @Override
     public String getNettyConnections() {
         StringBuilder sb = new StringBuilder();
-        sb.append("[Dapeng Mbean] Dapeng Netty Connections == [ Active/Total/Inactive ] == [ ")
+        sb.append("[Dapeng Mbean] Dapeng Netty Connections == [ Active/Inactive/Total ] == [ ")
                 .append(counterContainer.getActiveChannel())
                 .append("/")
                 .append(counterContainer.getInactiveChannel())
