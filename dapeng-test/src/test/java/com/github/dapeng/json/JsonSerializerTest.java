@@ -355,9 +355,9 @@ public class JsonSerializerTest {
         SoaMessageParser<String> parser = new SoaMessageParser<>(buf, jsonDecoder);
         parser.parseHeader();
 //        parser.getHeader();
-        parser.parseBody();
+//        parser.parseBody();
 //System.out.println(parser.getHeader());
-//        System.out.println("after enCode and decode:\n" + parser.parseBody().getBody());
+        System.out.println("after enCode and decode:\n" + parser.parseBody().getBody());
 //        System.out.println(desc + " ends=====================");
         requestBuf.release();
         InvocationContextImpl.Factory.removeCurrentInstance();

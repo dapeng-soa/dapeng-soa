@@ -16,6 +16,7 @@ public class OptimizedMetadata {
         final Service service;
 
         final Map<String, Method> methodMap = new HashMap<>(128);
+
         final Map<String, OptimizedStruct> optimizedStructs = new HashMap<>(1024);
         final Map<String, TEnum> enumMap = new HashMap<>(128);
 
@@ -40,6 +41,9 @@ public class OptimizedMetadata {
             return methodMap;
         }
 
+        public Map<String, OptimizedStruct> getOptimizedStructs() {
+            return optimizedStructs;
+        }
     }
 
     public static class OptimizedStruct {
