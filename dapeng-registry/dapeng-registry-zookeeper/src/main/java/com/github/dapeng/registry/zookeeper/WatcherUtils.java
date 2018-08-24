@@ -83,7 +83,6 @@ public class WatcherUtils {
      * loadbalance/LeastActive,createSupplier:Random,modifySupplier:RoundRobin
      * weight/192.168.4.107/9095/700  service weight config1
      * weight/192.168.4.107/500       service weight config2
-     * weight/600                    global weight config
      * @param data
      * @param zkInfo
      */
