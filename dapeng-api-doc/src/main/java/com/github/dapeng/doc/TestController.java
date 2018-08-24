@@ -8,6 +8,7 @@ import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.doc.cache.ServiceCache;
+import com.github.dapeng.json.OptimizedMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +64,9 @@ public class TestController {
         }
 
         try {
-            return jsonPost.callServiceMethod(jsonParameter, service);
+            //TODO
+            OptimizedMetadata.OptimizedService optimizedService = new OptimizedMetadata.OptimizedService(service);
+            return jsonPost.callServiceMethod(jsonParameter, optimizedService);
         } catch (SoaException e) {
 
             LOGGER.error(e.getMsg());

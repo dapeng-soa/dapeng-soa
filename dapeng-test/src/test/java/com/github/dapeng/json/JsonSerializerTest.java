@@ -10,6 +10,7 @@ import com.github.dapeng.util.SoaMessageBuilder;
 import com.github.dapeng.util.SoaMessageParser;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.channel.PreferHeapByteBufAllocator;
 import org.apache.commons.io.IOUtils;
 
 import javax.xml.bind.JAXB;
@@ -28,6 +29,8 @@ import static com.github.dapeng.util.DumpUtil.hexStr2bytes;
  * Unit test for simple App.
  */
 public class JsonSerializerTest {
+    static  long t1 = 0;
+    static  long t2 = 0;
     public static void main(String[] args) throws InterruptedException, TException, IOException {
         String result = "{\"name\":\"Ever\",\"success\":124, \"desc\":\"static void main(String[] args) throws InterruptedException, TException, IOException\", \"subEle\":{\"id\":2,\"age\":13}}";
 
@@ -48,46 +51,52 @@ public class JsonSerializerTest {
 //        String desc = "complexStructTest1";
 
 
-//        final String purchaseDescriptorXmlPath = "/com.today.api.purchase.service.PurchaseService.xml";
-//        Service purchaseService = getService(purchaseDescriptorXmlPath);
+        final String purchaseDescriptorXmlPath = "/com.today.api.purchase.service.PurchaseService.xml";
+        Service purchaseService = getService(purchaseDescriptorXmlPath);
+
+        Method createTransferOrder = purchaseService.methods.stream().filter(method -> method.name.equals("createTransferOrder")).collect(Collectors.toList()).get(0);
+        String json = loadJson("/createTransferOrder.json");
+
+        String desc = "createTransferOrderTest.json";
+
+//        final String orderDescriptorXmlPath = "/com.github.dapeng.json.demo.service.OrderService.xml";
+//        Service orderService = getService(orderDescriptorXmlPath);
 //
-//        Method createTransferOrder = purchaseService.methods.stream().filter(method -> method.name.equals("createTransferOrder")).collect(Collectors.toList()).get(0);
-//        String json = loadJson("/createTransferOrder.json");
+//        Method orderServicePayNotify = orderService.methods.stream().filter(method -> method.name.equals("createAppointmentForAvailable")).collect(Collectors.toList()).get(0);
+//        String payNotifyJson = loadJson("/orderService_createAppointmentForAvailable-complexStruct.json");
 //
-//        String desc = "createTransferOrderTest.json";
+//        String desc = "complexStructTest";
 
-        final String orderDescriptorXmlPath = "/com.github.dapeng.json.demo.service.OrderService.xml";
-        Service orderService = getService(orderDescriptorXmlPath);
+        OptimizedMetadata.OptimizedService optimizedService = new OptimizedMetadata.OptimizedService(purchaseService);
 
-        Method orderServicePayNotify = orderService.methods.stream().filter(method -> method.name.equals("createAppointmentForAvailable")).collect(Collectors.toList()).get(0);
-        String payNotifyJson = loadJson("/orderService_createAppointmentForAvailable-complexStruct.json");
-
-        String desc = "complexStructTest";
-
-        OptimizedMetadata.OptimizedService optimizedService = new OptimizedMetadata.OptimizedService(orderService);
-
-        OptimizedMetadata.OptimizedStruct optimizedStruct = new OptimizedMetadata.OptimizedStruct(orderServicePayNotify.request);
+        OptimizedMetadata.OptimizedStruct optimizedStruct = new OptimizedMetadata.OptimizedStruct(createTransferOrder.request);
         for (int i = 0; i < 100000; i++) {
 //                String resulta = result.equals("{}") ? "{\"status\":1}" : result.substring(0, result.lastIndexOf('}')) + ",\"status\":1}";
-            doTest2(optimizedService, orderServicePayNotify, optimizedStruct, payNotifyJson, desc);
-//                doTest2(optimizedService, createTransferOrder, optimizedStruct, json, desc);
+//            doTest2(optimizedService, orderServicePayNotify, optimizedStruct, payNotifyJson, desc);
+                doTest2(optimizedService, createTransferOrder, optimizedStruct, json, desc);
         }
 
+        t1 = 0;
+        t2 = 0;
+
         long cost = 0;
-        int round = 10;
+        int round = 5;
         for (int j = 0; j < round; j++) {
-            long t1 = System.nanoTime();
+            long t11 = System.nanoTime();
             for (int i = 0; i < 100000; i++) {
 //                String resulta = result.equals("{}") ? "{\"status\":1}" : result.substring(0, result.lastIndexOf('}')) + ",\"status\":1}";
-                doTest2(optimizedService, orderServicePayNotify, optimizedStruct, payNotifyJson, desc);
-//                doTest2(optimizedService, createTransferOrder, optimizedStruct, json, desc);
+//                doTest2(optimizedService, orderServicePayNotify, optimizedStruct, payNotifyJson, desc);
+                doTest2(optimizedService, createTransferOrder, optimizedStruct, json, desc);
             }
-            long t2 = System.nanoTime() - t1;
-            System.out.println("cost:" + t2/1000000);
-            cost += t2;
+            long t22 = System.nanoTime() - t11;
+            System.out.println("cost:" + t22/1000000);
+            cost += t22;
 //            Thread.sleep(200);
         }
         System.out.println("average:" + cost/round/1000000);
+        System.out.println("average:" + t1/round/1000000);
+        System.out.println("average:" + t2/round/1000000);
+
 //        createTransferOrderTest();
 //        optionalBooleanTest();
 //        simpleStructTest();
@@ -312,7 +321,7 @@ public class JsonSerializerTest {
 //    }
 
     private static void doTest2(OptimizedMetadata.OptimizedService optimizedServicee, Method method, OptimizedMetadata.OptimizedStruct optimizedStruct, String json, String desc) throws TException {
-
+        long begin = System.nanoTime();
         InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.createNewInstance();
         invocationContext.codecProtocol(CodecProtocol.CompressedBinary);
 
@@ -321,7 +330,8 @@ public class JsonSerializerTest {
         invocationContext.methodName(method.name);
         invocationContext.callerMid("JsonCaller");
 
-        final ByteBuf requestBuf = PooledByteBufAllocator.DEFAULT.buffer(8192);
+        final ByteBuf requestBuf = PreferHeapByteBufAllocator.DEFAULT.buffer(8192);
+
 
         JsonSerializer jsonSerializer = new JsonSerializer(optimizedServicee, method, "1.0.0", optimizedStruct);
 
@@ -338,6 +348,8 @@ public class JsonSerializerTest {
 //
 //        System.out.println(dumpToStr(buf));
 
+        long middle = System.nanoTime();
+
         JsonSerializer jsonDecoder = new JsonSerializer(optimizedServicee, method, "1.0.0", optimizedStruct);
 
         SoaMessageParser<String> parser = new SoaMessageParser<>(buf, jsonDecoder);
@@ -349,6 +361,9 @@ public class JsonSerializerTest {
 //        System.out.println(desc + " ends=====================");
         requestBuf.release();
         InvocationContextImpl.Factory.removeCurrentInstance();
+
+        t1 += middle - begin;
+        t2 += System.nanoTime() - middle;
     }
 
 //    private static void doTest3(Service service, Method method, Struct struct, String json, String desc) throws TException {

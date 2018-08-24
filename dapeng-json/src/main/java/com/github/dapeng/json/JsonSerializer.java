@@ -697,6 +697,10 @@ public class JsonSerializer implements BeanSerializer<String> {
                         return;
                     }
 
+                    if (current.dataType.kind != DataType.KIND.BOOLEAN) {
+                        logAndThrowTException();
+                    }
+
                     StackNode peek = peek();
                     if (peek != null && isMultiElementKind(peek.dataType.kind)) {
                         peek.increaseElement();
