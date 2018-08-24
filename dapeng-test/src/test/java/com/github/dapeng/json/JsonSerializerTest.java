@@ -31,13 +31,13 @@ public class JsonSerializerTest {
     public static void main(String[] args) throws InterruptedException, TException, IOException {
         String result = "{\"name\":\"Ever\",\"success\":124, \"desc\":\"static void main(String[] args) throws InterruptedException, TException, IOException\", \"subEle\":{\"id\":2,\"age\":13}}";
 
-//        final String orderDescriptorXmlPath = "/com.github.dapeng.json.demo.service.OrderService.xml";
-//        Service orderService = getService(orderDescriptorXmlPath);
-//
-//        Method orderServicePayNotify = orderService.methods.stream().filter(method -> method.name.equals("payNotify")).collect(Collectors.toList()).get(0);
-//        String payNotifyJson = loadJson("/orderService_payNotify.json");
-//
-//        String desc = "simpleStructTest";
+        final String orderDescriptorXmlPath = "/com.github.dapeng.json.demo.service.OrderService.xml";
+        Service orderService = getService(orderDescriptorXmlPath);
+
+        Method orderServicePayNotify = orderService.methods.stream().filter(method -> method.name.equals("payNotify")).collect(Collectors.toList()).get(0);
+        String payNotifyJson = loadJson("/orderService_payNotify.json");
+
+        String desc = "simpleStructTest";
 
 //        final String purchaseDescriptorXmlPath = "/com.today.api.purchase.service.PurchaseService.xml";
 //        Service purchaseService = getService(purchaseDescriptorXmlPath);
@@ -47,25 +47,24 @@ public class JsonSerializerTest {
 //
 //        String desc = "createTransferOrderTest.json";
 
-        final String orderDescriptorXmlPath = "/com.github.dapeng.json.demo.service.OrderService.xml";
-        Service orderService = getService(orderDescriptorXmlPath);
-
-        Method orderServicePayNotify = orderService.methods.stream().filter(method -> method.name.equals("createAppointmentForAvailable")).collect(Collectors.toList()).get(0);
-        String payNotifyJson = loadJson("/orderService_createAppointmentForAvailable-complexStruct.json");
-
-        String desc = "complexStructTest";
-        doTest2(orderService, orderServicePayNotify, orderServicePayNotify.request, payNotifyJson, desc);
+//        final String orderDescriptorXmlPath = "/com.github.dapeng.json.demo.service.OrderService.xml";
+//        Service orderService = getService(orderDescriptorXmlPath);
+//
+//        Method orderServicePayNotify = orderService.methods.stream().filter(method -> method.name.equals("createAppointmentForAvailable")).collect(Collectors.toList()).get(0);
+//        String payNotifyJson = loadJson("/orderService_createAppointmentForAvailable-complexStruct.json");
+//
+//        String desc = "complexStructTest";
+//        doTest2(orderService, orderServicePayNotify, orderServicePayNotify.request, payNotifyJson, desc);
 
         for (int j = 0; j < 100; j++) {
             long t1 = System.nanoTime();
             for (int i = 0; i < 10000; i++) {
-//                String resulta = result.equals("{}") ? "{\"status\":1}" : result.substring(0, result.lastIndexOf('}')) + ",\"status\":1}";
-//                doTest2(orderService, orderServicePayNotify, orderServicePayNotify.request, payNotifyJson, desc);
+                doTest2(orderService, orderServicePayNotify, orderServicePayNotify.request, payNotifyJson, desc);
 //                doTest2(purchaseService, createTransferOrder, createTransferOrder.request, json, desc);
             }
             long t2 = System.nanoTime() - t1;
             System.out.println("cost:" + TimeUnit.MILLISECONDS.convert(t2, TimeUnit.NANOSECONDS));
-            Thread.sleep(200);
+//            Thread.sleep(200);
         }
 //        createTransferOrderTest();
 //        optionalBooleanTest();
