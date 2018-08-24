@@ -12,7 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
 
@@ -26,6 +28,8 @@ public class JsonPost {
     private static final Logger LOGGER = LoggerFactory.getLogger(JsonPost.class);
 
     private boolean doNotThrowError = false;
+
+    private static final Map<String, OptimizedMetadata.OptimizedService> localServiceCache = new HashMap<>(128);
 
     private final static SoaConnectionPoolFactory factory = ServiceLoader.load(SoaConnectionPoolFactory.class, JsonPost.class.getClassLoader()).iterator().next();
 
@@ -49,17 +53,15 @@ public class JsonPost {
      * 调用远程服务
      *
      * @param jsonParameter
-     * @param service
+     * @param optimizedService
      * @return
      * @throws Exception
      */
     public String callServiceMethod(final String jsonParameter,
-                                    final Service service) throws Exception {
-        List<Method> targetMethods = service.getMethods().stream().filter(element ->
-                element.name.equals(methodName))
-                .collect(Collectors.toList());
+                                    final OptimizedMetadata.OptimizedService optimizedService) throws Exception {
+        Method method = optimizedService.methodMap.get(methodName);
 
-        if (targetMethods.isEmpty()) {
+        if (method == null) {
             return String.format("{\"responseCode\":\"%s\", \"responseMsg\":\"%s\", \"success\":\"{}\", \"status\":0}",
                     SoaCode.NoMatchedMethod,
                     "method:" + methodName + " for service:" + clientInfo.serviceName + " not found");
@@ -69,10 +71,7 @@ public class JsonPost {
             String sessionTid = InvocationContextImpl.Factory.currentInstance().sessionTid().map(DapengUtil::longToHexStr).orElse("0");
             MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
 
-            Method method = targetMethods.get(0);
-
             //todo cache
-            OptimizedMetadata.OptimizedService optimizedService = new OptimizedMetadata.OptimizedService(service);
             OptimizedMetadata.OptimizedStruct optimizedStructReq = new OptimizedMetadata.OptimizedStruct(method.request);
             OptimizedMetadata.OptimizedStruct optimizedStructRes = new OptimizedMetadata.OptimizedStruct(method.response);
 
@@ -81,8 +80,8 @@ public class JsonPost {
 
             final long beginTime = System.currentTimeMillis();
 
-            LOGGER.info("soa-request: service:[" + service.namespace + "." + service.name
-                    + ":" + service.meta.version + "], method:" + methodName + ", param:"
+            LOGGER.info("soa-request: service:[" + optimizedService + "." + optimizedService.name
+                    + ":" + optimizedService.meta.version + "], method:" + methodName + ", param:"
                     + jsonParameter);
 
             String jsonResponse = post(clientInfo.serviceName, clientInfo.version,
