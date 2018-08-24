@@ -25,28 +25,35 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ServerCounterContainer {
 
     static class TLNode {
-        Thread owner;
         long min;
         long max;
         long sum;
         long count;
 
         public void add(long value) {
-            if (count == 0) {
-                min = value;
-                max = value;
-                sum = value;
-                count = 1;
-            } else {
-                min = (value < min) ? value : min;
-                max = (value > max) ? value : max;
-                sum += value;
-                count += 1;
+            if(addFlowLock.compareAndSet(0,1)) {
+                if (count == 0) {
+                    min = value;
+                    max = value;
+                    sum = value;
+                    count = 1;
+                } else {
+                    min = (value < min) ? value : min;
+                    max = (value > max) ? value : max;
+                    sum += value;
+                    count += 1;
+                }
+                addFlowLock.set(0);
             }
         }
-    }
 
-//    static TLNode tlNodes[];
+        public void reset() {
+            min = 0;
+            max = 0;
+            sum = 0;
+            count = 0;
+        }
+    }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerCounterContainer.class);
     private final boolean MONITOR_ENABLE = SoaSystemEnvProperties.SOA_MONITOR_ENABLE;
@@ -58,18 +65,24 @@ public class ServerCounterContainer {
     private final AtomicInteger inactiveChannel = new AtomicInteger(0);
     private final AtomicInteger totalChannel = new AtomicInteger(0);
 
+    private static final AtomicInteger addCostLock = new AtomicInteger(0);
+    private static final AtomicInteger addFlowLock = new AtomicInteger(0);
+
     /**
      * 流量计数器
      * 无锁设计,
-     * key为某小时的第N分钟
-     * value为该分钟内的流量列表(每个请求/响应直接放到列表中, 方便统计最大/最小/平均值)
+     * 数组下标表示某小时的第N分钟
+     * 值为该分钟内的流量统计
      */
-    private final Map<Integer, List<Long>> reqFlows = new HashMap<>(64);
-    private final Map<Integer, List<Long>> respFlows = new HashMap<>(64);
+    private final TLNode[] reqFlows = new TLNode[60];
+    private final TLNode[] respFlows = new TLNode[60];
+
     /**
      * 服务耗时计数器
+     * 数组下标表示某小时的第N分钟
      */
-    private Map<Integer, List<ElapseInfo>> serviceElapses = new HashMap<>(64);
+    private final Map<ServiceBasicInfo,TLNode>[] serviceElapses = new Map[60];
+
     /**
      * 服务调用计数器
      */
@@ -174,17 +187,34 @@ public class ServerCounterContainer {
     }
 
     public void addServiceElapseInfo(final ServiceBasicInfo serviceBasicInfo, final long cost) {
-        serviceElapses.get(currentMinuteOfHour()).add(new ElapseInfo(serviceBasicInfo, cost));
+        if(addCostLock.compareAndSet(0,1)) {
+            if (serviceElapses[currentMinuteOfHour()].get(serviceBasicInfo) == null) {
+                TLNode tlNode = new TLNode();
+                tlNode.count = 1;
+                tlNode.max = cost;
+                tlNode.min = cost;
+                tlNode.sum = cost;
+                serviceElapses[currentMinuteOfHour()].put(serviceBasicInfo, tlNode);
+            } else {
+                serviceElapses[currentMinuteOfHour()].get(serviceBasicInfo).sum += cost;
+                serviceElapses[currentMinuteOfHour()].get(serviceBasicInfo).min = (cost < serviceElapses[currentMinuteOfHour()].get(serviceBasicInfo).min) ? cost : serviceElapses[currentMinuteOfHour()].get(serviceBasicInfo).min;
+                serviceElapses[currentMinuteOfHour()].get(serviceBasicInfo).max = (cost > serviceElapses[currentMinuteOfHour()].get(serviceBasicInfo).max) ? cost : serviceElapses[currentMinuteOfHour()].get(serviceBasicInfo).max;
+                serviceElapses[currentMinuteOfHour()].get(serviceBasicInfo).count += 1;
+            }
+            addCostLock.set(0);
+        }
     }
 
     public void addRequestFlow(long requestSize) {
-        if (MONITOR_ENABLE)
-            reqFlows.get(currentMinuteOfHour()).add(requestSize);
+        if (MONITOR_ENABLE) {
+            reqFlows[currentMinuteOfHour()].add(requestSize);
+        }
     }
 
     public void addResponseFlow(long responseSize) {
-        if (MONITOR_ENABLE)
-            respFlows.get(currentMinuteOfHour()).add(responseSize);
+        if (MONITOR_ENABLE) {
+            respFlows[currentMinuteOfHour()].add(responseSize);
+        }
     }
 
     public int increaseActiveChannelAndGet() {
@@ -229,9 +259,9 @@ public class ServerCounterContainer {
 
     private void init() {
         for (int i = 0; i < 60; i++) {
-            reqFlows.put(i, new ArrayList<>(1024));
-            respFlows.put(i, new ArrayList<>(1024));
-            serviceElapses.put(i, new ArrayList<>(1024));
+            reqFlows[i] = new TLNode();
+            respFlows[i] = new TLNode();
+            serviceElapses[i] = new HashMap<>(1024);
             serviceInvocationDatas.put(i, new ConcurrentHashMap<>(1024));
         }
 
@@ -258,47 +288,32 @@ public class ServerCounterContainer {
         int currentMinuteOfHour = currentMinuteOfHour();
         int oneMinuteBefore = (currentMinuteOfHour == 0) ? 59 : (currentMinuteOfHour - 1);
 
-        List<Long> currentReqFlows = reqFlows.get(oneMinuteBefore);
-        List<Long> currentRespFlows = respFlows.get(oneMinuteBefore);
-        if (!currentReqFlows.isEmpty() || !currentRespFlows.isEmpty()) {
+        TLNode currentReqFlows = reqFlows[oneMinuteBefore];
+        TLNode currentRespFlows = respFlows[oneMinuteBefore];
+        if(currentReqFlows.count != 0 || currentRespFlows.count != 0) {
             long maxRequestFlow = 0;
             long minRequestFlow = 0;
             long sumRequestFlow = 0;
             long avgRequestFlow = 0;
-            if (!currentReqFlows.isEmpty()) {
-                maxRequestFlow = currentReqFlows.stream()
-                        .sorted()
-                        .max(Comparator.naturalOrder()).get();
-                minRequestFlow = currentReqFlows.stream()
-                        .sorted()
-                        .min(Comparator.naturalOrder()).get();
-                sumRequestFlow = currentReqFlows.stream()
-                        .reduce((x, y) -> (x + y))
-                        .get();
-                avgRequestFlow = sumRequestFlow / (long) currentReqFlows.size();
-
-                currentReqFlows.clear();
+            if (currentReqFlows.count != 0) {
+                maxRequestFlow = currentReqFlows.max;
+                minRequestFlow = currentReqFlows.min;
+                sumRequestFlow = currentReqFlows.sum;
+                avgRequestFlow = currentReqFlows.sum / currentReqFlows.count;
+                currentReqFlows.reset();
             }
 
             long minResponseFlow = 0;
             long maxResponseFlow = 0;
             long sumResponseFlow = 0;
             long avgResponseFlow = 0;
-            if (!currentRespFlows.isEmpty()) {
-                minResponseFlow = currentRespFlows.stream()
-                        .sorted()
-                        .min(Comparator.naturalOrder()).get();
-                maxResponseFlow = currentRespFlows.stream()
-                        .sorted()
-                        .max(Comparator.naturalOrder()).get();
-                sumResponseFlow = currentRespFlows.stream()
-                        .reduce((x, y) -> (x + y))
-                        .get();
-                avgResponseFlow = sumResponseFlow / (long) currentRespFlows.size();
-
-                currentRespFlows.clear();
+            if (currentRespFlows.count !=0 ) {
+                minResponseFlow = currentRespFlows.min;
+                maxResponseFlow = currentRespFlows.max;
+                sumResponseFlow = currentRespFlows.sum;
+                avgResponseFlow = currentRespFlows.sum / currentRespFlows.count;
+                currentRespFlows.reset();
             }
-
 
             DataPoint point = new DataPoint();
             point.setDatabase(DATA_BASE);
@@ -331,51 +346,48 @@ public class ServerCounterContainer {
         int oneMinuteBefore = (currentMinuteOfHour == 0) ? 59 : (currentMinuteOfHour - 1);
 
         Map<ServiceBasicInfo, ServiceProcessData> invocationDatas = serviceInvocationDatas.get(oneMinuteBefore);
-        List<ElapseInfo> elapses = serviceElapses.get(oneMinuteBefore);
+        Map<ServiceBasicInfo,TLNode> elapses = serviceElapses[oneMinuteBefore];
 
         List<DataPoint> points = new ArrayList<>(invocationDatas.size());
 
         long now = System.currentTimeMillis();
         AtomicLong increment = new AtomicLong(0);
         invocationDatas.forEach((serviceBasicInfo, serviceProcessData) -> {
-            final Optional<Long> iTotalTime = elapses.stream()
-                    .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost))
-                    .reduce((m, n) -> (m + n));
-            if (iTotalTime.isPresent()) {
-                final Long iMinTime = elapses.stream()
-                        .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost))
-                        .sorted()
-                        .min(Comparator.naturalOrder()).get();
-                final Long iMaxTime = elapses.stream()
-                        .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost))
-                        .sorted()
-                        .max(Comparator.naturalOrder()).get();
-                final Long iAverageTime = iTotalTime.get() / elapses.stream()
-                        .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost)).count();
-
-                DataPoint point = new DataPoint();
-                point.setDatabase(DATA_BASE);
-                point.setBizTag("dapeng_service_process");
-                Map<String, String> tags = new HashMap<>(8);
-                tags.put("service_name", serviceBasicInfo.getServiceName());
-                tags.put("method_name", serviceProcessData.getMethodName());
-                tags.put("version_name", serviceProcessData.getVersionName());
-                tags.put("server_ip", NODE_IP);
-                tags.put("server_port", NODE_PORT);
-                point.setTags(tags);
-                Map<String, Long> fields = new HashMap<>(8);
-                fields.put("i_min_time", iMinTime);
-                fields.put("i_max_time", iMaxTime);
-                fields.put("i_average_time", iAverageTime);
-                fields.put("i_total_time", iTotalTime.get());
-                fields.put("total_calls", (long) serviceProcessData.getTotalCalls().get());
-                fields.put("succeed_calls", (long) serviceProcessData.getSucceedCalls().get());
-                fields.put("fail_calls", (long) serviceProcessData.getFailCalls().get());
-                point.setValues(fields);
-                point.setTimestamp(now + increment.incrementAndGet());
-
-                points.add(point);
+            TLNode tlNode = new TLNode();
+            for (Map.Entry<ServiceBasicInfo,TLNode> entry : elapses.entrySet()){
+                if (entry.getKey().equals(serviceBasicInfo)) {
+                    tlNode = entry.getValue();
+                    break;
+                }
             }
+
+            final Long iTotalTime = tlNode.sum;
+            final Long iMinTime = tlNode.min;
+            final Long iMaxTime = tlNode.max;
+            final Long iAverageTime = tlNode.sum / tlNode.count;
+
+            DataPoint point = new DataPoint();
+            point.setDatabase(DATA_BASE);
+            point.setBizTag("dapeng_service_process");
+            Map<String, String> tags = new HashMap<>(8);
+            tags.put("service_name", serviceBasicInfo.getServiceName());
+            tags.put("method_name", serviceProcessData.getMethodName());
+            tags.put("version_name", serviceProcessData.getVersionName());
+            tags.put("server_ip", NODE_IP);
+            tags.put("server_port", NODE_PORT);
+            point.setTags(tags);
+            Map<String, Long> fields = new HashMap<>(8);
+            fields.put("i_min_time", iMinTime);
+            fields.put("i_max_time", iMaxTime);
+            fields.put("i_average_time", iAverageTime);
+            fields.put("i_total_time", iTotalTime);
+            fields.put("total_calls", (long) serviceProcessData.getTotalCalls().get());
+            fields.put("succeed_calls", (long) serviceProcessData.getSucceedCalls().get());
+            fields.put("fail_calls", (long) serviceProcessData.getFailCalls().get());
+            point.setValues(fields);
+            point.setTimestamp(now + increment.incrementAndGet());
+
+            points.add(point);
         });
 
         elapses.clear();

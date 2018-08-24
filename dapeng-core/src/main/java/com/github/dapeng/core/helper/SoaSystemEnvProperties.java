@@ -50,6 +50,11 @@ public class SoaSystemEnvProperties {
      */
     private static final String KEY_SOA_EVENTBUS_PERIOD = "soa.eventbus.publish.period";
 
+     /**
+      * subPool 连接数
+      */
+    private static final String KEY_SOA_SUBPOOL_SIZE = "soa.subPool.size";
+
     //    public static final String SOA_SERVICE_IP = get(KEY_SOA_SERVICE_IP, "127.0.0.1");
 //    public static final boolean SOA_SERVICE_IP_ISCONFIG = get(KEY_SOA_SERVICE_IP) != null;
 //
@@ -92,6 +97,8 @@ public class SoaSystemEnvProperties {
     public static final String SOA_EVENT_MESSAGE_TOPIC = get(KEY_SOA_EVENT_MESSAGE_TOPIC, "");
 
     public static final String SOA_EVENTBUS_PERIOD = get(KEY_SOA_EVENTBUS_PERIOD, "1000");
+
+    public static final Integer SOA_SUBPOOL_SIZE = Integer.valueOf(get(KEY_SOA_SUBPOOL_SIZE,"1"));
 
 
     /**
