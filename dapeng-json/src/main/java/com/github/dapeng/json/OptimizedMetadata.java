@@ -15,14 +15,6 @@ public class OptimizedMetadata {
     public static class OptimizedService {
         final Service service;
 
-        public Service getService() {
-            return service;
-        }
-
-        public Map<String, Method> getMethodMap() {
-            return methodMap;
-        }
-
         final Map<String, Method> methodMap = new HashMap<>(128);
         final Map<String, OptimizedStruct> optimizedStructs = new HashMap<>(1024);
         final Map<String, TEnum> enumMap = new HashMap<>(128);
@@ -38,6 +30,14 @@ public class OptimizedMetadata {
             for (Method method: service.methods) {
                 methodMap.put(method.name, method);
             }
+        }
+
+        public Service getService() {
+            return service;
+        }
+
+        public Map<String, Method> getMethodMap() {
+            return methodMap;
         }
 
     }

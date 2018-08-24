@@ -29,8 +29,6 @@ public class JsonPost {
 
     private boolean doNotThrowError = false;
 
-    private static final Map<String, OptimizedMetadata.OptimizedService> localServiceCache = new HashMap<>(128);
-
     private final static SoaConnectionPoolFactory factory = ServiceLoader.load(SoaConnectionPoolFactory.class, JsonPost.class.getClassLoader()).iterator().next();
 
 
@@ -59,7 +57,7 @@ public class JsonPost {
      */
     public String callServiceMethod(final String jsonParameter,
                                     final OptimizedMetadata.OptimizedService optimizedService) throws Exception {
-        Method method = optimizedService.methodMap.get(methodName);
+        Method method = optimizedService.getMethodMap().get(methodName);
 
         if (method == null) {
             return String.format("{\"responseCode\":\"%s\", \"responseMsg\":\"%s\", \"success\":\"{}\", \"status\":0}",
@@ -80,8 +78,9 @@ public class JsonPost {
 
             final long beginTime = System.currentTimeMillis();
 
-            LOGGER.info("soa-request: service:[" + optimizedService + "." + optimizedService.name
-                    + ":" + optimizedService.meta.version + "], method:" + methodName + ", param:"
+            Service origService = optimizedService.getService();
+            LOGGER.info("soa-request: service:[" + origService.namespace + "." + origService.name
+                    + ":" + origService.meta.version + "], method:" + methodName + ", param:"
                     + jsonParameter);
 
             String jsonResponse = post(clientInfo.serviceName, clientInfo.version,
