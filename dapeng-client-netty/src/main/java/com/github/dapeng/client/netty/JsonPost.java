@@ -6,6 +6,7 @@ import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.metadata.Method;
 import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.json.JsonSerializer;
+import com.github.dapeng.json.OptimizedMetadata;
 import com.github.dapeng.util.DumpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,9 +71,13 @@ public class JsonPost {
 
             Method method = targetMethods.get(0);
 
+            //todo cache
+            OptimizedMetadata.OptimizedService optimizedService = new OptimizedMetadata.OptimizedService(service);
+            OptimizedMetadata.OptimizedStruct optimizedStructReq = new OptimizedMetadata.OptimizedStruct(method.request);
+            OptimizedMetadata.OptimizedStruct optimizedStructRes = new OptimizedMetadata.OptimizedStruct(method.response);
 
-            JsonSerializer jsonEncoder = new JsonSerializer(service, method, clientInfo.version, method.request);
-            JsonSerializer jsonDecoder = new JsonSerializer(service, method, clientInfo.version, method.response);
+            JsonSerializer jsonEncoder = new JsonSerializer(optimizedService, method, clientInfo.version, optimizedStructReq);
+            JsonSerializer jsonDecoder = new JsonSerializer(optimizedService, method, clientInfo.version, optimizedStructRes);
 
             final long beginTime = System.currentTimeMillis();
 

@@ -495,7 +495,7 @@ public class JsonSerializer implements BeanSerializer<String> {
              * 不在该Struct必填字段列表的字段列表
              */
             for (Field field : current.optimizedStruct.fields) {
-                if (!field.isOptional() && !current.fields4Struct.contains(field.name)) {
+                if (field != null && !field.isOptional() && !current.fields4Struct.contains(field.name)) {
                     String fieldName = current.fieldName;
                     String struct = current.optimizedStruct.struct.name;
                     SoaException ex = new SoaException(SoaCode.ReqFieldNull.getCode(), "JsonError, please check:"

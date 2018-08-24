@@ -15,7 +15,7 @@ import java.util.Map;
  */
 public class OptimizedMetadata {
 
-    static class OptimizedService {
+    public static class OptimizedService {
         final Service service;
 
         final Map<String, OptimizedStruct> optimizedStructs = new HashMap<>(1024);
@@ -32,7 +32,7 @@ public class OptimizedMetadata {
         }
     }
 
-    static class OptimizedStruct {
+    public static class OptimizedStruct {
         final Struct struct;
 
         final Map<String, Field> fieldMap = new HashMap<>(128);
