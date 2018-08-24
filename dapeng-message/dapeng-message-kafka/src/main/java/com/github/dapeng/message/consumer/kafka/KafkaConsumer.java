@@ -85,7 +85,7 @@ public class KafkaConsumer extends Thread {
      */
     private void receive(ByteBuffer message) {
 
-        logger.info("KafkaConsumer groupId({}) topic({}) 收到消息", groupId, topic);
+        //logger.info("KafkaConsumer groupId({}) topic({}) 收到消息", groupId, topic);
         for (ConsumerContext customer : customers) {
             dealMessage(customer, message);
         }
