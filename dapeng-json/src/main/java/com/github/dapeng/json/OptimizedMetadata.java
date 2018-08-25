@@ -30,6 +30,8 @@ public class OptimizedMetadata {
             }
             for (Method method: service.methods) {
                 methodMap.put(method.name, method);
+                optimizedStructs.put(service.name + "." + method.request.name, new OptimizedStruct(method.request));
+                optimizedStructs.put(service.name + "." + method.response.name, new OptimizedStruct(method.response));
             }
         }
 
