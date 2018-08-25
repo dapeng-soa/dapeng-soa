@@ -13,8 +13,6 @@ public class SubPool {
 
     static final int MAX = 1;
 
-    private final ReentrantLock connectionLock = new ReentrantLock();
-
     private final String ip;
     private final int port;
 
