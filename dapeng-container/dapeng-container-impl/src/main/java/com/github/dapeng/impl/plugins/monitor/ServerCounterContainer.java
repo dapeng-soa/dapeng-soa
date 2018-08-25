@@ -79,9 +79,9 @@ public class ServerCounterContainer {
     /**
      * 自旋锁
      */
-    private static final AtomicInteger addCostLock = new AtomicInteger(0);
-    private static final AtomicInteger addReqFlowLock = new AtomicInteger(0);
-    private static final AtomicInteger addRespFlowLock = new AtomicInteger(0);
+    private final AtomicInteger addCostLock = new AtomicInteger(0);
+    private final AtomicInteger addReqFlowLock = new AtomicInteger(0);
+    private final AtomicInteger addRespFlowLock = new AtomicInteger(0);
 
     /**
      * 流量计数器
@@ -161,6 +161,19 @@ public class ServerCounterContainer {
 
     private ServerCounterContainer() {
         init();
+    }
+
+    private void init() {
+        for (int i = 0; i < reqFlows.length; i++) {
+            reqFlows[i] = new TLNode(addReqFlowLock);
+            respFlows[i] = new TLNode(addRespFlowLock);
+            serviceElapses[i] = new HashMap<>(1024);
+            serviceInvocationDatas.put(i, new ConcurrentHashMap<>(1024));
+        }
+
+        if (MONITOR_ENABLE) {
+            initThreads();
+        }
     }
 
     public void increaseServiceCall(ServiceBasicInfo basicInfo, boolean isSucceed) {
@@ -269,19 +282,6 @@ public class ServerCounterContainer {
 
     public String getCurrentChannelStatus() {
         return activeChannel.get() + "/" + inactiveChannel.get() + "/" + totalChannel;
-    }
-
-    private void init() {
-        for (int i = 0; i < reqFlows.length; i++) {
-            reqFlows[i] = new TLNode(addReqFlowLock);
-            respFlows[i] = new TLNode(addRespFlowLock);
-            serviceElapses[i] = new HashMap<>(1024);
-            serviceInvocationDatas.put(i, new ConcurrentHashMap<>(1024));
-        }
-
-        if (MONITOR_ENABLE) {
-            initThreads();
-        }
     }
 
     /**
