@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class SubPool {
 
-    static final int MAX = 1;
+    static final int MAX = 8;
 
     private final ReentrantLock connectionLock = new ReentrantLock();
 

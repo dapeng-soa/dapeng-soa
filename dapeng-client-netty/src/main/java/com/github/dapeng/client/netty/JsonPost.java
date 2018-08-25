@@ -69,8 +69,8 @@ public class JsonPost {
             String sessionTid = InvocationContextImpl.Factory.currentInstance().sessionTid().map(DapengUtil::longToHexStr).orElse("0");
             MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
 
-            OptimizedMetadata.OptimizedStruct req = optimizedService.getOptimizedStructs().get(method.request.namespace + "." + method.request.name);
-            OptimizedMetadata.OptimizedStruct resp = optimizedService.getOptimizedStructs().get(method.response.namespace + "." + method.response.name);
+            OptimizedMetadata.OptimizedStruct req = optimizedService.getOptimizedStructs().get(optimizedService.getService().name + "." + method.request.name);
+            OptimizedMetadata.OptimizedStruct resp = optimizedService.getOptimizedStructs().get(optimizedService.getService().name + "." + method.response.name);
 
             JsonSerializer jsonEncoder = new JsonSerializer(optimizedService, method, clientInfo.version, req);
             JsonSerializer jsonDecoder = new JsonSerializer(optimizedService, method, clientInfo.version, resp);
