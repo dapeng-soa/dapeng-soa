@@ -10,7 +10,10 @@ import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 import static com.github.dapeng.core.enums.CodecProtocol.CompressedBinary;
@@ -39,7 +42,6 @@ public class JsonSerializer implements BeanSerializer<String> {
         this.version = version;
     }
 
-    // thrift -> json
     private void read(TProtocol iproto, JsonCallback writer) throws TException {
         iproto.readStructBegin();
         writer.onStartObject();
@@ -497,7 +499,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                         + struct + "." + fieldName
                         + ", struct mandatory fields missing:"
                         + mandatoryMissFileds.stream().map(field -> field.name + ", ").collect(Collectors.toList()));
-                logger.error(ex.getMessage(), ex);
+                logger.error(ex.getMessage());
                 throw ex;
             }
         }
@@ -1102,7 +1104,7 @@ class TJsonCompressProtocolCodec {
      * @param elemType type of the collection Element
      * @throws TException
      */
-    public void writeCollectionBegin(byte elemType, ByteBuf byteBuf) throws TException {
+    void writeCollectionBegin(byte elemType, ByteBuf byteBuf) throws TException {
         writeByteDirect((byte) (0xf0 | TCompactProtocol.ttypeToCompactType[elemType]), byteBuf);
         //write 3 byte with 0x0 to hold the collectionSize
         writeFixedLengthVarint32(3, byteBuf);
@@ -1115,7 +1117,7 @@ class TJsonCompressProtocolCodec {
      * @param byteBuf
      * @throws TException
      */
-    public void reWriteCollectionBegin(int size, ByteBuf byteBuf) throws TException {
+    void reWriteCollectionBegin(int size, ByteBuf byteBuf) throws TException {
         //Actually we should only change the collection length.
         byteBuf.writerIndex(byteBuf.writerIndex() + 1);
         reWriteVarint32(size, byteBuf);
@@ -1127,7 +1129,7 @@ class TJsonCompressProtocolCodec {
      *
      * @throws TException
      */
-    public void writeMapBegin(byte keyType, byte valueType, ByteBuf byteBuf) throws TException {
+    void writeMapBegin(byte keyType, byte valueType, ByteBuf byteBuf) throws TException {
         /**
          * origin implementation:
          *  if (map.size == 0) {
@@ -1152,7 +1154,7 @@ class TJsonCompressProtocolCodec {
      * @param byteBuf byteBuf which has reset the writerIndex to before collection
      * @throws TException
      */
-    public void reWriteMapBegin(int size, ByteBuf byteBuf) throws TException {
+    void reWriteMapBegin(int size, ByteBuf byteBuf) throws TException {
         if (size > 0) {
             reWriteVarint32(size, byteBuf);
         } else {

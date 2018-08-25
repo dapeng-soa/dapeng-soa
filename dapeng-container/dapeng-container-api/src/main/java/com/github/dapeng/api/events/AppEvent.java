@@ -1,7 +1,6 @@
 package com.github.dapeng.api.events;
 
 import com.github.dapeng.core.Application;
-import com.github.dapeng.core.Application;
 
 import java.util.EventObject;
 

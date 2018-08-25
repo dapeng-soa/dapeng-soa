@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
 
 /**
  * @author ever
@@ -24,8 +25,12 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class ServerCounterContainer {
 
+    /**
+     * 流量计数，计算一分钟内的各项数据
+     */
     static class TLNode {
         final AtomicInteger spinLock;
+
         long min;
         long max;
         long sum;
@@ -52,10 +57,12 @@ public class ServerCounterContainer {
         }
 
         public void reset() {
+            while (!spinLock.compareAndSet(0, 1));
             min = 0;
             max = 0;
             sum = 0;
             count = 0;
+            spinLock.set(0);
         }
     }
 
@@ -69,6 +76,9 @@ public class ServerCounterContainer {
     private final AtomicInteger inactiveChannel = new AtomicInteger(0);
     private final AtomicInteger totalChannel = new AtomicInteger(0);
 
+    /**
+     * 自旋锁
+     */
     private static final AtomicInteger addCostLock = new AtomicInteger(0);
     private static final AtomicInteger addReqFlowLock = new AtomicInteger(0);
     private static final AtomicInteger addRespFlowLock = new AtomicInteger(0);
@@ -192,19 +202,21 @@ public class ServerCounterContainer {
     }
 
     public void addServiceElapseInfo(final ServiceBasicInfo serviceBasicInfo, final long cost) {
-        int currentMinuteOfHour = currentMinuteOfHour();
-        TLNode node = serviceElapses[currentMinuteOfHour].get(serviceBasicInfo);
-        if (node == null) {
-            while (!addCostLock.compareAndSet(0, 1));
-            node = serviceElapses[currentMinuteOfHour].get(serviceBasicInfo);
+        if (MONITOR_ENABLE) {
+            int currentMinuteOfHour = currentMinuteOfHour();
+            TLNode node = serviceElapses[currentMinuteOfHour].get(serviceBasicInfo);
             if (node == null) {
-                node = new TLNode(addCostLock);
-                serviceElapses[currentMinuteOfHour].put(serviceBasicInfo, node);
+                while (!addCostLock.compareAndSet(0, 1)) ;
+                node = serviceElapses[currentMinuteOfHour].get(serviceBasicInfo);
+                if (node == null) {
+                    node = new TLNode(addCostLock);
+                    serviceElapses[currentMinuteOfHour].put(serviceBasicInfo, node);
+                }
+                addCostLock.set(0);
             }
-            addCostLock.set(0);
-        }
 
-        node.add(cost);
+            node.add(cost);
+        }
     }
 
     public void addRequestFlow(long requestSize) {
@@ -329,8 +341,8 @@ public class ServerCounterContainer {
             fields.put("min_request_flow", minRequestFlow);
             fields.put("sum_request_flow", sumRequestFlow);
             fields.put("avg_request_flow", avgRequestFlow);
-            fields.put("max_response_flow", minResponseFlow);
-            fields.put("min_response_flow", maxResponseFlow);
+            fields.put("max_response_flow", maxResponseFlow);
+            fields.put("min_response_flow", minResponseFlow);
             fields.put("sum_response_flow", sumResponseFlow);
             fields.put("avg_response_flow", avgResponseFlow);
             point.setValues(fields);
@@ -342,13 +354,36 @@ public class ServerCounterContainer {
         }
     }
 
-    private List<DataPoint> invokePointsOfLastMinute() {
+    public List<DataPoint> invokePointsOfLastMinute() {
         int currentMinuteOfHour = currentMinuteOfHour();
         int oneMinuteBefore = (currentMinuteOfHour == 0) ? 59 : (currentMinuteOfHour - 1);
 
         Map<ServiceBasicInfo, ServiceProcessData> invocationDatas = serviceInvocationDatas.get(oneMinuteBefore);
         Map<ServiceBasicInfo, TLNode> elapses = serviceElapses[oneMinuteBefore];
 
+        List<DataPoint> points = calcPointsOfLastMinute(invocationDatas, elapses);
+
+        elapses.clear();
+        invocationDatas.clear();
+
+        return points;
+    }
+
+    public List<DataPoint> invokePointsOfLastMinuteCopy() {
+        int currentMinuteOfHour = currentMinuteOfHour();
+        int oneMinuteBefore = (currentMinuteOfHour == 0) ? 59 : (currentMinuteOfHour - 1);
+
+        Map<ServiceBasicInfo, ServiceProcessData> invocationDatas = Collections.EMPTY_MAP;
+        invocationDatas.putAll(serviceInvocationDatas.get(oneMinuteBefore));
+
+        Map<ServiceBasicInfo, TLNode> elapses = Collections.EMPTY_MAP;
+        elapses.putAll(serviceElapses[oneMinuteBefore]);
+
+
+        return calcPointsOfLastMinute(invocationDatas, elapses);
+    }
+
+    private List<DataPoint> calcPointsOfLastMinute(Map<ServiceBasicInfo, ServiceProcessData> invocationDatas, Map<ServiceBasicInfo, TLNode> elapses) {
         List<DataPoint> points = new ArrayList<>(invocationDatas.size());
 
         long now = System.currentTimeMillis();
@@ -386,9 +421,6 @@ public class ServerCounterContainer {
                 points.add(point);
             }
         });
-
-        elapses.clear();
-        invocationDatas.clear();
 
         return points;
     }

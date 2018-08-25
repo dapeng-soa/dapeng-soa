@@ -163,7 +163,6 @@
       oprot.writeStructEnd();
     }
     
-      @Override
       public void validate(com.github.dapeng.basic.api.counter.domain.DataPoint bean) throws TException{
       
               if(bean.getBizTag() == null)

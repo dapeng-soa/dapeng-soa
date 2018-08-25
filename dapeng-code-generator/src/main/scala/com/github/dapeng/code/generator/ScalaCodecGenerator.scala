@@ -345,18 +345,18 @@ class ScalaCodecGenerator extends CodeGenerator {
         }
 
 
-  class getServiceMetadata extends SoaFunctionDefinition.Sync[{service.namespace}.{service.name}, getServiceMetadata_args, getServiceMetadata_result](
-  "getServiceMetadata", new GetServiceMetadata_argsSerializer(), new GetServiceMetadata_resultSerializer()) <block>
+        class getServiceMetadata extends SoaFunctionDefinition.Sync[{service.namespace}.{service.name}, getServiceMetadata_args, getServiceMetadata_result](
+        "getServiceMetadata", new GetServiceMetadata_argsSerializer(), new GetServiceMetadata_resultSerializer()) <block>
 
 
-      @throws[TException]
-      override def apply(iface: {service.namespace}.{service.name}, args: getServiceMetadata_args): getServiceMetadata_result = <block>
+            @throws[TException]
+            override def apply(iface: {service.namespace}.{service.name}, args: getServiceMetadata_args): getServiceMetadata_result = <block>
 
-              val source = scala.io.Source.fromInputStream({service.name}Codec.getClass.getClassLoader.getResourceAsStream("{oriNamespace}.{service.name}.xml"))
-              try getServiceMetadata_result(source.mkString) finally source.close
+                    val source = scala.io.Source.fromInputStream({service.name}Codec.getClass.getClassLoader.getResourceAsStream("{oriNamespace}.{service.name}.xml"))
+                    try getServiceMetadata_result(source.mkString) finally source.close
 
-      </block>
-      </block>
+            </block>
+            </block>
 
         class echo extends SoaFunctionDefinition.Sync[{service.namespace}.{service.name}, echo_args, echo_result](
         "echo", new echo_argsSerializer(), new echo_resultSerializer()) <block>

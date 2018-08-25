@@ -16,6 +16,7 @@ import org.slf4j.MDC;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ServiceLoader;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -28,16 +29,16 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
     private final String host;
     private final int port;
-    private final SubPool parent;
+    private final static SoaConnectionPoolFactory factory = ServiceLoader.load(SoaConnectionPoolFactory.class,
+            SoaBaseConnection.class.getClassLoader()).iterator().next();
     private Channel channel = null;
     private NettyClient client;
     private final static AtomicInteger seqidAtomic = new AtomicInteger(0);
 
-    public SoaBaseConnection(String host, int port, SubPool parent) {
+    public SoaBaseConnection(String host, int port) {
         this.client = NettyClientFactory.getNettyClient();
         this.host = host;
         this.port = port;
-        this.parent = parent;
         try {
             channel = connect(host, port);
         } catch (Exception e) {
@@ -128,6 +129,15 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         Result<RESP> result = (Result<RESP>) filterContext.getAttribute("result");
         assert (result != null);
+
+        //请求响应，在途请求-1
+        RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service,host, port);
+        if (runtimeInstance == null) {
+            LOGGER.error("SoaBaseConnection::runtimeInstance not found.");
+        } else {
+            runtimeInstance.decreaseActiveCount();
+        }
+
         if (result.success != null) {
             return result.success;
         } else {
@@ -258,7 +268,13 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
 
         assert (resultFuture != null);
-
+        //请求响应，在途请求-1
+        RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service,host, port);
+        if (runtimeInstance == null) {
+            LOGGER.error("SoaBaseConnection::runtimeInstance not found.");
+        } else {
+            runtimeInstance.decreaseActiveCount();
+        }
 
         return resultFuture;
     }

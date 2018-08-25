@@ -28,7 +28,7 @@ class JavaGenerator extends CodeGenerator {
     if(!file.exists())
       file.mkdirs()
 
-    return file
+    file
   }
 
   private def resourceDir(rootDir: String, packageName: String): String = {
@@ -209,7 +209,7 @@ class JavaGenerator extends CodeGenerator {
 
   }
 
-  private def toClientTemplate(service: Service, namespaces:util.Set[String]): Elem = return {
+  private def toClientTemplate(service: Service, namespaces:util.Set[String]): Elem = {
     <div>package {service.namespace.substring(0, service.namespace.lastIndexOf("."))};
 
       import com.github.dapeng.core.*;
@@ -232,6 +232,15 @@ class JavaGenerator extends CodeGenerator {
       public {service.name}Client() <block>
         this.serviceName = "{service.namespace + "." + service.name }";
         this.version = "{service.meta.version}";
+
+        ServiceLoader{lt}SoaConnectionPoolFactory{gt} factories = ServiceLoader.load(SoaConnectionPoolFactory.class,getClass().getClassLoader());
+        this.pool = factories.iterator().next().getPool();
+        this.clientInfo = this.pool.registerClientInfo(serviceName,version);
+      </block>
+
+      public {service.name}Client(String serviceVersion) <block>
+        this.serviceName = "{service.namespace + "." + service.name }";
+        this.version = serviceVersion;
 
         ServiceLoader{lt}SoaConnectionPoolFactory{gt} factories = ServiceLoader.load(SoaConnectionPoolFactory.class,getClass().getClassLoader());
         this.pool = factories.iterator().next().getPool();
@@ -312,7 +321,7 @@ class JavaGenerator extends CodeGenerator {
     </div>
   }
 
-  private def toAsyncClientTemplate(service: Service, namespaces:util.Set[String]): Elem = return {
+  private def toAsyncClientTemplate(service: Service, namespaces:util.Set[String]): Elem = {
     <div>package {service.namespace.substring(0, service.namespace.lastIndexOf("."))};
 
       import com.github.dapeng.core.*;
@@ -337,6 +346,15 @@ class JavaGenerator extends CodeGenerator {
       public {service.name}AsyncClient() <block>
         this.serviceName = "{service.namespace + "." + service.name }";
         this.version = "{service.meta.version}";
+
+        ServiceLoader{lt}SoaConnectionPoolFactory{gt} factories = ServiceLoader.load(SoaConnectionPoolFactory.class,getClass().getClassLoader());
+        this.pool = factories.iterator().next().getPool();
+        this.clientInfo = this.pool.registerClientInfo(serviceName,version);
+      </block>
+
+      public {service.name}AsyncClient(String serviceVersion) <block>
+        this.serviceName = "{service.namespace + "." + service.name }";
+        this.version = serviceVersion;
 
         ServiceLoader{lt}SoaConnectionPoolFactory{gt} factories = ServiceLoader.load(SoaConnectionPoolFactory.class,getClass().getClassLoader());
         this.pool = factories.iterator().next().getPool();
@@ -417,7 +435,7 @@ class JavaGenerator extends CodeGenerator {
 
 
   private def toEnumTemplate(enum: TEnum): Elem = {
-    return {
+    {
       <div>package {enum.namespace};
 
         /**
@@ -473,10 +491,13 @@ class JavaGenerator extends CodeGenerator {
   }
 
   private def toDomainTemplate(struct: Struct): Elem = {
-    return {
+    {
       <div>package {struct.namespace};
 
         import java.util.Optional;
+        import com.github.dapeng.org.apache.thrift.TException;
+        import com.github.dapeng.org.apache.thrift.protocol.TCompactProtocol;
+        import com.github.dapeng.util.TCommonTransport;
 
         /**
         {notice}
@@ -506,6 +527,22 @@ class JavaGenerator extends CodeGenerator {
         }
         }
 
+        public static byte[] getBytesFromBean({struct.name} bean) throws TException <block>
+          byte[] bytes = new byte[]<block></block>;
+          TCommonTransport transport = new TCommonTransport(bytes, TCommonTransport.Type.Write);
+          TCompactProtocol protocol = new TCompactProtocol(transport);
+
+          new {struct.namespace}.serializer.{struct.name}Serializer().write(bean, protocol);
+          transport.flush();
+          return transport.getByteBuf();
+        </block>
+
+        public static {struct.name} getBeanFromBytes(byte[] bytes) throws TException <block>
+          TCommonTransport transport = new TCommonTransport(bytes, TCommonTransport.Type.Read);
+          TCompactProtocol protocol = new TCompactProtocol(transport);
+          return new {struct.namespace}.serializer.{struct.name}Serializer().read(protocol);
+        </block>
+
         public String toString()<block>
           StringBuilder stringBuilder = new StringBuilder("<block>");
             {toFieldArrayBuffer(struct.getFields).map{(field : Field) =>{
@@ -523,7 +560,7 @@ class JavaGenerator extends CodeGenerator {
     }
   }
 
-  private def toServiceTemplate(service:Service): Elem = return {
+  private def toServiceTemplate(service:Service): Elem = {
     <div>
       package {service.namespace};
 
@@ -588,7 +625,7 @@ class JavaGenerator extends CodeGenerator {
   }
 
   private def toAsyncServiceTemplate(service:Service): Elem = {
-    return {
+    {
       <div>
         package {service.namespace};
 
@@ -684,17 +721,17 @@ class JavaGenerator extends CodeGenerator {
       case KIND.DATE => <div>java.util.Date</div>
       case KIND.BIGDECIMAL => <div>java.math.BigDecimal</div>
       case KIND.MAP =>
-        return {<div>java.util.Map{lt}{toDataTypeTemplate(dataType.getKeyType())}, {toDataTypeTemplate(dataType.getValueType())}{gt}</div>}
+        {<div>java.util.Map{lt}{toDataTypeTemplate(dataType.getKeyType())}, {toDataTypeTemplate(dataType.getValueType())}{gt}</div>}
       case KIND.LIST =>
-        return {<div>java.util.List{lt}{toDataTypeTemplate(dataType.getValueType())}{gt}</div>}
+        {<div>java.util.List{lt}{toDataTypeTemplate(dataType.getValueType())}{gt}</div>}
       case KIND.SET =>
-        return {<div>java.util.Set{lt}{toDataTypeTemplate(dataType.getValueType())}{gt}</div>}
+        {<div>java.util.Set{lt}{toDataTypeTemplate(dataType.getValueType())}{gt}</div>}
       case KIND.ENUM =>
         val ref = dataType.getQualifiedName();
-        return {<div>{ref}</div>}
+        {<div>{ref}</div>}
       case KIND.STRUCT =>
         val ref = dataType.getQualifiedName();
-        return {<div>{ref}</div>}
+        {<div>{ref}</div>}
     }
   }
 
