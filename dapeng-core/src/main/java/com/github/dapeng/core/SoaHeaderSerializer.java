@@ -1,5 +1,6 @@
 package com.github.dapeng.core;
 
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.*;
 
@@ -60,7 +61,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     break;
                 case 5:
                     if (schemeField.type == TType.STRING) {
-                        bean.setCallerIp(transferIp(iprot.readString()));
+                        bean.setCallerIp(IPUtils.transferIp(iprot.readString()));
                     } else if (schemeField.type == TType.I32) {
                         bean.setCallerIp(iprot.readI32());
                     } else {
@@ -85,7 +86,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     break;
                 case 8:
                     if (schemeField.type == TType.STRING) {
-                        bean.setUserIp(Optional.of(transferIp(iprot.readString())));
+                        bean.setUserIp(Optional.of(IPUtils.transferIp(iprot.readString())));
                     } else if (schemeField.type == TType.I32) {
                         bean.setUserIp(Optional.of(iprot.readI32()));
                     } else {
@@ -133,7 +134,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     break;
                 case 14:
                     if (schemeField.type == TType.STRING) {
-                        bean.setCalleeIp(Optional.of(transferIp(iprot.readString())));
+                        bean.setCalleeIp(Optional.of(IPUtils.transferIp(iprot.readString())));
                     } else if (schemeField.type == TType.I32) {
                         bean.setCalleeIp(Optional.of(iprot.readI32()));
                     } else {

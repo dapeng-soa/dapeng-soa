@@ -35,4 +35,13 @@ public interface SoaConnectionPool {
             REQ request,
             BeanSerializer<REQ> requestSerializer,
             BeanSerializer<RESP> responseSerializer) throws SoaException;
+
+    /**
+     * get runtime instance
+     * @param serviceName
+     * @param serviceIp
+     * @param servicePort
+     * @return
+     */
+    RuntimeInstance getRuntimeInstance(String serviceName, String serviceIp, int servicePort);
 }

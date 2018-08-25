@@ -8,6 +8,8 @@ import org.apache.zookeeper.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.CountDownLatch;
+
 /**
  * 描述:
  *
@@ -22,9 +24,10 @@ public class CommonZk {
     protected String zkHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
 
 
-    protected final static String SERVICE_PATH = "/soa/runtime/services";
+    protected final static String RUNTIME_PATH = "/soa/runtime/services";
     protected final static String CONFIG_PATH = "/soa/config/services";
     protected final static String ROUTES_PATH = "/soa/config/routes";
+    protected final static String FREQ_PATH = "/soa/config/freq";
 
 
     protected ZooKeeper zk;
@@ -34,7 +37,6 @@ public class CommonZk {
         //1.获取 globalConfig  异步模式
         zk.getData(CONFIG_PATH, watchedEvent -> {
             if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
-
                 if (zkInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
                     logger.info(getClass().getSimpleName() + "::syncZkConfigInfo[" + zkInfo.service + "]: {} 节点内容发生变化，重新获取配置信息", watchedEvent.getPath());
                     syncZkConfigInfo(zkInfo);

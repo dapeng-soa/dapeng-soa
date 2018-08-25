@@ -4,10 +4,10 @@ import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.Plugin;
 import com.github.dapeng.core.*;
-import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
+import com.github.dapeng.core.lifecycle.LifeCycleAware;
+import com.github.dapeng.core.lifecycle.LifeCycleProcessor;
 import com.github.dapeng.impl.container.DapengApplication;
-import org.apache.kafka.common.protocol.types.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +54,12 @@ public class SpringAppLoader implements Plugin {
 
                 Map<String, SoaServiceDefinition<?>> processorMap = (Map<String, SoaServiceDefinition<?>>)
                         method.invoke(springCtx, appClassLoader.loadClass(SoaServiceDefinition.class.getName()));
+
+                //获取所有实现了lifecycle的bean
+                LifeCycleProcessor.getInstance().addLifecycles(((Map<String, LifeCycleAware>)
+                        method.invoke(springCtx, appClassLoader.loadClass(LifeCycleAware.class.getName()))).values());
+
+
                 //TODO: 需要构造Application对象
                 Map<String, ServiceInfo> appInfos = toServiceInfos(processorMap);
                 Application application = new DapengApplication(appInfos.values().stream().collect(Collectors.toList()),
@@ -103,7 +109,7 @@ public class SpringAppLoader implements Plugin {
                 method.invoke(context);
             } catch (NoSuchMethodException e) {
                 LOGGER.info(" failed to get context close method.....");
-            } catch (IllegalAccessException|InvocationTargetException e) {
+            } catch (IllegalAccessException | InvocationTargetException e) {
                 LOGGER.info(e.getMessage());
             }
         });
@@ -140,12 +146,16 @@ public class SpringAppLoader implements Plugin {
                 methodsConfigMap.put(key, function.getCustomConfigInfo());
             });
 
-            ServiceInfo serviceInfo = new ServiceInfo(service.name(), service.version(),
-                    "service", ifaceClass, processor.getConfigInfo(), methodsConfigMap);
+            //判断有没有 接口实现的版本号   默认为IDL定义的版本号
+            ServiceVersion serviceVersionAnnotation = ifaceClass.isAnnotationPresent(ServiceVersion.class) ? ifaceClass.getAnnotationsByType(ServiceVersion.class)[0] : null;
 
-            serviceInfoMap.put(processorKey, serviceInfo);
+            String version = serviceVersionAnnotation != null ? serviceVersionAnnotation.version() : service.version();
+            if (serviceVersionAnnotation == null || serviceVersionAnnotation.isRegister()) {
+                ServiceInfo serviceInfo = new ServiceInfo(service.name(), version, "service", ifaceClass, processor.getConfigInfo(), methodsConfigMap);
+                serviceInfoMap.put(processorKey, serviceInfo);
+            }
+
         }
-
         return serviceInfoMap;
     }
 

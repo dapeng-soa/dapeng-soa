@@ -14,16 +14,14 @@ public class SubPool {
 
     static final int MAX = SoaSystemEnvProperties.SOA_SUBPOOL_SIZE;
 
-    private final ReentrantLock connectionLock = new ReentrantLock();
-
     private final String ip;
     private final int port;
 
     /**
      * connection that used by rpcClients, such as java, scala, php..
      */
-    private SoaConnection[] soaConnections;
-    private AtomicInteger index = new AtomicInteger(0);
+    private final SoaConnection[] soaConnections;
+    private final AtomicInteger index = new AtomicInteger(0);
 
     SubPool(String ip, int port) {
         this.ip = ip;
@@ -31,31 +29,22 @@ public class SubPool {
 
         soaConnections = new SoaConnection[MAX];
         for(int i = 0; i < MAX; i++) {
-            soaConnections[i] = createConnection();
-        }
-    }
-
-    private SoaConnection createConnection(){
-        try {
-            connectionLock.lock();
-            return new SoaConnectionImpl(ip, port, this);
-        } finally {
-            connectionLock.unlock();
+            soaConnections[i] = new SoaConnectionImpl(ip, port);
         }
     }
 
     public SoaConnection getConnection() {
-        int index = this.index.getAndIncrement();
-        if(index < 0) {
+        if (MAX == 1) {
+            return soaConnections[0];
+        }
+
+        int idx = this.index.getAndIncrement();
+        if(idx < 0) {
             synchronized (this){
                 this.index.set(0);
-                index = 0;
+                idx = 0;
             }
         }
-        return soaConnections[index%MAX];
+        return soaConnections[idx%MAX];
     }
-
-//    public void removeConnection() {
-//        soaConnection = null;
-//    }
 }

@@ -2,7 +2,13 @@ package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
+import com.github.dapeng.core.FreqControlRule;
+import com.github.dapeng.core.ServiceFreqControl;
+import com.github.dapeng.core.SoaException;
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.github.dapeng.core.lifecycle.LifeCycleEvent;
+import com.github.dapeng.core.lifecycle.LifeCycleProcessor;
 import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.core.helper.MasterHelper;
 import org.apache.zookeeper.*;
@@ -10,13 +16,14 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
+
+import static com.github.dapeng.core.SoaCode.FreqConfigError;
 
 
 /**
@@ -30,6 +37,11 @@ public class ServerZk extends CommonZk {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerZk.class);
 
     private RegistryAgent registryAgent;
+
+    /**
+     * 路由配置信息
+     */
+    private final Map<String, ServiceFreqControl> freqControlMap = new ConcurrentHashMap<>(16);
 
     /**
      * zk 配置 缓存 ，根据 serivceName + versionName 作为 key
@@ -61,7 +73,7 @@ public class ServerZk extends CommonZk {
                     case SyncConnected:
                         semaphore.countDown();
                         //创建根节点
-                        create(SERVICE_PATH, null, false);
+                        create(RUNTIME_PATH, null, false);
                         create(CONFIG_PATH, null, false);
                         create(ROUTES_PATH, null, false);
                         zkConfigMap.clear();
@@ -176,15 +188,18 @@ public class ServerZk extends CommonZk {
                     watchInstanceChange(context);
                 }
             });
+            boolean _isMaster = false;
             if (children.size() > 0) {
-                checkIsMaster(children, MasterHelper.generateKey(context.getService(), context.getVersion()), context.getInstanceInfo());
+                _isMaster = checkIsMaster(children, MasterHelper.generateKey(context.getService(), context.getVersion()), context.getInstanceInfo());
             }
-
+            //masterChange响应
+            LifeCycleProcessor.getInstance().onLifecycleEvent(
+                    new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.MASTER_CHANGE,
+                            context.getService(), _isMaster));
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
             create(context.getServicePath() + "/" + context.getInstanceInfo(), context, true);
         }
-
     }
 
 
@@ -305,11 +320,12 @@ public class ServerZk extends CommonZk {
      * @param serviceKey   当前服务信息                eg com.github.user.UserService:1.0.0
      * @param instanceInfo 当前服务节点实例信息         eg  192.168.10.17:9081:1.0.0
      */
-    public void checkIsMaster(List<String> children, String serviceKey, String instanceInfo) {
+    public boolean checkIsMaster(List<String> children, String serviceKey, String instanceInfo) {
         if (children.size() <= 0) {
-            return;
+            return false;
         }
 
+        boolean _isMaster = false;
 
         /**
          * 排序规则
@@ -331,14 +347,18 @@ public class ServerZk extends CommonZk {
 
             if (firstInfo.equals(instanceInfo)) {
                 isMaster.put(serviceKey, true);
+                _isMaster = true;
                 LOGGER.info("({})竞选master成功, master({})", serviceKey, CURRENT_CONTAINER_ADDR);
             } else {
                 isMaster.put(serviceKey, false);
+                _isMaster = false;
                 LOGGER.info("({})竞选master失败，当前节点为({})", serviceKey);
             }
         } catch (NumberFormatException e) {
             LOGGER.error("临时节点格式不正确,请使用新版，正确格式为 etc. 192.168.100.1:9081:1.0.0:0000000022");
         }
+
+        return _isMaster;
     }
 
 
@@ -361,5 +381,150 @@ public class ServerZk extends CommonZk {
         syncZkConfigInfo(info);
         zkConfigMap.put(serviceName, info);
         return info;
+    }
+
+    /**
+     * 获取 zookeeper 上的 限流规则 freqRule
+     *
+     * @return
+     */
+    public ServiceFreqControl getFreqControl(String service) {
+        if (freqControlMap.get(service) == null) {
+            try {
+                byte[] data = zk.getData(FREQ_PATH + "/" + service, event -> {
+                    if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                        LOGGER.info("freq 节点 data 发生变更，重新获取信息");
+                        freqControlMap.remove(service);
+                        getFreqControl(service);
+                    }
+                }, null);
+                ServiceFreqControl serviceFreqControl = processFreqRuleData(service, data, freqControlMap);
+                return serviceFreqControl;
+            } catch (KeeperException | InterruptedException e) {
+                LOGGER.error("获取freq 节点: {} 出现异常", service);
+                return new ServiceFreqControl(service, new ArrayList<>(8), new HashMap<>(8));
+            }
+        } else {
+            ServiceFreqControl serviceFreqControl = freqControlMap.get(service);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("获取freq信息, service: {} , freq: {}", service, serviceFreqControl);
+            }
+            return serviceFreqControl;
+        }
+    }
+
+    /**
+     * process zk data freqControl 限流规则信息
+     *
+     * @param service
+     * @param data
+     * @return
+     */
+    public static synchronized ServiceFreqControl processFreqRuleData(String service, byte[] data, Map<String, ServiceFreqControl> freqControlMap) {
+        ServiceFreqControl serviceFreqControl = null;
+        try {
+            String ruleData = new String(data, "utf-8");
+            serviceFreqControl = doParseRuleData(service, ruleData);
+
+            freqControlMap.put(service, serviceFreqControl);
+        } catch (Exception e) {
+            LOGGER.error("parser freq rule 信息 失败，请检查 rule data 写法是否正确!");
+        }
+        return serviceFreqControl;
+
+    }
+
+    /**
+     * 解析 zookeeper 上 配置的 ruleData数据 为FreqControlRule对象
+     *
+     * @param ruleData data from zk node
+     * @return
+     */
+    private static ServiceFreqControl doParseRuleData(final String serviceName, final String ruleData) throws Exception {
+        LOGGER.info("doParseRuleData,限流规则解析前ruleData:"  + ruleData);
+        List<FreqControlRule> rules4service = new ArrayList<>(16);
+        Map<String, List<FreqControlRule>> rules4method = new HashMap<>(16);
+
+        String[] str = ruleData.split("\n|\r|\r\n");
+        String pattern1 = "^\\[.*\\]$";
+        String pattern2 = "^[a-zA-Z]+\\[.*\\]$";
+
+        for (int i = 0; i < str.length; ) {
+            if (Pattern.matches(pattern1, str[i])) {
+                FreqControlRule rule = new FreqControlRule();
+                rule.targets = new HashSet<>(16);
+
+                while (!Pattern.matches(pattern1, str[++i])) {
+                    if ("".equals(str[i].trim())) continue;
+
+                    String[] s = str[i].split("=");
+                    switch (s[0].trim()) {
+                        case "match_app":
+                            rule.app = s[1].trim();
+                            break;
+                        case "rule_type":
+                            if (Pattern.matches(pattern2, s[1].trim())) {
+                                rule.ruleType = s[1].trim().split("\\[")[0];
+                                String[] str1 = s[1].trim().split("\\[")[1].trim().split("\\]")[0].trim().split(",");
+                                for (String aStr1 : str1) {
+                                    if (!aStr1.contains(".")) {
+                                        rule.targets.add(Integer.parseInt(aStr1.trim()));
+                                    } else {
+                                        rule.targets.add(IPUtils.transferIp(aStr1.trim()));
+                                    }
+                                }
+                            } else {
+                                rule.targets = null;
+                                rule.ruleType = s[1].trim();
+                            }
+                            break;
+                        case "min_interval":
+                            rule.minInterval = Integer.parseInt(s[1].trim().split(",")[0]);
+                            rule.maxReqForMinInterval = Integer.parseInt(s[1].trim().split(",")[1]);
+                            break;
+                        case "mid_interval":
+                            rule.midInterval = Integer.parseInt(s[1].trim().split(",")[0]);
+                            rule.maxReqForMidInterval = Integer.parseInt(s[1].trim().split(",")[1]);
+                            break;
+                        case "max_interval":
+                            rule.maxInterval = Integer.parseInt(s[1].trim().split(",")[0]);
+                            rule.maxReqForMaxInterval = Integer.parseInt(s[1].trim().split(",")[1]);
+                            break;
+                        default:
+                            LOGGER.warn("FreqConfig parse error:" + str[i]);
+                    }
+                    if (i == str.length - 1) {
+                        i++;
+                        break;
+                    }
+                }
+                if (rule.app == null || rule.ruleType == null ||
+                        rule.minInterval == 0 ||
+                        rule.midInterval == 0 ||
+                        rule.maxInterval == 0) {
+                    LOGGER.error("doParseRuleData, 限流规则解析失败。rule:{}", rule);
+                    throw new SoaException(FreqConfigError);
+                }
+                if (rule.app.equals("*")) {
+                    rule.app = serviceName;
+                    rules4service.add(rule);
+                } else {
+                    if (rules4method.containsKey(rule.app)) {
+                        rules4method.get(rule.app).add(rule);
+                    } else {
+                        List<FreqControlRule> rules = new ArrayList<>(8);
+                        rules.add(rule);
+                        rules4method.put(rule.app, rules);
+                    }
+                }
+
+            } else {
+                i++;
+            }
+        }
+
+        ServiceFreqControl freqControl = new ServiceFreqControl(serviceName, rules4service, rules4method);
+        LOGGER.info("doParseRuleData限流规则解析后内容: " + freqControl);
+        return freqControl;
     }
 }

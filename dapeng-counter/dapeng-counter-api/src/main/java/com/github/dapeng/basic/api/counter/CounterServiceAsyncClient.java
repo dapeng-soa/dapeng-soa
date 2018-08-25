@@ -113,5 +113,14 @@ package com.github.dapeng.basic.api.counter;
         return response.getSuccess();
       }
 
+      /**
+      * echo
+      **/
+      public String echo() throws SoaException {
+        String methodName = "echo";
+        echo_args echo_args = new echo_args();
+        echo_result response = pool.send(serviceName,version,methodName,echo_args, new echo_argsSerializer(), new echo_resultSerializer());
+        return response.getSuccess();
+      }
     }
     

@@ -10,7 +10,7 @@ import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.filters.HeadFilter;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.registry.ConfigKey;
-import com.github.dapeng.registry.RegistryAgentProxy;
+import com.github.dapeng.registry.zookeeper.ServerZkAgentImpl;
 import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
 import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.ExceptionUtil;
@@ -134,7 +134,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             SoaFunctionDefinition<I, REQ, RESP> soaFunction = (SoaFunctionDefinition<I, REQ, RESP>) serviceDef.functions.get(soaHeader.getMethodName());
 
             if (soaFunction == null) {
-                throw new SoaException(SoaCode.NoMatchedMethod);
+                throw new SoaException(SoaCode.ServerNoMatchedMethod);
             }
 
             HeadFilter headFilter = new HeadFilter();
@@ -213,7 +213,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     private long getTimeout(SoaHeader soaHeader) {
         long timeout = 0L;
         String serviceKey = soaHeader.getServiceName();
-        ZkServiceInfo configInfo = RegistryAgentProxy.getCurrentInstance(RegistryAgentProxy.Type.Server).getConfig(false, serviceKey);
+        ZkServiceInfo configInfo = ServerZkAgentImpl.getInstance().getConfig(false, serviceKey);
 
         long envTimeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT;
         if (null != configInfo) {
