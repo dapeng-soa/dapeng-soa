@@ -116,7 +116,6 @@ public class NettyClient {
                         new SoaClientHandler(callBack));
             }
         });
-        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
         return bootstrap;
     }
 
