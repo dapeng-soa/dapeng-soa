@@ -2,6 +2,7 @@ package com.github.dapeng.json;
 
 import com.github.dapeng.core.metadata.*;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,11 +41,15 @@ public class OptimizedMetadata {
         }
 
         public Map<String, Method> getMethodMap() {
-            return methodMap;
+            return Collections.unmodifiableMap(methodMap);
         }
 
         public Map<String, OptimizedStruct> getOptimizedStructs() {
-            return optimizedStructs;
+            return Collections.unmodifiableMap(optimizedStructs);
+        }
+
+        public Map<String, TEnum> getEnumMap() {
+            return Collections.unmodifiableMap(enumMap);
         }
     }
 
@@ -53,6 +58,10 @@ public class OptimizedMetadata {
 
         final Map<String, Field> fieldMap = new HashMap<>(128);
         final Field[] fields;
+
+        public Struct getStruct() {
+            return struct;
+        }
 
         public OptimizedStruct(Struct struct) {
             this.struct = struct;

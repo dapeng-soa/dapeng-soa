@@ -398,8 +398,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         long defaultTimeout = SoaSystemEnvProperties.SOA_DEFAULT_TIMEOUT;
 
         Optional<Integer> invocationTimeout = getInvocationTimeout();
-        Optional<Long> envTimeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT.longValue() == 0 ?
-                Optional.empty() : Optional.of(SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT.longValue());
+        Optional<Long> envTimeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT == 0 ?
+                Optional.empty() : Optional.of(SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT);
 
         Optional<Long> zkTimeout = getZkTimeout(service, version, method);
         Optional<Long> idlTimeout = getIdlTimeout(service, version, method);
