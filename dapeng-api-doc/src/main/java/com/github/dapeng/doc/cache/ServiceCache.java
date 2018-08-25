@@ -4,6 +4,7 @@ package com.github.dapeng.doc.cache;
 import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.metadata.*;
+import com.github.dapeng.json.OptimizedMetadata;
 import com.google.common.collect.TreeMultimap;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.core.Application;
@@ -28,9 +29,9 @@ public class ServiceCache {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceCache.class);
 
-    private static Map<String, Service> services = new TreeMap<>();
+    private static Map<String, OptimizedMetadata.OptimizedService> services = new TreeMap<>();
 
-    private static Map<String, Service> fullNameService = new TreeMap<>();
+    private static Map<String, OptimizedMetadata.OptimizedService> fullNameService = new TreeMap<>();
 
     public static TreeMultimap<String, String> urlMappings = TreeMultimap.create();
 
@@ -76,7 +77,9 @@ public class ServiceCache {
                     //替换为注册的版本号
                     serviceData.getMeta().setVersion(serviceInfo.version);
 
-                    Map<String, Service> services = loadResource(serviceData);
+                    OptimizedMetadata.OptimizedService optimizedService = new OptimizedMetadata.OptimizedService(serviceData);
+
+                    Map<String, OptimizedMetadata.OptimizedService> services = loadResource(optimizedService);
                     ServiceCache.services.putAll(services);
                 } catch (Exception e) {
                     LOGGER.error("生成SERVICE[" + serviceInfo.serviceName + "]出错, metaData:\n" + metadata, e);
@@ -91,15 +94,18 @@ public class ServiceCache {
         services.clear();
     }
 
-    public Map<String, Service> loadResource(Service service) {
+    public Map<String, OptimizedMetadata.OptimizedService> loadResource(OptimizedMetadata.OptimizedService optimizedService) {
 
-        final Map<String, Service> services = new TreeMap<>();
+        final Map<String, OptimizedMetadata.OptimizedService> services = new TreeMap<>();
+
+        Service service = optimizedService.getService();
 
         String key = getKey(service);
-        services.put(key, service);
+        services.put(key, optimizedService);
 
         String fullNameKey = getFullNameKey(service);
-        fullNameService.put(fullNameKey, service);
+        fullNameService.put(fullNameKey, optimizedService);
+
 
         //将service和service中的方法、结构体、枚举和字段名分别设置对应的url，以方便搜索
         urlMappings.put(service.getName(), "api/service/" + service.name + "/" + service.meta.version + ".htm");
@@ -130,7 +136,7 @@ public class ServiceCache {
         return services;
     }
 
-    public Service getService(String name, String version) {
+    public OptimizedMetadata.OptimizedService getService(String name, String version) {
 
         if (name.contains(".")) {
             return fullNameService.get(getKey(name, version));
@@ -151,7 +157,7 @@ public class ServiceCache {
         return name + ":" + version;
     }
 
-    public Map<String, Service> getServices() {
+    public Map<String, OptimizedMetadata.OptimizedService> getServices() {
         return services;
     }
 

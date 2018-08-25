@@ -50,6 +50,12 @@ public class SoaSystemEnvProperties {
      */
     private static final String KEY_SOA_EVENTBUS_PERIOD = "soa.eventbus.publish.period";
 
+     /**
+      * subPool 连接数， 单个客户端跟单个服务节点之间的连接数， 默认是1
+      */
+    private static final String KEY_SOA_SUBPOOL_SIZE = "soa.subPool.size";
+
+
     /**
      * 服务实例权重
      */
@@ -80,17 +86,17 @@ public class SoaSystemEnvProperties {
     public static final boolean SOA_CONTAINER_USETHREADPOOL = Boolean.valueOf(get(KEY_SOA_CONTAINER_USETHREADPOOL, Boolean.TRUE.toString()));
     public static final String SOA_CONTAINER_IP = get(KEY_SOA_CONTAINER_IP, IPUtils.containerIp());
     public static final String SOA_CALLER_IP = get(KEY_SOA_CALLER_IP, IPUtils.localIp());
-    public static final Integer SOA_CONTAINER_PORT = Integer.valueOf(get(KEY_SOA_CONTAINER_PORT, "9090"));
-    public static final Integer SOA_APIDOC_PORT = Integer.valueOf(get(KEY_SOA_APIDOC_PORT, "8080"));
+    public static final int SOA_CONTAINER_PORT = Integer.valueOf(get(KEY_SOA_CONTAINER_PORT, "9090"));
+    public static final int SOA_APIDOC_PORT = Integer.valueOf(get(KEY_SOA_APIDOC_PORT, "8080"));
     public static final String SOA_REMOTING_MODE = get(KEY_SOA_REMOTING_MODE, "remote");
     public static final boolean SOA_MONITOR_ENABLE = Boolean.valueOf(get(KEY_SOA_MONITOR_ENABLE, "false"));
     public static final boolean SOA_FREQ_LIMIT_ENABLE = Boolean.valueOf(get(KEY_SOA_FREQ_LIMIT_ENABLE, "false"));
     public static final String SOA_FREQ_SHM_DATA = get(KEY_SOA_FREQ_SHM_DATA, "/data/shm.data");
     public static final String SOA_SERVICE_CALLERFROM = get(KEY_SOA_SERVICE_CALLERFROM, "unknown");
-    public static final Long SOA_SERVICE_TIMEOUT = Long.valueOf(get(KEY_SOA_SERVICE_TIMEOUT, "0"));
+    public static final long SOA_SERVICE_TIMEOUT = Long.valueOf(get(KEY_SOA_SERVICE_TIMEOUT, "0"));
 
-    public static final Integer SOA_CORE_POOL_SIZE = Integer.valueOf(get(KEY_SOA_CORE_POOL_SIZE, String.valueOf(Runtime.getRuntime().availableProcessors() * 2)));
-    public static final Long SOA_MAX_READ_BUFFER_SIZE = Long.valueOf(get(KEY_SOA_MAX_READ_BUFFER_SIZE, String.valueOf(1024 * 1024 * 5)));// 5M
+    public static final int SOA_CORE_POOL_SIZE = Integer.valueOf(get(KEY_SOA_CORE_POOL_SIZE, String.valueOf(Runtime.getRuntime().availableProcessors() * 2)));
+    public static final long SOA_MAX_READ_BUFFER_SIZE = Long.valueOf(get(KEY_SOA_MAX_READ_BUFFER_SIZE, String.valueOf(1024 * 1024 * 5)));// 5M
 
     public static final String SOA_LOCAL_HOST_NAME = get(KEY_SOA_LOCAL_HOST_NAME);
     public static final boolean SOA_TRANSACTIONAL_ENABLE = Boolean.valueOf(get(KEY_SOA_TRANSACTIONAL_ENABLE, "true"));
@@ -102,6 +108,7 @@ public class SoaSystemEnvProperties {
 
     public static final String SOA_EVENTBUS_PERIOD = get(KEY_SOA_EVENTBUS_PERIOD, "1000");
 
+    public static final int SOA_SUBPOOL_SIZE = Integer.valueOf(get(KEY_SOA_SUBPOOL_SIZE,"1"));
     /**
      * 默认服务处理最大时间为10s, 超过即认为是慢服务
      */

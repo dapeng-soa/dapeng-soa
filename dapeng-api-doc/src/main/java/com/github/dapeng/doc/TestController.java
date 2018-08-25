@@ -51,7 +51,7 @@ public class TestController {
         String versionName = req.getParameter("version");
         String methodName = req.getParameter("methodName");
 
-        Service service = serviceCache.getService(serviceName, versionName);
+        OptimizedMetadata.OptimizedService service = serviceCache.getService(serviceName, versionName);
 
         InvocationContext invocationCtx = InvocationContextImpl.Factory.createNewInstance();
         invocationCtx.sessionTid(DapengUtil.generateTid());
@@ -64,9 +64,7 @@ public class TestController {
         }
 
         try {
-            //TODO
-            OptimizedMetadata.OptimizedService optimizedService = new OptimizedMetadata.OptimizedService(service);
-            return jsonPost.callServiceMethod(jsonParameter, optimizedService);
+            return jsonPost.callServiceMethod(jsonParameter, service);
         } catch (SoaException e) {
 
             LOGGER.error(e.getMsg());

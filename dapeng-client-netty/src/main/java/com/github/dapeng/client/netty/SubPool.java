@@ -1,6 +1,7 @@
 package com.github.dapeng.client.netty;
 
 import com.github.dapeng.core.SoaConnection;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -11,9 +12,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class SubPool {
 
-    static final int MAX = 8;
-
-    private final ReentrantLock connectionLock = new ReentrantLock();
+    static final int MAX = SoaSystemEnvProperties.SOA_SUBPOOL_SIZE;
 
     private final String ip;
     private final int port;
@@ -48,8 +47,4 @@ public class SubPool {
         }
         return soaConnections[idx%MAX];
     }
-
-//    public void removeConnection() {
-//        soaConnection = null;
-//    }
 }
