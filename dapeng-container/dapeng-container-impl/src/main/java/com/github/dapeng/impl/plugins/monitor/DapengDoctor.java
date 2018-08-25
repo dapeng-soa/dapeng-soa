@@ -82,7 +82,7 @@ public class DapengDoctor implements Doctor {
      */
     private Map<String, Object> mapFlows() {
         Map<String, Object> flowMap = new HashMap<>(8);
-        List<DataPoint> dataPointsList = ServerCounterContainer.getInstance().invokePointsOfLastMinute();
+        List<DataPoint> dataPointsList = ServerCounterContainer.getInstance().invokePointsOfLastMinuteCopy();
         if (dataPointsList.size() > 0) {
             DataPoint dataPoint = dataPointsList.get(dataPointsList.size() - 1);
             Map<String, Long> lastMinuteMap = dataPoint.values();

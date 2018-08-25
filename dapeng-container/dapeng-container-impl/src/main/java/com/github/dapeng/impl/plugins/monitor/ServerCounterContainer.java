@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
 
 /**
  * @author ever
@@ -264,15 +265,10 @@ public class ServerCounterContainer {
             long sumRequestFlow = 0;
             long avgRequestFlow = 0;
             if (!currentReqFlows.isEmpty()) {
-                maxRequestFlow = currentReqFlows.stream()
-                        .sorted()
-                        .max(Comparator.naturalOrder()).get();
-                minRequestFlow = currentReqFlows.stream()
-                        .sorted()
-                        .min(Comparator.naturalOrder()).get();
-                sumRequestFlow = currentReqFlows.stream()
-                        .reduce((x, y) -> (x + y))
-                        .get();
+                Stream<Long> reqFlowsStream = currentReqFlows.stream();
+                maxRequestFlow = reqFlowsStream.max(Comparator.naturalOrder()).get();
+                minRequestFlow = reqFlowsStream.min(Comparator.naturalOrder()).get();
+                sumRequestFlow = reqFlowsStream.reduce((x, y) -> (x + y)).get();
                 avgRequestFlow = sumRequestFlow / (long) currentReqFlows.size();
 
                 currentReqFlows.clear();
@@ -283,15 +279,10 @@ public class ServerCounterContainer {
             long sumResponseFlow = 0;
             long avgResponseFlow = 0;
             if (!currentRespFlows.isEmpty()) {
-                minResponseFlow = currentRespFlows.stream()
-                        .sorted()
-                        .min(Comparator.naturalOrder()).get();
-                maxResponseFlow = currentRespFlows.stream()
-                        .sorted()
-                        .max(Comparator.naturalOrder()).get();
-                sumResponseFlow = currentRespFlows.stream()
-                        .reduce((x, y) -> (x + y))
-                        .get();
+                Stream<Long> respFlowsStream = currentRespFlows.stream();
+                minResponseFlow = respFlowsStream.min(Comparator.naturalOrder()).get();
+                maxResponseFlow = respFlowsStream.max(Comparator.naturalOrder()).get();
+                sumResponseFlow = respFlowsStream.reduce((x, y) -> (x + y)).get();
                 avgResponseFlow = sumResponseFlow / (long) currentRespFlows.size();
 
                 currentRespFlows.clear();
@@ -331,25 +322,45 @@ public class ServerCounterContainer {
         Map<ServiceBasicInfo, ServiceProcessData> invocationDatas = serviceInvocationDatas.get(oneMinuteBefore);
         List<ElapseInfo> elapses = serviceElapses.get(oneMinuteBefore);
 
+        List<DataPoint> points = calcPointsOfLastMinute(invocationDatas, elapses);
+
+        elapses.clear();
+        invocationDatas.clear();
+
+        return points;
+    }
+
+    public List<DataPoint> invokePointsOfLastMinuteCopy() {
+        int currentMinuteOfHour = currentMinuteOfHour();
+        int oneMinuteBefore = (currentMinuteOfHour == 0) ? 59 : (currentMinuteOfHour - 1);
+
+        Map<ServiceBasicInfo, ServiceProcessData> invocationDatas = Collections.EMPTY_MAP;
+        invocationDatas.putAll(serviceInvocationDatas.get(oneMinuteBefore));
+
+        List<ElapseInfo> tmpList = serviceElapses.get(oneMinuteBefore);
+        List<ElapseInfo> elapses = new ArrayList<>(tmpList.size());
+        elapses.addAll(tmpList);
+
+
+        return calcPointsOfLastMinute(invocationDatas, elapses);
+    }
+
+    private List<DataPoint> calcPointsOfLastMinute(Map<ServiceBasicInfo, ServiceProcessData> invocationDatas, List<ElapseInfo> elapses) {
         List<DataPoint> points = new ArrayList<>(invocationDatas.size());
 
         long now = System.currentTimeMillis();
         AtomicLong increment = new AtomicLong(0);
         invocationDatas.forEach((serviceBasicInfo, serviceProcessData) -> {
-            final Optional<Long> iTotalTime = elapses.stream()
-                    .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost))
-                    .reduce((m, n) -> (m + n));
+            Stream<Long> localElapses = elapses.stream()
+                    .filter(x -> x.serviceInfo.equals(serviceBasicInfo))
+                    .map(y -> Long.valueOf(y.cost));
+
+            final Optional<Long> iTotalTime = localElapses.reduce((m, n) -> (m + n));
             if (iTotalTime.isPresent()) {
-                final Long iMinTime = elapses.stream()
-                        .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost))
-                        .sorted()
-                        .min(Comparator.naturalOrder()).get();
-                final Long iMaxTime = elapses.stream()
-                        .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost))
-                        .sorted()
-                        .max(Comparator.naturalOrder()).get();
-                final Long iAverageTime = iTotalTime.get() / elapses.stream()
-                        .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost)).count();
+                final Long iMinTime = localElapses.min(Comparator.naturalOrder()).get();
+                final Long iMaxTime = localElapses.max(Comparator.naturalOrder()).get();
+
+                final Long iAverageTime = iTotalTime.get() / localElapses.count();
 
                 DataPoint point = new DataPoint();
                 point.setDatabase(DATA_BASE);
@@ -375,9 +386,6 @@ public class ServerCounterContainer {
                 points.add(point);
             }
         });
-
-        elapses.clear();
-        invocationDatas.clear();
 
         return points;
     }
