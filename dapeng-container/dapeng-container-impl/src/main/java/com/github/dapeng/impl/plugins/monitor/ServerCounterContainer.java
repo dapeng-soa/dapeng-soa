@@ -79,9 +79,9 @@ public class ServerCounterContainer {
     /**
      * 自旋锁
      */
-    private static final AtomicInteger addCostLock = new AtomicInteger(0);
-    private static final AtomicInteger addReqFlowLock = new AtomicInteger(0);
-    private static final AtomicInteger addRespFlowLock = new AtomicInteger(0);
+    private final AtomicInteger addCostLock = new AtomicInteger(0);
+    private final AtomicInteger addReqFlowLock = new AtomicInteger(0);
+    private final AtomicInteger addRespFlowLock = new AtomicInteger(0);
 
     /**
      * 流量计数器
