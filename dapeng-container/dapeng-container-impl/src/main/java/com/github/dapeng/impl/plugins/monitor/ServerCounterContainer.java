@@ -373,12 +373,11 @@ public class ServerCounterContainer {
         int currentMinuteOfHour = currentMinuteOfHour();
         int oneMinuteBefore = (currentMinuteOfHour == 0) ? 59 : (currentMinuteOfHour - 1);
 
-        Map<ServiceBasicInfo, ServiceProcessData> invocationDatas = Collections.EMPTY_MAP;
+        Map<ServiceBasicInfo, ServiceProcessData> invocationDatas = new HashMap<>(128);
         invocationDatas.putAll(serviceInvocationDatas.get(oneMinuteBefore));
 
-        Map<ServiceBasicInfo, TLNode> elapses = Collections.EMPTY_MAP;
+        Map<ServiceBasicInfo, TLNode> elapses = new HashMap<>(128);
         elapses.putAll(serviceElapses[oneMinuteBefore]);
-
 
         return calcPointsOfLastMinute(invocationDatas, elapses);
     }
