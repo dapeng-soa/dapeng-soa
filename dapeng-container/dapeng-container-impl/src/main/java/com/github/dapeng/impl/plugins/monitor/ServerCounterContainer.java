@@ -379,7 +379,6 @@ public class ServerCounterContainer {
         Map<ServiceBasicInfo, TLNode> elapses = new HashMap<>(128);
         elapses.putAll(serviceElapses[oneMinuteBefore]);
 
-
         return calcPointsOfLastMinute(invocationDatas, elapses);
     }
 
