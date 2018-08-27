@@ -185,27 +185,27 @@ public class SoaSystemEnvProperties {
 
 
     /*---暂时未使用的环境变量名称-------------------------------------*/
-    //private static final String KEY_SOA_SERVICE_IP = "soa.service.ip";
-    //private static final String KEY_SOA_SERVICE_PORT = "soa.service.port";
-    //private static final String KEY_SOA_ZOOKEEPER_KAFKA_HOST = "soa.zookeeper.kafka.host";
-    //private static final String KEY_SOA_CALLER_IP = "soa.caller.ip";
-    //private static final String KEY_SOA_ZOOKEEPER_REGISTRY_HOST = "soa.zookeeper.registry.host";
-    //private static final String KEY_SOA_EVENT_MESSAGE_TOPIC = "soa.event.topic";
+    private static final String KEY_SOA_SERVICE_IP = "soa.service.ip";
+    private static final String KEY_SOA_SERVICE_PORT = "soa.service.port";
+    private static final String KEY_SOA_ZOOKEEPER_KAFKA_HOST = "soa.zookeeper.kafka.host";
+    private static final String KEY_SOA_CALLER_IP = "soa.caller.ip";
+    private static final String KEY_SOA_ZOOKEEPER_REGISTRY_HOST = "soa.zookeeper.registry.host";
+    private static final String KEY_SOA_EVENT_MESSAGE_TOPIC = "soa.event.topic";
     /**
      * 消息总线 定时间隔
      */
-    //private static final String KEY_SOA_EVENTBUS_PERIOD = "soa.eventbus.publish.period";
-    //private static final String KEY_SOA_SERVICE_CALLERFROM = "soa.service.callerfrom";
-    //private static final String KEY_SOA_REMOTING_MODE = "soa.remoting.mode";
+    private static final String KEY_SOA_EVENTBUS_PERIOD = "soa.eventbus.publish.period";
+    private static final String KEY_SOA_SERVICE_CALLERFROM = "soa.service.callerfrom";
+    private static final String KEY_SOA_REMOTING_MODE = "soa.remoting.mode";
 
 
     /*---暂时未使用的环境变量值-------------------------------------*/
-    // public static final String SOA_ZOOKEEPER_REGISTRY_HOST = get(KEY_SOA_ZOOKEEPER_REGISTRY_HOST, SOA_ZOOKEEPER_HOST);
-    //public static final String SOA_ZOOKEEPER_KAFKA_HOST = get(KEY_SOA_ZOOKEEPER_KAFKA_HOST, "127.0.0.1:2181");
-    //public static final String SOA_CALLER_IP = get(KEY_SOA_CALLER_IP, IPUtils.localIp());
-    //public static final String SOA_REMOTING_MODE = get(KEY_SOA_REMOTING_MODE, "remote");
-    //public static final String SOA_SERVICE_CALLERFROM = get(KEY_SOA_SERVICE_CALLERFROM, "unknown");
-    //public static final String SOA_EVENT_MESSAGE_TOPIC = get(KEY_SOA_EVENT_MESSAGE_TOPIC, "");
-    // public static final String SOA_EVENTBUS_PERIOD = get(KEY_SOA_EVENTBUS_PERIOD, "1000");
+    public static final String SOA_ZOOKEEPER_REGISTRY_HOST = get(KEY_SOA_ZOOKEEPER_REGISTRY_HOST, SOA_ZOOKEEPER_HOST);
+    public static final String SOA_ZOOKEEPER_KAFKA_HOST = get(KEY_SOA_ZOOKEEPER_KAFKA_HOST, "127.0.0.1:2181");
+    public static final String SOA_CALLER_IP = get(KEY_SOA_CALLER_IP, IPUtils.localIp());
+    public static final String SOA_REMOTING_MODE = get(KEY_SOA_REMOTING_MODE, "remote");
+    public static final String SOA_SERVICE_CALLERFROM = get(KEY_SOA_SERVICE_CALLERFROM, "unknown");
+    public static final String SOA_EVENT_MESSAGE_TOPIC = get(KEY_SOA_EVENT_MESSAGE_TOPIC, "");
+    public static final String SOA_EVENTBUS_PERIOD = get(KEY_SOA_EVENTBUS_PERIOD, "1000");
 
 }
