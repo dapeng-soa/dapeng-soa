@@ -22,7 +22,7 @@ public class KafkaMsgProducer {
     /**
      * 127.0.0.1:9091,127.0.0.1:9092
      */
-    private String kafkaConnect = SoaSystemEnvProperties.SOA_KAFKA_PORT;
+    private String kafkaConnect = SoaSystemEnvProperties.SOA_KAFKA_HOST;
 
     private Producer<Long, byte[]> producer;
 
