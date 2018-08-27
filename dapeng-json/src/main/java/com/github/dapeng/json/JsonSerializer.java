@@ -47,7 +47,7 @@ public class JsonSerializer implements BeanSerializer<String> {
             TField field = iproto.readFieldBegin();
             if (field.type == TType.STOP) break;
 
-            Field fld = field.id >= optimizedStruct.fields.length  ? null : optimizedStruct.fields[field.id];
+            Field fld = optimizedStruct.fieldMapByTag.get(field.id);
 
             boolean skip = fld == null;
 
@@ -494,7 +494,7 @@ public class JsonSerializer implements BeanSerializer<String> {
             /**
              * 不在该Struct必填字段列表的字段列表
              */
-            for (Field field : current.optimizedStruct.fields) {
+            for (Field field : current.optimizedStruct.fieldMapByTag.values()) {
                 if (field != null && !field.isOptional() && !current.fields4Struct.contains(field.name)) {
                     String fieldName = current.fieldName;
                     String struct = current.optimizedStruct.struct.name;

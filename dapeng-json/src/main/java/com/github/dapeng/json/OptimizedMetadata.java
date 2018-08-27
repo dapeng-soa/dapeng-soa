@@ -56,8 +56,17 @@ public class OptimizedMetadata {
     public static class OptimizedStruct {
         final Struct struct;
 
+        /**
+         *
+         */
         final Map<String, Field> fieldMap = new HashMap<>(128);
-        final Field[] fields;
+        /**
+         * 数组方式， 更高效，需要注意，
+         * 1. 不连续key很大的情况， 例如来了个tag为65546的field
+         * 2. 有些结构体定时的时候没填tag， 结果生成元数据的时候就变成了负数
+         */
+//        final Field[] fields;
+        final Map<Integer, Field> fieldMapByTag = new HashMap<>(128);
 
         public Struct getStruct() {
             return struct;
@@ -65,16 +74,9 @@ public class OptimizedMetadata {
 
         public OptimizedStruct(Struct struct) {
             this.struct = struct;
-            int length = struct.fields.size();
             for (Field f : struct.fields) {
                 this.fieldMap.put(f.name, f);
-                if (f.tag > length) {
-                    length = f.tag;
-                }
-            }
-            fields = new Field[length+1];
-            for (Field f : struct.fields) {
-                fields[f.tag] = f;
+                this.fieldMapByTag.put(f.tag, f);
             }
         }
     }
