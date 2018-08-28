@@ -66,7 +66,7 @@ public class OptimizedMetadata {
          * 2. 有些结构体定时的时候没填tag， 结果生成元数据的时候就变成了负数
          */
 //        final Field[] fields;
-        final Map<Integer, Field> fieldMapByTag = new HashMap<>(128);
+        final Map<Short, Field> fieldMapByTag = new HashMap<>(128);
 
         public Struct getStruct() {
             return struct;
@@ -76,7 +76,7 @@ public class OptimizedMetadata {
             this.struct = struct;
             for (Field f : struct.fields) {
                 this.fieldMap.put(f.name, f);
-                this.fieldMapByTag.put(f.tag, f);
+                this.fieldMapByTag.put((short)f.tag, f);
             }
         }
     }
