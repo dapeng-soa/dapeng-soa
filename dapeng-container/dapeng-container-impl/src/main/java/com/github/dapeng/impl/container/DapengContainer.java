@@ -214,18 +214,24 @@ public class DapengContainer implements Container {
 
         //4.启动Apploader， plugins
         getPlugins().forEach(Plugin::start);
+
         //启动LifeCycle start
-        LifeCycleProcessor.getInstance().onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.START));
+        try {
+            LifeCycleProcessor.getInstance().onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.START));
+        } catch (Throwable ex) {
+            LOGGER.error("Failed to start lifeCycle bean: " + ex.getMessage(), ex);
+        }
 
         // register Filters
         new FilterLoader(this, applicationCls);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.warn("Container graceful shutdown begin.");
-            //1.shutdown LifeCycle onStop
-            LOGGER.warn("begin to call LifeCycleEvent stop ");
-            LifeCycleProcessor.getInstance().onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.STOP));
-
+            try {
+                LifeCycleProcessor.getInstance().onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.STOP));
+            } catch (Throwable ex) {
+                LOGGER.error("Failed to stop lifeCycle bean: " + ex.getMessage(), ex);
+            }
             status = STATUS_SHUTTING;
             // fixme not so graceful
             getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
