@@ -36,13 +36,4 @@ public interface LifeCycleAware {
      */
     default void onConfigChange(LifeCycleEvent event) {
     }
-
-    /**
-     * 实现的接口是否在运行
-     *
-     * @return
-     */
-    boolean isRunning();
-
-
 }

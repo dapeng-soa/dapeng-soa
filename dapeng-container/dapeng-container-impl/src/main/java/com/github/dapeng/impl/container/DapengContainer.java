@@ -139,7 +139,7 @@ public class DapengContainer implements Container {
                 + SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL);
 
         if (!SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL) {
-            return command -> command.run();
+            return Runnable::run;
         } else {
             ThreadPoolExecutor bizExector = (ThreadPoolExecutor) Executors.newFixedThreadPool(SoaSystemEnvProperties.SOA_CORE_POOL_SIZE,
                     new ThreadFactoryBuilder()
