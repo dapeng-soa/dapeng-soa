@@ -106,7 +106,6 @@ class JsonReader implements JsonCallback {
      * 标志是否是最外层object
      */
     boolean inited = true;
-    String currentHeaderName;
     /**
      * onStartField的时候, 记录是否找到该Field. 如果没找到,那么需要skip这个field
      */
@@ -585,7 +584,7 @@ class JsonReader implements JsonCallback {
                 oproto.writeI32(Integer.parseInt(value));
                 break;
             case LONG:
-                oproto.writeI64(Long.valueOf(value));
+                oproto.writeI64(Long.parseLong(value));
                 break;
             case SHORT:
                 oproto.writeI16(Short.parseShort(value));
