@@ -30,9 +30,7 @@ public class LifeCycleProcessor {
     public void onLifecycleEvent(final LifeCycleEvent event) {
         switch (event.getEventEnum()) {
             case START:
-                lifeCycles.forEach(lifeCycleAware -> {
-                    lifeCycleAware.onStart(event);
-                });
+                lifeCycles.forEach(lifeCycleAware -> lifeCycleAware.onStart(event));
                 break;
             case PAUSE:
                 lifeCycles.forEach(lifeCycleAware -> lifeCycleAware.onPause(event));
@@ -44,9 +42,7 @@ public class LifeCycleProcessor {
                 lifeCycles.forEach(lifeCycleAware -> lifeCycleAware.onConfigChange(event));
                 break;
             case STOP:
-                lifeCycles.forEach(lifeCycleAware -> {
-                    lifeCycleAware.onStop(event);
-                });
+                lifeCycles.forEach(lifeCycleAware -> lifeCycleAware.onStop(event));
 
                 break;
             default:
