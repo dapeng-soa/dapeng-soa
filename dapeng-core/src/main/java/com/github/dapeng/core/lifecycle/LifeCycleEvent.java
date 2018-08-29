@@ -8,6 +8,9 @@ package com.github.dapeng.core.lifecycle;
  */
 public class LifeCycleEvent {
     public enum LifeCycleEventEnum {
+        /**
+         * dapeng 容器启动
+         */
         START,
         PAUSE,
         MASTER_CHANGE,
@@ -16,21 +19,33 @@ public class LifeCycleEvent {
     }
 
     /**
-     * 事件发生时附带的一些属性
+     * 事件类型
      */
-    private final Object attachment;
     private final LifeCycleEventEnum eventEnum;
     /**
      * service name
      */
-    private final String service;
+    private String service;
+    /**
+     * 事件发生时附带的一些属性
+     */
+    private Object attachment;
 
     public LifeCycleEvent(final LifeCycleEventEnum eventEnum,
                           final String service,
                           final Object attachment) {
-        this.attachment = attachment;
         this.eventEnum = eventEnum;
         this.service = service;
+        this.attachment = attachment;
+    }
+
+    public LifeCycleEvent(LifeCycleEventEnum eventEnum, Object attachment) {
+        this.eventEnum = eventEnum;
+        this.attachment = attachment;
+    }
+
+    public LifeCycleEvent(LifeCycleEventEnum eventEnum) {
+        this.eventEnum = eventEnum;
     }
 
     public Object getAttachment() {

@@ -62,7 +62,7 @@ public class SpringAppLoader implements Plugin {
 
                 //TODO: 需要构造Application对象
                 Map<String, ServiceInfo> appInfos = toServiceInfos(processorMap);
-                Application application = new DapengApplication(appInfos.values().stream().collect(Collectors.toList()),
+                Application application = new DapengApplication(new ArrayList<>(appInfos.values()),
                         appClassLoader);
 
                 //Start spring context
@@ -77,7 +77,8 @@ public class SpringAppLoader implements Plugin {
                     container.registerAppProcessors(serviceDefinitionMap);
 
                     container.registerAppMap(toApplicationMap(serviceDefinitionMap, application));
-                    container.registerApplication(application); //fire a zk event
+                    //fire a zk event
+                    container.registerApplication(application);
                 }
 
                 LOGGER.info(" ------------ SpringClassLoader: " + ContainerFactory.getContainer().getApplications());
@@ -184,8 +185,7 @@ public class SpringAppLoader implements Plugin {
                 xmlPaths.add(nextElement.toString());
             }
         }
-        Object context = constructor.newInstance(new Object[]{xmlPaths.toArray(new String[0])});
-        return context;
+        return constructor.newInstance(new Object[]{xmlPaths.toArray(new String[0])});
     }
 
 }
