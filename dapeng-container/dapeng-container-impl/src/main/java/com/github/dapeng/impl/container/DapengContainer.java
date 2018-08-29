@@ -214,6 +214,8 @@ public class DapengContainer implements Container {
 
         //4.启动Apploader， plugins
         getPlugins().forEach(Plugin::start);
+        //启动LifeCycle start
+        LifeCycleProcessor.getInstance().onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.START));
 
         // register Filters
         new FilterLoader(this, applicationCls);
@@ -221,6 +223,7 @@ public class DapengContainer implements Container {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.warn("Container graceful shutdown begin.");
             //1.shutdown LifeCycle onStop
+            LOGGER.warn("begin to call LifeCycleEvent stop ");
             LifeCycleProcessor.getInstance().onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.STOP));
 
             status = STATUS_SHUTTING;
