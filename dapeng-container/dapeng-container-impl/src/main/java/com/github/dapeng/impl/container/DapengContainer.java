@@ -6,12 +6,13 @@ import com.github.dapeng.api.Plugin;
 import com.github.dapeng.api.events.AppEvent;
 import com.github.dapeng.api.events.AppEventType;
 import com.github.dapeng.api.healthcheck.DoctorFactory;
-import com.github.dapeng.client.netty.NettyClientFactory;
 import com.github.dapeng.core.Application;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.github.dapeng.core.lifecycle.LifeCycleEvent;
+import com.github.dapeng.core.lifecycle.LifeCycleProcessor;
 import com.github.dapeng.impl.filters.FilterLoader;
 import com.github.dapeng.impl.plugins.*;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
@@ -219,6 +220,9 @@ public class DapengContainer implements Container {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.warn("Container graceful shutdown begin.");
+            //1.shutdown LifeCycle onStop
+            LifeCycleProcessor.getInstance().onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.STOP));
+
             status = STATUS_SHUTTING;
             // fixme not so graceful
             getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
