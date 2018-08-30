@@ -6,7 +6,7 @@ import com.github.dapeng.api.Plugin;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.lifecycle.LifeCycleAware;
-import com.github.dapeng.core.lifecycle.LifeCycleProcessor;
+import com.github.dapeng.impl.LifeCycleProcessor;
 import com.github.dapeng.impl.container.DapengApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
