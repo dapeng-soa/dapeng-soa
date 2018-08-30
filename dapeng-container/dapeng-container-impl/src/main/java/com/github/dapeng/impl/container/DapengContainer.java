@@ -12,7 +12,7 @@ import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.lifecycle.LifeCycleEvent;
-import com.github.dapeng.core.lifecycle.LifeCycleProcessor;
+import com.github.dapeng.impl.LifeCycleProcessor;
 import com.github.dapeng.impl.filters.FilterLoader;
 import com.github.dapeng.impl.plugins.*;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
@@ -216,22 +216,15 @@ public class DapengContainer implements Container {
         getPlugins().forEach(Plugin::start);
 
         //启动LifeCycle start
-        try {
-            LifeCycleProcessor.getInstance().onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.START));
-        } catch (Throwable ex) {
-            LOGGER.error("Failed to start lifeCycle bean: " + ex.getMessage(), ex);
-        }
+        LifeCycleProcessor.getInstance().onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.START));
 
         // register Filters
         new FilterLoader(this, applicationCls);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.warn("Container graceful shutdown begin.");
-            try {
-                LifeCycleProcessor.getInstance().onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.STOP));
-            } catch (Throwable ex) {
-                LOGGER.error("Failed to stop lifeCycle bean: " + ex.getMessage(), ex);
-            }
+            LifeCycleProcessor.getInstance().onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.STOP));
+
             status = STATUS_SHUTTING;
             // fixme not so graceful
             getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
