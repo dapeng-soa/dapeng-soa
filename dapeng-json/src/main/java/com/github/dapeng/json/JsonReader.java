@@ -2,7 +2,6 @@ package com.github.dapeng.json;
 
 
 import com.github.dapeng.core.*;
-import com.github.dapeng.core.helper.SoaHeaderHelper;
 import com.github.dapeng.core.metadata.*;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.*;
@@ -105,7 +104,7 @@ class JsonReader implements JsonCallback {
     /**
      * 标志是否是最外层object
      */
-    boolean inited = true;
+    boolean outsideBody = true;
     /**
      * onStartField的时候, 记录是否找到该Field. 如果没找到,那么需要skip这个field
      */
@@ -193,12 +192,13 @@ class JsonReader implements JsonCallback {
 
     @Override
     public void onStartObject() throws TException {
-        if (inited) {
-            new SoaHeaderSerializer().write(SoaHeaderHelper.buildHeader(
-                    optimizedService.service.namespace + "." + optimizedService.service.name, version, method.name),
-                    new TBinaryProtocol(oproto.getTransport()));
+        if (outsideBody) {
+            //TODO remove
+//            new SoaHeaderSerializer().write(SoaHeaderHelper.buildHeader(
+//                    optimizedService.service.namespace + "." + optimizedService.service.name, version, method.name),
+//                    new TBinaryProtocol(oproto.getTransport()));
 
-            //初始化当前数据节点
+            //TODO 应该在OptimizedStruct中 Op初始化当前数据节点
             DataType initDataType = new DataType();
             initDataType.setKind(DataType.KIND.STRUCT);
             initDataType.qualifiedName = optimizedStruct.struct.name;
@@ -206,7 +206,7 @@ class JsonReader implements JsonCallback {
                     optimizedStruct, optimizedStruct.struct.name);
 
             oproto.writeStructBegin(new TStruct(current.optimizedStruct.struct.name));
-            inited = false;
+            outsideBody = false;
         } else {
             if (!foundField) {
                 skipFieldsStack++;
