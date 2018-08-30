@@ -1,15 +1,22 @@
 package com.github.dapeng.json;
 
+import com.github.dapeng.core.BeanSerializer;
 import com.github.dapeng.core.InvocationContextImpl;
+import com.github.dapeng.core.SoaException;
+import com.github.dapeng.core.SoaHeader;
 import com.github.dapeng.core.enums.CodecProtocol;
+import com.github.dapeng.core.helper.SoaHeaderHelper;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.metadata.Method;
 import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.core.metadata.Struct;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.util.SoaMessageBuilder;
 import com.github.dapeng.util.SoaMessageParser;
+import io.netty.buffer.AbstractByteBufAllocator;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.PreferHeapByteBufAllocator;
 import org.apache.commons.io.IOUtils;
 
@@ -330,19 +337,9 @@ public class JsonSerializerTest {
         invocationContext.methodName(method.name);
         invocationContext.callerMid("JsonCaller");
 
-        final ByteBuf requestBuf = PreferHeapByteBufAllocator.DEFAULT.buffer(8192);
-
-
         JsonSerializer jsonSerializer = new JsonSerializer(optimizedServicee, method, "1.0.0", optimizedStruct);
 
-        SoaMessageBuilder<String> builder = new SoaMessageBuilder();
-
-        jsonSerializer.setRequestByteBuf(requestBuf);
-
-        ByteBuf buf = builder.buffer(requestBuf)
-                .body(json, jsonSerializer)
-                .seqid(10)
-                .build();
+        ByteBuf buf = buildRequestBuf(optimizedServicee.service.name, "1.0.0", method.name, 10, json,  jsonSerializer);
 //        System.out.println("origJson:\n" + json);
 //
 //
@@ -355,11 +352,11 @@ public class JsonSerializerTest {
         SoaMessageParser<String> parser = new SoaMessageParser<>(buf, jsonDecoder);
         parser.parseHeader();
 //        parser.getHeader();
-        parser.parseBody();
+//        parser.parseBody();
 //System.out.println(parser.getHeader());
-//        System.out.println("after enCode and decode:\n" + parser.parseBody().getBody());
+        System.out.println("after enCode and decode:\n" + parser.parseBody().getBody());
 //        System.out.println(desc + " ends=====================");
-        requestBuf.release();
+        buf.release();
         InvocationContextImpl.Factory.removeCurrentInstance();
 
         t1 += middle - begin;
@@ -406,5 +403,29 @@ public class JsonSerializerTest {
 
     private static String loadJson(final String jsonPath) throws IOException {
         return IOUtils.toString(JsonSerializerTest.class.getResource(jsonPath), "UTF-8");
+    }
+
+    private static <REQ> ByteBuf buildRequestBuf(String service, String version, String method, int seqid, REQ request, BeanSerializer<REQ> requestSerializer) throws SoaException {
+        AbstractByteBufAllocator allocator =
+                SoaSystemEnvProperties.SOA_POOLED_BYTEBUF ?
+                        PooledByteBufAllocator.DEFAULT : UnpooledByteBufAllocator.DEFAULT;
+        final ByteBuf requestBuf = allocator.buffer(8192);
+
+        SoaMessageBuilder<REQ> builder = new SoaMessageBuilder<>();
+
+        try {
+            SoaHeader header = SoaHeaderHelper.buildHeader(service, version, method);
+
+            ByteBuf buf = builder.buffer(requestBuf)
+                    .header(header)
+                    .body(request, requestSerializer)
+                    .seqid(seqid)
+                    .build();
+            return buf;
+        } catch (TException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 }
