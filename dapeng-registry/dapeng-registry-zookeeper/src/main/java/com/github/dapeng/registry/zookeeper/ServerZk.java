@@ -2,15 +2,15 @@ package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
+import com.github.dapeng.api.lifecycle.LifecycleProcessorFactory;
 import com.github.dapeng.core.FreqControlRule;
 import com.github.dapeng.core.ServiceFreqControl;
 import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.helper.IPUtils;
+import com.github.dapeng.core.helper.MasterHelper;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.lifecycle.LifeCycleEvent;
-import com.github.dapeng.core.lifecycle.LifeCycleProcessor;
 import com.github.dapeng.registry.RegistryAgent;
-import com.github.dapeng.core.helper.MasterHelper;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
@@ -193,7 +193,7 @@ public class ServerZk extends CommonZk {
                 _isMaster = checkIsMaster(children, MasterHelper.generateKey(context.getService(), context.getVersion()), context.getInstanceInfo());
             }
             //masterChange响应
-            LifeCycleProcessor.getInstance().onLifecycleEvent(
+            LifecycleProcessorFactory.getLifecycleProcessor().onLifecycleEvent(
                     new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.MASTER_CHANGE,
                             context.getService(), _isMaster));
         } catch (KeeperException | InterruptedException e) {
