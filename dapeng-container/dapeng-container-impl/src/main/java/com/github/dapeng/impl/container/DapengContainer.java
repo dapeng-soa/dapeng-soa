@@ -6,13 +6,14 @@ import com.github.dapeng.api.Plugin;
 import com.github.dapeng.api.events.AppEvent;
 import com.github.dapeng.api.events.AppEventType;
 import com.github.dapeng.api.healthcheck.DoctorFactory;
+import com.github.dapeng.api.lifecycle.LifecycleProcessor;
+import com.github.dapeng.api.lifecycle.LifecycleProcessorFactory;
 import com.github.dapeng.core.Application;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.lifecycle.LifeCycleEvent;
-import com.github.dapeng.impl.LifeCycleProcessor;
 import com.github.dapeng.impl.filters.FilterLoader;
 import com.github.dapeng.impl.plugins.*;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
@@ -26,7 +27,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.*;
 
 public class DapengContainer implements Container {
@@ -184,6 +188,7 @@ public class DapengContainer implements Container {
         LOGGER.info(getClass().getSimpleName() + "::startup begin");
         status = STATUS_CREATING;
         DoctorFactory.createDoctor(this.getClass().getClassLoader());
+        LifecycleProcessorFactory.createLifecycleProcessor(this.getClass().getClassLoader());
         //3. 初始化appLoader,dapengPlugin 应该用serviceLoader的方式去加载
         Plugin springAppLoader = new SpringAppLoader(this, applicationCls);
         Plugin zookeeperPlugin = new ZookeeperRegistryPlugin(this);
@@ -215,15 +220,16 @@ public class DapengContainer implements Container {
         //4.启动Apploader， plugins
         getPlugins().forEach(Plugin::start);
 
+        final LifecycleProcessor lifecycleProcessor = LifecycleProcessorFactory.getLifecycleProcessor();
         //启动LifeCycle start
-        LifeCycleProcessor.getInstance().onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.START));
+        lifecycleProcessor.onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.START));
 
         // register Filters
         new FilterLoader(this, applicationCls);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.warn("Container graceful shutdown begin.");
-            LifeCycleProcessor.getInstance().onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.STOP));
+            lifecycleProcessor.onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.STOP));
 
             status = STATUS_SHUTTING;
             // fixme not so graceful
