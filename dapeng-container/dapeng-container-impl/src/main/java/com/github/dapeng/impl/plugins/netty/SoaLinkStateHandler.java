@@ -33,10 +33,13 @@ public class SoaLinkStateHandler extends ChannelDuplexHandler {
         try {
             long requestFlow = (long) ((ByteBuf) msg).readableBytes();
             counterContainer.addRequestFlow(requestFlow);
+        } catch (Throwable e) {
+            LOGGER.error(e.getMessage(), e);
         } finally {
             ctx.fireChannelRead(msg);
         }
     }
+
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {

@@ -123,7 +123,7 @@ public class DumpUtil {
             return msg;
         }
 
-        msg = msg.indexOf("\r\n") != -1 ? msg.replaceAll("\r\n", "") : msg;
+//        msg = msg.indexOf("\r\n") != -1 ? msg.replaceAll("\r\n", "") : msg;
 
         int len = msg.length();
         int max_len = 128;

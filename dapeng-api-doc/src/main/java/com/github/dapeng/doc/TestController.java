@@ -8,6 +8,7 @@ import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.doc.cache.ServiceCache;
+import com.github.dapeng.json.OptimizedMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +51,7 @@ public class TestController {
         String versionName = req.getParameter("version");
         String methodName = req.getParameter("methodName");
 
-        Service service = serviceCache.getService(serviceName, versionName);
+        OptimizedMetadata.OptimizedService service = serviceCache.getService(serviceName, versionName);
 
         InvocationContext invocationCtx = InvocationContextImpl.Factory.createNewInstance();
         invocationCtx.sessionTid(DapengUtil.generateTid());
