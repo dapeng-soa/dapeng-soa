@@ -1,8 +1,10 @@
 package com.github.dapeng.impl.filters.slow.service;
 
+import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.text.SimpleDateFormat;
 import java.time.Clock;
@@ -75,6 +77,7 @@ public class SlowServiceCheckTaskManager {
 //            if (true) {
                 final StackTraceElement[] stackElements = task.currentThread.getStackTrace();
                 if (stackElements != null && stackElements.length > 0) {
+                    MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID,task.sessionTid.map(DapengUtil::longToHexStr).orElse("0"));
                     final StringBuilder builder = new StringBuilder(task.toString());
                     builder.append("--[" + currentTimeAsString + "]:task info:[" + task.serviceName + ":" + task.methodName + ":" + task.versionName + "]").append("\n");
 
