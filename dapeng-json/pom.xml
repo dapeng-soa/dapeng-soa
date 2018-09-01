@@ -11,7 +11,6 @@
 
     <artifactId>dapeng-json</artifactId>
 
-
     <dependencies>
         <dependency>
             <groupId>com.github.dapeng</groupId>

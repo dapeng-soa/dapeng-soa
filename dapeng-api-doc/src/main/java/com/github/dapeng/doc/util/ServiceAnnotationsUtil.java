@@ -5,6 +5,7 @@ import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.doc.dto.EventDto;
 import com.github.dapeng.doc.dto.EventVo;
 import com.github.dapeng.doc.properties.ServiceConstants;
+import com.github.dapeng.json.OptimizedMetadata;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -24,11 +25,12 @@ public class ServiceAnnotationsUtil {
      * @param services
      * @return
      */
-    public static Map<String, Collection<Service>> groupingServices(Collection<Service> services) {
+    public static Map<String, Collection<Service>> groupingServices(Collection<OptimizedMetadata.OptimizedService> services) {
         Map<String, Collection<Service>> groupedServices = new HashMap<>(16);
         List<Service> groupedServiceList = new ArrayList<>();
-        Collection<Service> tempServices = new ArrayList<>(services);
-        services.forEach(service -> {
+        Collection<Service> tempServices = new ArrayList<>(services.stream().map(OptimizedMetadata.OptimizedService::getService).collect(Collectors.toList()));
+        services.forEach(optimizedService -> {
+            Service service = optimizedService.getService();
             if (null != service.annotations) {
                 service.annotations.stream().filter(x -> x.key.equals(ServiceConstants.SERVICE_GROUP_KEY))
                         .collect(Collectors.toList())

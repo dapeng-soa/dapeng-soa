@@ -2764,7 +2764,7 @@
  创建修正单请求体
 </doc>
             <fields>
-                <field tag="-1" name="itemReceiveList" optional="false" privacy="false">
+                <field tag="1" name="itemReceiveList" optional="false" privacy="false">
                     <dataType>
                         <kind>LIST</kind>
                         <valueType>
@@ -4174,7 +4174,7 @@
         </struct>
         <struct namespace="com.today.api.purchase.response" name="CreateStockOrderResponse">
             <fields>
-                <field tag="-1" name="stockOrderId" optional="false" privacy="false">
+                <field tag="1" name="stockOrderId" optional="false" privacy="false">
                     <dataType>
                         <kind>LONG</kind>
                     </dataType>

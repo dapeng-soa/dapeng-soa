@@ -163,6 +163,19 @@ public class ServerCounterContainer {
         init();
     }
 
+    private void init() {
+        for (int i = 0; i < reqFlows.length; i++) {
+            reqFlows[i] = new TLNode(addReqFlowLock);
+            respFlows[i] = new TLNode(addRespFlowLock);
+            serviceElapses[i] = new HashMap<>(1024);
+            serviceInvocationDatas.put(i, new ConcurrentHashMap<>(1024));
+        }
+
+        if (MONITOR_ENABLE) {
+            initThreads();
+        }
+    }
+
     public void increaseServiceCall(ServiceBasicInfo basicInfo, boolean isSucceed) {
         Integer currentMinute = currentMinuteOfHour();
         ServiceProcessData serviceProcessData = serviceInvocationDatas.get(currentMinute).get(basicInfo);
@@ -269,19 +282,6 @@ public class ServerCounterContainer {
 
     public String getCurrentChannelStatus() {
         return activeChannel.get() + "/" + inactiveChannel.get() + "/" + totalChannel;
-    }
-
-    private void init() {
-        for (int i = 0; i < reqFlows.length; i++) {
-            reqFlows[i] = new TLNode(addReqFlowLock);
-            respFlows[i] = new TLNode(addRespFlowLock);
-            serviceElapses[i] = new HashMap<>(1024);
-            serviceInvocationDatas.put(i, new ConcurrentHashMap<>(1024));
-        }
-
-        if (MONITOR_ENABLE) {
-            initThreads();
-        }
     }
 
     /**
