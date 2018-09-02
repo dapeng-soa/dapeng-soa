@@ -1,14 +1,15 @@
 package com.github.dapeng.client.netty;
 
-import com.github.dapeng.core.SoaConnectionPool;
-import com.github.dapeng.core.SoaConnectionPoolFactory;
-import com.github.dapeng.core.SoaException;
+import com.github.dapeng.core.*;
+import com.github.dapeng.core.helper.DapengUtil;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.metadata.Method;
 import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.json.JsonSerializer;
 import com.github.dapeng.util.DumpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.util.List;
 import java.util.ServiceLoader;
@@ -58,31 +59,41 @@ public class JsonPost {
                 .collect(Collectors.toList());
 
         if (targetMethods.isEmpty()) {
-            return "method:" + methodName + " for service:"
-                    + clientInfo.serviceName + " not found";
+            return String.format("{\"responseCode\":\"%s\", \"responseMsg\":\"%s\", \"success\":\"{}\", \"status\":0}",
+                    SoaCode.ClientNoMatchedMethod,
+                    "method:" + methodName + " for service:" + clientInfo.serviceName + " not found");
         }
 
-        Method method = targetMethods.get(0);
+        try {
+            String sessionTid = InvocationContextImpl.Factory.currentInstance().sessionTid().map(DapengUtil::longToHexStr).orElse("0");
+            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
+
+            Method method = targetMethods.get(0);
 
 
-        JsonSerializer jsonEncoder = new JsonSerializer(service, method, clientInfo.version, method.request);
-        JsonSerializer jsonDecoder = new JsonSerializer(service, method, clientInfo.version, method.response);
+            JsonSerializer jsonEncoder = new JsonSerializer(service, method, clientInfo.version, method.request);
+            JsonSerializer jsonDecoder = new JsonSerializer(service, method, clientInfo.version, method.response);
 
-        final long beginTime = System.currentTimeMillis();
+            final long beginTime = System.currentTimeMillis();
 
-        LOGGER.info("soa-request: service:[" + service.namespace + "." + service.name
-                + ":" + service.meta.version + "], method:" + methodName + ", param:"
-                + jsonParameter);
+            LOGGER.info("soa-request: service:[" + service.namespace + "." + service.name
+                    + ":" + service.meta.version + "], method:" + methodName + ", param:"
+                    + jsonParameter);
 
-        String jsonResponse = post(clientInfo.serviceName, clientInfo.version,
-                methodName, jsonParameter, jsonEncoder, jsonDecoder);
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("soa-response: " + jsonResponse + " cost:" + (System.currentTimeMillis() - beginTime) + "ms");
-        } else {
-            LOGGER.info("soa-response: " + DumpUtil.formatToString(jsonResponse) + (System.currentTimeMillis() - beginTime) + "ms");
+            String jsonResponse = post(clientInfo.serviceName, clientInfo.version,
+                    methodName, jsonParameter, jsonEncoder, jsonDecoder);
+            //MDC will be remove by client filter
+            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("soa-response: " + jsonResponse + " cost:" + (System.currentTimeMillis() - beginTime) + "ms");
+            } else {
+                LOGGER.info("soa-response: " + DumpUtil.formatToString(jsonResponse) + " cost:" + (System.currentTimeMillis() - beginTime) + "ms");
+            }
+
+            return jsonResponse;
+        } finally {
+            MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         }
-
-        return jsonResponse;
     }
 
 
@@ -97,11 +108,10 @@ public class JsonPost {
 
         try {
             String result = this.pool.send(serviceName, version, method, requestJson, jsonEncoder, jsonDecoder);
-
             jsonResponse = result.equals("{}") ? "{\"status\":1}" : result.substring(0, result.lastIndexOf('}')) + ",\"status\":1}";
 
         } catch (SoaException e) {
-            if (e.getCode().startsWith("Err-Core")) {
+            if (DapengUtil.isDapengCoreException(e)) {
                 LOGGER.error(e.getMsg(), e);
             } else {
                 LOGGER.error(e.getMsg());

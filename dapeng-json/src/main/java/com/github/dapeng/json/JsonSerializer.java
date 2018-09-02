@@ -14,9 +14,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.github.dapeng.core.enums.CodecProtocol.CompressedBinary;
+import static com.github.dapeng.core.helper.IPUtils.transferIp;
 import static com.github.dapeng.util.MetaDataUtil.*;
 
 /**
+ * todo not support header.
+ *
  * @author ever
  */
 public class JsonSerializer implements BeanSerializer<String> {
@@ -299,6 +302,8 @@ public class JsonSerializer implements BeanSerializer<String> {
             }
         }
 
+        TJsonCompressProtocolCodec jsonCompressProtocolCodec = new TJsonCompressProtocolCodec();
+
         //当前处理数据节点
         StackNode current;
         String currentHeaderName;
@@ -488,7 +493,7 @@ public class JsonSerializer implements BeanSerializer<String> {
             if (!mandatoryMissFileds.isEmpty()) {
                 String fieldName = current.fieldName;
                 String struct = current.struct.name;
-                TException ex = new TException("JsonError, please check:"
+                SoaException ex = new SoaException(SoaCode.ReqFieldNull.getCode(), "JsonError, please check:"
                         + struct + "." + fieldName
                         + ", struct mandatory fields missing:"
                         + mandatoryMissFileds.stream().map(field -> field.name + ", ").collect(Collectors.toList()));
@@ -793,7 +798,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     //reset writerIndex, skip the field
                     requestByteBuf.writerIndex(current.byteBufPositionBefore);
                     if (invocationCtx.codecProtocol() == CompressedBinary) {
-                        ((TCompactProtocol)oproto).resetLastFieldId();
+                        ((TCompactProtocol) oproto).resetLastFieldId();
                     }
                     break;
                 default:
@@ -911,7 +916,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     break;
                 case CompressedBinary:
                 default:
-                    TJsonCompressProtocolUtil.writeMapBegin(keyType, valueType, requestByteBuf);
+                    jsonCompressProtocolCodec.writeMapBegin(keyType, valueType, requestByteBuf);
                     break;
             }
         }
@@ -923,7 +928,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     break;
                 case CompressedBinary:
                 default:
-                    TJsonCompressProtocolUtil.reWriteMapBegin(size, requestByteBuf);
+                    jsonCompressProtocolCodec.reWriteMapBegin(size, requestByteBuf);
                     break;
             }
         }
@@ -942,7 +947,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                     break;
                 case CompressedBinary:
                 default:
-                    TJsonCompressProtocolUtil.writeCollectionBegin(valueType, requestByteBuf);
+                    jsonCompressProtocolCodec.writeCollectionBegin(valueType, requestByteBuf);
                     break;
             }
         }
@@ -954,14 +959,14 @@ public class JsonSerializer implements BeanSerializer<String> {
                     break;
                 case CompressedBinary:
                 default:
-                    TJsonCompressProtocolUtil.reWriteCollectionBegin(size, requestByteBuf);
+                    jsonCompressProtocolCodec.reWriteCollectionBegin(size, requestByteBuf);
                     break;
             }
         }
 
         private void fillStringToInvocationCtx(String value) {
             if ("calleeIp".equals(currentHeaderName)) {
-                invocationCtx.calleeIp(value);
+                invocationCtx.calleeIp(transferIp(value));
             } else if ("callerMid".equals(currentHeaderName)) {
                 invocationCtx.callerMid(value);
             } else {
@@ -1088,7 +1093,7 @@ public class JsonSerializer implements BeanSerializer<String> {
  *
  * @author ever
  */
-class TJsonCompressProtocolUtil {
+class TJsonCompressProtocolCodec {
 
     /**
      * Invoked before we get the actually collection size.
@@ -1097,7 +1102,7 @@ class TJsonCompressProtocolUtil {
      * @param elemType type of the collection Element
      * @throws TException
      */
-    public static void writeCollectionBegin(byte elemType, ByteBuf byteBuf) throws TException {
+    public void writeCollectionBegin(byte elemType, ByteBuf byteBuf) throws TException {
         writeByteDirect((byte) (0xf0 | TCompactProtocol.ttypeToCompactType[elemType]), byteBuf);
         //write 3 byte with 0x0 to hold the collectionSize
         writeFixedLengthVarint32(3, byteBuf);
@@ -1110,7 +1115,7 @@ class TJsonCompressProtocolUtil {
      * @param byteBuf
      * @throws TException
      */
-    public static void reWriteCollectionBegin(int size, ByteBuf byteBuf) throws TException {
+    public void reWriteCollectionBegin(int size, ByteBuf byteBuf) throws TException {
         //Actually we should only change the collection length.
         byteBuf.writerIndex(byteBuf.writerIndex() + 1);
         reWriteVarint32(size, byteBuf);
@@ -1122,7 +1127,7 @@ class TJsonCompressProtocolUtil {
      *
      * @throws TException
      */
-    public static void writeMapBegin(byte keyType, byte valueType, ByteBuf byteBuf) throws TException {
+    public void writeMapBegin(byte keyType, byte valueType, ByteBuf byteBuf) throws TException {
         /**
          * origin implementation:
          *  if (map.size == 0) {
@@ -1147,7 +1152,7 @@ class TJsonCompressProtocolUtil {
      * @param byteBuf byteBuf which has reset the writerIndex to before collection
      * @throws TException
      */
-    public static void reWriteMapBegin(int size, ByteBuf byteBuf) throws TException {
+    public void reWriteMapBegin(int size, ByteBuf byteBuf) throws TException {
         if (size > 0) {
             reWriteVarint32(size, byteBuf);
         } else {
@@ -1155,9 +1160,9 @@ class TJsonCompressProtocolUtil {
         }
     }
 
-    private static byte[] byteDirectBuffer = new byte[1];
+    private byte[] byteDirectBuffer = new byte[1];
 
-    private static void writeByteDirect(byte b, ByteBuf byteBuf) throws TException {
+    private void writeByteDirect(byte b, ByteBuf byteBuf) throws TException {
         byteDirectBuffer[0] = b;
         byteBuf.writeBytes(byteDirectBuffer);
     }
@@ -1169,7 +1174,7 @@ class TJsonCompressProtocolUtil {
      * @param byteBuf
      * @throws TException
      */
-    private static void writeFixedLengthVarint32(int count, ByteBuf byteBuf) throws TException {
+    private void writeFixedLengthVarint32(int count, ByteBuf byteBuf) throws TException {
         for (int i = 0; i < count; i++) {
             writeByteDirect((byte) 0, byteBuf);
         }
@@ -1183,9 +1188,9 @@ class TJsonCompressProtocolUtil {
      * n = 65537(1 0000 0000 0000 0001) result = 0x81 0x80 0x04
      * Write an i32 as a varint. Always results in 3 bytes on the wire.
      */
-    private static byte[] i32buf = new byte[3];
+    private byte[] i32buf = new byte[3];
 
-    private static void reWriteVarint32(int n, ByteBuf byteBuf) throws TException {
+    private void reWriteVarint32(int n, ByteBuf byteBuf) throws TException {
         int idx = 0;
         while (true) {
             if (idx >= i32buf.length) {

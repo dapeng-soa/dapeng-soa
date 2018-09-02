@@ -7,11 +7,10 @@ import com.github.dapeng.core.TransactionContext;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.filter.FilterChain;
 import com.github.dapeng.core.filter.FilterContext;
+import com.github.dapeng.core.helper.DapengUtil;
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.github.dapeng.impl.plugins.netty.NettyChannelKeys;
 import com.github.dapeng.org.apache.thrift.TException;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.Attribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -37,13 +36,12 @@ public class LogFilter implements Filter {
 
         try {
             // 容器的IO线程MDC以及应用的MDC(不同classLoader)设置
-            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().orElse("0"));
-            switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().orElse("0"));
+            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
+            switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
 
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.seqId() + "]");
             }
-
 
             SoaHeader soaHeader = transactionContext.getHeader();
 
@@ -53,7 +51,7 @@ public class LogFilter implements Filter {
                     + "]:method[" + soaHeader.getMethodName() + "]"
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "") + " "
                     + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "") + " "
-                    + (soaHeader.getUserIp().isPresent() ? " userIp:" + soaHeader.getUserIp().get() : "");
+                    + (soaHeader.getUserIp().isPresent() ? " userIp:" + IPUtils.transferIp(soaHeader.getUserIp().get()) : "");
 
 
             application.info(this.getClass(), infoLog);
@@ -66,7 +64,7 @@ public class LogFilter implements Filter {
                 boolean isAsync = (Boolean) filterContext.getAttribute("isAsync");
                 if (isAsync) {
                     MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
-                    switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), transactionContext.sessionTid().orElse("0"));
+                    switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
                 }
             }
         }
@@ -75,15 +73,14 @@ public class LogFilter implements Filter {
     @Override
     public void onExit(FilterContext filterContext, FilterChain prev) {
         TransactionContext transactionContext = (TransactionContext) filterContext.getAttribute("context");
-        ChannelHandlerContext channelHandlerContext = (ChannelHandlerContext) filterContext.getAttribute("channelHandlerContext");
         Application application = (Application) filterContext.getAttribute("application");
 
         boolean isAsync = (Boolean) filterContext.getAttribute("isAsync");
 
         try {
             if (isAsync) {
-                MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().orElse("0"));
-                switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().orElse("0"));
+                MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
+                switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
             }
 
             if (LOGGER.isTraceEnabled()) {
@@ -95,23 +92,7 @@ public class LogFilter implements Filter {
 
             SoaHeader soaHeader = transactionContext.getHeader();
 
-            /**
-             * use AttributeMap to share common data on different  ChannelHandlers
-             */
-            Attribute<Map<Integer, Long>> requestTimestampAttr = channelHandlerContext.channel().attr(NettyChannelKeys.REQUEST_TIMESTAMP);
-            Map<Integer, Long> requestTimestampMap = requestTimestampAttr.get();
-
-            Long requestTimestamp = 0L;
-            if (requestTimestampMap != null) {
-                //each per request take the time then remove it
-                requestTimestamp = requestTimestampMap.get(transactionContext.seqId());
-
-                if (requestTimestamp == null) {
-                    requestTimestamp = 0L;
-                }
-            } else {
-                LOGGER.warn(getClass().getSimpleName() + "::encode no requestTimestampMap found!");
-            }
+            Long requestTimestamp = (Long)transactionContext.getAttribute("dapeng_request_timestamp");
 
             Long cost = System.currentTimeMillis() - requestTimestamp;
             String infoLog = "response[seqId:" + transactionContext.seqId() + ", respCode:" + soaHeader.getRespCode().get() + "]:"
@@ -119,8 +100,8 @@ public class LogFilter implements Filter {
                     + "]:version[" + soaHeader.getVersionName()
                     + "]:method[" + soaHeader.getMethodName() + "]"
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                    + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : ""
-                    + " cost:" + cost + "ms");
+                    + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "")
+                    + " cost:" + cost + "ms";
             soaHeader.setCalleeTime1(cost.intValue());
             application.info(this.getClass(), infoLog);
         } finally {
@@ -129,7 +110,7 @@ public class LogFilter implements Filter {
             } catch (TException e) {
                 LOGGER.error(e.getMessage(), e);
             } finally {
-                switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), transactionContext.sessionTid().orElse("0"));
+                switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
 
                 MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
             }

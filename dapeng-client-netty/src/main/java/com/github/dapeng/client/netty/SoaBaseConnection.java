@@ -3,6 +3,7 @@ package com.github.dapeng.client.netty;
 import com.github.dapeng.client.filter.LogFilter;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.filter.*;
+import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.util.DumpUtil;
@@ -169,14 +170,14 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     } catch (Exception e) {
                         LOGGER.error(e.getMessage(), e);
                         Result<RESP> result = new Result<>(null,
-                                new SoaException(SoaCode.UnKnown, SoaCode.UnKnown.getMsg()));
+                                new SoaException(SoaCode.ClientUnKnown, SoaCode.ClientUnKnown.getMsg()));
                         ctx.setAttribute("result", result);
                         onExit(ctx, getPrevChain(ctx));
                         return;
                     }
 
                     responseBufFuture.whenComplete((realResult, ex) -> {
-                        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().orElse("0"));
+                        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
                         if (ex != null) {
                             SoaException soaException = convertToSoaException(ex);
                             Result<RESP> result = new Result<>(null, soaException);
@@ -268,7 +269,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
         if (ex instanceof SoaException) {
             soaException = (SoaException) ex;
         } else {
-            soaException = new SoaException(SoaCode.UnKnown.getCode(), ex.getMessage());
+            soaException = new SoaException(SoaCode.ClientUnKnown.getCode(), ex.getMessage());
         }
         return soaException;
     }
@@ -292,7 +293,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
     private <RESP> Result<RESP> processResponse(ByteBuf responseBuf, BeanSerializer<RESP> responseSerializer) {
         if (responseBuf == null) {
-            return new Result<>(null, new SoaException(SoaCode.TimeOut));
+            return new Result<>(null, new SoaException(SoaCode.ReqTimeOut));
         }
         final int readerIndex = responseBuf.readerIndex();
         try {
@@ -309,7 +310,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
             } else {
                 return new Result<>(null, new SoaException(
                         lastInfo.responseCode(),
-                        (respHeader.getRespMessage().isPresent()) ? respHeader.getRespMessage().get() : SoaCode.UnKnown.getMsg()));
+                        (respHeader.getRespMessage().isPresent()) ? respHeader.getRespMessage().get() : SoaCode.ClientUnKnown.getMsg()));
             }
 
         } catch (SoaException ex) {
@@ -318,7 +319,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
             LOGGER.error("通讯包解析出错:\n" + ex.getMessage(), ex);
             LOGGER.error(DumpUtil.dumpToStr(responseBuf.readerIndex(readerIndex)));
             return new Result<>(null,
-                    new SoaException(SoaCode.UnKnown, "通讯包解析出错"));
+                    new SoaException(SoaCode.RespDecodeError, SoaCode.RespDecodeError.getCode()));
         } finally {
             if (responseBuf != null) {
                 responseBuf.release();
@@ -365,13 +366,13 @@ public abstract class SoaBaseConnection implements SoaConnection {
      */
     private void fillLastInvocationInfo(InvocationInfoImpl info, SoaHeader respHeader) {
         InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-        info.calleeTid(respHeader.getCallerTid().orElse(""));
-        info.calleeIp(respHeader.getCalleeIp().orElse(""));
+        info.calleeTid(respHeader.getCallerTid().orElse(0L));
+        info.calleeIp(respHeader.getCalleeIp().orElse(0));
         info.calleePort(respHeader.getCalleePort().orElse(0));
         info.calleeMid(respHeader.getCalleeMid().orElse(""));
         info.calleeTime1(respHeader.getCalleeTime1().orElse(0));
         info.calleeTime2(respHeader.getCalleeTime2().orElse(0));
         info.loadBalanceStrategy(invocationContext.loadBalanceStrategy().orElse(null));
-        info.responseCode(respHeader.getRespCode().orElse(SoaCode.UnKnown.getCode()));
+        info.responseCode(respHeader.getRespCode().orElse(SoaCode.ClientUnKnown.getCode()));
     }
 }

@@ -2,6 +2,7 @@ package com.github.dapeng.client.netty;
 
 import com.github.dapeng.core.SoaConnection;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -9,6 +10,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * @date 2017/12/25
  */
 public class SubPool {
+
+    static final int MAX = 1;
 
     private final ReentrantLock connectionLock = new ReentrantLock();
 
@@ -18,25 +21,37 @@ public class SubPool {
     /**
      * connection that used by rpcClients, such as java, scala, php..
      */
-    private SoaConnection soaConnection;
+    private SoaConnection[] soaConnections;
+    private AtomicInteger index = new AtomicInteger(0);
 
     SubPool(String ip, int port) {
         this.ip = ip;
         this.port = port;
+
+        soaConnections = new SoaConnection[MAX];
+        for(int i = 0; i < MAX; i++) {
+            soaConnections[i] = createConnection();
+        }
     }
 
-    public SoaConnection getConnection() {
-
-        if (soaConnection != null) return soaConnection;
+    private SoaConnection createConnection(){
         try {
             connectionLock.lock();
-            if (soaConnection == null) {
-                soaConnection = new SoaConnectionImpl(ip, port, this);
-            }
+            return new SoaConnectionImpl(ip, port, this);
         } finally {
             connectionLock.unlock();
         }
-        return soaConnection;
+    }
+
+    public SoaConnection getConnection() {
+        int index = this.index.getAndIncrement();
+        if(index < 0) {
+            synchronized (this){
+                this.index.set(0);
+                index = 0;
+            }
+        }
+        return soaConnections[index%MAX];
     }
 
 //    public void removeConnection() {
