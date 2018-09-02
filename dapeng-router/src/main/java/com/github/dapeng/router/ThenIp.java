@@ -1,5 +1,7 @@
 package com.github.dapeng.router;
 
+import com.github.dapeng.core.helper.IPUtils;
+
 /**
  * <p>
  * 路由匹配成功后，导向的具体 服务ip 实体类
@@ -26,7 +28,7 @@ public class ThenIp {
     public String toString() {
         return "ThenIp{" +
                 "not=" + not +
-                ", ip=" + ip +
+                ", ip=" + IPUtils.transferIp(ip) +
                 ", mask=" + mask +
                 '}';
     }

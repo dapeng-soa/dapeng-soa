@@ -23,7 +23,7 @@ public class SoaHeaderHelper {
 
         if (context.getHeader() == null) {
             SoaHeader header = new SoaHeader();
-            ((TransactionContextImpl)context).setHeader(header);
+            ((TransactionContextImpl) context).setHeader(header);
         }
 
         if (setDefaultIfEmpty) {
@@ -56,8 +56,11 @@ public class SoaHeaderHelper {
         header.setVersionName(version);
         header.setMethodName(methodName);
 
-        header.setCallerIp(IPUtils.localIp());
-        header.setCallerTid(Optional.ofNullable(invocationContext.callerTid()));
+        header.setCallerIp(IPUtils.localIpAsInt());
+
+        if (invocationContext.callerTid() != 0) {
+            header.setCallerTid(Optional.of(invocationContext.callerTid()));
+        }
 
 
         /**
@@ -92,7 +95,7 @@ public class SoaHeaderHelper {
         }
         if (invocationContext.sessionTid().isPresent()) {
             header.setSessionTid(invocationContext.sessionTid());
-        }
+    }
 
         /**
          * 如果容器内调用其它服务, 将原始的调用者信息传递

@@ -1,5 +1,6 @@
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.RuntimeInstance;
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
 import com.github.dapeng.router.exception.ParsingException;
@@ -392,7 +393,7 @@ public class TestRouterRuntimeList {
 
 
 //        ctx.calleeIp("192.168.1.97   ");
-        ctx.calleeIp("192.168.1.101   ");
+        ctx.calleeIp(IPUtils.transferIp("192.168.1.101"));
         List<RuntimeInstance> prepare = prepare(ctx, routes);
 
 
@@ -429,11 +430,9 @@ public class TestRouterRuntimeList {
         builder.append("method match 'register' => ip'192.168.10.12'" + "\r\n");
 
 
-
-
         List<Route> routes = RoutesExecutor.parseAll(builder.toString());
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-
+        ctx.methodName("register");
 
         List<RuntimeInstance> prepare = prepare(ctx, routes);
 
@@ -462,6 +461,45 @@ public class TestRouterRuntimeList {
 
 
         List<RuntimeInstance> expectInstances = new ArrayList<>();
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+    }
+
+
+    /**
+     * 测试 cookies 路由解析
+     */
+    @Test
+    public void testCookieRouter() {
+        String pattern = "cookie_storeId match 11866600  => ip\"192.168.1.101\"\n" +
+                "otherwise => ~ip\"192.168.10.126\" ";
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.setCookie("storeId", "11866600");
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        expectInstances.add(runtimeInstance1);
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+    }
+
+
+    /**
+     * 测试路由解析 没有空格区分 ,测试 cookies
+     */
+    @Test
+    public void testErrorRouteLexer() {
+        String pattern = "cookie_storeId match 11866600 ; method match  \"updateOrderMemberId\" => ip\"192.168.1.101\"\n" +
+                "otherwise => ~ip\"192.168.10.126\" ";
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.setCookie("storeId", "11866600");
+        ctx.methodName("updateOrderMemberId");
+
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        expectInstances.add(runtimeInstance1);
         Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
 

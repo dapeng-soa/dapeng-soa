@@ -7,7 +7,6 @@ import java.io.ByteArrayOutputStream;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- *
  * @author lihuimin
  * @date 2017/12/21
  */
@@ -34,7 +33,7 @@ public class DumpUtil {
         StringBuilder sb = new StringBuilder();
 
         // XX XX XX XX XX XX XX XX  XX XX XX XX XX XX XX XX  ASCII....
-        sb.append("=======[\n");
+        sb.append("=======[" + availabe + "]\n");
         int i = 0;
         for (; i < availabe; i++) {
             byte b = buffer.getByte(readerIndex + i);
@@ -78,18 +77,45 @@ public class DumpUtil {
      */
     public static String dumpThreadPool(ThreadPoolExecutor poolExecutor) {
         StringBuilder sb = new StringBuilder();
-        sb.append(" shutdown / terminating / terminated[")
-                .append(poolExecutor.isShutdown()).append(" / ")
-                .append(poolExecutor.isTerminating()).append(" / ")
+        sb.append(" shutdown/terminating/terminated[")
+                .append(poolExecutor.isShutdown()).append("/")
+                .append(poolExecutor.isTerminating()).append("/")
                 .append(poolExecutor.isTerminated()).append("]");
-        sb.append(" -activeCount / poolSize[")
-                .append(poolExecutor.getActiveCount()).append(" / ")
+        sb.append(" -activeCount/poolSize[")
+                .append(poolExecutor.getActiveCount()).append("/")
                 .append(poolExecutor.getPoolSize()).append("]");
-        sb.append(" -waitingTasks / completeTasks / totalTasks[")
-                .append(poolExecutor.getQueue().size()).append(" / ")
-                .append(poolExecutor.getCompletedTaskCount()).append(" / ")
+        sb.append(" -waitingTasks/completeTasks/totalTasks[")
+                .append(poolExecutor.getQueue().size()).append("/")
+                .append(poolExecutor.getCompletedTaskCount()).append("/")
                 .append(poolExecutor.getTaskCount()).append("]");
         return sb.toString();
+    }
+
+    /**
+     * transfer hex string to bytes
+     * @param hex
+     * @return
+     */
+    public static byte[] hexStr2bytes(String hex) {
+        int length = hex.length()/2;
+        // must be multiple of 2
+        assert hex.length() % 2 == 0;
+        byte[] result = new byte[length];
+        for (int i = 0, j=0; j < length; j+=2, i+=4) {
+            if (i + 4 > hex.length()) {
+                String _2bytes = hex.substring(i, i+2) + "00";
+                int anInt = Integer.parseInt(_2bytes, 16);
+                result[j] = (byte)((anInt >> 8) & 0xff);
+            } else {
+                String _2bytes = hex.substring(i, i+4);
+                int anInt = Integer.parseInt(_2bytes, 16);
+                result[j] = (byte)((anInt >> 8) & 0xff);
+                result[j+1] = (byte)(anInt & 0xff);
+            }
+
+        }
+
+        return result;
     }
 
     public static String formatToString(String msg) {
