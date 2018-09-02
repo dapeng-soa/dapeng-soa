@@ -13,9 +13,9 @@ public class LifecycleProcessorFactory {
     public static void createLifecycleProcessor(ClassLoader containerCl) {
         if (lifecycleProcessor == null) {
             synchronized (LifecycleProcessorFactory.class) {
-                ServiceLoader<LifecycleProcessorFactorySpi> LifecycleProcessorFactorySpis = ServiceLoader.load(LifecycleProcessorFactorySpi.class, containerCl);
-                assert LifecycleProcessorFactorySpis.iterator().hasNext();
-                lifecycleProcessor = LifecycleProcessorFactorySpis.iterator().next().createInstance();
+                ServiceLoader<LifecycleProcessorFactorySpi> lifecycleProcessorFactorySpis = ServiceLoader.load(LifecycleProcessorFactorySpi.class, containerCl);
+                assert lifecycleProcessorFactorySpis.iterator().hasNext();
+                lifecycleProcessor = lifecycleProcessorFactorySpis.iterator().next().createInstance();
             }
         }
     }
