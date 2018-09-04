@@ -38,17 +38,13 @@ public class ClientZkAgentImpl implements ClientZkAgent {
 
     @Override
     public void start() {
-
-        masterZk = new ClientZk(SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
-        masterZk.init();
-
-        if (SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_ISCONFIG) {
-            fallbackZk = new ClientZk(SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_HOST);
-            fallbackZk.init();
+        masterZk = ClientZk.getMasterInstance();
+        // fallback
+        if (usingFallbackZk) {
+            fallbackZk = ClientZk.getFallbackInstance();
         }
     }
 
-    //todo 优雅退出的时候, 需要调用这个
     @Override
     public void stop() {
         if (masterZk != null) {
@@ -70,15 +66,19 @@ public class ClientZkAgentImpl implements ClientZkAgent {
 
     @Override
     public void syncService(ZkServiceInfo zkInfo) {
-        if (zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
-            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo just created, now sync with zk");
-            masterZk.syncServiceZkInfo(zkInfo);
-            if (zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE && usingFallbackZk) {
-                fallbackZk.syncServiceZkInfo(zkInfo);
-            }
+        //根据同一个zkInfo对象锁住即可
+        synchronized (zkInfo) {
+            if (zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
+                LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo just created, now sync with zk");
+                masterZk.syncServiceZkInfo(zkInfo);
+                if (zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE && usingFallbackZk) {
+                    fallbackZk.syncServiceZkInfo(zkInfo);
+                }
 
-            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + ", status:" + zkInfo.getStatus() + "]");
+                LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + ", status:" + zkInfo.getStatus() + "]");
+            }
         }
+
 
         //使用路由规则，过滤可用服务器
         // fixme 在runtime跟config变化的时候才需要计算可用节点信息

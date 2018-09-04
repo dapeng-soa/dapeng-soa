@@ -3,19 +3,20 @@ package com.github.dapeng.registry.zookeeper;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.Weight;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
+import org.apache.zookeeper.Watcher;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author lihuimin
  * @date 2017/12/25
  */
 public class ZkServiceInfo {
+
+    private Watcher watcher = new ZkWatcher(this);
 
     public enum Status {
 
@@ -29,7 +30,7 @@ public class ZkServiceInfo {
     /**
      * instances list
      */
-    private  List<RuntimeInstance> runtimeInstances;
+    private List<RuntimeInstance> runtimeInstances;
 
     public ZkServiceInfo(String service) {
         this.service = service;
@@ -41,7 +42,7 @@ public class ZkServiceInfo {
         this.runtimeInstances = runtimeInstances;
     }
 
-    public  List<RuntimeInstance> getRuntimeInstances() {
+    public List<RuntimeInstance> getRuntimeInstances() {
         return runtimeInstances;
     }
 
@@ -55,6 +56,10 @@ public class ZkServiceInfo {
 
     public Status getStatus() {
         return status;
+    }
+
+    public Watcher getWatcher() {
+        return watcher;
     }
 
     public void setStatus(Status status) {
