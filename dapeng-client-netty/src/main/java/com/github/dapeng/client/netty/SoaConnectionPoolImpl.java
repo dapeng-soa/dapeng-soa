@@ -54,6 +54,11 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     private Map<String, ClientInfoWeakRef> clientInfos = new ConcurrentHashMap<>(16);
     private final ReferenceQueue<ClientInfo> referenceQueue = new ReferenceQueue<>();
+    /**
+     * 重用 ZkServiceInfo , 每一个 serviceName 对应 唯一一个ZkServiceInfo实例.
+     */
+    private Map<String, ZkServiceInfo> zkServiceInfoMap = new ConcurrentHashMap<>(16);
+
 
     Thread cleanThread = new Thread(() -> {
         while (true) {
@@ -102,7 +107,17 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
             clientInfos.put(key, clientInfoRef);
 
-            ZkServiceInfo zkInfo = new ZkServiceInfo(serviceName, new ArrayList<>());
+            ZkServiceInfo zkInfo = zkServiceInfoMap.get(serviceName);
+            if (zkInfo == null) {
+                synchronized (this) {
+                    if (zkInfo == null) {
+                        zkInfo = new ZkServiceInfo(serviceName, new ArrayList<>());
+                        zkServiceInfoMap.put(serviceName, zkInfo);
+                    }
+                }
+            }
+
+            // 如果Map 里存在 zkInfo, 还要 sync 吗？
             zkAgent.syncService(zkInfo);
 
             if (zkInfo.getStatus() == ZkServiceInfo.Status.ACTIVE) {
@@ -161,8 +176,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             return null;
         }
         List<RuntimeInstance> runtimeInstances = zkInfo.getRuntimeInstances();
-        for (RuntimeInstance runtimeInstance : runtimeInstances){
-            if (runtimeInstance.ip.equals(serviceIp)&&runtimeInstance.port == servicePort){
+        for (RuntimeInstance runtimeInstance : runtimeInstances) {
+            if (runtimeInstance.ip.equals(serviceIp) && runtimeInstance.port == servicePort) {
                 return runtimeInstance;
             }
         }

@@ -1,7 +1,6 @@
 package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.RuntimeInstance;
-import com.github.dapeng.core.Weight;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.version.Version;
 import com.github.dapeng.registry.ConfigKey;
@@ -11,7 +10,6 @@ import com.github.dapeng.router.RoutesExecutor;
 import org.apache.zookeeper.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.rmi.log.ReliableLog;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,14 +39,56 @@ public class ClientZk extends CommonZk {
      */
     private final Map<String, List<Route>> routesMap = new ConcurrentHashMap<>(16);
 
+    /**
+     * master zkHost
+     */
+    private static final String MASTER_HOST = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
+    /**
+     * fallback zkHost
+     */
+    private static final String FALLBACK_HOST = SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_HOST;
 
-    public ClientZk(String zkHost) {
+
+    private static ClientZk clientZk;
+    private static ClientZk fallbackZk;
+
+    private ClientZk(String zkHost) {
         this.zkHost = zkHost;
+        init();
     }
 
-    public void init() {
+    private void init() {
         connect();
     }
+
+    /**
+     * 工厂方法获取zk实例
+     */
+    public static ClientZk getMasterInstance() {
+        if (clientZk == null) {
+            synchronized (ClientZk.class) {
+                if (clientZk == null) {
+                    clientZk = new ClientZk(MASTER_HOST);
+                }
+            }
+        }
+        return clientZk;
+    }
+
+    /**
+     * 工厂方法，获取 fallback client zk 实例
+     */
+    public static ClientZk getFallbackInstance() {
+        if (fallbackZk == null) {
+            synchronized (ClientZk.class) {
+                if (fallbackZk == null) {
+                    fallbackZk = new ClientZk(FALLBACK_HOST);
+                }
+            }
+        }
+        return clientZk;
+    }
+
 
     /**
      * 连接zookeeper
@@ -169,12 +209,13 @@ public class ClientZk extends CommonZk {
         }
     }
 
+
     /**
      * 保证zk watch机制，出现异常循环执行5次
      *
      * @param zkInfo
      */
-    private void syncZkRuntimeInfo(ZkServiceInfo zkInfo) {
+    public void syncZkRuntimeInfo(ZkServiceInfo zkInfo) {
         String servicePath = RUNTIME_PATH + "/" + zkInfo.service;
         int retry = 5;
         do {
@@ -186,15 +227,7 @@ public class ClientZk extends CommonZk {
 
                 List<String> childrens;
                 try {
-                    childrens = zk.getChildren(servicePath, watchedEvent -> {
-                        if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-                            if (zkInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
-                                LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:{}子节点发生变化，重新获取信息", watchedEvent.getPath());
-                                syncZkRuntimeInfo(zkInfo);
-                                WatcherUtils.recalculateRuntimeInstanceWeight(zkInfo);
-                            }
-                        }
-                    });
+                    childrens = zk.getChildren(servicePath, zkInfo.getWatcher());
                 } catch (KeeperException.NoNodeException e) {
                     LOGGER.error("sync service:  {} zk node is not exist,", zkInfo.service);
                     return;
@@ -226,110 +259,9 @@ public class ClientZk extends CommonZk {
                 LOGGER.error(e.getMessage(), e);
                 try {
                     Thread.sleep(1000);
-                } catch (InterruptedException e1) {
+                } catch (InterruptedException ignored) {
                 }
             }
         } while (retry-- > 0);
     }
-
-
-    private Watcher runtimeWatcher(ZkServiceInfo zkInfo) {
-        return watchedEvent -> {
-            if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-                if (zkInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
-                    LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:{}子节点发生变化，重新获取信息", watchedEvent.getPath());
-                    syncZkRuntimeInfo(zkInfo);
-                }
-            }
-        };
-    }
-
-
-    //～～～～～～～～～～～～～～～～～～
-    //      目前暂时没有用到的方法
-    //～～～～～～～～～～～～～～～
-
-    public List<ServiceInfo> getServiceInfoCached(String serviceName, String versionName, boolean compatible) {
-
-        List<ServiceInfo> serverList;
-
-        if (caches.containsKey(serviceName)) {
-            serverList = caches.get(serviceName);
-        } else {
-            //get service Info and set up Watcher
-            getServiceInfoByServiceName(serviceName);
-            serverList = caches.get(serviceName);
-        }
-
-        List<ServiceInfo> usableList = new ArrayList<>();
-
-        if (serverList != null && serverList.size() > 0) {
-
-            if (!compatible) {
-                usableList.addAll(serverList.stream().filter(server -> server.versionName.equals(versionName)).collect(Collectors.toList()));
-            } else {
-                usableList.addAll(serverList.stream().filter(server -> Version.toVersion(versionName).compatibleTo(Version.toVersion(server.versionName))).collect(Collectors.toList()));
-            }
-        }
-        return usableList;
-    }
-
-    /**
-     * 根据serviceName节点的路径，获取下面的子节点，并监听子节点变化
-     *
-     * @param serviceName
-     */
-    private void getServiceInfoByServiceName(String serviceName) {
-
-        String servicePath = RUNTIME_PATH + "/" + serviceName;
-        try {
-            if (zk == null) {
-                init();
-            }
-
-            List<String> children = zk.getChildren(servicePath, watchedEvent -> {
-                if (watchedEvent.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-                    LOGGER.info("{}子节点发生变化，重新获取信息", watchedEvent.getPath());
-                    getServiceInfoByServiceName(serviceName);
-                }
-            });
-
-            LOGGER.info("获取{}的子节点成功", servicePath);
-            WatcherUtils.resetServiceInfoByName(serviceName, servicePath, children, caches);
-
-        } catch (KeeperException | InterruptedException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }
-
-
-    /*
-
-    public void getRoutesAsync() {
-        zk.getData(ROUTES_PATH, event -> {
-            if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
-                LOGGER.info("routes 节点 data 发现变更，重新获取信息");
-                routes.clear();
-                getRoutesAsync();
-            }
-        }, routeDataCb, null);
-    }
-
-    private AsyncCallback.DataCallback routeDataCb = (rc, path, ctx, data, stat) -> {
-        switch (KeeperException.Code.get(rc)) {
-            case CONNECTIONLOSS:
-                getRoutesAsync();
-                break;
-            case NONODE:
-                LOGGER.error("服务 [{}] 的service配置节点不存在，无法获取service级配置信息 ", ((ZkServiceInfo) ctx).service);
-                break;
-            case OK:
-                processRouteData(data);
-                break;
-            default:
-                break;
-        }
-    };
-
-    */
 }

@@ -46,7 +46,7 @@ public class ServerZk extends CommonZk {
     /**
      * zk 配置 缓存 ，根据 serivceName + versionName 作为 key
      */
-    public final ConcurrentMap<String, ZkServiceInfo> zkConfigMap = new ConcurrentHashMap();
+    public final ConcurrentMap<String, ZkServiceInfo> zkConfigMap = new ConcurrentHashMap<>();
 
     public ServerZk(RegistryAgent registryAgent) {
         this.registryAgent = registryAgent;
@@ -398,8 +398,7 @@ public class ServerZk extends CommonZk {
                         getFreqControl(service);
                     }
                 }, null);
-                ServiceFreqControl serviceFreqControl = processFreqRuleData(service, data, freqControlMap);
-                return serviceFreqControl;
+                return processFreqRuleData(service, data, freqControlMap);
             } catch (KeeperException | InterruptedException e) {
                 LOGGER.error("获取freq 节点: {} 出现异常", service);
                 return new ServiceFreqControl(service, new ArrayList<>(8), new HashMap<>(8));
@@ -441,7 +440,7 @@ public class ServerZk extends CommonZk {
      * @return
      */
     private static ServiceFreqControl doParseRuleData(final String serviceName, final String ruleData) throws Exception {
-        LOGGER.info("doParseRuleData,限流规则解析前ruleData:"  + ruleData);
+        LOGGER.info("doParseRuleData,限流规则解析前ruleData:" + ruleData);
         List<FreqControlRule> rules4service = new ArrayList<>(16);
         Map<String, List<FreqControlRule>> rules4method = new HashMap<>(16);
 
