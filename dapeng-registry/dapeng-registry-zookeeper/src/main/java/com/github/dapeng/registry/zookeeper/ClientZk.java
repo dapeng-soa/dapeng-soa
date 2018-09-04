@@ -29,15 +29,15 @@ public class ClientZk extends CommonZk {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientZk.class);
 
-    private final Map<String, List<ServiceInfo>> caches = new ConcurrentHashMap<>();
+    private final Map<String, List<ServiceInfo>> caches = new ConcurrentHashMap<>(128);
     /**
      * 其他配置信息
      */
-    private final Map<String, Map<ConfigKey, Object>> config = new ConcurrentHashMap<>();
+    private final Map<String, Map<ConfigKey, Object>> config = new ConcurrentHashMap<>(128);
     /**
      * 路由配置信息
      */
-    private final Map<String, List<Route>> routesMap = new ConcurrentHashMap<>(16);
+    private final Map<String, List<Route>> routesMap = new ConcurrentHashMap<>(128);
 
     /**
      * master zkHost
