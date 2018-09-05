@@ -368,10 +368,10 @@ public class ServerZk extends CommonZk {
 
     /**
      * 获取zk 配置信息，封装到 ZkConfigInfo
-     * 并发考虑
+     * 加入并发考虑
      *
-     * @param serviceName
-     * @return
+     * @param serviceName 服务名(服务唯一)
+     * @return ZkServiceInfo
      */
     protected ZkServiceInfo getConfigData(String serviceName) {
         ZkServiceInfo info = zkConfigMap.get(serviceName);
