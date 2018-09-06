@@ -248,7 +248,7 @@ public class JsonSerializer implements BeanSerializer<String> {
      */
     @Override
     public void write(String input, TProtocol oproto) throws TException {
-        JsonReader jsonReader = new JsonReader(optimizedStruct, optimizedService, method, version, requestByteBuf, oproto);
+        JsonReader jsonReader = new JsonReader(optimizedStruct, optimizedService,requestByteBuf, oproto);
         try {
             new JsonParser(input, jsonReader).parseJsValue();
         } catch (RuntimeException e) {

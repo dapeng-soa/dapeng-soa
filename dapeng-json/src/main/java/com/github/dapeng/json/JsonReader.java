@@ -22,21 +22,19 @@ import static com.github.dapeng.util.MetaDataUtil.findEnumItemValue;
  * format:
  * url:http://xxx/api/callService?serviceName=xxx&version=xx&method=xx
  * post body:
+ * <pre>
  * {
- * "body":{
- * ${structName}:{}
+ *  "body":{
+ *      ${structName}:${struct}
+ *  }
  * }
- * }
- * <p>
- * InvocationContext and SoaHeader should be ready before
+ * </pre>
  */
 class JsonReader implements JsonCallback {
     private final Logger logger = LoggerFactory.getLogger(JsonReader.class);
 
     private final OptimizedMetadata.OptimizedStruct optimizedStruct;
     private final OptimizedMetadata.OptimizedService optimizedService;
-    private final Method method;
-    private final String version;
     private final ByteBuf requestByteBuf;
 
     private final InvocationContext invocationCtx = InvocationContextImpl.Factory.currentInstance();
@@ -46,54 +44,6 @@ class JsonReader implements JsonCallback {
      * 压缩二进制编码下,集合的默认长度(占3字节)
      */
     private final TProtocol oproto;
-
-    /**
-     * 用于保存当前处理节点的信息
-     */
-    class StackNode {
-        final DataType dataType;
-        /**
-         * byteBuf position after this node created
-         */
-        final int byteBufPosition;
-
-        /**
-         * byteBuf position before this node created
-         */
-        final int byteBufPositionBefore;
-
-        /**
-         * optimizedStruct if dataType.kind==STRUCT
-         */
-        final OptimizedMetadata.OptimizedStruct optimizedStruct;
-
-        /**
-         * the field name
-         */
-        final String fieldName;
-
-        /**
-         * if datatype is optimizedStruct, all fieldMap parsed will be add to this set
-         */
-        final Set<String> fields4Struct = new HashSet<>(32);
-
-        /**
-         * if dataType is a Collection(such as LIST, MAP, SET etc), elCount represents the size of the Collection.
-         */
-        private int elCount = 0;
-
-        StackNode(final DataType dataType, final int byteBufPosition, int byteBufPositionBefore, final OptimizedMetadata.OptimizedStruct optimizedStruct, String fieldName) {
-            this.dataType = dataType;
-            this.byteBufPosition = byteBufPosition;
-            this.byteBufPositionBefore = byteBufPositionBefore;
-            this.optimizedStruct = optimizedStruct;
-            this.fieldName = fieldName;
-        }
-
-        void increaseElement() {
-            elCount++;
-        }
-    }
 
     TJsonCompressProtocolCodec jsonCompressProtocolCodec = new TJsonCompressProtocolCodec();
 
@@ -110,28 +60,28 @@ class JsonReader implements JsonCallback {
      */
     boolean foundField = true;
     /**
-     * todo
      * 从第一个多余字段开始后,到该多余字段结束, 所解析到的字段的计数值.
      * 用于在多余字段是复杂结构类型的情况下, 忽略该复杂结构内嵌套的所有多余字段
      * 例如:
-     * {
-     * createdOrderRequest: {
-     * "buyerId":2,
-     * "sellerId":3,
-     * "uselessField1":{
-     * "innerField1":"a",
-     * "innerField2":"b"
-     * },
-     * "uselessField2":[{
-     * "innerField3":"c",
-     * "innerField4":"d"
-     * },
-     * {
-     * "innerField3":"c",
-     * "innerField4":"d"
-     * }]
+     * <pre>
+     *  createdOrderRequest: {
+     *      "buyerId":2,
+     *      "sellerId":3,
+     *      "uselessField1":{
+     *          "innerField1":"a",
+     *          "innerField2":"b"
+     *      },
+     *      "uselessField2":[
+     *      {
+     *          "innerField3":"c",
+     *          "innerField4":"d"
+     *      },
+     *      {
+     *          "innerField3":"c",
+     *          "innerField4":"d"
+     *      }]
      * }
-     * }
+     * </pre>
      * 当uselessField1跟uselessField2是多余字段时,我们要确保其内部所有字段都
      * 给skip掉.
      */
@@ -150,94 +100,127 @@ class JsonReader implements JsonCallback {
     /**
      * @param optimizedStruct
      * @param optimizedService
-     * @param method
-     * @param version
      * @param requestByteBuf
      * @param oproto
      */
-    JsonReader(OptimizedMetadata.OptimizedStruct optimizedStruct, OptimizedMetadata.OptimizedService optimizedService, Method method, String version, ByteBuf requestByteBuf, TProtocol oproto) {
+    JsonReader(OptimizedMetadata.OptimizedStruct optimizedStruct, OptimizedMetadata.OptimizedService optimizedService, ByteBuf requestByteBuf, TProtocol oproto) {
         this.optimizedStruct = optimizedStruct;
         this.optimizedService = optimizedService;
-        this.method = method;
-        this.version = version;
         this.requestByteBuf = requestByteBuf;
         this.oproto = oproto;
+
+        init();
     }
 
+    private void init() {
+        DataType initDataType = new DataType();
+        initDataType.setKind(DataType.KIND.STRUCT);
+        initDataType.qualifiedName = optimizedStruct.struct.name;
+        current = new StackNode(initDataType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(),
+                optimizedStruct, optimizedStruct.struct.name);
+    }
 
     /**
-     * {  a:, b:, c: { ... }, d: [ { }, { } ]  }
-     * <p>
-     * init                -- [], topStruct
-     * onStartObject
-     * onStartField a    -- [topStruct], DataType a
-     * onEndField a
-     * ...
-     * onStartField c    -- [topStruct], StructC
-     * onStartObject
-     * onStartField
-     * onEndField
-     * ...
-     * onEndObject     -- [], topStruct
-     * onEndField c
-     * <p>
-     * onStartField d
-     * onStartArray    -- [topStruct] structD
-     * onStartObject
-     * onEndObject
-     * onEndArray      -- []
-     * onEndField d
+     * <pre>
+     * - onStartObject
+     *  - 当前栈顶 ：STRUCT or MAP
+     *  - 栈操作：无
+     *  - 处理：proto.writeStructBegin or proto.writeMapBegin
+     * - onEndObject
+     *  - 当前栈顶：STRUCT or MAP
+     *  - 栈操作：无
+     *  - 处理：
+     *      - proto.writeStructEnd or proto.writeMapEnd
+     *      - 如果父栈元素是 LIST/SET/MAP，计数++
+     * - onStartArray
+     *  - 当前栈顶：LIST/SET
+     *  - 栈操作：将当前栈顶的子元素（valueType）类型压栈
+     *  - 处理：proto.writeListBegin or proto.writeSetBegin
+     * - onEndArray
+     *  - 当前栈顶：
+     *  - 栈操作：pop 恢复当前栈顶为 LIST/SET
+     *  - 处理：
+     *      - proto.writeListEnd or proto.writeSetEnd
+     *      - 如果父栈元素是 LIST/SET/MAP，计数++
+     * - onStartField name
+     *  - 当前栈顶：STRUCT / MAP
+     *  - 栈操作：
+     *      - STRUCT：将结构体的fields[name] 压栈
+     *      - MAP：将 valueType 压栈
+     *      - 同步新栈顶的 writeIndex
+     *  - 处理：
+     *      - STRUCT: proto.writeFieldBegin name
+     *      - MAP: proto.writeString name or proto.writeInt name.toInt
+     * - onEndField
+     *  - 当前栈顶：any
+     *  - 栈操作：pop 恢复当前 STRUCT/MAP
+     *  - 处理：proto.writeFieldEnd
+     * - onNumber
+     *  - 当前栈顶：BYTE/SHORT/INTEGER/LONG/DOUBLE
+     *  - 栈操作：无
+     *  - 处理
+     *      - proto.writeI8, writeI16, ...
+     *      - 如果父栈元素是 LIST/SET/MAP，计数++
+     * - onBoolean
+     *  - 当前栈顶：BOOLEAN
+     *  - 栈操作：无
+     *  - 处理
+     *      - proto.writeBoolean.
+     *      - 如果父栈元素是 LIST/SET/MAP，计数++
+     * - onString
+     *  - 当前栈顶：STRING
+     *  - 栈操作：无
+     *  - 处理
+     *      - proto.writeString, ...
+     *      - 如果父栈元素是 LIST/SET/MAP，计数++
+     * - onNull
+     *  - 当前栈顶：any
+     *  - 栈操作：无
+     *  - 处理
+     *      - 父栈元素为 STRUCT/MAP 时，当前field容许为空时，重置 writeIndex,否则报错
+     *      - 父栈元素为 LIST/SET 时，不容许写入空值。
+     * </pre>
      */
     Stack<StackNode> history = new Stack<>();
 
     @Override
     public void onStartObject() throws TException {
         if (outsideBody) {
-            //TODO remove
-//            new SoaHeaderSerializer().write(SoaHeaderHelper.buildHeader(
-//                    optimizedService.service.namespace + "." + optimizedService.service.name, version, method.name),
-//                    new TBinaryProtocol(oproto.getTransport()));
-
-            //TODO 应该在OptimizedStruct中 Op初始化当前数据节点
-            DataType initDataType = new DataType();
-            initDataType.setKind(DataType.KIND.STRUCT);
-            initDataType.qualifiedName = optimizedStruct.struct.name;
-            current = new StackNode(initDataType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(),
-                    optimizedStruct, optimizedStruct.struct.name);
-
-            oproto.writeStructBegin(new TStruct(current.optimizedStruct.struct.name));
+            // just skip the body level
             outsideBody = false;
-        } else {
-            if (!foundField) {
-                skipFieldsStack++;
-                return;
-            }
-
-            assert current.dataType.kind == DataType.KIND.STRUCT || current.dataType.kind == DataType.KIND.MAP;
-
-            StackNode peek = peek();
-            if (peek != null && isMultiElementKind(peek.dataType.kind)) {
-                peek.increaseElement();
-                //集合套集合的变态处理方式
-                current = new StackNode(peek.dataType.valueType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(), current.optimizedStruct, current.optimizedStruct == null ? null : current.optimizedStruct.struct.name);
-            }
-            switch (current.dataType.kind) {
-                case STRUCT:
-                    Struct struct = current.optimizedStruct.struct;
-                    if (struct == null) {
-                        logger.error("optimizedStruct not found");
-                        logAndThrowTException();
-                    }
-                    oproto.writeStructBegin(new TStruct(struct.name));
-                    break;
-                case MAP:
-                    assert isValidMapKeyType(current.dataType.keyType.kind);
-                    writeMapBegin(dataType2Byte(current.dataType.keyType), dataType2Byte(current.dataType.valueType), 0);
-                    break;
-                default:
-                    logAndThrowTException();
-            }
+            return;
         }
+
+        if (!foundField) {
+            skipFieldsStack++;
+            return;
+        }
+
+        assert current.dataType.kind == DataType.KIND.STRUCT || current.dataType.kind == DataType.KIND.MAP;
+
+        StackNode peek = peek();
+        if (peek != null && isMultiElementKind(peek.dataType.kind)) {
+            peek.increaseElement();
+            //集合套集合的变态处理方式  todo
+            current = new StackNode(peek.dataType.valueType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(), current.optimizedStruct, current.optimizedStruct == null ? null : current.optimizedStruct.struct.name);
+        }
+        switch (current.dataType.kind) {
+            case STRUCT:
+                Struct struct = current.optimizedStruct.struct;
+                if (struct == null) {
+                    logger.error("optimizedStruct not found");
+                    logAndThrowTException();
+                }
+                oproto.writeStructBegin(new TStruct(struct.name));
+                break;
+            case MAP:
+                assert isValidMapKeyType(current.dataType.keyType.kind);
+                writeMapBegin(dataType2Byte(current.dataType.keyType), dataType2Byte(current.dataType.valueType), 0);
+                break;
+            default:
+                logAndThrowTException();
+        }
+
     }
 
     @Override
@@ -247,9 +230,9 @@ class JsonReader implements JsonCallback {
         if (!foundField) {
             skipFieldsStack--;
             return;
-        } else {
-            assert skipFieldsStack == 0;
         }
+
+        assert skipFieldsStack == 0;
 
         assert current.dataType.kind == DataType.KIND.STRUCT || current.dataType.kind == DataType.KIND.MAP;
 
@@ -274,24 +257,6 @@ class JsonReader implements JsonCallback {
 
     }
 
-    private void validateStruct(StackNode current) throws TException {
-        /**
-         * 不在该Struct必填字段列表的字段列表
-         */
-        for (Field field : current.optimizedStruct.fieldMapByTag.values()) {
-            if (field != null && !field.isOptional() && !current.fields4Struct.contains(field.name)) {
-                String fieldName = current.fieldName;
-                String struct = current.optimizedStruct.struct.name;
-                SoaException ex = new SoaException(SoaCode.ReqFieldNull.getCode(), "JsonError, please check:"
-                        + struct + "." + fieldName
-                        + ", optimizedStruct mandatory fields missing:"
-                        + field.name);
-                logger.error(ex.getMessage());
-                throw ex;
-            }
-        }
-    }
-
     /**
      * 由于目前拿不到集合的元素个数, 暂时设置为0个
      *
@@ -309,7 +274,7 @@ class JsonReader implements JsonCallback {
         StackNode peek = peek();
         if (peek != null && isMultiElementKind(peek.dataType.kind)) {
             peek.increaseElement();
-            //集合套集合的变态处理方式
+            //集合套集合的变态处理方式 todo
             current = new StackNode(peek.dataType.valueType, requestByteBuf.writerIndex(),
                     requestByteBuf.writerIndex(), current.optimizedStruct,
                     current.optimizedStruct == null ? null : current.optimizedStruct.struct.name);
@@ -362,15 +327,12 @@ class JsonReader implements JsonCallback {
 
         if (rootBodyFound && current.dataType.kind == DataType.KIND.MAP) {
             assert isValidMapKeyType(current.dataType.keyType.kind);
-            stackNew(new StackNode(current.dataType.keyType, requestByteBuf.writerIndex(),
-                    requestByteBuf.writerIndex(), null, name));
             // key有可能是String, 也有可能是Int
-            if (current.dataType.kind == DataType.KIND.STRING) {
+            if (current.dataType.keyType.kind == DataType.KIND.STRING) {
                 oproto.writeString(name);
             } else {
-                writeIntField(name, current.dataType.kind);
+                writeIntField(name, current.dataType.keyType.kind);
             }
-            pop();
             stackNew(new StackNode(current.dataType.valueType, requestByteBuf.writerIndex(),
                     requestByteBuf.writerIndex(),
                     optimizedService.optimizedStructs.get(current.dataType.valueType.qualifiedName), name));
@@ -402,22 +364,6 @@ class JsonReader implements JsonCallback {
             }
         }
 
-    }
-
-    private void writeIntField(String value, DataType.KIND kind) throws TException {
-        switch (kind) {
-            case SHORT:
-                oproto.writeI16(Short.valueOf(value));
-                break;
-            case INTEGER:
-                oproto.writeI32(Integer.valueOf(value));
-                break;
-            case LONG:
-                oproto.writeI64(Long.valueOf(value));
-                break;
-            default:
-                logAndThrowTException();
-        }
     }
 
     @Override
@@ -610,6 +556,41 @@ class JsonReader implements JsonCallback {
         return history.empty() ? null : history.peek();
     }
 
+
+    private void validateStruct(StackNode current) throws TException {
+        /**
+         * 不在该Struct必填字段列表的字段列表
+         */
+        for (Field field : current.optimizedStruct.fieldMapByTag.values()) {
+            if (field != null && !field.isOptional() && !current.fields4Struct.contains(field.name)) {
+                String fieldName = current.fieldName;
+                String struct = current.optimizedStruct.struct.name;
+                SoaException ex = new SoaException(SoaCode.ReqFieldNull.getCode(), "JsonError, please check:"
+                        + struct + "." + fieldName
+                        + ", optimizedStruct mandatory fields missing:"
+                        + field.name);
+                logger.error(ex.getMessage());
+                throw ex;
+            }
+        }
+    }
+
+    private void writeIntField(String value, DataType.KIND kind) throws TException {
+        switch (kind) {
+            case SHORT:
+                oproto.writeI16(Short.valueOf(value));
+                break;
+            case INTEGER:
+                oproto.writeI32(Integer.valueOf(value));
+                break;
+            case LONG:
+                oproto.writeI64(Long.valueOf(value));
+                break;
+            default:
+                logAndThrowTException();
+        }
+    }
+
     /**
      * 根据current 节点重写集合元素长度
      */
@@ -717,5 +698,53 @@ class JsonReader implements JsonCallback {
         TException ex = new TException("JsonError:" + msg);
         logger.error(ex.getMessage(), ex);
         throw ex;
+    }
+
+    /**
+     * 用于保存当前处理节点的信息
+     */
+    static class StackNode {
+        final DataType dataType;
+        /**
+         * byteBuf position after this node created
+         */
+        final int byteBufPosition;
+
+        /**
+         * byteBuf position before this node created
+         */
+        final int byteBufPositionBefore;
+
+        /**
+         * optimizedStruct if dataType.kind==STRUCT
+         */
+        final OptimizedMetadata.OptimizedStruct optimizedStruct;
+
+        /**
+         * the field name
+         */
+        final String fieldName;
+
+        /**
+         * if datatype is optimizedStruct, all fieldMap parsed will be add to this set
+         */
+        final Set<String> fields4Struct = new HashSet<>(32);
+
+        /**
+         * if dataType is a Collection(such as LIST, MAP, SET etc), elCount represents the size of the Collection.
+         */
+        private int elCount = 0;
+
+        StackNode(final DataType dataType, final int byteBufPosition, int byteBufPositionBefore, final OptimizedMetadata.OptimizedStruct optimizedStruct, String fieldName) {
+            this.dataType = dataType;
+            this.byteBufPosition = byteBufPosition;
+            this.byteBufPositionBefore = byteBufPositionBefore;
+            this.optimizedStruct = optimizedStruct;
+            this.fieldName = fieldName;
+        }
+
+        void increaseElement() {
+            elCount++;
+        }
     }
 }
