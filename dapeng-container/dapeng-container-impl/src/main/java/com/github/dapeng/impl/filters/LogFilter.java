@@ -10,13 +10,13 @@ import com.github.dapeng.core.filter.FilterContext;
 import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.github.dapeng.impl.plugins.netty.MdcCtxInfoUtil;
 import com.github.dapeng.org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class LogFilter implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(LogFilter.class);
-    private static final Map<ClassLoader, MdcCtxInfo> mdcCtxInfoCache = new ConcurrentHashMap<>(16);
+    private static final Map<ClassLoader, MdcCtxInfoUtil> mdcCtxInfoCache = new ConcurrentHashMap<>(16);
 
     @Override
     public void onEntry(FilterContext filterContext, FilterChain next) {
@@ -37,7 +37,7 @@ public class LogFilter implements Filter {
         try {
             // 容器的IO线程MDC以及应用的MDC(不同classLoader)设置
             MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
-            switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
+            MdcCtxInfoUtil.switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"), mdcCtxInfoCache);
 
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.seqId() + "]");
@@ -64,7 +64,7 @@ public class LogFilter implements Filter {
                 boolean isAsync = (Boolean) filterContext.getAttribute("isAsync");
                 if (isAsync) {
                     MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
-                    switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
+                    MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"), mdcCtxInfoCache);
                 }
             }
         }
@@ -80,7 +80,7 @@ public class LogFilter implements Filter {
         try {
             if (isAsync) {
                 MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
-                switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
+                MdcCtxInfoUtil.switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"), mdcCtxInfoCache);
             }
 
             if (LOGGER.isTraceEnabled()) {
@@ -92,7 +92,7 @@ public class LogFilter implements Filter {
 
             SoaHeader soaHeader = transactionContext.getHeader();
 
-            Long requestTimestamp = (Long)transactionContext.getAttribute("dapeng_request_timestamp");
+            Long requestTimestamp = (Long) transactionContext.getAttribute("dapeng_request_timestamp");
 
             Long cost = System.currentTimeMillis() - requestTimestamp;
             String infoLog = "response[seqId:" + transactionContext.seqId() + ", respCode:" + soaHeader.getRespCode().get() + "]:"
@@ -110,61 +110,9 @@ public class LogFilter implements Filter {
             } catch (TException e) {
                 LOGGER.error(e.getMessage(), e);
             } finally {
-                switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
-
+                MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"), mdcCtxInfoCache);
                 MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
             }
         }
     }
-
-    /**
-     * 应用的MDC辅助类
-     */
-    class MdcCtxInfo {
-        final ClassLoader appClassLoader;
-        final Class<?> mdcClass;
-        final Method put;
-        final Method remove;
-
-        MdcCtxInfo(ClassLoader app, Class<?> mdcClass, Method put, Method remove) {
-            this.appClassLoader = app;
-            this.mdcClass = mdcClass;
-            this.put = put;
-            this.remove = remove;
-        }
-    }
-
-    // MDC.put(key, value), MDC.remove(key)
-    private void switchMdcToAppClassLoader(String methodName, ClassLoader appClassLoader, String sessionTid) {
-        try {
-            MdcCtxInfo mdcCtxInfo = mdcCtxInfoCache.get(appClassLoader);
-            if (mdcCtxInfo == null) {
-                synchronized (appClassLoader) {
-                    mdcCtxInfo = mdcCtxInfoCache.get(appClassLoader);
-                    if (mdcCtxInfo == null) {
-                        Class<?> mdcClass = appClassLoader.loadClass(MDC.class.getName());
-
-                        mdcCtxInfo = new MdcCtxInfo(appClassLoader,
-                                mdcClass,
-                                mdcClass.getMethod("put", String.class, String.class),
-                                mdcClass.getMethod("remove", String.class)
-                        );
-                        mdcCtxInfoCache.put(appClassLoader, mdcCtxInfo);
-                    }
-                }
-            }
-
-
-            if (methodName.equals("put")) {
-                mdcCtxInfo.put.invoke(mdcCtxInfo.mdcClass, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
-            } else {
-                mdcCtxInfo.remove.invoke(mdcCtxInfo.mdcClass, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
-            }
-        } catch (ClassNotFoundException | NoSuchMethodException
-                | IllegalAccessException |
-                InvocationTargetException e) {
-            LOGGER.error(getClass().getSimpleName() + "::switchMdcToAppClassLoader," + e.getMessage(), e);
-        }
-    }
-
 }
