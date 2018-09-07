@@ -26,7 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class LogFilter implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(LogFilter.class);
-    private static final Map<ClassLoader, MdcCtxInfoUtil> mdcCtxInfoCache = new ConcurrentHashMap<>(16);
 
     @Override
     public void onEntry(FilterContext filterContext, FilterChain next) {
@@ -37,7 +36,7 @@ public class LogFilter implements Filter {
         try {
             // 容器的IO线程MDC以及应用的MDC(不同classLoader)设置
             MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
-            MdcCtxInfoUtil.switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"), mdcCtxInfoCache);
+            MdcCtxInfoUtil.switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
 
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.seqId() + "]");
@@ -64,7 +63,7 @@ public class LogFilter implements Filter {
                 boolean isAsync = (Boolean) filterContext.getAttribute("isAsync");
                 if (isAsync) {
                     MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
-                    MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"), mdcCtxInfoCache);
+                    MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), null);
                 }
             }
         }
@@ -80,7 +79,7 @@ public class LogFilter implements Filter {
         try {
             if (isAsync) {
                 MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
-                MdcCtxInfoUtil.switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"), mdcCtxInfoCache);
+                MdcCtxInfoUtil.switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
             }
 
             if (LOGGER.isTraceEnabled()) {
@@ -110,7 +109,7 @@ public class LogFilter implements Filter {
             } catch (TException e) {
                 LOGGER.error(e.getMessage(), e);
             } finally {
-                MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"), mdcCtxInfoCache);
+                MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), null);
                 MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
             }
         }
