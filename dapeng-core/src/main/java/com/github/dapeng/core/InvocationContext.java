@@ -118,6 +118,16 @@ public interface InvocationContext {
     InvocationContext calleePort(final Integer calleePort);
     Optional<Integer> calleePort();
 
+
+    /**
+     * 设置调用者IP
+     *
+     * @param callerIp
+     * @return
+     */
+    InvocationContext callerIp(final Integer callerIp);
+    Optional<Integer> callerIp();
+
     /**
      * 调用端tid
      * @return

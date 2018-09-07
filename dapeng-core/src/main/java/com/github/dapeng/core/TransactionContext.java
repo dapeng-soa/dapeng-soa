@@ -81,6 +81,9 @@ public interface TransactionContext {
 
     Optional<Integer> timeout();
 
+    Optional<Long> maxProcessTime();
+    TransactionContext maxProcessTime(Long maxProcessTime);
+
     long calleeTid();
 
     void setAttribute(String key, Object value);

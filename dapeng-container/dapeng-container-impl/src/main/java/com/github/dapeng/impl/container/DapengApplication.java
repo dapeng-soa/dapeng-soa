@@ -3,6 +3,7 @@ package com.github.dapeng.impl.container;
 
 import com.github.dapeng.core.Application;
 import com.github.dapeng.core.ServiceInfo;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +58,11 @@ public class DapengApplication implements Application {
     @Override
     public Optional<ServiceInfo> getServiceInfo(String name, String version) {
         return serviceInfos.stream().filter(i -> name.equals(i.serviceName) && version.equals(i.version)).findFirst();
+    }
+
+    @Override
+    public Long getMethodMaxProcessTime(String name, String version, String method) {
+        return getServiceInfo(name, version).isPresent() ? getServiceInfo(name, version).get().methodsMaxProcessTimeMap.get(method) : SoaSystemEnvProperties.SOA_MAX_PROCESS_TIME;
     }
 
     @Override

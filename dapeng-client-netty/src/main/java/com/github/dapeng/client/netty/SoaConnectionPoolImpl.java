@@ -2,6 +2,7 @@ package com.github.dapeng.client.netty;
 
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.zookeeper.ClientZkAgent;
@@ -21,7 +22,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static com.github.dapeng.core.SoaCode.*;
@@ -47,10 +47,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     }
 
     private Map<String, ZkServiceInfo> zkInfos = new ConcurrentHashMap<>();
-    private Map<IpPort, SubPool> subPools = new ConcurrentHashMap<>();
     private ClientZkAgent zkAgent = new ClientZkAgentImpl();
-
-    private ReentrantLock subPoolLock = new ReentrantLock();
 
     private Map<String, ClientInfoWeakRef> clientInfos = new ConcurrentHashMap<>(16);
     private final ReferenceQueue<ClientInfo> referenceQueue = new ReferenceQueue<>();
@@ -161,8 +158,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             return null;
         }
         List<RuntimeInstance> runtimeInstances = zkInfo.getRuntimeInstances();
-        for (RuntimeInstance runtimeInstance : runtimeInstances){
-            if (runtimeInstance.ip.equals(serviceIp)&&runtimeInstance.port == servicePort){
+        for (RuntimeInstance runtimeInstance : runtimeInstances) {
+            if (runtimeInstance.ip.equals(serviceIp) && runtimeInstance.port == servicePort) {
                 return runtimeInstance;
             }
         }
@@ -172,8 +169,15 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private SoaConnection findConnection(final String service,
                                          final String version,
                                          final String method) throws SoaException {
-        ZkServiceInfo zkInfo = zkInfos.get(service);
 
+        InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+
+        //如果设置了calleeip 和 calleport 直接调用服务 不走路由
+        if (context.calleeIp().isPresent() && context.calleePort().isPresent()) {
+            return SubPoolFactory.getSubPool(IPUtils.transferIp(context.calleeIp().get()), context.calleePort().get()).getConnection();
+        }
+
+        ZkServiceInfo zkInfo = zkInfos.get(service);
         if (zkInfo == null || zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
             //todo should find out why zkInfo is null
             // 1. target service not exists
@@ -217,25 +221,10 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         inst.increaseActiveCount();
 
-        IpPort ipPort = new IpPort(inst.ip, inst.port);
-        SubPool subPool = subPools.get(ipPort);
-        if (subPool == null) {
-            try {
-                subPoolLock.lock();
-                subPool = subPools.get(ipPort);
-                if (subPool == null) {
-                    subPool = new SubPool(inst.ip, inst.port);
-                    subPools.put(ipPort, subPool);
-                }
-            } finally {
-                subPoolLock.unlock();
-            }
-        }
-
         // TODO: 2018-08-04  服务端需要返回来正确的版本号
-        InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         context.versionName(inst.version);
-        return subPool.getConnection();
+
+        return SubPoolFactory.getSubPool(inst.ip, inst.port).getConnection();
     }
 
     /**

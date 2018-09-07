@@ -77,10 +77,17 @@ public class TransactionContextImpl implements TransactionContext {
      * 客户端指定的超时
      */
     private Optional<Integer> timeout = Optional.empty();
+
     /**
      * 调用源
      */
     private Optional<String> callerMid = Optional.empty();
+
+    /**
+     * 服务方法执行最大时间(慢服务)
+     */
+    private Optional<Long> maxProcessTime = Optional.empty();
+
 
     private Map<String, Object> attributes = new HashMap<>(16);
 
@@ -165,7 +172,7 @@ public class TransactionContextImpl implements TransactionContext {
 
     public TransactionContextImpl setHeader(SoaHeader header) {
         this.header = header;
-        return  this;
+        return this;
     }
 
     @Override
@@ -269,6 +276,16 @@ public class TransactionContextImpl implements TransactionContext {
 
     public TransactionContextImpl timeout(Integer timeout) {
         this.timeout = Optional.ofNullable(timeout);
+        return this;
+    }
+
+    @Override
+    public Optional<Long> maxProcessTime() {
+        return maxProcessTime;
+    }
+
+    public TransactionContextImpl maxProcessTime(Long maxProcessTime) {
+        this.maxProcessTime = Optional.ofNullable(maxProcessTime);
         return this;
     }
 
