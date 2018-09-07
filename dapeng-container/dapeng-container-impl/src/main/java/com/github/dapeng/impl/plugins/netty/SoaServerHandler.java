@@ -94,8 +94,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         // Uncaught exceptions from inbound handlers will propagate up to this handler
         TransactionContext tranCtx = TransactionContextImpl.Factory.currentInstance();
         // short error log and detail error log, for the sake of elasticsearch indexing
-        LOGGER.error("exceptionCaught:seqId:" + (tranCtx==null?"":tranCtx.seqId()) + ", channel:" + ctx.channel() + ", msg:" + cause.getMessage());
-        LOGGER.error("exceptionCaught:seqId:" + (tranCtx==null?"":tranCtx.seqId()) + ", " + cause.getMessage(), cause);
+        LOGGER.error("exceptionCaught:seqId:" + (tranCtx == null ? "" : tranCtx.seqId()) + ", channel:" + ctx.channel() + ", msg:" + cause.getMessage());
+        LOGGER.error("exceptionCaught:seqId:" + (tranCtx == null ? "" : tranCtx.seqId()) + ", " + cause.getMessage(), cause);
         ctx.close();
     }
 
@@ -131,6 +131,9 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             if (application == null) {
                 throw new SoaException(SoaCode.NoMatchedService);
             }
+            //设置服务方法最大执行时间(慢服务)
+            transactionContext.maxProcessTime(application.getMethodMaxProcessTime(soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName()));
+
             SoaFunctionDefinition<I, REQ, RESP> soaFunction = (SoaFunctionDefinition<I, REQ, RESP>) serviceDef.functions.get(soaHeader.getMethodName());
 
             if (soaFunction == null) {
@@ -261,8 +264,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         private final SoaFunctionDefinition<I, REQ, RESP> soaFunction;
 
         DispatchFilter(SoaServiceDefinition<I> serviceDef,
-                              SoaFunctionDefinition<I, REQ, RESP> soaFunction,
-                              REQ args) {
+                       SoaFunctionDefinition<I, REQ, RESP> soaFunction,
+                       REQ args) {
 
             this.serviceDef = serviceDef;
             this.args = args;

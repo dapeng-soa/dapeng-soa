@@ -3,7 +3,6 @@ package com.github.dapeng.core;
 import com.github.dapeng.core.enums.CodecProtocol;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.helper.DapengUtil;
-import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 
 import java.util.Collections;
@@ -49,8 +48,9 @@ public class InvocationContextImpl implements InvocationContext {
     private CodecProtocol codecProtocol = CodecProtocol.CompressedBinary;
 
     private Optional<Integer> calleeIp = Optional.empty();
-
     private Optional<Integer> calleePort = Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
+
+    private Optional<Integer> callerIp = Optional.empty();
 
     private Optional<String> callerMid = Optional.empty();
 
@@ -143,6 +143,17 @@ public class InvocationContextImpl implements InvocationContext {
     @Override
     public Optional<Integer> calleePort() {
         return this.calleePort;
+    }
+
+    @Override
+    public InvocationContext callerIp(Integer callerIp) {
+        this.callerIp = Optional.ofNullable(callerIp);
+        return this;
+    }
+
+    @Override
+    public Optional<Integer> callerIp() {
+        return this.callerIp;
     }
 
     @Override
