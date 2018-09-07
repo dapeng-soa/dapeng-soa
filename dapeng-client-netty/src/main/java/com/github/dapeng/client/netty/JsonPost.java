@@ -144,8 +144,8 @@ public class JsonPost {
     /**
      * 异步调用远程服务
      *
-     * @param jsonParameter
-     * @param optimizedService
+     * @param jsonParameter    json请求
+     * @param optimizedService 服务元数据信息
      * @return
      * @throws Exception
      */
@@ -170,9 +170,6 @@ public class JsonPost {
 
             JsonSerializer jsonEncoder = new JsonSerializer(optimizedService, method, clientInfo.version, req);
             JsonSerializer jsonDecoder = new JsonSerializer(optimizedService, method, clientInfo.version, resp);
-
-            //todo
-            final long beginTime = System.currentTimeMillis();
 
             Service origService = optimizedService.getService();
 

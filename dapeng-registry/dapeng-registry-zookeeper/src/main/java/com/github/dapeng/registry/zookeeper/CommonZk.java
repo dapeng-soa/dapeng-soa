@@ -24,25 +24,18 @@ public class CommonZk {
     protected String zkHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
 
 
-    protected final static String RUNTIME_PATH = "/soa/runtime/services";
-    protected final static String CONFIG_PATH = "/soa/config/services";
-    protected final static String ROUTES_PATH = "/soa/config/routes";
-    protected final static String FREQ_PATH = "/soa/config/freq";
+    final static String RUNTIME_PATH = "/soa/runtime/services";
+    final static String CONFIG_PATH = "/soa/config/services";
+    final static String ROUTES_PATH = "/soa/config/routes";
+    final static String FREQ_PATH = "/soa/config/freq";
 
 
     protected ZooKeeper zk;
 
 
-    protected void syncZkConfigInfo(ZkServiceInfo zkInfo) {
+    public void syncZkConfigInfo(ZkServiceInfo zkInfo) {
         //1.获取 globalConfig  异步模式
-        zk.getData(CONFIG_PATH, watchedEvent -> {
-            if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
-                if (zkInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
-                    logger.info(getClass().getSimpleName() + "::syncZkConfigInfo[" + zkInfo.service + "]: {} 节点内容发生变化，重新获取配置信息", watchedEvent.getPath());
-                    syncZkConfigInfo(zkInfo);
-                }
-            }
-        }, globalConfigDataCb, zkInfo);
+        zk.getData(CONFIG_PATH, zkInfo.getWatcher(), globalConfigDataCb, zkInfo);
 
         //异步监听子节点变动
         watchConfigServiceNodeChange();
@@ -51,12 +44,7 @@ public class CommonZk {
         String configPath = CONFIG_PATH + "/" + zkInfo.service;
 
         // zk config 有具体的service节点存在时，这一步在异步callback中进行判断
-        zk.getData(configPath, watchedEvent -> {
-            if (watchedEvent.getType() == Watcher.Event.EventType.NodeDataChanged) {
-                logger.info(watchedEvent.getPath() + "'s data changed, reset zkConfigMap in memory");
-                syncZkConfigInfo(zkInfo);
-            }
-        }, serviceConfigDataCb, zkInfo);
+        zk.getData(configPath, zkInfo.getWatcher(), serviceConfigDataCb, zkInfo);
     }
 
 
@@ -64,14 +52,15 @@ public class CommonZk {
      * 监听 "/soa/config/services" 下的子节点变动
      */
     private void watchConfigServiceNodeChange() {
-        zk.exists(CONFIG_PATH, event -> {
-            if (event.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-                logger.info("{}子节点发生变化，重新获取子节点...", event.getPath());
-            }
-        }, nodeChildrenCb, null);
+        zk.exists(CONFIG_PATH, configServiceNodeChangeWatcher, nodeChildrenCb, null);
 
     }
 
+    private Watcher configServiceNodeChangeWatcher = event -> {
+        if (event.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
+            logger.info("{}子节点发生变化，重新获取子节点...", event.getPath());
+        }
+    };
 
     private AsyncCallback.StatCallback nodeChildrenCb = (rc, path, ctx, name) -> {
         switch (KeeperException.Code.get(rc)) {

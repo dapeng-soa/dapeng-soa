@@ -35,7 +35,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
     private NettyClient client;
     private final static AtomicInteger seqidAtomic = new AtomicInteger(0);
 
-    public SoaBaseConnection(String host, int port) {
+    SoaBaseConnection(String host, int port) {
         this.client = NettyClientFactory.getNettyClient();
         this.host = host;
         this.port = port;

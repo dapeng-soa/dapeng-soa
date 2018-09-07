@@ -1,5 +1,7 @@
 package com.github.dapeng.client.netty;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -7,12 +9,12 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author huyj
  * @Created 2018-08-21 16:40
  */
-public class SubPoolFactory {
+class SubPoolFactory {
 
-    private final static ConcurrentHashMap<IpPort, SubPool> subPoolsMap = new ConcurrentHashMap(16);
+    private final static Map<IpPort, SubPool> subPoolsMap = new HashMap<>(16);
     private static final ReentrantLock subPoolLock = new ReentrantLock();
 
-    public static SubPool getSubPool(String ip, int port) {
+    static SubPool getSubPool(String ip, int port) {
         IpPort ipPort = new IpPort(ip, port);
         SubPool subPool = subPoolsMap.get(ipPort);
         if (subPool == null) {
