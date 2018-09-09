@@ -79,6 +79,9 @@ public class OptimizedMetadata {
          *
          */
         final Map<String, Field> fieldMap = new HashMap<>(128);
+
+        final int tagBase; // maybe < 0
+
         /**
          * 数组方式， 更高效，需要注意，
          * 1. 不连续key很大的情况， 例如来了个tag为65546的field
@@ -86,7 +89,8 @@ public class OptimizedMetadata {
          *
          * 所以目前采用Map的方式
          */
-        final Map<Short, Field> fieldMapByTag = new HashMap<>(128);
+        private final Map<Short, Field> fieldMapByTag;
+        private final Field[] fieldArrayByTag;
 
         public Struct getStruct() {
             return struct;
@@ -94,10 +98,39 @@ public class OptimizedMetadata {
 
         public OptimizedStruct(Struct struct) {
             this.struct = struct;
+
+            int tagBase = 0;
+            int maxTag = 0;
+
             for (Field f : struct.fields) {
                 this.fieldMap.put(f.name, f);
-                this.fieldMapByTag.put((short)f.tag, f);
+                if(f.tag < tagBase) tagBase = f.tag;
+                if(f.tag > maxTag) maxTag = f.tag;
             }
+
+            this.tagBase = tagBase;
+            Field[] array = null;
+            Map<Short, Field> map = null;
+            if(maxTag - tagBase + 1 <= 256) {
+                array = new Field[maxTag - tagBase + 1];
+                for(Field f: struct.fields) {
+                    array[f.tag - tagBase] = f;
+                }
+            }
+            else {
+                map = new HashMap<>();
+                for(Field f: struct.fields) {
+                    map.put((short)f.tag, f);
+                }
+            }
+            this.fieldArrayByTag = array;
+            this.fieldMapByTag = map;
+        }
+
+        public Field get(short tag) {
+            if(fieldArrayByTag != null && tag >= tagBase && tag - tagBase < fieldArrayByTag.length)
+                return fieldArrayByTag[tag - tagBase];
+            else return fieldMapByTag.get(tag);
         }
     }
 }

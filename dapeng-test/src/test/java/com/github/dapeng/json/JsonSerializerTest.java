@@ -117,7 +117,7 @@ public class JsonSerializerTest {
 //            simpleStructWithEnumTest();
 //            simpleStructWithOptionTest();
 
-            complexStructTest();
+//            complexStructTest();
             complexStructTest1();
         } catch (Exception e) {
             Thread.sleep(50);

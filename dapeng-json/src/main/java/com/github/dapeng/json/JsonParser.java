@@ -386,9 +386,13 @@ class JsonParser {
 
     void array() throws TException {
         ws();
+        int index = 0;
         if (cursorChar != ']') {
             do {
+                callback.onStartField(index);
                 value();
+                callback.onEndField();
+                index++;
             } while (ws(','));
         }
         require(']');

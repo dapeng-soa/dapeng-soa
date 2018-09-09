@@ -44,7 +44,7 @@ public class JsonSerializer implements BeanSerializer<String> {
             TField field = iproto.readFieldBegin();
             if (field.type == TType.STOP) break;
 
-            Field fld = optimizedStruct.fieldMapByTag.get(field.id);
+            Field fld = optimizedStruct.get(field.id);
 
             boolean skip = fld == null;
 
@@ -52,8 +52,9 @@ public class JsonSerializer implements BeanSerializer<String> {
                 writer.onStartField(fld.name);
                 readField(iproto, fld.dataType, field.type, writer, skip);
                 writer.onEndField();
-            } else {
-                readField(iproto, fld.dataType, field.type, writer, skip);
+            } else { // skip reading
+                TProtocolUtil.skip(iproto, field.type);
+                // readField(iproto, field.type, field.type, writer, skip);
             }
 
             iproto.readFieldEnd();
@@ -253,7 +254,7 @@ public class JsonSerializer implements BeanSerializer<String> {
             new JsonParser(input, jsonReader).parseJsValue();
         } catch (RuntimeException e) {
             if (jsonReader.current != null) {
-                String errorMsg = "Please check field:" + jsonReader.current.fieldName;
+                String errorMsg = "Please check field:" + jsonReader.current.getFieldName();
                 logger.error(errorMsg + "\n" + e.getMessage(), e);
                 throw new TException(errorMsg);
             }
