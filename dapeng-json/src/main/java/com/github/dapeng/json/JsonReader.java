@@ -50,10 +50,6 @@ class JsonReader implements JsonCallback {
      * 当前处理数据节点
      */
     StackNode current;
-    /**
-     * 标志是否是最外层object
-     */
-    //boolean outsideBody = true;
 
     /**
      * incr: startObject/startArray
@@ -137,11 +133,6 @@ class JsonReader implements JsonCallback {
     List<StackNode> nodePool = new ArrayList<>(64);  // keep a minum StackNode Pool
 
     /**
-     * 记录是否是null. 前端在处理optional字段的时候, 可能会传入一个null,见单元测试
-     */
-//    boolean foundNull = true;
-
-    /**
      * @param optimizedStruct
      * @param optimizedService
      * @param requestByteBuf
@@ -155,12 +146,11 @@ class JsonReader implements JsonCallback {
     }
 
 
-
     @Override
     public void onStartObject() throws TException {
         level++;
 
-        if(level == 0) return;  // it's the outside { body: ... } object
+        if (level == 0) return;  // it's the outside { body: ... } object
 
         if (skip) {
             skipDepth++;
@@ -184,7 +174,7 @@ class JsonReader implements JsonCallback {
                 break;
             case MAP:
                 assert isValidMapKeyType(current.dataType.keyType.kind);
-                writeMapBegin(dataType2Byte(current     .dataType.keyType), dataType2Byte(current.dataType.valueType), 0);
+                writeMapBegin(dataType2Byte(current.dataType.keyType), dataType2Byte(current.dataType.valueType), 0);
                 break;
             default:
                 logAndThrowTException();
@@ -195,7 +185,7 @@ class JsonReader implements JsonCallback {
     @Override
     public void onEndObject() throws TException {
         level--;
-        if(level == -1) return; // the outer body
+        if (level == -1) return; // the outer body
 
         if (skip) {
             skipDepth--;
@@ -280,21 +270,19 @@ class JsonReader implements JsonCallback {
         if (skip) {
             return;
         }
-        if(level == 0) { // expect only the "body"
-            if("body".equals(name)) { // body
+        if (level == 0) { // expect only the "body"
+            if ("body".equals(name)) { // body
                 DataType initDataType = new DataType();
                 initDataType.setKind(DataType.KIND.STRUCT);
                 initDataType.qualifiedName = optimizedStruct.struct.name;
-                push( initDataType, -1, // not a struct field
+                push(initDataType, -1, // not a struct field
                         requestByteBuf.writerIndex(), //
-                        optimizedStruct, "body" );
-            }
-            else { // others, just skip now
+                        optimizedStruct, "body");
+            } else { // others, just skip now
                 skip = true;
                 skipDepth = 0;
             }
-        }
-        else { // level > 0, not skip
+        } else { // level > 0, not skip
             if (current.dataType.kind == DataType.KIND.MAP) {
                 assert isValidMapKeyType(current.dataType.keyType.kind);
 
@@ -304,12 +292,12 @@ class JsonReader implements JsonCallback {
                 } else {
                     writeIntField(name, current.dataType.keyType.kind);
                 }
-                push( current.dataType.valueType,
+                push(current.dataType.valueType,
                         tFieldPos, // so value can't be null
                         requestByteBuf.writerIndex(), // need for List/Map
                         optimizedService.optimizedStructs.get(current.dataType.valueType.qualifiedName),
                         name);
-            } else if(current.dataType.kind == DataType.KIND.STRUCT) {
+            } else if (current.dataType.kind == DataType.KIND.STRUCT) {
 
                 Field field = current.optimizedStruct.fieldMap.get(name);
                 if (field == null) {
@@ -317,34 +305,33 @@ class JsonReader implements JsonCallback {
                     skipDepth = 0;
                     logger.debug("field(" + name + ") not found. just skip");
                     return;
-                }
-                else {
+                } else {
                     skip = false;
                 }
 
                 int tFieldPos = requestByteBuf.writerIndex();
                 oproto.writeFieldBegin(new TField(field.name, dataType2Byte(field.dataType), (short) field.getTag()));
-                push( field.dataType,
+                push(field.dataType,
                         tFieldPos,
                         requestByteBuf.writerIndex(),
                         optimizedService.optimizedStructs.get(field.dataType.qualifiedName),
                         name);
-            }
-            else logAndThrowTException("field " + name + " type " + toString(current.dataType) + " not compatible with json object");
+            } else
+                logAndThrowTException("field " + name + " type " + toString(current.dataType) + " not compatible with json object");
         }
     }
 
     @Override
     public void onStartField(int index) {
-        if(skip){
+        if (skip) {
             return;
         }
         assert isCollectionKind(current.dataType.kind);
 
         DataType next = current.dataType.valueType;
         OptimizedMetadata.OptimizedStruct nextStruct = (next.kind == DataType.KIND.STRUCT) ?
-                optimizedService.optimizedStructs.get(next.qualifiedName) :null;
-        push( current.dataType.valueType,
+                optimizedService.optimizedStructs.get(next.qualifiedName) : null;
+        push(current.dataType.valueType,
                 -1,
                 requestByteBuf.writerIndex(),
                 nextStruct,
@@ -363,32 +350,31 @@ class JsonReader implements JsonCallback {
 
         String fieldName = current.fieldName;
 
-        if(level > 0) { // level = 0 will having no current dataType
+        if (level > 0) { // level = 0 will having no current dataType
             StackNode parent = peek();
-            assert(parent != null);
+            assert (parent != null);
 
-            switch (parent.dataType.kind){
+            switch (parent.dataType.kind) {
                 case SET:
                 case LIST:
-                    if(current.isNull) {
+                    if (current.isNull) {
                         logAndThrowTException("SET/LIST can't support null value");
                     }
                     break;
                 case MAP:
-                    if(current.isNull) {
+                    if (current.isNull) {
                         // peek().decrElementSize(); onNull not incrElementSize
                         requestByteBuf.writerIndex(current.tFieldPosition);
                     }
                     break;
                 case STRUCT:
-                    if(current.isNull) {
+                    if (current.isNull) {
                         // parent.fields4Struct.remove(fieldName);
                         requestByteBuf.writerIndex(current.tFieldPosition);
-                        if(invocationCtx.codecProtocol() == CompressedBinary) {
-                            ((TCompactProtocol)oproto).resetLastFieldId();
+                        if (invocationCtx.codecProtocol() == CompressedBinary) {
+                            ((TCompactProtocol) oproto).resetLastFieldId();
                         }
-                    }
-                    else {
+                    } else {
                         Field field = parent.optimizedStruct.fieldMap.get(fieldName);
                         parent.fields4Struct.set(field.tag - parent.optimizedStruct.tagBase);
                         oproto.writeFieldEnd();
@@ -552,7 +538,7 @@ class JsonReader implements JsonCallback {
     private void push(final DataType dataType, final int tFieldPos, final int valuePos, final OptimizedMetadata.OptimizedStruct optimizedStruct, String fieldName) {
         StackNode node = null;
 
-        if(nodePool.size() > 0) node = nodePool.remove(nodePool.size()-1);
+        if (nodePool.size() > 0) node = nodePool.remove(nodePool.size() - 1);
         else node = new StackNode();
 
         node.init(dataType, valuePos, tFieldPos, optimizedStruct, fieldName);
@@ -570,7 +556,7 @@ class JsonReader implements JsonCallback {
     }
 
     private StackNode peek() {
-        return history.size() <= 1 ? null : history.get(history.size()-2);
+        return history.size() <= 1 ? null : history.get(history.size() - 2);
     }
 
     private String toString(DataType type) {
@@ -596,7 +582,7 @@ class JsonReader implements JsonCallback {
          * 不在该Struct必填字段列表的字段列表
          */
         OptimizedMetadata.OptimizedStruct struct = current.optimizedStruct;
-        for (Field field : struct.fieldMap.values() ) {
+        for (Field field : struct.fieldMap.values()) {
             if (field != null && !field.isOptional() && !current.fields4Struct.get(field.tag - struct.tagBase)) {
                 String fieldName = current.fieldName;
                 String structName = struct.struct.name;
@@ -777,7 +763,7 @@ class JsonReader implements JsonCallback {
         StackNode() {
         }
 
-        public StackNode init(final DataType dataType, final int valuePosition, int tFieldPosition, final OptimizedMetadata.OptimizedStruct optimizedStruct, String fieldName){
+        public StackNode init(final DataType dataType, final int valuePosition, int tFieldPosition, final OptimizedMetadata.OptimizedStruct optimizedStruct, String fieldName) {
             this.dataType = dataType;
             this.valuePosition = valuePosition;
             this.tFieldPosition = tFieldPosition;
