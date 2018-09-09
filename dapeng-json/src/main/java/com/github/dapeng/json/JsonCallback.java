@@ -44,6 +44,13 @@ public interface JsonCallback {
     void onStartField(String name) throws TException;
 
     /**
+     * called begin an array element
+     * @param index
+     * @throws TException
+     */
+    void onStartField(int index) throws TException;
+
+    /**
      * Called at end of Json field
      *
      * @throws TException

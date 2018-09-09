@@ -9,9 +9,7 @@ import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 
 import static com.github.dapeng.core.enums.CodecProtocol.CompressedBinary;
 import static com.github.dapeng.json.JsonUtils.*;
@@ -30,6 +28,7 @@ import static com.github.dapeng.util.MetaDataUtil.findEnumItemValue;
  * }
  * </pre>
  */
+
 class JsonReader implements JsonCallback {
     private final Logger logger = LoggerFactory.getLogger(JsonReader.class);
 
@@ -54,71 +53,23 @@ class JsonReader implements JsonCallback {
     /**
      * 标志是否是最外层object
      */
-    boolean outsideBody = true;
+    //boolean outsideBody = true;
+
+    /**
+     * incr: startObject/startArray
+     * decr: endObject/endArray
+     */
+    int level = -1;
+
     /**
      * onStartField的时候, 记录是否找到该Field. 如果没找到,那么需要skip这个field
+     * 当 skip 设置为 true 时， skipDepth 初始化为 0。
+     * - onStartObject/onStartArray) 则 skipDepth++
+     * - onEndObject/onEndArray时，skipDepth--
+     * 当 skipDepth 为 0 且进入 onEndField 时， skip 复位为false
      */
-    boolean foundField = true;
-    /**
-     * 从第一个多余字段开始后,到该多余字段结束, 所解析到的字段的计数值.
-     * 用于在多余字段是复杂结构类型的情况下, 忽略该复杂结构内嵌套的所有多余字段
-     * 例如:
-     * <pre>
-     *  createdOrderRequest: {
-     *      "buyerId":2,
-     *      "sellerId":3,
-     *      "uselessField1":{
-     *          "innerField1":"a",
-     *          "innerField2":"b"
-     *      },
-     *      "uselessField2":[
-     *      {
-     *          "innerField3":"c",
-     *          "innerField4":"d"
-     *      },
-     *      {
-     *          "innerField3":"c",
-     *          "innerField4":"d"
-     *      }]
-     * }
-     * </pre>
-     * 当uselessField1跟uselessField2是多余字段时,我们要确保其内部所有字段都
-     * 给skip掉.
-     */
-    int skipFieldsStack = 0;
-    /**
-     * 记录是否是null. 前端在处理optional字段的时候, 可能会传入一个null,见单元测试
-     */
-    boolean foundNull = true;
-
-    /**
-     * 是否遇到了最外层的body
-     */
-    boolean rootBodyFound = false;
-    boolean rootBodyEnd = false;
-
-    /**
-     * @param optimizedStruct
-     * @param optimizedService
-     * @param requestByteBuf
-     * @param oproto
-     */
-    JsonReader(OptimizedMetadata.OptimizedStruct optimizedStruct, OptimizedMetadata.OptimizedService optimizedService, ByteBuf requestByteBuf, TProtocol oproto) {
-        this.optimizedStruct = optimizedStruct;
-        this.optimizedService = optimizedService;
-        this.requestByteBuf = requestByteBuf;
-        this.oproto = oproto;
-
-        init();
-    }
-
-    private void init() {
-        DataType initDataType = new DataType();
-        initDataType.setKind(DataType.KIND.STRUCT);
-        initDataType.qualifiedName = optimizedStruct.struct.name;
-        current = new StackNode(initDataType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(),
-                optimizedStruct, optimizedStruct.struct.name);
-    }
+    boolean skip = false;
+    int skipDepth = 0;
 
     /**
      * <pre>
@@ -134,11 +85,11 @@ class JsonReader implements JsonCallback {
      *      - 如果父栈元素是 LIST/SET/MAP，计数++
      * - onStartArray
      *  - 当前栈顶：LIST/SET
-     *  - 栈操作：将当前栈顶的子元素（valueType）类型压栈
+     *  - 栈操作：无
      *  - 处理：proto.writeListBegin or proto.writeSetBegin
      * - onEndArray
      *  - 当前栈顶：
-     *  - 栈操作：pop 恢复当前栈顶为 LIST/SET
+     *  - 栈操作：无
      *  - 处理：
      *      - proto.writeListEnd or proto.writeSetEnd
      *      - 如果父栈元素是 LIST/SET/MAP，计数++
@@ -183,16 +134,36 @@ class JsonReader implements JsonCallback {
      */
     Stack<StackNode> history = new Stack<>();
 
+    List<StackNode> nodePool = new ArrayList<>(64);  // keep a minum StackNode Pool
+
+    /**
+     * 记录是否是null. 前端在处理optional字段的时候, 可能会传入一个null,见单元测试
+     */
+//    boolean foundNull = true;
+
+    /**
+     * @param optimizedStruct
+     * @param optimizedService
+     * @param requestByteBuf
+     * @param oproto
+     */
+    JsonReader(OptimizedMetadata.OptimizedStruct optimizedStruct, OptimizedMetadata.OptimizedService optimizedService, ByteBuf requestByteBuf, TProtocol oproto) {
+        this.optimizedStruct = optimizedStruct;
+        this.optimizedService = optimizedService;
+        this.requestByteBuf = requestByteBuf;
+        this.oproto = oproto;
+    }
+
+
+
     @Override
     public void onStartObject() throws TException {
-        if (outsideBody) {
-            // just skip the body level
-            outsideBody = false;
-            return;
-        }
+        level++;
 
-        if (!foundField) {
-            skipFieldsStack++;
+        if(level == 0) return;  // it's the outside { body: ... } object
+
+        if (skip) {
+            skipDepth++;
             return;
         }
 
@@ -200,9 +171,7 @@ class JsonReader implements JsonCallback {
 
         StackNode peek = peek();
         if (peek != null && isMultiElementKind(peek.dataType.kind)) {
-            peek.increaseElement();
-            //集合套集合的变态处理方式  todo
-            current = new StackNode(peek.dataType.valueType, requestByteBuf.writerIndex(), requestByteBuf.writerIndex(), current.optimizedStruct, current.optimizedStruct == null ? null : current.optimizedStruct.struct.name);
+            peek.incrElementSize();
         }
         switch (current.dataType.kind) {
             case STRUCT:
@@ -215,7 +184,7 @@ class JsonReader implements JsonCallback {
                 break;
             case MAP:
                 assert isValidMapKeyType(current.dataType.keyType.kind);
-                writeMapBegin(dataType2Byte(current.dataType.keyType), dataType2Byte(current.dataType.valueType), 0);
+                writeMapBegin(dataType2Byte(current     .dataType.keyType), dataType2Byte(current.dataType.valueType), 0);
                 break;
             default:
                 logAndThrowTException();
@@ -225,30 +194,24 @@ class JsonReader implements JsonCallback {
 
     @Override
     public void onEndObject() throws TException {
-        if (rootBodyEnd) return;
+        level--;
+        if(level == -1) return; // the outer body
 
-        if (!foundField) {
-            skipFieldsStack--;
+        if (skip) {
+            skipDepth--;
             return;
         }
-
-        assert skipFieldsStack == 0;
 
         assert current.dataType.kind == DataType.KIND.STRUCT || current.dataType.kind == DataType.KIND.MAP;
 
         switch (current.dataType.kind) {
             case STRUCT:
                 validateStruct(current);
-
                 oproto.writeFieldStop();
                 oproto.writeStructEnd();
-                if (current.optimizedStruct.struct.name.equals(optimizedStruct.struct.name)) {
-                    rootBodyEnd = true;
-                }
                 break;
             case MAP:
                 oproto.writeMapEnd();
-
                 reWriteByteBuf();
                 break;
             default:
@@ -264,8 +227,9 @@ class JsonReader implements JsonCallback {
      */
     @Override
     public void onStartArray() throws TException {
-        if (!foundField) {
-            skipFieldsStack++;
+        level++;
+        if (skip) {
+            skipDepth++;
             return;
         }
 
@@ -273,11 +237,7 @@ class JsonReader implements JsonCallback {
 
         StackNode peek = peek();
         if (peek != null && isMultiElementKind(peek.dataType.kind)) {
-            peek.increaseElement();
-            //集合套集合的变态处理方式 todo
-            current = new StackNode(peek.dataType.valueType, requestByteBuf.writerIndex(),
-                    requestByteBuf.writerIndex(), current.optimizedStruct,
-                    current.optimizedStruct == null ? null : current.optimizedStruct.struct.name);
+            peek.incrElementSize();
         }
 
         switch (current.dataType.kind) {
@@ -289,19 +249,15 @@ class JsonReader implements JsonCallback {
                 logAndThrowTException();
         }
 
-        OptimizedMetadata.OptimizedStruct nextStruct = optimizedService.optimizedStructs.get(current.dataType.valueType.qualifiedName);
-        stackNew(new StackNode(current.dataType.valueType, requestByteBuf.writerIndex(),
-                requestByteBuf.writerIndex(), nextStruct, nextStruct == null ? "" : nextStruct.struct.name));
     }
 
     @Override
     public void onEndArray() throws TException {
-        if (!foundField) {
-            skipFieldsStack--;
+        level--;
+        if (skip) {
+            skipDepth--;
             return;
         }
-
-        pop();
 
         assert isCollectionKind(current.dataType.kind);
 
@@ -321,79 +277,133 @@ class JsonReader implements JsonCallback {
 
     @Override
     public void onStartField(String name) throws TException {
-        if (!foundField || rootBodyEnd) {
+        if (skip) {
             return;
         }
-
-        if (rootBodyFound && current.dataType.kind == DataType.KIND.MAP) {
-            assert isValidMapKeyType(current.dataType.keyType.kind);
-            // key有可能是String, 也有可能是Int
-            if (current.dataType.keyType.kind == DataType.KIND.STRING) {
-                oproto.writeString(name);
-            } else {
-                writeIntField(name, current.dataType.keyType.kind);
+        if(level == 0) { // expect only the "body"
+            if("body".equals(name)) { // body
+                DataType initDataType = new DataType();
+                initDataType.setKind(DataType.KIND.STRUCT);
+                initDataType.qualifiedName = optimizedStruct.struct.name;
+                push( initDataType, -1, // not a struct field
+                        requestByteBuf.writerIndex(), //
+                        optimizedStruct, "body" );
             }
-            stackNew(new StackNode(current.dataType.valueType, requestByteBuf.writerIndex(),
-                    requestByteBuf.writerIndex(),
-                    optimizedService.optimizedStructs.get(current.dataType.valueType.qualifiedName), name));
-        } else {
-            // reset field status
-            foundNull = false;
-            foundField = true;
+            else { // others, just skip now
+                skip = true;
+                skipDepth = 0;
+            }
+        }
+        else { // level > 0, not skip
+            if (current.dataType.kind == DataType.KIND.MAP) {
+                assert isValidMapKeyType(current.dataType.keyType.kind);
 
-            if (rootBodyFound) {
+                int tFieldPos = requestByteBuf.writerIndex();
+                if (current.dataType.keyType.kind == DataType.KIND.STRING) {
+                    oproto.writeString(name);
+                } else {
+                    writeIntField(name, current.dataType.keyType.kind);
+                }
+                push( current.dataType.valueType,
+                        tFieldPos, // so value can't be null
+                        requestByteBuf.writerIndex(), // need for List/Map
+                        optimizedService.optimizedStructs.get(current.dataType.valueType.qualifiedName),
+                        name);
+            } else if(current.dataType.kind == DataType.KIND.STRUCT) {
+
                 Field field = current.optimizedStruct.fieldMap.get(name);
                 if (field == null) {
-                    foundField = false;
+                    skip = true;
+                    skipDepth = 0;
                     logger.debug("field(" + name + ") not found. just skip");
                     return;
                 }
-
-                if (current.dataType.kind == DataType.KIND.STRUCT) {
-                    current.fields4Struct.add(name);
+                else {
+                    skip = false;
                 }
 
-                int byteBufPositionBefore = requestByteBuf.writerIndex();
+                int tFieldPos = requestByteBuf.writerIndex();
                 oproto.writeFieldBegin(new TField(field.name, dataType2Byte(field.dataType), (short) field.getTag()));
-                stackNew(new StackNode(field.dataType, requestByteBuf.writerIndex(),
-                        byteBufPositionBefore, optimizedService.optimizedStructs.get(field.dataType.qualifiedName), name));
-            } else if (!rootBodyFound && !"body".equals(name)) {
-                logAndThrowTException("no body");
-            } else if (!rootBodyFound && "body".equals(name)) {
-                rootBodyFound = true;
+                push( field.dataType,
+                        tFieldPos,
+                        requestByteBuf.writerIndex(),
+                        optimizedService.optimizedStructs.get(field.dataType.qualifiedName),
+                        name);
             }
+            else logAndThrowTException("field " + name + " type " + toString(current.dataType) + " not compatible with json object");
         }
+    }
+
+    @Override
+    public void onStartField(int index) {
+        if(skip){
+            return;
+        }
+        assert isCollectionKind(current.dataType.kind);
+
+        DataType next = current.dataType.valueType;
+        OptimizedMetadata.OptimizedStruct nextStruct = (next.kind == DataType.KIND.STRUCT) ?
+                optimizedService.optimizedStructs.get(next.qualifiedName) :null;
+        push( current.dataType.valueType,
+                -1,
+                requestByteBuf.writerIndex(),
+                nextStruct,
+                null);
 
     }
 
     @Override
     public void onEndField() throws TException {
-        if (!foundField || rootBodyEnd) {
-            // reset the flag
-            if (skipFieldsStack == 0) {
-                foundField = true;
+        if (skip) {
+            if (skipDepth == 0) { // reset skipFlag
+                skip = false;
             }
             return;
         }
 
         String fieldName = current.fieldName;
-        pop();
 
-        if (foundNull) {
-            if (current.dataType.kind == DataType.KIND.STRUCT) {
-                current.fields4Struct.remove(fieldName);
+        if(level > 0) { // level = 0 will having no current dataType
+            StackNode parent = peek();
+            assert(parent != null);
+
+            switch (parent.dataType.kind){
+                case SET:
+                case LIST:
+                    if(current.isNull) {
+                        logAndThrowTException("SET/LIST can't support null value");
+                    }
+                    break;
+                case MAP:
+                    if(current.isNull) {
+                        // peek().decrElementSize(); onNull not incrElementSize
+                        requestByteBuf.writerIndex(current.tFieldPosition);
+                    }
+                    break;
+                case STRUCT:
+                    if(current.isNull) {
+                        // parent.fields4Struct.remove(fieldName);
+                        requestByteBuf.writerIndex(current.tFieldPosition);
+                        if(invocationCtx.codecProtocol() == CompressedBinary) {
+                            ((TCompactProtocol)oproto).resetLastFieldId();
+                        }
+                    }
+                    else {
+                        Field field = parent.optimizedStruct.fieldMap.get(fieldName);
+                        parent.fields4Struct.set(field.tag - parent.optimizedStruct.tagBase);
+                        oproto.writeFieldEnd();
+                    }
+                    break;
             }
-        }
-        if (current.dataType.kind != DataType.KIND.MAP && !foundNull) {
-            oproto.writeFieldEnd();
+
+            pop();
         }
 
-        foundNull = false;
     }
 
     @Override
     public void onBoolean(boolean value) throws TException {
-        if (!foundField) {
+        if (skip) {
             return;
         }
 
@@ -403,7 +413,7 @@ class JsonReader implements JsonCallback {
 
         StackNode peek = peek();
         if (peek != null && isMultiElementKind(peek.dataType.kind)) {
-            peek.increaseElement();
+            peek.incrElementSize();
         }
 
         oproto.writeBool(value);
@@ -413,13 +423,13 @@ class JsonReader implements JsonCallback {
     public void onNumber(double value) throws TException {
         DataType.KIND currentType = current.dataType.kind;
 
-        if (!foundField) {
+        if (skip) {
             return;
         }
 
         StackNode peek = peek();
         if (peek != null && isMultiElementKind(peek.dataType.kind)) {
-            peek.increaseElement();
+            peek.incrElementSize();
         }
 
         switch (currentType) {
@@ -453,13 +463,13 @@ class JsonReader implements JsonCallback {
     public void onNumber(long value) throws TException {
         DataType.KIND currentType = current.dataType.kind;
 
-        if (!foundField) {
+        if (skip) {
             return;
         }
 
         StackNode peek = peek();
         if (peek != null && isMultiElementKind(peek.dataType.kind)) {
-            peek.increaseElement();
+            peek.incrElementSize();
         }
 
         switch (currentType) {
@@ -488,26 +498,21 @@ class JsonReader implements JsonCallback {
 
     @Override
     public void onNull() throws TException {
-        if (!foundField) {
+        if (skip) {
             return;
         }
-        foundNull = true;
-        //reset writerIndex, skip the field
-        requestByteBuf.writerIndex(current.byteBufPositionBefore);
-        if (invocationCtx.codecProtocol() == CompressedBinary) {
-            ((TCompactProtocol) oproto).resetLastFieldId();
-        }
+        current.isNull = true;
     }
 
     @Override
     public void onString(String value) throws TException {
-        if (!foundField) {
+        if (skip) {
             return;
         }
 
         StackNode peek = peek();
         if (peek != null && isMultiElementKind(peek.dataType.kind)) {
-            peek.increaseElement();
+            peek.incrElementSize();
         }
 
         switch (current.dataType.kind) {
@@ -543,30 +548,60 @@ class JsonReader implements JsonCallback {
         }
     }
 
-    private void stackNew(StackNode node) {
-        history.push(this.current);
+    // only used in startField
+    private void push(final DataType dataType, final int tFieldPos, final int valuePos, final OptimizedMetadata.OptimizedStruct optimizedStruct, String fieldName) {
+        StackNode node = null;
+
+        if(nodePool.size() > 0) node = nodePool.remove(nodePool.size()-1);
+        else node = new StackNode();
+
+        node.init(dataType, valuePos, tFieldPos, optimizedStruct, fieldName);
+        //if(current != null)
+        history.push(node);
         this.current = node;
     }
 
+    // only used in endField
     private StackNode pop() {
-        return this.current = history.pop();
+        StackNode old = history.pop();
+        nodePool.add(old);
+
+        return this.current = (history.size() > 0) ? history.peek() : null;
     }
 
     private StackNode peek() {
-        return history.empty() ? null : history.peek();
+        return history.size() <= 1 ? null : history.get(history.size()-2);
     }
 
+    private String toString(DataType type) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(type.kind.toString());
+        switch (type.kind) {
+            case STRUCT:
+                sb.append("(").append(type.qualifiedName).append(")");
+                break;
+            case LIST:
+            case SET:
+                sb.append("[").append(toString(type.valueType)).append("]");
+                break;
+            case MAP:
+                sb.append("[").append(toString(type.keyType)).append(",").append(toString(type.valueType)).append("]");
+                break;
+        }
+        return sb.toString();
+    }
 
     private void validateStruct(StackNode current) throws TException {
         /**
          * 不在该Struct必填字段列表的字段列表
          */
-        for (Field field : current.optimizedStruct.fieldMapByTag.values()) {
-            if (field != null && !field.isOptional() && !current.fields4Struct.contains(field.name)) {
+        OptimizedMetadata.OptimizedStruct struct = current.optimizedStruct;
+        for (Field field : struct.fieldMap.values() ) {
+            if (field != null && !field.isOptional() && !current.fields4Struct.get(field.tag - struct.tagBase)) {
                 String fieldName = current.fieldName;
-                String struct = current.optimizedStruct.struct.name;
+                String structName = struct.struct.name;
                 SoaException ex = new SoaException(SoaCode.ReqFieldNull.getCode(), "JsonError, please check:"
-                        + struct + "." + fieldName
+                        + structName + "." + fieldName
                         + ", optimizedStruct mandatory fields missing:"
                         + field.name);
                 logger.error(ex.getMessage());
@@ -578,13 +613,13 @@ class JsonReader implements JsonCallback {
     private void writeIntField(String value, DataType.KIND kind) throws TException {
         switch (kind) {
             case SHORT:
-                oproto.writeI16(Short.valueOf(value));
+                oproto.writeI16(Short.parseShort(value));
                 break;
             case INTEGER:
-                oproto.writeI32(Integer.valueOf(value));
+                oproto.writeI32(Integer.parseInt(value));
                 break;
             case LONG:
-                oproto.writeI64(Long.valueOf(value));
+                oproto.writeI64(Long.parseLong(value));
                 break;
             default:
                 logAndThrowTException();
@@ -598,7 +633,7 @@ class JsonReader implements JsonCallback {
         assert isMultiElementKind(current.dataType.kind);
 
         //拿到当前node的开始位置以及集合元素大小
-        int beginPosition = current.byteBufPosition;
+        int beginPosition = current.valuePosition;
         int elCount = current.elCount;
 
         //备份最新的writerIndex
@@ -701,50 +736,87 @@ class JsonReader implements JsonCallback {
     }
 
     /**
-     * 用于保存当前处理节点的信息
+     * 用于保存当前处理节点的信息, 从之前的 immutable 调整为  mutable，并使用了一个简单的池，这样，StackNode
+     * 的数量 = json的深度，而不是长度，降低内存需求
      */
     static class StackNode {
-        final DataType dataType;
+
+        private DataType dataType;
+        /**
+         * byteBuf position before this node created, maybe a Struct Field, or a Map field, or an array element
+         */
+        private int tFieldPosition;
+
         /**
          * byteBuf position after this node created
          */
-        final int byteBufPosition;
-
-        /**
-         * byteBuf position before this node created
-         */
-        final int byteBufPositionBefore;
+        private int valuePosition;
 
         /**
          * optimizedStruct if dataType.kind==STRUCT
          */
-        final OptimizedMetadata.OptimizedStruct optimizedStruct;
+        private OptimizedMetadata.OptimizedStruct optimizedStruct;
 
         /**
          * the field name
          */
-        final String fieldName;
+        private String fieldName;
 
         /**
          * if datatype is optimizedStruct, all fieldMap parsed will be add to this set
          */
-        final Set<String> fields4Struct = new HashSet<>(32);
+        private BitSet fields4Struct = new BitSet(64);
 
         /**
          * if dataType is a Collection(such as LIST, MAP, SET etc), elCount represents the size of the Collection.
          */
-        private int elCount = 0;
+        int elCount = 0;
 
-        StackNode(final DataType dataType, final int byteBufPosition, int byteBufPositionBefore, final OptimizedMetadata.OptimizedStruct optimizedStruct, String fieldName) {
+        boolean isNull = false;
+
+        StackNode() {
+        }
+
+        public StackNode init(final DataType dataType, final int valuePosition, int tFieldPosition, final OptimizedMetadata.OptimizedStruct optimizedStruct, String fieldName){
             this.dataType = dataType;
-            this.byteBufPosition = byteBufPosition;
-            this.byteBufPositionBefore = byteBufPositionBefore;
+            this.valuePosition = valuePosition;
+            this.tFieldPosition = tFieldPosition;
             this.optimizedStruct = optimizedStruct;
             this.fieldName = fieldName;
+
+            this.fields4Struct.clear();
+            this.elCount = 0;
+            this.isNull = false;
+            return this;
         }
 
-        void increaseElement() {
+        void incrElementSize() {
             elCount++;
         }
+
+        public DataType getDataType() {
+            return dataType;
+        }
+
+        public int gettFieldPosition() {
+            return tFieldPosition;
+        }
+
+        public int getValuePosition() {
+            return valuePosition;
+        }
+
+        public OptimizedMetadata.OptimizedStruct getOptimizedStruct() {
+            return optimizedStruct;
+        }
+
+        public String getFieldName() {
+            return fieldName;
+        }
+
+        public BitSet getFields4Struct() {
+            return fields4Struct;
+        }
+
     }
 }
