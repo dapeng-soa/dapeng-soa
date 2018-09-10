@@ -11,6 +11,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.github.dapeng.core.helper.DapengUtil.longToHexStr;
+import static com.github.dapeng.core.helper.IPUtils.transferIp;
+
 /**
  * 客户端上下文
  *
@@ -34,10 +37,10 @@ public class InvocationContextImpl implements InvocationContext {
      */
     private String versionName;
 
-    private Optional<String> sessionTid = Optional.empty();
-    private String callerTid = DapengUtil.generateTid();
+    private Optional<Long> sessionTid = Optional.empty();
+    private long callerTid = DapengUtil.generateTid();
     private Optional<Long> userId = Optional.empty();
-    private Optional<String> userIp = Optional.empty();
+    private Optional<Integer> userIp = Optional.empty();
 
     private Optional<Integer> timeout = Optional.empty();
 
@@ -45,9 +48,9 @@ public class InvocationContextImpl implements InvocationContext {
 
     private CodecProtocol codecProtocol = CodecProtocol.CompressedBinary;
 
-    private Optional<String> calleeIp = Optional.empty();
+    private Optional<Integer> calleeIp = Optional.empty();
 
-    private Optional<Integer> calleePort = Optional.of(9090);
+    private Optional<Integer> calleePort = Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
 
     private Optional<String> callerMid = Optional.empty();
 
@@ -63,7 +66,7 @@ public class InvocationContextImpl implements InvocationContext {
      * 包含服务提供端返回来的一些信息, 例如calleeIp, 服务耗时等信息
      */
     private InvocationInfo lastInvocationInfo;
-    private Integer seqId;
+    private int seqId;
 
     @Override
     public String serviceName() {
@@ -127,12 +130,12 @@ public class InvocationContextImpl implements InvocationContext {
     }
 
     @Override
-    public Optional<String> calleeIp() {
+    public Optional<Integer> calleeIp() {
         return this.calleeIp;
     }
 
     @Override
-    public InvocationContext calleeIp(String calleeIp) {
+    public InvocationContext calleeIp(Integer calleeIp) {
         this.calleeIp = Optional.ofNullable(calleeIp);
         return this;
     }
@@ -177,24 +180,24 @@ public class InvocationContextImpl implements InvocationContext {
     }
 
     @Override
-    public InvocationContext sessionTid(String sessionTid) {
+    public InvocationContext sessionTid(Long sessionTid) {
         this.sessionTid = Optional.ofNullable(sessionTid);
         return this;
     }
 
     @Override
-    public Optional<String> sessionTid() {
+    public Optional<Long> sessionTid() {
         return this.sessionTid;
     }
 
     @Override
-    public InvocationContext callerTid(String callerTid) {
+    public InvocationContext callerTid(Long callerTid) {
         this.callerTid = callerTid;
         return this;
     }
 
     @Override
-    public String callerTid() {
+    public long callerTid() {
         return this.callerTid;
     }
 
@@ -228,7 +231,7 @@ public class InvocationContextImpl implements InvocationContext {
 
     @Override
     public InvocationContext cookies(Map<String, String> cookies) {
-        cookies.putAll(cookies);
+        this.cookies.putAll(cookies);
         return this;
     }
 
@@ -260,13 +263,13 @@ public class InvocationContextImpl implements InvocationContext {
     }
 
     @Override
-    public InvocationContext userIp(String userIp) {
+    public InvocationContext userIp(Integer userIp) {
         this.userIp = Optional.ofNullable(userIp);
         return this;
     }
 
     @Override
-    public Optional<String> userIp() {
+    public Optional<Integer> userIp() {
         return userIp;
     }
 
@@ -336,16 +339,16 @@ public class InvocationContextImpl implements InvocationContext {
         sb.append("\"").append("serviceName").append("\":\"").append(this.serviceName).append("\",");
         sb.append("\"").append("methodName").append("\":\"").append(this.methodName).append("\",");
         sb.append("\"").append("versionName").append("\":\"").append(this.versionName).append("\",");
-        sb.append("\"").append("sessionTid").append("\":\"").append(this.sessionTid.isPresent() ? this.sessionTid.get() : null).append("\",");
+        sb.append("\"").append("sessionTid").append("\":\"").append(this.sessionTid.isPresent() ? longToHexStr(this.sessionTid.get()) : null).append("\",");
         sb.append("\"").append("userId").append("\":\"").append(this.userId.isPresent() ? this.userId.get() : null).append("\",");
-        sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? this.userIp.get() : null).append("\",");
+        sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? transferIp(this.userIp.get()) : null).append("\",");
         sb.append("\"").append("timeout").append("\":\"").append(this.timeout.isPresent() ? this.timeout.get() : null).append("\",");
         sb.append("\"").append("transactionId").append("\":\"").append(this.transactionId.isPresent() ? this.transactionId.get() : null).append("\",");
         sb.append("\"").append("transactionSequence").append("\":\"").append(this.transactionSequence.isPresent() ? this.transactionSequence.get() : null).append("\",");
         sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid).append("\",");
         sb.append("\"").append("callerMid").append("\":\"").append(this.callerMid.isPresent() ? this.callerMid.get() : null).append("\",");
         sb.append("\"").append("operatorId").append("\":").append(this.operatorId.isPresent() ? this.operatorId.get() : null).append(",");
-        sb.append("\"").append("calleeIp").append("\":\"").append(this.calleeIp.isPresent() ? this.calleeIp.get() : null).append("\",");
+        sb.append("\"").append("calleeIp").append("\":\"").append(this.calleeIp.isPresent() ? transferIp(this.calleeIp.get()) : null).append("\",");
         sb.append("\"").append("calleePort").append("\":\"").append(this.calleePort.isPresent() ? this.calleePort.get() : null).append("\",");
 
         sb.deleteCharAt(sb.lastIndexOf(","));

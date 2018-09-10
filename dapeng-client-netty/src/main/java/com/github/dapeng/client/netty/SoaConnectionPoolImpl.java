@@ -97,7 +97,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         if (Integer.parseInt(tarArr[0]) != Integer.parseInt(reqArr[0])) {
             return false;
         }
-        return  ((Integer.parseInt(tarArr[1]) * 10 + Integer.parseInt(tarArr[2]))
+        return ((Integer.parseInt(tarArr[1]) * 10 + Integer.parseInt(tarArr[2]))
                 >= (Integer.parseInt(reqArr[1]) * 10 + Integer.parseInt(reqArr[2])));
     }
 
@@ -160,7 +160,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     private SoaConnection findConnection(String service,
                                          String version,
-                                         String method) {
+                                         String method) throws SoaException {
         ZkServiceInfo zkInfo = zkInfos.get(service);
 
         if (zkInfo == null || zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
@@ -177,10 +177,13 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
             zkInfos.put(service, zkInfo);
         }
+        //当zk上服务节点发生变化的时候, 会导致这里拿不到服务运行时实例.
+        //目前简单重试三次处理
+        List<RuntimeInstance> compatibles = retryGetConnection(zkInfo, version);
+        if (compatibles == null || compatibles.isEmpty()) {
+            return null;
+        }
 
-        List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
-                .filter(rt -> checkVersion(version, rt.version))
-                .collect(Collectors.toList());
         // router
         List<RuntimeInstance> routedInstances = router(service, method, version, compatibles);
 
@@ -211,6 +214,35 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     }
 
     /**
+     * 如果出现异常（ConcurrentModifyException）,或获取到的实例为0，进行重试
+     *
+     * @param zkInfo
+     * @param version
+     */
+    private List<RuntimeInstance> retryGetConnection(ZkServiceInfo zkInfo, String version) {
+        int retry = 1;
+        do {
+            try {
+                List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances().stream()
+                        .filter(rt -> checkVersion(version, rt.version))
+                        .collect(Collectors.toList());
+
+                if (compatibles.size() > 0) {
+                    return compatibles;
+                }
+            } catch (Exception e) {
+                logger.error("zkInfo get connection 出现异常: " + e.getMessage());
+            }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException ignored) {
+            }
+        } while (retry++ <= 3);
+        logger.warn("retryGetConnection::重试3次获取 connection 失败");
+        return null;
+    }
+
+    /**
      * 服务路由
      *
      * @param service
@@ -219,7 +251,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * @param compatibles
      * @return
      */
-    private List<RuntimeInstance> router(String service, String method, String version, List<RuntimeInstance> compatibles) {
+    private List<RuntimeInstance> router(String service, String method, String version, List<RuntimeInstance> compatibles) throws SoaException {
         InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         List<Route> routes = zkAgent.getRoutes(service);
         if (routes == null || routes.size() == 0) {
@@ -230,6 +262,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             context.methodName(method);
             context.versionName(version);
             List<RuntimeInstance> runtimeInstances = RoutesExecutor.executeRoutes(context, routes, compatibles);
+            if (runtimeInstances.size() == 0) {
+                throw new SoaException(SoaCode.NoMatchedRouting);
+            }
             return runtimeInstances;
         }
     }

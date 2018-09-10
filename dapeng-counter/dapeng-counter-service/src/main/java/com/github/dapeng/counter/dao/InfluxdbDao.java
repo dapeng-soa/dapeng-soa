@@ -2,16 +2,13 @@ package com.github.dapeng.counter.dao;
 
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
 import com.github.dapeng.counter.util.CounterServiceProperties;
-import org.influxdb.dto.Point;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
+import org.influxdb.dto.Point;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -20,7 +17,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * Create by 2018/2/7 10:08
  * email :yq1724555319@gmail.com
  */
-
 public class InfluxdbDao {
     private static final Logger LOGGER = LoggerFactory.getLogger(InfluxdbDao.class);
 

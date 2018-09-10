@@ -73,6 +73,10 @@ public class SoaSystemEnvProperties {
     public static final String SOA_ZOOKEEPER_KAFKA_HOST = get(KEY_SOA_ZOOKEEPER_KAFKA_HOST, "127.0.0.1:2181");
     public static final String SOA_KAFKA_PORT = get(KEY_SOA_KAFKA_HOST, "127.0.0.1:9092");
 
+    public static final long SOA_MAX_TIMEOUT = 300000L;
+    public static final long SOA_DEFAULT_TIMEOUT = 1000L;
+
+
     public static final boolean SOA_CONTAINER_USETHREADPOOL = Boolean.valueOf(get(KEY_SOA_CONTAINER_USETHREADPOOL, Boolean.TRUE.toString()));
     public static final String SOA_CONTAINER_IP = get(KEY_SOA_CONTAINER_IP, IPUtils.containerIp());
     public static final String SOA_CALLER_IP = get(KEY_SOA_CALLER_IP, IPUtils.localIp());
@@ -81,10 +85,7 @@ public class SoaSystemEnvProperties {
     public static final String SOA_REMOTING_MODE = get(KEY_SOA_REMOTING_MODE, "remote");
     public static final boolean SOA_MONITOR_ENABLE = Boolean.valueOf(get(KEY_SOA_MONITOR_ENABLE, "false"));
     public static final String SOA_SERVICE_CALLERFROM = get(KEY_SOA_SERVICE_CALLERFROM, "unknown");
-    public static final Long SOA_SERVICE_TIMEOUT = Long.valueOf(get(KEY_SOA_SERVICE_TIMEOUT, "0"));
-
-    public static final long SOA_MAX_TIMEOUT = 300000L;
-    public static final long SOA_DEFAULT_TIMEOUT = 1000L;
+    public static final Long SOA_SERVICE_TIMEOUT = Long.valueOf(get(KEY_SOA_SERVICE_TIMEOUT, String.valueOf(SOA_DEFAULT_TIMEOUT)));
 
     public static final Integer SOA_CORE_POOL_SIZE = Integer.valueOf(get(KEY_SOA_CORE_POOL_SIZE, String.valueOf(Runtime.getRuntime().availableProcessors() * 2)));
     public static final Long SOA_MAX_READ_BUFFER_SIZE = Long.valueOf(get(KEY_SOA_MAX_READ_BUFFER_SIZE, String.valueOf(1024 * 1024 * 5)));// 5M

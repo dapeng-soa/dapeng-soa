@@ -80,10 +80,10 @@ public class TestController {
 
     private void fillInvocationCtx(InvocationContext invocationCtx, HttpServletRequest req) {
         invocationCtx.callerMid(req.getRequestURI());
-        invocationCtx.userIp(req.getRemoteAddr());
+        invocationCtx.userIp(IPUtils.transferIp(req.getRemoteAddr()));
         Set<String> parameters = req.getParameterMap().keySet();
         if (parameters.contains("calleeIp")) {
-            invocationCtx.calleeIp(req.getParameter("calleeIp"));
+            invocationCtx.calleeIp(IPUtils.transferIp(req.getParameter("calleeIp")));
         }
 
         if (parameters.contains("calleePort")) {

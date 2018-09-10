@@ -3,6 +3,8 @@ package com.github.dapeng.impl.plugins.netty;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.*;
+import com.github.dapeng.core.helper.DapengUtil;
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.ExceptionUtil;
@@ -41,7 +43,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                           SoaResponseWrapper wrapper,
                           ByteBuf out) throws Exception {
         TransactionContext transactionContext = wrapper.transactionContext;
-        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().orElse("0"));
+        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
 
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(getClass().getSimpleName() + "::encode");
@@ -63,30 +65,33 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
 
                     TSoaTransport transport = new TSoaTransport(out);
                     SoaMessageProcessor messageProcessor = new SoaMessageProcessor(transport);
-                    Attribute<Map<Integer, Long>> requestTimestampAttr = channelHandlerContext.channel().attr(NettyChannelKeys.REQUEST_TIMESTAMP);
-                    Map<Integer, Long> requestTimestampMap = requestTimestampAttr.get();
 
-                    Long requestTimestamp = 0L;
-                    if (requestTimestampMap != null) {
-                        //each per request take the time then remove it
-                        requestTimestamp = requestTimestampMap.remove(transactionContext.seqId());
+                    //todo remove the try..catch
+                    try {
+                        Long requestTimestamp = (Long) transactionContext.getAttribute("dapeng_request_timestamp");
 
-                        if (requestTimestamp == null) {
-                            requestTimestamp = 0L;
-                        }
-                    } else {
-                        LOGGER.warn(getClass().getSimpleName() + "::encode no requestTimestampMap found!");
+                        Long cost = System.currentTimeMillis() - requestTimestamp;
+                        soaHeader.setCalleeTime2(cost.intValue());
+                    } catch (Exception e) {
+                        LOGGER.error(e.getMessage(), e);
+                        soaHeader.setCalleeTime2(0);
                     }
-                    Long cost = System.currentTimeMillis() - requestTimestamp;
-                    soaHeader.setCalleeTime2(cost.intValue());
-                    soaHeader.setCalleeIp(Optional.ofNullable(SoaSystemEnvProperties.SOA_CONTAINER_IP));
-                    soaHeader.setCalleePort(Optional.ofNullable(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
+                    soaHeader.setCalleeIp(Optional.of(IPUtils.transferIp(SoaSystemEnvProperties.SOA_CONTAINER_IP)));
+                    soaHeader.setCalleePort(Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
                     Joiner joiner = Joiner.on(":");
                     soaHeader.setCalleeMid(joiner.join(soaHeader.getServiceName(),soaHeader.getMethodName(),soaHeader.getVersionName()));
                     soaHeader.setCalleeTid(transactionContext.calleeTid());
                     messageProcessor.writeHeader(transactionContext);
                     if (serializer != null && result != null) {
-                        messageProcessor.writeBody(serializer, result);
+                        try {
+                            messageProcessor.writeBody(serializer, result);
+                        } catch (SoaException e) {
+                            if (e.getCode().equals(SoaCode.StructFieldNull.getCode())) {
+                                e.setCode(SoaCode.ServerRespFieldNull.getCode());
+                                e.setMsg(SoaCode.ServerRespFieldNull.getMsg());
+                            }
+                            throw e;
+                        }
                     }
                     messageProcessor.writeMessageEnd();
                     transport.flush();
@@ -96,8 +101,10 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                                 + "service[" + soaHeader.getServiceName()
                                 + "]:version[" + soaHeader.getVersionName()
                                 + "]:method[" + soaHeader.getMethodName() + "]"
-                                + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                                + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
+                                + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : ",")
+                                + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : ",")
+                                + " calleeTime1:" + soaHeader.getCalleeTime1().orElse(-1) + ","
+                                + " calleeTime2:" + soaHeader.getCalleeTime2().orElse(-1);
                         LOGGER.debug(getClass().getSimpleName() + "::encode:" + debugLog + ", payload[seqId:" + transactionContext.seqId() + "]:\n" + result);
                         LOGGER.debug(getClass().getSimpleName() + "::encode, payloadAsByteBuf:\n" + DumpUtil.dumpToStr(out));
                     }
@@ -142,7 +149,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         SoaException soaException = transactionContext.soaException();
         if (soaException == null) {
             soaException = new SoaException(soaHeader.getRespCode().get(),
-                    soaHeader.getRespMessage().orElse(SoaCode.UnKnown.getMsg()));
+                    soaHeader.getRespMessage().orElse(SoaCode.ServerUnKnown.getMsg()));
             transactionContext.soaException(soaException);
         }
 
@@ -167,7 +174,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
                     + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
             // 根据respCode判断是否是业务异常还是运行时异常
-            if (soaHeader.getRespCode().get().startsWith("Err-Core")) {
+            if (DapengUtil.isDapengCoreException(soaException)) {
                 application.error(this.getClass(), infoLog, soaException);
             } else {
                 application.info(this.getClass(), infoLog);

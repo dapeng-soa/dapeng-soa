@@ -16,6 +16,7 @@ import com.twitter.scrooge.java_generator._
 import scala.collection.JavaConversions._
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
+import scala.io.Source
 import scala.util.control.Breaks._
 
 
@@ -76,12 +77,16 @@ class ThriftCodeParser(var language: String) {
     //如果是scala，需要重写namespace
     val finalTxt = if (language.equals("scala")) {
       // getNamespaceLine => "namespace java xxxxxx.xx.xx"
-      val namespaceLine = txt.split("\n")(0)
-      // getNamespace => xx.xx.xx
-      val namespace = namespaceLine.split(" ").reverse.head
-      val scalaNamespace = toScalaNamespace(namespace)
-
-      txt.replace(namespace,scalaNamespace)
+      val namespaceLine = Source.fromFile(resource).getLines().find(_.trim.startsWith("namespace"))
+      namespaceLine match {
+        case Some(i) =>
+          val namespace = i.split(" ").reverse.head
+          val scalaNamespace = toScalaNamespace(namespace)
+          txt.replace(namespace,scalaNamespace)
+        case None =>
+          println("[Warning] you should specific your namespace statement at head of your thrift file. like: namespace java YourPackageName")
+          txt
+      }
     } else txt
 
     val importer = Importer(Seq(homeDir))
