@@ -50,10 +50,6 @@ class JsonReader implements JsonCallback {
      * 当前处理数据节点
      */
     StackNode current;
-    /**
-     * 标志是否是最外层object
-     */
-    //boolean outsideBody = true;
 
     /**
      * incr: startObject/startArray
@@ -73,73 +69,102 @@ class JsonReader implements JsonCallback {
 
     /**
      * <pre>
+     *
+     * 按照事件流解析 JSON 时， JsonReader 为维护一个 NodeInfo 的 stack， 基本原则是：
+     * - 栈顶的NodeInfo(current) 总是对应当前的 json value 的信息。
+     * - 对 JsonObject
+     * -- 当 onStartField(String) 时，会将子字段的 NodeInfo 压栈
+     * -- 当 onEndField 时， 会 pop 到 上一层NodeInfo 应该时 Struct or MAP 对应的NodeInfo
+     * - 对 JsonArray
+     * -- 当 onStartFiled(int) 时，会将数组元素对应的 NodeInfo 压栈
+     * -- 当 onEndField 时，会pop，恢复到 List/SET 对应的 NodeInfo
+     *
+     * 也就是说，对JSON中的每一个值( object, array, string, number, boolean, null），都会有一个
+     * 对应的 NodeInfo, 这个随着 JSON 的事件流，不断的新建，然后当json值处理完成后，NodeInfo又会销毁。
+     *
+     * NodeInfo 中包括了如下信息：
+     * - DataType 当前 value 对应的元数据类型。
+     * - tFieldPos 对应与 { name: null } 这样的 field，当检测到value 是一个null值时，我们需要将
+     *     thrift流回滚到 tFieldPos，即消除在流中的field头部信息。这个检测在 onEndField 时进行。
+     *     对于LIST/SET 这是不容许子元素有 null 值的。
+     * - valuePos 如果 value 时一个MAP/LIST/SET，在 value 的开始部分会是这个集合的长度，
+     *     在 onEndObject/onEndArray 时，我们会回到 valuePos，重写集合的长度。
+     * - elCount 如果 parent 是MAP/LIST/SET，对非 null 值(onStartObject, onStartArray,onString,
+     *     onNumber, onBoolean)都会新增 parent.elCount。然后在parent结束后重置长度。
+     * - isNull onNull 会设置当前的 isNull 为true，在onEndField 时，进行 tFieldPos的特殊处理。
+     *
+     *  主要的处理逻辑：
+     *
      * - onStartObject
      *  - 当前栈顶 ：STRUCT or MAP
      *  - 栈操作：无
      *  - 处理：proto.writeStructBegin or proto.writeMapBegin
+     *
      * - onEndObject
      *  - 当前栈顶：STRUCT or MAP
      *  - 栈操作：无
-     *  - 处理：
-     *      - proto.writeStructEnd or proto.writeMapEnd
-     *      - 如果父栈元素是 LIST/SET/MAP，计数++
+     *  - 处理：proto.writeStructEnd or proto.writeMapEnd
+     *
      * - onStartArray
      *  - 当前栈顶：LIST/SET
      *  - 栈操作：无
      *  - 处理：proto.writeListBegin or proto.writeSetBegin
+     *
      * - onEndArray
      *  - 当前栈顶：
      *  - 栈操作：无
-     *  - 处理：
-     *      - proto.writeListEnd or proto.writeSetEnd
-     *      - 如果父栈元素是 LIST/SET/MAP，计数++
+     *  - 处理：proto.writeListEnd or proto.writeSetEnd 并重置长度
+     *
      * - onStartField name
      *  - 当前栈顶：STRUCT / MAP
      *  - 栈操作：
      *      - STRUCT：将结构体的fields[name] 压栈
      *      - MAP：将 valueType 压栈
-     *      - 同步新栈顶的 writeIndex
      *  - 处理：
      *      - STRUCT: proto.writeFieldBegin name
      *      - MAP: proto.writeString name or proto.writeInt name.toInt
+     *
+     *  - onStartField int
+     *   - 当前栈顶：LIST/SET
+     *   - 栈操作：
+     *      - 将 valueType 压栈
+     *   - 处理：
+     *
      * - onEndField
      *  - 当前栈顶：any
-     *  - 栈操作：pop 恢复当前 STRUCT/MAP
-     *  - 处理：proto.writeFieldEnd
+     *  - 栈操作：pop 恢复上一层。
+     *  - 处理：
+     *   - 当前字段是Map的元素且当前值为 null，则回退到 tFieldPos
+     *   - 当前字段为LIST/SET的子元素，不容许当前值为 null
+     *   - 当前字段是Struct的字段，则回退到 tFieldPos 或者 writeFieldEnd
+     *
      * - onNumber
      *  - 当前栈顶：BYTE/SHORT/INTEGER/LONG/DOUBLE
      *  - 栈操作：无
      *  - 处理
      *      - proto.writeI8, writeI16, ...
-     *      - 如果父栈元素是 LIST/SET/MAP，计数++
+     *
      * - onBoolean
      *  - 当前栈顶：BOOLEAN
      *  - 栈操作：无
      *  - 处理
      *      - proto.writeBoolean.
-     *      - 如果父栈元素是 LIST/SET/MAP，计数++
+     *
      * - onString
      *  - 当前栈顶：STRING
      *  - 栈操作：无
      *  - 处理
      *      - proto.writeString, ...
-     *      - 如果父栈元素是 LIST/SET/MAP，计数++
+     *
      * - onNull
      *  - 当前栈顶：any
      *  - 栈操作：无
-     *  - 处理
-     *      - 父栈元素为 STRUCT/MAP 时，当前field容许为空时，重置 writeIndex,否则报错
-     *      - 父栈元素为 LIST/SET 时，不容许写入空值。
+     *  - 处理 current.isNull = true
      * </pre>
      */
     Stack<StackNode> history = new Stack<>();
 
     List<StackNode> nodePool = new ArrayList<>(64);  // keep a minum StackNode Pool
-
-    /**
-     * 记录是否是null. 前端在处理optional字段的时候, 可能会传入一个null,见单元测试
-     */
-//    boolean foundNull = true;
 
     /**
      * @param optimizedStruct
@@ -596,7 +621,9 @@ class JsonReader implements JsonCallback {
          * 不在该Struct必填字段列表的字段列表
          */
         OptimizedMetadata.OptimizedStruct struct = current.optimizedStruct;
-        for (Field field : struct.fieldMap.values() ) {
+        List<Field> fields = struct.struct.fields;
+        for (int i = 0; i < fields.size(); i++ ) { // iterator need more allocation
+            Field field = fields.get(i);
             if (field != null && !field.isOptional() && !current.fields4Struct.get(field.tag - struct.tagBase)) {
                 String fieldName = current.fieldName;
                 String structName = struct.struct.name;
