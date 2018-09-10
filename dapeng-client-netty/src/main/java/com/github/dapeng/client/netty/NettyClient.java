@@ -230,4 +230,9 @@ public class NettyClient {
         return bootstrap.connect(host, port).sync().channel();
     }
 
+    public void shutdown() {
+        LOGGER.warn("NettyClient shutdown gracefully");
+        workerGroup.shutdownGracefully();
+    }
+
 }

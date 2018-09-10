@@ -2,8 +2,10 @@ package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
+import com.github.dapeng.core.FreqControlRule;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.Service;
+import com.github.dapeng.core.ServiceFreqControl;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.*;
@@ -15,21 +17,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.github.dapeng.registry.zookeeper.CommonZk.*;
+
 /**
  * RegistryAgent using Synchronous zookeeper requesting
  *
  * @author tangliu
  * @date 2016-08-12
  */
-public class RegistryAgentImpl implements RegistryAgent {
+public class ServerZkAgentImpl implements RegistryAgent {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RegistryAgentImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServerZkAgentImpl.class);
 
-    private final String RUNTIME_PATH = "/soa/runtime/services";
-    private final String CONFIG_PATH = "/soa/config/services";
-    private final static String ROUTES_PATH = "/soa/config/routes";
+    private static final RegistryAgent instance = new ServerZkAgentImpl();
 
-    private final boolean isClient;
     private final ServerZk serverZk = new ServerZk(this);
     /**
      * 灰度环境下访问生产环境的zk?
@@ -40,26 +41,23 @@ public class RegistryAgentImpl implements RegistryAgent {
     private Map<ProcessorKey, SoaServiceDefinition<?>> processorMap;
 
 
-    public RegistryAgentImpl() {
-        this(true);
+    private ServerZkAgentImpl() {
     }
 
-    public RegistryAgentImpl(boolean isClient) {
-        this.isClient = isClient;
+    public static RegistryAgent getInstance() {
+        return instance;
     }
 
     @Override
     public void start() {
 
-        if (!isClient) {
-            serverZk.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
-            serverZk.connect();
+        serverZk.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST);
+        serverZk.connect();
 
-            if (SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_ISCONFIG) {
-                zooKeeperMasterClient = new ServerZk(this);
-                zooKeeperMasterClient.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_HOST);
-                zooKeeperMasterClient.connect();
-            }
+        if (SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_ISCONFIG) {
+            zooKeeperMasterClient = new ServerZk(this);
+            zooKeeperMasterClient.setZookeeperHost(SoaSystemEnvProperties.SOA_ZOOKEEPER_MASTER_HOST);
+            zooKeeperMasterClient.connect();
         }
     }
 
@@ -102,6 +100,8 @@ public class RegistryAgentImpl implements RegistryAgent {
             // 创建路由节点
             serverZk.create(ROUTES_PATH + "/" + serverName, null, false);
 
+            // 创建限流节点
+            serverZk.create(FREQ_PATH + "/" + serverName, null, false);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -146,6 +146,10 @@ public class RegistryAgentImpl implements RegistryAgent {
         return serverZk.getConfigData(serviceKey);
     }
 
+    @Override
+    public ServiceFreqControl getFreqControlRule(boolean usingFallback, String serviceKey) {
+        return serverZk.getFreqControl(serviceKey);
+    }
 
     /**
      * getAllServices

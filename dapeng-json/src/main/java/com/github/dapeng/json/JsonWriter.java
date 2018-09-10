@@ -1,7 +1,5 @@
 package com.github.dapeng.json;
 
-import com.github.dapeng.org.apache.thrift.TException;
-
 public class JsonWriter implements JsonCallback {
 
     private StringBuilder builder = new StringBuilder(64);
@@ -13,9 +11,7 @@ public class JsonWriter implements JsonCallback {
 
     @Override
     public void onEndObject() {
-        if (builder.charAt(builder.length() - 1) == ',') {
-            builder.setLength(builder.length() - 1);
-        }
+        removeTailSplitor();
         builder.append('}');
     }
 
@@ -26,9 +22,7 @@ public class JsonWriter implements JsonCallback {
 
     @Override
     public void onEndArray() {
-        if (builder.charAt(builder.length() - 1) == ',') {
-            builder.setLength(builder.length() - 1);
-        }
+        removeTailSplitor();
         builder.append(']');
     }
 
@@ -64,7 +58,16 @@ public class JsonWriter implements JsonCallback {
 
     @Override
     public void onString(String value) {
-        builder.append('\"').append(escapeString(value)).append('\"');
+        builder.append('\"');
+        escapeString(value, builder);
+        builder.append('\"');
+    }
+
+    private void removeTailSplitor() {
+        int position = builder.length() - 1;
+        if (builder.charAt(position) == ',') {
+            builder.setLength(position);
+        }
     }
 
     /**
@@ -77,10 +80,11 @@ public class JsonWriter implements JsonCallback {
      * @param value
      * @return
      */
-    private String escapeString(String value) {
+    private void escapeString(String value, StringBuilder sb) {
         if (value != null && value.length() > 0) {
+            int length = value.length();
+
             int index = 0;
-            StringBuilder sb = new StringBuilder(64);
             do {
                 char ch = value.charAt(index++);
                 switch (ch) {
@@ -103,10 +107,8 @@ public class JsonWriter implements JsonCallback {
                         sb.append(ch);
                 }
 
-            } while (index < value.length());
-            return sb.toString();
+            } while (index < length);
         }
-        return value;
     }
 
     @Override

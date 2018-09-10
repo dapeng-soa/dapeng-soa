@@ -1,8 +1,11 @@
 package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.RuntimeInstance;
+import com.github.dapeng.core.Weight;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
+import org.apache.zookeeper.Watcher;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +15,8 @@ import java.util.Map;
  * @date 2017/12/25
  */
 public class ZkServiceInfo {
+
+    private Watcher watcher = new ZkWatcher(this);
 
     public enum Status {
 
@@ -53,6 +58,10 @@ public class ZkServiceInfo {
         return status;
     }
 
+    public Watcher getWatcher() {
+        return watcher;
+    }
+
     public void setStatus(Status status) {
         this.status = status;
     }
@@ -71,6 +80,13 @@ public class ZkServiceInfo {
     public Config<LoadBalanceStrategy> loadbalanceConfig = new Config<>();
 
     /**
+     * weight zk config
+     */
+    public Weight weightGlobalConfig = new Weight();
+
+    public List<Weight> weightServiceConfigs = new ArrayList<>();
+
+    /**
      * config class
      */
     public static class Config<T> {
@@ -78,5 +94,4 @@ public class ZkServiceInfo {
         public Map<String, T> serviceConfigs = new HashMap<>();
         public Map<String, T> instanceConfigs = new HashMap<>();
     }
-
 }

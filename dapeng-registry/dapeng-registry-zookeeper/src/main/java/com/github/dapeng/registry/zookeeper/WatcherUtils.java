@@ -1,7 +1,8 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.core.RuntimeInstance;
+import com.github.dapeng.core.Weight;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
-import com.github.dapeng.registry.*;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.ServiceInfo;
 import org.slf4j.Logger;
@@ -76,9 +77,11 @@ public class WatcherUtils {
     /**
      * new get config data
      * <p>
-     * timeout/800ms,createSupplier:100ms,modifySupplier:200ms;
-     * loadbalance/LeastActive,createSupplier:Random,modifySupplier:RoundRobin;
-     *
+     * timeout/800ms,createSupplier:100ms,modifySupplier:200ms
+     * loadbalance/LeastActive,createSupplier:Random,modifySupplier:RoundRobin
+     * weight/192.168.4.107/9095/700  service weight config1
+     * weight/192.168.4.107/500       service weight config2
+     * weight/600                    global weight config
      * @param data
      * @param zkInfo
      */
@@ -87,53 +90,124 @@ public class WatcherUtils {
 
             String configData = new String(data, "utf-8");
 
-            String[] properties = configData.split(";");
+            String[] properties = configData.split("\n|\r|\r\n");
 
+            if (!isGlobal && !zkInfo.weightServiceConfigs.isEmpty()){
+                zkInfo.weightServiceConfigs.clear();
+            }
             for (String property : properties) {
-                String typeValue = property.split("/")[0];
-                if (typeValue.equals(ConfigKey.TimeOut.getValue())) {
-                    if (isGlobal) {
-                        String value = property.split("/")[1];
-                        zkInfo.timeConfig.globalConfig = timeHelper(value);
-                    } else {
-                        String[] keyValues = property.split(",");
-                        for (String keyValue : keyValues) {
-                            String[] props;
-                            if (keyValue.contains("/")) {
-                                props = keyValue.split("/");
-                            } else {
-                                props = keyValue.split(":");
+                if (!"".equals(property)) {
+                    String typeValue = property.split("/")[0];
+                    if (typeValue.equals(ConfigKey.TimeOut.getValue())) {
+                        if (isGlobal) {
+                            String value = property.split("/")[1];
+                            zkInfo.timeConfig.globalConfig = timeHelper(value);
+                        } else {
+                            String[] keyValues = property.split(",");
+                            for (String keyValue : keyValues) {
+                                String[] props;
+                                if (keyValue.contains("/")) {
+                                    props = keyValue.split("/");
+                                } else {
+                                    props = keyValue.split(":");
+                                }
+                                zkInfo.timeConfig.serviceConfigs.put(props[0], timeHelper(props[1]));
                             }
-                            zkInfo.timeConfig.serviceConfigs.put(props[0], timeHelper(props[1]));
                         }
-                    }
 
-                } else if (typeValue.equals(ConfigKey.LoadBalance.getValue())) {
+                    } else if (typeValue.equals(ConfigKey.LoadBalance.getValue())) {
+                        if (isGlobal) {
+                            String value = property.split("/")[1];
+                            zkInfo.loadbalanceConfig.globalConfig = LoadBalanceStrategy.findByValue(value);
+                        } else {
 
-                    if (isGlobal) {
-                        String value = property.split("/")[1];
-                        zkInfo.loadbalanceConfig.globalConfig = LoadBalanceStrategy.findByValue(value);
-                    } else {
-
-                        String[] keyValues = property.split(",");
-                        for (String keyValue : keyValues) {
-                            String[] props;
-                            if (keyValue.contains("/")) {
-                                props = keyValue.split("/");
-                            } else {
-                                props = keyValue.split(":");
+                            String[] keyValues = property.split(",");
+                            for (String keyValue : keyValues) {
+                                String[] props;
+                                if (keyValue.contains("/")) {
+                                    props = keyValue.split("/");
+                                } else {
+                                    props = keyValue.split(":");
+                                }
+                                zkInfo.loadbalanceConfig.serviceConfigs.put(props[0], LoadBalanceStrategy.findByValue(props[1]));
                             }
-                            zkInfo.loadbalanceConfig.serviceConfigs.put(props[0], LoadBalanceStrategy.findByValue(props[1]));
+                        }
+                    } else if (typeValue.equals(ConfigKey.Weight.getValue())) {
+                        if (isGlobal) {
+                            zkInfo.weightGlobalConfig = doParseWeightData(property);
+
+                        } else {
+                            zkInfo.weightServiceConfigs.add(doParseWeightData(property));
                         }
                     }
                 }
             }
+            recalculateRuntimeInstanceWeight(zkInfo);
             LOGGER.info("get config from {} with data [{}]", zkInfo.service, configData);
         } catch (UnsupportedEncodingException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
 
+
+    /**
+     * 将zk config 中的权重设置，同步到运行实例中
+     * @param zkInfo
+     */
+    public static void recalculateRuntimeInstanceWeight(ZkServiceInfo zkInfo){
+        if (zkInfo != null) {
+            List<RuntimeInstance> runtimeInstances = zkInfo.getRuntimeInstances();
+            if (runtimeInstances != null && runtimeInstances.size() > 0) {
+                for (RuntimeInstance runtimeInstance : runtimeInstances) {
+                    if (zkInfo.weightGlobalConfig.ip != null) {   //没有全局配置的情况下ip = null，有全局配置ip = ""
+                        runtimeInstance.weight = zkInfo.weightGlobalConfig.weight;
+                    }
+                    if (zkInfo.weightServiceConfigs != null) {
+                        List<Weight> weights = zkInfo.weightServiceConfigs;
+                        for (Weight weight : weights) {
+                            if (weight.ip.equals(runtimeInstance.ip)) {
+                                if (weight.port == runtimeInstance.port){
+                                    runtimeInstance.weight = weight.weight;
+                                    break;
+                                }else if(weight.port == -1){
+                                    runtimeInstance.weight = weight.weight;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     *
+     * parse zk weight config
+     * @param weightData
+     * @return
+     */
+    public static Weight doParseWeightData(String weightData) {
+        Weight weight = new Weight();
+        String[] strArr = weightData.split("[/]");
+        if (strArr.length >= 2) {
+            if (strArr.length == 2){                   //weight/600  global weight config
+                weight.ip = "";
+                weight.port = -1;
+                weight.weight = Integer.parseInt(strArr[1]);
+            }else if (strArr.length == 3) {              //weight/192.168.4.107/500       service weight config2
+                weight.ip = strArr[1];
+                weight.port = -1;
+                weight.weight = Integer.parseInt(strArr[2]);
+            } else {                                   //   weight/192.168.4.107/9095/700  service weight config1
+                weight.ip = strArr[1];
+                weight.port = Integer.parseInt(strArr[2]);
+                weight.weight = Integer.parseInt(strArr[3]);
+            }
+        }else {
+            weight = null;
+        }
+        return weight;
+    }
 
     /**
      * serviceName下子节点列表即可用服务地址列表

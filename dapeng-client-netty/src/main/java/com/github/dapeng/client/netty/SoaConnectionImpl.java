@@ -18,8 +18,8 @@ public class SoaConnectionImpl extends SoaBaseConnection {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SoaConnectionImpl.class);
 
-    public SoaConnectionImpl(String host, int port, SubPool parent) {
-        super(host, port, parent);
+    public SoaConnectionImpl(String host, int port) {
+        super(host, port);
     }
 
     @Override
@@ -43,7 +43,11 @@ public class SoaConnectionImpl extends SoaBaseConnection {
         } catch (TException e) {
             LOGGER.error(e.getMessage(), e);
             requestBuf.release();
-            throw new SoaException(e);
+            if (e instanceof SoaException) {
+                throw (SoaException)e;
+            } else {
+                throw new SoaException(e);
+            }
         }
     }
 }

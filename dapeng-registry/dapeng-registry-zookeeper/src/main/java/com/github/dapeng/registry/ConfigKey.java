@@ -19,7 +19,9 @@ public enum ConfigKey {
 
     Compatible("compatible"),
 
-    TimeOut("timeout");
+    TimeOut("timeout"),
+
+    Weight("weight");
 
     private final String value;
 

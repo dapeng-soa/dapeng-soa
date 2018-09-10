@@ -1,6 +1,7 @@
 package com.github.dapeng.impl.plugins.netty;
 
 import com.github.dapeng.api.Container;
+import com.github.dapeng.api.healthcheck.DoctorFactory;
 import com.github.dapeng.client.netty.TSoaTransport;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
@@ -8,10 +9,11 @@ import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.github.dapeng.impl.plugins.monitor.DapengDoctor;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
-import com.github.dapeng.org.apache.thrift.protocol.TProtocolException;
 import com.github.dapeng.util.DumpUtil;
+import com.google.gson.Gson;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -21,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -33,7 +36,7 @@ import static io.netty.channel.ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE;
 @ChannelHandler.Sharable
 public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SoaMsgDecoder.class);
-
+    private final Gson gson = new Gson();
     private final Container container;
 
     SoaMsgDecoder(Container container) {
@@ -48,20 +51,25 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             }
 
             Object request = parseSoaMsg(msg);
-
             final TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
-            String methodName = transactionContext.getHeader().getMethodName();
 
-            //TODO 将容器线程池信息 transactionContext 进行共享  echo实现方法时可以直接从 transactionContext中拿到 【数据库连接池信息暂时拿不到】
-            if (methodName.equalsIgnoreCase("echo")) {
-                transactionContext.setAttribute("container-threadPool-info", DumpUtil.dumpThreadPool((ThreadPoolExecutor) container.getDispatcher()));
+            try {
+                String methodName = transactionContext.getHeader().getMethodName();
+
+                if ("echo".equalsIgnoreCase(methodName)) {
+                    String echoInfo = DumpUtil.dumpThreadPool((ThreadPoolExecutor) container.getDispatcher());
+                    Map<String, Object> diagnoseMap = DoctorFactory.getDoctor().diagnoseReport();
+                    diagnoseMap.put("service", transactionContext.getHeader().getServiceName());
+                    diagnoseMap.put("container_info", echoInfo);
+                    transactionContext.setAttribute("container-threadPool-info", gson.toJson(diagnoseMap));
+                }
+            } catch (Throwable e) {
+                LOGGER.error(e.getMessage(), e);
+            } finally {
+                transactionContext.setAttribute("dapeng_request_timestamp", System.currentTimeMillis());
+
+                out.add(request);
             }
-            /**
-             * use AttributeMap to share common data on different  ChannelHandlers
-             */
-            transactionContext.setAttribute("dapeng_request_timestamp", System.currentTimeMillis());
-
-            out.add(request);
         } catch (Throwable e) {
 
             SoaException soaException = convertToSoaException(e);
@@ -93,9 +101,9 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
 
         // parser.service, version, method, header, bodyProtocol
         SoaHeader soaHeader = parser.parseSoaMessage(context);
-        ((TransactionContextImpl)context).setHeader(soaHeader);
+        ((TransactionContextImpl) context).setHeader(soaHeader);
 
-        updateTransactionCtx((TransactionContextImpl)context, soaHeader);
+        updateTransactionCtx((TransactionContextImpl) context, soaHeader);
 
         MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, context.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
 
@@ -110,7 +118,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         SoaFunctionDefinition<I, REQ, RESP> soaFunction = (SoaFunctionDefinition<I, REQ, RESP>) processor.functions.get(soaHeader.getMethodName());
 
         if (soaFunction == null) {
-            throw new SoaException(SoaCode.NoMatchedMethod);
+            throw new SoaException(SoaCode.ServerNoMatchedMethod);
         }
 
         TProtocol contentProtocol = parser.getContentProtocol();
@@ -168,5 +176,6 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
 
         ctx.calleeTid(DapengUtil.generateTid());
         ctx.sessionTid(soaHeader.getSessionTid().orElse(ctx.calleeTid()));
+        ctx.setAttribute("dapengDoctor", DoctorFactory.getDoctor());
     }
 }

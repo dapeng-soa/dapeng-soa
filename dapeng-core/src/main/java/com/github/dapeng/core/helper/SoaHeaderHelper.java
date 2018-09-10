@@ -123,6 +123,7 @@ public class SoaHeaderHelper {
             // 传递tid
             header.setSessionTid(transactionContext.sessionTid());
             invocationContext.callerTid(transactionContext.calleeTid());
+            header.setCallerTid(Optional.of(transactionContext.calleeTid()));
 
             header.setCallerPort(Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
         }

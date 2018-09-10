@@ -40,7 +40,7 @@ public class EventKafkaConsumer extends Thread {
         init();
     }
 
-    private String kafkaConnect = SoaSystemEnvProperties.SOA_KAFKA_PORT;
+    private String kafkaConnect = SoaSystemEnvProperties.SOA_KAFKA_HOST;
 
     protected org.apache.kafka.clients.consumer.KafkaConsumer<Long, byte[]> consumer;
 

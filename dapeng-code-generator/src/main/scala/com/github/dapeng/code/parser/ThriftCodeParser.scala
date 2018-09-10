@@ -52,9 +52,9 @@ class ThriftCodeParser(var language: String) {
       var int = lastIndexCount
       var beginStr = namespace
       var endStr = ""
-      while ((int >= 0) ) {
+      while ((int >= 0)) {
         endStr = s"${beginStr.substring(beginStr.lastIndexOf("."))}${endStr}"
-        beginStr = beginStr.substring(0,beginStr.lastIndexOf("."))
+        beginStr = beginStr.substring(0, beginStr.lastIndexOf("."))
         int -= 1
       }
       s"${beginStr}.scala${endStr}"
@@ -233,10 +233,10 @@ class ThriftCodeParser(var language: String) {
     dataType
   }
 
-  private def getNameSpace(doc: Document, language:String): Option[Identifier] = {
+  private def getNameSpace(doc: Document, language: String): Option[Identifier] = {
     doc.namespace(language) match {
       case x@Some(id) => x
-      case None =>  // return a default namespace of java
+      case None => // return a default namespace of java
         doc.namespace("java")
     }
 
@@ -327,7 +327,6 @@ class ThriftCodeParser(var language: String) {
   }
 
 
-
   private def findServices(doc: Document, generator: ApacheJavaGenerator): util.List[metadata.Service] = {
     val results = new util.ArrayList[metadata.Service]()
 
@@ -336,11 +335,25 @@ class ThriftCodeParser(var language: String) {
 
       val service = new metadata.Service()
 
+
       service.setNamespace(if (controller.has_namespace) controller.namespace else null)
       service.setName(controller.name)
       service.setDoc(toDocString(s.docstring))
       if (s.annotations.size > 0)
         service.setAnnotations(s.annotations.map { case (key, value) => new Annotation(key, value) }.toList)
+
+
+      val serviceVersion = if(service.annotations != null) service.annotations.find(item => {item.key.contains("version")}) else None
+      service.setMeta(new metadata.Service.ServiceMeta {
+        if (serviceVersion.nonEmpty) {
+          this.version = serviceVersion.get.value
+        } else {
+          this.version = "1.0.0"
+        }
+        this.timeout = 30000
+      })
+
+
 
       val methods = new util.ArrayList[Method]()
       for (tmpIndex <- (0 until controller.functions.size)) {
@@ -492,7 +505,7 @@ class ThriftCodeParser(var language: String) {
         }
 
         if (method.annotations != null) {
-          method.annotations.foreach(annotation => getAllStructByAnnotation(annotation.getValue,structSet))
+          method.annotations.foreach(annotation => getAllStructByAnnotation(annotation.getValue, structSet))
         }
 
       }
@@ -500,16 +513,8 @@ class ThriftCodeParser(var language: String) {
       service.setEnumDefinitions(enumSet.toList)
       //      service.setEnumDefinitions(enumCache)
       //      service.setStructDefinitions(structCache)
-      service.setMeta(new metadata.Service.ServiceMeta {
-        if (serviceVersion != null && !serviceVersion.trim.equals(""))
-          this.version = serviceVersion.trim
-        else
-          this.version = "1.0.0"
-        this.timeout = 30000
-      })
     }
-
-    return serviceCache;
+    return serviceCache
   }
 
   /**
@@ -543,6 +548,7 @@ class ThriftCodeParser(var language: String) {
 
   /**
     * qualifiedName:
+    *
     * @param annoValue
     * @param structSet
     * @return
@@ -551,7 +557,7 @@ class ThriftCodeParser(var language: String) {
     annoValue.split(",").foreach(qualifiedName => {
       val finalQualifiedName = if (language.equals("scala")) {
         if (qualifiedName.contains(".")) {
-          toScalaNamespace(qualifiedName,1)
+          toScalaNamespace(qualifiedName, 1)
         } else qualifiedName
       } else {
         qualifiedName

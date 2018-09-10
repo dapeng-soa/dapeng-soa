@@ -20,6 +20,7 @@ import org.slf4j.MDC;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
 
@@ -66,20 +67,14 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     TSoaTransport transport = new TSoaTransport(out);
                     SoaMessageProcessor messageProcessor = new SoaMessageProcessor(transport);
 
-                    //todo remove the try..catch
-                    try {
-                        Long requestTimestamp = (Long) transactionContext.getAttribute("dapeng_request_timestamp");
+                    Long requestTimestamp = (Long) transactionContext.getAttribute("dapeng_request_timestamp");
 
-                        Long cost = System.currentTimeMillis() - requestTimestamp;
-                        soaHeader.setCalleeTime2(cost.intValue());
-                    } catch (Exception e) {
-                        LOGGER.error(e.getMessage(), e);
-                        soaHeader.setCalleeTime2(0);
-                    }
+                    Long cost = System.currentTimeMillis() - requestTimestamp;
+                    soaHeader.setCalleeTime2(cost.intValue());
                     soaHeader.setCalleeIp(Optional.of(IPUtils.transferIp(SoaSystemEnvProperties.SOA_CONTAINER_IP)));
                     soaHeader.setCalleePort(Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
                     Joiner joiner = Joiner.on(":");
-                    soaHeader.setCalleeMid(joiner.join(soaHeader.getServiceName(),soaHeader.getMethodName(),soaHeader.getVersionName()));
+                    soaHeader.setCalleeMid(joiner.join(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName()));
                     soaHeader.setCalleeTid(transactionContext.calleeTid());
                     messageProcessor.writeHeader(transactionContext);
                     if (serializer != null && result != null) {
@@ -166,7 +161,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             messageProcessor.writeMessageEnd();
 
             transport.flush();
-
+            MdcCtxInfoUtil.switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
             String infoLog = "response[seqId:" + transactionContext.seqId() + ", respCode:" + soaHeader.getRespCode().get() + "]:"
                     + "service[" + soaHeader.getServiceName()
                     + "]:version[" + soaHeader.getVersionName()
@@ -179,12 +174,14 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             } else {
                 application.info(this.getClass(), infoLog);
             }
-
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(getClass() + " " + infoLog + ", payload:\n" + soaException.getMessage());
             }
         } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
+        } finally {
+            MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), null);
+            MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         }
     }
 }

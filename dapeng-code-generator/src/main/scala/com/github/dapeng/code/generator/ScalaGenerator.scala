@@ -291,8 +291,14 @@ class ScalaGenerator extends CodeGenerator {
           override def apply(a: A): B = f(a)
         </block>
 
+        private var version = "{service.meta.version}"
         val serviceName = "{oriNamespace + "." + service.name }"
-        val version = "{service.meta.version}"
+
+        def this (serviceVersion:String) <block>
+        this ()
+        this.version = serviceVersion
+        </block>
+
         val pool = <block>
           val serviceLoader = ServiceLoader.load(classOf[SoaConnectionPoolFactory],getClass.getClassLoader)
           if (serviceLoader.iterator().hasNext) <block> serviceLoader.iterator().next().getPool </block> else null
@@ -307,6 +313,17 @@ class ScalaGenerator extends CodeGenerator {
           new getServiceMetadata_args,
           new GetServiceMetadata_argsSerializer,
           new GetServiceMetadata_resultSerializer
+          ).success
+        </block>
+
+        def echo: String = <block>
+          pool.send(
+          serviceName,
+          version,
+          "echo",
+          new echo_args,
+          new echo_argsSerializer,
+          new echo_resultSerializer
           ).success
         </block>
 
@@ -364,9 +381,14 @@ class ScalaGenerator extends CodeGenerator {
         {notice}
         **/
         class {service.name}AsyncClient extends {service.name}Async <block>
-
         val serviceName = "{oriNamespace + "." + service.name }"
-        val version = "{service.meta.version}"
+        private var version = "{service.meta.version}"
+
+        def this (serviceVersion:String) <block>
+          this ()
+          this.version = serviceVersion
+        </block>
+
         val pool = <block>
           val serviceLoader = ServiceLoader.load(classOf[SoaConnectionPoolFactory],getClass.getClassLoader)
           if (serviceLoader.iterator().hasNext) <block> serviceLoader.iterator().next().getPool </block> else null
@@ -381,6 +403,17 @@ class ScalaGenerator extends CodeGenerator {
           new getServiceMetadata_args,
           new GetServiceMetadata_argsSerializer,
           new GetServiceMetadata_resultSerializer
+          ).success
+        </block>
+
+        def echo: String = <block>
+          pool.send(
+          serviceName,
+          version,
+          "echo",
+          new echo_args,
+          new echo_argsSerializer,
+          new echo_resultSerializer
           ).success
         </block>
 
@@ -505,9 +538,28 @@ class ScalaGenerator extends CodeGenerator {
       <div>package {struct.namespace}
 
         import com.github.dapeng.core.BeanSerializer
+        import com.github.dapeng.org.apache.thrift.protocol.TCompactProtocol
+        import com.github.dapeng.util.TCommonTransport
+        import {struct.namespace}.serializer.{struct.name}Serializer
         object {struct.name} <block>
           implicit val x: BeanSerializer[{struct.namespace}.{struct.name}] = new {struct.namespace}.serializer.{struct.name}Serializer
-      </block>
+
+          def getBytesFromBean(bean: {struct.name}): Array[Byte] = <block>
+            val bytes = new Array[Byte](8192)
+            val transport = new TCommonTransport(bytes, TCommonTransport.Type.Write)
+            val protocol = new TCompactProtocol(transport)
+
+            new {struct.name}Serializer().write(bean, protocol)
+            transport.flush()
+            transport.getByteBuf
+          </block>
+
+          def getBeanFromBytes(bytes: Array[Byte]): {struct.name} = <block>
+            val transport = new TCommonTransport(bytes, TCommonTransport.Type.Read)
+            val protocol = new TCompactProtocol(transport)
+            new {struct.name}Serializer().read(protocol)
+          </block>
+        </block>
 
         /**
         {notice}
