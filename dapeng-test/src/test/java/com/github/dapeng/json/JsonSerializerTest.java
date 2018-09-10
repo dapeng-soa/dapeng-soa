@@ -27,6 +27,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.github.dapeng.util.DumpUtil.dumpToStr;
@@ -116,9 +117,11 @@ public class JsonSerializerTest {
 //            enumTest();
 //            simpleStructWithEnumTest();
 //            simpleStructWithOptionTest();
-
+//
 //            complexStructTest();
-            complexStructTest1();
+//            complexStructTest1();
+
+            concurrentTest();
         } catch (Exception e) {
             Thread.sleep(50);
             e.printStackTrace();
@@ -128,6 +131,8 @@ public class JsonSerializerTest {
 
     }
 
+    static AtomicInteger counter = new AtomicInteger(0);
+    static AtomicInteger counter2 = new AtomicInteger(0);
     private static void concurrentTest() throws InterruptedException {
         long begin = System.currentTimeMillis();
         Executor ec = Executors.newFixedThreadPool(5);
@@ -135,6 +140,7 @@ public class JsonSerializerTest {
             ec.execute(() -> {
                 try {
                     listCategoryDetailBySkuNosTest();
+                    counter.incrementAndGet();
                 } catch (Throwable e) {
                     e.printStackTrace();
                     System.exit(-1);
@@ -143,14 +149,17 @@ public class JsonSerializerTest {
             ec.execute(() -> {
                 try {
                     listSkuDetailBySkuNosTest();
+                    counter2.incrementAndGet();
                 } catch (Throwable e) {
                     e.printStackTrace();
                     System.exit(-1);
                 }
             });
         }
+        ((ExecutorService) ec).shutdown();
         ((ExecutorService) ec).awaitTermination(100, TimeUnit.HOURS);
         System.out.println("end:" + (System.currentTimeMillis() - begin));
+        System.out.println("counter/counter1:" + counter + "/" + counter2);
     }
 
     private static void createTransferOrderTest() throws IOException, TException {
@@ -357,10 +366,10 @@ public class JsonSerializerTest {
         JsonSerializer jsonSerializer = new JsonSerializer(optimizedServicee, method, "1.0.0", optimizedStruct);
 
         ByteBuf buf = buildRequestBuf(optimizedServicee.service.name, "1.0.0", method.name, 10, json, jsonSerializer);
-        System.out.println("origJson:\n" + json);
+//        System.out.println("origJson:\n" + json);
 //
 //
-        System.out.println(dumpToStr(buf));
+//        System.out.println(dumpToStr(buf));
 
         long middle = System.nanoTime();
 
@@ -369,20 +378,20 @@ public class JsonSerializerTest {
         SoaMessageParser<String> parser = new SoaMessageParser<>(buf, jsonDecoder);
         parser.parseHeader();
 //        parser.getHeader();
-//        parser.parseBody();
-        System.out.println(parser.getHeader());
-        System.out.println("after enCode and decode:\n" + parser.parseBody().getBody());
-        System.out.println(desc + " ends=====================");
+        parser.parseBody();
+//        System.out.println(parser.getHeader());
+//        System.out.println("after enCode and decode:\n" + parser.parseBody().getBody());
+//        System.out.println(desc + " ends=====================" + "counters:" + counter + "/" + counter2);
         buf.release();
         InvocationContextImpl.Factory.removeCurrentInstance();
 
         t1 += middle - begin;
         t2 += System.nanoTime() - middle;
-        try {
-            Thread.sleep(50);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            Thread.sleep(50);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
     }
 
 //    private static void doTest3(Service service, Method method, Struct struct, String json, String desc) throws TException {
