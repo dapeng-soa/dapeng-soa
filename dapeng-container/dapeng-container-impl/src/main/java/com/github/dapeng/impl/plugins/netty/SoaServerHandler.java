@@ -62,8 +62,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
             if (LOGGER.isDebugEnabled() && SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL) {
                 ThreadPoolExecutor poolExecutor = (ThreadPoolExecutor) dispatcher;
-                LOGGER.debug("BizThreadPoolInfo:\n"
-                        + DumpUtil.dumpThreadPool(poolExecutor));
+                LOGGER.debug("BizThreadPoolInfo:\n" + DumpUtil.dumpThreadPool(poolExecutor));
             }
             dispatcher.execute(() -> {
                 try {
@@ -132,10 +131,13 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                 throw new SoaException(SoaCode.NoMatchedService);
             }
             //设置服务方法最大执行时间(慢服务)
-            transactionContext.maxProcessTime(application.getMethodMaxProcessTime(soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName()));
+            //注解配置的值(缺省为3000)
+            Long maxProcessTimeAnnotation = application.getMethodMaxProcessTime(soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName());
+            //Zk配置分的值
+            Long maxProcessTimeZk = soaHeader.getMaxProcessTime().orElse(maxProcessTimeAnnotation);
+            transactionContext.maxProcessTime(maxProcessTimeZk);
 
             SoaFunctionDefinition<I, REQ, RESP> soaFunction = (SoaFunctionDefinition<I, REQ, RESP>) serviceDef.functions.get(soaHeader.getMethodName());
-
             if (soaFunction == null) {
                 throw new SoaException(SoaCode.ServerNoMatchedMethod);
             }

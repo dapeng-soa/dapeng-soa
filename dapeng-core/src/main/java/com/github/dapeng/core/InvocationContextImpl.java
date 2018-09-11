@@ -42,6 +42,7 @@ public class InvocationContextImpl implements InvocationContext {
     private Optional<Integer> userIp = Optional.empty();
 
     private Optional<Integer> timeout = Optional.empty();
+    private Optional<Long> maxProcessTime = Optional.empty();
 
     private Optional<LoadBalanceStrategy> loadBalanceStrategy = Optional.empty();
 
@@ -122,6 +123,18 @@ public class InvocationContextImpl implements InvocationContext {
         this.timeout = Optional.ofNullable(timeout);
         return this;
     }
+
+    @Override
+    public Optional<Long> maxProcessTime() {
+        return maxProcessTime;
+    }
+
+    @Override
+    public InvocationContext maxProcessTime(final Long maxProcessTime) {
+        this.maxProcessTime = Optional.ofNullable(maxProcessTime);
+        return this;
+    }
+
 
     // read/write
     @Override
@@ -354,6 +367,7 @@ public class InvocationContextImpl implements InvocationContext {
         sb.append("\"").append("userId").append("\":\"").append(this.userId.isPresent() ? this.userId.get() : null).append("\",");
         sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? transferIp(this.userIp.get()) : null).append("\",");
         sb.append("\"").append("timeout").append("\":\"").append(this.timeout.isPresent() ? this.timeout.get() : null).append("\",");
+        sb.append("\"").append("maxProcessTime").append("\":\"").append(this.maxProcessTime.isPresent() ? this.maxProcessTime.get() : null).append("\",");
         sb.append("\"").append("transactionId").append("\":\"").append(this.transactionId.isPresent() ? this.transactionId.get() : null).append("\",");
         sb.append("\"").append("transactionSequence").append("\":\"").append(this.transactionSequence.isPresent() ? this.transactionSequence.get() : null).append("\",");
         sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid).append("\",");

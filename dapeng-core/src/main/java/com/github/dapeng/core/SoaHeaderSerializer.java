@@ -6,8 +6,6 @@ import com.github.dapeng.org.apache.thrift.protocol.*;
 
 import java.util.Optional;
 
-import static com.github.dapeng.core.helper.IPUtils.transferIp;
-
 /**
  * @author tangliu
  * @date 2016/1/11
@@ -212,6 +210,13 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                         com.github.dapeng.org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
                     }
                     break;
+                case 24:
+                    if (schemeField.type == TType.I64) {
+                        bean.setMaxProcessTime(Optional.of(iprot.readI64()));
+                    } else {
+                        TProtocolUtil.skip(iprot, schemeField.type);
+                    }
+                    break;
                 default:
                     TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -355,6 +360,12 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
         }
         oprot.writeMapEnd();
         oprot.writeFieldEnd();
+
+        if (bean.getMaxProcessTime().isPresent()) {
+            oprot.writeFieldBegin(new TField("maxProcessTime", TType.I64, (short) 24));
+            oprot.writeI64(bean.getMaxProcessTime().get());
+            oprot.writeFieldEnd();
+        }
 
         oprot.writeFieldStop();
         oprot.writeStructEnd();

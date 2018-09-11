@@ -2,6 +2,7 @@ package com.github.dapeng.client.netty;
 
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.zookeeper.ClientZkAgent;
@@ -21,7 +22,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 import static com.github.dapeng.core.SoaCode.*;
 
@@ -31,7 +31,7 @@ import static com.github.dapeng.core.SoaCode.*;
  */
 public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private final Logger logger = LoggerFactory.getLogger(SoaConnectionPoolImpl.class);
-    private final LoadBalanceStrategy DEFAULT_LB_STRATEGY = LoadBalanceStrategy.Random;
+    private final LoadBalanceStrategy DEFAULT_LB_STRATEGY = LoadBalanceStrategy.LeastActive;
 
     class ClientInfoWeakRef extends WeakReference<SoaConnectionPool.ClientInfo> {
         final String serviceName;
@@ -129,7 +129,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         if (connection == null) {
             throw new SoaException(SoaCode.NotFoundServer, "服务 [ " + service + " ] 无可用实例");
         }
-        long timeout = getTimeout(service, serverVersion, method);
+        long timeout = getTimeout(service, method);
         if (logger.isDebugEnabled()) {
             logger.debug("findConnection:serviceName:{},methodName:{},version:[{} -> {}] ,TimeOut:{}", service, method, version, serverVersion, timeout);
         }
@@ -149,7 +149,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         if (connection == null) {
             throw new SoaException(SoaCode.NotFoundServer, "服务 [ " + service + " ] 无可用实例");
         }
-        long timeout = getTimeout(service, serverVersion, method);
+        long timeout = getTimeout(service, method);
         if (logger.isDebugEnabled()) {
             logger.debug("findConnection:serviceName:{},methodName:{},version:[{} -> {}] ,TimeOut:{}", service, method, version, serverVersion, timeout);
         }
@@ -177,12 +177,19 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
 
+        ZkServiceInfo zkInfo = zkServiceInfoMap.get(service);
+
+
+        //设置慢服务检测时间阈值
+        Optional<Long> maxProcessTime = getZkProcessTime(method, zkInfo);
+        context.maxProcessTime(maxProcessTime.orElse(null));
+
+
         //如果设置了calleeip 和 calleport 直接调用服务 不走路由
         if (context.calleeIp().isPresent() && context.calleePort().isPresent()) {
             return SubPoolFactory.getSubPool(IPUtils.transferIp(context.calleeIp().get()), context.calleePort().get()).getConnection();
         }
 
-        ZkServiceInfo zkInfo = zkServiceInfoMap.get(service);
 
         if (zkInfo == null || zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
             //todo should find out why zkInfo is null
@@ -424,10 +431,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         } else {
             timeout = Optional.of(defaultTimeout);
         }
-
         return timeout.get() >= maxTimeout ? maxTimeout : timeout.get();
-
     }
+
 
     private Optional<Integer> getInvocationTimeout() {
         InvocationContext context = InvocationContextImpl.Factory.currentInstance();
@@ -502,6 +508,42 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             return Optional.of(serviceTimeOut);
         } else if (globalTimeOut != null) {
 
+            return Optional.of(globalTimeOut);
+        } else {
+            return Optional.empty();
+        }
+    }
+
+
+    /**
+     * 获取 zookeeper processTime config
+     * <p>
+     * method level -> service level -> global level
+     * <</p>
+     *
+     * @return
+     */
+    private Optional<Long> getZkProcessTime(String methodName, ZkServiceInfo configInfo) {
+        //方法级别
+        Long methodTimeOut = null;
+        //服务配置
+        Long serviceTimeOut = null;
+
+        Long globalTimeOut = null;
+
+        if (configInfo != null) {
+            //方法级别
+            methodTimeOut = configInfo.processTimeConfig.serviceConfigs.get(methodName);
+            //服务配置
+            serviceTimeOut = configInfo.processTimeConfig.serviceConfigs.get(ConfigKey.ProcessTime.getValue());
+            globalTimeOut = configInfo.processTimeConfig.globalConfig;
+        }
+
+        if (methodTimeOut != null) {
+            return Optional.of(methodTimeOut);
+        } else if (serviceTimeOut != null) {
+            return Optional.of(serviceTimeOut);
+        } else if (globalTimeOut != null) {
             return Optional.of(globalTimeOut);
         } else {
             return Optional.empty();

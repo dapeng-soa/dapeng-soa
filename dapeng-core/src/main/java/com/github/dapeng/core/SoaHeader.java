@@ -7,9 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.github.dapeng.core.helper.DapengUtil.longToHexStr;
-import static com.github.dapeng.core.helper.IPUtils.transferIp;
-
 /**
  * <pre>
  * web	service1	service2	service3	service4
@@ -79,6 +76,10 @@ public class SoaHeader {
     private Optional<Long> callerTid = Optional.empty();
 
     private Optional<Integer> timeout = Optional.empty();
+
+    //慢服务检测时间阈值
+    private Optional<Long> maxProcessTime = Optional.empty();
+
     /**
      * 调用源
      */
@@ -134,6 +135,7 @@ public class SoaHeader {
         sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? IPUtils.transferIp(this.userIp.get()) : null).append("\",");
         sb.append("\"").append("operatorId").append("\":").append(this.operatorId.isPresent() ? this.operatorId.get() : null).append(",");
         sb.append("\"").append("timeout").append("\":\"").append(this.timeout.isPresent() ? this.timeout.get() : null).append("\",");
+        sb.append("\"").append("maxProcessTime").append("\":\"").append(this.maxProcessTime.isPresent() ? this.maxProcessTime.get() : null).append("\",");
         sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid.isPresent() ? DapengUtil.longToHexStr(this.callerTid.get()) : null).append("\",");
         sb.append("\"").append("callerMid").append("\":\"").append(this.callerMid.isPresent() ? this.callerMid.get() : null).append("\",");
         sb.append("\"").append("callerIp").append("\":\"").append(this.callerIp.isPresent() ? IPUtils.transferIp(this.callerIp.get()) : null).append("\",");
@@ -225,6 +227,14 @@ public class SoaHeader {
 
     public void setTimeout(Optional<Integer> timeout) {
         this.timeout = timeout;
+    }
+
+    public Optional<Long> getMaxProcessTime() {
+        return maxProcessTime;
+    }
+
+    public void setMaxProcessTime(Optional<Long> maxProcessTime) {
+        this.maxProcessTime = maxProcessTime;
     }
 
     public Optional<String> getCallerMid() {

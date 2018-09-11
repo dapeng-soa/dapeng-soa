@@ -58,6 +58,11 @@ public class SoaHeaderHelper {
 
         header.setCallerIp(IPUtils.localIpAsInt());
 
+        //设置慢服务检测阈值
+        if (invocationContext.maxProcessTime().isPresent()) {
+            header.setMaxProcessTime(invocationContext.maxProcessTime());
+        }
+
         if (invocationContext.callerTid() != 0) {
             header.setCallerTid(Optional.of(invocationContext.callerTid()));
         }
@@ -95,7 +100,7 @@ public class SoaHeaderHelper {
         }
         if (invocationContext.sessionTid().isPresent()) {
             header.setSessionTid(invocationContext.sessionTid());
-    }
+        }
 
         /**
          * 如果容器内调用其它服务, 将原始的调用者信息传递
