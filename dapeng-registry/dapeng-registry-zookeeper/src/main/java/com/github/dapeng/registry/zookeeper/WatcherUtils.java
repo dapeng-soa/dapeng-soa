@@ -3,10 +3,8 @@ package com.github.dapeng.registry.zookeeper;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.Weight;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
-import com.github.dapeng.registry.*;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.ServiceInfo;
-import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
