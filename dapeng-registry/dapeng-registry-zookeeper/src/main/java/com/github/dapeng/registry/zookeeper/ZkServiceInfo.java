@@ -71,6 +71,11 @@ public class ZkServiceInfo {
     //                                                                             ～
     //～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～
     /**
+     * processTime zk config
+     */
+    public Config<Long> processTimeConfig = new Config<>();
+
+    /**
      * timeout zk config
      */
     public Config<Long> timeConfig = new Config<>();
