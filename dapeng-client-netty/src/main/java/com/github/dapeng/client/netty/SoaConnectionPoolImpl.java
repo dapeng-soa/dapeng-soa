@@ -45,7 +45,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
     }
 
-    private Map<String, ZkServiceInfo> zkInfos = new ConcurrentHashMap<>();
     private ClientZkAgent zkAgent = new ClientZkAgentImpl();
 
     private Map<String, ClientInfoWeakRef> clientInfos = new ConcurrentHashMap<>(16);
@@ -190,7 +189,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             return SubPoolFactory.getSubPool(IPUtils.transferIp(context.calleeIp().get()), context.calleePort().get()).getConnection();
         }
 
-        ZkServiceInfo zkInfo = zkServiceInfoMap.get(service);
         if (zkInfo == null || zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
             //todo should find out why zkInfo is null
             // 1. target service not exists
