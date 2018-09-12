@@ -1,10 +1,12 @@
 {
   "body": {
     "request": {
-      "id": 10,
-      "phone": "13751777101"
+      "mobile": "13476057507",
+      "openId": 2088402938593373,
+      "name": null,
+      "unionId": null,
+      "registerCityId": "WU_HAN",
+      "registerSource": "WECHAT_H5"
     }
   }
 }
-
-{"body":{"request":{"mobile":"13476057507","openId":2088402938593373,"name":null,"unionId":null,"registerCityId":"WU_HAN","registerSource":"WECHAT_H5"}}}
