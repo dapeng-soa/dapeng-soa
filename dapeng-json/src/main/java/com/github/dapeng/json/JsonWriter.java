@@ -1,5 +1,7 @@
 package com.github.dapeng.json;
 
+import com.github.dapeng.org.apache.thrift.TException;
+
 public class JsonWriter implements JsonCallback {
 
     private StringBuilder builder = new StringBuilder(64);
@@ -29,6 +31,10 @@ public class JsonWriter implements JsonCallback {
     @Override
     public void onStartField(String name) {
         builder.append('\"').append(name).append('\"').append(':');
+    }
+
+    @Override
+    public void onStartField(int index) {
     }
 
     @Override

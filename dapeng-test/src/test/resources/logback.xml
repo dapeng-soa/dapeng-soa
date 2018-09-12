@@ -7,7 +7,7 @@
             <Pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</Pattern>
         </layout>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>ERROR</level>
+            <level>INFO</level>
         </filter>
     </appender>
 
@@ -51,12 +51,9 @@
     <logger name="druid.sql" level="OFF"/>
 
     <root level="INFO">
-        <if condition='!property("soa.run.mode").equals("native")'>
-            <then>
+
                 <appender-ref ref="STDOUT"/>
-            </then>
-        </if>
-        <appender-ref ref="DETAILFILE"/>
+
     </root>
     <jmxConfigurator />
 </configuration>
