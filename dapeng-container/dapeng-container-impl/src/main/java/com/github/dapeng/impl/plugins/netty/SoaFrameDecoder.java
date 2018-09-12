@@ -1,18 +1,23 @@
 package com.github.dapeng.impl.plugins.netty;
 
+import com.github.dapeng.api.Container;
+import com.github.dapeng.api.healthcheck.DoctorFactory;
 import com.github.dapeng.core.SoaCode;
 import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.util.DumpUtil;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.util.CharsetUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ThreadPoolExecutor;
 
-import static com.github.dapeng.core.SoaCode.ReqBufferOverFlow;
 import static com.github.dapeng.core.SoaProtocolConstants.ETX;
 import static com.github.dapeng.core.SoaProtocolConstants.STX;
 
@@ -37,10 +42,12 @@ import static com.github.dapeng.core.SoaProtocolConstants.STX;
  */
 public class SoaFrameDecoder extends ByteToMessageDecoder {
     private final static Logger LOGGER = LoggerFactory.getLogger(SoaFrameDecoder.class);
+    private Container container;
 
-    SoaFrameDecoder() {
+    SoaFrameDecoder(Container container) {
         ensureNotSharable();
         setSingleDecode(false);
+        this.container = container;
     }
 
     @Override
@@ -51,10 +58,22 @@ public class SoaFrameDecoder extends ByteToMessageDecoder {
         int readerIndex = in.readerIndex();
 
         int length = in.readInt();
-
-        if (length == 0) {// 心跳
+        // 心跳
+        if (length == 0) {
             ctx.writeAndFlush(ctx.alloc().buffer(1).writeInt(0));
 
+            return;
+        }
+        // echo 健康检查
+        if (length == 1) {
+            String doctorInfo = getDoctorInfo();
+            ByteBuf doctorInfoBuf;
+            if (doctorInfo == null) {
+                doctorInfoBuf = Unpooled.EMPTY_BUFFER;
+            } else {
+                doctorInfoBuf = buildEchoResponseBuf(doctorInfo, ctx);
+            }
+            ctx.writeAndFlush(doctorInfoBuf);
             return;
         }
 
@@ -100,5 +119,52 @@ public class SoaFrameDecoder extends ByteToMessageDecoder {
 
         out.add(msg);
     }
+
+
+    /**
+     * Doctor 健康检查
+     *
+     * @return diagnoseMap
+     */
+    @SuppressWarnings("unchecked")
+    private String getDoctorInfo() {
+        try {
+            String echoInfo = DumpUtil.dumpThreadPool((ThreadPoolExecutor) container.getDispatcher());
+            Map<String, Object> diagnoseMap = DoctorFactory.getDoctor().diagnoseReport();
+            diagnoseMap.put("container_info", echoInfo);
+
+            StringBuilder builder = new StringBuilder();
+            builder.append("{");
+            diagnoseMap.forEach((k, v) -> {
+                builder.append("\"").append(k).append("\"").append(":");
+                if (v instanceof Map) {
+                    builder.append('{');
+                    ((Map) v).forEach((x, y) -> builder.append("\"").append(x).append("\"").append(":")
+                            .append("\"").append(y).append("\"").append(","));
+                    builder.setCharAt(builder.length() - 1, '}');
+                } else {
+                    builder.append("\"").append(v).append("\"");
+                }
+                builder.append(",");
+            });
+            builder.setCharAt(builder.length() - 1, '}');
+            return builder.toString();
+        } catch (Throwable e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return null;
+    }
+
+
+    /**
+     * 构造返回 byteBuf 数据
+     */
+    private ByteBuf buildEchoResponseBuf(String content, ChannelHandlerContext ctx) {
+        ByteBuf wrapBuf = ctx.alloc().buffer(content.length() + 4);
+        wrapBuf.writeInt(content.length());
+        wrapBuf.writeBytes(content.getBytes(CharsetUtil.UTF_8));
+        return wrapBuf;
+    }
+
 
 }

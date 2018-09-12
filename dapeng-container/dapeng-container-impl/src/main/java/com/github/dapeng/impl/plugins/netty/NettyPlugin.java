@@ -78,7 +78,7 @@ public class NettyPlugin implements AppListener, Plugin {
                                     // 超时设置
                                     ch.pipeline().addLast(HandlerConstants.IDLE_STATE_HANDLER, new IdleStateHandler(20, 0, 0));
                                     //粘包和断包处理
-                                    ch.pipeline().addLast(HandlerConstants.SOA_FRAME_DECODER_HANDLER, new SoaFrameDecoder());
+                                    ch.pipeline().addLast(HandlerConstants.SOA_FRAME_DECODER_HANDLER, new SoaFrameDecoder(container));
                                     // 链路监控检测
                                     ch.pipeline().addLast(HandlerConstants.SOA_IDLE_HANDLER, soaLinkStateHandler);
                                     ch.pipeline().addLast(HandlerConstants.SOA_MSG_ENCODER_HANDLER, soaMsgEncoder);
