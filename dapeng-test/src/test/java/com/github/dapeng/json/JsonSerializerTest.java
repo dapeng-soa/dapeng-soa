@@ -107,21 +107,22 @@ public class JsonSerializerTest {
 //        System.out.println("average:" + t2/round/1000000);
 
         try {
-//            createTransferOrderTest();
-//            optionalBooleanTest();
-//            simpleStructTest();
-//            simpleMapTest();
-//            createTransferOrderTest();
-//            intArrayTest();
-//            intMapTest();
-//            enumTest();
-//            simpleStructWithEnumTest();
-//            simpleStructWithOptionTest();
-//
-//            complexStructTest();
-//            complexStructTest1();
+            createTransferOrderTest();
+            optionalBooleanTest();
+            simpleStructTest();
+            simpleMapTest();
+            createTransferOrderTest();
+            intArrayTest();
+            intMapTest();
+            enumTest();
+            simpleStructWithEnumTest();
+            simpleStructWithOptionTest();
 
-            concurrentTest();
+            complexStructTest();
+            complexStructTest1();
+            noTagStructTest();
+//            memberRegisterByUnionIdAndOpenIdServiceTest();
+//            concurrentTest();
         } catch (Exception e) {
             Thread.sleep(50);
             e.printStackTrace();
@@ -160,6 +161,18 @@ public class JsonSerializerTest {
         ((ExecutorService) ec).awaitTermination(100, TimeUnit.HOURS);
         System.out.println("end:" + (System.currentTimeMillis() - begin));
         System.out.println("counter/counter1:" + counter + "/" + counter2);
+    }
+
+    private static void noTagStructTest() throws IOException, TException {
+        final String purchaseDescriptorXmlPath = "/com.today.api.purchase.query.service.PurchaseQueryService.xml";
+        OptimizedMetadata.OptimizedService purchaseService = new OptimizedMetadata.OptimizedService(getService(purchaseDescriptorXmlPath));
+
+        Method listUnClearedOrder = purchaseService.getMethodMap().get("listUnClearedOrder");
+        String json = loadJson("/listUnClearedOrder-resp.json");
+
+        String desc = "listUnClearedOrder-resp";
+        doTest2(purchaseService, listUnClearedOrder, constructOptimizedStruct(purchaseService, listUnClearedOrder.response), json, desc);
+
     }
 
     private static void createTransferOrderTest() throws IOException, TException {
@@ -353,6 +366,18 @@ public class JsonSerializerTest {
         doTest2(crmService, method, constructOptimizedStruct(crmService, method.request), json, "simpleStructWithOptionTest");
     }
 
+    private static void memberRegisterByUnionIdAndOpenIdServiceTest() throws IOException, TException {
+        final String memberDescriptorXmlPath = "/com.today.api.member.service.MemberService.xml";
+
+        OptimizedMetadata.OptimizedService memberService = new OptimizedMetadata.OptimizedService(getService(memberDescriptorXmlPath));
+
+        String json = loadJson("/memberRegisterByUnionIdAndOpenIdService.json");
+
+        Method method = memberService.getMethodMap().get("memberRegisterByUnionIdAndOpenIdService");
+
+        doTest2(memberService, method, constructOptimizedStruct(memberService, method.request), json, "memberRegisterByUnionIdAndOpenIdServiceTest");
+    }
+
     private static void doTest2(OptimizedMetadata.OptimizedService optimizedServicee, Method method, OptimizedMetadata.OptimizedStruct optimizedStruct, String json, String desc) throws TException {
         long begin = System.nanoTime();
         InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.createNewInstance();
@@ -366,10 +391,10 @@ public class JsonSerializerTest {
         JsonSerializer jsonSerializer = new JsonSerializer(optimizedServicee, method, "1.0.0", optimizedStruct);
 
         ByteBuf buf = buildRequestBuf(optimizedServicee.service.name, "1.0.0", method.name, 10, json, jsonSerializer);
-//        System.out.println("origJson:\n" + json);
+        System.out.println("origJson:\n" + json);
 //
 //
-//        System.out.println(dumpToStr(buf));
+        System.out.println(dumpToStr(buf));
 
         long middle = System.nanoTime();
 
@@ -379,9 +404,9 @@ public class JsonSerializerTest {
         parser.parseHeader();
 //        parser.getHeader();
         parser.parseBody();
-//        System.out.println(parser.getHeader());
-//        System.out.println("after enCode and decode:\n" + parser.parseBody().getBody());
-//        System.out.println(desc + " ends=====================" + "counters:" + counter + "/" + counter2);
+        System.out.println(parser.getHeader());
+        System.out.println("after enCode and decode:\n" + parser.getBody());
+        System.out.println(desc + " ends=====================" + "counters:" + counter + "/" + counter2);
         buf.release();
         InvocationContextImpl.Factory.removeCurrentInstance();
 
