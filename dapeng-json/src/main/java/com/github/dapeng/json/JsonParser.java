@@ -207,12 +207,10 @@ class JsonParser {
                 break;
             case 'n':
                 if (!_null()) throw fail("JSON Value", mark);
-                ;
                 callback.onNull();
                 break;
             case 't':
                 if (!_true()) throw fail("JSON Value", mark);
-                ;
                 callback.onBoolean(true);
                 break;
             case '{':
@@ -239,7 +237,6 @@ class JsonParser {
             case '9':
             case '-':
                 number();
-                //callback.onNumber();
                 break;
             case '\"':
                 string();

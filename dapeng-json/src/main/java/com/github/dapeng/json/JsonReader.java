@@ -74,7 +74,7 @@ class JsonReader implements JsonCallback {
      * - 栈顶的NodeInfo(current) 总是对应当前的 json value 的信息。
      * - 对 JsonObject
      * -- 当 onStartField(String) 时，会将子字段的 NodeInfo 压栈
-     * -- 当 onEndField 时， 会 pop 到 上一层NodeInfo 应该时 Struct or MAP 对应的NodeInfo
+     * -- 当 onEndField 时， 会 pop 到 上一层NodeInfo 应该是 Struct or MAP 对应的NodeInfo
      * - 对 JsonArray
      * -- 当 onStartFiled(int) 时，会将数组元素对应的 NodeInfo 压栈
      * -- 当 onEndField 时，会pop，恢复到 List/SET 对应的 NodeInfo
@@ -136,7 +136,8 @@ class JsonReader implements JsonCallback {
      *  - 处理：
      *   - 当前字段是Map的元素且当前值为 null，则回退到 tFieldPos
      *   - 当前字段为LIST/SET的子元素，不容许当前值为 null
-     *   - 当前字段是Struct的字段，则回退到 tFieldPos 或者 writeFieldEnd
+     *   - 当前字段是Struct的字段，则回退到 tFieldPos(null) 或者 writeFieldEnd(not null)
+     *   - rewrite array size
      *
      * - onNumber
      *  - 当前栈顶：BYTE/SHORT/INTEGER/LONG/DOUBLE
