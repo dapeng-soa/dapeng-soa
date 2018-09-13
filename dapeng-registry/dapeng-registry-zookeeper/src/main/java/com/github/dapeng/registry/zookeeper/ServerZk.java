@@ -61,6 +61,7 @@ public class ServerZk extends CommonZk {
             CountDownLatch semaphore = new CountDownLatch(1);
             // zk 需要为空
             if (zk != null) {
+                zk.close();
                 zk = null;
             }
 
