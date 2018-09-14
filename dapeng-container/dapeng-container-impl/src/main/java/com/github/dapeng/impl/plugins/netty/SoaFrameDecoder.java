@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-import static com.github.dapeng.core.SoaCode.ReqBufferOverFlow;
 import static com.github.dapeng.core.SoaProtocolConstants.ETX;
 import static com.github.dapeng.core.SoaProtocolConstants.STX;
 
