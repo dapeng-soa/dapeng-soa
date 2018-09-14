@@ -217,7 +217,12 @@ public class RoutesExecutor {
                 ctxValue = ctx.userId().map(userId -> userId.toString()).orElse("");
                 break;
             case "callerIp":
-                ctxValue = ctx.callerIp().map(String::valueOf).orElse("");
+                //ctxValue = ctx.callerIp().map(String::valueOf).orElse("");
+                ctxValue = ctx.callerIp().map(IPUtils::transferIp).orElse("");
+                break;
+            case "userIp":
+                // ctxValue = ctx.userIp().map(String::valueOf).orElse("");
+                ctxValue = ctx.userIp().map(IPUtils::transferIp).orElse("");
                 break;
             default:
                 if (id.startsWith(COOKIE_PREFIX)) {
@@ -266,12 +271,12 @@ public class RoutesExecutor {
             return regex.matcher(value).matches();
 
         } else if (pattern instanceof RangePattern) {
-                RangePattern range = ((RangePattern) pattern);
-                long from = range.from;
-                long to = range.to;
+            RangePattern range = ((RangePattern) pattern);
+            long from = range.from;
+            long to = range.to;
 
-                long valueAsLong = Long.parseLong(value);
-                return valueAsLong <= to && valueAsLong >= from;
+            long valueAsLong = Long.parseLong(value);
+            return valueAsLong <= to && valueAsLong >= from;
 
         } else if (pattern instanceof ModePattern) {
             ModePattern mode = ((ModePattern) pattern);
