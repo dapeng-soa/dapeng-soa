@@ -31,7 +31,7 @@ import static com.github.dapeng.core.SoaCode.*;
  */
 public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private final Logger logger = LoggerFactory.getLogger(SoaConnectionPoolImpl.class);
-    private final LoadBalanceStrategy DEFAULT_LB_STRATEGY = LoadBalanceStrategy.Random;
+    private final LoadBalanceStrategy DEFAULT_LB_STRATEGY = LoadBalanceStrategy.LeastActive;
 
     class ClientInfoWeakRef extends WeakReference<SoaConnectionPool.ClientInfo> {
         final String serviceName;
@@ -494,10 +494,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             globalTimeOut = configInfo.timeConfig.globalConfig;
         }
 
-        /*logger.debug("request:serviceName:{},methodName:{},version:{}," +
-                        " methodTimeOut:{},serviceTimeOut:{},globalTimeOut:{}",
-                serviceName, methodName, version, methodTimeOut, serviceTimeOut, globalTimeOut);*/
-
         if (methodTimeOut != null) {
 
             return Optional.of(methodTimeOut);
@@ -523,26 +519,26 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      */
     private Optional<Long> getZkProcessTime(String methodName, ZkServiceInfo configInfo) {
         //方法级别
-        Long methodTimeOut = null;
+        Long methodProcessTime = null;
         //服务配置
-        Long serviceTimeOut = null;
+        Long serviceProcessTime = null;
 
-        Long globalTimeOut = null;
+        Long globalProcessTime = null;
 
         if (configInfo != null) {
             //方法级别
-            methodTimeOut = configInfo.processTimeConfig.serviceConfigs.get(methodName);
+            methodProcessTime = configInfo.processTimeConfig.serviceConfigs.get(methodName);
             //服务配置
-            serviceTimeOut = configInfo.processTimeConfig.serviceConfigs.get(ConfigKey.ProcessTime.getValue());
-            globalTimeOut = configInfo.processTimeConfig.globalConfig;
+            serviceProcessTime = configInfo.processTimeConfig.serviceConfigs.get(ConfigKey.ProcessTime.getValue());
+            globalProcessTime = configInfo.processTimeConfig.globalConfig;
         }
 
-        if (methodTimeOut != null) {
-            return Optional.of(methodTimeOut);
-        } else if (serviceTimeOut != null) {
-            return Optional.of(serviceTimeOut);
-        } else if (globalTimeOut != null) {
-            return Optional.of(globalTimeOut);
+        if (methodProcessTime != null) {
+            return Optional.of(methodProcessTime);
+        } else if (serviceProcessTime != null) {
+            return Optional.of(serviceProcessTime);
+        } else if (globalProcessTime != null) {
+            return Optional.of(globalProcessTime);
         } else {
             return Optional.empty();
         }
