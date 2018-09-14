@@ -71,6 +71,7 @@ public class SlowServiceCheckTaskManager {
             final SlowServiceCheckTask task = iterator.next();
 
             long maxProcessTime = task.maxProcessTime.isPresent() ? task.maxProcessTime.get() : MAX_PROCESS_TIME;
+            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, task.sessionTid.map(DapengUtil::longToHexStr).orElse("0"));
 
             if (logger.isInfoEnabled()) {
                 logger.info("slow service check {}:{}:{};maxProcessTime:{} ", task.serviceName, task.versionName, task.methodName, maxProcessTime);
@@ -81,10 +82,8 @@ public class SlowServiceCheckTaskManager {
 //            if (true) {
                 final StackTraceElement[] stackElements = task.currentThread.getStackTrace();
                 if (stackElements != null && stackElements.length > 0) {
-                    MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, task.sessionTid.map(DapengUtil::longToHexStr).orElse("0"));
                     final StringBuilder builder = new StringBuilder(task.toString());
                     builder.append("--[" + currentTimeAsString + "]:task info:[" + task.serviceName + ":" + task.methodName + ":" + task.versionName + "]").append("\n");
-
                     final String firstStackInfo = stackElements[0].toString();
                     if (lastStackInfo.containsKey(task.currentThread) && lastStackInfo.get(task.currentThread).equals(firstStackInfo)) {
                         builder.append("Same as last check...");
