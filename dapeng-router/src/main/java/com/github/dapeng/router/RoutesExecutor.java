@@ -217,12 +217,10 @@ public class RoutesExecutor {
                 ctxValue = ctx.userId().map(userId -> userId.toString()).orElse("");
                 break;
             case "callerIp":
-                //ctxValue = ctx.callerIp().map(String::valueOf).orElse("");
-                ctxValue = ctx.callerIp().map(IPUtils::transferIp).orElse("");
+                ctxValue = ctx.callerIp().map(String::valueOf).orElse("");
                 break;
             case "userIp":
-                // ctxValue = ctx.userIp().map(String::valueOf).orElse("");
-                ctxValue = ctx.userIp().map(IPUtils::transferIp).orElse("");
+                 ctxValue = ctx.userIp().map(String::valueOf).orElse("");
                 break;
             default:
                 if (id.startsWith(COOKIE_PREFIX)) {
@@ -262,7 +260,7 @@ public class RoutesExecutor {
             return !matcherPattern(pattern1, value);
         } else if (pattern instanceof IpPattern) {
             IpPattern ipPattern = ((IpPattern) pattern);
-            return matchIpWithMask(ipPattern.ip, Integer.valueOf(value), ipPattern.mask);
+            return matchIpWithMask(ipPattern.ip, Integer.parseInt(value), ipPattern.mask);
         } else if (pattern instanceof RegexPattern) {
             /**
              * 使用缓存好的 pattern 进行 正则 匹配
