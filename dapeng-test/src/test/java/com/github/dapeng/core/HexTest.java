@@ -77,6 +77,8 @@ public class HexTest {
         System.out.println(ch1);
         System.out.println((int)'m');
         Byte.parseByte("6d", 16);
+
+
     }
 
     private static char btoc(long l) { return (char)(l > 10 ? l - 10 + 'A' : l  + '0'); }

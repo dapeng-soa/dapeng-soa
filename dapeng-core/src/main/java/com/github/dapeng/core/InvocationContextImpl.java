@@ -3,6 +3,7 @@ package com.github.dapeng.core;
 import com.github.dapeng.core.enums.CodecProtocol;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.helper.DapengUtil;
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 
 import java.util.Collections;
@@ -49,9 +50,9 @@ public class InvocationContextImpl implements InvocationContext {
     private CodecProtocol codecProtocol = CodecProtocol.CompressedBinary;
 
     private Optional<Integer> calleeIp = Optional.empty();
-    private Optional<Integer> calleePort = Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
+    private Optional<Integer> calleePort = Optional.empty();
 
-    private Optional<Integer> callerIp = Optional.empty();
+    private Optional<Integer> callerIp = Optional.ofNullable(IPUtils.localIpAsInt());
 
     private Optional<String> callerMid = Optional.empty();
 
@@ -364,17 +365,17 @@ public class InvocationContextImpl implements InvocationContext {
         sb.append("\"").append("methodName").append("\":\"").append(this.methodName).append("\",");
         sb.append("\"").append("versionName").append("\":\"").append(this.versionName).append("\",");
         sb.append("\"").append("sessionTid").append("\":\"").append(this.sessionTid.isPresent() ? longToHexStr(this.sessionTid.get()) : null).append("\",");
-        sb.append("\"").append("userId").append("\":\"").append(this.userId.isPresent() ? this.userId.get() : null).append("\",");
+        sb.append("\"").append("userId").append("\":\"").append(this.userId.orElse(null)).append("\",");
         sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? transferIp(this.userIp.get()) : null).append("\",");
-        sb.append("\"").append("timeout").append("\":\"").append(this.timeout.isPresent() ? this.timeout.get() : null).append("\",");
-        sb.append("\"").append("maxProcessTime").append("\":\"").append(this.maxProcessTime.isPresent() ? this.maxProcessTime.get() : null).append("\",");
-        sb.append("\"").append("transactionId").append("\":\"").append(this.transactionId.isPresent() ? this.transactionId.get() : null).append("\",");
-        sb.append("\"").append("transactionSequence").append("\":\"").append(this.transactionSequence.isPresent() ? this.transactionSequence.get() : null).append("\",");
+        sb.append("\"").append("timeout").append("\":\"").append(this.timeout.orElse(null)).append("\",");
+        sb.append("\"").append("maxProcessTime").append("\":\"").append(this.maxProcessTime.orElse(null)).append("\",");
+        sb.append("\"").append("transactionId").append("\":\"").append(this.transactionId.orElse(null)).append("\",");
+        sb.append("\"").append("transactionSequence").append("\":\"").append(this.transactionSequence.orElse(null)).append("\",");
         sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid).append("\",");
-        sb.append("\"").append("callerMid").append("\":\"").append(this.callerMid.isPresent() ? this.callerMid.get() : null).append("\",");
-        sb.append("\"").append("operatorId").append("\":").append(this.operatorId.isPresent() ? this.operatorId.get() : null).append(",");
+        sb.append("\"").append("callerMid").append("\":\"").append(this.callerMid.orElse(null)).append("\",");
+        sb.append("\"").append("operatorId").append("\":").append(this.operatorId.orElse(null)).append(",");
         sb.append("\"").append("calleeIp").append("\":\"").append(this.calleeIp.isPresent() ? transferIp(this.calleeIp.get()) : null).append("\",");
-        sb.append("\"").append("calleePort").append("\":\"").append(this.calleePort.isPresent() ? this.calleePort.get() : null).append("\",");
+        sb.append("\"").append("calleePort").append("\":\"").append(this.calleePort.orElse(null)).append("\",");
 
         sb.deleteCharAt(sb.lastIndexOf(","));
         sb.append("}");
