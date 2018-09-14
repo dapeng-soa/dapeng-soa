@@ -17,8 +17,6 @@ public interface Application {
 
     Optional<ServiceInfo> getServiceInfo(String name, String version);
 
-    Long getMethodMaxProcessTime(String serviceName, String version, String method);
-
     void info(Class<?> logClass, String formattedMsg, Object... args);
 
     void error(Class<?> logClass, String errMsg, Throwable exception);

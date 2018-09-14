@@ -27,6 +27,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.github.dapeng.util.DumpUtil.dumpToStr;
@@ -36,8 +37,9 @@ import static com.github.dapeng.util.DumpUtil.hexStr2bytes;
  * Unit test for simple App.
  */
 public class JsonSerializerTest {
-    static  long t1 = 0;
-    static  long t2 = 0;
+    static long t1 = 0;
+    static long t2 = 0;
+
     public static void main(String[] args) throws InterruptedException, TException, IOException {
         String result = "{\"name\":\"Ever\",\"success\":124, \"desc\":\"static void main(String[] args) throws InterruptedException, TException, IOException\", \"subEle\":{\"id\":2,\"age\":13}}";
 
@@ -58,93 +60,6 @@ public class JsonSerializerTest {
 //        String desc = "complexStructTest1";
 
 
-        final String purchaseDescriptorXmlPath = "/com.today.api.purchase.service.PurchaseService.xml";
-        Service purchaseService = getService(purchaseDescriptorXmlPath);
-
-        Method createTransferOrder = purchaseService.methods.stream().filter(method -> method.name.equals("createTransferOrder")).collect(Collectors.toList()).get(0);
-        String json = loadJson("/createTransferOrder.json");
-
-        String desc = "createTransferOrderTest.json";
-
-//        final String orderDescriptorXmlPath = "/com.github.dapeng.json.demo.service.OrderService.xml";
-//        Service orderService = getService(orderDescriptorXmlPath);
-//
-//        Method orderServicePayNotify = orderService.methods.stream().filter(method -> method.name.equals("createAppointmentForAvailable")).collect(Collectors.toList()).get(0);
-//        String payNotifyJson = loadJson("/orderService_createAppointmentForAvailable-complexStruct.json");
-//
-//        String desc = "complexStructTest";
-
-        OptimizedMetadata.OptimizedService optimizedService = new OptimizedMetadata.OptimizedService(purchaseService);
-
-        OptimizedMetadata.OptimizedStruct optimizedStruct = new OptimizedMetadata.OptimizedStruct(createTransferOrder.request);
-        for (int i = 0; i < 100000; i++) {
-//                String resulta = result.equals("{}") ? "{\"status\":1}" : result.substring(0, result.lastIndexOf('}')) + ",\"status\":1}";
-//            doTest2(optimizedService, orderServicePayNotify, optimizedStruct, payNotifyJson, desc);
-                doTest2(optimizedService, createTransferOrder, optimizedStruct, json, desc);
-        }
-
-        t1 = 0;
-        t2 = 0;
-
-        long cost = 0;
-        int round = 5;
-        for (int j = 0; j < round; j++) {
-            long t11 = System.nanoTime();
-            for (int i = 0; i < 100000; i++) {
-//                String resulta = result.equals("{}") ? "{\"status\":1}" : result.substring(0, result.lastIndexOf('}')) + ",\"status\":1}";
-//                doTest2(optimizedService, orderServicePayNotify, optimizedStruct, payNotifyJson, desc);
-                doTest2(optimizedService, createTransferOrder, optimizedStruct, json, desc);
-            }
-            long t22 = System.nanoTime() - t11;
-            System.out.println("cost:" + t22/1000000);
-            cost += t22;
-//            Thread.sleep(200);
-        }
-        System.out.println("average:" + cost/round/1000000);
-        System.out.println("average:" + t1/round/1000000);
-        System.out.println("average:" + t2/round/1000000);
-
-//        createTransferOrderTest();
-//        optionalBooleanTest();
-//        simpleStructTest();
-//        simpleMapTest();
-//        createTransferOrderTest();
-//        intArrayTest();
-//        intMapTest();
-//        enumTest();
-//        simpleStructWithEnumTest();
-//        simpleStructWithOptionTest();
-//
-//        complexStructTest();
-//        complexStructTest1();
-    }
-//
-//    private static void concurrentTest() throws InterruptedException {
-//        long begin = System.currentTimeMillis();
-//        Executor ec = Executors.newFixedThreadPool(5);
-//        for (int i = 0; i < 10000; i++) {
-//            ec.execute(() -> {
-//                try {
-//                    listCategoryDetailBySkuNosTest();
-//                } catch (Throwable e) {
-//                    e.printStackTrace();
-//                    System.exit(-1);
-//                }
-//            });
-//            ec.execute(() -> {
-//                try {
-//                    listSkuDetailBySkuNosTest();
-//                } catch (Throwable e) {
-//                    e.printStackTrace();
-//                    System.exit(-1);
-//                }
-//            });
-//        }
-//        ((ExecutorService) ec).awaitTermination(100, TimeUnit.HOURS);
-//        System.out.println("end:" + (System.currentTimeMillis() - begin));
-//    }
-//
-//    private static void createTransferOrderTest() throws IOException, TException {
 //        final String purchaseDescriptorXmlPath = "/com.today.api.purchase.service.PurchaseService.xml";
 //        Service purchaseService = getService(purchaseDescriptorXmlPath);
 //
@@ -152,65 +67,7 @@ public class JsonSerializerTest {
 //        String json = loadJson("/createTransferOrder.json");
 //
 //        String desc = "createTransferOrderTest.json";
-//        doTest2(purchaseService, createTransferOrder, createTransferOrder.request, json, desc);
-//
-//    }
-//
-//    /**
-//     * 多余属性处理
-//     *
-//     * @throws IOException
-//     */
-//    private static void redundancyTest() throws IOException, TException {
-//        final String categoryDescriptorXmlPath = "/com.today.api.category.service.CategoryService.xml";
-//        Service categoryService = getService(categoryDescriptorXmlPath);
-//
-//        Method createCategoryAttribute = categoryService.methods.stream().filter(method -> method.name.equals("createCategoryAttribute")).collect(Collectors.toList()).get(0);
-//        String json = loadJson("/categoryService_createCategoryAttribute.json");
-//
-//        String desc = "redundancyTest";
-//        doTest2(categoryService, createCategoryAttribute, createCategoryAttribute.request, json, desc);
-//
-//    }
-//
-//    private static void listCategoryDetailBySkuNosTest() throws IOException, TException {
-//        final String categoryDescriptorXmlPath = "/com.today.api.category.service.OpenCategoryService.xml";
-//        Service categoryService = getService(categoryDescriptorXmlPath);
-//
-//        Method createCategoryAttribute = categoryService.methods.stream().filter(method -> method.name.equals("listCategoryDetailBySkuNos")).collect(Collectors.toList()).get(0);
-//        String json = loadJson("/listCategoryDetailBySkuNos.json");
-//
-//        String desc = "listCategoryDetailBySkuNosTest";
-//        doTest2(categoryService, createCategoryAttribute, createCategoryAttribute.request, json, desc);
-//
-//    }
-//
-//    private static void listSkuDetailBySkuNosTest() throws IOException, TException {
-//        final String categoryDescriptorXmlPath = "/com.today.api.goods.service.OpenGoodsService.xml";
-//        Service categoryService = getService(categoryDescriptorXmlPath);
-//
-//        Method createCategoryAttribute = categoryService.methods.stream().filter(method -> method.name.equals("listSkuDetailBySkuNos")).collect(Collectors.toList()).get(0);
-//        String json = loadJson("/listSkuDetailBySkuNos.json");
-//
-//        String desc = "listSkuDetailBySkuNosTest";
-//        doTest2(categoryService, createCategoryAttribute, createCategoryAttribute.request, json, desc);
-//
-//    }
-//
-//
-//    private static void optionalBooleanTest() throws IOException, TException {
-//        final String supplierDescriptorXmlPath = "/com.today.api.supplier.service.SupplierService.xml";
-//        Service orderService = getService(supplierDescriptorXmlPath);
-//
-//        Method createSupplierToGoods = orderService.methods.stream().filter(method -> method.name.equals("createSupplierToGoods")).collect(Collectors.toList()).get(0);
-//        String json = loadJson("/supplierService_optionalBooleanStruct.json");
-//
-//        String desc = "optionalBooleanTest";
-//        doTest2(orderService, createSupplierToGoods, createSupplierToGoods.request, json, desc);
-//
-//    }
-//
-//    private static void complexStructTest() throws IOException, TException {
+
 //        final String orderDescriptorXmlPath = "/com.github.dapeng.json.demo.service.OrderService.xml";
 //        Service orderService = getService(orderDescriptorXmlPath);
 //
@@ -218,114 +75,308 @@ public class JsonSerializerTest {
 //        String payNotifyJson = loadJson("/orderService_createAppointmentForAvailable-complexStruct.json");
 //
 //        String desc = "complexStructTest";
-//        doTest2(orderService, orderServicePayNotify, orderServicePayNotify.request, payNotifyJson, desc);
+
+//        OptimizedMetadata.OptimizedService optimizedService = new OptimizedMetadata.OptimizedService(purchaseService);
 //
-//    }
+//        OptimizedMetadata.OptimizedStruct optimizedStruct = new OptimizedMetadata.OptimizedStruct(createTransferOrder.request);
+//        for (int i = 0; i < 100000; i++) {
+////                String resulta = result.equals("{}") ? "{\"status\":1}" : result.substring(0, result.lastIndexOf('}')) + ",\"status\":1}";
+////            doTest2(optimizedService, orderServicePayNotify, optimizedStruct, payNotifyJson, desc);
+//                doTest2(optimizedService, createTransferOrder, optimizedStruct, json, desc);
+//        }
 //
-//    private static void complexStructTest1() throws IOException, TException {
-//        final String orderDescriptorXmlPath = "/com.github.dapeng.json.demo.service.OrderService.xml";
-//        Service orderService = getService(orderDescriptorXmlPath);
+//        t1 = 0;
+//        t2 = 0;
 //
-//        Method orderServicePayNotify = orderService.methods.stream().filter(method -> method.name.equals("createAppointmentForAvailable1")).collect(Collectors.toList()).get(0);
-//        String payNotifyJson = loadJson("/complexStruct.json");
-//
-//        String desc = "complexStructTest1";
-//        doTest2(orderService, orderServicePayNotify, orderServicePayNotify.request, payNotifyJson, desc);
-//
-//    }
-//
-//    private static void simpleStructTest() throws TException, IOException {
-//        final String orderDescriptorXmlPath = "/com.github.dapeng.json.demo.service.OrderService.xml";
-//        Service orderService = getService(orderDescriptorXmlPath);
-//
-//        Method orderServicePayNotify = orderService.methods.stream().filter(method -> method.name.equals("payNotify")).collect(Collectors.toList()).get(0);
-//        String payNotifyJson = loadJson("/orderService_payNotify.json");
-//
-//        String desc = "simpleStructTest";
-//        doTest2(orderService, orderServicePayNotify, orderServicePayNotify.request, payNotifyJson, desc);
-//    }
-//
-//    /**
-//     * Map<String,String>
-//     *
-//     * @throws IOException
-//     * @throws TException
-//     */
-//    private static void simpleMapTest() throws IOException, TException {
-//        final String orderDescriptorXmlPath = "/com.github.dapeng.json.demo.service.OrderService.xml";
-//        Service orderService = getService(orderDescriptorXmlPath);
-//
-//        Method method = orderService.methods.stream().filter(_method -> _method.name.equals("payNotifyForAlipay")).collect(Collectors.toList()).get(0);
-//        String json = loadJson("/orderService_payNotifyForAlipay-map.json");
-//
-//        doTest2(orderService, method, method.request, json, "simpleMapTest");
-//    }
-//
-//    /**
-//     * Map<Integer, String>
-//     *
-//     * @throws IOException
-//     * @throws TException
-//     */
-//    private static void intMapTest() throws IOException, TException {
-//        final String crmDescriptorXmlPath = "/crm.xml";
-//
-//        Service crmService = getService(crmDescriptorXmlPath);
-//
-//        String json = loadJson("/crmService_listDoctorsNameById-map.json");
-//
-//        Method method = crmService.methods.stream().filter(_method -> _method.name.equals("listDoctorsNameById")).collect(Collectors.toList()).get(0);
-//
-//        doTest2(crmService, method, method.response, json, "intMapTest");
-//    }
-//
-//    private static void intArrayTest() throws IOException, TException {
-//        final String crmDescriptorXmlPath = "/crm.xml";
-//
-//        Service crmService = getService(crmDescriptorXmlPath);
-//
-//        String json = loadJson("/crmService_listDoctorsNameById-list.json");
-//
-//        Method method = crmService.methods.stream().filter(_method -> _method.name.equals("listDoctorsNameById")).collect(Collectors.toList()).get(0);
-//
-//        doTest2(crmService, method, method.request, json, "intArrayTest");
-//    }
-//
-//    private static void enumTest() throws IOException, TException {
-//        final String crmDescriptorXmlPath = "/crm.xml";
-//
-//        Service crmService = getService(crmDescriptorXmlPath);
-//
-//        String json = loadJson("/crmService_modifyDoctorType-enum.json");
-//
-//        Method method = crmService.methods.stream().filter(_method -> _method.name.equals("modifyDoctorType")).collect(Collectors.toList()).get(0);
-//
-//        doTest2(crmService, method, method.request, json, "enumTest");
-//    }
-//
-//    private static void simpleStructWithEnumTest() throws IOException, TException {
-//        final String crmDescriptorXmlPath = "/crm.xml";
-//
-//        Service crmService = getService(crmDescriptorXmlPath);
-//
-//        String json = loadJson("/crmService_saveFocusDoctor-structWithEnum.json");
-//
-//        Method method = crmService.methods.stream().filter(_method -> _method.name.equals("saveFocusDoctor")).collect(Collectors.toList()).get(0);
-//
-//        doTest2(crmService, method, method.request, json, "simpleStructWithEnumTest");
-//    }
-//
-//    private static void simpleStructWithOptionTest() throws IOException, TException {
-//        final String crmDescriptorXmlPath = "/crm.xml";
-//
-//        Service crmService = getService(crmDescriptorXmlPath);
-//
-//        String json = loadJson("/crmService_getPatient-option.json");
-//
-//        Method method = crmService.methods.stream().filter(_method -> _method.name.equals("getPatient")).collect(Collectors.toList()).get(0);
-//
-//        doTest2(crmService, method, method.request, json, "simpleStructWithOptionTest");
-//    }
+//        long cost = 0;
+//        int round = 5;
+//        for (int j = 0; j < round; j++) {
+//            long t11 = System.nanoTime();
+//            for (int i = 0; i < 100000; i++) {
+////                String resulta = result.equals("{}") ? "{\"status\":1}" : result.substring(0, result.lastIndexOf('}')) + ",\"status\":1}";
+////                doTest2(optimizedService, orderServicePayNotify, optimizedStruct, payNotifyJson, desc);
+//                doTest2(optimizedService, createTransferOrder, optimizedStruct, json, desc);
+//            }
+//            long t22 = System.nanoTime() - t11;
+//            System.out.println("cost:" + t22/1000000);
+//            cost += t22;
+////            Thread.sleep(200);
+//        }
+//        System.out.println("average:" + cost/round/1000000);
+//        System.out.println("average:" + t1/round/1000000);
+//        System.out.println("average:" + t2/round/1000000);
+
+        try {
+            createTransferOrderTest();
+            optionalBooleanTest();
+            simpleStructTest();
+            simpleMapTest();
+            createTransferOrderTest();
+            intArrayTest();
+            intMapTest();
+            enumTest();
+            simpleStructWithEnumTest();
+            simpleStructWithOptionTest();
+
+            complexStructTest();
+            complexStructTest1();
+            noTagStructTest();
+//            memberRegisterByUnionIdAndOpenIdServiceTest();
+//            concurrentTest();
+        } catch (Exception e) {
+            Thread.sleep(50);
+            e.printStackTrace();
+        } finally {
+            System.exit(0);
+        }
+
+    }
+
+    static AtomicInteger counter = new AtomicInteger(0);
+    static AtomicInteger counter2 = new AtomicInteger(0);
+    private static void concurrentTest() throws InterruptedException {
+        long begin = System.currentTimeMillis();
+        Executor ec = Executors.newFixedThreadPool(5);
+        for (int i = 0; i < 10000; i++) {
+            ec.execute(() -> {
+                try {
+                    listCategoryDetailBySkuNosTest();
+                    counter.incrementAndGet();
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                    System.exit(-1);
+                }
+            });
+            ec.execute(() -> {
+                try {
+                    listSkuDetailBySkuNosTest();
+                    counter2.incrementAndGet();
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                    System.exit(-1);
+                }
+            });
+        }
+        ((ExecutorService) ec).shutdown();
+        ((ExecutorService) ec).awaitTermination(100, TimeUnit.HOURS);
+        System.out.println("end:" + (System.currentTimeMillis() - begin));
+        System.out.println("counter/counter1:" + counter + "/" + counter2);
+    }
+
+    private static void noTagStructTest() throws IOException, TException {
+        final String purchaseDescriptorXmlPath = "/com.today.api.purchase.query.service.PurchaseQueryService.xml";
+        OptimizedMetadata.OptimizedService purchaseService = new OptimizedMetadata.OptimizedService(getService(purchaseDescriptorXmlPath));
+
+        Method listUnClearedOrder = purchaseService.getMethodMap().get("listUnClearedOrder");
+        String json = loadJson("/listUnClearedOrder-resp.json");
+
+        String desc = "listUnClearedOrder-resp";
+        doTest2(purchaseService, listUnClearedOrder, constructOptimizedStruct(purchaseService, listUnClearedOrder.response), json, desc);
+
+    }
+
+    private static void createTransferOrderTest() throws IOException, TException {
+        final String purchaseDescriptorXmlPath = "/com.today.api.purchase.service.PurchaseService.xml";
+        OptimizedMetadata.OptimizedService purchaseService = new OptimizedMetadata.OptimizedService(getService(purchaseDescriptorXmlPath));
+
+        Method createTransferOrder = purchaseService.getMethodMap().get("createTransferOrder");
+        String json = loadJson("/createTransferOrder.json");
+
+        String desc = "createTransferOrderTest.json";
+        doTest2(purchaseService, createTransferOrder, constructOptimizedStruct(purchaseService, createTransferOrder.request), json, desc);
+
+    }
+
+    /**
+     * 多余属性处理
+     *
+     * @throws IOException
+     */
+    private static void redundancyTest() throws IOException, TException {
+        final String categoryDescriptorXmlPath = "/com.today.api.category.service.CategoryService.xml";
+        OptimizedMetadata.OptimizedService categoryService = new OptimizedMetadata.OptimizedService(getService(categoryDescriptorXmlPath));
+
+        Method createCategoryAttribute = categoryService.getMethodMap().get("createCategoryAttribute");
+        String json = loadJson("/categoryService_createCategoryAttribute.json");
+
+        String desc = "redundancyTest";
+        doTest2(categoryService, createCategoryAttribute, constructOptimizedStruct(categoryService, createCategoryAttribute.request), json, desc);
+
+    }
+
+    private static void listCategoryDetailBySkuNosTest() throws IOException, TException {
+        final String categoryDescriptorXmlPath = "/com.today.api.category.service.OpenCategoryService.xml";
+        OptimizedMetadata.OptimizedService categoryService = new OptimizedMetadata.OptimizedService(getService(categoryDescriptorXmlPath));
+
+        Method createCategoryAttribute = categoryService.getMethodMap().get("listCategoryDetailBySkuNos");
+        String json = loadJson("/listCategoryDetailBySkuNos.json");
+
+        String desc = "listCategoryDetailBySkuNosTest";
+        doTest2(categoryService, createCategoryAttribute, constructOptimizedStruct(categoryService, createCategoryAttribute.request), json, desc);
+
+    }
+
+    private static OptimizedMetadata.OptimizedStruct constructOptimizedStruct(OptimizedMetadata.OptimizedService optimizedService, Struct struct) {
+        return optimizedService.getOptimizedStructs().get(struct.namespace + "." + struct.name);
+    }
+
+    private static void listSkuDetailBySkuNosTest() throws IOException, TException {
+        final String categoryDescriptorXmlPath = "/com.today.api.goods.service.OpenGoodsService.xml";
+        OptimizedMetadata.OptimizedService categoryService = new OptimizedMetadata.OptimizedService(getService(categoryDescriptorXmlPath));
+
+        Method createCategoryAttribute = categoryService.getMethodMap().get("listSkuDetailBySkuNos");
+        String json = loadJson("/listSkuDetailBySkuNos.json");
+
+        String desc = "listSkuDetailBySkuNosTest";
+        doTest2(categoryService, createCategoryAttribute, constructOptimizedStruct(categoryService, createCategoryAttribute.request), json, desc);
+
+    }
+
+
+    private static void optionalBooleanTest() throws IOException, TException {
+        final String supplierDescriptorXmlPath = "/com.today.api.supplier.service.SupplierService.xml";
+        OptimizedMetadata.OptimizedService orderService = new OptimizedMetadata.OptimizedService(getService(supplierDescriptorXmlPath));
+
+        Method createSupplierToGoods = orderService.getMethodMap().get("createSupplierToGoods");
+        String json = loadJson("/supplierService_optionalBooleanStruct.json");
+
+        String desc = "optionalBooleanTest";
+        doTest2(orderService, createSupplierToGoods, constructOptimizedStruct(orderService, createSupplierToGoods.request), json, desc);
+
+        json = loadJson("/supplierService_optionalBooleanStruct1.json");
+        desc = "optionalBooleanTest-without-optional-field";
+        doTest2(orderService, createSupplierToGoods, constructOptimizedStruct(orderService, createSupplierToGoods.request), json, desc);
+
+    }
+
+    private static void complexStructTest() throws IOException, TException {
+        final String orderDescriptorXmlPath = "/com.github.dapeng.json.demo.service.OrderService.xml";
+        OptimizedMetadata.OptimizedService orderService = new OptimizedMetadata.OptimizedService(getService(orderDescriptorXmlPath));
+
+        Method orderServicePayNotify = orderService.getMethodMap().get("createAppointmentForAvailable");
+        String payNotifyJson = loadJson("/orderService_createAppointmentForAvailable-complexStruct.json");
+
+        String desc = "complexStructTest";
+        doTest2(orderService, orderServicePayNotify, constructOptimizedStruct(orderService, orderServicePayNotify.request), payNotifyJson, desc);
+
+    }
+
+    private static void complexStructTest1() throws IOException, TException {
+        final String orderDescriptorXmlPath = "/com.github.dapeng.json.demo.service.OrderService.xml";
+        OptimizedMetadata.OptimizedService orderService = new OptimizedMetadata.OptimizedService(getService(orderDescriptorXmlPath));
+
+        Method orderServicePayNotify = orderService.getMethodMap().get("createAppointmentForAvailable1");
+        String payNotifyJson = loadJson("/complexStruct.json");
+
+        String desc = "complexStructTest1";
+        doTest2(orderService, orderServicePayNotify, constructOptimizedStruct(orderService, orderServicePayNotify.request), payNotifyJson, desc);
+
+    }
+
+    private static void simpleStructTest() throws TException, IOException {
+        final String orderDescriptorXmlPath = "/com.github.dapeng.json.demo.service.OrderService.xml";
+        OptimizedMetadata.OptimizedService orderService = new OptimizedMetadata.OptimizedService(getService(orderDescriptorXmlPath));
+
+        Method orderServicePayNotify = orderService.getMethodMap().get("payNotify");
+        String payNotifyJson = loadJson("/orderService_payNotify.json");
+
+        String desc = "simpleStructTest";
+        doTest2(orderService, orderServicePayNotify, constructOptimizedStruct(orderService, orderServicePayNotify.request), payNotifyJson, desc);
+    }
+
+    /**
+     * Map<String,String>
+     *
+     * @throws IOException
+     * @throws TException
+     */
+    private static void simpleMapTest() throws IOException, TException {
+        final String orderDescriptorXmlPath = "/com.github.dapeng.json.demo.service.OrderService.xml";
+        OptimizedMetadata.OptimizedService orderService = new OptimizedMetadata.OptimizedService(getService(orderDescriptorXmlPath));
+
+        Method method = orderService.getMethodMap().get("payNotifyForAlipay");
+        String json = loadJson("/orderService_payNotifyForAlipay-map.json");
+
+        doTest2(orderService, method, constructOptimizedStruct(orderService, method.request), json, "simpleMapTest");
+    }
+
+    /**
+     * Map<Integer, String>
+     *
+     * @throws IOException
+     * @throws TException
+     */
+    private static void intMapTest() throws IOException, TException {
+        final String crmDescriptorXmlPath = "/crm.xml";
+
+        OptimizedMetadata.OptimizedService crmService = new OptimizedMetadata.OptimizedService(getService(crmDescriptorXmlPath));
+
+        String json = loadJson("/crmService_listDoctorsNameById-map.json");
+
+        Method method = crmService.getMethodMap().get("listDoctorsNameById");
+
+        doTest2(crmService, method, constructOptimizedStruct(crmService, method.response), json, "intMapTest");
+    }
+
+    private static void intArrayTest() throws IOException, TException {
+        final String crmDescriptorXmlPath = "/crm.xml";
+
+        OptimizedMetadata.OptimizedService crmService = new OptimizedMetadata.OptimizedService(getService(crmDescriptorXmlPath));
+
+        String json = loadJson("/crmService_listDoctorsNameById-list.json");
+
+        Method method = crmService.getMethodMap().get("listDoctorsNameById");
+
+        doTest2(crmService, method, constructOptimizedStruct(crmService, method.request), json, "intArrayTest");
+    }
+
+    private static void enumTest() throws IOException, TException {
+        final String crmDescriptorXmlPath = "/crm.xml";
+
+        OptimizedMetadata.OptimizedService crmService = new OptimizedMetadata.OptimizedService(getService(crmDescriptorXmlPath));
+
+        String json = loadJson("/crmService_modifyDoctorType-enum.json");
+
+        Method method = crmService.getMethodMap().get("modifyDoctorType");
+
+        doTest2(crmService, method, constructOptimizedStruct(crmService, method.request), json, "enumTest");
+    }
+
+    private static void simpleStructWithEnumTest() throws IOException, TException {
+        final String crmDescriptorXmlPath = "/crm.xml";
+
+        OptimizedMetadata.OptimizedService crmService = new OptimizedMetadata.OptimizedService(getService(crmDescriptorXmlPath));
+
+        String json = loadJson("/crmService_saveFocusDoctor-structWithEnum.json");
+
+        Method method = crmService.getMethodMap().get("saveFocusDoctor");
+
+        doTest2(crmService, method, constructOptimizedStruct(crmService, method.request), json, "simpleStructWithEnumTest");
+    }
+
+    private static void simpleStructWithOptionTest() throws IOException, TException {
+        final String crmDescriptorXmlPath = "/crm.xml";
+
+        OptimizedMetadata.OptimizedService crmService = new OptimizedMetadata.OptimizedService(getService(crmDescriptorXmlPath));
+
+        String json = loadJson("/crmService_getPatient-option.json");
+
+        Method method = crmService.getMethodMap().get("getPatient");
+
+        doTest2(crmService, method, constructOptimizedStruct(crmService, method.request), json, "simpleStructWithOptionTest");
+    }
+
+    private static void memberRegisterByUnionIdAndOpenIdServiceTest() throws IOException, TException {
+        final String memberDescriptorXmlPath = "/com.today.api.member.service.MemberService.xml";
+
+        OptimizedMetadata.OptimizedService memberService = new OptimizedMetadata.OptimizedService(getService(memberDescriptorXmlPath));
+
+        String json = loadJson("/memberRegisterByUnionIdAndOpenIdService.json");
+
+        Method method = memberService.getMethodMap().get("memberRegisterByUnionIdAndOpenIdService");
+
+        doTest2(memberService, method, constructOptimizedStruct(memberService, method.request), json, "memberRegisterByUnionIdAndOpenIdServiceTest");
+    }
 
     private static void doTest2(OptimizedMetadata.OptimizedService optimizedServicee, Method method, OptimizedMetadata.OptimizedStruct optimizedStruct, String json, String desc) throws TException {
         long begin = System.nanoTime();
@@ -339,11 +390,11 @@ public class JsonSerializerTest {
 
         JsonSerializer jsonSerializer = new JsonSerializer(optimizedServicee, method, "1.0.0", optimizedStruct);
 
-        ByteBuf buf = buildRequestBuf(optimizedServicee.service.name, "1.0.0", method.name, 10, json,  jsonSerializer);
-//        System.out.println("origJson:\n" + json);
+        ByteBuf buf = buildRequestBuf(optimizedServicee.service.name, "1.0.0", method.name, 10, json, jsonSerializer);
+        System.out.println("origJson:\n" + json);
 //
 //
-//        System.out.println(dumpToStr(buf));
+        System.out.println(dumpToStr(buf));
 
         long middle = System.nanoTime();
 
@@ -352,15 +403,20 @@ public class JsonSerializerTest {
         SoaMessageParser<String> parser = new SoaMessageParser<>(buf, jsonDecoder);
         parser.parseHeader();
 //        parser.getHeader();
-//        parser.parseBody();
-//System.out.println(parser.getHeader());
-        System.out.println("after enCode and decode:\n" + parser.parseBody().getBody());
-//        System.out.println(desc + " ends=====================");
+        parser.parseBody();
+        System.out.println(parser.getHeader());
+        System.out.println("after enCode and decode:\n" + parser.getBody());
+        System.out.println(desc + " ends=====================" + "counters:" + counter + "/" + counter2);
         buf.release();
         InvocationContextImpl.Factory.removeCurrentInstance();
 
         t1 += middle - begin;
         t2 += System.nanoTime() - middle;
+//        try {
+//            Thread.sleep(50);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
     }
 
 //    private static void doTest3(Service service, Method method, Struct struct, String json, String desc) throws TException {

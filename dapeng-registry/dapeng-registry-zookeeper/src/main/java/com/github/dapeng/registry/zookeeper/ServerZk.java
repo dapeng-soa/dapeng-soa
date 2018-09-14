@@ -56,9 +56,14 @@ public class ServerZk extends CommonZk {
      * zk 客户端实例化
      * 使用 CountDownLatch 门闩 锁，保证zk连接成功后才返回
      */
-    public void connect() {
+    public synchronized void connect() {
         try {
             CountDownLatch semaphore = new CountDownLatch(1);
+            // zk 需要为空
+            if (zk != null) {
+                zk.close();
+                zk = null;
+            }
 
             zk = new ZooKeeper(zkHost, 30000, watchedEvent -> {
 
@@ -111,7 +116,7 @@ public class ServerZk extends CommonZk {
     /**
      * 关闭 zk 连接
      */
-    public void destroy() {
+    public synchronized void destroy() {
         if (zk != null) {
             try {
                 LOGGER.info("ServerZk closing connection to zookeeper {}", zkHost);

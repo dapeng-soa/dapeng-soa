@@ -12,7 +12,8 @@
         {
           "skuId": 29045,
           "skuNo": "44020157",
-          "skuNum": 8
+          "skuNum": 8,
+          "remark": "abc\"测试"
         },
         {
           "skuId": 21585,
@@ -22,6 +23,7 @@
         {
           "skuId": 17704,
           "skuNo": "20501112",
+          "remark": "你好\t嘛\n哈",
           "skuNum": 3
         },
         {
