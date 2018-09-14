@@ -151,7 +151,7 @@ public class SpringAppLoader implements Plugin {
             ServiceVersion serviceVersionAnnotation = ifaceClass.isAnnotationPresent(ServiceVersion.class) ? ifaceClass.getAnnotationsByType(ServiceVersion.class)[0] : null;
             String version = serviceVersionAnnotation != null ? serviceVersionAnnotation.version() : service.version();
 
-            //封装方法的 慢服务时间
+            //封装方法的慢服务时间
             HashMap<String, Long> methodsMaxProcessTimeMap = new HashMap<>(16);
             Arrays.asList(ifaceClass.getMethods()).forEach(item -> {
                 if (processor.functions.keySet().contains(item.getName())) {

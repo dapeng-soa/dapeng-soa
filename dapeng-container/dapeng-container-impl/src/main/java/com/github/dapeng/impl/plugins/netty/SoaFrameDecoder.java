@@ -52,7 +52,8 @@ public class SoaFrameDecoder extends ByteToMessageDecoder {
 
         int length = in.readInt();
 
-        if (length == 0) {// 心跳
+        // 心跳
+        if (length == 0) {
             ctx.writeAndFlush(ctx.alloc().buffer(1).writeInt(0));
 
             return;

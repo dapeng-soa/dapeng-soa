@@ -24,6 +24,10 @@ public class SlowServiceCheckTaskManager {
     private static Map<Thread, String> lastStackInfo = new ConcurrentHashMap<>();
     private static final long DEFAULT_SLEEP_TIME = 3000L;
     private static final long MAX_PROCESS_TIME = SoaSystemEnvProperties.SOA_MAX_PROCESS_TIME;
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
+
+
+    private SlowServiceCheckTaskManager() {}
 
     static void addTask(SlowServiceCheckTask task) {
         tasks.add(task);
@@ -59,6 +63,7 @@ public class SlowServiceCheckTaskManager {
     public static void stop() {
         live = false;
         tasks.clear();
+        lastStackInfo.clear();
     }
 
     private static void checkSampleTask() {
@@ -107,6 +112,6 @@ public class SlowServiceCheckTaskManager {
 
     private static String getCurrentTime() {
         return LocalDateTime.now(ZoneId.of("Asia/Shanghai"))
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS"));
+                .format(formatter);
     }
 }

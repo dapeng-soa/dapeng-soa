@@ -132,7 +132,11 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             }
             //设置服务方法最大执行时间(慢服务)
             //注解配置的值(缺省为3000)
-            Long maxProcessTimeAnnotation = application.getMethodMaxProcessTime(soaHeader.getServiceName(), soaHeader.getVersionName(), soaHeader.getMethodName());
+
+             Optional<ServiceInfo> serviceInfo = application.getServiceInfo(soaHeader.getServiceName(), soaHeader.getVersionName());
+
+            Long maxProcessTimeAnnotation = serviceInfo.isPresent() ? serviceInfo.get().methodsMaxProcessTimeMap.get(soaHeader.getMethodName()) : SoaSystemEnvProperties.SOA_MAX_PROCESS_TIME;
+
             //Zk配置分的值
             Long maxProcessTimeZk = soaHeader.getMaxProcessTime().orElse(maxProcessTimeAnnotation);
             transactionContext.maxProcessTime(maxProcessTimeZk);

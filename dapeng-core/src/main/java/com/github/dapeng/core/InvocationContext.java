@@ -93,7 +93,7 @@ public interface InvocationContext {
     /**
      * 设置慢服务时间阈值,单位毫秒
      *
-     * @param timeout
+     * @param processTime
      * @return
      */
     InvocationContext maxProcessTime(final Long processTime);

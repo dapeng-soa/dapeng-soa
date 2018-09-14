@@ -2,6 +2,7 @@ package com.github.dapeng.json;
 
 import com.github.dapeng.core.metadata.*;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,8 +32,10 @@ public class OptimizedMetadata {
             }
             for (Method method: service.methods) {
                 methodMap.put(method.name, method);
-                optimizedStructs.put(service.name + "." + method.request.name, new OptimizedStruct(method.request));
-                optimizedStructs.put(service.name + "." + method.response.name, new OptimizedStruct(method.response));
+                optimizedStructs.put(method.request.namespace + "." + method.request.name, new OptimizedStruct(method.request));
+
+                optimizedStructs.put(method.request.name + ".body", wrapperReq(method));
+                optimizedStructs.put(method.response.namespace + "." + method.response.name, new OptimizedStruct(method.response));
             }
         }
 
@@ -51,6 +54,22 @@ public class OptimizedMetadata {
         public Map<String, TEnum> getEnumMap() {
             return Collections.unmodifiableMap(enumMap);
         }
+
+        private OptimizedStruct wrapperReq(Method method) {
+            Struct reqWrapperStruct = new Struct();
+            reqWrapperStruct.name = "body";
+            reqWrapperStruct.namespace = method.name;
+            reqWrapperStruct.fields = new ArrayList<>(2);
+            Field reqField = new Field();
+            reqField.tag = 0;
+            DataType reqDataType = new DataType();
+            reqDataType.kind = DataType.KIND.STRUCT;
+            reqDataType.qualifiedName = method.request.name;
+            reqField.dataType = reqDataType;
+            reqWrapperStruct.fields.add(reqField);
+
+            return new OptimizedStruct(reqWrapperStruct);
+        }
     }
 
     public static class OptimizedStruct {
@@ -60,13 +79,18 @@ public class OptimizedMetadata {
          *
          */
         final Map<String, Field> fieldMap = new HashMap<>(128);
+
+        final int tagBase; // maybe < 0
+
         /**
          * 数组方式， 更高效，需要注意，
          * 1. 不连续key很大的情况， 例如来了个tag为65546的field
          * 2. 有些结构体定时的时候没填tag， 结果生成元数据的时候就变成了负数
+         *
+         * 所以目前采用Map的方式
          */
-//        final Field[] fields;
-        final Map<Short, Field> fieldMapByTag = new HashMap<>(128);
+        private final Map<Short, Field> fieldMapByTag;
+        private final Field[] fieldArrayByTag;
 
         public Struct getStruct() {
             return struct;
@@ -74,10 +98,39 @@ public class OptimizedMetadata {
 
         public OptimizedStruct(Struct struct) {
             this.struct = struct;
+
+            int tagBase = 0;
+            int maxTag = 0;
+
             for (Field f : struct.fields) {
                 this.fieldMap.put(f.name, f);
-                this.fieldMapByTag.put((short)f.tag, f);
+                if(f.tag < tagBase) tagBase = f.tag;
+                if(f.tag > maxTag) maxTag = f.tag;
             }
+
+            this.tagBase = tagBase;
+            Field[] array = null;
+            Map<Short, Field> map = null;
+            if(maxTag - tagBase + 1 <= 256) {
+                array = new Field[maxTag - tagBase + 1];
+                for(Field f: struct.fields) {
+                    array[f.tag - tagBase] = f;
+                }
+            }
+            else {
+                map = new HashMap<>();
+                for(Field f: struct.fields) {
+                    map.put((short)f.tag, f);
+                }
+            }
+            this.fieldArrayByTag = array;
+            this.fieldMapByTag = map;
+        }
+
+        public Field get(short tag) {
+            if(fieldArrayByTag != null && tag >= tagBase && tag - tagBase < fieldArrayByTag.length)
+                return fieldArrayByTag[tag - tagBase];
+            else return fieldMapByTag.get(tag);
         }
     }
 }

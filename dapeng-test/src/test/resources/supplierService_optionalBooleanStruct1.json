@@ -5,7 +5,8 @@
       "supplierId":21,
       "supplierLogisticsId":21,
       "purchasePrice":"22.2",
-      "isPrimarySupplier":"false"
+      "isPrimarySupplier":"false",
+      "flag":2
     }
   }
 }
