@@ -198,7 +198,7 @@ public class DapengContainer implements Container {
         Plugin nettyPlugin = new NettyPlugin(this);
 
         //TODO: deployAgent plugin
-        Plugin deployAgentPlugin = new DeployAgentPlugin(this, applicationCls);
+        Plugin deployAgentPlugin = new DeployAgentPlugin( applicationCls);
         registerPlugin(deployAgentPlugin);
 
         Plugin mbeanAgentPlugin = new MbeanAgentPlugin(this);

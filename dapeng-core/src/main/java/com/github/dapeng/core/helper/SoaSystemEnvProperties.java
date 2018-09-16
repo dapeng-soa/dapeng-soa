@@ -106,6 +106,7 @@ public class SoaSystemEnvProperties {
     private static final String KEY_SOA_SERVICE_VERSION = "soa.service.version";
     private static final String KEY_SOA_USE_IVY = "soa.use.ivy";
     private static final String KEY_SOA_IVY_JARS_DIR = "soa.ivy.jars.dir";
+    private static final String KEY_SOA_IVY_SETTING_FILE = "soa.ivy.setting.file";
 
 //    public static final String SOA_SERVICE_IP = get(KEY_SOA_SERVICE_IP, "127.0.0.1");
 //    public static final boolean SOA_SERVICE_IP_ISCONFIG = get(KEY_SOA_SERVICE_IP) != null;
@@ -167,6 +168,7 @@ public class SoaSystemEnvProperties {
     public static final String SOA_SERVICE_VERSION = get(KEY_SOA_SERVICE_VERSION, "");
     public static final boolean SOA_USE_IVY = Boolean.valueOf(get(KEY_SOA_USE_IVY, "false"));
     public static final String SOA_IVY_JARS_DIR = get(KEY_SOA_IVY_JARS_DIR, "/dapeng-container/apps/");
+    public static final String SOA_IVY_SETTING_FILE = get(KEY_SOA_IVY_SETTING_FILE, "");
 
     /**
      * 正常返回的时候的response code

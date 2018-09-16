@@ -1,10 +1,8 @@
 package com.github.dapeng.impl.plugins.deploy_agent;
 
-import com.github.dapeng.api.Container;
 import com.github.dapeng.api.Plugin;
 import com.github.dapeng.bootstrap.classloader.ApplicationClassLoader;
 import com.github.dapeng.bootstrap.classloader.ClassLoaderFactory;
-import com.github.dapeng.impl.container.DapengContainer;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import org.apache.ivy.Ivy;
 import org.slf4j.Logger;
@@ -15,7 +13,6 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -27,25 +24,9 @@ public class DeployAgentPlugin implements Plugin{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DeployAgentPlugin.class);
 
-    private final Container container;
     private final List<ClassLoader> appClassLoaders;
 
-    private static final String JAR_POSTFIX = ".*\\.jar";
-
-    private boolean useivy = true; //fixme 先本地写死
-    private String organisation = ""; //fixme 先本地写死
-    private String serviceVersion = "";   //fixme 先本地写死 (服务版本号)
-    private String serviceArtifactId = ""; //fixme 先本地写死     (服务名)
-    private String ivysettings; //fixme 先本地写死 (为ivysettings.xml 的文件路径)
-    private String targetDir = "";
-    private String cache;
-    private String local;
-
-    protected String servicesdir;
-    protected String thirddir;
-
-    public DeployAgentPlugin(DapengContainer container, List<ClassLoader> appsCls) {
-        this.container = container;
+    public DeployAgentPlugin(List<ClassLoader> appsCls) {
         this.appClassLoaders = appsCls;
     }
 
@@ -53,37 +34,36 @@ public class DeployAgentPlugin implements Plugin{
     public void start() {
         LOGGER.info(" check if use ivy to deploy apps:  " + SoaSystemEnvProperties.SOA_USE_IVY);
         if (SoaSystemEnvProperties.SOA_USE_IVY) {
-            Set<URI> serviceUris;
             try {
-                organisation = SoaSystemEnvProperties.SOA_ORGANIZATION;
+                String organisation = SoaSystemEnvProperties.SOA_ORGANIZATION;
                 if (StringUtils.isEmpty(organisation)) {
                     throw new Exception(" use ivy deploy must defined organization => soa.organization");
                 }
 
-                serviceArtifactId = SoaSystemEnvProperties.SOA_ARTIFACT_ID;
+                String serviceArtifactId = SoaSystemEnvProperties.SOA_ARTIFACT_ID;
                 if (StringUtils.isEmpty(serviceArtifactId)) {
                     throw new Exception(" use ivy deploy must defined serviceArtifactId => soa.artifact.id");
                 }
 
-                serviceVersion = SoaSystemEnvProperties.SOA_SERVICE_VERSION;
+                String serviceVersion = SoaSystemEnvProperties.SOA_SERVICE_VERSION;
                 if (StringUtils.isEmpty(serviceVersion)) {
                     throw new Exception(" use ivy deploy must defined serviceVersion => soa.service.version");
                 }
 
-                targetDir = SoaSystemEnvProperties.SOA_IVY_JARS_DIR;
+                LOGGER.info(" start to load " + organisation + "::" + serviceVersion + "::" + serviceArtifactId);
+
+                String targetDir = SoaSystemEnvProperties.SOA_IVY_JARS_DIR;
                 LOGGER.info(" use " + targetDir + " as apps jars dir..........");
 
-                serviceUris = loadLibrary();
+                Set<URI> serviceUris = loadLibrary(organisation, serviceVersion, serviceArtifactId);
 
                 Iterator<URI> iterator = serviceUris.iterator();
                 while (iterator.hasNext()) {
                     URI uri = iterator.next();
-                    System.out.println("path: " + uri.getPath());
-                    System.out.println("fileName: " + uri.getPath().substring(uri.getPath().lastIndexOf("/") + 1));
                     if (!new File(targetDir + "/" + uri.getPath().substring(uri.getPath().lastIndexOf("/") + 1)).exists()) {
                         writeFile(uri.toURL(),uri.getPath().substring(uri.getPath().lastIndexOf("/") + 1),targetDir );
                     } else {
-                        LOGGER.info(" file: " + uri.getPath() + " already exists.....");
+                        LOGGER.warn(" file: " + uri.getPath() + " already exists.....");
                     }
                 }
 
@@ -105,7 +85,7 @@ public class DeployAgentPlugin implements Plugin{
                 LOGGER.error(" failed to load service url........." + e.getMessage());
             }
         } else {
-            LOGGER.warn(" Didn't use ivy to deploy apps...skip DeployAgentPlugin.........");
+            LOGGER.warn(" Didn't use ivy to load apps...skip DeployAgentPlugin.........");
         }
 
     }
@@ -156,84 +136,19 @@ public class DeployAgentPlugin implements Plugin{
     }
 
     /**
-     * 初始化OSP三种Classloader的ClassPath
+     * 初始化ServiceClassloader的ClassPath
+     * Platform & core classLoader的jar包包含在dapeng镜像中，不需要再加载
      */
-    private Set<URI> loadLibrary() throws Exception {
-        Set<URI> plateformUrls = new HashSet<URI>();
-        Set<URI> containerUrls = new HashSet<URI>();
+    private Set<URI> loadLibrary(String organisation, String serviceVersion, String serviceArtifactId) throws Exception {
         Set<URI> serviceUrls = new HashSet<URI>();
 
-        if (useivy) {
+        if (SoaSystemEnvProperties.SOA_USE_IVY) {
             IvyGetJarUtil ivyGetJarUtil = new IvyGetJarUtil(getIvy());
-            //TODO 目前platformUrl & containerUrl 暂时没用上
-//            plateformUrls.addAll(ivyGetJarUtil.getJars(organisation, serviceArtifactId, serviceVersion,
-//                    new String[] { "master(*)", "compile(*)", "runtime(*)", "provided(*)" }));
-//			containerUrls.addAll(ivyGetJarUtil.getJars(organisation, "osp-container", ospVersion,
-//					new String[] { "master(*)", "compile(*)", "runtime(*)" }));
 
             if (serviceArtifactId != null) {
                 String[] temp = serviceArtifactId.split(":");
                 serviceUrls.addAll(
                         ivyGetJarUtil.getJars(organisation, temp[0], serviceVersion, new String[] { "master(*)", "compile(*)" }));
-            }
-        } else {
-            String enginePath = URLDecoder.decode(
-                    new File(DeployAgentPlugin.class.getProtectionDomain().getCodeSource().getLocation().getFile()).getParent(),
-                    "UTF-8");
-
-            File platformlib = new File(enginePath + "/platformlib");
-            if (platformlib.exists()) {
-                plateformUrls.addAll(listFilesUrls(platformlib, JAR_POSTFIX));
-            } else {
-                LOGGER.error("platformlib folder is not exists");
-            }
-
-            File containerlib = new File(enginePath + "/containerlib");
-            if (containerlib.exists()) {
-                containerUrls.addAll(listFilesUrls(containerlib, JAR_POSTFIX));
-            } else {
-                LOGGER.error("containerlib folder is not exists");
-            }
-
-            // 检查servicesdir非空时必须是存在的目录列表
-            if (servicesdir != null) {
-                for (String temp : servicesdir.split(";")) {
-                    File file = new File(temp);
-                    if (!file.exists()) {
-                        LOGGER.error("the servicesdir is not exists, it's " + temp);
-                    }
-                    if (!file.isDirectory()) {
-                        LOGGER.error("the servicesdir is not directory, it's " + temp);
-                    }
-                }
-            } else {
-                servicesdir = enginePath + "/servicesdir";
-            }
-
-            String[] servicedirs = servicesdir.split(";");
-            for (String dir : servicedirs) {
-                File dirFile = new File(dir);
-                serviceUrls.addAll(listFilesUrls(dirFile, JAR_POSTFIX));
-
-                // 额外将此目录加为ClassPath, 因为使用Spring Loaded时，此目录直接放.class文件
-                serviceUrls.add(dirFile.toURI());
-            }
-
-            // thirddir非空时必须是存在的目录或文件列表
-            if (thirddir != null) {
-                for (String temp : thirddir.split(";")) {
-                    File file = new File(temp);
-                    if (!file.exists()) {
-                        LOGGER.error("the thirddir is not exists, it's " + temp);
-                    }
-                }
-            } else {
-                thirddir = enginePath + "/thirddir";
-            }
-
-            String[] thirddirs = thirddir.split(";");
-            for (String dir : thirddirs) {
-                serviceUrls.addAll(listFilesUrls(new File(dir), JAR_POSTFIX));
             }
         }
 
@@ -267,31 +182,29 @@ public class DeployAgentPlugin implements Plugin{
     private Ivy getIvy() throws ParseException, IOException {
         Ivy ivy = Ivy.newInstance();
 
-        if (cache == null) {
-            cache = System.getProperty("user.home") + "/.ivy_cache";
-        }
-        File cacheFile = new File(cache);
+        File cacheFile = new File(System.getProperty("user.home") + "/.ivy2/cache");
         if (!cacheFile.exists()) {
             cacheFile.mkdirs();
         }
         ivy.getSettings().setDefaultCache(cacheFile);
 
-        if (local == null) {
-            local = System.getProperty("user.home") + "/.m2/repository";
-        }
-        File localFile = new File(local);
+        File localFile = new File(System.getProperty("user.home") + "/.m2/repository");
         if (!localFile.exists()) {
             localFile.mkdirs();
         }
-        ivy.getSettings().setVariable("ivy.local.default.root", local);
+        ivy.getSettings().setVariable("ivy.local.default.root", localFile.getAbsolutePath());
 
-        URL ivysettingsURL = null;
-        if (ivysettings == null) {
-            ivysettingsURL = DeployAgentPlugin.class.getClassLoader().getResource("ivysettings.xml");
+        LOGGER.info("IVY Plugin cache path: " + cacheFile.getAbsolutePath());
+        LOGGER.info("IVY Plugin local path: " + localFile.getAbsolutePath());
+
+        String ivySettingFile = SoaSystemEnvProperties.SOA_IVY_SETTING_FILE;
+        URL ivySettingsURL = null;
+        if (ivySettingFile == null || ivySettingFile.isEmpty()) {
+            ivySettingsURL = DeployAgentPlugin.class.getClassLoader().getResource("ivysettings.xml");
         } else {
-            ivysettingsURL = new File(ivysettings).toURI().toURL();
+            ivySettingsURL = new File(ivySettingFile).toURI().toURL();
         }
-        ivy.getSettings().load(ivysettingsURL);
+        ivy.getSettings().load(ivySettingsURL);
 
         return ivy;
     }
