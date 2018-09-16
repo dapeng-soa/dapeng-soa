@@ -214,7 +214,7 @@ public class RoutesExecutor {
                 ctxValue = ctx.versionName();
                 break;
             case "userId":
-                ctxValue = ctx.userId().map(userId -> userId.toString()).orElse("");
+                ctxValue = ctx.userId().map(String::valueOf).orElse("");
                 break;
             case "callerIp":
                 ctxValue = ctx.callerIp().map(String::valueOf).orElse("");
