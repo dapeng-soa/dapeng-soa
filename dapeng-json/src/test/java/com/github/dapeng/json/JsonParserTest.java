@@ -62,6 +62,11 @@ public class JsonParserTest {
             }
 
             @Override
+            public void onStartField(int index) {
+                System.out.println("onStartField:" + index);
+            }
+
+            @Override
             public void onEndField() {
                 System.out.println("onEndField");
             }

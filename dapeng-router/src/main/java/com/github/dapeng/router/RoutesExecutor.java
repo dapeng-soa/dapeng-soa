@@ -214,10 +214,13 @@ public class RoutesExecutor {
                 ctxValue = ctx.versionName();
                 break;
             case "userId":
-                ctxValue = ctx.userId().map(userId -> userId.toString()).orElse("");
+                ctxValue = ctx.userId().map(String::valueOf).orElse("");
                 break;
-            case "calleeIp":
-                ctxValue = ctx.calleeIp().map(String::valueOf).orElse("");
+            case "callerIp":
+                ctxValue = ctx.callerIp().map(String::valueOf).orElse("");
+                break;
+            case "userIp":
+                 ctxValue = ctx.userIp().map(String::valueOf).orElse("");
                 break;
             default:
                 if (id.startsWith(COOKIE_PREFIX)) {
@@ -257,7 +260,7 @@ public class RoutesExecutor {
             return !matcherPattern(pattern1, value);
         } else if (pattern instanceof IpPattern) {
             IpPattern ipPattern = ((IpPattern) pattern);
-            return matchIpWithMask(ipPattern.ip, Integer.valueOf(value), ipPattern.mask);
+            return matchIpWithMask(ipPattern.ip, Integer.parseInt(value), ipPattern.mask);
         } else if (pattern instanceof RegexPattern) {
             /**
              * 使用缓存好的 pattern 进行 正则 匹配
@@ -266,12 +269,12 @@ public class RoutesExecutor {
             return regex.matcher(value).matches();
 
         } else if (pattern instanceof RangePattern) {
-                RangePattern range = ((RangePattern) pattern);
-                long from = range.from;
-                long to = range.to;
+            RangePattern range = ((RangePattern) pattern);
+            long from = range.from;
+            long to = range.to;
 
-                long valueAsLong = Long.parseLong(value);
-                return valueAsLong <= to && valueAsLong >= from;
+            long valueAsLong = Long.parseLong(value);
+            return valueAsLong <= to && valueAsLong >= from;
 
         } else if (pattern instanceof ModePattern) {
             ModePattern mode = ((ModePattern) pattern);

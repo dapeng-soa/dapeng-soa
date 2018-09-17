@@ -82,6 +82,7 @@ public class WatcherUtils {
      * weight/192.168.4.107/9095/700  service weight config1
      * weight/192.168.4.107/500       service weight config2
      * weight/600                    global weight config
+     *
      * @param data
      * @param zkInfo
      */
@@ -92,13 +93,13 @@ public class WatcherUtils {
 
             String[] properties = configData.split("\n|\r|\r\n");
 
-            if (!isGlobal && !zkInfo.weightServiceConfigs.isEmpty()){
+            if (!isGlobal && !zkInfo.weightServiceConfigs.isEmpty()) {
                 zkInfo.weightServiceConfigs.clear();
             }
             for (String property : properties) {
                 if (!"".equals(property)) {
                     String typeValue = property.split("/")[0];
-                    if (typeValue.equals(ConfigKey.TimeOut.getValue())) {
+                    if (typeValue.equals(ConfigKey.TimeOut.getValue())) {//服务超时 TimeOut
                         if (isGlobal) {
                             String value = property.split("/")[1];
                             zkInfo.timeConfig.globalConfig = timeHelper(value);
@@ -114,8 +115,23 @@ public class WatcherUtils {
                                 zkInfo.timeConfig.serviceConfigs.put(props[0], timeHelper(props[1]));
                             }
                         }
-
-                    } else if (typeValue.equals(ConfigKey.LoadBalance.getValue())) {
+                    } else if (typeValue.equals(ConfigKey.ProcessTime.getValue())) { //服务慢服务检测 ProcessTime
+                        if (isGlobal) {
+                            String value = property.split("/")[1];
+                            zkInfo.processTimeConfig.globalConfig = timeHelper(value);
+                        } else {
+                            String[] keyValues = property.split(",");
+                            for (String keyValue : keyValues) {
+                                String[] props;
+                                if (keyValue.contains("/")) {
+                                    props = keyValue.split("/");
+                                } else {
+                                    props = keyValue.split(":");
+                                }
+                                zkInfo.processTimeConfig.serviceConfigs.put(props[0], timeHelper(props[1]));
+                            }
+                        }
+                    } else if (typeValue.equals(ConfigKey.LoadBalance.getValue())) { //负载均衡 LoadBalance
                         if (isGlobal) {
                             String value = property.split("/")[1];
                             zkInfo.loadbalanceConfig.globalConfig = LoadBalanceStrategy.findByValue(value);
@@ -132,7 +148,7 @@ public class WatcherUtils {
                                 zkInfo.loadbalanceConfig.serviceConfigs.put(props[0], LoadBalanceStrategy.findByValue(props[1]));
                             }
                         }
-                    } else if (typeValue.equals(ConfigKey.Weight.getValue())) {
+                    } else if (typeValue.equals(ConfigKey.Weight.getValue())) {//权重 Weight
                         if (isGlobal) {
                             zkInfo.weightGlobalConfig = doParseWeightData(property);
 
@@ -152,9 +168,10 @@ public class WatcherUtils {
 
     /**
      * 将zk config 中的权重设置，同步到运行实例中
+     *
      * @param zkInfo
      */
-    public static void recalculateRuntimeInstanceWeight(ZkServiceInfo zkInfo){
+    public static void recalculateRuntimeInstanceWeight(ZkServiceInfo zkInfo) {
         if (zkInfo != null) {
             List<RuntimeInstance> runtimeInstances = zkInfo.getRuntimeInstances();
             if (runtimeInstances != null && runtimeInstances.size() > 0) {
@@ -166,10 +183,10 @@ public class WatcherUtils {
                         List<Weight> weights = zkInfo.weightServiceConfigs;
                         for (Weight weight : weights) {
                             if (weight.ip.equals(runtimeInstance.ip)) {
-                                if (weight.port == runtimeInstance.port){
+                                if (weight.port == runtimeInstance.port) {
                                     runtimeInstance.weight = weight.weight;
                                     break;
-                                }else if(weight.port == -1){
+                                } else if (weight.port == -1) {
                                     runtimeInstance.weight = weight.weight;
                                 }
                             }
@@ -181,8 +198,8 @@ public class WatcherUtils {
     }
 
     /**
-     *
      * parse zk weight config
+     *
      * @param weightData
      * @return
      */
@@ -190,11 +207,11 @@ public class WatcherUtils {
         Weight weight = new Weight();
         String[] strArr = weightData.split("[/]");
         if (strArr.length >= 2) {
-            if (strArr.length == 2){                   //weight/600  global weight config
+            if (strArr.length == 2) {                   //weight/600  global weight config
                 weight.ip = "";
                 weight.port = -1;
                 weight.weight = Integer.parseInt(strArr[1]);
-            }else if (strArr.length == 3) {              //weight/192.168.4.107/500       service weight config2
+            } else if (strArr.length == 3) {              //weight/192.168.4.107/500       service weight config2
                 weight.ip = strArr[1];
                 weight.port = -1;
                 weight.weight = Integer.parseInt(strArr[2]);
@@ -203,7 +220,7 @@ public class WatcherUtils {
                 weight.port = Integer.parseInt(strArr[2]);
                 weight.weight = Integer.parseInt(strArr[3]);
             }
-        }else {
+        } else {
             weight = null;
         }
         return weight;

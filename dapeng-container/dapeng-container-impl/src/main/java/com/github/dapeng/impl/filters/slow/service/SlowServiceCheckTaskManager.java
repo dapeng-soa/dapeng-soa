@@ -6,8 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import java.text.SimpleDateFormat;
-import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -26,6 +24,10 @@ public class SlowServiceCheckTaskManager {
     private static Map<Thread, String> lastStackInfo = new ConcurrentHashMap<>();
     private static final long DEFAULT_SLEEP_TIME = 3000L;
     private static final long MAX_PROCESS_TIME = SoaSystemEnvProperties.SOA_MAX_PROCESS_TIME;
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
+
+
+    private SlowServiceCheckTaskManager() {}
 
     static void addTask(SlowServiceCheckTask task) {
         tasks.add(task);
@@ -61,6 +63,7 @@ public class SlowServiceCheckTaskManager {
     public static void stop() {
         live = false;
         tasks.clear();
+        lastStackInfo.clear();
     }
 
     private static void checkSampleTask() {
@@ -72,15 +75,20 @@ public class SlowServiceCheckTaskManager {
         while (iterator.hasNext()) {
             final SlowServiceCheckTask task = iterator.next();
 
+            long maxProcessTime = task.maxProcessTime.isPresent() ? task.maxProcessTime.get() : MAX_PROCESS_TIME;
+            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, task.sessionTid.map(DapengUtil::longToHexStr).orElse("0"));
+
+            if (logger.isInfoEnabled()) {
+                logger.info("slow service check {}:{}:{};maxProcessTime:{} ", task.serviceName, task.versionName, task.methodName, maxProcessTime);
+            }
+
             final long ptime = currentTime - task.startTime;
-            if (ptime >= MAX_PROCESS_TIME) {
+            if (ptime >= maxProcessTime) {
 //            if (true) {
                 final StackTraceElement[] stackElements = task.currentThread.getStackTrace();
                 if (stackElements != null && stackElements.length > 0) {
-                    MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID,task.sessionTid.map(DapengUtil::longToHexStr).orElse("0"));
                     final StringBuilder builder = new StringBuilder(task.toString());
                     builder.append("--[" + currentTimeAsString + "]:task info:[" + task.serviceName + ":" + task.methodName + ":" + task.versionName + "]").append("\n");
-
                     final String firstStackInfo = stackElements[0].toString();
                     if (lastStackInfo.containsKey(task.currentThread) && lastStackInfo.get(task.currentThread).equals(firstStackInfo)) {
                         builder.append("Same as last check...");
@@ -104,6 +112,6 @@ public class SlowServiceCheckTaskManager {
 
     private static String getCurrentTime() {
         return LocalDateTime.now(ZoneId.of("Asia/Shanghai"))
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS"));
+                .format(formatter);
     }
 }

@@ -18,7 +18,7 @@ public class SoaConnectionImpl extends SoaBaseConnection {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SoaConnectionImpl.class);
 
-    public SoaConnectionImpl(String host, int port) {
+    SoaConnectionImpl(String host, int port) {
         super(host, port);
     }
 

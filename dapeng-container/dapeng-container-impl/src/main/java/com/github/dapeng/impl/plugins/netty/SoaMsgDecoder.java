@@ -9,7 +9,6 @@ import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.github.dapeng.impl.plugins.monitor.DapengDoctor;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
 import com.github.dapeng.util.DumpUtil;
@@ -172,6 +171,9 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         }
         if (soaHeader.getTimeout().isPresent()) {
             ctx.timeout(soaHeader.getTimeout().get());
+        }
+        if (soaHeader.getMaxProcessTime().isPresent()) {
+            ctx.maxProcessTime(soaHeader.getMaxProcessTime().get());
         }
 
         ctx.calleeTid(DapengUtil.generateTid());

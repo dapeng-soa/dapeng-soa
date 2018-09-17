@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-import static com.github.dapeng.core.SoaCode.ReqBufferOverFlow;
 import static com.github.dapeng.core.SoaProtocolConstants.ETX;
 import static com.github.dapeng.core.SoaProtocolConstants.STX;
 
@@ -52,7 +51,8 @@ public class SoaFrameDecoder extends ByteToMessageDecoder {
 
         int length = in.readInt();
 
-        if (length == 0) {// 心跳
+        // 心跳
+        if (length == 0) {
             ctx.writeAndFlush(ctx.alloc().buffer(1).writeInt(0));
 
             return;

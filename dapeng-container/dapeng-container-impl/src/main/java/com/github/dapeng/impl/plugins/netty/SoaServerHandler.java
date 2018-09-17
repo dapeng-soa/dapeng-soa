@@ -62,8 +62,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
             if (LOGGER.isDebugEnabled() && SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL) {
                 ThreadPoolExecutor poolExecutor = (ThreadPoolExecutor) dispatcher;
-                LOGGER.debug("BizThreadPoolInfo:\n"
-                        + DumpUtil.dumpThreadPool(poolExecutor));
+                LOGGER.debug("BizThreadPoolInfo:\n" + DumpUtil.dumpThreadPool(poolExecutor));
             }
             dispatcher.execute(() -> {
                 try {
@@ -94,8 +93,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         // Uncaught exceptions from inbound handlers will propagate up to this handler
         TransactionContext tranCtx = TransactionContextImpl.Factory.currentInstance();
         // short error log and detail error log, for the sake of elasticsearch indexing
-        LOGGER.error("exceptionCaught:seqId:" + (tranCtx==null?"":tranCtx.seqId()) + ", channel:" + ctx.channel() + ", msg:" + cause.getMessage());
-        LOGGER.error("exceptionCaught:seqId:" + (tranCtx==null?"":tranCtx.seqId()) + ", " + cause.getMessage(), cause);
+        LOGGER.error("exceptionCaught:seqId:" + (tranCtx == null ? "" : tranCtx.seqId()) + ", channel:" + ctx.channel() + ", msg:" + cause.getMessage());
+        LOGGER.error("exceptionCaught:seqId:" + (tranCtx == null ? "" : tranCtx.seqId()) + ", " + cause.getMessage(), cause);
         ctx.close();
     }
 
@@ -131,8 +130,18 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             if (application == null) {
                 throw new SoaException(SoaCode.NoMatchedService);
             }
-            SoaFunctionDefinition<I, REQ, RESP> soaFunction = (SoaFunctionDefinition<I, REQ, RESP>) serviceDef.functions.get(soaHeader.getMethodName());
+            //设置服务方法最大执行时间(慢服务)
+            //注解配置的值(缺省为3000)
 
+             Optional<ServiceInfo> serviceInfo = application.getServiceInfo(soaHeader.getServiceName(), soaHeader.getVersionName());
+
+            Long maxProcessTimeAnnotation = serviceInfo.isPresent() ? serviceInfo.get().methodsMaxProcessTimeMap.get(soaHeader.getMethodName()) : SoaSystemEnvProperties.SOA_MAX_PROCESS_TIME;
+
+            //Zk配置分的值
+            Long maxProcessTimeZk = soaHeader.getMaxProcessTime().orElse(maxProcessTimeAnnotation);
+            transactionContext.maxProcessTime(maxProcessTimeZk);
+
+            SoaFunctionDefinition<I, REQ, RESP> soaFunction = (SoaFunctionDefinition<I, REQ, RESP>) serviceDef.functions.get(soaHeader.getMethodName());
             if (soaFunction == null) {
                 throw new SoaException(SoaCode.ServerNoMatchedMethod);
             }
@@ -261,8 +270,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         private final SoaFunctionDefinition<I, REQ, RESP> soaFunction;
 
         DispatchFilter(SoaServiceDefinition<I> serviceDef,
-                              SoaFunctionDefinition<I, REQ, RESP> soaFunction,
-                              REQ args) {
+                       SoaFunctionDefinition<I, REQ, RESP> soaFunction,
+                       REQ args) {
 
             this.serviceDef = serviceDef;
             this.args = args;

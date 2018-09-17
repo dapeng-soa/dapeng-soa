@@ -43,14 +43,16 @@ public class InvocationContextImpl implements InvocationContext {
     private Optional<Integer> userIp = Optional.empty();
 
     private Optional<Integer> timeout = Optional.empty();
+    private Optional<Long> maxProcessTime = Optional.empty();
 
     private Optional<LoadBalanceStrategy> loadBalanceStrategy = Optional.empty();
 
     private CodecProtocol codecProtocol = CodecProtocol.CompressedBinary;
 
     private Optional<Integer> calleeIp = Optional.empty();
+    private Optional<Integer> calleePort = Optional.empty();
 
-    private Optional<Integer> calleePort = Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
+    private Optional<Integer> callerIp = Optional.ofNullable(IPUtils.localIpAsInt());
 
     private Optional<String> callerMid = Optional.empty();
 
@@ -123,6 +125,18 @@ public class InvocationContextImpl implements InvocationContext {
         return this;
     }
 
+    @Override
+    public Optional<Long> maxProcessTime() {
+        return maxProcessTime;
+    }
+
+    @Override
+    public InvocationContext maxProcessTime(final Long maxProcessTime) {
+        this.maxProcessTime = Optional.ofNullable(maxProcessTime);
+        return this;
+    }
+
+
     // read/write
     @Override
     public CodecProtocol codecProtocol() {
@@ -143,6 +157,17 @@ public class InvocationContextImpl implements InvocationContext {
     @Override
     public Optional<Integer> calleePort() {
         return this.calleePort;
+    }
+
+    @Override
+    public InvocationContext callerIp(Integer callerIp) {
+        this.callerIp = Optional.ofNullable(callerIp);
+        return this;
+    }
+
+    @Override
+    public Optional<Integer> callerIp() {
+        return this.callerIp;
     }
 
     @Override
@@ -340,16 +365,17 @@ public class InvocationContextImpl implements InvocationContext {
         sb.append("\"").append("methodName").append("\":\"").append(this.methodName).append("\",");
         sb.append("\"").append("versionName").append("\":\"").append(this.versionName).append("\",");
         sb.append("\"").append("sessionTid").append("\":\"").append(this.sessionTid.isPresent() ? longToHexStr(this.sessionTid.get()) : null).append("\",");
-        sb.append("\"").append("userId").append("\":\"").append(this.userId.isPresent() ? this.userId.get() : null).append("\",");
+        sb.append("\"").append("userId").append("\":\"").append(this.userId.orElse(null)).append("\",");
         sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? transferIp(this.userIp.get()) : null).append("\",");
-        sb.append("\"").append("timeout").append("\":\"").append(this.timeout.isPresent() ? this.timeout.get() : null).append("\",");
-        sb.append("\"").append("transactionId").append("\":\"").append(this.transactionId.isPresent() ? this.transactionId.get() : null).append("\",");
-        sb.append("\"").append("transactionSequence").append("\":\"").append(this.transactionSequence.isPresent() ? this.transactionSequence.get() : null).append("\",");
+        sb.append("\"").append("timeout").append("\":\"").append(this.timeout.orElse(null)).append("\",");
+        sb.append("\"").append("maxProcessTime").append("\":\"").append(this.maxProcessTime.orElse(null)).append("\",");
+        sb.append("\"").append("transactionId").append("\":\"").append(this.transactionId.orElse(null)).append("\",");
+        sb.append("\"").append("transactionSequence").append("\":\"").append(this.transactionSequence.orElse(null)).append("\",");
         sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid).append("\",");
-        sb.append("\"").append("callerMid").append("\":\"").append(this.callerMid.isPresent() ? this.callerMid.get() : null).append("\",");
-        sb.append("\"").append("operatorId").append("\":").append(this.operatorId.isPresent() ? this.operatorId.get() : null).append(",");
+        sb.append("\"").append("callerMid").append("\":\"").append(this.callerMid.orElse(null)).append("\",");
+        sb.append("\"").append("operatorId").append("\":").append(this.operatorId.orElse(null)).append(",");
         sb.append("\"").append("calleeIp").append("\":\"").append(this.calleeIp.isPresent() ? transferIp(this.calleeIp.get()) : null).append("\",");
-        sb.append("\"").append("calleePort").append("\":\"").append(this.calleePort.isPresent() ? this.calleePort.get() : null).append("\",");
+        sb.append("\"").append("calleePort").append("\":\"").append(this.calleePort.orElse(null)).append("\",");
 
         sb.deleteCharAt(sb.lastIndexOf(","));
         sb.append("}");

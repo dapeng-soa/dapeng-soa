@@ -21,6 +21,8 @@ public enum ConfigKey {
 
     TimeOut("timeout"),
 
+    ProcessTime("processTime"),
+
     Weight("weight");
 
     private final String value;
@@ -49,6 +51,8 @@ public enum ConfigKey {
                 return FailOver;
             case "compatible":
                 return Compatible;
+            case "processTime":
+                return ProcessTime;
             default:
                 return null;
         }

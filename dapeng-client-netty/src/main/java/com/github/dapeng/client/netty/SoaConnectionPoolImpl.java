@@ -2,6 +2,7 @@ package com.github.dapeng.client.netty;
 
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.zookeeper.ClientZkAgent;
@@ -21,8 +22,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 import static com.github.dapeng.core.SoaCode.*;
 
@@ -46,12 +45,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
     }
 
-    private Map<IpPort, SubPool> subPools = new ConcurrentHashMap<>();
     private ClientZkAgent zkAgent = new ClientZkAgentImpl();
 
-    private ReentrantLock subPoolLock = new ReentrantLock();
-
-    private Map<String, ClientInfoWeakRef> clientInfos = new ConcurrentHashMap<>(128);
+    private Map<String, ClientInfoWeakRef> clientInfos = new ConcurrentHashMap<>(16);
     private final ReferenceQueue<ClientInfo> referenceQueue = new ReferenceQueue<>();
     /**
      * 重用 ZkServiceInfo , 每一个 serviceName 对应 唯一一个ZkServiceInfo实例.
@@ -177,7 +173,21 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private SoaConnection findConnection(final String service,
                                          final String version,
                                          final String method) throws SoaException {
+
+        InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+
         ZkServiceInfo zkInfo = zkServiceInfoMap.get(service);
+
+
+        //设置慢服务检测时间阈值
+        Optional<Long> maxProcessTime = getZkProcessTime(method, zkInfo);
+        context.maxProcessTime(maxProcessTime.orElse(null));
+
+
+        //如果设置了calleeip 和 calleport 直接调用服务 不走路由
+        if (context.calleeIp().isPresent() && context.calleePort().isPresent()) {
+            return SubPoolFactory.getSubPool(IPUtils.transferIp(context.calleeIp().get()), context.calleePort().get()).getConnection();
+        }
 
         if (zkInfo == null || zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
             //todo should find out why zkInfo is null
@@ -236,25 +246,10 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         inst.increaseActiveCount();
 
-        IpPort ipPort = new IpPort(inst.ip, inst.port);
-        SubPool subPool = subPools.get(ipPort);
-        if (subPool == null) {
-            try {
-                subPoolLock.lock();
-                subPool = subPools.get(ipPort);
-                if (subPool == null) {
-                    subPool = new SubPool(inst.ip, inst.port);
-                    subPools.put(ipPort, subPool);
-                }
-            } finally {
-                subPoolLock.unlock();
-            }
-        }
-
         // TODO: 2018-08-04  服务端需要返回来正确的版本号
-        InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         context.versionName(inst.version);
-        return subPool.getConnection();
+
+        return SubPoolFactory.getSubPool(inst.ip, inst.port).getConnection();
     }
 
     /**
@@ -434,10 +429,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         } else {
             timeout = Optional.of(defaultTimeout);
         }
-
         return timeout.get() >= maxTimeout ? maxTimeout : timeout.get();
-
     }
+
 
     private Optional<Integer> getInvocationTimeout() {
         InvocationContext context = InvocationContextImpl.Factory.currentInstance();
@@ -500,10 +494,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             globalTimeOut = configInfo.timeConfig.globalConfig;
         }
 
-        /*logger.debug("request:serviceName:{},methodName:{},version:{}," +
-                        " methodTimeOut:{},serviceTimeOut:{},globalTimeOut:{}",
-                serviceName, methodName, version, methodTimeOut, serviceTimeOut, globalTimeOut);*/
-
         if (methodTimeOut != null) {
 
             return Optional.of(methodTimeOut);
@@ -513,6 +503,42 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         } else if (globalTimeOut != null) {
 
             return Optional.of(globalTimeOut);
+        } else {
+            return Optional.empty();
+        }
+    }
+
+
+    /**
+     * 获取 zookeeper processTime config
+     * <p>
+     * method level -> service level -> global level
+     * <</p>
+     *
+     * @return
+     */
+    private Optional<Long> getZkProcessTime(String methodName, ZkServiceInfo configInfo) {
+        //方法级别
+        Long methodProcessTime = null;
+        //服务配置
+        Long serviceProcessTime = null;
+
+        Long globalProcessTime = null;
+
+        if (configInfo != null) {
+            //方法级别
+            methodProcessTime = configInfo.processTimeConfig.serviceConfigs.get(methodName);
+            //服务配置
+            serviceProcessTime = configInfo.processTimeConfig.serviceConfigs.get(ConfigKey.ProcessTime.getValue());
+            globalProcessTime = configInfo.processTimeConfig.globalConfig;
+        }
+
+        if (methodProcessTime != null) {
+            return Optional.of(methodProcessTime);
+        } else if (serviceProcessTime != null) {
+            return Optional.of(serviceProcessTime);
+        } else if (globalProcessTime != null) {
+            return Optional.of(globalProcessTime);
         } else {
             return Optional.empty();
         }
