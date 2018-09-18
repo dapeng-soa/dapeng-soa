@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>dapeng-container</artifactId>
-        <groupId>com.github.dapeng</groupId>
+        <groupId>com.github.dapeng-soa</groupId>
         <version>2.0.5</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -142,43 +142,43 @@
     
     <dependencies>
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-container-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-utils</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-spring</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-transaction-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-api-doc</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-message-kafka</artifactId>
             <version>${project.version}</version>
         </dependency>
         <!--counter-->
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-counter-api</artifactId>
             <version>${project.version}</version>
         </dependency>

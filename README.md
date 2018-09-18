@@ -169,7 +169,7 @@ java -jar dapeng-code-generator-2.0.5-jar-with-dependencies.jar -gen java -out F
 新建maven工程，即`hello-api`工程，依赖于`dapeng-remoting-api`:
 ```
 <dependency>
-    <groupId>com.github.dapeng</groupId>
+    <groupId>com.github.dapeng-soa</groupId>
     <artifactId>dapeng-remoting-api</artifactId>
     <version>2.0.5</version>
 </dependency>
@@ -189,12 +189,12 @@ java -jar dapeng-code-generator-2.0.5-jar-with-dependencies.jar -gen java -out F
 
 ```
 <dependency>
-    <groupId>com.github.dapeng</groupId>
+    <groupId>com.github.dapeng-soa</groupId>
     <artifactId>hello-api</artifactId>
     <version>1.0-SNAPSHOT</version>
 </dependency>
 <dependency>
-    <groupId>com.github.dapeng</groupId>
+    <groupId>com.github.dapeng-soa</groupId>
     <artifactId>dapeng-spring</artifactId>
     <version>2.0.5</version>
 </dependency>
@@ -325,17 +325,17 @@ mvn compile com.github.dapeng:dapeng-maven-plugin:2.0.5:run
 客户端要依赖`hello-api`,`dapeng-com.github.dapeng.registry.registry-zookeeper`和`dapeng-remoting-netty`
 ```
 <dependency>
-    <groupId>com.github.dapeng</groupId>
+    <groupId>com.github.dapeng-soa</groupId>
     <artifactId>hello-api</artifactId>
     <version>1.0-SNAPSHOT</version>
 </dependency>
 <dependency>
-    <groupId>com.github.dapeng</groupId>
+    <groupId>com.github.dapeng-soa</groupId>
     <artifactId>dapeng-com.github.dapeng.registry.registry-zookeeper</artifactId>
     <version>2.0.5</version>
 </dependency>
 <dependency>
-    <groupId>com.github.dapeng</groupId>
+    <groupId>com.github.dapeng-soa</groupId>
     <artifactId>dapeng-remoting-netty</artifactId>
     <version>2.0.5</version>
 </dependency>

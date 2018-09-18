@@ -3,14 +3,12 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
         <artifactId>dapeng-parent</artifactId>
-        <groupId>com.github.dapeng</groupId>
+        <groupId>com.github.dapeng-soa</groupId>
         <version>2.0.5</version>
     </parent>
 
-    <groupId>com.github.dapeng</groupId>
     <artifactId>dapeng-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
     <name>dapeng-maven-plugin</name>
@@ -19,7 +17,7 @@
     <dependencies>
 
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-container-impl</artifactId>
             <version>${project.version}</version>
             <exclusions>
@@ -31,7 +29,7 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-bootstrap</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -63,7 +61,7 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-code-generator</artifactId>
             <version>${project.version}</version>
         </dependency>
