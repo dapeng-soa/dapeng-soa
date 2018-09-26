@@ -36,7 +36,7 @@ done
 JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=1091 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
 NETTY_OPTS=" -Dio.netty.leakDetectionLevel=advanced "
 #GC_OPTS=" -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDateStamps -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintGCDetails -XX:+PrintPromotionFailure -XX:+PrintGCApplicationStoppedTime -Dlog.dir=$PRGDIR/.."
-GC_OPTS=" -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDateStamps -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintPromotionFailure -XX:+PrintGCDetails -Dlog.dir=$PRGDIR/.."
+GC_OPTS=" -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDateStamps -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintPromotionFailure -XX:+PrintGCApplicationStoppedTime -XX:+PrintGCDetails -Dlog.dir=$PRGDIR/.."
 
 
 #预分配内存, 会造成jvm进程启动的时候慢一点, 但运行时减轻gc停顿, 减少内存碎片
