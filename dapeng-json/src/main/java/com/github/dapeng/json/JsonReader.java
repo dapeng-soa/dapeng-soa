@@ -540,7 +540,10 @@ class JsonReader implements JsonCallback {
             case ENUM:
                 TEnum tEnum = optimizedService.enumMap.get(current.dataType.qualifiedName);
                 Integer tValue = findEnumItemValue(tEnum, value);
-                if (tValue == null) logAndThrowTException();
+                if (tValue == null) {
+                    logger.error("Enum(" + current.dataType.qualifiedName + ") not found for value:" + value);
+                    logAndThrowTException();
+                }
                 oproto.writeI32(tValue);
                 break;
             case BOOLEAN:

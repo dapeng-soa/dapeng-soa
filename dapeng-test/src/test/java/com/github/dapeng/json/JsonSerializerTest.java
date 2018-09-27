@@ -107,20 +107,21 @@ public class JsonSerializerTest {
 //        System.out.println("average:" + t2/round/1000000);
 
         try {
-            createTransferOrderTest();
-            optionalBooleanTest();
-            simpleStructTest();
-            simpleMapTest();
-            createTransferOrderTest();
-            intArrayTest();
-            intMapTest();
-            enumTest();
-            simpleStructWithEnumTest();
-            simpleStructWithOptionTest();
-
-            complexStructTest();
-            complexStructTest1();
-            noTagStructTest();
+            queryExportReportTest();
+//            createTransferOrderTest();
+//            optionalBooleanTest();
+//            simpleStructTest();
+//            simpleMapTest();
+//            createTransferOrderTest();
+//            intArrayTest();
+//            intMapTest();
+//            enumTest();
+//            simpleStructWithEnumTest();
+//            simpleStructWithOptionTest();
+//
+//            complexStructTest();
+//            complexStructTest1();
+//            noTagStructTest();
 //            memberRegisterByUnionIdAndOpenIdServiceTest();
 //            concurrentTest();
         } catch (Exception e) {
@@ -172,6 +173,18 @@ public class JsonSerializerTest {
 
         String desc = "listUnClearedOrder-resp";
         doTest2(purchaseService, listUnClearedOrder, constructOptimizedStruct(purchaseService, listUnClearedOrder.response), json, desc);
+
+    }
+
+    private static void queryExportReportTest() throws IOException, TException {
+        final String financeReportDescriptorXmlPath = "/com.today.api.financereport.service.ExportReportService.xml";
+        OptimizedMetadata.OptimizedService financeReportService = new OptimizedMetadata.OptimizedService(getService(financeReportDescriptorXmlPath));
+
+        Method queryExportReport = financeReportService.getMethodMap().get("queryExportReport");
+        String json = loadJson("/queryExportReport.json");
+
+        String desc = "queryExportReportTest";
+        doTest2(financeReportService, queryExportReport, constructOptimizedStruct(financeReportService, queryExportReport.request), json, desc);
 
     }
 
