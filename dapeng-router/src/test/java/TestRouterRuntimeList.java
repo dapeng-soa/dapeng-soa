@@ -503,4 +503,46 @@ public class TestRouterRuntimeList {
         Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
 
+    /**
+     * 测试 otherwise 不走两个或多个 ip
+     */
+    @Test
+    public void testOtherWiseTwoIp() {
+        //"192.168.1.101",
+        String pattern = "otherwise => ~ip\"192.168.1.101\" , ~ip\"192.168.1.102\" , ~ip\"192.168.1.103\" ";
+
+
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.setCookie("storeId", "11866600");
+        ctx.methodName("updateOrderMemberId");
+
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+//        expectInstances.add(runtimeInstance3);
+        expectInstances.add(runtimeInstance4);
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+    }
+
+    @Test
+    public void testOtherWiseIpMark() {
+        //"192.168.1.101",
+        String pattern = "otherwise => ~ip\"192.168.1.101/24\" ";
+
+
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.setCookie("storeId", "11866600");
+        ctx.methodName("updateOrderMemberId");
+
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+    }
+
 }
