@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -540,7 +541,7 @@ public class TestRouterRuntimeList {
         List<RuntimeInstance> prepare = prepare(ctx, routes);
 
 
-        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        List<RuntimeInstance> expectInstances = Collections.emptyList();
 
         Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
