@@ -180,7 +180,23 @@ service HelloService {
 
 ```mvn clean package```
 生成的文件: 
-![](https://github.com/dapeng-soa/documents/blob/master/images/dapeng-thrift/demo.png?raw=true)
+```
+|-- demo
+|   |-- java/com/github/dapeng/demo/hello                                
+|   |   |-- domain                            
+|   |   |   |-- serializer
+|   |   |   |   |-- HelloSerializer.java      Hello实体对象的序列化器
+|   |   |   |-- Hello.java                    Hello实体类
+|   |   |-- service                     
+|   |   |   |-- HelloService                  Hello服务的同步实现
+|   |   |   |-- HelloServiceAsync             Hello服务的异步实现
+|   |-- HelloServiceAsyncClient.java          Hello服务的异步客户端                    
+|   |-- HelloServiceAsyncCodec.java           Hello服务的编解码类  
+|   |-- HelloServiceClient.java               Hello服务的同步客户端              
+|   |-- HelloServiceCodec.java                Hello服务的同步编解码器
+|   |-- HelloServiceSuperCodec.java           Hello服务编解码器的父类（包含同步异步的公共实体）
+-------------------------------------------------------
+```
 
 ##### 2.4 服务实现 HelloServiceImpl
 ```
