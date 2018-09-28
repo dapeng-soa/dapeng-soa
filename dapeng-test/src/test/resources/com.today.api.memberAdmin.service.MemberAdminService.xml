@@ -1,0 +1,4161 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<service namespace="com.today.api.memberAdmin.service" name="MemberAdminService">
+    <doc>
+
+ 会员后台服务
+</doc>
+    <meta>
+        <version>1.0.0</version>
+        <timeout>30000</timeout>
+    </meta>
+    <methods>
+        <method name="listKebanCouponService">
+            <doc>
+
+# 根据fkId查询第三方合作券
+## 业务描述
+
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+    无
+## 逻辑处理
+
+## 输出
+   返回详情数据
+</doc>
+            <request name="listKebanCouponService_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.request.ListKebanCouponRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listKebanCouponService_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.response.ListKebanCouponResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listMemberOrderService">
+            <doc>
+
+# 老POS订单列表查询
+## 业务描述
+
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+    无
+## 逻辑处理
+
+## 输出
+   返回详情数据
+</doc>
+            <request name="listMemberOrderService_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.request.ListMemberOrderRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listMemberOrderService_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.response.ListMemberOrderResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listRechargeOrder">
+            <doc>
+
+# 线上充值列表查询
+## 业务描述
+
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+    无
+## 逻辑处理
+
+## 输出
+   返回详情数据
+</doc>
+            <request name="listRechargeOrder_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.request.ListRechargeOrderRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listRechargeOrder_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.response.ListRechargeOrderResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="rechargeOrderDetail">
+            <doc>
+
+# 线上充值详情查询
+## 业务描述
+
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+    无
+## 逻辑处理
+
+## 输出
+   返回详情数据
+</doc>
+            <request name="rechargeOrderDetail_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.request.RechargeOrderDetailRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="rechargeOrderDetail_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.response.RechargeOrderDetailResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="kebanQueryCoupon">
+            <doc>
+
+# 线上充值详情查询
+## 业务描述
+
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+    无
+## 逻辑处理
+
+## 输出
+   返回详情数据
+</doc>
+            <request name="kebanQueryCoupon_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.request.KebanQueryCouponRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="kebanQueryCoupon_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.response.KebanQueryCouponResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="rechargeOrderApplyExamine">
+            <doc>
+
+# 申请审核接口
+## 业务描述
+
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+    无
+## 逻辑处理
+
+## 输出
+   返回详情数据
+</doc>
+            <request name="rechargeOrderApplyExamine_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.request.RechargeOrderApplyRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="rechargeOrderApplyExamine_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="rechargeOrderExamine">
+            <doc>
+
+# 审核接口
+## 业务描述
+
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+    无
+## 逻辑处理
+
+## 输出
+   返回详情数据
+</doc>
+            <request name="rechargeOrderExamine_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.request.RechargeOrderExamineRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="rechargeOrderExamine_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="memberOrderDetailService">
+            <doc>
+
+# 老POS订单详情
+## 业务描述
+
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+    无
+## 逻辑处理
+
+## 输出
+   返回详情数据
+</doc>
+            <request name="memberOrderDetailService_args">
+                <fields>
+                    <field tag="1" name="orderNo" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRING</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="memberOrderDetailService_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.response.MemberOrderDetailResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="accountMemberQueryListService">
+            <doc>
+
+# 获取用户账户列表
+## 业务描述
+    获取用户账户列表
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+   验证用户为在库会员
+## 逻辑处理
+   分页查询用户账户列表
+
+## 输出
+   返回用户账户列表
+</doc>
+            <request name="accountMemberQueryListService_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.user.request.AccountMemberQueryListRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="accountMemberQueryListService_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.response.AccountMemberQueryListResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="memberCouponQueryListService">
+            <doc>
+
+# 根据用户查询优惠券列表
+
+
+## 业务描述
+    根据用户查询优惠券列表
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+   验证用户为在库会员
+## 逻辑处理
+   无
+
+## 输出
+   返回优惠券list
+</doc>
+            <request name="memberCouponQueryListService_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.user.request.MemberCouponQueryListRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="memberCouponQueryListService_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.response.MemberCouponQueryListResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="memberQueryDetailService">
+            <doc>
+
+# 查询用户详情
+## 业务描述
+    用户根据用户id
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+   验证id是否存在；
+## 逻辑处理
+
+## 输出
+   返回详情数据
+</doc>
+            <request name="memberQueryDetailService_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.user.request.MemberQueryDetailRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="memberQueryDetailService_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.response.MemberQueryDetailResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="scoreMemberQueryListService">
+            <doc>
+
+# 用户积分列表
+
+## 业务描述
+    用户查询积分列表接口
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+    无
+## 逻辑处理
+   分页查询member base实体返回在库会员id ，名称及积分
+
+## 输出
+   返回用户积分列表
+
+</doc>
+            <request name="scoreMemberQueryListService_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.user.request.ScoreMemberQueryListRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="scoreMemberQueryListService_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.response.ScoreMemberQueryListResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="memberQueryListService">
+            <doc>
+
+# 用户查询接口
+
+## 业务描述
+    用户列表查询接口
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+   验证表单高级查询条件；
+
+## 逻辑处理
+
+## 输出
+   返回list
+</doc>
+            <request name="memberQueryListService_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.user.request.MemberQueryListRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="memberQueryListService_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.response.MemberQueryListResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="accountMemberQueryDetailService">
+            <doc>
+
+# 获取某用户的账户流水明细
+## 业务描述
+    获取某一个用户的账户流水明细列表
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+   验证用户为在库会员
+
+## 逻辑处理
+   分页查询实体member_account_journal 实体，获得用户账户明细
+
+
+## 输出
+   返回结果
+</doc>
+            <request name="accountMemberQueryDetailService_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.user.request.AccountMemberQueryDetailRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="accountMemberQueryDetailService_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.response.AccountMemberQueryDetailResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="memberFroznService">
+            <doc>
+
+# 用户冻结接口
+## 业务描述
+    用户冻结接口
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    无
+## 数据库变更
+    修改用户状态
+##  事务处理
+    无
+## 前置检查
+   验证操作员权限；
+
+## 逻辑处理
+   如果用户已被冻结，则返回已经冻结；
+
+## 输出
+   返回结果
+</doc>
+            <request name="memberFroznService_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.user.request.MemberFroznRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="memberFroznService_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.response.MemberFroznResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="memberUnfreezeService">
+            <doc>
+
+# 用户解冻接口
+## 业务描述
+    用户解冻接口
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    无
+## 数据库变更
+    修改用户状态
+##  事务处理
+    无
+## 前置检查
+   验证操作员权限；
+
+## 逻辑处理
+   如果用户已被解冻，则返回已经解冻；
+
+## 输出
+   返回结果
+</doc>
+            <request name="memberUnfreezeService_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.user.request.MemberUnfreezeRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="memberUnfreezeService_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.response.MemberUnfreezeResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="scoreMemberQueryDetailService">
+            <doc>
+
+# 用户的流水明细列表
+## 业务描述
+    获取某一个用户的流水明细列表
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+   验证用户为在库会员
+
+## 逻辑处理
+   分页查询实体member_integral_journal 实体，获得用户积分明细
+
+## 输出
+   返回流水列表
+
+</doc>
+            <request name="scoreMemberQueryDetailService_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.user.request.ScoreMemberQueryDetailRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="scoreMemberQueryDetailService_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.response.ScoreMemberQueryDetailResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+    </methods>
+    <structs>
+        <struct namespace="com.today.api.member.vo" name="TMemberCardAccount">
+            <doc>
+
+ 礼品卡账户实体
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 主键id
+</doc>
+                </field>
+                <field tag="2" name="memberId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 会员id
+</doc>
+                </field>
+                <field tag="3" name="memberName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 会员名称
+</doc>
+                </field>
+                <field tag="4" name="cardBalance" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 账户余额
+</doc>
+                </field>
+                <field tag="5" name="cardAccountStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.MemberCardAccountStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 账户状态,1:正常(normal);2:冻结(frezz)
+</doc>
+                </field>
+                <field tag="6" name="createdAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 创建时间
+</doc>
+                </field>
+                <field tag="7" name="createdBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台创建人(公司员工 id)
+</doc>
+                </field>
+                <field tag="8" name="updatedAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 更新时间
+</doc>
+                </field>
+                <field tag="9" name="updatedBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台更新人(公司员工 id)
+</doc>
+                </field>
+                <field tag="10" name="remark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 备注
+</doc>
+                </field>
+                <field tag="11" name="oldOrderId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 老orderid
+</doc>
+                </field>
+                <field tag="12" name="oldOrderNo" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 老orderNo
+</doc>
+                </field>
+                <field tag="13" name="mobilePhone" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 链表查询增加的手机号字段
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.user.request" name="AccountMemberQueryListRequest">
+            <doc>
+
+ 会员账户列表查询
+</doc>
+            <fields>
+                <field tag="1" name="memberId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+会员id
+</doc>
+                </field>
+                <field tag="2" name="mobilePhone" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+会员手机号
+</doc>
+                </field>
+                <field tag="3" name="startTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+  创建时间
+</doc>
+                </field>
+                <field tag="4" name="endTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                </field>
+                <field tag="5" name="pageRequest" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageRequest</ref>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.memberAdmin.vo" name="RechargeOrderInfo">
+            <doc>
+
+ 充值订单详情
+</doc>
+            <fields>
+                <field tag="1" name="orderNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                </field>
+                <field tag="2" name="phone" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 手机号
+</doc>
+                </field>
+                <field tag="3" name="amountPrice" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 应付金额
+</doc>
+                </field>
+                <field tag="4" name="actualPrice" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 实付金额
+</doc>
+                </field>
+                <field tag="5" name="discountPrice" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠金额
+</doc>
+                </field>
+                <field tag="6" name="orderTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 订单时间
+</doc>
+                </field>
+                <field tag="7" name="orderStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 订单状态
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.vo" name="TCardConsume">
+            <doc>
+
+ 礼品卡消费流水实体
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 利用主键策略生成的唯一键
+</doc>
+                </field>
+                <field tag="2" name="cardId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 礼品卡id
+</doc>
+                </field>
+                <field tag="3" name="orderId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 订单编号
+</doc>
+                </field>
+                <field tag="5" name="consumeAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 充值赠送为正数，消费为负数
+</doc>
+                </field>
+                <field tag="6" name="lastBalance" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 变动前余额
+</doc>
+                </field>
+                <field tag="7" name="createdAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 创建时间
+</doc>
+                </field>
+                <field tag="8" name="createdBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台创建人(公司员工 id)
+</doc>
+                </field>
+                <field tag="9" name="memberId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 会员id
+</doc>
+                </field>
+                <field tag="10" name="cardNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 卡号
+</doc>
+                </field>
+                <field tag="11" name="memberName" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 会员姓名
+</doc>
+                </field>
+                <field tag="12" name="consumeType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.CardConsumeType</ref>
+                    </dataType>
+                    <doc>
+
+ 礼品卡流水类型
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.response" name="MemberUnfreezeResponse">
+            <doc>
+
+ 冻结操作返回体
+</doc>
+            <fields>
+                <field tag="1" name="userId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 用户 id
+</doc>
+                </field>
+                <field tag="2" name="memberStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.MemberMemberStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 用户状态
+</doc>
+                </field>
+                <field tag="3" name="remark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+  操作员解冻备注
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.response" name="MemberQueryDetailResponse">
+            <doc>
+
+ 会员详情查询
+</doc>
+            <fields>
+                <field tag="1" name="member" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.member.vo.TMember</ref>
+                    </dataType>
+                    <doc>
+
+ 用户 vo
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.response" name="ListRechargeOrderResponse">
+            <doc>
+
+ 充值订单list
+</doc>
+            <fields>
+                <field tag="1" name="rechargeOrder" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.memberAdmin.vo.RechargeOrder</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 充值订单实体
+</doc>
+                </field>
+                <field tag="2" name="pageResponse" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageResponse</ref>
+                    </dataType>
+                    <doc>
+
+ 分页信息
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.response" name="MemberQueryListResponse">
+            <doc>
+
+ 会员查询列表
+</doc>
+            <fields>
+                <field tag="1" name="pageResponse" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageResponse</ref>
+                    </dataType>
+                    <doc>
+
+ 分页
+</doc>
+                </field>
+                <field tag="2" name="memberList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.vo.TMember</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 用户列表
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.response" name="AccountMemberQueryDetailResponse">
+            <doc>
+
+ 会员账户详情查询
+</doc>
+            <fields>
+                <field tag="1" name="pageResponse" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageResponse</ref>
+                    </dataType>
+                    <doc>
+
+ 分页
+</doc>
+                </field>
+                <field tag="2" name="cardConsumeList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.vo.TCardConsume</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 会员积分列表
+</doc>
+                </field>
+                <field tag="3" name="memberCardAccountDetail" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.member.vo.TMemberCardAccount</ref>
+                    </dataType>
+                    <doc>
+
+ 会员账户详情
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.response" name="ListKebanCouponResponse">
+            <doc>
+
+ 可伴优惠券查询返回体
+</doc>
+            <fields>
+                <field tag="1" name="memberCoupon" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.vo.TMemberCoupon</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 用户 vo
+</doc>
+                </field>
+                <field tag="2" name="pageResponse" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageResponse</ref>
+                    </dataType>
+                    <doc>
+
+ 分页信息
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.response" name="ListMemberOrderResponse">
+            <doc>
+
+ 老POS订单返回体
+</doc>
+            <fields>
+                <field tag="1" name="memberOrderList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.memberAdmin.vo.TMemberOrder</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 老POS订单实体
+</doc>
+                </field>
+                <field tag="2" name="pageResponse" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageResponse</ref>
+                    </dataType>
+                    <doc>
+
+ 分页信息
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.memberAdmin.vo" name="RechargeOrder">
+            <fields>
+                <field tag="1" name="phone" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 手机号
+</doc>
+                </field>
+                <field tag="2" name="orderNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 订单编号
+</doc>
+                </field>
+                <field tag="3" name="discountPrice" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠金额
+</doc>
+                </field>
+                <field tag="4" name="amount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 应付金额
+</doc>
+                </field>
+                <field tag="5" name="payAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 实付金额
+</doc>
+                </field>
+                <field tag="6" name="orderStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 订单状态
+</doc>
+                </field>
+                <field tag="7" name="orderTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 订单时间
+</doc>
+                </field>
+                <field tag="8" name="operationStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 操作状态
+</doc>
+                </field>
+                <field tag="9" name="sn" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 卡号
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.vo" name="TScoreJournal">
+            <doc>
+
+  ScoreJournal
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 利用主键策略生成的唯一键
+</doc>
+                </field>
+                <field tag="2" name="memberId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 会员id
+</doc>
+                </field>
+                <field tag="3" name="scorePrice" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 变动积分
+</doc>
+                </field>
+                <field tag="4" name="orderId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 订单id
+</doc>
+                </field>
+                <field tag="5" name="resouceType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.ScoreJournalResouceTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 积分来源类型,1:消费(consume);2:积分兑换(exchange);3:消费赠送(give);4:首充赠送(recharge);5:完善资料赠送(perfect);6:指定商品赠送(sku_give);7:会员日赠送(member_day);8:无现金日赠送(nocash_day);9:退款(refund);10:多倍商品赠送(mutlple);11:退单(back);12:会员生日赠送(birthday);13:组合套餐赠送(package);14:储值送(stored);15:手动赠送(give);16:注册赠送(register);17:系统扣除(system)
+</doc>
+                </field>
+                <field tag="6" name="scoreLast" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 变动之前积分
+</doc>
+                </field>
+                <field tag="7" name="createdAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 创建时间
+</doc>
+                </field>
+                <field tag="8" name="createdBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台创建人(公司员工 id)
+</doc>
+                </field>
+                <field tag="9" name="updatedAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 更新时间
+</doc>
+                </field>
+                <field tag="10" name="updatedBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台更新人(公司员工 id)
+</doc>
+                </field>
+                <field tag="11" name="remark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 备注
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.response" name="ScoreMemberQueryDetailResponse">
+            <doc>
+
+ 会员积分详情查询
+</doc>
+            <fields>
+                <field tag="1" name="pageResponse" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageResponse</ref>
+                    </dataType>
+                    <doc>
+
+ 分页
+</doc>
+                </field>
+                <field tag="2" name="scoreJournalList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.vo.TScoreJournal</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 会员积分列表
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.response" name="RechargeOrderDetailResponse">
+            <doc>
+
+ 充值订单详情
+</doc>
+            <fields>
+                <field tag="1" name="orderInfo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.memberAdmin.vo.RechargeOrderInfo</ref>
+                    </dataType>
+                </field>
+                <field tag="2" name="goodsInfo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.memberAdmin.vo.RechargeGoodsInfo</ref>
+                    </dataType>
+                    <doc>
+
+ 商品详情
+</doc>
+                </field>
+                <field tag="3" name="payInfo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.memberAdmin.vo.RechargePayInfo</ref>
+                    </dataType>
+                    <doc>
+
+ 支付详情
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.response" name="ScoreMemberQueryListResponse">
+            <doc>
+
+ 会员积分列表查询
+</doc>
+            <fields>
+                <field tag="1" name="pageResponse" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageResponse</ref>
+                    </dataType>
+                    <doc>
+
+ 分页
+</doc>
+                </field>
+                <field tag="2" name="memberList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.vo.TMember</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 会员积分列表
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.request" name="ListRechargeOrderRequest">
+            <doc>
+
+ 充值订单请求体
+</doc>
+            <fields>
+                <field tag="1" name="phone" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 手机号
+</doc>
+                </field>
+                <field tag="2" name="orderStatus" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 订单状态
+</doc>
+                </field>
+                <field tag="3" name="startTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 查询开始时间
+</doc>
+                </field>
+                <field tag="4" name="endTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 查询结束时间
+</doc>
+                </field>
+                <field tag="5" name="pageRequest" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageRequest</ref>
+                    </dataType>
+                    <doc>
+
+ 分页对象
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.memberAdmin.vo" name="RechargeGoodsInfo">
+            <doc>
+
+ 充值订单商品详情
+</doc>
+            <fields>
+                <field tag="1" name="snNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 礼品卡号
+</doc>
+                </field>
+                <field tag="2" name="snName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品名称
+</doc>
+                </field>
+                <field tag="3" name="price" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 售价
+</doc>
+                </field>
+                <field tag="4" name="orderNum" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 数量
+</doc>
+                </field>
+                <field tag="5" name="totalPrice" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 小计金额
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.request" name="RechargeOrderExamineRequest">
+            <doc>
+
+ 审核订单
+</doc>
+            <fields>
+                <field tag="1" name="orderNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 订单号
+</doc>
+                </field>
+                <field tag="2" name="examineAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 审核人
+</doc>
+                </field>
+                <field tag="3" name="examineStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.RechargeOrderEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 审核状态
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.request" name="RechargeOrderApplyRequest">
+            <doc>
+
+ 充值订单申请审核
+</doc>
+            <fields>
+                <field tag="1" name="orderNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 订单号
+</doc>
+                </field>
+                <field tag="2" name="applyAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 申请审核人
+</doc>
+                </field>
+                <field tag="3" name="sn" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 卡号
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.user.request" name="AccountMemberQueryDetailRequest">
+            <doc>
+
+ 会员账户详情查询
+</doc>
+            <fields>
+                <field tag="1" name="memberId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 查询query
+</doc>
+                </field>
+                <field tag="2" name="pageRequest" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageRequest</ref>
+                    </dataType>
+                </field>
+                <field tag="3" name="orderId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+                <field tag="4" name="startTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                </field>
+                <field tag="5" name="endTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.request" name="ListKebanCouponRequest">
+            <doc>
+
+ 可伴优惠券查询请求体
+</doc>
+            <fields>
+                <field tag="1" name="fkId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 可伴优惠券FK_ID
+</doc>
+                </field>
+                <field tag="2" name="pageRequest" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageRequest</ref>
+                    </dataType>
+                    <doc>
+
+ 分页对象
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.response" name="MemberFroznResponse">
+            <doc>
+
+ 冻结操作返回体
+</doc>
+            <fields>
+                <field tag="1" name="userId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 用户 id
+</doc>
+                </field>
+                <field tag="2" name="memberStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.MemberMemberStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 用户状态
+</doc>
+                </field>
+                <field tag="3" name="remark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+  操作员冻结备注
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.user.request" name="MemberCouponQueryListRequest">
+            <doc>
+
+ 会员优惠券
+</doc>
+            <fields>
+                <field tag="1" name="userId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 用户 id
+</doc>
+                </field>
+                <field tag="2" name="couponName" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 券名称
+</doc>
+                </field>
+                <field tag="3" name="couponId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 券ID
+</doc>
+                </field>
+                <field tag="4" name="mobilePhone" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+  手机号
+</doc>
+                </field>
+                <field tag="5" name="couponType" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.CouponTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+  券类型
+</doc>
+                </field>
+                <field tag="6" name="startTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+  开始时间
+</doc>
+                </field>
+                <field tag="7" name="endTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+  结束时间
+</doc>
+                </field>
+                <field tag="8" name="pageRequest" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageRequest</ref>
+                    </dataType>
+                    <doc>
+
+ 分页信息
+</doc>
+                </field>
+                <field tag="9" name="storeId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+门店id
+</doc>
+                </field>
+                <field tag="10" name="storeName" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 门店名称
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.response" name="MemberCouponQueryListResponse">
+            <doc>
+
+ 会员优惠券列表查询
+</doc>
+            <fields>
+                <field tag="1" name="pageResponse" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageResponse</ref>
+                    </dataType>
+                    <doc>
+
+ 分页
+</doc>
+                </field>
+                <field tag="2" name="memberCouponList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.vo.TMemberCoupon</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 优惠券列表
+</doc>
+                </field>
+                <field tag="3" name="memberId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 会员id
+</doc>
+                </field>
+                <field tag="4" name="mobile" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 会员手机号
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.vo" name="TMember">
+            <doc>
+
+  Member
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 利用主键策略生成的唯一键
+</doc>
+                </field>
+                <field tag="2" name="memberCode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 根据规则引擎生成
+</doc>
+                </field>
+                <field tag="3" name="memberName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 会员名称
+</doc>
+                </field>
+                <field tag="4" name="memberPassword" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 会员密码
+</doc>
+                </field>
+                <field tag="5" name="memberScore" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 积分
+</doc>
+                </field>
+                <field tag="6" name="memberHeadUrl" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 用户头像url
+</doc>
+                </field>
+                <field tag="7" name="memberSalt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 加密盐
+</doc>
+                </field>
+                <field tag="8" name="mobilePhone" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 用户手机号
+</doc>
+                </field>
+                <field tag="9" name="memberSex" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.MemberSexEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 性别,1:男(male);2:女(female)
+</doc>
+                </field>
+                <field tag="10" name="memberStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.MemberMemberStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 用户状态,1:正常(normal);2:冻结(frozen)
+</doc>
+                </field>
+                <field tag="11" name="memberType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.MemberMemberTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 会员类型,1:支付会员(pay);2:认证会员(valid)
+</doc>
+                </field>
+                <field tag="12" name="registerSource" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 注册渠道来源
+</doc>
+                </field>
+                <field tag="13" name="registerCityId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 注册城市，取字典表id
+</doc>
+                </field>
+                <field tag="14" name="registerCityName" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 注册城市名称，做冗余
+</doc>
+                </field>
+                <field tag="15" name="memberBirthday" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 会员生日
+</doc>
+                </field>
+                <field tag="16" name="registerStoreId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 注册门店id
+</doc>
+                </field>
+                <field tag="17" name="registerTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 注册时间
+</doc>
+                </field>
+                <field tag="18" name="email" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 电子邮箱
+</doc>
+                </field>
+                <field tag="19" name="wechatOpenId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 微信openid
+</doc>
+                </field>
+                <field tag="20" name="wechatUnionId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 微信unionid
+</doc>
+                </field>
+                <field tag="21" name="alipayOpenId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 支付宝openid
+</doc>
+                </field>
+                <field tag="22" name="lastLoginTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 最后一次登录时间
+</doc>
+                </field>
+                <field tag="23" name="createdAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 创建时间
+</doc>
+                </field>
+                <field tag="24" name="createdBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台创建人(公司员工 id)
+</doc>
+                </field>
+                <field tag="25" name="updatedAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 更新时间
+</doc>
+                </field>
+                <field tag="26" name="updatedBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台更新人(公司员工 id)
+</doc>
+                </field>
+                <field tag="27" name="remark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 备注
+</doc>
+                </field>
+                <field tag="28" name="approveTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 认证时间
+</doc>
+                </field>
+                <field tag="29" name="old_memberId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ old_member_id
+</doc>
+                </field>
+                <field tag="30" name="membershipNumber" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 微信卡包卡号
+</doc>
+                </field>
+                <field tag="31" name="userCardStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.UserCardStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 微信卡包会员卡状态
+</doc>
+                </field>
+                <field tag="32" name="aliShipNumber" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 支付宝原生卡卡号
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.request" name="RechargeOrderDetailRequest">
+            <doc>
+
+ 充值订单详情
+</doc>
+            <fields>
+                <field tag="1" name="orderNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 订单号
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.user.request" name="MemberFroznRequest">
+            <doc>
+
+ 冻结操作请求体
+</doc>
+            <fields>
+                <field tag="1" name="userId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 用户 id
+</doc>
+                </field>
+                <field tag="2" name="remark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+  操作员冻结备注
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.vo" name="TMemberCoupon">
+            <fields>
+                <field tag="1" name="memberId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 会员id
+</doc>
+                </field>
+                <field tag="2" name="memberName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 会员名称
+</doc>
+                </field>
+                <field tag="3" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 主键id
+</doc>
+                </field>
+                <field tag="4" name="couponId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠券id
+</doc>
+                </field>
+                <field tag="5" name="couponName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠券名字
+</doc>
+                </field>
+                <field tag="6" name="startTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠券开始时间
+</doc>
+                </field>
+                <field tag="7" name="endTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠券结束时间
+</doc>
+                </field>
+                <field tag="8" name="couponRemark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠券使用说明
+</doc>
+                </field>
+                <field tag="9" name="receiveTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠券领取时间
+</doc>
+                </field>
+                <field tag="10" name="sourceFlag" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 来源标识{1：游戏过关赠送2：排行榜赠送3：金币兑换}
+</doc>
+                </field>
+                <field tag="11" name="sourceId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 来源id
+</doc>
+                </field>
+                <field tag="12" name="isUsed" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 是否使用
+</doc>
+                </field>
+                <field tag="13" name="usedTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠券使用时间
+</doc>
+                </field>
+                <field tag="14" name="fkId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 外码
+</doc>
+                </field>
+                <field tag="15" name="scanCodeId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 二维码标示
+</doc>
+                </field>
+                <field tag="16" name="createdAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 创建时间
+</doc>
+                </field>
+                <field tag="17" name="createdBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台创建人(公司员工 id)
+</doc>
+                </field>
+                <field tag="18" name="updatedAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 更新时间
+</doc>
+                </field>
+                <field tag="19" name="updatedBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台更新人(公司员工 id)
+</doc>
+                </field>
+                <field tag="20" name="remark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 备注
+</doc>
+                </field>
+                <field tag="21" name="mobilePhone" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 手机号
+</doc>
+                </field>
+                <field tag="22" name="couponKey" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠劵唯一key
+</doc>
+                </field>
+                <field tag="23" name="storeId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 门店id
+</doc>
+                </field>
+                <field tag="24" name="storeName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 门店名称
+</doc>
+                </field>
+                <field tag="25" name="orderId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ orderId
+</doc>
+                </field>
+                <field tag="26" name="couponPrice" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠券价值
+</doc>
+                </field>
+                <field tag="27" name="couponType" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.CouponEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 优惠券type
+</doc>
+                </field>
+                <field tag="28" name="isExpired" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.CouponExpiredEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 是否已过期
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.response" name="AccountMemberQueryListResponse">
+            <doc>
+
+ 会员账户列表查询
+</doc>
+            <fields>
+                <field tag="1" name="pageResponse" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageResponse</ref>
+                    </dataType>
+                    <doc>
+
+ 分页
+</doc>
+                </field>
+                <field tag="2" name="memberAccountList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.vo.TMemberCardAccount</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 会员积分列表
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.user.request" name="ScoreMemberQueryDetailRequest">
+            <doc>
+
+ 会员积分详情查询
+</doc>
+            <fields>
+                <field tag="1" name="orderId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 查询query
+</doc>
+                </field>
+                <field tag="2" name="startTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+  创建时间
+</doc>
+                </field>
+                <field tag="3" name="endTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                </field>
+                <field tag="4" name="pageRequest" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageRequest</ref>
+                    </dataType>
+                </field>
+                <field tag="5" name="resouceType" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.ScoreJournalResouceTypeEnum</ref>
+                    </dataType>
+                </field>
+                <field tag="6" name="memberId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.page" name="TPageResponse">
+            <fields>
+                <field tag="1" name="start" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 查询的开始序号（序号从零开始）
+</doc>
+                </field>
+                <field tag="2" name="limit" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 最大返回的记录数
+</doc>
+                </field>
+                <field tag="3" name="results" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 结果记录数
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.response" name="MemberOrderDetailResponse">
+            <doc>
+
+ 老POS订单返回体
+</doc>
+            <fields>
+                <field tag="1" name="memberOrder" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.memberAdmin.vo.TMemberOrder</ref>
+                    </dataType>
+                    <doc>
+
+ 老POS订单实体
+</doc>
+                </field>
+                <field tag="2" name="goodsList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.memberAdmin.vo.Goods</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 商品集合
+</doc>
+                </field>
+                <field tag="3" name="couponList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.member.vo.TMemberCoupon</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 优惠券集合
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.user.request" name="MemberUnfreezeRequest">
+            <doc>
+
+ 解冻操作请求体
+</doc>
+            <fields>
+                <field tag="1" name="userId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 用户 id
+</doc>
+                </field>
+                <field tag="2" name="remark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+  操作员冻结备注
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.memberAdmin.vo" name="Goods">
+            <doc>
+
+  商品实体
+</doc>
+            <fields>
+                <field tag="1" name="skuNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 货号
+</doc>
+                </field>
+                <field tag="2" name="skuName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品名称
+</doc>
+                </field>
+                <field tag="3" name="salePrice" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 门店售价
+</doc>
+                </field>
+                <field tag="4" name="count" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 数量
+</doc>
+                </field>
+                <field tag="5" name="amount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 合计金额
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.user.request" name="MemberQueryCondition">
+            <doc>
+
+ 会员查询条件
+</doc>
+            <fields>
+                <field tag="1" name="queryType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.MemberQueryEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 查询类型，例如手机号/id/姓名等
+</doc>
+                </field>
+                <field tag="2" name="keyword" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 关键字
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.memberAdmin.vo" name="RechargePayInfo">
+            <doc>
+
+ 充值订单支付详情
+</doc>
+            <fields>
+                <field tag="1" name="payNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 支付流水号
+</doc>
+                </field>
+                <field tag="2" name="payChannel" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 支付渠道
+</doc>
+                </field>
+                <field tag="3" name="payMoney" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 支付金额
+</doc>
+                </field>
+                <field tag="4" name="payType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 类型
+</doc>
+                </field>
+                <field tag="5" name="payStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 状态
+</doc>
+                </field>
+                <field tag="6" name="payTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 支付时间
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.request" name="ListMemberOrderRequest">
+            <doc>
+
+ 老POS订单请求体
+</doc>
+            <fields>
+                <field tag="1" name="mobile" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 手机号
+</doc>
+                </field>
+                <field tag="2" name="storeId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 门店编号
+</doc>
+                </field>
+                <field tag="3" name="startTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 开始时间
+</doc>
+                </field>
+                <field tag="4" name="entTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 结束时间
+</doc>
+                </field>
+                <field tag="5" name="orderStatus" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.MemberOrderStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 订单状态
+</doc>
+                </field>
+                <field tag="6" name="pageRequest" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageRequest</ref>
+                    </dataType>
+                    <doc>
+
+ 分页对象
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.user.request" name="MemberQueryDetailRequest">
+            <doc>
+
+ 会员详情查询
+</doc>
+            <fields>
+                <field tag="1" name="memberId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 用户 id
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.user.request" name="MemberQueryListRequest">
+            <doc>
+
+ 会员查询列表
+</doc>
+            <fields>
+                <field tag="1" name="memberStatus" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.MemberMemberStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 用户 状态
+</doc>
+                </field>
+                <field tag="2" name="memberType" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.MemberMemberTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+  会员类型
+</doc>
+                </field>
+                <field tag="3" name="sex" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.member.enums.MemberSexEnum</ref>
+                    </dataType>
+                    <doc>
+
+  会员性别
+</doc>
+                </field>
+                <field tag="4" name="registerCityId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+  注册城市
+</doc>
+                </field>
+                <field tag="5" name="registerStoreId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+  注册门店
+</doc>
+                </field>
+                <field tag="6" name="registerDateStart" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+  注册时间
+</doc>
+                </field>
+                <field tag="7" name="registerDateEnd" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                </field>
+                <field tag="8" name="query" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.user.request.MemberQueryCondition</ref>
+                    </dataType>
+                </field>
+                <field tag="9" name="pageRequest" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageRequest</ref>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.user.request" name="ScoreMemberQueryListRequest">
+            <doc>
+
+ 会员积分列表查询
+</doc>
+            <fields>
+                <field tag="1" name="memberId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+会员id
+</doc>
+                </field>
+                <field tag="2" name="mobilePhone" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+会员手机号
+</doc>
+                </field>
+                <field tag="3" name="startTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+  创建时间
+</doc>
+                </field>
+                <field tag="4" name="endTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                </field>
+                <field tag="5" name="pageRequest" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageRequest</ref>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.memberAdmin.vo" name="TMemberOrder">
+            <doc>
+
+订单详情
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 主键id
+</doc>
+                </field>
+                <field tag="2" name="orderNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 订单号
+</doc>
+                </field>
+                <field tag="3" name="orderType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 订单类型{1：门店订单2：充值订单3：快捷购订单4：自助购订单5：套卡订单}
+</doc>
+                </field>
+                <field tag="4" name="orderStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 订单状态{1：待支付2：已支付3：已结算4：已撤销}
+</doc>
+                </field>
+                <field tag="5" name="shouldPay" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 应付金额，单位：元
+</doc>
+                </field>
+                <field tag="6" name="actualPay" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 实际付款金额
+</doc>
+                </field>
+                <field tag="7" name="cardPay" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 卡支付金额
+</doc>
+                </field>
+                <field tag="8" name="cashPay" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 现金支付
+</doc>
+                </field>
+                <field tag="9" name="codePay" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 扫码支付金额
+</doc>
+                </field>
+                <field tag="10" name="remark" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 备注
+</doc>
+                </field>
+                <field tag="11" name="operatorId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 操作人
+</doc>
+                </field>
+                <field tag="12" name="refundAmount" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 退款金额
+</doc>
+                </field>
+                <field tag="13" name="transId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+商户交易流水号
+</doc>
+                </field>
+                <field tag="14" name="scorePay" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 积分支付金额
+</doc>
+                </field>
+                <field tag="15" name="posCode" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ Pos机编号
+</doc>
+                </field>
+                <field tag="16" name="discountAmount" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠金额，单位：元
+</doc>
+                </field>
+                <field tag="17" name="payChannelCode" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 第三方支付渠道
+</doc>
+                </field>
+                <field tag="18" name="businessDate" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 营业日
+</doc>
+                </field>
+                <field tag="19" name="aliOpenId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+支付宝openId
+</doc>
+                </field>
+                <field tag="20" name="updateTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 修改时间
+</doc>
+                </field>
+                <field tag="21" name="commodity" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品信息
+</doc>
+                </field>
+                <field tag="22" name="coupon" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠劵
+</doc>
+                </field>
+                <field tag="23" name="integral" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 积分
+</doc>
+                </field>
+                <field tag="24" name="account" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 手机号（老POS叫法）
+</doc>
+                </field>
+                <field tag="25" name="createdAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 创建时间
+</doc>
+                </field>
+                <field tag="26" name="storeId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 门店id
+</doc>
+                </field>
+                <field tag="27" name="storeName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 门店名称
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.page" name="TPageRequest">
+            <doc>
+
+ 分页查询请求包
+</doc>
+            <fields>
+                <field tag="1" name="start" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 查询的开始序号（序号从零开始）
+</doc>
+                </field>
+                <field tag="2" name="limit" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 返回记录数
+</doc>
+                </field>
+                <field tag="3" name="sortFields" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 排序的字段
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.request" name="KebanQueryCouponRequest">
+            <fields>
+                <field tag="1" name="fkId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 条形码
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.member.response" name="KebanQueryCouponResponse">
+            <doc>
+
+ 可伴优惠劵查询
+</doc>
+            <fields>
+                <field tag="1" name="couponName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+  优惠劵名称
+</doc>
+                </field>
+                <field tag="2" name="couponStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠劵状态
+</doc>
+                </field>
+                <field tag="3" name="useTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 核销时间
+</doc>
+                </field>
+                <field tag="4" name="storeName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 核销门店
+</doc>
+                </field>
+            </fields>
+        </struct>
+    </structs>
+    <enums>
+        <tenum namespace="com.today.api.member.enums" name="MemberOrderStatusEnum">
+            <doc>
+
+ 会员订单状态
+</doc>
+            <items>
+                <item>
+                    <label>PAID</label>
+                    <value>1</value>
+                    <doc>
+
+ 待支付
+</doc>
+                </item>
+                <item>
+                    <label>ALPAY</label>
+                    <value>2</value>
+                    <doc>
+
+  已支付
+</doc>
+                </item>
+                <item>
+                    <label>ALLSETTLED</label>
+                    <value>3</value>
+                    <doc>
+
+ 已结算
+</doc>
+                </item>
+                <item>
+                    <label>RESCINDED</label>
+                    <value>4</value>
+                    <doc>
+
+ 已撤销
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.member.enums" name="UserCardStatusEnum">
+            <doc>
+
+ 微信卡包会员卡状态
+</doc>
+            <items>
+                <item>
+                    <label>NORMAL</label>
+                    <value>0</value>
+                    <doc>
+
+ 正常
+</doc>
+                </item>
+                <item>
+                    <label>EXPIRE</label>
+                    <value>1</value>
+                    <doc>
+
+ 已过期
+</doc>
+                </item>
+                <item>
+                    <label>GIFTING</label>
+                    <value>2</value>
+                    <doc>
+
+ 转增中
+</doc>
+                </item>
+                <item>
+                    <label>GIFT_SUCC</label>
+                    <value>3</value>
+                    <doc>
+
+ 转赠成功
+</doc>
+                </item>
+                <item>
+                    <label>GIFT_TIMEOUT</label>
+                    <value>4</value>
+                    <doc>
+
+ 转赠超时
+</doc>
+                </item>
+                <item>
+                    <label>DELETE</label>
+                    <value>5</value>
+                    <doc>
+
+ 已删除
+</doc>
+                </item>
+                <item>
+                    <label>UNAVAILABLE</label>
+                    <value>6</value>
+                    <doc>
+
+ 已失效
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.member.enums" name="CardConsumeType">
+            <doc>
+
+ 礼品卡流水类型
+</doc>
+            <items>
+                <item>
+                    <label>CONSUME</label>
+                    <value>0</value>
+                    <doc>
+
+ 消费
+</doc>
+                </item>
+                <item>
+                    <label>REFUND</label>
+                    <value>1</value>
+                    <doc>
+
+ 退款
+</doc>
+                </item>
+                <item>
+                    <label>RECHARGE</label>
+                    <value>2</value>
+                    <doc>
+
+ 充值
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.member.enums" name="MemberSexEnum">
+            <doc>
+
+ 用户性别
+</doc>
+            <items>
+                <item>
+                    <label>MALE</label>
+                    <value>1</value>
+                    <doc>
+
+ 男
+</doc>
+                </item>
+                <item>
+                    <label>FEMALE</label>
+                    <value>2</value>
+                    <doc>
+
+ 女
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.member.enums" name="MemberCardAccountStatusEnum">
+            <doc>
+
+ 礼品卡账户状态
+</doc>
+            <items>
+                <item>
+                    <label>NORMAL</label>
+                    <value>1</value>
+                    <doc>
+
+ 正常
+</doc>
+                </item>
+                <item>
+                    <label>FREZZ</label>
+                    <value>2</value>
+                    <doc>
+
+ 冻结
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.member.enums" name="RechargeOrderEnum">
+            <doc>
+
+ 申请状态
+</doc>
+            <items>
+                <item>
+                    <label>APPLY</label>
+                    <value>1</value>
+                    <doc>
+
+ 申请审核
+</doc>
+                </item>
+                <item>
+                    <label>EXAMINE_SUCCESS</label>
+                    <value>2</value>
+                    <doc>
+
+ 审核成功
+</doc>
+                </item>
+                <item>
+                    <label>EXAMINE_ERROR</label>
+                    <value>3</value>
+                    <doc>
+
+ 审核失败
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.member.enums" name="MemberMemberTypeEnum">
+            <doc>
+
+ 会员类型
+</doc>
+            <items>
+                <item>
+                    <label>PAY_MEMBER</label>
+                    <value>1</value>
+                    <doc>
+
+ 支付会员
+</doc>
+                </item>
+                <item>
+                    <label>VALID_MEMBER</label>
+                    <value>2</value>
+                    <doc>
+
+ 认证会员
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.member.enums" name="MemberQueryEnum">
+            <doc>
+
+ 查询条件
+</doc>
+            <items>
+                <item>
+                    <label>MEMBER_ID</label>
+                    <value>1</value>
+                    <doc>
+
+ 会员id
+</doc>
+                </item>
+                <item>
+                    <label>MEMBER_PHONE</label>
+                    <value>2</value>
+                    <doc>
+
+ 手机号
+</doc>
+                </item>
+                <item>
+                    <label>MEMBER_NAME</label>
+                    <value>3</value>
+                    <doc>
+
+ 姓名
+</doc>
+                </item>
+                <item>
+                    <label>WECHAT_OPENID</label>
+                    <value>4</value>
+                    <doc>
+
+ 微信openid
+</doc>
+                </item>
+                <item>
+                    <label>ALIPAY_OPENID</label>
+                    <value>5</value>
+                    <doc>
+
+ 支付宝openid
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.member.enums" name="ScoreJournalResouceTypeEnum">
+            <doc>
+
+ 积分来源类型
+</doc>
+            <items>
+                <item>
+                    <label>CONSUME</label>
+                    <value>1</value>
+                    <doc>
+
+ 消费
+</doc>
+                </item>
+                <item>
+                    <label>EXCHANGE</label>
+                    <value>2</value>
+                    <doc>
+
+ 积分兑换
+</doc>
+                </item>
+                <item>
+                    <label>GIVE</label>
+                    <value>3</value>
+                    <doc>
+
+ 消费赠送
+</doc>
+                </item>
+                <item>
+                    <label>RECHARGE</label>
+                    <value>4</value>
+                    <doc>
+
+ 首充赠送
+</doc>
+                </item>
+                <item>
+                    <label>PERFECT</label>
+                    <value>5</value>
+                    <doc>
+
+ 完善资料赠送
+</doc>
+                </item>
+                <item>
+                    <label>SKU_GIVE</label>
+                    <value>6</value>
+                    <doc>
+
+ 指定商品赠送
+</doc>
+                </item>
+                <item>
+                    <label>MEMBER_DAY</label>
+                    <value>7</value>
+                    <doc>
+
+ 会员日赠送
+</doc>
+                </item>
+                <item>
+                    <label>NOCASH_DAY</label>
+                    <value>8</value>
+                    <doc>
+
+ 无现金日赠送
+</doc>
+                </item>
+                <item>
+                    <label>REFUND</label>
+                    <value>9</value>
+                    <doc>
+
+ 退款
+</doc>
+                </item>
+                <item>
+                    <label>MUTLPLE</label>
+                    <value>10</value>
+                    <doc>
+
+ 多倍商品赠送
+</doc>
+                </item>
+                <item>
+                    <label>BACK</label>
+                    <value>11</value>
+                    <doc>
+
+ 退单
+</doc>
+                </item>
+                <item>
+                    <label>BIRTHDAY</label>
+                    <value>12</value>
+                    <doc>
+
+ 会员生日赠送
+</doc>
+                </item>
+                <item>
+                    <label>PACKAGE</label>
+                    <value>13</value>
+                    <doc>
+
+ 组合套餐赠送
+</doc>
+                </item>
+                <item>
+                    <label>STORED</label>
+                    <value>14</value>
+                    <doc>
+
+ 储值送
+</doc>
+                </item>
+                <item>
+                    <label>MANAUAL</label>
+                    <value>15</value>
+                    <doc>
+
+ 手动赠送
+</doc>
+                </item>
+                <item>
+                    <label>REGISTER</label>
+                    <value>16</value>
+                    <doc>
+
+ 注册赠送
+</doc>
+                </item>
+                <item>
+                    <label>SYSTEM</label>
+                    <value>17</value>
+                    <doc>
+
+ 系统扣除
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.member.enums" name="CouponEnum">
+            <doc>
+
+ 优惠劵类型
+</doc>
+            <items>
+                <item>
+                    <label>DISCOUNT</label>
+                    <value>1</value>
+                    <doc>
+
+ 代金券-非码
+</doc>
+                </item>
+                <item>
+                    <label>EXCHANGE</label>
+                    <value>2</value>
+                    <doc>
+
+ 优惠券-兑换券
+</doc>
+                </item>
+                <item>
+                    <label>FULLCUT</label>
+                    <value>3</value>
+                    <doc>
+
+ 优惠券-满减劵
+</doc>
+                </item>
+                <item>
+                    <label>VOUCHERS</label>
+                    <value>4</value>
+                    <doc>
+
+ 优惠券-代金劵
+</doc>
+                </item>
+                <item>
+                    <label>REBATE</label>
+                    <value>5</value>
+                    <doc>
+
+ 优惠券-非码
+</doc>
+                </item>
+                <item>
+                    <label>DEDUCTIBLE</label>
+                    <value>6</value>
+                    <doc>
+
+ 优惠券-抵扣劵
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.member.enums" name="MemberMemberStatusEnum">
+            <doc>
+
+ 用户状态
+</doc>
+            <items>
+                <item>
+                    <label>NORMAL</label>
+                    <value>1</value>
+                    <doc>
+
+ 正常
+</doc>
+                </item>
+                <item>
+                    <label>FROZEN</label>
+                    <value>2</value>
+                    <doc>
+
+ 冻结
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.member.enums" name="CouponExpiredEnum">
+            <doc>
+
+ 优惠券是否过期
+</doc>
+            <items>
+                <item>
+                    <label>UNEXPIRED</label>
+                    <value>0</value>
+                    <doc>
+
+未过期
+</doc>
+                </item>
+                <item>
+                    <label>EXPIRED</label>
+                    <value>1</value>
+                    <doc>
+
+ 过期
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.member.enums" name="CouponTypeEnum">
+            <doc>
+
+ 优惠券类型
+</doc>
+            <items>
+                <item>
+                    <label>GAME_GIVE</label>
+                    <value>1</value>
+                    <doc>
+
+ 游戏过关赠送
+</doc>
+                </item>
+                <item>
+                    <label>RANKING_GIVE</label>
+                    <value>2</value>
+                    <doc>
+
+  排行榜赠送
+</doc>
+                </item>
+                <item>
+                    <label>GOLD_GIVE</label>
+                    <value>3</value>
+                    <doc>
+
+ 金币兑换
+</doc>
+                </item>
+            </items>
+        </tenum>
+    </enums>
+    <annotations>
+        <annotation key="group" value="member"/>
+    </annotations>
+</service>
