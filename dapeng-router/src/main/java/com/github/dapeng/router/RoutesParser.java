@@ -15,12 +15,11 @@ import static com.github.dapeng.router.RoutesLexer.*;
 import static com.github.dapeng.router.token.Token.STRING;
 
 /**
- *  描述: 语法, 路由规则解析
- *
+ * 描述: 语法, 路由规则解析
  * <pre>
  * routes :  (route eol)*
  * route  : left '=>' right
- * left  : 'otherwise' | matcher (';' matcher)*
+ * left  : 'otherwise' matcher (';' matcher)*
  * matcher : id 'match' patterns
  * patterns: pattern (',' pattern)*
  * pattern : '~' pattern
@@ -33,7 +32,7 @@ import static com.github.dapeng.router.token.Token.STRING;
  * | mod
  * right : rightPattern (',' rightPattern)*
  * rightPattern : '~' rightPattern | ip
- * </pre>
+ *</pre>
  * @author hz.lei
  * @date 2018年04月13日 下午9:34
  */
