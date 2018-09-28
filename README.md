@@ -1,3 +1,5 @@
+[TOC]
+
 ### 容器部署
 
 #### 运行脚本
@@ -35,7 +37,7 @@ dapeng-container/target/dapeng-container
 |   |   |-- service-a/*.jar                
 |   |   |-- service-b.jar                  
 |   |   |-- service-c_d_f.jar              
-|   |   |-- service-e/classes              
+|   |   |-- service-e/jars              
 |   |-- logs                               日志目录
 -------------------------------------------------------
 ```
@@ -45,40 +47,96 @@ dapeng-container/target/dapeng-container
 ```
 |-- dapeng
 |   |-- dapeng-api-doc                 服务api站点工程
-|   |-- dapeng-bootstrap               启动模块工程
 |   |-- dapeng-code-generator          服务idl代码生成工程
 |   |-- dapeng-container               容器工程
-|   |-- dapeng-core                    核心工程
+|   |   |-- dapeng-bootstrap           启动模块工程
+|   |   |-- dapeng-container-api       dapeng主容器Api
+|   |   |-- dapeng-container-impl      dapeng主容器实现模块
+|   |-- dapeng-core                    dapeng核心工程
+|   |-- dapeng-client-netty            dapeng客户端通讯模块(netty)
+|   |-- dapeng-message                 dapeng消息订阅发布模块
+|   |-- dapeng-spring                  spring扩展模块工程
+|   |-- dapeng-registry
+|   |   |-- dapeng-registry-zookeeper  注册模块api实现工程(zookeeper版本)
 |   |-- dapeng-maven-plugin            Maven开发插件工程
 |   |-- dapeng-monitor
 |   |   |-- dapeng-monitor-api         监控模块api工程
 |   |   |-- dapeng-monitor-druid       druid的监控工具
 |   |   |-- dapeng-monitor-influxdb    监控模块api实现工程(influxdb版本)
-|   |-- dapeng-com.github.dapeng.registry.registry
-|   |   |-- dapeng-com.github.dapeng.registry.registry-api        注册模块api工程
-|   |   |-- dapeng-com.github.dapeng.registry.registry-zookeeper  注册模块api实现工程(zookeeper版本)
-|   |-- dapeng-remoting
-|   |   |-- dapeng-remoting-api        客户端通讯模块api工程
-|   |   |-- dapeng-remoting-netty      客户端通讯模块api实现工程(netty版本)
-|   |   |-- dapeng-remoting-socket     客户端通讯模块api实现工程(socket版本)
-|   |-- dapeng-spring                  spring扩展模块工程
+|   |-- dapeng-counter                 大鹏influxdb计数模块
+|   |-- dapeng-json                    流式处理json模式
 ```
 
 ### 服务开发简易说明
+环境需求:
 
-#### 安装soa项目到本地maven仓库
+> 
+* jdk8 或以上版本
+* scala 2.12.* 或以上
+* zookeeper
+* maven or sbt 
+
+#### 1. 安装dapeng-soa项目到本地maven仓库
 
 ```
 mvn clean install
 ```
 
-#### 例子工程
+#### 2. 新建maven项目 - demo (java版本)
 
+##### 2.1 修改pom.xml配置
 ```
-git clone https://github.com/dapeng-soa/dapeng-soa-hello.git
+<properties>
+	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+	<java.version>1.8</java.version>
+	<maven.compiler.source>1.8</maven.compiler.source>
+	<maven.compiler.target>1.8</maven.compiler.target>
+	<dapeng.version>2.0.5</dapeng.version> <!-- 定义dapeng框架版本 -->
+</properties>
+
+<dependencies>
+	<dependency>
+		<groupId>com.github.dapeng</groupId>
+		<artifactId>dapeng-client-netty</artifactId>
+		<version>${dapeng.version}</version>
+	</dependency>
+	<dependency>
+    	<groupId>com.github.dapeng</groupId>
+    	<artifactId>dapeng-spring</artifactId>
+    	<version>${dapeng.version}</version>
+	</dependency>
+</dependencies>
+
+<!-- 基于thrift生成源码插件 -->
+<build>
+	<plugins>
+		<plugin>
+			<groupId>com.github.dapeng</groupId>
+			<artifactId>dapeng-maven-plugin</artifactId>
+			<version>${dapeng.version}</version>
+			<executions>
+				<execution>
+					<phase>generate-sources</phase>
+					<goals>
+						<goal>thriftGenerator</goal>
+					</goals>
+					<configuration>
+						<!--配置生成哪种语言的代码[java,scala]-->
+						<language>java</language>
+					    <!-- thrift文件存放路径 -->
+					    <sourceFilePath>src/main/resources/thrifts/</sourceFilePath>
+					    <!-- 生成的源码存放路径 -->
+						<targetFilePath>src/main/</targetFilePath>
+					</configuration>
+				</execution>
+			</executions>
+		</plugin>
+	</plugins>
+</build>
 ```
 
-#### thrift idl 定义服务接口
+##### 2.2 thrift idl 定义服务接口
 
 * hello_domain.thrift:
 
@@ -118,159 +176,75 @@ service HelloService {
 
 > [thrift idl补充说明](#thrift)
 
-#### 服务接口代码生成：
+##### 2.3 服务接口代码生成：
 
-> 打包服务接口代码工程(`dapeng-code-generator`): `mvn clean package`
->
-> 输出的可执行jar包目录: `dapeng-code-generator/target/dapeng-code-generator-2.0.5-jar-with-dependencies.jar`
+```mvn clean package```
+生成的文件: 
+![](https://github.com/dapeng-soa/documents/blob/master/images/dapeng-thrift/demo.png?raw=true)
 
-打印帮助命令
-
+##### 2.4 服务实现 HelloServiceImpl
 ```
-java -jar dapeng-code-generator-2.0.5-jar-with-dependencies.jar
+package com.github.dapeng.demo.hello.impl;
 
------------------------------------------------------------------------
- args: -gen metadata,js,json file
- Scrooge [options] file
- Options:
-   -out dir    Set the output location for generated files.
-   -gen STR    Generate code with a dynamically-registered generator.
-               STR has the form language[val1,val2,val3].
-               Keys and values are options passed to the generator.
-   -v version  Set the version of the Service generated.
-   -in dir     Set input location of all Thrift files.
-   -all        Generate all structs and enums
+import com.github.dapeng.core.SoaException;
+import com.github.dapeng.demo.hello.domain.Hello;
+import com.github.dapeng.demo.hello.service.HelloService;
 
- Available generators (and options):
-   metadata
-   js
-   json
-   java
------------------------------------------------------------------------
-```
-
-生成thrift idl 定义服务接口代码
-
-```
-java -jar dapeng-code-generator-2.0.5-jar-with-dependencies.jar -gen java -out F:\hello F:\hello\hello_domain.thrift,F:\hello\hello_service.thrift
-
-# 说明：
-# 1. `-gen java` 表示生成java代码； 
-# 2. `-out F:\hello`表示生成代码到`F:\hello`文件夹；
-# 3. `-in /home/thrift/`表示thrift文件所在文件夹，可以省略一个个声明文件地址
-# 4. 多个thrift文件使用`,`分隔； 
-# 5. 生成的xml文件在`F:\hello`文件夹，java类在`F:\hello\java-gen`文件夹。
-```
-
-#### 创建API工程
-
-`hello-api`工程会被服务端和客户端依赖。
-
-新建maven工程，即`hello-api`工程，依赖于`dapeng-remoting-api`:
-```
-<dependency>
-    <groupId>com.github.dapeng-soa</groupId>
-    <artifactId>dapeng-remoting-api</artifactId>
-    <version>2.0.5</version>
-</dependency>
-```
-
-将上一步中生成的java代码，拷贝入对应的package。将上一步中生成的xml文件，拷贝入`resources`文件夹。示例如图：
-
-![api结构示例](http://7xnl6z.com1.z0.glb.clouddn.com/com.github.dapeng.soaapi_sturct_demo.png)
-
-最后`mvn clean install`此项目。
-
-#### 创建Service工程
-
-`hello-service`工程依赖于`hello-api`工程和`dapeng-spring`包，在工程中实现api中的接口类，在方法中实现具体的业务逻辑。
-
-* 依赖：
-
-```
-<dependency>
-    <groupId>com.github.dapeng-soa</groupId>
-    <artifactId>hello-api</artifactId>
-    <version>1.0-SNAPSHOT</version>
-</dependency>
-<dependency>
-    <groupId>com.github.dapeng-soa</groupId>
-    <artifactId>dapeng-spring</artifactId>
-    <version>2.0.5</version>
-</dependency>
-```
-
-* 实现类：
-
-```
 public class HelloServiceImpl implements HelloService {
-
     @Override
     public String sayHello(String name) throws SoaException {
-        return "hello, " + name;
+        return name;
     }
 
     @Override
     public String sayHello2(Hello hello) throws SoaException {
-        if (hello.getName().equals("bad")) {
-            throw new SoaException("hello-001", "so bad");
-        } else {
-            String message;
-            if (!hello.getMessage().isPresent())
-                message = "you message is emtpy";
-            else
-                message = "you message is '" + hello.getMessage().get() + "'";
-
-            return "hello, " + hello.getName() + ", " + message;
-        }
+        return hello.toString();
     }
 }
+
 ```
+##### 2.5 声明服务，使得容器启动时加载和注册该服务：
 
-* 声明服务，使得容器启动时加载和注册该服务：
-
-在`resources/META-INF/spring/`文件夹下新建services.xml
+> 在`resources/META-INF/spring/`文件夹下新建services.xml
 
 ```
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xmlns:soa="http://soa-springtag.dapeng.com/schema/service"
-   xsi:schemaLocation="http://www.springframework.org/schema/beans
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:soa="http://soa-springtag.dapeng.com/schema/service"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
     http://www.springframework.org/schema/beans/spring-beans.xsd
     http://soa-springtag.dapeng.com/schema/service
     http://soa-springtag.dapeng.com/schema/service/service.xsd">
 
-    <bean id="helloService" class="com.github.dapeng.soa.hello.HelloServiceImpl"/>
+    <bean id="helloService" class="com.github.dapeng.demo.hello.impl.HelloServiceImpl"/>
     <soa:service ref="helloService"/>
 </beans>
 ```
     
-#### 开发模式启动服务
+##### 2.6 开发模式启动服务
 
 > 前提:需要把`dapeng-maven-plugin`安装到本地maven仓库
 
-##### 安装Maven插件
+###### 2.6.1 安装Maven插件
 
 安装`dapeng-maven-plugin`工程
 
 * 源码手动安装
 
 ```
-cd dapeng/dapeng-maven-plugin
+cd dapeng-soa/dapeng-maven-plugin
 mvn clean install
 ```
 
 
 ##### Maven启动服务容器
 
-> 启动服务容器在开发模式下可以选择`本地模式`或`远程模式`
->
 > 可在无开发ide环境下或在ide开发环境下运行
 > 
 > 可以使用`dapeng`的插件简称,需要在本地maven进行配置
 
-* dapeng插件简称配置(不使用不用配置)
+* dapeng插件简称配置(不使用简称可以不用配置)
 
 修改maven的主配置文件（${MAVEN_HOME}/conf/settings.xml文件或者 ~/.m2/settings.xml文件）
 
@@ -280,211 +254,191 @@ mvn clean install
   </pluginGroups>
 ```
 
-* 本地模式(无需启动zookeeper)
-
-> 默认启动端口:9090
-
 启动命令:
+> 可选参数:
+ -Dsoa.zookeeper.host=127.0.0.1:2181 
+ -Dsoa.container.port=9090   -- 大鹏容器端口, 默认:9090
+ -Dsoa.monitor.enable=false
+ -Dsoa.apidoc.port=8080       --大鹏文档站点端口, 默认: 8080
+ 
 ```
-# 第一种(简称)
-cd hello-service
-mvn compile dapeng:run -Dsoa.remoting.mode=local
-
-# 第二种
-cd hello-service
-mvn compile com.github.dapeng:dapeng-maven-plugin:2.0.5:run -Dsoa.remoting.mode=local
-```
-
-* 远程模式(需要启动zookeeper)
-
-> 默认启动端口:9090
-
-启动命令:
-```
-# 第一种(简称)
+# 第一种(简称,配置了pluginGroup后可用)
 cd hello-service
 mvn compile dapeng:run
 
-# 第二种
+# 第二种(不需配置maven pluginGroup)
 cd hello-service
 mvn compile com.github.dapeng:dapeng-maven-plugin:2.0.5:run
+
+# 指定参数运行
+cd hello-service
+mvn compile com.github.dapeng:dapeng-maven-plugin:2.0.5:run -Dsoa.apidoc.port=8089
 ```
 
-* 启动可选参数
+##### 2.7 调用服务测试
+
+###### 2.7.1 本地测试代码：
 
 ```
-# -Dsoa.zookeeper.host=127.0.0.1:2181
-# -Dsoa.container.port=9090
-# -Dsoa.monitor.enable=false
-```
+import com.github.dapeng.demo.hello.HelloServiceClient;
 
-#### 客户端调用服务
+public class HelloServiceTest {
 
-##### 依赖配置
-
-客户端要依赖`hello-api`,`dapeng-com.github.dapeng.registry.registry-zookeeper`和`dapeng-remoting-netty`
-```
-<dependency>
-    <groupId>com.github.dapeng-soa</groupId>
-    <artifactId>hello-api</artifactId>
-    <version>1.0-SNAPSHOT</version>
-</dependency>
-<dependency>
-    <groupId>com.github.dapeng-soa</groupId>
-    <artifactId>dapeng-com.github.dapeng.registry.registry-zookeeper</artifactId>
-    <version>2.0.5</version>
-</dependency>
-<dependency>
-    <groupId>com.github.dapeng-soa</groupId>
-    <artifactId>dapeng-remoting-netty</artifactId>
-    <version>2.0.5</version>
-</dependency>
-```
-
-
-##### 本地模式
-
-> 非本地模式不用配置
-
-启动参数:
-
-```
-# -Dsoa.remoting.mode=local
-```
-
-可选参数:
-
-```
-# -Dsoa.service.port=9091
-```
-
-##### 远程模式
-
-> 无必选参数
-
-可选参数:
-
-```
-# -Dsoa.zookeeper.host=127.0.0.1:2181
-# -Dsoa.service.port=9091
-```
-
-##### 调用服务测试
-
-测试代码：
-
-```
-HelloServiceClient client = new HelloServiceClient();
-System.out.println(client.sayHello("LiLei"));
-```
-
-#### 文档站点和在线测试
-
-* 启动服务后，在浏览器访问地址：[http://localhost:8080/index.htm](http://localhost:8080/index.htm),点击`api`标签，即可看到当前运行的服务信息：
-
-![API站点页面](http://7xnl6z.com1.z0.glb.clouddn.com/com.github.dapeng.soa1.png)
-    
-* 点击对应服务，可以查看该服务相关信息，包括全名称、版本号、方法列表、结构体和枚举类型列表等，点击对应项目可查看详情。
-* 从方法详情页面点击在线测试，进入在线测试页面：
-
-![在线测试页面](http://7xnl6z.com1.z0.glb.clouddn.com/com.github.dapeng.soa2.png)
-
-* 输入必填项参数，点击提交请求，即可请求本机当前运行的服务，并获得返回数据：
-
-![请求数据](http://7xnl6z.com1.z0.glb.clouddn.com/com.github.dapeng.soa.api_test_req.png)
-
-![返回数据](http://7xnl6z.com1.z0.glb.clouddn.com/com.github.dapeng.soa.api_test_rsp.png)
-
-* 控制台可以看到相应的请求信息：
-
-其中trans-pool-1-thread-2是后台服务打印日志
-
-![控制台打印信息](http://7xnl6z.com1.z0.glb.clouddn.com/com.github.dapeng.soa4.png)
-
-
-#### 分布式事务
-
-为了解决分布式框架中，跨服务跨库调用过程的数据一致性问题，框架提供了一个分布式事务管理的解决方案。
-
-##### 原理
-
-在设计服务时，声明该服务方法是由全局事务管理器管理，该方法中调用的其他服务方法，可以声明为一个事务过程。当调用一个全局事务方法时，容器将为该次调用生成唯一id，自动记录该事务，以及该全局
-事务下的所有子事务过程，并记录状态。由一个定时事务管理器定时扫描记录，按照约定向前或者回滚一个失败的全局事务中已成功且未回滚(向前)的子事务过程。
-
-##### 使用
-
-1. 在IDL中声明某方法是一个全局事务过程
-
-    ```
-    service AuctionService {
-    
-        /**
-        * @SoaGlobalTransactional
-        **/
-        auction_domain.TBidAuctionResponse bidAuction(1: auction_domain.TBidAuctionCondition bidAuctionCondition)
-    
+    public static void main(String[] args) throws Exception{
+        HelloServiceClient helloService = new HelloServiceClient();
+        String result = helloService.sayHello("hello world!");
+        System.out.println(result);
     }
-    ```
-    即在该方法注释中，添加"@SoaGlobalTransactional"字符串。
-    
-2. 在IDL中声明某方法是一个子事务过程,并声明对应的回滚方法(方法名_rollback)
+}
+```
 
-    ```
-    service AccountService {
-    
-          /**
-            * @IsSoaTransactionProcess
-            **/
-           account_domain.TAccountJournal freezeBalance( 1:account_domain.TFreezeBalanceRequest freezeBalanceRequest),
-           
-        
-           /**
-            * freezeBalance接口的回调方法
-           **/
-           account_domain.TAccountJournal freezeBalance_rollback(),
-    }
-    ```
-    在方法注释中使用字符串"@IsSoaTransactionProcess"声明该方法是一个子事务过程，同时也必须定义一个对应的回滚方法。定时事务管理器会自动调用该回滚方法，由开发者自己实现回滚方法。
-    
-3. 在数据库中添加全局事务表和事务过程表
- 
-    ```
-    CREATE TABLE `global_transactions` (
-      `id` int(11) NOT NULL AUTO_INCREMENT,
-      `status` smallint(2) NOT NULL DEFAULT '1' COMMENT '状态，1：新建；2：成功；3：失败；4：已回滚；5：已部分回滚；99：挂起；',
-      `curr_sequence` int(11) NOT NULL COMMENT '当前过程序列号',
-      `created_at` datetime NOT NULL,
-      `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      `created_by` int(11) DEFAULT NULL,
-      `updated_by` int(11) DEFAULT NULL,
-      PRIMARY KEY (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=87 DEFAULT CHARSET=utf8 COMMENT='全局事务表';
-    
-    CREATE TABLE `global_transaction_process` (
-      `id` int(11) NOT NULL AUTO_INCREMENT,
-      `transaction_id` int(11) NOT NULL,
-      `transaction_sequence` int(11) NOT NULL COMMENT '过程所属序列号',
-      `status` smallint(2) NOT NULL DEFAULT '1' COMMENT '过程当前状态，1：新建；2：成功；3：失败；4：未知，5：已回滚；',
-      `expected_status` smallint(6) NOT NULL DEFAULT '1' COMMENT '过程目标状态，1：成功；2：已回滚；',
-      `service_name` varchar(128) NOT NULL COMMENT '服务名称',
-      `version_name` varchar(32) NOT NULL COMMENT '服务版本',
-      `method_name` varchar(32) NOT NULL COMMENT '方法名称',
-      `rollback_method_name` varchar(32) NOT NULL COMMENT '回滚方法名称',
-      `request_json` text NOT NULL COMMENT '过程请求参数Json序列化',
-      `response_json` text NOT NULL COMMENT '过程响应参数Json序列化',
-      `redo_times` int(11) DEFAULT '0' COMMENT '重试次数',
-      `next_redo_time` datetime DEFAULT NULL COMMENT '下次重试时间',
-      `created_at` datetime NOT NULL,
-      `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      `created_by` int(11) DEFAULT NULL,
-      `updated_by` int(11) DEFAULT NULL,
-      PRIMARY KEY (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=77 DEFAULT CHARSET=utf8 COMMENT='事务过程表';
-    ```
-    
-    
+##### 2.7.2 文档站点和在线测试
+> 服务启动后，输入网址 `localhost:8080`, 如果改了apidoc.port的值，输入你指定的端口即可
 
-<h4 id="thrift"> Thrift IDL 补充说明</h4>
+![index](https://github.com/dapeng-soa/documents/blob/master/images/dapeng-apiDoc/apidoc_index.png?raw=true)
+
+> 点击api标签, 可以看到我们启动运行的Hello 服务
+
+![index](https://github.com/dapeng-soa/documents/blob/master/images/dapeng-apiDoc/apidoc_service_index.png?raw=true)
+
+> 点击`helloService`, 可以查看服务详情
+
+![index](https://github.com/dapeng-soa/documents/blob/master/images/dapeng-apiDoc/apidoc_service_detail.png?raw=true)
+
+> 点击对应的方法，即可在线测试接口
+
+![index](https://github.com/dapeng-soa/documents/blob/master/images/dapeng-apiDoc/apidoc_method_test.png?raw=true)
+![index](https://github.com/dapeng-soa/documents/blob/master/images/dapeng-apiDoc/apidoc_test_response.png?raw=true)
+
+
+#### 3. 创建Scala版本的Demo项目 (sbt构建版本)
+> scala 版本的Demo项目我们提供了一个g8 模板，创建非常简单
+- 需要安装好sbt环境, 执行以下命令，并根据提示输入对应的配置
+
+```
+> sbt new dapeng-soa/dapeng-soa-v2.g8
+
+[info] Loading settings from idea.sbt ...
+[info] Loading global plugins from /yourHomePath/.sbt/1.0/plugins
+[info] Set current project to github (in build file:/yourProjectPath/)
+
+this is a template to genreate dapeng api service
+
+name [api]: demo     # 输入项目名，不输入直接回车则使用默认值
+version ["0.1-SNAPSHOT"]:  # 输入项目版本号
+scalaVersion ["2.12.2"]:   # 输入scala版本，建议2.12以上
+organization [com.github.dapeng-soa]: # 输入你的服务groupId
+resources [resources]:      #源文件文件夹名， 默认值，可以不改
+api [demo-api]:           # 可使用默认值
+service [demo-service]:   # 可使用默认值
+servicePackage []: com.github.dapeng 
+dapengVersion [2.0.5]:    # dapeng框架的版本，现在是2.0.5
+#项目源码包路径，需要填写,这里我们设为com.github.dapeng
+
+Template applied in ./demo
+```
+
+##### 3.1 编译api
+
+```
+> cd demo
+> sbt clean api/compile api/package
+
+.......
+[success] Total time: 15 s, completed 2018-9-28 14:57:44
+Welcome to use generate plugin
+Thrift-Generator-Plugin:  No need to regenerate source files. skip..............
+[info] Packaging C:\Users\23294\dev\github\demo\demo-api\target\scala-2.12\demo-api_2.12-0.1-SNAPSHOT.jar ...
+[info] Done packaging.
+[success] Total time: 0 s, completed 2018-9-28 14:57:44
+```
+
+> windows 环境的朋友请注意，由于windows系统自带的编码时gbk,在编译的时候需要设置编码为 utf8. 可以新建一个sbt-task, 如下图
+![index](https://github.com/dapeng-soa/documents/blob/master/images/dapeng-demo/demo_compile.png?raw=true)
+
+##### 3.2 实现接口
+> 我们的g8模板把项目分成了两部分，api & service, 接口文件放到demo-api, 实现则在demo-service, 在demo-service新建 helloServiceImpl (scala版)
+
+src/main/scala/com/github/dapeng/hello/impl/HelloServiceImpl.scala
+```
+package com.github.dapeng.hello.impl
+
+import com.github.dapeng.hello.scala.domain.Hello
+import com.github.dapeng.hello.scala.service.HelloService
+
+class HelloServiceImpl extends HelloService{
+  /**
+    *
+    **
+  say hello
+    *
+    **/
+  override def sayHello(name: String): String = name
+
+  /**
+    *
+    **/
+  override def sayHello2(hello: Hello): String = {
+    hello.toString
+  }
+}
+```
+
+##### 3.3 修改spring配置
+> <b>`demo-service` ->  spring的services.xml配置跟java版本的一致<b/>
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:soa="http://soa-springtag.dapeng.com/schema/service"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://soa-springtag.dapeng.com/schema/service
+        http://soa-springtag.dapeng.com/schema/service/service.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!--参数配置-->
+    <context:property-placeholder location="classpath:config_demo.properties" local-override="false"
+                                  system-properties-mode="ENVIRONMENT"/>
+
+    <context:component-scan base-package="com.github.dapeng"/>
+
+    <!-- dapeng framework service bean config template -->
+    <bean id="helloScalaService" class="com.github.dapeng.hello.impl.HelloServiceImpl"/>
+    <soa:service ref="helloScalaService"/>
+</beans>
+```
+
+##### 3.4 运行服务
+> scala 版本我们提供了一个运行插件，只需要运行如下指令即可运行
+```
+> sbt runContainer
+
+......
+09-28 15:21:20 228 dapeng-container-biz-pool-0 INFO [1b944b0195b92ca1] - request[seqId:0]:service[com.github.dapeng.hello.service.HelloService]:version[1.0.0]:method[getServiceMetadata]  
+09-28 15:21:20 439 dapeng-container-biz-pool-0 INFO [1b944b0195b92ca1] - response[seqId:0, respCode:0000]:service[com.github.dapeng.hello.service.HelloService]:version[1.0.0]:method[getServiceMetadata] cost:535ms
+九月 28, 2018 3:21:20 下午 org.springframework.web.context.ContextLoader initWebApplicationContext
+信息: Root WebApplicationContext: initialization completed in 2520 ms
+九月 28, 2018 3:21:20 下午 org.springframework.web.servlet.DispatcherServlet initServletBean
+信息: FrameworkServlet 'appServlet': initialization started
+九月 28, 2018 3:21:20 下午 org.springframework.web.context.support.XmlWebApplicationContext prepareRefresh
+信息: Refreshing WebApplicationContext for namespace 'appServlet-servlet': startup date [Fri Sep 28 15:21:20 CST 2018]; parent: Root WebApplicationContext
+九月 28, 2018 3:21:20 下午 org.springframework.web.servlet.DispatcherServlet initServletBean
+信息: FrameworkServlet 'appServlet': initialization completed in 13 ms
+api-doc server started at port: 8192
+```
+
+##### 3.5 测试
+> <b>测试方式与java版本一致, 请参考 [2.7 调用服务测试]<b/>
+
+#### 4 基于docker模式的发布构建
+
+> 详情请参考该demo工程
+https://github.com/dapeng-soa/dapeng-hello
+
+#### 5. Thrift IDL 补充说明
 
 ##### Optional类型
 
@@ -548,65 +502,3 @@ System.out.println(client.sayHello("LiLei"));
     ```
 
 3. 在method描述中，若返回结果类型为`double`，且注释中包含`@datatype(name="bigdecimal")`字符串，则在java代码生成时，该返回结果将自动转换为`java.math.Bigdecimal`类型，例子同上。
-
-
-##### 忽略日志
-
-* 框架默认打印所有请求内容和返回内容，若不想打印某字段，可以在struct描述时，在该字段注释中添加`@logger(level="off")`字符串，例：
-
-    ```
-    /**
-     * @logger(level="off") 
-     * 文章内容,不打印
-     */
-    5: optional string content,
-    ```
-    
-##### 异步方法
-
-* 框架支持客户端和服务端异步调用。只需要在IDL声明方法时，注释中添加`@SoaAsyncFunction`字符串，则可以自动生成异步客户端和服务端代码，例：
-    
-    ```
-    service HelloService {
-    
-        /**
-        * @SoaAsyncFunction
-        **/
-        string sayHello(1:string name)
-    }
-    ```
-
-##### 分布式事务
-
-1. 在IDL中声明某方法是一个全局事务过程
-
-    ```
-    service AuctionService {
-    
-        /**
-        * @SoaGlobalTransactional
-        **/
-        auction_domain.TBidAuctionResponse bidAuction(1: auction_domain.TBidAuctionCondition bidAuctionCondition)
-    
-    }
-    ```
-    即在该方法注释中，添加"@SoaGlobalTransactional"字符串。
-    
-2. 在IDL中声明某方法是一个子事务过程,并声明对应的回滚方法(方法名_rollback)
-
-    ```
-    service AccountService {
-    
-          /**
-            * @IsSoaTransactionProcess
-            **/
-           account_domain.TAccountJournal freezeBalance( 1:account_domain.TFreezeBalanceRequest freezeBalanceRequest),
-           
-        
-           /**
-            * freezeBalance接口的回调方法
-           **/
-           account_domain.TAccountJournal freezeBalance_rollback(),
-    }
-    ```
-    在方法注释中使用字符串"@IsSoaTransactionProcess"声明该方法是一个子事务过程，同时也必须定义一个对应的回滚方法。定时事务管理器会自动调用该回滚方法，由开发者自己实现回滚方法。
