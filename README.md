@@ -438,7 +438,7 @@ api-doc server started at port: 8192
 > 详情请参考该demo工程
 https://github.com/dapeng-soa/dapeng-hello
 
-#### 5. Thrift IDL 补充说明
+#### <h4 id="thrift"> 5. Thrift IDL 补充说明 <h4/>
 
 ##### Optional类型
 
@@ -449,7 +449,7 @@ https://github.com/dapeng-soa/dapeng-hello
     ```
     /**
     * 文章来源
-    */
+    *
     6: optional string source,
     ```
 
