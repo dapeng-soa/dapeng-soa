@@ -17,6 +17,7 @@ import com.github.dapeng.core.lifecycle.LifeCycleEvent;
 import com.github.dapeng.impl.filters.FilterLoader;
 import com.github.dapeng.impl.plugins.*;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
+import com.github.dapeng.util.TtlExecutors;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -145,7 +146,7 @@ public class DapengContainer implements Container {
         if (!SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL) {
             return Runnable::run;
         } else {
-            ThreadPoolExecutor bizExector = (ThreadPoolExecutor) Executors.newFixedThreadPool(SoaSystemEnvProperties.SOA_CORE_POOL_SIZE,
+            ThreadPoolExecutor bizExector = (ThreadPoolExecutor) TtlExecutors.newFixedThreadPool(SoaSystemEnvProperties.SOA_CORE_POOL_SIZE,
                     new ThreadFactoryBuilder()
                             .setDaemon(true)
                             .setNameFormat("dapeng-container-biz-pool-%d")

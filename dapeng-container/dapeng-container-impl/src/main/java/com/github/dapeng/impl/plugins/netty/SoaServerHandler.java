@@ -66,15 +66,15 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             }
             dispatcher.execute(() -> {
                 try {
-                    TransactionContext.Factory.currentInstance(transactionContext);
+                    //TransactionContext.Factory.currentInstance(transactionContext);
                     processRequest(channelHandlerContext, processor, msg, transactionContext, invokeTime);
                 } catch (Throwable e) {
                     writeErrorMessage(channelHandlerContext,
                             transactionContext,
                             ExceptionUtil.convertToSoaException(e));
-                } finally {
+                } /*finally {
                     TransactionContext.Factory.removeCurrentInstance();
-                }
+                }*/
             });
         } catch (Throwable ex) {
             if (transactionContext.getHeader() == null) {

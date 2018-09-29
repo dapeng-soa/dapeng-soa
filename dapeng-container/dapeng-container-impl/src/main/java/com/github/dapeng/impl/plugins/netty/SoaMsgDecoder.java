@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import static com.github.dapeng.api.Container.STATUS_RUNNING;
 import static com.github.dapeng.util.ExceptionUtil.convertToSoaException;
 import static io.netty.channel.ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE;
 
@@ -47,6 +48,11 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         try {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(getClass().getSimpleName() + "::decode");
+            }
+
+            if (container.status() != STATUS_RUNNING) {
+                LOGGER.warn(getClass().getSimpleName() +"::decode: container is not running");
+                return;
             }
 
             Object request = parseSoaMsg(msg);
