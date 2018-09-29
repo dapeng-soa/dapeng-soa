@@ -388,7 +388,8 @@ public class TestRouterRuntimeList {
      */
     @Test
     public void testRouterIp() {
-        String pattern = "  calleeIp match ip'192.168.1.101/24' => ip\"192.168.2.105/30\" ";
+//        String pattern = "  calleeIp match ip'192.168.1.101/24' => ip\"192.168.2.105/30\" ";
+        String pattern = "  callerIp match ip'192.168.1.101/24' => ip\"192.168.2.105/30\" ";
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
 
