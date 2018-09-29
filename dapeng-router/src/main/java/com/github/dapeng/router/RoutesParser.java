@@ -9,7 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.github.dapeng.router.RoutesLexer.*;
 import static com.github.dapeng.router.token.Token.STRING;
@@ -32,7 +34,8 @@ import static com.github.dapeng.router.token.Token.STRING;
  * | mod
  * right : rightPattern (',' rightPattern)*
  * rightPattern : '~' rightPattern | ip
- *</pre>
+ * </pre>
+ *
  * @author hz.lei
  * @date 2018年04月13日 下午9:34
  */
@@ -247,6 +250,9 @@ public class RoutesParser {
             case Token.IP:
                 ThenIp it = rightPattern();
                 thenIps.add(it);
+                // => ip"" ,
+                // => 后 只会跟三种  Token_EOF(结束符号)  Token_COMMA(逗号) EOL(换行符)
+                validate(lexer.peek(), Token_COMMA, Token_EOF, Token_EOL);
                 while (lexer.peek() == Token_COMMA) {
                     lexer.next(Token.COMMA);
                     ThenIp it2 = rightPattern();
@@ -289,6 +295,24 @@ public class RoutesParser {
 
     private void warn(String errorInfo) {
         logger.warn(errorInfo);
+    }
+
+    private void validate(Token target, Token... expects) {
+        boolean flag = false;
+        for (Token expect : expects) {
+            if (target == expect) {
+                flag = true;
+                break;
+            }
+        }
+        if (!flag) {
+            throw new ParsingException("[Validate Token Error]",
+                    "target token: " + convert(target) + " is not in expects token: " + convert(expects));
+        }
+    }
+
+    private List<String> convert(Token... tokens) {
+        return Arrays.stream(tokens).map(token -> TokenEnum.findById(token.type()).toString()).collect(Collectors.toList());
     }
 
 }

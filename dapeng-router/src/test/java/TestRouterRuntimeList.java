@@ -530,7 +530,7 @@ public class TestRouterRuntimeList {
     @Test
     public void testOtherWiseIpMark() {
         //"192.168.1.101",
-        String pattern = "otherwise => ~ip\"192.168.1.101/24\" ";
+        String pattern = "otherwise => ~ip\"192.168.1.101/24\"    ";
 
 
         List<Route> routes = RoutesExecutor.parseAll(pattern);
@@ -545,5 +545,45 @@ public class TestRouterRuntimeList {
 
         Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
+
+    @Test
+    public void testMoreThenError() {
+        String pattern = "cookie_storeId match 11866600  => ip\"192.168.1.101\"   => ip\"192.168.1.102\"\n" +
+                "otherwise => ~ip\"192.168.10.126\" ";
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.setCookie("storeId", "118666200");
+        ctx.methodName("updateOrderMemberId");
+
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        expectInstances.add(runtimeInstance1);
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+    }
+
+    @Test
+    public void testMoreThenIp2(){
+        String pattern = "cookie_storeId match 11888900 , 11728901 , 11735000 , 11799200 ; method match \"reverseOrderPayment\" => ip\"1.1.1.1\"\n" +
+                "method match \"createOfflineOrder\"  => ip\"192.168.10.126\"\n" +
+                "method match \"getServiceMetadata\" , \"createMiniOrders\" , \"createDoneOrderPayments\" , \"createCanceledOrderPayments\" => ip\"192.168.10.130\"\n" +
+                "cookie_storeId match 11866600 , 11799200 , 11735000 , 11739600  =>  ip\"192.168.10.130\"=> ip\"192.168.10.130\"\n" +
+                "cookie_storeId match 11888900 , 11728901 , 11735000 , 11799200 => ip\"192.168.10.126\"\n" +
+                "otherwise => ~ip\"192.168.10.0/24\"";
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.setCookie("storeId", "118666200");
+        ctx.methodName("updateOrderMemberId");
+
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        expectInstances.add(runtimeInstance1);
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+
+    }
+
 
 }
