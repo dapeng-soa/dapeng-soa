@@ -1,11 +1,11 @@
 package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.RuntimeInstance;
-import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
+
 
 /**
  *
@@ -15,7 +15,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class LoadBalanceAlgorithm {
     private static int lastIndex = -1;
     private static int currentWeight = 0;
-
 
     /**
      * 带权重的随机算法
@@ -57,16 +56,34 @@ public class LoadBalanceAlgorithm {
         return result;
     }
 
+    /**
+     * 最小连接数算法：选取在途请求数最小的实例返回，
+     * 当存在多个在途请求数最小的实例时，随机选取一个实例返回
+     * @param instances
+     * @return
+     */
     public static RuntimeInstance leastActive(List<RuntimeInstance> instances) {
         RuntimeInstance result = null;
         if (instances.size() > 0) {
+            final Random random = new Random();
             int index = 0;
+            List<RuntimeInstance> sameLeastCount = new ArrayList<>(16);
+            sameLeastCount.add(instances.get(index));
             for (int i = 1; i < instances.size(); i++) {
                 if (instances.get(i).getActiveCount() < instances.get(index).getActiveCount()) {
                     index = i;
+                    sameLeastCount.clear();
+                    sameLeastCount.add(instances.get(index));
+                }else if(instances.get(i).getActiveCount() == instances.get(index).getActiveCount()) {
+                    sameLeastCount.add(instances.get(i));
                 }
             }
-            result = instances.get(index);
+            int length = sameLeastCount.size();
+            if (length > 1){
+                result = sameLeastCount.get(random.nextInt(length));
+            }else {
+                result = sameLeastCount.get(0);
+            }
         }
         return result;
     }

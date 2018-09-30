@@ -31,7 +31,7 @@ import static com.github.dapeng.core.SoaCode.*;
  */
 public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private final Logger logger = LoggerFactory.getLogger(SoaConnectionPoolImpl.class);
-    private final LoadBalanceStrategy DEFAULT_LB_STRATEGY = LoadBalanceStrategy.LeastActive;
+    private final LoadBalanceStrategy DEFAULT_LB_STRATEGY = LoadBalanceStrategy.Random;
 
     class ClientInfoWeakRef extends WeakReference<SoaConnectionPool.ClientInfo> {
         final String serviceName;
