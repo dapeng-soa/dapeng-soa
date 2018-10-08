@@ -107,7 +107,20 @@ public class JsonSerializerTest {
 //        System.out.println("average:" + t2/round/1000000);
 
         try {
-            memberCouponQueryListServiceTest();
+            final String purchaseDescriptorXmlPath = "/com.today.api.purchase.service.PurchaseService.xml";
+            OptimizedMetadata.OptimizedService purchaseService = new OptimizedMetadata.OptimizedService(getService(purchaseDescriptorXmlPath));
+
+            Method createTransferOrder = purchaseService.getMethodMap().get("createTransferOrder");
+            String json = loadJson("/createTransferOrder.json");
+
+            String desc = "createTransferOrderTest.json";
+
+            OptimizedMetadata.OptimizedStruct struct = constructOptimizedStruct(purchaseService, createTransferOrder.request);
+            while (true) {
+                doTest2(purchaseService, createTransferOrder, struct, json, desc);
+
+                Thread.sleep(200);
+            }
 //            queryExportReportTest();
 //            createTransferOrderTest();
 //            optionalBooleanTest();
@@ -418,10 +431,10 @@ public class JsonSerializerTest {
         JsonSerializer jsonSerializer = new JsonSerializer(optimizedServicee, method, "1.0.0", optimizedStruct);
 
         ByteBuf buf = buildRequestBuf(optimizedServicee.service.name, "1.0.0", method.name, 10, json, jsonSerializer);
-        System.out.println("origJson:\n" + json);
+//        System.out.println("origJson:\n" + json);
 //
 //
-        System.out.println(dumpToStr(buf));
+//        System.out.println(dumpToStr(buf));
 
         long middle = System.nanoTime();
 
@@ -431,9 +444,9 @@ public class JsonSerializerTest {
         parser.parseHeader();
 //        parser.getHeader();
         parser.parseBody();
-        System.out.println(parser.getHeader());
-        System.out.println("after enCode and decode:\n" + parser.getBody());
-        System.out.println(desc + " ends=====================" + "counters:" + counter + "/" + counter2);
+//        System.out.println(parser.getHeader());
+//        System.out.println("after enCode and decode:\n" + parser.getBody());
+//        System.out.println(desc + " ends=====================" + "counters:" + counter + "/" + counter2);
         buf.release();
         InvocationContextImpl.Factory.removeCurrentInstance();
 
