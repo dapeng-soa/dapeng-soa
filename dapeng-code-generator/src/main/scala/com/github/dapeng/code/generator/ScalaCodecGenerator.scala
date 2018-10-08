@@ -641,13 +641,13 @@ class ScalaCodecGenerator extends CodeGenerator {
         if(field.dataType.getKind() == DataType.KIND.VOID) {}
         else {
           <div>
-            {if(field.isOptional) <div>if(bean.{nameAsId(field.name)}.isDefined)</div>}<block>
+            {if(field.isOptional) <div>if(bean.{nameAsId(field.name)}.isDefined)</div>}<block>{ <div>if(!bean.{nameAsId(field.name)}.equals(Some(null)))</div>}<block>
             val elem{index} = bean.{nameAsId(field.name)} {if(field.isOptional) <div>.get</div>}
             oprot.writeFieldBegin(new com.github.dapeng.org.apache.thrift.protocol.TField("{nameAsId(field.name)}", {toThriftDateType(field.dataType)}, {field.tag}.asInstanceOf[Short]))
             {toScalaWriteElement(field.dataType, index)}
             oprot.writeFieldEnd
             {index = index + 1}
-            </block></div>
+            </block></block></div>
         }
       }
       }
@@ -679,7 +679,7 @@ class ScalaCodecGenerator extends CodeGenerator {
           <div>{
             if(field.isOptional && field.dataType.kind == KIND.STRUCT && field.dataType.kind != DataType.KIND.VOID){
               <div>
-                if(bean.{nameAsId(field.name)}.isDefined)
+                if(bean.{nameAsId(field.name)}.isDefined )
                 new {if(field.dataType.qualifiedName.contains("com.github.dapeng.soa.scala")) field.dataType.qualifiedName.substring(0,field.dataType.qualifiedName.lastIndexOf("."))+".serializer."+field.dataType.qualifiedName.substring(field.dataType.qualifiedName.lastIndexOf(".")+1) else field.dataType.qualifiedName.substring(0,field.dataType.qualifiedName.lastIndexOf(".")).replace("com.github.dapeng.soa","com.github.dapeng.soa.scala")+".serializer."+field.dataType.qualifiedName.substring(field.dataType.qualifiedName.lastIndexOf(".")+1)}Serializer().validate(bean.{nameAsId(field.name)}.get)
               </div>}}</div>
       }
