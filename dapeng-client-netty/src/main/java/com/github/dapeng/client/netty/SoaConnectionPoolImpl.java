@@ -208,14 +208,13 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 return null;
             }
         }
-        //当zk上服务节点发生变化的时候, 会导致这里拿不到服务运行时实例.
-        List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances();
+        //当zk上服务节点发生变化的时候, 可能会导致拿到不存在的服务运行时实例或者根本拿不到任何实例.
+        List<RuntimeInstance> compatibles = new ArrayList<>(zkInfo.getRuntimeInstances());
         if (compatibles == null || compatibles.isEmpty()) {
             return null;
         }
 
         // checkVersion
-        // potential ConcurrentModificationException
         List<RuntimeInstance> checkVersionInstances = new ArrayList<>(8);
         for (RuntimeInstance rt : compatibles) {
             if (checkVersion(version, rt.version)) {
@@ -265,32 +264,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
         return ((Integer.parseInt(tarArr[1]) * 10 + Integer.parseInt(tarArr[2]))
                 >= (Integer.parseInt(reqArr[1]) * 10 + Integer.parseInt(reqArr[2])));
-    }
-
-    /**
-     * 如果出现异常（ConcurrentModifyException）,或获取到的实例为0，进行重试
-     */
-    private SoaConnection retryFindConnection(final String service,
-                                              final String version,
-                                              final String method) throws SoaException {
-        SoaConnection soaConnection;
-        int retry = 1;
-        do {
-            try {
-                soaConnection = findConnection(service, version, method);
-                if (soaConnection != null) {
-                    return soaConnection;
-                }
-            } catch (ConcurrentModificationException e) {
-                logger.error("zkInfo get connection 出现异常: " + e.getMessage());
-            }
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException ignored) {
-            }
-        } while (retry++ <= 3);
-        logger.warn("retryFindConnection::重试3次获取 connection 失败");
-        return null;
     }
 
     /**
