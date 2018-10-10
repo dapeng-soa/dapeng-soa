@@ -239,16 +239,21 @@ public class ClientZk extends CommonZk {
                     LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:no service instances found");
                     return;
                 }
-                List<RuntimeInstance> runtimeInstanceList = zkInfo.getRuntimeInstances();
-                //这里要clear掉，因为接下来会重新将实例信息放入list中，不清理会导致重复...
-                runtimeInstanceList.clear();
+
                 LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "], 获取{}的子节点成功", servicePath);
+                List<RuntimeInstance> runtimeInstances = new ArrayList<>(8);
                 //child = 10.168.13.96:9085:1.0.0
                 for (String children : childrens) {
                     String[] infos = children.split(":");
                     RuntimeInstance instance = new RuntimeInstance(zkInfo.service, infos[0], Integer.valueOf(infos[1]), infos[2]);
-                    runtimeInstanceList.add(instance);
+                    runtimeInstances.add(instance);
                 }
+
+                // copyOnWriteArrayList
+                List<RuntimeInstance> runtimeInstanceList = zkInfo.getRuntimeInstances();
+                //这里要clear掉，因为接下来会重新将实例信息放入list中，不清理会导致重复...
+                runtimeInstanceList.clear();
+                runtimeInstanceList.addAll(runtimeInstances);
 
                 StringBuilder logBuffer = new StringBuilder();
                 zkInfo.getRuntimeInstances().forEach(info -> logBuffer.append(info.toString()));
