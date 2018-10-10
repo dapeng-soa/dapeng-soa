@@ -293,6 +293,31 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
     }
 
+    /**
+     * 如果出现异常（ConcurrentModifyException）,或获取到的实例为0，进行重试
+     */
+    private SoaConnection retryFindConnection(final String service,
+                                              final String version,
+                                              final String method) throws SoaException {
+        SoaConnection soaConnection;
+        int retry = 1;
+        do {
+            try {
+                soaConnection = findConnection(service, version, method);
+                if (soaConnection != null) {
+                    return soaConnection;
+                }
+            } catch (ConcurrentModificationException e) {
+                logger.error("zkInfo get connection 出现异常: " + e.getMessage());
+            }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException ignored) {
+            }
+        } while (retry++ <= 3);
+        logger.warn("retryFindConnection::重试3次获取 connection 失败");
+        return null;
+    }
 
     /**
      * 根据zk 负载均衡配置解析，分为 全局/service级别/method级别
