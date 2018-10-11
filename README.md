@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://github.com/dapeng-soa/documents/blob/master/images/dapeng-logo/%E5%A4%A7%E9%B9%8Flogo-03.png" alt="dapeng-soa" title="dapeng-soa"/>
+<img width="254" src="https://github.com/dapeng-soa/documents/blob/master/images/dapeng-logo/%E5%A4%A7%E9%B9%8Flogo-03.png" alt="dapeng-soa" title="dapeng-soa"/>
 </p>
 
 [![Language](https://img.shields.io/badge/language-Java-orange.svg)](https://www.oracle.com)
