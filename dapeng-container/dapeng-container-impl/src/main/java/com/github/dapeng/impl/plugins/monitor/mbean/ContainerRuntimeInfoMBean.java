@@ -7,6 +7,7 @@ public interface ContainerRuntimeInfoMBean {
 
     /**
      * 设置日志级别
+     *
      * @param loggerName
      * @param levelStr
      */
@@ -14,6 +15,7 @@ public interface ContainerRuntimeInfoMBean {
 
     /**
      * 获取日志级别
+     *
      * @param loggerName
      * @return
      */
@@ -21,6 +23,7 @@ public interface ContainerRuntimeInfoMBean {
 
     /**
      * 禁用/开启监控
+     *
      * @param enable
      * @return
      */
@@ -28,30 +31,35 @@ public interface ContainerRuntimeInfoMBean {
 
     /**
      * 获取业务线程池情况
+     *
      * @return
      */
     String getThreadPoolStatus();
 
     /**
      * 获取服务信息(包含容器信息)
+     *
      * @return
      */
     String getServiceBasicInfo();
 
     /**
      * 获取当前运行服务流量信息
+     *
      * @return
      */
     String getServiceFlow();
 
     /**
      * 获取当前服务调用信息
+     *
      * @return
      */
     String getServiceInvoke();
 
     /**
      * 获取当前运行服务流量信息 (指定条数)
+     *
      * @param count 获取数据条数
      * @return
      */
@@ -59,7 +67,8 @@ public interface ContainerRuntimeInfoMBean {
 
     /**
      * 获取当前服务调用信息(指定条数)
-     * @param count 获取的数据条数
+     *
+     * @param count      获取的数据条数
      * @param methodName 方法名字
      * @return
      */
@@ -67,8 +76,15 @@ public interface ContainerRuntimeInfoMBean {
 
     /**
      * 获取Netty连接数信息
+     *
      * @return
      */
     String getNettyConnections();
 
+    /**
+     * 获取zk本地信息(包括config(全局和服务配置)以及router、freqControl的信息)
+     *
+     * @return
+     */
+    String getZkLocalInfo();
 }

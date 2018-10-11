@@ -4,13 +4,21 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.core.Application;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.plugins.monitor.ServerCounterContainer;
 import com.github.dapeng.impl.plugins.monitor.config.MonitorFilterProperties;
 import com.github.dapeng.impl.plugins.netty.SoaInvokeCounter;
+
 import com.github.dapeng.util.DumpUtil;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -28,13 +36,17 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     private final static ServerCounterContainer counterContainer = ServerCounterContainer.getInstance();
     private final Container container;
 
+    private final static String CONFIG_PATH = "/soa/config/services";
+    private final static String ROUTES_PATH = "/soa/config/routes";
+    private final static String FREQ_PATH = "/soa/config/freq";
+
     public ContainerRuntimeInfo(Container container) {
         super();
         this.container = container;
         try {
             loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        }catch (Exception e){
-            LOGGER.info("loggerContext get error",e);
+        } catch (Exception e) {
+            LOGGER.info("loggerContext get error", e);
         }
     }
 
@@ -49,7 +61,7 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
         loggerName = loggerName.trim();
         levelStr = levelStr.trim();
 
-        LOGGER.info("Jmx Trying to set logger level [" + levelStr + "] to logger [" + loggerName +"]");
+        LOGGER.info("Jmx Trying to set logger level [" + levelStr + "] to logger [" + loggerName + "]");
 
         ch.qos.logback.classic.Logger logger = loggerContext.getLogger(loggerName);
         if ("null".equalsIgnoreCase(levelStr)) {
@@ -187,7 +199,128 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
         return sb.toString();
     }
 
+    @Override
+    public String getZkLocalInfo() {
+        StringBuilder sb = new StringBuilder();
+        ZooKeeper zk = null;
+        CountDownLatch connectedSignal = new CountDownLatch(1);
+        try {
+             zk = new ZooKeeper(SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST, 30000, event -> {
+                if (event.getState() == Watcher.Event.KeeperState.SyncConnected) {
+                    connectedSignal.countDown();
+                }
+            });
+            connectedSignal.await(10000, TimeUnit.MILLISECONDS);
+            String configData = getZkConfigData(zk);
+            String routerData = getZkRouterData(zk);
+            String freqControlData = getZkFreqControlData(zk);
+            sb.append("[Dapeng Mbean] ZK Local info == [ \n")
+                    .append(configData)
+                    .append(routerData)
+                    .append(freqControlData)
+                    .append(" \n]");
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        } finally {
+            if (zk != null) {
+                try {
+                    zk.close();
+                } catch (Exception e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+            }
+        }
+        return sb.toString();
+    }
+
     private String getContainerVersion() {
         return containerVersion;
     }
+
+    private String getZkConfigData(ZooKeeper zk) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n config data  == [ \n");
+        try {
+            byte[] temp = zk.getData(CONFIG_PATH, false, null);
+            String globalConfig = new String(temp, "UTF-8");
+            sb.append("\n global config data  == [ \n");
+            if (!globalConfig.isEmpty()) {
+                sb.append(globalConfig);
+            }
+            sb.append(" \n]");
+
+            List<String> children = zk.getChildren(CONFIG_PATH, false);
+            if (children.size() > 0){
+                sb.append("\n service config data  == [ \n");
+            }
+            for (int i = 0; i < children.size(); i++) {
+                String servicePath = CONFIG_PATH + "/"+children.get(i);
+                byte[] serviceTemp = zk.getData(servicePath, false, null);
+                String serviceConfig = new String(serviceTemp, "UTF-8");
+                if (!serviceConfig.isEmpty()) {
+                    sb.append(children.get(i))
+                            .append(": [ \n")
+                            .append(serviceConfig)
+                            .append(" \n]");
+                }
+            }
+            sb.append(" \n]");
+
+            sb.append(" \n]");
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return sb.toString();
+    }
+
+    private String getZkRouterData(ZooKeeper zk) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            List<String> children = zk.getChildren(ROUTES_PATH, false);
+            if (children.size() > 0){
+                sb.append("\n service router data  == [ \n");
+            }
+            for (int i = 0; i < children.size(); i++) {
+                String servicePath = ROUTES_PATH +"/"+children.get(i);
+                byte[] serviceTemp = zk.getData(servicePath, false, null);
+                String serviceConfig = new String(serviceTemp, "UTF-8");
+                if (!serviceConfig.isEmpty()) {
+                    sb.append(children.get(i))
+                            .append(": [ \n")
+                            .append(serviceConfig)
+                            .append(" \n]");
+                }
+            }
+            sb.append(" \n]");
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return sb.toString();
+    }
+
+    private String getZkFreqControlData(ZooKeeper zk) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            List<String> children = zk.getChildren(FREQ_PATH, false);
+            if (children.size() > 0){
+                sb.append("\n service freqControl data  == [ \n");
+            }
+            for (int i = 0; i < children.size(); i++) {
+                String servicePath = FREQ_PATH + "/"+children.get(i);
+                byte[] serviceTemp = zk.getData(servicePath, false, null);
+                String serviceConfig = new String(serviceTemp, "UTF-8");
+                if (!serviceConfig.isEmpty()) {
+                    sb.append(children.get(i))
+                            .append(": [\n")
+                            .append(serviceConfig)
+                            .append(" \n]");
+                }
+            }
+            sb.append(" \n]");
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return sb.toString();
+    }
+
 }
