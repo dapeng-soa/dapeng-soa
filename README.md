@@ -14,6 +14,11 @@ Dapeng-soa is a lightweight, high performance micro-service framework, which is 
 - [x] configuration/deploy server
 - [x] project templates(g8 template for sbt projects)
 
+# Architecture
+<p align="center">
+<img src="https://github.com/dapeng-soa/documents/blob/master/images/dapeng-architecture.png" alt="dapeng-soa" title="dapeng-soa"/>
+</p>
+
 # Features
 
 
