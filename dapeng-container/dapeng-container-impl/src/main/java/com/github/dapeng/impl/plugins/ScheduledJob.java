@@ -1,13 +1,12 @@
 package com.github.dapeng.impl.plugins;
 
 import com.github.dapeng.api.ContainerFactory;
-import com.github.dapeng.core.InvocationContext;
-import com.github.dapeng.core.InvocationContextImpl;
-import com.github.dapeng.core.ProcessorKey;
+import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.github.dapeng.impl.plugins.netty.MdcCtxInfoUtil;
 import com.google.common.base.Stopwatch;
 import org.quartz.*;
 import org.slf4j.Logger;
@@ -42,17 +41,22 @@ public class ScheduledJob implements Job {
         /**
          * 添加sessionTid
          */
+        long tid = DapengUtil.generateTid();
+        String sessionTid = DapengUtil.longToHexStr(tid);
         InvocationContext invocationContext = InvocationContextImpl.Factory.createNewInstance();
-        invocationContext.sessionTid(DapengUtil.generateTid());
-        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
-
+        invocationContext.sessionTid(tid);
+        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
 
         logger.info("定时任务({})开始执行", context.getJobDetail().getKey().getName());
+
+        ProcessorKey processorKey = new ProcessorKey(serviceName, versionName);
         Map<ProcessorKey, SoaServiceDefinition<?>> processorMap = ContainerFactory.getContainer().getServiceProcessors();
-        SoaServiceDefinition soaServiceDefinition = processorMap.get(new ProcessorKey(serviceName, versionName));
+        SoaServiceDefinition soaServiceDefinition = processorMap.get(processorKey);
+        Application application = ContainerFactory.getContainer().getApplication(processorKey);
 //        SoaProcessFunction<Object, Object, Object, ? extends TCommonBeanSerializer<Object>, ? extends TCommonBeanSerializer<Object>> soaProcessFunction =
 //                (SoaProcessFunction<Object, Object, Object, ? extends TCommonBeanSerializer<Object>, ? extends TCommonBeanSerializer<Object>>) data.get("function");
         Object iface = data.get("iface");
+        MdcCtxInfoUtil.switchMdcToAppClassLoader("put", application.getAppClasssLoader(), sessionTid);
         try {
             if (soaServiceDefinition.isAsync) {
                 SoaFunctionDefinition.Async<Object, Object, Object> functionDefinition = (SoaFunctionDefinition.Async<Object, Object, Object>) data.get("function");
@@ -67,6 +71,7 @@ public class ScheduledJob implements Job {
             logger.error(e.getMessage(), e);
         } finally {
             MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+            MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), null);
             InvocationContextImpl.Factory.removeCurrentInstance();
         }
 
