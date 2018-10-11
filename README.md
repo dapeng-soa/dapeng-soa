@@ -1,6 +1,26 @@
-### 容器部署
+<p align="center">
+<img src="https://github.com/dapeng-soa/documents/blob/master/images/dapeng-logo/%E5%A4%A7%E9%B9%8Flogo-03.png" alt="dapeng-soa" title="dapeng-soa"/>
+</p>
 
-#### 运行脚本
+![](https://img.shields.io/badge/language-java-orange-scala-green.svg)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.dapeng-soa/dapeng-parent/badge.svg)](https://search.maven.org/search?q=com.github.dapeng-soa)
+[![GitHub release](https://img.shields.io/github/release/dapeng-soa/dapeng-soa.svg)](https://github.com/dapeng-soa/dapeng-soa/releases)
+[![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
+
+Dapeng-soa is a lightweight, high performance micro-service framework, which is based on netty and thrift. It provides service metadata generated from the thrift IDL automatically. Also, scaffolds are provided, such as:
+- apiGateway([dapeng-mesh](https://github.com/dapeng-soa/dapeng-mesh))
+>transfer json-http request to thrift protocol
+- online api documents and testing site, which are generated automatically
+- command-line tools
+- configuration/deploy server
+- project templates(g8 template for sbt projects)
+
+# Features
+
+
+# 容器部署
+
+## 运行脚本
 
 ```
 cd dapeng-container
@@ -8,13 +28,13 @@ cd dapeng-container
 sh dev.sh
 ```
 
-#### 输出目录
+## 输出目录
 
 ```
 dapeng-container/target/dapeng-container
 ```
 
-#### 目录说明
+## 目录说明
 
 ```
 |-- dapeng-container
@@ -40,7 +60,7 @@ dapeng-container/target/dapeng-container
 -------------------------------------------------------
 ```
 
-### 工程目录说明
+# 工程目录说明
 
 ```
 |-- dapeng
@@ -65,7 +85,7 @@ dapeng-container/target/dapeng-container
 |   |-- dapeng-json                    流式处理json模式
 ```
 
-### 服务开发简易说明
+# 服务开发简易说明
 环境需求:
 
 > 
@@ -74,15 +94,15 @@ dapeng-container/target/dapeng-container
 * zookeeper
 * maven or sbt 
 
-#### 1. 安装dapeng-soa项目到本地maven仓库
+## 1. 安装dapeng-soa项目到本地maven仓库
 
 ```
 mvn clean install
 ```
 
-#### 2. 新建maven项目 - demo (java版本)
+## 2. 新建maven项目 - demo (java版本)
 
-##### 2.1 修改pom.xml配置
+### 2.1 修改pom.xml配置
 ```
 <properties>
 	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -134,7 +154,7 @@ mvn clean install
 </build>
 ```
 
-##### 2.2 thrift idl 定义服务接口
+### 2.2 thrift idl 定义服务接口
 
 * hello_domain.thrift:
 
@@ -174,7 +194,7 @@ service HelloService {
 
 > [thrift idl补充说明](#thrift)
 
-##### 2.3 服务接口代码生成：
+### 2.3 服务接口代码生成：
 
 ```mvn clean package```
 生成的文件: 
@@ -196,7 +216,7 @@ service HelloService {
 -------------------------------------------------------
 ```
 
-##### 2.4 服务实现 HelloServiceImpl
+### 2.4 服务实现 HelloServiceImpl
 ```
 package com.github.dapeng.demo.hello.impl;
 
@@ -217,7 +237,7 @@ public class HelloServiceImpl implements HelloService {
 }
 
 ```
-##### 2.5 声明服务，使得容器启动时加载和注册该服务：
+### 2.5 声明服务，使得容器启动时加载和注册该服务：
 
 > 在`resources/META-INF/spring/`文件夹下新建services.xml
 
@@ -236,11 +256,11 @@ public class HelloServiceImpl implements HelloService {
 </beans>
 ```
     
-##### 2.6 开发模式启动服务
+### 2.6 开发模式启动服务
 
 > 前提:需要把`dapeng-maven-plugin`安装到本地maven仓库
 
-###### 2.6.1 安装Maven插件
+#### 2.6.1 安装Maven插件
 
 安装`dapeng-maven-plugin`工程
 
@@ -252,7 +272,7 @@ mvn clean install
 ```
 
 
-##### Maven启动服务容器
+### Maven启动服务容器
 
 > 可在无开发ide环境下或在ide开发环境下运行
 > 
@@ -289,9 +309,9 @@ cd hello-service
 mvn compile com.github.dapeng:dapeng-maven-plugin:2.1.1-SNAPSHOT:run -Dsoa.apidoc.port=8089
 ```
 
-##### 2.7 调用服务测试
+### 2.7 调用服务测试
 
-###### 2.7.1 本地测试代码：
+#### 2.7.1 本地测试代码：
 
 ```
 import com.github.dapeng.demo.hello.HelloServiceClient;
@@ -306,7 +326,7 @@ public class HelloServiceTest {
 }
 ```
 
-##### 2.7.2 文档站点和在线测试
+### 2.7.2 文档站点和在线测试
 > 服务启动后，输入网址 `localhost:8080`, 如果改了apidoc.port的值，输入你指定的端口即可
 
 ![index](https://github.com/dapeng-soa/documents/blob/master/images/dapeng-apiDoc/apidoc_index.png?raw=true)
@@ -325,7 +345,7 @@ public class HelloServiceTest {
 ![index](https://github.com/dapeng-soa/documents/blob/master/images/dapeng-apiDoc/apidoc_test_response.png?raw=true)
 
 
-#### 3. 创建Scala版本的Demo项目 (sbt构建版本)
+## 3. 创建Scala版本的Demo项目 (sbt构建版本)
 > scala 版本的Demo项目我们提供了一个g8 模板，创建非常简单
 - 需要安装好sbt环境, 执行以下命令，并根据提示输入对应的配置
 
@@ -352,7 +372,7 @@ dapengVersion [2.1.1-SNAPSHOT]:    # dapeng框架的版本，现在是2.1.1-SNAP
 Template applied in ./demo
 ```
 
-##### 3.1 编译api
+### 3.1 编译api
 
 ```
 > cd demo
@@ -370,7 +390,7 @@ Thrift-Generator-Plugin:  No need to regenerate source files. skip..............
 > windows 环境的朋友请注意，由于windows系统自带的编码时gbk,在编译的时候需要设置编码为 utf8. 可以新建一个sbt-task, 如下图
 ![index](https://github.com/dapeng-soa/documents/blob/master/images/dapeng-demo/demo_compile.png?raw=true)
 
-##### 3.2 实现接口
+### 3.2 实现接口
 > 我们的g8模板把项目分成了两部分，api & service, 接口文件放到demo-api, 实现则在demo-service, 在demo-service新建 helloServiceImpl (scala版)
 
 src/main/scala/com/github/dapeng/hello/impl/HelloServiceImpl.scala
@@ -398,7 +418,7 @@ class HelloServiceImpl extends HelloService{
 }
 ```
 
-##### 3.3 修改spring配置
+### 3.3 修改spring配置
 > <b>`demo-service` ->  spring的services.xml配置跟java版本的一致<b/>
 ```
 <?xml version="1.0" encoding="UTF-8"?>
@@ -425,7 +445,7 @@ class HelloServiceImpl extends HelloService{
 </beans>
 ```
 
-##### 3.4 运行服务
+### 3.4 运行服务
 > scala 版本我们提供了一个运行插件，只需要运行如下指令即可运行
 ```
 > sbt runContainer
@@ -444,17 +464,17 @@ class HelloServiceImpl extends HelloService{
 api-doc server started at port: 8192
 ```
 
-##### 3.5 测试
+### 3.5 测试
 > <b>测试方式与java版本一致, 请参考 [2.7 调用服务测试]<b/>
 
-#### 4 基于docker模式的发布构建
+## 4 基于docker模式的发布构建
 
 > 详情请参考该demo工程
 https://github.com/dapeng-soa/dapeng-hello
 
-#### <h4 id="thrift"> 5. Thrift IDL 补充说明 <h4/>
+## <h4 id="thrift"> 5. Thrift IDL 补充说明 <h4/>
 
-##### Optional类型
+### Optional类型
 
 * 请求发送和结果返回前，将对实体中所有非Optional类型字段进行校验，若不为Optional类型且为`null`，将直接抛错；
 
@@ -467,7 +487,7 @@ https://github.com/dapeng-soa/dapeng-hello
     6: optional string source,
     ```
 
-##### Date类型
+### Date类型
 
 1. 在struct描述中，若字段类型为`i64`，且注释中包含`@datatype(name="date")`字符串, 则在java代码生成时，该字段将自动转换为`java.util.Date`类型，例：
 
@@ -492,7 +512,7 @@ https://github.com/dapeng-soa/dapeng-hello
 
 3. 在method描述中，若返回结果类型为`i64`，且注释中包含`@datatype(name="date")`字符串，则在java代码生成时，该返回结果将自动转换为`java.util.Date`类型，例子同上。
 
-##### BigDecimal类型
+### BigDecimal类型
 
 1. 在struct描述中，若字段类型为`double`，且注释中包含`@datatype(name="bigdecimal")`字符串, 则在java代码生成时，该字段将自动转换为`java.math.BigDecimal`类型，例：
 
