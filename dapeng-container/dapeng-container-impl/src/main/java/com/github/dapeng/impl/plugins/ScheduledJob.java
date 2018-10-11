@@ -1,10 +1,7 @@
 package com.github.dapeng.impl.plugins;
 
 import com.github.dapeng.api.ContainerFactory;
-import com.github.dapeng.core.Application;
-import com.github.dapeng.core.InvocationContext;
-import com.github.dapeng.core.InvocationContextImpl;
-import com.github.dapeng.core.ProcessorKey;
+import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.DapengUtil;
@@ -44,7 +41,10 @@ public class ScheduledJob implements Job {
         /**
          * 添加sessionTid
          */
-        String sessionTid = DapengUtil.longToHexStr(DapengUtil.generateTid());
+        long tid = DapengUtil.generateTid();
+        String sessionTid = DapengUtil.longToHexStr(tid);
+        InvocationContext invocationContext = InvocationContextImpl.Factory.createNewInstance();
+        invocationContext.sessionTid(tid);
         MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
 
         logger.info("定时任务({})开始执行", context.getJobDetail().getKey().getName());
@@ -72,7 +72,7 @@ public class ScheduledJob implements Job {
         } finally {
             MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
             MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), null);
-
+            InvocationContextImpl.Factory.removeCurrentInstance();
         }
 
     }
