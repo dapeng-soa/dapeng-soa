@@ -86,18 +86,6 @@ public class IPUtils {
         return (ip1 & maskIp) == (ip2 & maskIp);
     }
 
-    /**
-     * 在ip匹配成功的基础上，对 remote server 端口进行匹配过滤
-     *
-     * @param ip1
-     * @param ip2
-     * @param mask 子网掩码
-     * @return
-     */
-    public static boolean matchIpInstanceWithPort(int ip1, int ip2, int mask) {
-        int maskIp = (0xFFFFFFFF << (32 - mask));
-        return (ip1 & maskIp) == (ip2 & maskIp);
-    }
 
     /**
      * transfer ip from int to human-readable format,
