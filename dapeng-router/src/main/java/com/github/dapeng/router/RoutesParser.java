@@ -124,10 +124,10 @@ public class RoutesParser {
                 return new Otherwise();
             case Token.ID:
                 Matcher matcher = matcher();
-                matchers.macthers.add(matcher);
+                matchers.matchers.add(matcher);
                 while (lexer.peek() == Token_SEMI_COLON) {
                     lexer.next(Token.SEMI_COLON);
-                    matchers.macthers.add(matcher());
+                    matchers.matchers.add(matcher());
                 }
                 return matchers;
             default:
@@ -276,11 +276,11 @@ public class RoutesParser {
             case Token.NOT: {
                 lexer.next(Token.NOT);
                 ThenIp it = rightPattern();
-                return new ThenIp(!it.not, it.ip, it.mask);
+                return new ThenIp(!it.not, it.ip, it.port, it.mask);
             }
             case Token.IP: {
                 IpToken ip = (IpToken) lexer.next(Token.IP);
-                return new ThenIp(false, ip.ip, ip.mask);
+                return new ThenIp(false, ip.ip, ip.port, ip.mask);
             }
             default:
                 error("expect '~ip' or 'ip' but got:" + token);

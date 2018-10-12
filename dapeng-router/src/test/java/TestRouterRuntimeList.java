@@ -4,12 +4,15 @@ import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
 import com.github.dapeng.router.exception.ParsingException;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static org.junit.matchers.JUnitMatchers.containsString;
 
 /**
  * 描述:
@@ -36,6 +39,21 @@ public class TestRouterRuntimeList {
 
         List<RuntimeInstance> filterInstances = RoutesExecutor.executeRoutes(ctx, routes, instances);
         return filterInstances;
+    }
+
+    @Test
+    public void testSimpleOne() {
+        String pattern = "  method match 'getFoo'  => ip\"192.168.1.101:9090\"";
+
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.methodName("getFoo");
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        expectInstances.add(runtimeInstance1);
+
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
 
 
@@ -389,7 +407,7 @@ public class TestRouterRuntimeList {
     @Test
     public void testRouterIp() {
 //        String pattern = "  calleeIp match ip'192.168.1.101/24' => ip\"192.168.2.105/30\" ";
-        String pattern = "  callerIp match ip'192.168.1.101/24' => ip\"192.168.2.105/30\" ";
+        String pattern = "  calleeIp match ip'192.168.1.101/24' => ip\"192.168.2.105/30\" ";
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
 
@@ -549,40 +567,52 @@ public class TestRouterRuntimeList {
 
     @Test
     public void testMoreThenError() {
-        String pattern = "cookie_storeId match 11866600  => ip\"192.168.1.101\"   => ip\"192.168.1.102\"\n" +
-                "otherwise => ~ip\"192.168.10.126\" ";
-        List<Route> routes = RoutesExecutor.parseAll(pattern);
-        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-        ctx.setCookie("storeId", "118666200");
-        ctx.methodName("updateOrderMemberId");
+        try {
 
-        List<RuntimeInstance> prepare = prepare(ctx, routes);
+            String pattern = "cookie_storeId match 11866600  => ip\"192.168.1.101\"   => ip\"192.168.1.102\"\n" +
+                    "otherwise => ~ip\"192.168.10.126\" ";
+            List<Route> routes = RoutesExecutor.parseAll(pattern);
+            InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+            ctx.setCookie("storeId", "118666200");
+            ctx.methodName("updateOrderMemberId");
+
+            List<RuntimeInstance> prepare = prepare(ctx, routes);
 
 
-        List<RuntimeInstance> expectInstances = new ArrayList<>();
-        expectInstances.add(runtimeInstance1);
-        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+            List<RuntimeInstance> expectInstances = new ArrayList<>();
+            expectInstances.add(runtimeInstance1);
+            Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+        } catch (ParsingException ex) {
+            Assert.assertThat(ex.getMessage(), CoreMatchers.containsString(
+                    ("[Validate Token Error]:target token: [(2,'=>')] is not in expects token: [(15,'逗号'), (-1,'文件结束符'), (1,'回车换行符')]")));
+        }
     }
 
     @Test
-    public void testMoreThenIp2(){
-        String pattern = "cookie_storeId match 11888900 , 11728901 , 11735000 , 11799200 ; method match \"reverseOrderPayment\" => ip\"1.1.1.1\"\n" +
-                "method match \"createOfflineOrder\"  => ip\"192.168.10.126\"\n" +
-                "method match \"getServiceMetadata\" , \"createMiniOrders\" , \"createDoneOrderPayments\" , \"createCanceledOrderPayments\" => ip\"192.168.10.130\"\n" +
-                "cookie_storeId match 11866600 , 11799200 , 11735000 , 11739600  =>  ip\"192.168.10.130\"=> ip\"192.168.10.130\"\n" +
-                "cookie_storeId match 11888900 , 11728901 , 11735000 , 11799200 => ip\"192.168.10.126\"\n" +
-                "otherwise => ~ip\"192.168.10.0/24\"";
-        List<Route> routes = RoutesExecutor.parseAll(pattern);
-        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-        ctx.setCookie("storeId", "118666200");
-        ctx.methodName("updateOrderMemberId");
+    public void testMoreThenIp2() {
+        try {
+            String pattern = "cookie_storeId match 11888900 , 11728901 , 11735000 , 11799200 ; method match \"reverseOrderPayment\" => ip\"1.1.1.1\"\n" +
+                    "method match \"createOfflineOrder\"  => ip\"192.168.10.126\"\n" +
+                    "method match \"getServiceMetadata\" , \"createMiniOrders\" , \"createDoneOrderPayments\" , \"createCanceledOrderPayments\" => ip\"192.168.10.130\"\n" +
+                    "cookie_storeId match 11866600 , 11799200 , 11735000 , 11739600  =>  ip\"192.168.10.130\"=> ip\"192.168.10.130\"\n" +
+                    "cookie_storeId match 11888900 , 11728901 , 11735000 , 11799200 => ip\"192.168.10.126\"\n" +
+                    "otherwise => ~ip\"192.168.10.0/24\"";
+            List<Route> routes = RoutesExecutor.parseAll(pattern);
+            InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+            ctx.setCookie("storeId", "118666200");
+            ctx.methodName("updateOrderMemberId");
 
-        List<RuntimeInstance> prepare = prepare(ctx, routes);
+            List<RuntimeInstance> prepare = prepare(ctx, routes);
 
 
-        List<RuntimeInstance> expectInstances = new ArrayList<>();
-        expectInstances.add(runtimeInstance1);
-        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+            List<RuntimeInstance> expectInstances = new ArrayList<>();
+            expectInstances.add(runtimeInstance1);
+            Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+
+        } catch (ParsingException ex) {
+            Assert.assertThat(ex.getMessage(), CoreMatchers.containsString(
+                    ("[Validate Token Error]:target token: [(2,'=>')] is not in expects token: [(15,'逗号'), (-1,'文件结束符'), (1,'回车换行符')]")));
+        }
 
     }
 

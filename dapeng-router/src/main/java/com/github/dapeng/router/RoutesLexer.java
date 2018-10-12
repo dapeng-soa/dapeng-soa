@@ -38,14 +38,17 @@ public class RoutesLexer {
     static SimpleToken Token_SEMI_COLON = new SimpleToken(Token.SEMI_COLON);
     static SimpleToken Token_COMMA = new SimpleToken(Token.COMMA);
 
+
+
     /**
      * IP_REGEX
-     * todo: 暂时只支持全格式IP(加掩码), 对于192.168.10/24这种不支持
+     * 暂时只支持全格式IP(加掩码), 对于192.168.10/24这种不支持
      */
     private static final String IP_REGEX = "(^(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|[1-9])\\.(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\."
-            + "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\.(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d))(/(\\d{2}))?$";
+            + "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\.(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d))(/(\\d{2}))?(:(\\d{2,5}))?$";
+
     private static final Pattern IP_PATTERN = Pattern.compile(IP_REGEX);
-    private static final int DEFAULT_MASK = 32;
+
 
     /**
      * 求模正则, 例如 1024n+0-8
@@ -302,14 +305,15 @@ public class RoutesLexer {
             String ipStr = matcher.group(1);
             int ip = IPUtils.transferIp(ipStr);
 
-            String masks = matcher.group(7);
-            if (masks != null) {
-                int mask = Integer.parseInt(masks);
-                return new IpToken(ip, mask);
-            } else {
-                // 默认值，mask
-                return new IpToken(ip, DEFAULT_MASK);
-            }
+            // parse ip mask
+            String maskStr = matcher.group(7);
+            int mask = maskStr != null ? Integer.parseInt(maskStr) : IpToken.DEFAULT_MASK;
+
+            // parse ip port
+            String portStr = matcher.group(9);
+            int port = portStr != null ? Integer.parseInt(portStr) : IpToken.DEFAULT_PORT;
+
+            return new IpToken(ip, port, mask);
         }
         throw new ParsingException("[IpEx]", "parse ip failed,check the ip express");
     }
