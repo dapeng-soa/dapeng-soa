@@ -179,8 +179,10 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
 
         //设置慢服务检测时间阈值
-        Optional<Long> maxProcessTime = getZkProcessTime(method, zkInfo);
-        context.maxProcessTime(maxProcessTime.orElse(null));
+        /*Optional<Long> maxProcessTime = getZkProcessTime(method, zkInfo);
+        context.maxProcessTime(maxProcessTime.orElse(null));*/
+        // TODO: 2018-10-12 慢服务时间 取自超时时间[TimeOut]
+        context.maxProcessTime(getTimeout(service, method));
 
 
         //如果设置了calleeip 和 calleport 直接调用服务 不走路由
