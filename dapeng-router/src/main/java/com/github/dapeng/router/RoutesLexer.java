@@ -6,6 +6,7 @@ import com.github.dapeng.router.token.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,7 +38,6 @@ public class RoutesLexer {
     static SimpleToken Token_EOF = new SimpleToken(EOF);
     static SimpleToken Token_SEMI_COLON = new SimpleToken(Token.SEMI_COLON);
     static SimpleToken Token_COMMA = new SimpleToken(Token.COMMA);
-
 
 
     /**
@@ -165,7 +165,7 @@ public class RoutesLexer {
         char ch = nextChar();
         StringBuilder sb = new StringBuilder(16);
         do {
-            throwExWithCondition(ch == EOI || ch == EOF,
+            throwExWithCondition(ch == EOI,
                     "[RegexEx]", "parse IP_REGEX failed,check the IP_REGEX express:" + sb.toString());
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
@@ -217,7 +217,7 @@ public class RoutesLexer {
         char quotation = currentChar();
         char ch = nextChar();
         do {
-            throwExWithCondition(ch == EOI || ch == EOF,
+            throwExWithCondition(ch == EOI,
                     "[StringEx]", "parse string failed,check the string express:" + sb.toString());
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
@@ -263,7 +263,7 @@ public class RoutesLexer {
         StringBuilder sb = new StringBuilder(16);
 
         do {
-            throwExWithCondition(ch == EOI || ch == EOF,
+            throwExWithCondition(ch == EOI,
                     "[ModeEx]", "parse mode failed,check the mode express:" + sb.toString());
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
@@ -295,7 +295,7 @@ public class RoutesLexer {
 
         StringBuilder sb = new StringBuilder(16);
         do {
-            throwExWithCondition(ch == EOI || ch == EOF,
+            throwExWithCondition(ch == EOI,
                     "[IpEx]", "parse ip failed,check the ip express:" + sb.toString());
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
@@ -350,9 +350,11 @@ public class RoutesLexer {
 
 
     /**
-     * @param expects
-     * @param isThrow
-     * @return
+     * require next char or throw ex
+     *
+     * @param expects expects char []
+     * @param isThrow if or not throw ex
+     * @return {@code true } or {@code false}
      */
     private boolean require(char[] expects, boolean isThrow) {
         char actual = nextChar();
@@ -362,8 +364,8 @@ public class RoutesLexer {
             }
         }
         throwExWithCondition(isThrow,
-                "[RequireEx]", "require char: " + expects.toString() + " but actual char: " + actual);
-        logger.debug("require char: " + expects.toString() + " but actual char: " + actual);
+                "[RequireEx]", "require char: " + Arrays.toString(expects) + " but actual char: " + actual);
+        logger.debug("require char: " + Arrays.toString(expects) + " but actual char: " + actual);
         return false;
     }
 }

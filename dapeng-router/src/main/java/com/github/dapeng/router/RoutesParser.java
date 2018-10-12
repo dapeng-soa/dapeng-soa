@@ -105,15 +105,11 @@ public class RoutesParser {
      * left  : 'otherwise' matcher (';' matcher)*
      * <p>
      * method match pattern1,pattern2
-     */
-
-    /**
+     * <p>
      * method match s'getFoo',s'setFoo' ; version match s'1.0.0',s'1.0.1' => right
      * 分号 分隔 之间 是一个 Matcher
      * <p>
      * 一个 Matcher 有多个 pattern
-     *
-     * @return
      */
     public Condition left() {
         Matchers matchers = new Matchers();
@@ -136,14 +132,10 @@ public class RoutesParser {
         }
     }
 
-    /*
-     matcher : id 'match' patterns
-     */
-
     /**
+     * matcher : id 'match' patterns
+     * <p>
      * method match "getFoo","setFoo"
-     *
-     * @return
      */
     public Matcher matcher() {
 
@@ -173,8 +165,6 @@ public class RoutesParser {
      * method match s'getFoo',s'setFoo';version match s'1.0.0',s'1.0.1' => right    (1)
      * <p>
      * method match s'getFoo',s'setFoo' => right                (2)
-     *
-     * @return
      */
     public List<Pattern> patterns() {
         List<Pattern> patterns = new ArrayList<>();
@@ -196,8 +186,6 @@ public class RoutesParser {
      * s'setFoo'
      * <p>
      * s'getFoo*'
-     *
-     * @return
      */
     public Pattern pattern() {
         // s'getFoo'
@@ -267,8 +255,6 @@ public class RoutesParser {
 
     /**
      * ？
-     *
-     * @return
      */
     public ThenIp rightPattern() {
         Token token = lexer.peek();
