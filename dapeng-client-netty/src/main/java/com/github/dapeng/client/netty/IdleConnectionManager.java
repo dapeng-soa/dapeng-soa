@@ -48,7 +48,7 @@ public class IdleConnectionManager {
     public void start() {
         live = true;
 
-        final Thread targetThread = new Thread("Check idle connection Thread") {
+        final Thread targetThread = new Thread("check-idle-connection-thread") {
             @Override
             public void run() {
                 while (live) {
