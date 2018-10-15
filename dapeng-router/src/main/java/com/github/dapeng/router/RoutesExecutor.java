@@ -42,9 +42,9 @@ public class RoutesExecutor {
      */
     public static List<RuntimeInstance> executeRoutes(InvocationContextImpl ctx, List<Route> routes, List<RuntimeInstance> instances) {
         StringBuilder logAppend = new StringBuilder();
-        instances.forEach(ins -> logAppend.append(ins.toString() + " "));
-        logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes$开始过滤：过滤前 size  {}，实例: {}", instances.size(), logAppend.toString());
-        boolean isMatched = false;
+        instances.forEach(ins -> logAppend.append(ins.toString()).append(" "));
+        logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes开始过滤：过滤前 size  {}，实例: {}", instances.size(), logAppend.toString());
+        boolean isMatched;
         for (Route route : routes) {
             try {
                 isMatched = matchCondition(ctx, route.getLeft());
@@ -55,12 +55,13 @@ public class RoutesExecutor {
                     if (logger.isDebugEnabled()) {
                         StringBuilder append = new StringBuilder();
                         instances.forEach(ins -> append.append(ins.toString() + " "));
-                        logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes过滤结果 size: {}, 实例: {}",
+                        logger.debug(RoutesExecutor.class.getSimpleName() + "::route left " + route.getLeft().toString() +
+                                        "::executeRoutes过滤结果 size: {}, 实例: {}",
                                 instances.size(), append.toString());
                     }
                     break;
                 } else {
-                    logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes路由没有过滤, size {}", instances.size());
+                    logger.debug(RoutesExecutor.class.getSimpleName() + "::route left " + route.getLeft().toString() + "::executeRoutes路由没有过滤, size {}", instances.size());
                 }
             } catch (Throwable ex) {
                 logger.error(ex.getMessage(), ex);
@@ -220,7 +221,7 @@ public class RoutesExecutor {
                 ctxValue = ctx.callerIp().map(String::valueOf).orElse("");
                 break;
             case "userIp":
-                 ctxValue = ctx.userIp().map(String::valueOf).orElse("");
+                ctxValue = ctx.userIp().map(String::valueOf).orElse("");
                 break;
             default:
                 if (id.startsWith(COOKIE_PREFIX)) {
