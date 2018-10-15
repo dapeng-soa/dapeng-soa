@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>dapeng-container</artifactId>
-        <groupId>com.github.dapeng</groupId>
-        <version>2.0.5</version>
+        <groupId>com.github.dapeng-soa</groupId>
+        <version>2.1.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -13,6 +13,7 @@
 
     <properties>
         <devName>dapeng-container</devName>
+        <dapeng-version>2.1.0</dapeng-version>
     </properties>
 
     <build>
@@ -135,50 +136,100 @@
                             </outputDirectory>
                         </configuration>
                     </plugin>
+
+                    <!--<plugin>-->
+                        <!--<groupId>com.spotify</groupId>-->
+                        <!--<artifactId>docker-maven-plugin</artifactId>-->
+                        <!--<version>0.4.10</version>-->
+                        <!--<configuration>-->
+                            <!--<imageName>docker.io/dapengsoa/dapeng-container:${dapeng-version}</imageName>-->
+                            <!--<dockerDirectory>${basedir}</dockerDirectory>-->
+                        <!--</configuration>-->
+                        <!--<executions>-->
+                            <!--<execution>-->
+                                <!--<id>build-image</id>-->
+                                <!--<phase>package</phase>-->
+                                <!--<goals>-->
+                                    <!--<goal>build</goal>-->
+                                <!--</goals>-->
+                            <!--</execution>-->
+                        <!--</executions>-->
+                    <!--</plugin>-->
                 </plugins>
             </build>
         </profile>
+
+        <profile>
+            <id>dockerBuild</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.spotify</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <version>0.4.10</version>
+                        <configuration>
+                            <imageName>docker.io/dapengsoa/dapeng-container:${dapeng-version}</imageName>
+                            <dockerDirectory>${basedir}</dockerDirectory>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>build-image</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
     </profiles>
     
     <dependencies>
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-container-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-utils</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-spring</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-transaction-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-api-doc</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-message-kafka</artifactId>
             <version>${project.version}</version>
         </dependency>
         <!--counter-->
         <dependency>
-            <groupId>com.github.dapeng</groupId>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-counter-api</artifactId>
             <version>${project.version}</version>
         </dependency>

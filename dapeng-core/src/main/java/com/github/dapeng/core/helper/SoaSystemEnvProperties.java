@@ -114,6 +114,15 @@ public class SoaSystemEnvProperties {
      */
     private static final String KEY_SOA_SLOW_SERVICE_CHECK_ENABLE = "slow.service.check.enable";
 
+    /**
+     * 数据库用户信息加密开关(默认false)
+     */
+    private static final String KEY_SOA_DATABASE_ENCRYPT_ENABLE = "database.encrypt.enable";
+
+    /**
+     * 数据库用户信息加密  公钥
+     */
+    private static final String KEY_SOA_DATABASE_ENCRYPT_PUBLICKEY = "database.encrypt.publickey";
 
 
 
@@ -152,6 +161,12 @@ public class SoaSystemEnvProperties {
     public static final long SOA_MAX_PROCESS_TIME = Long.valueOf(get(KEY_SOA_MAX_PROCESS_TIME, "3000"));
     public static final boolean SOA_SLOW_SERVICE_CHECK_ENABLE = Boolean.valueOf(get(KEY_SOA_SLOW_SERVICE_CHECK_ENABLE, "true"));
 
+
+    /*
+    * 数据库加密配置
+    * */
+    public static final String SOA_DATABASE_ENCRYPT_PUBLICKEY = get(KEY_SOA_DATABASE_ENCRYPT_PUBLICKEY, null);
+    public static final boolean SOA_DATABASE_ENCRYPT_ENABLE = Boolean.valueOf(get(KEY_SOA_DATABASE_ENCRYPT_ENABLE, "false"));
 
     /**
      * 正常返回的时候的response code

@@ -16,10 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
@@ -122,7 +119,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                                  BeanSerializer<REQ> requestSerializer,
                                  BeanSerializer<RESP> responseSerializer)
             throws SoaException {
-        SoaConnection connection = findConnection(service, version, method);
+        SoaConnection connection = retryFindConnection(service, version, method);
         // 选好的服务版本(可能不同于请求的版本)
         String serverVersion = InvocationContextImpl.Factory.currentInstance().versionName();
         if (connection == null) {
@@ -143,7 +140,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                                               BeanSerializer<REQ> requestSerializer,
                                               BeanSerializer<RESP> responseSerializer) throws SoaException {
 
-        SoaConnection connection = findConnection(service, version, method);
+        SoaConnection connection = retryFindConnection(service, version, method);
+
         String serverVersion = InvocationContextImpl.Factory.currentInstance().versionName();
         if (connection == null) {
             throw new SoaException(SoaCode.NotFoundServer, "服务 [ " + service + " ] 无可用实例");
@@ -210,9 +208,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 return null;
             }
         }
-        //当zk上服务节点发生变化的时候, 会导致这里拿不到服务运行时实例.
-        //目前简单重试三次处理
-        List<RuntimeInstance> compatibles = retryGetConnection(zkInfo);
+        //当zk上服务节点发生变化的时候, 可能会导致拿到不存在的服务运行时实例或者根本拿不到任何实例.
+        List<RuntimeInstance> compatibles = new ArrayList<>(zkInfo.getRuntimeInstances());
         if (compatibles == null || compatibles.isEmpty()) {
             return null;
         }
@@ -270,31 +267,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     }
 
     /**
-     * 如果出现异常（ConcurrentModifyException）,或获取到的实例为0，进行重试
-     *
-     * @param zkInfo
-     */
-    private List<RuntimeInstance> retryGetConnection(ZkServiceInfo zkInfo) {
-        int retry = 1;
-        do {
-            try {
-                List<RuntimeInstance> runtimeInstances = zkInfo.getRuntimeInstances();
-                if (runtimeInstances.size() > 0) {
-                    return runtimeInstances;
-                }
-            } catch (Exception e) {
-                logger.error("zkInfo get connection 出现异常: " + e.getMessage());
-            }
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException ignored) {
-            }
-        } while (retry++ <= 3);
-        logger.warn("retryGetConnection::重试3次获取 connection 失败");
-        return null;
-    }
-
-    /**
      * 服务路由
      *
      * @param service
@@ -321,6 +293,31 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
     }
 
+    /**
+     * 如果出现异常（ConcurrentModifyException）,或获取到的实例为0，进行重试
+     */
+    private SoaConnection retryFindConnection(final String service,
+                                              final String version,
+                                              final String method) throws SoaException {
+        SoaConnection soaConnection;
+        int retry = 1;
+        do {
+            try {
+                soaConnection = findConnection(service, version, method);
+                if (soaConnection != null) {
+                    return soaConnection;
+                }
+            } catch (ConcurrentModificationException e) {
+                logger.error("zkInfo get connection 出现异常: " + e.getMessage());
+            }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException ignored) {
+            }
+        } while (retry++ <= 3);
+        logger.warn("retryFindConnection::重试3次获取 connection 失败");
+        return null;
+    }
 
     /**
      * 根据zk 负载均衡配置解析，分为 全局/service级别/method级别

@@ -228,22 +228,25 @@ public class DapengContainer implements Container {
         // register Filters
         new FilterLoader(this, applicationCls);
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            LOGGER.warn("Container graceful shutdown begin.");
-            lifecycleProcessor.onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.STOP));
+        Runtime.getRuntime().addShutdownHook(new Thread("container-shutdown-hook-thread") {
+            @Override
+            public void run() {
+                LOGGER.warn("Container graceful shutdown begin.");
+                lifecycleProcessor.onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.STOP));
 
-            status = STATUS_SHUTTING;
-            // fixme not so graceful
-            getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
-            Lists.reverse(getPlugins()).stream().filter(plugin -> !(plugin instanceof ZookeeperRegistryPlugin)).forEach(Plugin::stop);
-            try {
-                Thread.sleep(4000);
-            } catch (InterruptedException e) {
-                LOGGER.error(e.getMessage(), e);
+                status = STATUS_SHUTTING;
+                // fixme not so graceful
+                getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
+                Lists.reverse(getPlugins()).stream().filter(plugin -> !(plugin instanceof ZookeeperRegistryPlugin)).forEach(Plugin::stop);
+                try {
+                    Thread.sleep(4000);
+                } catch (InterruptedException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+                SHUTDOWN_SIGNAL.countDown();
+                LOGGER.warn("Container graceful shutdown end.");
             }
-            SHUTDOWN_SIGNAL.countDown();
-            LOGGER.warn("Container graceful shutdown end.");
-        }));
+        });
 
         try {
             LOGGER.warn(getClass().getSimpleName() + "::startup end");

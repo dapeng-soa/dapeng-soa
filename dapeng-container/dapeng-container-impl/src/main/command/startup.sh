@@ -40,7 +40,7 @@ GC_OPTS=" -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+HeapDumpOnOutOfMemoryError -X
 
 
 #预分配内存, 会造成jvm进程启动的时候慢一点, 但运行时减轻gc停顿, 减少内存碎片
-MEM_OPTS="-XX:NewRatio=1 -XX:+AlwaysPreTouch"
+MEM_OPTS="-XX:+AlwaysPreTouch"
 #如果线程数较多，函数的递归较少，线程栈内存可以调小节约内存，默认1M。
 MEM_OPTS="$MEM_OPTS -Xss256k"
 
