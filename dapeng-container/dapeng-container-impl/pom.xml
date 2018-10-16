@@ -178,7 +178,8 @@
                         <configuration>
                             <!-- copy child's output files into target/docker -->
                             <tasks>
-                                <copy dir="${project.build.directory}/dapeng-container" todir="${basedir}/docker/">
+                                <copy todir="${basedir}/docker/">
+                                   <fileset dir="${project.build.directory}/dapeng-container/" />
                                 </copy>
                             </tasks>
                         </configuration>
