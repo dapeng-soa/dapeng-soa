@@ -46,6 +46,9 @@ public class RoutesExecutor {
         instances.forEach(ins -> logAppend.append(ins.toString()).append(" "));
         logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes$开始过滤：过滤前 size  {}，实例: {}", instances.size(), logAppend.toString());
         boolean isMatched = false;
+        instances.forEach(ins -> logAppend.append(ins.toString()).append(" "));
+        logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes开始过滤：过滤前 size  {}，实例: {}", instances.size(), logAppend.toString());
+        boolean isMatched;
         for (Route route : routes) {
             try {
                 isMatched = matchCondition(ctx, route.getLeft());
@@ -61,7 +64,7 @@ public class RoutesExecutor {
                     }
                     break;
                 } else {
-                    logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes路由没有过滤, size {}", instances.size());
+                    logger.debug(RoutesExecutor.class.getSimpleName() + "::route left " + route.getLeft().toString() + "::executeRoutes路由没有过滤, size {}", instances.size());
                 }
             } catch (Throwable ex) {
                 logger.error(ex.getMessage(), ex);
