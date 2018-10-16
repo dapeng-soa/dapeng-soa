@@ -1,19 +1,23 @@
-<p align="center">
-<img src="https://github.com/dapeng-soa/documents/blob/master/images/dapeng-logo/%E5%A4%A7%E9%B9%8Flogo-03.png" alt="dapeng-soa" title="dapeng-soa"/>
-</p>
+<img width="254" src="https://github.com/dapeng-soa/documents/blob/master/images/dapeng-logo/%E5%A4%A7%E9%B9%8Flogo-03.png" alt="dapeng-soa" title="dapeng-soa"/>
 
-![](https://img.shields.io/badge/language-java-orange-scala-green.svg)
+[![Language](https://img.shields.io/badge/language-Java-orange.svg)](https://www.oracle.com)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.dapeng-soa/dapeng-parent/badge.svg)](https://search.maven.org/search?q=com.github.dapeng-soa)
 [![GitHub release](https://img.shields.io/github/release/dapeng-soa/dapeng-soa.svg)](https://github.com/dapeng-soa/dapeng-soa/releases)
+[![DockerHub](https://img.shields.io/badge/docker-dapengsoa-yellow.svg)](https://hub.docker.com/r/dapengsoa/dapeng-container/)
 [![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 
+
 Dapeng-soa is a lightweight, high performance micro-service framework, which is based on netty and thrift. It provides service metadata generated from the thrift IDL automatically. Also, scaffolds are provided, such as:
-- apiGateway([dapeng-mesh](https://github.com/dapeng-soa/dapeng-mesh))
->transfer json-http request to thrift protocol
-- online api documents and testing site, which are generated automatically
-- command-line tools
-- configuration/deploy server
-- project templates(g8 template for sbt projects)
+- [x] apiGateway([dapeng-mesh](https://github.com/dapeng-soa/dapeng-mesh)), which transfer json-http request to thrift protocol
+- [x] online api documents and testing site, which are generated automatically
+- [x] command-line tools
+- [x] configuration/deploy server
+- [x] project templates(g8 template for sbt projects)
+
+# Architecture
+<p align="center">
+<img src="https://github.com/dapeng-soa/documents/blob/master/images/dapeng-architecture.png" alt="dapeng-soa" title="dapeng-soa"/>
+</p>
 
 # Features
 

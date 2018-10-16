@@ -184,7 +184,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         // TODO: 2018-10-12 慢服务时间 取自超时时间[TimeOut]
         context.maxProcessTime(getTimeout(service, method));
 
-
         //如果设置了calleeip 和 calleport 直接调用服务 不走路由
         if (context.calleeIp().isPresent() && context.calleePort().isPresent()) {
             return SubPoolFactory.getSubPool(IPUtils.transferIp(context.calleeIp().get()), context.calleePort().get()).getConnection();
