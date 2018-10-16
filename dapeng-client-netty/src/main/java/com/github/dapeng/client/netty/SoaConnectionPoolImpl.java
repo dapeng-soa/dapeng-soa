@@ -18,6 +18,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 
 import static com.github.dapeng.core.SoaCode.*;
@@ -102,7 +103,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
             ZkServiceInfo zkInfo = zkServiceInfoMap.get(serviceName);
             if (zkInfo == null) {
-                zkInfo = new ZkServiceInfo(serviceName, new ArrayList<>());
+                zkInfo = new ZkServiceInfo(serviceName, new CopyOnWriteArrayList<>());
                 zkServiceInfoMap.put(serviceName, zkInfo);
             }
 
@@ -197,7 +198,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 synchronized (this) {
                     zkInfo = zkServiceInfoMap.get(service);
                     if (zkInfo == null) {
-                        zkInfo = new ZkServiceInfo(service, new ArrayList<>());
+                        zkInfo = new ZkServiceInfo(service, new CopyOnWriteArrayList<>());
                         zkServiceInfoMap.put(service, zkInfo);
                     }
                 }
@@ -210,7 +211,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             }
         }
         //当zk上服务节点发生变化的时候, 可能会导致拿到不存在的服务运行时实例或者根本拿不到任何实例.
-        List<RuntimeInstance> compatibles = new ArrayList<>(zkInfo.getRuntimeInstances());
+        List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances();
         if (compatibles == null || compatibles.isEmpty()) {
             return null;
         }
@@ -308,7 +309,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 if (soaConnection != null) {
                     return soaConnection;
                 }
-            } catch (ConcurrentModificationException e) {
+            } catch (Exception e) {
                 logger.error("zkInfo get connection 出现异常: " + e.getMessage());
             }
             try {

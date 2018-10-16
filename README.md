@@ -114,7 +114,7 @@ mvn clean install
 	<java.version>1.8</java.version>
 	<maven.compiler.source>1.8</maven.compiler.source>
 	<maven.compiler.target>1.8</maven.compiler.target>
-	<dapeng.version>2.1.0</dapeng.version> <!-- 定义dapeng框架版本 -->
+	<dapeng.version>2.1.1-SNAPSHOT</dapeng.version> <!-- 定义dapeng框架版本 -->
 </properties>
 
 <dependencies>
@@ -306,11 +306,11 @@ mvn compile dapeng:run
 
 # 第二种(不需配置maven pluginGroup)
 cd hello-service
-mvn compile com.github.dapeng:dapeng-maven-plugin:2.1.0:run
+mvn compile com.github.dapeng:dapeng-maven-plugin:2.1.1-SNAPSHOT:run
 
 # 指定参数运行
 cd hello-service
-mvn compile com.github.dapeng:dapeng-maven-plugin:2.1.0:run -Dsoa.apidoc.port=8089
+mvn compile com.github.dapeng:dapeng-maven-plugin:2.1.1-SNAPSHOT:run -Dsoa.apidoc.port=8089
 ```
 
 ### 2.7 调用服务测试
@@ -370,7 +370,7 @@ resources [resources]:      #源文件文件夹名， 默认值，可以不改
 api [demo-api]:           # 可使用默认值
 service [demo-service]:   # 可使用默认值
 servicePackage []: com.github.dapeng 
-dapengVersion [2.1.0]:    # dapeng框架的版本，现在是2.1.0
+dapengVersion [2.1.1-SNAPSHOT]:    # dapeng框架的版本，现在是2.1.1-SNAPSHOT
 #项目源码包路径，需要填写,这里我们设为com.github.dapeng
 
 Template applied in ./demo

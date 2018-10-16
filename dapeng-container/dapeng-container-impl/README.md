@@ -14,7 +14,7 @@
 > mvn clean package 
 
 ......
-[INFO] Building jar: */dapeng-soa/dapeng-container/dapeng-container-impl/target/dapeng-container-impl-2.1.0-sources.jar
+[INFO] Building jar: */dapeng-soa/dapeng-container/dapeng-container-impl/target/dapeng-container-impl-2.1.1-SNAPSHOT-sources.jar
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
