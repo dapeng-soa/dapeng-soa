@@ -42,9 +42,11 @@ public class RoutesExecutor {
      * 执行 路由规则 匹配， 返回 经过路由后的 实例列表
      */
     public static List<RuntimeInstance> executeRoutes(InvocationContextImpl ctx, List<Route> routes, List<RuntimeInstance> instances) {
-        StringBuilder logAppend = new StringBuilder();
-        instances.forEach(ins -> logAppend.append(ins.toString()).append(" "));
-        logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes开始过滤：过滤前 size  {}，实例: {}", instances.size(), logAppend.toString());
+        if (logger.isDebugEnabled()) {
+            StringBuilder logAppend = new StringBuilder();
+            instances.forEach(ins -> logAppend.append(ins.toString()).append(" "));
+            logger.debug(RoutesExecutor.class.getSimpleName() + "::executeRoutes开始过滤：过滤前 size  {}，实例: {}", instances.size(), logAppend.toString());
+        }
         boolean isMatched;
         for (Route route : routes) {
             try {
@@ -62,7 +64,9 @@ public class RoutesExecutor {
                     }
                     break;
                 } else {
-                    logger.debug(RoutesExecutor.class.getSimpleName() + "::route left " + route.getLeft().toString() + "::executeRoutes路由没有过滤, size {}", instances.size());
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(RoutesExecutor.class.getSimpleName() + "::route left " + route.getLeft().toString() + "::executeRoutes路由没有过滤, size {}", instances.size());
+                    }
                 }
             } catch (Throwable ex) {
                 logger.error(ex.getMessage(), ex);
@@ -246,7 +250,9 @@ public class RoutesExecutor {
                     String cookie = id.substring(COOKIE_PREFIX.length());
                     InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
                     if (invocationContext != null) {
-                        logger.debug("cookies content: {}", invocationContext.cookie(cookie));
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("cookies content: {}", invocationContext.cookie(cookie));
+                        }
                         return invocationContext.cookie(cookie);
                     } else {
                         return null;
