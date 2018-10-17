@@ -28,7 +28,7 @@ public class ZkServiceInfo {
     private Status status = Status.CREATED;
 
     /**
-     * instances list
+     * instances list, always use cow collection
      */
     private List<RuntimeInstance> runtimeInstances;
 
@@ -37,17 +37,12 @@ public class ZkServiceInfo {
     }
 
     public ZkServiceInfo(String service, List<RuntimeInstance> runtimeInstances) {
-
         this.service = service;
         this.runtimeInstances = runtimeInstances;
     }
 
     public List<RuntimeInstance> getRuntimeInstances() {
         return runtimeInstances;
-    }
-
-    public void setRuntimeInstances(List<RuntimeInstance> runtimeInstances) {
-        this.runtimeInstances = runtimeInstances;
     }
 
     public String getService() {
