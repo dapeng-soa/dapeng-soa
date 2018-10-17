@@ -1,5 +1,4 @@
 import com.github.dapeng.core.helper.IPUtils;
-import com.github.dapeng.router.token.IpToken;
 import org.junit.Test;
 
 import java.util.regex.Matcher;

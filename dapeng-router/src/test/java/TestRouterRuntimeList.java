@@ -12,8 +12,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.matchers.JUnitMatchers.containsString;
-
 /**
  * 描述:
  *
@@ -615,21 +613,4 @@ public class TestRouterRuntimeList {
         }
 
     }
-
-    @Test
-    public void testRegexCookieTest() {
-        String pattern = "  cookie_storeId  match r'100.*'  => ip\"192.168.1.101\"";
-
-        List<Route> routes = RoutesExecutor.parseAll(pattern);
-        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-        ctx.setCookie("storeId", "100201");
-        List<RuntimeInstance> prepare = prepare(ctx, routes);
-
-        List<RuntimeInstance> expectInstances = new ArrayList<>();
-        expectInstances.add(runtimeInstance1);
-
-        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
-    }
-
-
 }
