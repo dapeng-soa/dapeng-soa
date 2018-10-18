@@ -236,6 +236,13 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
 
         //loadBalance
+        if (logger.isDebugEnabled()) {
+            StringBuilder sb = new StringBuilder();
+            routedInstances.forEach(ins->sb.append(ins.toString())
+                    .append(" : ")
+                    .append(ins.getActiveCount()).append(" "));
+            logger.debug(getClass().getSimpleName() + "::负载均衡实例count值: " + sb.toString());
+        }
         RuntimeInstance inst = loadBalance(method, zkInfo, routedInstances);
         if (inst == null) {
             // should not reach here
@@ -244,6 +251,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         inst.increaseActiveCount();
 
+        if (logger.isDebugEnabled()) {
+            logger.debug("负载均衡选择结果: " + inst.toString());
+        }
         // TODO: 2018-08-04  服务端需要返回来正确的版本号
         context.versionName(inst.version);
 

@@ -8,6 +8,7 @@ import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Registry Agent
@@ -73,4 +74,21 @@ public interface RegistryAgent {
      * @see com.github.dapeng.impl.plugins.netty
      */
     ServiceFreqControl getFreqControlRule(boolean usingFallback, String serviceKey);
+
+    /**
+     * 获取本地所有限流规则
+     *
+     * @param
+     * @return
+     */
+    Map<String, ServiceFreqControl> getFreqControlMap();
+
+    /**
+     * 获取本地所有配置信息
+     *
+     * @param
+     * @return
+     */
+    ConcurrentMap<String, ZkServiceInfo> getZkConfigMap();
+
 }

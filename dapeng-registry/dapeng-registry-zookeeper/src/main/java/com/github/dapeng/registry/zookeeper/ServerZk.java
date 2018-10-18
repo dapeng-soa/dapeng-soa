@@ -39,7 +39,7 @@ public class ServerZk extends CommonZk {
     private RegistryAgent registryAgent;
 
     /**
-     * 路由配置信息
+     * 限流配置信息
      */
     private final Map<String, ServiceFreqControl> freqControlMap = new ConcurrentHashMap<>(16);
 
@@ -129,6 +129,13 @@ public class ServerZk extends CommonZk {
 
     }
 
+    public Map<String, ServiceFreqControl> getFreqControlMap() {
+        return freqControlMap;
+    }
+
+    public ConcurrentMap<String, ZkServiceInfo> getZkConfigMap() {
+        return zkConfigMap;
+    }
     //～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～
     //                           that's begin                                      ～
     //                                                                             ～

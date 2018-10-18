@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 import static com.github.dapeng.registry.zookeeper.CommonZk.*;
 
@@ -150,6 +151,17 @@ public class ServerZkAgentImpl implements RegistryAgent {
     public ServiceFreqControl getFreqControlRule(boolean usingFallback, String serviceKey) {
         return serverZk.getFreqControl(serviceKey);
     }
+
+    @Override
+    public Map<String, ServiceFreqControl> getFreqControlMap() {
+        return serverZk.getFreqControlMap();
+    }
+
+    @Override
+    public ConcurrentMap<String, ZkServiceInfo> getZkConfigMap() {
+        return serverZk.getZkConfigMap();
+    }
+
 
     /**
      * getAllServices

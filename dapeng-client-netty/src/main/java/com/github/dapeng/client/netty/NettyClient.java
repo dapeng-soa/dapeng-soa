@@ -1,8 +1,6 @@
 package com.github.dapeng.client.netty;
 
-import com.github.dapeng.core.SoaCode;
-import com.github.dapeng.core.SoaException;
-import com.github.dapeng.core.TransactionContext;
+import com.github.dapeng.core.*;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.AbstractByteBufAllocator;
@@ -21,7 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.concurrent.*;
 
 /**
@@ -37,6 +37,8 @@ public class NettyClient {
 
     private Bootstrap bootstrap = null;
     private final EventLoopGroup workerGroup = new NioEventLoopGroup(1);
+    private final static SoaConnectionPoolFactory factory = ServiceLoader.load(SoaConnectionPoolFactory.class,
+            NettyClient.class.getClassLoader()).iterator().next();
 
     private static class RequestQueue {
         private static class AsyncRequestWithTimeout {
@@ -149,6 +151,16 @@ public class NettyClient {
             // 如果在服务里面, 那么不清理MDC
             if (!TransactionContext.hasCurrentInstance()) {
                 MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+            }
+            //客户端请求超时，在途请求数-1
+            InetSocketAddress inetSocketAddress = (InetSocketAddress)channel.remoteAddress();
+            String host = inetSocketAddress.getAddress().getHostAddress();
+            int port = inetSocketAddress.getPort();
+            RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service,host, port);
+            if (runtimeInstance == null) {
+                LOGGER.error("NettyClient::runtimeInstance not found.");
+            } else {
+                runtimeInstance.decreaseActiveCount();
             }
             LOGGER.error("请求服务超时[" + service + "]，seqid:" + seqid);
             throw new SoaException(SoaCode.ReqTimeOut.getCode(), "请求服务超时[" + service + "]");

@@ -89,6 +89,9 @@ public class ClientZk extends CommonZk {
         return clientZk;
     }
 
+    public Map<String, List<Route>> getRoutesMap(){
+        return  routesMap;
+    }
 
     /**
      * 连接zookeeper

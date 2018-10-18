@@ -99,4 +99,18 @@ public class ZkServiceInfo {
         public Map<String, T> serviceConfigs = new HashMap<>();
         public Map<String, T> instanceConfigs = new HashMap<>();
     }
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("{ service=" + service );
+        sb.append(", processTimeGlobalConfig=").append(processTimeConfig.globalConfig)
+                .append(", processTimeServiceConfig=").append(processTimeConfig.serviceConfigs);
+        sb.append(", timeGlobalConfig=").append(timeConfig.globalConfig)
+                .append(", processTimeServiceConfig").append(timeConfig.serviceConfigs);
+        sb.append(", loadbalanceGlobalConfig=").append(loadbalanceConfig.globalConfig)
+                .append(", loadbalanceServiceConfig=").append(loadbalanceConfig.serviceConfigs);
+        sb.append(", weightGlobalConfig==").append(weightGlobalConfig)
+                .append(", weightServiceConfigs=").append(weightServiceConfigs);
+        sb.append("}");
+        return sb.toString();
+    }
 }
