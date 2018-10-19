@@ -335,12 +335,12 @@ public abstract class SoaBaseConnection implements SoaConnection {
             LOGGER.error("通讯包解析出错:\n" + ex.getMessage(), ex);
             LOGGER.error(DumpUtil.dumpToStr(responseBuf.readerIndex(readerIndex)));
             return new Result<>(null,
-                    new SoaException(SoaCode.RespDecodeError, SoaCode.RespDecodeError.getCode()));
+                    new SoaException(SoaCode.RespDecodeError, SoaCode.RespDecodeError.getMsg()));
 
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             LOGGER.error("processResponse unknown exception: " + ex.getMessage(), ex);
             return new Result<>(null,
-                    new SoaException(SoaCode.RespDecodeUnknownError, SoaCode.RespDecodeUnknownError.getCode()));
+                    new SoaException(SoaCode.RespDecodeUnknownError, SoaCode.RespDecodeUnknownError.getMsg()));
         } finally {
             responseBuf.release();
         }

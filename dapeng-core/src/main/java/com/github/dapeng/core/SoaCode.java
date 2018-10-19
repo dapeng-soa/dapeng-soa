@@ -16,7 +16,7 @@ public enum SoaCode implements SoaBaseCodeInterface {
     ReqFieldNull("Err-Core-411", "请求对象字段不允许为空"),
     RespFieldNull("Err-Core-412", "响应对象字段不允许为空"),
     RespDecodeError("Err-Core-413", "响应通讯包解析出错"),
-    RespDecodeUnknownError("Err-Core-414", "响应通讯包未知异常"),
+    RespDecodeUnknownError("Err-Core-414", "响应通讯包未知异常,可能API版本不一致"),
 
     // 服务端
     ServerUnKnown("Err-Core-500", "系统出错了!"),
