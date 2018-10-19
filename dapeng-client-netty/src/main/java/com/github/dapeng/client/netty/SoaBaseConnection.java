@@ -62,6 +62,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
         invocationContext.serviceName(service);
         invocationContext.versionName(version);
         invocationContext.methodName(method);
+        invocationContext.timeout((int)timeout);
 
         Filter dispatchFilter = new Filter() {
             private FilterChain getPrevChain(FilterContext ctx) {

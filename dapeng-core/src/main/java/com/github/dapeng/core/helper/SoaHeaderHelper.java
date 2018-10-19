@@ -102,6 +102,10 @@ public class SoaHeaderHelper {
             header.setSessionTid(invocationContext.sessionTid());
         }
 
+        if (invocationContext.timeout().isPresent()) {
+            header.setTimeout(invocationContext.timeout());
+        }
+
         /**
          * 如果容器内调用其它服务, 将原始的调用者信息传递
          */
