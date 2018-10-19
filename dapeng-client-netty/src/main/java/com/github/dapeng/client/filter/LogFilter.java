@@ -47,7 +47,9 @@ public class LogFilter implements Filter {
             String infoLog = "request[seqId:" + invocationContext.seqId() + ", server:" + filterContext.getAttribute("serverInfo") + "]:"
                     + "service[" + invocationContext.serviceName()
                     + "]:version[" + invocationContext.versionName()
-                    + "]:method[" + invocationContext.methodName() + "]";
+                    + "]:method[" + invocationContext.methodName()
+                    + "]:userIp[" + invocationContext.userIp()
+                    + "]:callerMid["+invocationContext.callerMid()+"]";
 
             LOGGER.info(getClass().getSimpleName() + "::onEntry," + infoLog);
         } finally {
