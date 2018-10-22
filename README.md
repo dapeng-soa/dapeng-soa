@@ -33,8 +33,8 @@ Dapeng-soa 是一个轻量级、高性能的微服务框架，构建在Netty以�
 - [x] 分布式服务调用日志跟踪
 
 # Next
-[Quick start](https://github.com/dapeng-soa/dapeng-soa/quickstart_en.md)
+[Quick start](https://github.com/dapeng-soa/dapeng-soa/blob/master/quickstart.md)
 
 # Documents
-- [x] [中文](https://github.com/dapeng-soa/dapeng-soa/README.md)
-- [x] [English](https://github.com/dapeng-soa/dapeng-soa/README_en.md)
+- [x] [中文](https://github.com/dapeng-soa/dapeng-soa/blob/master/README.md)
+- [x] [English](https://github.com/dapeng-soa/dapeng-soa/blob/master/README_en.md)

@@ -35,8 +35,8 @@ Dapeng-soa is a lightweight, high performance micro-service framework, which is 
 
 
 # Next
-[Quick start](https://github.com/dapeng-soa/dapeng-soa/quickstart_en.md)
+[Quick start](https://github.com/dapeng-soa/dapeng-soa/blob/master/quickstart_en.md)
 
 # Documents
-- [x] [中文](https://github.com/dapeng-soa/dapeng-soa/README.md)
-- [x] [English](https://github.com/dapeng-soa/dapeng-soa/README_en.md)
+- [x] [中文](https://github.com/dapeng-soa/dapeng-soa/blob/master/README.md)
+- [x] [English](https://github.com/dapeng-soa/dapeng-soa/blob/master/README_en.md)
