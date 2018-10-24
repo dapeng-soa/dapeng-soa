@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author lihuimin
  */
+@SuppressWarnings("unchecked")
 public abstract class SoaBaseConnection implements SoaConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(SoaBaseConnection.class);
 
@@ -281,7 +282,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
 
     private SoaException convertToSoaException(Throwable ex) {
-        SoaException soaException = null;
+        SoaException soaException;
         if (ex instanceof SoaException) {
             soaException = (SoaException) ex;
         } else {
