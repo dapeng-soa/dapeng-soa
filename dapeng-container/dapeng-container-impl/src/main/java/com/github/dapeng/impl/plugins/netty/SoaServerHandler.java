@@ -188,8 +188,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         attachErrorInfo(transactionContext, e);
 
         SoaResponseWrapper responseWrapper = new SoaResponseWrapper(transactionContext,
-                Optional.ofNullable(null),
-                Optional.ofNullable(null));
+                Optional.empty(),
+                Optional.empty());
 
         ctx.writeAndFlush(responseWrapper).addListener(FIRE_EXCEPTION_ON_FAILURE);
     }
