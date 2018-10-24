@@ -36,10 +36,25 @@ public class MdcCtxInfoUtil {
         }
     }
 
+    /**
+     * 容器使用 appClassloader load MDC 并 根据 key {@code mdcKey } put 值到 MDC 中
+     * {@link SoaSystemEnvProperties#KEY_LOGGER_SESSION_TID},{@link SoaSystemEnvProperties#THREAD_LEVEL_KEY}
+     *
+     * @param application app 应用 classloader
+     * @param mdcKey      mdc key
+     * @param mdcValue    mdc value
+     */
     public static void putMdcToAppClassLoader(Application application, String mdcKey, String mdcValue) {
         switchMdcToAppClassLoader("put", application.getAppClasssLoader(), mdcKey, mdcValue);
     }
 
+    /**
+     * 容器使用 appClassloader load MDC 并 根据 key {@code mdcKey } 从 MDC 中 remove 值
+     * {@link SoaSystemEnvProperties#KEY_LOGGER_SESSION_TID},{@link SoaSystemEnvProperties#THREAD_LEVEL_KEY}
+     *
+     * @param application app 应用 classloader
+     * @param mdcKey      mdc key
+     */
     public static void removeMdcToAppClassLoader(Application application, String mdcKey) {
         switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), mdcKey, null);
     }
