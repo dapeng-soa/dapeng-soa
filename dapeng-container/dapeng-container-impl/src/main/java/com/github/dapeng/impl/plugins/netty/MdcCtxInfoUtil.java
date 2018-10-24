@@ -1,5 +1,6 @@
 package com.github.dapeng.impl.plugins.netty;
 
+import com.github.dapeng.core.Application;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,19 +27,25 @@ public class MdcCtxInfoUtil {
         final Class<?> mdcClass;
         final Method put;
         final Method remove;
-        final String mdcKey;
 
-        MdcCtxInfo(ClassLoader cl, Class<?> mdcClass, Method put, Method remove, String mdcKey) {
+        MdcCtxInfo(ClassLoader cl, Class<?> mdcClass, Method put, Method remove) {
             this.appClassLoader = cl;
             this.mdcClass = mdcClass;
             this.put = put;
             this.remove = remove;
-            this.mdcKey = mdcKey;
         }
     }
 
+    public static void putMdcToAppClassLoader(Application application, String mdcKey, String mdcValue) {
+        switchMdcToAppClassLoader("put", application.getAppClasssLoader(), mdcKey, mdcValue);
+    }
 
-    public static void switchMdcToAppClassLoader(String methodName, ClassLoader appClassLoader, String mdcKey, String mdcValue) {
+    public static void removeMdcToAppClassLoader(Application application, String mdcKey) {
+        switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), mdcKey, null);
+    }
+
+
+    private static void switchMdcToAppClassLoader(String methodName, ClassLoader appClassLoader, String mdcKey, String mdcValue) {
         try {
             MdcCtxInfo mdcCtxInfo = mdcCtxInfoCache.get(appClassLoader);
             if (mdcCtxInfo == null) {
@@ -50,8 +57,7 @@ public class MdcCtxInfoUtil {
                         mdcCtxInfo = new MdcCtxInfo(appClassLoader,
                                 mdcClass,
                                 mdcClass.getMethod("put", String.class, String.class),
-                                mdcClass.getMethod("remove", String.class),
-                                mdcKey);
+                                mdcClass.getMethod("remove", String.class));
                         mdcCtxInfoCache.put(appClassLoader, mdcCtxInfo);
                     }
                 }
@@ -67,4 +73,6 @@ public class MdcCtxInfoUtil {
             LOGGER.error(appClassLoader.getClass().getSimpleName() + "::switchMdcToAppClassLoader," + e.getMessage(), e);
         }
     }
+
+
 }

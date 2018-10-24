@@ -161,8 +161,8 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             messageProcessor.writeMessageEnd();
 
             transport.flush();
-            MdcCtxInfoUtil.switchMdcToAppClassLoader("put", application.getAppClasssLoader(),
-                    SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
+            MdcCtxInfoUtil.putMdcToAppClassLoader(application, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID,
+                    transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
             String infoLog = "response[seqId:" + transactionContext.seqId() + ", respCode:" + soaHeader.getRespCode().get() + "]:"
                     + "service[" + soaHeader.getServiceName()
                     + "]:version[" + soaHeader.getVersionName()
@@ -181,8 +181,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
-            MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(),
-                    SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, null);
+            MdcCtxInfoUtil.removeMdcToAppClassLoader(application, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
             MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         }
     }

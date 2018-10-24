@@ -75,7 +75,7 @@
         <slf4j-version>1.7.13</slf4j-version>
         <profile.name>oss</profile.name>
         <arguments />
-        <logback-version>1.1.3</logback-version>
+        <logback-version>2.0.0</logback-version>
     </properties>
 
     <profiles>
@@ -180,13 +180,13 @@
         <dependencies>
             <!-- Logging -->
             <dependency>
-                <groupId>ch.qos.logback</groupId>
+                <groupId>com.github.dapeng-soa</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${logback-version}</version>
             </dependency>
 
             <dependency>
-                <groupId>ch.qos.logback</groupId>
+                <groupId>com.github.dapeng-soa</groupId>
                 <artifactId>logback-core</artifactId>
                 <version>${logback-version}</version>
             </dependency>

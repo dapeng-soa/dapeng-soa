@@ -17,10 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * @author Ever
  * @date 2018-04-11
@@ -38,15 +34,15 @@ public class LogFilter implements Filter {
             // 容器的IO线程MDC以及应用的MDC(不同classLoader)设置
             String sessionTid = transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0");
             MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
-            putMdcToAppCl(application, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
+            MdcCtxInfoUtil.putMdcToAppClassLoader(application, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
 
             //DEBUG
             InvocationContextImpl invocationCtx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
             String logLevel = invocationCtx.cookie(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
 
             if (logLevel != null) {
-                putMdcToAppCl(application, SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
                 MDC.put(SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
+                MdcCtxInfoUtil.putMdcToAppClassLoader(application, SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
             }
 
             if (LOGGER.isTraceEnabled()) {
@@ -74,10 +70,10 @@ public class LogFilter implements Filter {
                 boolean isAsync = (Boolean) filterContext.getAttribute("isAsync");
                 if (isAsync) {
                     MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
-                    MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, null);
+                    MdcCtxInfoUtil.removeMdcToAppClassLoader(application, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
 
                     MDC.remove(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
-                    removeMdcToAppCl(application, SoaSystemEnvProperties.THREAD_LEVEL_KEY);
+                    MdcCtxInfoUtil.removeMdcToAppClassLoader(application, SoaSystemEnvProperties.THREAD_LEVEL_KEY);
                 }
             }
         }
@@ -94,15 +90,15 @@ public class LogFilter implements Filter {
             if (isAsync) {
                 String sessionTid = transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0");
                 MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
-                putMdcToAppCl(application, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
+                MdcCtxInfoUtil.putMdcToAppClassLoader(application, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
 
                 //DEBUG
                 InvocationContextImpl invocationCtx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
                 String logLevel = invocationCtx.cookie(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
 
                 if (logLevel != null) {
-                    putMdcToAppCl(application, SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
                     MDC.put(SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
+                    MdcCtxInfoUtil.putMdcToAppClassLoader(application, SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
                 }
             }
 
@@ -133,21 +129,13 @@ public class LogFilter implements Filter {
             } catch (TException e) {
                 LOGGER.error(e.getMessage(), e);
             } finally {
-                removeMdcToAppCl(application, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
                 MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+                MdcCtxInfoUtil.removeMdcToAppClassLoader(application, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
 
-                removeMdcToAppCl(application, SoaSystemEnvProperties.THREAD_LEVEL_KEY);
                 MDC.remove(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
+                MdcCtxInfoUtil.removeMdcToAppClassLoader(application, SoaSystemEnvProperties.THREAD_LEVEL_KEY);
 
             }
         }
-    }
-
-    private void putMdcToAppCl(Application application, String mdcKey, String mdcValue) {
-        MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), mdcKey, mdcValue);
-    }
-
-    private void removeMdcToAppCl(Application application, String mdcKey) {
-        MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), mdcKey, null);
     }
 }
