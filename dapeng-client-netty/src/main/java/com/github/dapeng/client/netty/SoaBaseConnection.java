@@ -131,7 +131,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
         assert (result != null);
 
         //请求响应，在途请求-1
-        RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service,host, port);
+        RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service, host, port);
         if (runtimeInstance == null) {
             LOGGER.error("SoaBaseConnection::runtimeInstance not found.");
         } else {
@@ -269,7 +269,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         assert (resultFuture != null);
         //请求响应，在途请求-1
-        RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service,host, port);
+        RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service, host, port);
         if (runtimeInstance == null) {
             LOGGER.error("SoaBaseConnection::runtimeInstance not found.");
         } else {
@@ -335,13 +335,15 @@ public abstract class SoaBaseConnection implements SoaConnection {
             LOGGER.error("通讯包解析出错:\n" + ex.getMessage(), ex);
             LOGGER.error(DumpUtil.dumpToStr(responseBuf.readerIndex(readerIndex)));
             return new Result<>(null,
-                    new SoaException(SoaCode.RespDecodeError, SoaCode.RespDecodeError.getCode()));
-        } finally {
-            if (responseBuf != null) {
-                responseBuf.release();
-            }
-        }
+                    new SoaException(SoaCode.RespDecodeError, SoaCode.RespDecodeError.getMsg()));
 
+        } catch (Throwable ex) {
+            LOGGER.error("processResponse unknown exception: " + ex.getMessage(), ex);
+            return new Result<>(null,
+                    new SoaException(SoaCode.RespDecodeUnknownError, SoaCode.RespDecodeUnknownError.getMsg()));
+        } finally {
+            responseBuf.release();
+        }
     }
 
 
