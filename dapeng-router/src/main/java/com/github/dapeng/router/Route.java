@@ -12,8 +12,8 @@ import java.util.List;
  */
 public class Route {
 
-    private Condition left;
-    private List<ThenIp> thenRouteIps;
+    private final Condition left;
+    private final List<ThenIp> thenRouteIps;
 
     public Route(Condition left, List<ThenIp> thenRouteIps) {
         this.left = left;
@@ -30,9 +30,6 @@ public class Route {
 
     @Override
     public String toString() {
-        return "Route{" +
-                "left=" + left +
-                ", thenRouteIps:" + thenRouteIps +
-                '}';
+        return "Route{ left=" + left + ", thenRouteIps:" + thenRouteIps + '}';
     }
 }

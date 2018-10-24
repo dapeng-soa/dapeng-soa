@@ -1,5 +1,7 @@
 package com.github.dapeng.client.netty;
 
+import com.github.dapeng.cookie.CookieExecutor;
+import com.github.dapeng.cookie.CookieRoute;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.helper.IPUtils;
@@ -11,6 +13,7 @@ import com.github.dapeng.registry.zookeeper.LoadBalanceAlgorithm;
 import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
+import io.netty.handler.codec.http.cookie.Cookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -228,6 +231,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + ":" + version + "], not found available version of instances");
             throw new SoaException(NoMatchedService, "服务 [ " + service + ":" + version + "] 无可用实例:没有找到对应的服务版本");
         }
+        //set cookies routes
+        cookieRouter(service, version, method);
 
         // router
         List<RuntimeInstance> routedInstances = router(service, method, version, checkVersionInstances);
@@ -292,6 +297,22 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 throw new SoaException(SoaCode.NoMatchedRouting);
             }
             return runtimeInstances;
+        }
+    }
+
+    /**
+     * cookie 服务路由
+     */
+    private void cookieRouter(String service, String method, String version) {
+        InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        List<CookieRoute> cookieRoutes = zkAgent.getCookieRoutes(service);
+        if (cookieRoutes == null || cookieRoutes.size() == 0) {
+            logger.debug("cookie router 路由信息为空或size为0, 跳过 cookie router");
+        } else {
+            context.serviceName(service);
+            context.methodName(method);
+            context.versionName(version);
+            CookieExecutor.cookieRoutes(context, cookieRoutes);
         }
     }
 
@@ -502,42 +523,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         } else if (globalTimeOut != null) {
 
             return Optional.of(globalTimeOut);
-        } else {
-            return Optional.empty();
-        }
-    }
-
-
-    /**
-     * 获取 zookeeper processTime config
-     * <p>
-     * method level -> service level -> global level
-     * <</p>
-     *
-     * @return
-     */
-    private Optional<Long> getZkProcessTime(String methodName, ZkServiceInfo configInfo) {
-        //方法级别
-        Long methodProcessTime = null;
-        //服务配置
-        Long serviceProcessTime = null;
-
-        Long globalProcessTime = null;
-
-        if (configInfo != null) {
-            //方法级别
-            methodProcessTime = configInfo.processTimeConfig.serviceConfigs.get(methodName);
-            //服务配置
-            serviceProcessTime = configInfo.processTimeConfig.serviceConfigs.get(ConfigKey.ProcessTime.getValue());
-            globalProcessTime = configInfo.processTimeConfig.globalConfig;
-        }
-
-        if (methodProcessTime != null) {
-            return Optional.of(methodProcessTime);
-        } else if (serviceProcessTime != null) {
-            return Optional.of(serviceProcessTime);
-        } else if (globalProcessTime != null) {
-            return Optional.of(globalProcessTime);
         } else {
             return Optional.empty();
         }

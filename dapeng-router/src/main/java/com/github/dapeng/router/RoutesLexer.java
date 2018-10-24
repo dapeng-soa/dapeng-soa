@@ -30,14 +30,14 @@ public class RoutesLexer {
     private String content;
     private int pos;
 
-    static SimpleToken Token_EOL = new SimpleToken(Token.EOL);
-    static SimpleToken Token_THEN = new SimpleToken(Token.THEN);
-    static SimpleToken Token_OTHERWISE = new SimpleToken(Token.OTHERWISE);
-    static SimpleToken Token_MATCH = new SimpleToken(Token.MATCH);
-    static SimpleToken Token_NOT = new SimpleToken(Token.NOT);
-    static SimpleToken Token_EOF = new SimpleToken(EOF);
-    static SimpleToken Token_SEMI_COLON = new SimpleToken(Token.SEMI_COLON);
-    static SimpleToken Token_COMMA = new SimpleToken(Token.COMMA);
+    public static SimpleToken Token_EOL = new SimpleToken(Token.EOL);
+    public static SimpleToken Token_THEN = new SimpleToken(Token.THEN);
+    public static SimpleToken Token_OTHERWISE = new SimpleToken(Token.OTHERWISE);
+    public static SimpleToken Token_MATCH = new SimpleToken(Token.MATCH);
+    public static SimpleToken Token_NOT = new SimpleToken(Token.NOT);
+    public static SimpleToken Token_EOF = new SimpleToken(EOF);
+    public static SimpleToken Token_SEMI_COLON = new SimpleToken(Token.SEMI_COLON);
+    public static SimpleToken Token_COMMA = new SimpleToken(Token.COMMA);
 
 
     /**
@@ -120,6 +120,14 @@ public class RoutesLexer {
                     pos--;
                     return processId();
                 }
+                //process cookies
+            case 'c':
+                if (require(new char[]{'\"', '\''}, false)) {
+                    return parseCookies();
+                } else {
+                    pos--;
+                    return processId();
+                }
             case '-':
             case '+':
             case '0':
@@ -171,6 +179,33 @@ public class RoutesLexer {
         } while ((ch = nextChar()) != quotation);
         String value = sb.toString();
         return new RegexToken(value);
+    }
+
+    /**
+     * c"storeId#11928654"
+     *
+     * @return
+     */
+    private Token parseCookies() {
+        char quotation = currentChar();
+        char ch = nextChar();
+        StringBuilder sb = new StringBuilder(16);
+        do {
+            throwExWithCondition(ch == EOI,
+                    "[CookiesEx]", "parse COOKIE_RULES failed,check the COOKIE_REGEX express:" + sb.toString());
+            sb.append(ch);
+        } while ((ch = nextChar()) != quotation);
+        String value = sb.toString();
+
+        int pos = value.indexOf("#");
+
+        if (pos != -1) {
+            String backValue = value.substring(pos);
+            if (!backValue.contains("#")) {
+                return new CookieToken(value.substring(0, pos), backValue);
+            }
+        }
+        throw new ParsingException("[CookiesEx]", "parse COOKIE_RULES failed,check the cookie value contains '#' or more than one ");
     }
 
 

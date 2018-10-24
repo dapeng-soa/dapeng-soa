@@ -1,5 +1,7 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.cookie.CookieExecutor;
+import com.github.dapeng.cookie.CookieRoute;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.version.Version;
@@ -11,6 +13,7 @@ import org.apache.zookeeper.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +41,11 @@ public class ClientZk extends CommonZk {
      * 路由配置信息
      */
     private final Map<String, List<Route>> routesMap = new ConcurrentHashMap<>(128);
+
+    /**
+     * cookie 路由配置信息
+     */
+    private final Map<String, List<CookieRoute>> cookieRoutesMap = new ConcurrentHashMap<>(32);
 
     /**
      * master zkHost
@@ -172,15 +180,55 @@ public class ClientZk extends CommonZk {
         return null;
     }
 
+    public List<CookieRoute> getCookieRoutes(String service) {
+        if (cookieRoutesMap.get(service) == null) {
+            try {
+                byte[] data = zk.getData(COOKIE_ROUTES_PATH + "/" + service, event -> {
+                    if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
+                        LOGGER.info("cookie routes 节点 data 发现变更，重新获取信息");
+                        cookieRoutesMap.remove(service);
+                        getCookieRoutes(service);
+                    }
+                }, null);
+                List<CookieRoute> routes = processCookieRouteData(service, data);
+                LOGGER.warn("ClientZk::getCookieRoutes routes changes:" + routes);
+                return routes;
+            } catch (KeeperException | InterruptedException e) {
+                LOGGER.error("获取route service 节点: {} 出现异常", service);
+            }
+        } else {
+            LOGGER.debug("获取 cookie route信息, service: {} , route size {}", service, cookieRoutesMap.get(service).size());
+            return this.cookieRoutesMap.get(service);
+        }
+        return null;
+    }
+
+
     /**
      * process zk data 解析route 信息
      */
     public List<Route> processRouteData(String service, byte[] data) {
         List<Route> zkRoutes;
         try {
-            String routeData = new String(data, "utf-8");
+            String routeData = new String(data, StandardCharsets.UTF_8);
             zkRoutes = RoutesExecutor.parseAll(routeData);
             routesMap.put(service, zkRoutes);
+        } catch (Exception e) {
+            zkRoutes = new ArrayList<>(16);
+            LOGGER.error("parser routes 信息 失败，请检查路由规则写法是否正确!");
+        }
+        return zkRoutes;
+    }
+
+    /**
+     * process zk data 解析route 信息
+     */
+    public List<CookieRoute> processCookieRouteData(String service, byte[] data) {
+        List<CookieRoute> zkRoutes;
+        try {
+            String routeData = new String(data, StandardCharsets.UTF_8);
+            zkRoutes = CookieExecutor.parseCookieRoutes(routeData);
+            cookieRoutesMap.put(service, zkRoutes);
         } catch (Exception e) {
             zkRoutes = new ArrayList<>(16);
             LOGGER.error("parser routes 信息 失败，请检查路由规则写法是否正确!");
@@ -255,9 +303,8 @@ public class ClientZk extends CommonZk {
                 runtimeInstanceList.clear();
                 runtimeInstanceList.addAll(runtimeInstances);
 
-                StringBuilder logBuffer = new StringBuilder();
-                zkInfo.getRuntimeInstances().forEach(info -> logBuffer.append(info.toString()));
-                LOGGER.info("<-> syncZkRuntimeInfo 触发服务实例同步，目前服务实例列表:" + zkInfo.service + " -> " + logBuffer);
+                LOGGER.info("<-> syncZkRuntimeInfo 触发服务实例同步，目前服务实例列表: {} -> {}",
+                        zkInfo.service, zkInfo.getRuntimeInstances().toString());
                 zkInfo.setStatus(ZkServiceInfo.Status.ACTIVE);
                 return;
             } catch (KeeperException | InterruptedException e) {

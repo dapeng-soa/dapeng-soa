@@ -1,6 +1,7 @@
 package com.github.dapeng.registry.zookeeper;
 
 
+import com.github.dapeng.cookie.CookieRoute;
 import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
@@ -89,5 +90,10 @@ public class ClientZkAgentImpl implements ClientZkAgent {
     @Override
     public List<Route> getRoutes(String service) {
         return masterZk.getRoutes(service);
+    }
+
+    @Override
+    public List<CookieRoute> getCookieRoutes(String service) {
+        return masterZk.getCookieRoutes(service);
     }
 }

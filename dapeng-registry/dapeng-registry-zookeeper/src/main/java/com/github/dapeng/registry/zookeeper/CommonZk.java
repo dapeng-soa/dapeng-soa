@@ -27,6 +27,7 @@ public class CommonZk {
     final static String RUNTIME_PATH = "/soa/runtime/services";
     final static String CONFIG_PATH = "/soa/config/services";
     final static String ROUTES_PATH = "/soa/config/routes";
+    final static String COOKIE_ROUTES_PATH = "/soa/config/cookies";
     final static String FREQ_PATH = "/soa/config/freq";
 
 
