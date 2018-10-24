@@ -39,6 +39,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         this.container = container;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void encode(ChannelHandlerContext channelHandlerContext,
                           SoaResponseWrapper wrapper,
@@ -61,8 +62,9 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                 writeErrorResponse(transactionContext, application, out);
             } else {
                 try {
-                    BeanSerializer serializer = wrapper.serializer.get();
-                    Object result = wrapper.result.get();
+                    //fix java.util.NoSuchElementException: No value present
+                    Optional<BeanSerializer> serializer = wrapper.serializer;
+                    Optional<Object> result = wrapper.result;
 
                     TSoaTransport transport = new TSoaTransport(out);
                     SoaMessageProcessor messageProcessor = new SoaMessageProcessor(transport);
@@ -77,9 +79,10 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     soaHeader.setCalleeMid(joiner.join(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName()));
                     soaHeader.setCalleeTid(transactionContext.calleeTid());
                     messageProcessor.writeHeader(transactionContext);
-                    if (serializer != null && result != null) {
+
+                    if (serializer.isPresent() && result.isPresent()) {
                         try {
-                            messageProcessor.writeBody(serializer, result);
+                            messageProcessor.writeBody(serializer.get(), result.get());
                         } catch (SoaException e) {
                             if (e.getCode().equals(SoaCode.StructFieldNull.getCode())) {
                                 e.setCode(SoaCode.ServerRespFieldNull.getCode());
