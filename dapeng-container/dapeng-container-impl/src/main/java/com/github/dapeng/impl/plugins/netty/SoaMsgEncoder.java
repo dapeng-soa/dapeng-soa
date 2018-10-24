@@ -74,15 +74,8 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     TSoaTransport transport = new TSoaTransport(out);
                     SoaMessageProcessor messageProcessor = new SoaMessageProcessor(transport);
 
-                    Long requestTimestamp = (Long) transactionContext.getAttribute("dapeng_request_timestamp");
+                    updateSoaHeader(soaHeader, transactionContext);
 
-                    Long cost = System.currentTimeMillis() - requestTimestamp;
-                    soaHeader.setCalleeTime2(cost.intValue());
-                    soaHeader.setCalleeIp(Optional.of(IPUtils.transferIp(SoaSystemEnvProperties.SOA_CONTAINER_IP)));
-                    soaHeader.setCalleePort(Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
-                    Joiner joiner = Joiner.on(":");
-                    soaHeader.setCalleeMid(joiner.join(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName()));
-                    soaHeader.setCalleeTid(transactionContext.calleeTid());
                     messageProcessor.writeHeader(transactionContext);
 
                     if (serializer.isPresent() && result.isPresent()) {
@@ -124,6 +117,18 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         } finally {
             MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         }
+    }
+
+    private void updateSoaHeader(SoaHeader soaHeader, TransactionContext transactionContext) {
+        Long requestTimestamp = (Long) transactionContext.getAttribute("dapeng_request_timestamp");
+
+        Long cost = System.currentTimeMillis() - requestTimestamp;
+        soaHeader.setCalleeTime2(cost.intValue());
+        soaHeader.setCalleeIp(Optional.of(IPUtils.transferIp(SoaSystemEnvProperties.SOA_CONTAINER_IP)));
+        soaHeader.setCalleePort(Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
+        Joiner joiner = Joiner.on(":");
+        soaHeader.setCalleeMid(joiner.join(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName()));
+        soaHeader.setCalleeTid(transactionContext.calleeTid());
     }
 
     /**
