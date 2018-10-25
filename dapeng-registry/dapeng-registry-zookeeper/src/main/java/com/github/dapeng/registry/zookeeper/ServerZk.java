@@ -33,22 +33,22 @@ import static com.github.dapeng.core.SoaCode.FreqConfigError;
  * @date 2018-03-20
  */
 public class ServerZk extends CommonZk {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerZk.class);
-
+    /**
+     * 服务注册代理 agent
+     */
     private RegistryAgent registryAgent;
-
     /**
      * 路由配置信息
      */
     private final Map<String, ServiceFreqControl> freqControlMap = new ConcurrentHashMap<>(16);
 
     /**
-     * zk 配置 缓存 ，根据 serivceName + versionName 作为 key
+     * zk 配置 缓存 ，根据 serviceName + versionName 作为 key
      */
-    public final ConcurrentMap<String, ZkServiceInfo> zkConfigMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, ZkServiceInfo> zkConfigMap = new ConcurrentHashMap<>();
 
-    public ServerZk(RegistryAgent registryAgent) {
+    ServerZk(RegistryAgent registryAgent) {
         this.registryAgent = registryAgent;
     }
 
@@ -56,7 +56,7 @@ public class ServerZk extends CommonZk {
      * zk 客户端实例化
      * 使用 CountDownLatch 门闩 锁，保证zk连接成功后才返回
      */
-    public synchronized void connect() {
+    synchronized void connect() {
         try {
             CountDownLatch semaphore = new CountDownLatch(1);
             // zk 需要为空
@@ -64,7 +64,6 @@ public class ServerZk extends CommonZk {
                 zk.close();
                 zk = null;
             }
-
             zk = new ZooKeeper(zkHost, 30000, watchedEvent -> {
 
                 switch (watchedEvent.getState()) {

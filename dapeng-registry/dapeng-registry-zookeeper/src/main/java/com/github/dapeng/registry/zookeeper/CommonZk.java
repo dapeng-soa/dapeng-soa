@@ -8,31 +8,41 @@ import org.apache.zookeeper.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CountDownLatch;
-
 /**
- * 描述:
+ * 描述:service provider service consumer common zookeeper class
  *
  * @author hz.lei
  * @date 2018年03月22日 上午11:17
  */
 public class CommonZk {
-
-
     private static Logger logger = LoggerFactory.getLogger(CommonZk.class);
 
     protected String zkHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
-
-
+    /**
+     * runtime instance array
+     */
     final static String RUNTIME_PATH = "/soa/runtime/services";
+    /**
+     * service instance config message
+     */
     final static String CONFIG_PATH = "/soa/config/services";
+    /**
+     * service instance route message
+     */
     final static String ROUTES_PATH = "/soa/config/routes";
+    /**
+     * service instance cookie route  message
+     */
     final static String COOKIE_ROUTES_PATH = "/soa/config/cookies";
+    /**
+     * service instance freq limiting  message
+     */
     final static String FREQ_PATH = "/soa/config/freq";
 
-
+    /**
+     * Zookeeper Client
+     */
     protected ZooKeeper zk;
-
 
     public void syncZkConfigInfo(ZkServiceInfo zkInfo) {
         //1.获取 globalConfig  异步模式
@@ -113,7 +123,6 @@ public class CommonZk {
                 break;
             case OK:
                 WatcherUtils.processZkConfig(data, (ZkServiceInfo) ctx, false);
-
                 break;
             default:
                 break;
