@@ -17,13 +17,12 @@ public class CookieExecutor extends RoutesExecutor {
     /**
      * 解析 Cookie routes 路由规则
      *
-     * @param content
+     * @param content 设置在 zk cookies 节点下的路由内容信息
      * @return
      */
     public static List<CookieRoute> parseCookieRoutes(String content) {
         CookieParser parser = new CookieParser(new RoutesLexer(content));
-        List<CookieRoute> routes = parser.cookieRoutes();
-        return routes;
+        return parser.cookieRoutes();
     }
 
     /**

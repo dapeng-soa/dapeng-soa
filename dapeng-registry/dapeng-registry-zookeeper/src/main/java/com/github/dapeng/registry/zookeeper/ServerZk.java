@@ -68,7 +68,6 @@ public class ServerZk extends CommonZk {
             zk = new ZooKeeper(zkHost, 30000, watchedEvent -> {
 
                 switch (watchedEvent.getState()) {
-
                     case Expired:
                         LOGGER.info("ServerZk session timeout to  {} [Zookeeper]", zkHost);
                         destroy();

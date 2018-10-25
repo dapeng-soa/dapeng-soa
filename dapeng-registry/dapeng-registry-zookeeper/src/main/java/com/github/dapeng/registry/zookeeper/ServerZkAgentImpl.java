@@ -100,6 +100,9 @@ public class ServerZkAgentImpl implements RegistryAgent {
             // 创建路由节点
             serverZk.create(ROUTES_PATH + "/" + serverName, null, false);
 
+            // 创建cookie 路由节点
+            serverZk.create(COOKIE_ROUTES_PATH + "/" + serverName, null, false);
+
             // 创建限流节点
             serverZk.create(FREQ_PATH + "/" + serverName, null, false);
         } catch (Exception e) {
