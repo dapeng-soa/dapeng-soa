@@ -8,4 +8,9 @@ Caused by: java.lang.RuntimeException: wrong with get ip
 
 解决方案：在/etc/hosts中绑定本地内网ip跟机器名
 以centos为例：
->echo $(ifconfig eth0|grep "inet "|awk '{print $2}') `hostname` >> /etc/hosts
+>echo $(ifconfig eth0|grep -w "inet"|awk '{print $2}') `hostname` >> /etc/hosts
+
+Mac 环境
+
+> echo $(ifconfig en0 | grep -w "inet"|awk '{print $2}') `hostname` 
+
