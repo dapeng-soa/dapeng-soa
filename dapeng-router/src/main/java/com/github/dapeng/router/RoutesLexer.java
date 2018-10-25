@@ -200,7 +200,7 @@ public class RoutesLexer {
         int pos = value.indexOf("#");
 
         if (pos != -1) {
-            String backValue = value.substring(pos);
+            String backValue = value.substring(pos + 1);
             if (!backValue.contains("#")) {
                 return new CookieToken(value.substring(0, pos), backValue);
             }

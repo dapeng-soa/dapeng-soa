@@ -62,6 +62,8 @@ public class LogFilter implements Filter {
 
             application.info(this.getClass(), infoLog);
         } finally {
+            //remove current invocation
+            InvocationContextImpl.Factory.removeCurrentInstance();
             try {
                 next.onEntry(filterContext);
             } catch (TException e) {
@@ -88,17 +90,22 @@ public class LogFilter implements Filter {
 
         try {
             if (isAsync) {
-                String sessionTid = transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0");
-                MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
-                MdcCtxInfoUtil.putMdcToAppClassLoader(application, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
+                try {
+                    String sessionTid = transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0");
+                    MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
+                    MdcCtxInfoUtil.putMdcToAppClassLoader(application, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
 
-                //DEBUG
-                InvocationContextImpl invocationCtx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-                String logLevel = invocationCtx.cookie(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
+                    //DEBUG
+                    InvocationContextImpl invocationCtx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+                    String logLevel = invocationCtx.cookie(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
 
-                if (logLevel != null) {
-                    MDC.put(SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
-                    MdcCtxInfoUtil.putMdcToAppClassLoader(application, SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
+                    if (logLevel != null) {
+                        MDC.put(SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
+                        MdcCtxInfoUtil.putMdcToAppClassLoader(application, SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
+                    }
+                } finally {
+                    //remove current invocation
+                    InvocationContextImpl.Factory.removeCurrentInstance();
                 }
             }
 

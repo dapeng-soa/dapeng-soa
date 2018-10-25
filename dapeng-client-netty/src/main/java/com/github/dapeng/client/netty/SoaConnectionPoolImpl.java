@@ -232,7 +232,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             throw new SoaException(NoMatchedService, "服务 [ " + service + ":" + version + "] 无可用实例:没有找到对应的服务版本");
         }
         //set cookies routes
-        cookieRouter(service, version, method);
+        cookieRouter(service, method, version);
 
         // router
         List<RuntimeInstance> routedInstances = router(service, method, version, checkVersionInstances);
