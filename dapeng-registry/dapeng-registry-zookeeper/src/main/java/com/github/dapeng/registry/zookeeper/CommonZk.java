@@ -19,10 +19,26 @@ public class CommonZk {
     String zkHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
 
     final static String RUNTIME_PATH = "/soa/runtime/services";
+    /**
+     * service instance config message
+     */
     final static String CONFIG_PATH = "/soa/config/services";
+    /**
+     * service instance route message
+     */
     final static String ROUTES_PATH = "/soa/config/routes";
+    /**
+     * service instance cookie route  message
+     */
+    final static String COOKIE_ROUTES_PATH = "/soa/config/cookies";
+    /**
+     * service instance freq limiting  message
+     */
     final static String FREQ_PATH = "/soa/config/freq";
 
+    /**
+     * Zookeeper Client
+     */
     protected ZooKeeper zk;
 
     public void syncZkConfigInfo(ZkServiceInfo zkInfo) {

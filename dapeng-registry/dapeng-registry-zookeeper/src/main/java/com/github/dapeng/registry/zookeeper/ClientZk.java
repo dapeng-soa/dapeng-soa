@@ -1,5 +1,7 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.cookie.CookieExecutor;
+import com.github.dapeng.cookie.CookieRoute;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.ConfigKey;
@@ -167,7 +169,8 @@ public class ClientZk extends CommonZk {
             try {
                 RoutesWatcher routesWatcher = routesWatcherMap.get(servicePath);
                 if (routesWatcher == null) {
-                    routesWatcherMap.putIfAbsent(servicePath, new RoutesWatcher(service, routesMap));
+                    routesWatcherMap.putIfAbsent(servicePath,
+                            new RoutesWatcher<>(service, routesMap, RoutesWatcher.RouteType.SERVICE_ROUTE));
                     routesWatcher = routesWatcherMap.get(servicePath);
                 }
 
@@ -183,24 +186,27 @@ public class ClientZk extends CommonZk {
     }
 
     public List<CookieRoute> getCookieRoutes(String service) {
-        if (cookieRoutesMap.get(service) == null) {
+        if (cookieRoutesMap.get(service) != null) {
+            LOGGER.debug("获取 cookie route信息, service: {} , route size {}", service, cookieRoutesMap.get(service).size());
+            return this.cookieRoutesMap.get(service);
+        } else {
+            LOGGER.info("ClientZK::getCookieRoutes routesMap service:{} 为空,从zk获取 route信息。");
+            String servicePath = COOKIE_ROUTES_PATH + "/" + service;
             try {
-                byte[] data = zk.getData(COOKIE_ROUTES_PATH + "/" + service, event -> {
-                    if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
-                        LOGGER.info("cookie routes 节点 data 发现变更，重新获取信息");
-                        cookieRoutesMap.remove(service);
-                        getCookieRoutes(service);
-                    }
-                }, null);
+                RoutesWatcher cookieWatcher = routesWatcherMap.get(servicePath);
+                if (cookieWatcher == null) {
+                    routesWatcherMap.putIfAbsent(servicePath,
+                            new RoutesWatcher<>(service, cookieRoutesMap, RoutesWatcher.RouteType.COOKIE_ROUTE));
+                    cookieWatcher = routesWatcherMap.get(servicePath);
+                }
+
+                byte[] data = zk.getData(servicePath, cookieWatcher, null);
                 List<CookieRoute> routes = processCookieRouteData(service, data);
                 LOGGER.warn("ClientZk::getCookieRoutes routes changes:" + routes);
                 return routes;
             } catch (KeeperException | InterruptedException e) {
                 LOGGER.error("获取route service 节点: {} 出现异常", service);
             }
-        } else {
-            LOGGER.debug("获取 cookie route信息, service: {} , route size {}", service, cookieRoutesMap.get(service).size());
-            return this.cookieRoutesMap.get(service);
         }
         return null;
     }

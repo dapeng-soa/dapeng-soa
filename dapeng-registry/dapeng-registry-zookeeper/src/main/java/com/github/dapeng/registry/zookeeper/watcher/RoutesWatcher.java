@@ -1,7 +1,6 @@
 package com.github.dapeng.registry.zookeeper.watcher;
 
 import com.github.dapeng.registry.zookeeper.ClientZk;
-import com.github.dapeng.router.Route;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
@@ -13,25 +12,41 @@ import java.util.Map;
 /**
  * @author maple 2018.09.04 下午3:58
  */
-public class RoutesWatcher implements Watcher {
+public class RoutesWatcher<T> implements Watcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(RoutesWatcher.class);
 
     private final String service;
 
-    private final Map<String, List<Route>> routesMap;
+    private final Map<String, List<T>> routesMap;
 
-    public RoutesWatcher(String service, Map<String, List<Route>> routesMap) {
+    private final RouteType type;
+
+    public RoutesWatcher(String service, Map<String, List<T>> routesMap, RouteType type) {
         this.service = service;
         this.routesMap = routesMap;
+        this.type = type;
+    }
+
+    public enum RouteType {
+        SERVICE_ROUTE,
+        COOKIE_ROUTE
     }
 
     @Override
     public void process(WatchedEvent event) {
         LOGGER.warn("RoutesWatcher::getRoutes zkEvent: " + event);
         if (event.getType() == Event.EventType.NodeDataChanged) {
-            LOGGER.info("RoutesWatcher::watcher routes节点data发现变更,重新获取信息. watcherEvent: {}", event);
-            routesMap.remove(service);
-            ClientZk.getMasterInstance().getRoutes(service);
+            if (type == RouteType.SERVICE_ROUTE) {
+                LOGGER.info("RoutesWatcher::watcher service  routes节点data发现变更,重新获取信息. event: {}", event);
+                routesMap.remove(service);
+                ClientZk.getMasterInstance().getRoutes(service);
+
+            } else if (type == RouteType.COOKIE_ROUTE) {
+                LOGGER.info("RoutesWatcher::watcher cookie routes 节点data发现变更,重新获取信息,event:{}", event);
+                routesMap.remove(service);
+                ClientZk.getMasterInstance().getCookieRoutes(service);
+            }
         }
+
     }
 }
