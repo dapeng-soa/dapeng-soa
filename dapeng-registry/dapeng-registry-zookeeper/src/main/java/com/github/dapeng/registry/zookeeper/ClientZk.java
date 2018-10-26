@@ -2,22 +2,22 @@ package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.github.dapeng.core.version.Version;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.ServiceInfo;
+import com.github.dapeng.registry.zookeeper.watcher.RoutesWatcher;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
 import org.apache.zookeeper.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * zookeeperClient 主要作用是 供 客户端 从zk获取服务实例
@@ -38,6 +38,10 @@ public class ClientZk extends CommonZk {
      * 路由配置信息
      */
     private final Map<String, List<Route>> routesMap = new ConcurrentHashMap<>(128);
+    /**
+     * route watcher map
+     */
+    private final Map<String, RoutesWatcher> routesWatcherMap = new ConcurrentHashMap<>(64);
 
     /**
      * master zkHost
@@ -147,20 +151,18 @@ public class ClientZk extends CommonZk {
 
     /**
      * route 根据给定路由规则对可运行实例进行过滤
-     *
-     * @return
      */
     public List<Route> getRoutes(String service) {
         if (routesMap.get(service) == null) {
+            String servicePath = ROUTES_PATH + "/" + service;
             try {
-                byte[] data = zk.getData(ROUTES_PATH + "/" + service, event -> {
-                    LOGGER.warn("ClientZk::getRoutes zkEvent: " + event);
-                    if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
-                        LOGGER.info("routes 节点 data 发现变更，重新获取信息");
-                        routesMap.remove(service);
-                        getRoutes(service);
-                    }
-                }, null);
+                RoutesWatcher routesWatcher = routesWatcherMap.get(servicePath);
+                if (routesWatcher == null) {
+                    routesWatcher = new RoutesWatcher(service, routesMap);
+                    routesWatcherMap.putIfAbsent(servicePath, routesWatcher);
+                }
+                byte[] data = zk.getData(servicePath, routesWatcher, null);
+
                 List<Route> routes = processRouteData(service, data);
                 LOGGER.warn("ClientZk::getRoutes routes changes:" + routes);
                 return routes;
@@ -180,12 +182,12 @@ public class ClientZk extends CommonZk {
     public List<Route> processRouteData(String service, byte[] data) {
         List<Route> zkRoutes;
         try {
-            String routeData = new String(data, "utf-8");
+            String routeData = new String(data, StandardCharsets.UTF_8);
             zkRoutes = RoutesExecutor.parseAll(routeData);
             routesMap.put(service, zkRoutes);
         } catch (Exception e) {
             zkRoutes = new ArrayList<>(16);
-            LOGGER.error("parser routes 信息 失败，请检查路由规则写法是否正确!");
+            LOGGER.error("parser routes 信息 失败，请检查路由规则写法是否正确\n {}", e.getMessage());
         }
         return zkRoutes;
     }
@@ -214,16 +216,14 @@ public class ClientZk extends CommonZk {
 
     /**
      * 保证zk watch机制，出现异常循环执行5次
-     *
-     * @param zkInfo
      */
     public void syncZkRuntimeInfo(ZkServiceInfo zkInfo) {
-        String servicePath = RUNTIME_PATH + "/" + zkInfo.service;
+        String servicePath = RUNTIME_PATH + "/" + zkInfo.getService();
         int retry = 5;
         do {
             try {
                 if (zk == null) {
-                    LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:zk is null, now init()");
+                    LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[{}]:zk is null, now init()", zkInfo.getService());
                     init();
                 }
 
@@ -231,23 +231,23 @@ public class ClientZk extends CommonZk {
                 try {
                     childrens = zk.getChildren(servicePath, zkInfo.getWatcher());
                 } catch (KeeperException.NoNodeException e) {
-                    LOGGER.error("sync service:  {} zk node is not exist,", zkInfo.service);
+                    LOGGER.error("sync service:  {} zk node is not exist,", zkInfo.getService());
                     return;
                 }
 
                 if (childrens.size() == 0) {
                     zkInfo.setStatus(ZkServiceInfo.Status.CANCELED);
                     zkInfo.getRuntimeInstances().clear();
-                    LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "]:no service instances found");
+                    LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[{}]:no service instances found", zkInfo.getService());
                     return;
                 }
 
-                LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + zkInfo.service + "], 获取{}的子节点成功", servicePath);
+                LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[{}], 获取{}的子节点成功", zkInfo.getService(), servicePath);
                 List<RuntimeInstance> runtimeInstances = new ArrayList<>(8);
                 //child = 10.168.13.96:9085:1.0.0
                 for (String children : childrens) {
                     String[] infos = children.split(":");
-                    RuntimeInstance instance = new RuntimeInstance(zkInfo.service, infos[0], Integer.valueOf(infos[1]), infos[2]);
+                    RuntimeInstance instance = new RuntimeInstance(zkInfo.getService(), infos[0], Integer.valueOf(infos[1]), infos[2]);
                     runtimeInstances.add(instance);
                 }
 
@@ -257,9 +257,8 @@ public class ClientZk extends CommonZk {
                 runtimeInstanceList.clear();
                 runtimeInstanceList.addAll(runtimeInstances);
 
-                StringBuilder logBuffer = new StringBuilder();
-                zkInfo.getRuntimeInstances().forEach(info -> logBuffer.append(info.toString()));
-                LOGGER.info("<-> syncZkRuntimeInfo 触发服务实例同步，目前服务实例列表:" + zkInfo.service + " -> " + logBuffer);
+                LOGGER.info("ClientZk::syncZkRuntimeInfo 触发服务实例同步，目前服务实例列表: {} -> {}",
+                        zkInfo.getService(), zkInfo.getRuntimeInstances().toString());
                 zkInfo.setStatus(ZkServiceInfo.Status.ACTIVE);
                 return;
             } catch (KeeperException | InterruptedException e) {

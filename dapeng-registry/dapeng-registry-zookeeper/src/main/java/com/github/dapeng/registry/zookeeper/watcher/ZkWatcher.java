@@ -1,5 +1,7 @@
-package com.github.dapeng.registry.zookeeper;
+package com.github.dapeng.registry.zookeeper.watcher;
 
+import com.github.dapeng.registry.zookeeper.ClientZk;
+import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
@@ -22,15 +24,15 @@ public class ZkWatcher implements Watcher {
         LOGGER.warn("ZkWatcher::process zkEvent: " + event);
         if (event.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
             if (zkServiceInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
-                LOGGER.info("{}::syncZkRuntimeInfo[{}]:{}子节点发生变化，重新获取信息",
-                        getClass().getSimpleName(), zkServiceInfo.service, event.getPath());
+                LOGGER.info("{}::syncZkRuntimeInfo[{}]::子节点发生变化，重新获取信息,event:{}",
+                        getClass().getSimpleName(), zkServiceInfo.getService(), event);
 
                 ClientZk.getMasterInstance().syncZkRuntimeInfo(zkServiceInfo);
             }
         } else if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
             if (zkServiceInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
-                LOGGER.info("{}::syncZkConfigInfo[{}]: {} 节点内容发生变化，重新获取配置信息",
-                        getClass().getSimpleName(), zkServiceInfo.service, event.getPath());
+                LOGGER.info("{}::syncZkConfigInfo[{}]::节点内容发生变化，重新获取配置信息,event:{}",
+                        getClass().getSimpleName(), zkServiceInfo.getService(), event);
 
                 ClientZk.getMasterInstance().syncZkConfigInfo(zkServiceInfo);
             }
