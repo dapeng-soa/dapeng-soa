@@ -1,9 +1,9 @@
 package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
