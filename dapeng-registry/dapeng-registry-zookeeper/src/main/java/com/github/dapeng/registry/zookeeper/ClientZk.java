@@ -2,22 +2,22 @@ package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.github.dapeng.core.version.Version;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.ServiceInfo;
-import com.github.dapeng.registry.zookeeper.watcher.RoutesWatcher;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
 import org.apache.zookeeper.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * zookeeperClient 主要作用是 供 客户端 从zk获取服务实例
@@ -101,8 +101,9 @@ public class ClientZk extends CommonZk {
         try {
             CountDownLatch semaphore = new CountDownLatch(1);
 
-            // Fixme zk连接状态变化不应该引起本地runtime缓存的清除, 尤其是zk挂了之后, 不至于影响业务(本地缓存还存在于每个SoaConnectionPool中?)
+            // default watch
             zk = new ZooKeeper(zkHost, 30000, e -> {
+                LOGGER.info("ClientZk::connect zkEvent:" + e);
                 switch (e.getState()) {
                     case Expired:
                         LOGGER.info("Client's host: {} 到zookeeper Server的session过期，重连", zkHost);
@@ -122,7 +123,7 @@ public class ClientZk extends CommonZk {
                         init();
                         break;
                     case AuthFailed:
-                        LOGGER.info("Zookeeper connection auth failed ...");
+                        LOGGER.error("Zookeeper connection auth failed ...");
                         destroy();
                         break;
                     default:
