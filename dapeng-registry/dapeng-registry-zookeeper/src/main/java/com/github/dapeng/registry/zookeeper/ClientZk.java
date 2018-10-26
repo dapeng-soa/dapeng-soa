@@ -3,7 +3,6 @@ package com.github.dapeng.registry.zookeeper;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.ConfigKey;
-import com.github.dapeng.registry.ServiceInfo;
 import com.github.dapeng.registry.zookeeper.watcher.RoutesWatcher;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
@@ -26,10 +25,7 @@ import java.util.concurrent.TimeUnit;
  * @date 2016/2/29
  */
 public class ClientZk extends CommonZk {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientZk.class);
-
-    private final Map<String, List<ServiceInfo>> caches = new ConcurrentHashMap<>(128);
     /**
      * 其他配置信息
      */
@@ -51,10 +47,15 @@ public class ClientZk extends CommonZk {
      * fallback zkHost
      */
     private static final String FALLBACK_HOST = SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_HOST;
-
-
+    /**
+     * master zookeeper client
+     */
     private static ClientZk clientZk;
+    /**
+     * fallback zookeeper client
+     */
     private static ClientZk fallbackZk;
+
 
     private ClientZk(String zkHost) {
         this.zkHost = zkHost;
@@ -93,7 +94,6 @@ public class ClientZk extends CommonZk {
         return clientZk;
     }
 
-
     /**
      * 连接zookeeper
      */
@@ -114,7 +114,6 @@ public class ClientZk extends CommonZk {
                     case SyncConnected:
                         semaphore.countDown();
                         LOGGER.info("Client's host: {}  已连接 zookeeper Server", zkHost);
-                        caches.clear();
                         config.clear();
                         break;
                     case Disconnected:
@@ -153,7 +152,11 @@ public class ClientZk extends CommonZk {
      * route 根据给定路由规则对可运行实例进行过滤
      */
     public List<Route> getRoutes(String service) {
-        if (routesMap.get(service) == null) {
+        if (routesMap.get(service) != null) {
+            LOGGER.debug("获取route信息, service: {} , route size {}", service, routesMap.get(service).size());
+            return this.routesMap.get(service);
+        } else {
+            LOGGER.info("ClientZK::getRoutes routesMap service:{} 为空,从zk获取 route信息。");
             String servicePath = ROUTES_PATH + "/" + service;
             try {
                 RoutesWatcher routesWatcher = routesWatcherMap.get(servicePath);
@@ -169,9 +172,6 @@ public class ClientZk extends CommonZk {
             } catch (KeeperException | InterruptedException e) {
                 LOGGER.error("获取route service 节点: {} 出现异常", service);
             }
-        } else {
-            LOGGER.debug("获取route信息, service: {} , route size {}", service, routesMap.get(service).size());
-            return this.routesMap.get(service);
         }
         return null;
     }
@@ -195,7 +195,7 @@ public class ClientZk extends CommonZk {
     /**
      * 客户端 同步zk 服务信息  syncServiceZkInfo
      *
-     * @param zkInfo
+     * @param zkInfo zkInfo
      */
     public void syncServiceZkInfo(ZkServiceInfo zkInfo) {
         try {
