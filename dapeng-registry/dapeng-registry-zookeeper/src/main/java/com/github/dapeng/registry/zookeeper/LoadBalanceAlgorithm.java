@@ -1,11 +1,9 @@
 package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.RuntimeInstance;
-import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 
 import java.util.List;
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @author lihuimin
@@ -28,7 +26,7 @@ public class LoadBalanceAlgorithm {
 
         if (instances.size() > 0) {
             int length = instances.size();
-            final Random random = new Random();
+            final ThreadLocalRandom random = ThreadLocalRandom.current();
 
             int totalWeight = 0;
             int minWeight = Integer.MAX_VALUE;

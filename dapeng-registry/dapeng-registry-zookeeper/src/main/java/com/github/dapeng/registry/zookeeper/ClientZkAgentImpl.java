@@ -1,7 +1,6 @@
 package com.github.dapeng.registry.zookeeper;
 
 
-import com.github.dapeng.cookie.CookieRoute;
 import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
@@ -10,8 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author lihuimin
@@ -26,12 +23,6 @@ public class ClientZkAgentImpl implements ClientZkAgent {
     private final boolean usingFallbackZk = SoaSystemEnvProperties.SOA_ZOOKEEPER_FALLBACK_ISCONFIG;
 
     private ClientZk masterZk, fallbackZk;
-
-    /**
-     * 路由配置信息
-     */
-    private final Map<String, List<Route>> routesMap = new ConcurrentHashMap<>(16);
-
 
     public ClientZkAgentImpl() {
         start();
@@ -60,7 +51,7 @@ public class ClientZkAgentImpl implements ClientZkAgent {
 
     @Override
     public void cancelSyncService(ZkServiceInfo zkInfo) {
-        LOGGER.info("cancelSyncService:[" + zkInfo.service + "]");
+        LOGGER.info("cancelSyncService:[" + zkInfo.getService() + "]");
         zkInfo.setStatus(ZkServiceInfo.Status.CANCELED);
     }
 
@@ -69,21 +60,21 @@ public class ClientZkAgentImpl implements ClientZkAgent {
         //根据同一个zkInfo对象锁住即可
         synchronized (zkInfo) {
             if (zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
-                LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo just created, now sync with zk");
+                LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.getService() + "]:zkInfo just created, now sync with zk");
                 masterZk.syncServiceZkInfo(zkInfo);
                 if (zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE && usingFallbackZk) {
                     fallbackZk.syncServiceZkInfo(zkInfo);
                 }
 
-                LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + ", status:" + zkInfo.getStatus() + "]");
+                LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.getService() + ", status:" + zkInfo.getStatus() + "]");
             }
         }
 
         if (zkInfo.getStatus() == ZkServiceInfo.Status.ACTIVE && zkInfo.getRuntimeInstances() != null) {
 
-            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo succeed");
+            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.getService() + "]:zkInfo succeed");
         } else {
-            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.service + "]:zkInfo failed");
+            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.getService() + "]:zkInfo failed");
         }
     }
 

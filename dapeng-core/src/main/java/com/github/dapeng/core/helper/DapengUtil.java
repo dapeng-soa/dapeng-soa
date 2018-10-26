@@ -8,7 +8,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.github.dapeng.core.helper.IPUtils.localIpAsInt;
@@ -18,8 +18,7 @@ import static com.github.dapeng.core.helper.IPUtils.localIpAsInt;
  * @date 20180406
  */
 public class DapengUtil {
-    private static int random = new Random().nextInt();
-    private static AtomicInteger seqId = new AtomicInteger(random);
+    private static AtomicInteger seqId = new AtomicInteger(ThreadLocalRandom.current().nextInt());
     private static int processId = getProcessId() << 16;
     private static int localIp = localIpAsInt();
 

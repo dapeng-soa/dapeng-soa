@@ -65,7 +65,7 @@ public class ServerZk extends CommonZk {
                 zk = null;
             }
             zk = new ZooKeeper(zkHost, 30000, watchedEvent -> {
-
+                LOGGER.info("ServerZk::connect zkEvent:" + watchedEvent);
                 switch (watchedEvent.getState()) {
                     case Expired:
                         LOGGER.info("ServerZk session timeout to  {} [Zookeeper]", zkHost);
@@ -180,6 +180,7 @@ public class ServerZk extends CommonZk {
         String watchPath = context.getServicePath();
         try {
             List<String> children = zk.getChildren(watchPath, event -> {
+                LOGGER.warn("ServerZk::watchInstanceChange zkEvent:" + event);
                 //Children发生变化，则重新获取最新的services列表
                 if (event.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
                     LOGGER.info("容器状态:{}, {}子节点发生变化，重新获取子节点...", ContainerFactory.getContainer().status(), event.getPath());
@@ -233,6 +234,7 @@ public class ServerZk extends CommonZk {
      * 异步添加持久化节点回调方法
      */
     private AsyncCallback.StringCallback persistNodeCreateCallback = (rc, path, ctx, name) -> {
+        LOGGER.warn("ServerZk::persistNodeCreateCallback zkEvent: " + rc + ", " + path + ", " + name);
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 LOGGER.info("创建节点:{},连接断开，重新创建", path);
@@ -262,6 +264,7 @@ public class ServerZk extends CommonZk {
      * 异步添加serverInfo 临时节点 的回调处理
      */
     private AsyncCallback.StringCallback serverInfoCreateCallback = (rc, path, ctx, name) -> {
+        LOGGER.warn("ServerZk::serverInfoCreateCallback zkEvent: " + rc + ", " + path + ", " + name);
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 LOGGER.info("添加serviceInfo:{},连接断开，重新添加", path);
@@ -302,6 +305,7 @@ public class ServerZk extends CommonZk {
      * 异步更新节点信息的回调方法
      */
     private AsyncCallback.StatCallback serverInfoUpdateCallback = (rc, path1, ctx, stat) -> {
+        LOGGER.warn("ServerZk::serverInfoUpdateCallback zkEvent: " + rc + ", " + path1 + ", " + stat);
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 updateServerInfo(path1, (String) ctx);
@@ -400,6 +404,7 @@ public class ServerZk extends CommonZk {
         if (freqControlMap.get(service) == null) {
             try {
                 byte[] data = zk.getData(FREQ_PATH + "/" + service, event -> {
+                    LOGGER.warn("ServerZk::getFreqControl zkEvent: " + event);
                     if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
                         LOGGER.info("freq 节点 data 发生变更，重新获取信息");
                         freqControlMap.remove(service);

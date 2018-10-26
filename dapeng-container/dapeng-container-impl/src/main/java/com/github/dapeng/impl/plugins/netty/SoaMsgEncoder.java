@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.github.dapeng.api.Container.STATUS_RUNNING;
 import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
 
 /**
@@ -50,6 +51,10 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(getClass().getSimpleName() + "::encode");
         }
+        //容器不是运行状态
+        if (container.status() != STATUS_RUNNING) {
+            writeErrorResponse(transactionContext, out);
+        }
 
         try {
             SoaHeader soaHeader = transactionContext.getHeader();
@@ -69,15 +74,8 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     TSoaTransport transport = new TSoaTransport(out);
                     SoaMessageProcessor messageProcessor = new SoaMessageProcessor(transport);
 
-                    Long requestTimestamp = (Long) transactionContext.getAttribute("dapeng_request_timestamp");
+                    updateSoaHeader(soaHeader, transactionContext);
 
-                    Long cost = System.currentTimeMillis() - requestTimestamp;
-                    soaHeader.setCalleeTime2(cost.intValue());
-                    soaHeader.setCalleeIp(Optional.of(IPUtils.transferIp(SoaSystemEnvProperties.SOA_CONTAINER_IP)));
-                    soaHeader.setCalleePort(Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
-                    Joiner joiner = Joiner.on(":");
-                    soaHeader.setCalleeMid(joiner.join(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName()));
-                    soaHeader.setCalleeTid(transactionContext.calleeTid());
                     messageProcessor.writeHeader(transactionContext);
 
                     if (serializer.isPresent() && result.isPresent()) {
@@ -119,6 +117,18 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         } finally {
             MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         }
+    }
+
+    private void updateSoaHeader(SoaHeader soaHeader, TransactionContext transactionContext) {
+        Long requestTimestamp = (Long) transactionContext.getAttribute("dapeng_request_timestamp");
+
+        Long cost = System.currentTimeMillis() - requestTimestamp;
+        soaHeader.setCalleeTime2(cost.intValue());
+        soaHeader.setCalleeIp(Optional.of(IPUtils.transferIp(SoaSystemEnvProperties.SOA_CONTAINER_IP)));
+        soaHeader.setCalleePort(Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
+        Joiner joiner = Joiner.on(":");
+        soaHeader.setCalleeMid(joiner.join(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName()));
+        soaHeader.setCalleeTid(transactionContext.calleeTid());
     }
 
     /**
@@ -185,6 +195,48 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             LOGGER.error(e.getMessage(), e);
         } finally {
             MdcCtxInfoUtil.removeMdcToAppClassLoader(application, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+            MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+        }
+    }
+
+    /**
+     * application 为空。 容器不在运行状态下时，writeErrorResponse
+     *
+     * @param transactionContext 服务上下文信息
+     * @param out                {@link ByteBuf}
+     */
+    private void writeErrorResponse(TransactionContext transactionContext,
+                                    ByteBuf out) {
+        SoaHeader soaHeader = transactionContext.getHeader();
+        SoaException soaException = transactionContext.soaException();
+        if (soaException == null) {
+            soaException = new SoaException(soaHeader.getRespCode().orElse(SoaCode.ContainerStatusError.getCode()),
+                    soaHeader.getRespMessage().orElse(SoaCode.ContainerStatusError.getMsg()));
+            transactionContext.soaException(soaException);
+        }
+        //重复利用ByteBuf
+        if (out.readableBytes() > 0) {
+            out.clear();
+        }
+        TSoaTransport transport = new TSoaTransport(out);
+        SoaMessageProcessor messageProcessor = new SoaMessageProcessor(transport);
+
+        try {
+            messageProcessor.writeHeader(transactionContext);
+            messageProcessor.writeMessageEnd();
+
+            transport.flush();
+            String infoLog = "response[seqId:" + transactionContext.seqId() + ", respCode:" + soaHeader.getRespCode().get() + "]:"
+                    + "service[" + soaHeader.getServiceName()
+                    + "]:version[" + soaHeader.getVersionName()
+                    + "]:method[" + soaHeader.getMethodName() + "]"
+                    + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
+                    + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
+
+            LOGGER.info(getClass() + " " + infoLog + ", payload:\n" + soaException.getMessage());
+        } catch (Throwable e) {
+            LOGGER.error(e.getMessage(), e);
+        } finally {
             MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         }
     }
