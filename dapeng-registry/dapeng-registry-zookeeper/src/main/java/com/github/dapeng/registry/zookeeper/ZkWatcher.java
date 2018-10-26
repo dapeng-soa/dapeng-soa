@@ -19,6 +19,7 @@ public class ZkWatcher implements Watcher {
 
     @Override
     public void process(WatchedEvent event) {
+        LOGGER.warn("ZkWatcher::process zkEvent: " + event);
         if (event.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
             if (zkServiceInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
                 LOGGER.info("{}::syncZkRuntimeInfo[{}]:{}子节点发生变化，重新获取信息",

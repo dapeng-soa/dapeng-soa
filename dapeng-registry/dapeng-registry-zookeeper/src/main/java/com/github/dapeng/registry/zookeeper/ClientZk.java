@@ -97,8 +97,9 @@ public class ClientZk extends CommonZk {
         try {
             CountDownLatch semaphore = new CountDownLatch(1);
 
-            // Fixme zk连接状态变化不应该引起本地runtime缓存的清除, 尤其是zk挂了之后, 不至于影响业务(本地缓存还存在于每个SoaConnectionPool中?)
+            // default watch
             zk = new ZooKeeper(zkHost, 30000, e -> {
+                LOGGER.info("ClientZk::connect zkEvent:" + e);
                 switch (e.getState()) {
                     case Expired:
                         LOGGER.info("Client's host: {} 到zookeeper Server的session过期，重连", zkHost);
@@ -118,7 +119,7 @@ public class ClientZk extends CommonZk {
                         init();
                         break;
                     case AuthFailed:
-                        LOGGER.info("Zookeeper connection auth failed ...");
+                        LOGGER.error("Zookeeper connection auth failed ...");
                         destroy();
                         break;
                     default:
@@ -153,6 +154,7 @@ public class ClientZk extends CommonZk {
         if (routesMap.get(service) == null) {
             try {
                 byte[] data = zk.getData(ROUTES_PATH + "/" + service, event -> {
+                    LOGGER.warn("ClientZk::getRoutes zkEvent: " + event);
                     if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
                         LOGGER.info("routes 节点 data 发现变更，重新获取信息");
                         routesMap.remove(service);

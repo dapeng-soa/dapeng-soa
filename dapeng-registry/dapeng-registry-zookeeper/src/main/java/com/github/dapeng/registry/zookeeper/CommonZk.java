@@ -57,12 +57,14 @@ public class CommonZk {
     }
 
     private Watcher configServiceNodeChangeWatcher = event -> {
+        logger.warn("CommonZk::configServiceNodeChangeWatcher zkEvent:" + event);
         if (event.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
             logger.info("{}子节点发生变化，重新获取子节点...", event.getPath());
         }
     };
 
-    private AsyncCallback.StatCallback nodeChildrenCb = (rc, path, ctx, name) -> {
+    private AsyncCallback.StatCallback nodeChildrenCb = (rc, path, ctx, stat) -> {
+        logger.warn("CommonZk::configServiceNodeChangeWatcher zkEvent:" + rc + ", " + path + ", " + stat);
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 logger.info("监听配置子节点时，session超时，重新监听", path);
@@ -83,6 +85,7 @@ public class CommonZk {
      * 全局配置异步getData
      */
     private AsyncCallback.DataCallback globalConfigDataCb = (rc, path, ctx, data, stat) -> {
+        logger.warn("globalConfigDataCb zkEvent:" + rc + ", " + path + ", " + stat);
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 logger.error("读取配置节点data时连接丢失，重新获取!");
@@ -103,6 +106,7 @@ public class CommonZk {
      * service级别异步 getData
      */
     private AsyncCallback.DataCallback serviceConfigDataCb = (rc, path, ctx, data, stat) -> {
+        logger.warn("serviceConfigDataCb zkEvent:" + rc + ", " + path + ", " + stat);
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 syncZkConfigInfo((ZkServiceInfo) ctx);
