@@ -161,11 +161,11 @@ public class ClientZk extends CommonZk {
             try {
                 RoutesWatcher routesWatcher = routesWatcherMap.get(servicePath);
                 if (routesWatcher == null) {
-                    routesWatcher = new RoutesWatcher(service, routesMap);
-                    routesWatcherMap.putIfAbsent(servicePath, routesWatcher);
+                    routesWatcherMap.putIfAbsent(servicePath, new RoutesWatcher(service, routesMap));
+                    routesWatcher = routesWatcherMap.get(servicePath);
                 }
-                byte[] data = zk.getData(servicePath, routesWatcher, null);
 
+                byte[] data = zk.getData(servicePath, routesWatcher, null);
                 List<Route> routes = processRouteData(service, data);
                 LOGGER.warn("ClientZk::getRoutes routes changes:" + routes);
                 return routes;
