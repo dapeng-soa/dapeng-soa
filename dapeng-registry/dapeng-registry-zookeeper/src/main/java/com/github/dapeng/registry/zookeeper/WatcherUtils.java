@@ -159,7 +159,7 @@ public class WatcherUtils {
                 }
             }
             recalculateRuntimeInstanceWeight(zkInfo);
-            LOGGER.info("get config from {} with data [{}]", zkInfo.service, configData);
+            LOGGER.info("get config from {} with data [{}]", zkInfo.getService(), configData);
         } catch (UnsupportedEncodingException e) {
             LOGGER.error(e.getMessage(), e);
         }
