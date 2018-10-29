@@ -167,10 +167,7 @@ public class RegistryAgentImpl implements RegistryAgent {
                 services.add(service);
             }
         }
-        //如果开启了全局事务，将事务服务也注册到zookeeper,为了主从竞选，只有主全局事务管理器会执行
-        if (SoaSystemEnvProperties.SOA_TRANSACTIONAL_ENABLE) {
-            this.registerService("com.github.dapeng.transaction.api.service.GlobalTransactionService", "1.0.0");
-        }
+
         return services;
     }
 
