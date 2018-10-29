@@ -707,7 +707,7 @@ class JavaCodecGenerator extends CodeGenerator {
   def getJavaSetElement(field: Field): Elem = {
     field.dataType.kind match {
       case KIND.VOID => <div>com.github.dapeng.org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);</div>
-      case _ => <div> bean.set{field.name.charAt(0).toUpper + field.name.substring(1)}({if(field.optional) <div>Optional.of(</div>}elem0{if(field.optional) <div>)</div>});</div>
+      case _ => <div> bean.set{field.name.charAt(0).toUpper + field.name.substring(1)}({if(field.optional) <div>Optional.ofNullable(</div>}elem0{if(field.optional) <div>)</div>});</div>
     }
 
   }
