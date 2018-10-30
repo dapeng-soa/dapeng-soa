@@ -215,6 +215,9 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     SoaException soaException = convertToSoaException(e);
                     Result<RESP> result = new Result<>(null, soaException);
 
+                    if (invocationContext.lastInvocationInfo().responseCode() == null) {
+                        ((InvocationInfoImpl)invocationContext.lastInvocationInfo()).responseCode(soaException.getCode());
+                    }
                     ctx.setAttribute("result", result);
                     onExit(ctx, getPrevChain(ctx));
                 } finally {
