@@ -333,7 +333,9 @@ public class ServerCounterContainer {
                 tags.put("period", String.valueOf(PERIOD));
                 tags.put("analysis_time", String.valueOf(now));
                 tags.put("service_name", serviceBasicInfo.getServiceName());
-                tags.put("method_name", serviceProcessData.getMethodName());
+                String [] serviceParts = serviceBasicInfo.getServiceName().split("\\.");
+                int size = serviceParts.length;
+                tags.put("method_name", size >0 ? serviceParts[size-1]+"."+serviceProcessData.getMethodName() : serviceProcessData.getMethodName());
                 tags.put("version_name", serviceProcessData.getVersionName());
                 tags.put("server_ip", NODE_IP);
                 tags.put("server_port", NODE_PORT);
