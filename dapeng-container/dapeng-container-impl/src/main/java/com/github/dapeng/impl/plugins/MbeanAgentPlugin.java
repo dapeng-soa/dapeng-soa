@@ -31,8 +31,10 @@ public class MbeanAgentPlugin implements Plugin {
         try {
             mName = new ObjectName("com.github.dapeng:name=containerRuntimeInfo");
             //create mbean and register mbean
-            server.registerMBean(new ContainerRuntimeInfo(container), mName);
+            ContainerRuntimeInfo runtimeInfo = new ContainerRuntimeInfo(container);
+            server.registerMBean(runtimeInfo, mName);
             LOGGER.info("::registerMBean dapengContainerMBean success");
+            LOGGER.info("::current service basicInfo: " + runtimeInfo.getServiceBasicInfo());
         } catch (Exception e) {
             LOGGER.info("::registerMBean dapengContainerMBean error [" + e.getMessage() + "]", e);
         }
@@ -49,4 +51,6 @@ public class MbeanAgentPlugin implements Plugin {
             }
         }
     }
+
+
 }
