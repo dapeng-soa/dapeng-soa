@@ -27,6 +27,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
+import static com.github.dapeng.util.ExceptionUtil.convertToSoaException;
+import static io.netty.channel.ChannelFutureListener.CLOSE;
 import static io.netty.channel.ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE;
 
 /**
@@ -95,7 +97,23 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         // short error log and detail error log, for the sake of elasticsearch indexing
         LOGGER.error("exceptionCaught:seqId:" + (tranCtx == null ? "" : tranCtx.seqId()) + ", channel:" + ctx.channel() + ", msg:" + cause.getMessage());
         LOGGER.error("exceptionCaught:seqId:" + (tranCtx == null ? "" : tranCtx.seqId()) + ", " + cause.getMessage(), cause);
-        ctx.close();
+
+        SoaException soaException = convertToSoaException(cause);
+        SoaHeader soaHeader = tranCtx.getHeader();
+        if (soaHeader == null) {
+            soaHeader = new SoaHeader();
+        }
+        soaHeader.setRespCode(soaException.getCode());
+        soaHeader.setRespMessage("Netty Handler caught unknown exception: " + soaException.getMessage());
+
+        tranCtx.soaException(soaException);
+        SoaResponseWrapper responseWrapper = new SoaResponseWrapper(tranCtx,
+                Optional.empty(),
+                Optional.empty());
+
+        TransactionContext.Factory.removeCurrentInstance();
+
+        ctx.writeAndFlush(responseWrapper).addListener(CLOSE);
     }
 
     @SuppressWarnings("unchecked")
@@ -188,8 +206,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         attachErrorInfo(transactionContext, e);
 
         SoaResponseWrapper responseWrapper = new SoaResponseWrapper(transactionContext,
-                Optional.ofNullable(null),
-                Optional.ofNullable(null));
+                Optional.empty(),
+                Optional.empty());
 
         ctx.writeAndFlush(responseWrapper).addListener(FIRE_EXCEPTION_ON_FAILURE);
     }
