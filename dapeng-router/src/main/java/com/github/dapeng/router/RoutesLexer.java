@@ -19,7 +19,9 @@ import static com.github.dapeng.router.token.Token.EOF;
  * @date 2018年04月13日 下午9:04
  */
 public class RoutesLexer {
-
+    /**
+     * 文件结束符
+     */
     private static final char EOI = '\uFFFF';
 
     private static Logger logger = LoggerFactory.getLogger(RoutesLexer.class);
@@ -338,7 +340,7 @@ public class RoutesLexer {
         char ws;
         while (((1L << (ws = nextChar())) & ((ws - 64) >> 31) & 0x100002600L) != 0L
                 && ws != '\n'
-                && ws != '\r');
+                && ws != '\r') ;
         pos--;
     }
 

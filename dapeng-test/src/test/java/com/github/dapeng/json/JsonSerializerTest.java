@@ -23,6 +23,7 @@ import org.apache.commons.io.IOUtils;
 import javax.xml.bind.JAXB;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -107,7 +108,21 @@ public class JsonSerializerTest {
 //        System.out.println("average:" + t2/round/1000000);
 
         try {
-            queryExportReportTest();
+            final String purchaseDescriptorXmlPath = "/com.today.api.purchase.service.PurchaseService.xml";
+            OptimizedMetadata.OptimizedService purchaseService = new OptimizedMetadata.OptimizedService(getService(purchaseDescriptorXmlPath));
+
+            Method createTransferOrder = purchaseService.getMethodMap().get("createTransferOrder");
+            String json = loadJson("/createTransferOrder.json");
+
+            String desc = "createTransferOrderTest.json";
+
+            OptimizedMetadata.OptimizedStruct struct = constructOptimizedStruct(purchaseService, createTransferOrder.request);
+            while (true) {
+                doTest2(purchaseService, createTransferOrder, struct, json, desc);
+
+                Thread.sleep(200);
+            }
+//            queryExportReportTest();
 //            createTransferOrderTest();
 //            optionalBooleanTest();
 //            simpleStructTest();
@@ -185,6 +200,19 @@ public class JsonSerializerTest {
 
         String desc = "queryExportReportTest";
         doTest2(financeReportService, queryExportReport, constructOptimizedStruct(financeReportService, queryExportReport.request), json, desc);
+
+    }
+
+    private static void memberCouponQueryListServiceTest() throws IOException, TException {
+        final String memberCouponQueryListServiceDescriptorXmlPath = "/com.today.api.memberAdmin.service.MemberAdminService.xml";
+        OptimizedMetadata.OptimizedService memberCouponQueryListService = new OptimizedMetadata.OptimizedService(getService(memberCouponQueryListServiceDescriptorXmlPath));
+
+        Method memberCouponQuery = memberCouponQueryListService.getMethodMap().get("memberCouponQueryListService");
+        String json = loadJson("/memberCouponQueryListService.json");
+
+        String desc = "memberCouponQueryListServiceTest";
+//        doTest2(memberCouponQueryListService, memberCouponQuery, constructOptimizedStruct(memberCouponQueryListService, memberCouponQuery.request), json, desc);
+        doTest3(memberCouponQueryListService, memberCouponQuery, constructOptimizedStruct(memberCouponQueryListService, memberCouponQuery.response), json, desc);
 
     }
 
@@ -404,10 +432,10 @@ public class JsonSerializerTest {
         JsonSerializer jsonSerializer = new JsonSerializer(optimizedServicee, method, "1.0.0", optimizedStruct);
 
         ByteBuf buf = buildRequestBuf(optimizedServicee.service.name, "1.0.0", method.name, 10, json, jsonSerializer);
-        System.out.println("origJson:\n" + json);
+//        System.out.println("origJson:\n" + json);
 //
 //
-        System.out.println(dumpToStr(buf));
+//        System.out.println(dumpToStr(buf));
 
         long middle = System.nanoTime();
 
@@ -417,9 +445,9 @@ public class JsonSerializerTest {
         parser.parseHeader();
 //        parser.getHeader();
         parser.parseBody();
-        System.out.println(parser.getHeader());
-        System.out.println("after enCode and decode:\n" + parser.getBody());
-        System.out.println(desc + " ends=====================" + "counters:" + counter + "/" + counter2);
+//        System.out.println(parser.getHeader());
+//        System.out.println("after enCode and decode:\n" + parser.getBody());
+//        System.out.println(desc + " ends=====================" + "counters:" + counter + "/" + counter2);
         buf.release();
         InvocationContextImpl.Factory.removeCurrentInstance();
 
@@ -432,38 +460,38 @@ public class JsonSerializerTest {
 //        }
     }
 
-//    private static void doTest3(Service service, Method method, Struct struct, String json, String desc) throws TException {
-//
-//        InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.createNewInstance();
-//        invocationContext.codecProtocol(CodecProtocol.CompressedBinary);
-//
-//        invocationContext.serviceName(service.name);
-//        invocationContext.versionName(service.meta.version);
-//        invocationContext.methodName(method.name);
-//        invocationContext.callerMid("JsonCaller");
-//
-//        final ByteBuf requestBuf = PooledByteBufAllocator.DEFAULT.buffer(8192);
-//
-////        String hex = "000000b50201000000000a0b00010000002c636f6d2e746f6461792e6170692e676f6f64732e736572766963652e4f70656e476f6f6473536572766963650b0002000000156c697374536b7544657461696c4279536b754e6f730b000300000005312e302e300b00040000000a4a736f6e43616c6c6572080005c0a8c7ab0a0009b81cc7ab00007e940d00170b0b00000000000c00010f00010b000000010000000832303534333833390f0003080000000100000002000003";
-//        String hex = "000000d4020101000496730b00010000002c636f6d2e746f6461792e6170692e676f6f64732e736572766963652e4f70656e476f6f6473536572766963650b0002000000156c697374536b7544657461696c4279536b754e6f730b000300000005312e302e300b0004000000252f6170692f6531626664373632333231653430396365653461633062366538343139363363080005ac1200020a0007ac1e00020000c30e08000879292c580a0009ac1e00020000c30d0d00170b0b00000000001c19f882800008323035343338333929f581800004000003";
-////String hex = "000000d4020101000498670b00010000002c636f6d2e746f6461792e6170692e676f6f64732e736572766963652e4f70656e476f6f6473536572766963650b0002000000156c697374536b7544657461696c4279536b754e6f730b000300000005312e302e300b0004000000252f6170692f6531626664373632333231653430396365653461633062366538343139363363080005ac1200020a0007ac1e00020000c9e608000879292c580a0009ac1e00020000c9e50d00170b0b00000000001c19f881800008323035343534343429f581800004000003";
-//        byte[] bytes = hexStr2bytes(hex);
-//        requestBuf.setBytes(0, bytes);
-//        requestBuf.writerIndex(bytes.length);
-//
+    private static void doTest3(OptimizedMetadata.OptimizedService service, Method method, OptimizedMetadata.OptimizedStruct struct, String json, String desc) throws TException {
+
+        InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.createNewInstance();
+        invocationContext.codecProtocol(CodecProtocol.CompressedBinary);
+
+        invocationContext.serviceName(service.getService().name);
+        invocationContext.versionName(service.getService().meta.version);
+        invocationContext.methodName(method.name);
+        invocationContext.callerMid("JsonCaller");
+
+        final ByteBuf requestBuf = PooledByteBufAllocator.DEFAULT.buffer(8192);
+
+//        String hex = "000000b50201000000000a0b00010000002c636f6d2e746f6461792e6170692e676f6f64732e736572766963652e4f70656e476f6f6473536572766963650b0002000000156c697374536b7544657461696c4279536b754e6f730b000300000005312e302e300b00040000000a4a736f6e43616c6c6572080005c0a8c7ab0a0009b81cc7ab00007e940d00170b0b00000000000c00010f00010b000000010000000832303534333833390f0003080000000100000002000003";
+        String hex = "00000975020101000000550b000100000034636f6d2e746f6461792e6170692e6d656d62657241646d696e2e736572766963652e4d656d62657241646d696e536572766963650b00020000001c6d656d626572436f75706f6e51756572794c697374536572766963650b000300000005312e302e300b000400000009436d6443616c6c6572080005c0a814c80a0007b56f14c8e62df7640a0009b56f14c8e62df6d90b000b00000004303030300b000c000000026f6b0a000dac190002173c8c0b08000ec0a80a7e080010000023800b001200000057636f6d2e746f6461792e6170692e6d656d62657241646d696e2e736572766963652e4d656d62657241646d696e536572766963653a6d656d626572436f75706f6e51756572794c697374536572766963653a312e302e300800150000009a0800160000009a0d00170b0b00000000000c001c1500151415320019ac16a0cd830318044576657216a8ab9d0b16a8ab9d0b1816e4b889e6988ee6b2bb35e58583e4bba3e98791e588b8168090c28f955916b0b085e5a75918026f6b16d0b7c5b595591500160e150216f0b5f3d3955918143832313038353037353131303938363835343436180016d0b7c5b59559150216f0b5f3d3955915021800180b3133373531373737313031182433304236314139372d394639452d333433322d463935332d3434373642313232313732381680a60e1809e8b68ae7a780e5ba9716bce3f80e17000000000000144015080016a0cd830318044576657216aaab9d0b16aaab9d0b1823e585a8e59cbae6bba1313030e58583e7ab8be5878f3230e58583e4bba3e98791e588b8168090c28f955916b0b085e5a75918026f6b16d0b7c5b595591500160e1500160018143832313038353130373831333233313830363934180016d0b7c5b59559150216d0b7c5b5955915021800180b3133373531373737313031182446413934443944362d433134382d323342422d363337392d36363841333830453242323416001800160017000000000000344015080016a0cd830318044576657216acab9d0b16acab9d0b1821e9b29ce9a39fe6bba13230e58583e7ab8be5878f35e58583e4bba3e98791e588b8168090c28f955916b0b085e5a75918026f6b16d0b7c5b595591500160e15021680d4a7b09d5918143832313038353037353431303934393531313636180016d0b7c5b5955915021680d4a7b09d5915021800180b3133373531373737313031182443364433464432312d433639412d323033462d453338302d4134313033414342424335361680a60e1809e8b68ae7a780e5ba9716f09da31117000000000000144015080016a0cd830318044576657216aeab9d0b16aeab9d0b1821e9b29ce9a39fe6bba13230e58583e7ab8be5878f35e58583e4bba3e98791e588b8168090c28f955916b0b085e5a75918026f6b16d0b7c5b595591500160e1500160018143832313038353130383131303336363530393639180016d0b7c5b59559150216d0b7c5b5955915021800180b3133373531373737313031182443364433464432312d433639412d323033462d453338302d41343130334143424243353616001800160017000000000000144015080016a0cd830318044576657216b0ab9d0b16b0ab9d0b1821e9b29ce9a39fe6bba13230e58583e7ab8be5878f35e58583e4bba3e98791e588b8168090c28f955916b0b085e5a75918026f6b16d0b7c5b595591500160e1500160018143832313038353037353531343739303434333432180016d0b7c5b59559150216d0b7c5b5955915021800180b3133373531373737313031182443364433464432312d433639412d323033462d453338302d41343130334143424243353616001800160017000000000000144015080016a0cd830318044576657216b2ab9d0b16b2ab9d0b1821e9b29ce9a39fe6bba13230e58583e7ab8be5878f35e58583e4bba3e98791e588b8168090c28f955916b0b085e5a75918026f6b16d0b7c5b595591500160e1500160018143832313038353037353631383738383130373533180016d0b7c5b59559150216d0b7c5b5955915021800180b3133373531373737313031182443364433464432312d433639412d323033462d453338302d41343130334143424243353616001800160017000000000000144015080016a0cd830318044576657216eab19d0b16eab19d0b181b546f646179e99c9ce6b787e6b78b38e58583e4bba3e98791e588b8168090c28f955916b0b085e5a75918026f6b16d0b7c5b595591500160e1500160018143832313038353037353031373332373930353833180016d0b7c5b59559150216d0b7c5b5955915021800180b3133373531373737313031182439353639454436322d413642322d413734342d423631422d32453635453241364132363016001800160017000000000000204015080016a0cd830318044576657216ecb19d0b16ecb19d0b1816e4b889e6988ee6b2bb35e58583e4bba3e98791e588b8168090c28f955916b0b085e5a75918026f6b16d0b7c5b595591500160e150216f0879dd6965918143832313038353130373631313132363939353536180016d0b7c5b59559150216f0879dd6965915021800180b3133373531373737313031182433304236314139372d394639452d333433322d463935332d3434373642313232313732381680a60e1809e8b68ae7a780e5ba9716b0ada10f17000000000000144015080016a0cd830318044576657216eeb19d0b16eeb19d0b1813e4bebfe5bd9336e58583e4bba3e98791e588b8168090c28f955916b0b085e5a75918026f6b16d0b7c5b595591500160e150216b09bc3d6985918143832313038353037353231333732383635333232180016d0b7c5b59559150216b09bc3d6985915021800180b3133373531373737313031182445444530453133312d373234322d374646382d334143322d34323844333443413443333516c6a70e180ce5beaae7a4bce997a8e5ba9716f693ec0f17000000000000184015080016a0cd830318044576657216f0b19d0b16f0b19d0b1813e4bebfe5bd9336e58583e4bba3e98791e588b8168090c28f955916b0b085e5a75918026f6b16d0b7c5b595591500160e150216f0a69be9985918143832313038353037353331353538323437363531180016d0b7c5b59559150216f0a69be9985915021800180b3133373531373737313031182445444530453133312d373234322d374646382d334143322d34323844333443413443333516c6a70e180ce5beaae7a4bce997a8e5ba9716e8b6f30f17000000000000184015080016a0cd8303180b3133373531373737313031000003";
+//String hex = "000000d4020101000498670b00010000002c636f6d2e746f6461792e6170692e676f6f64732e736572766963652e4f70656e476f6f6473536572766963650b0002000000156c697374536b7544657461696c4279536b754e6f730b000300000005312e302e300b0004000000252f6170692f6531626664373632333231653430396365653461633062366538343139363363080005ac1200020a0007ac1e00020000c9e608000879292c580a0009ac1e00020000c9e50d00170b0b00000000001c19f881800008323035343534343429f581800004000003";
+        byte[] bytes = hexStr2bytes(hex);
+        requestBuf.setBytes(0, bytes);
+        requestBuf.writerIndex(bytes.length);
+
 //        System.out.println("origJson:\n" + json);
-//        System.out.println(dumpToStr(requestBuf));
-//
-//        JsonSerializer jsonDecoder = new JsonSerializer(service, method, "1.0.0", struct);
-//        SoaMessageParser<String> parser = new SoaMessageParser<>(requestBuf, jsonDecoder);
-//        parser.parseHeader();
-//
-//        System.out.println(parser.getHeader());
-//        System.out.println("after enCode and decode:\n" + parser.parseBody().getBody());
-//        System.out.println(desc + " ends=====================");
-//        requestBuf.release();
-//        InvocationContextImpl.Factory.removeCurrentInstance();
-//    }
+        System.out.println(dumpToStr(requestBuf));
+
+        JsonSerializer jsonDecoder = new JsonSerializer(service, method, "1.0.0", struct);
+        SoaMessageParser<String> parser = new SoaMessageParser<>(requestBuf, jsonDecoder);
+        parser.parseHeader();
+
+        System.out.println(parser.getHeader());
+        System.out.println("after enCode and decode:\n" + parser.parseBody().getBody());
+        System.out.println(desc + " ends=====================");
+        requestBuf.release();
+        InvocationContextImpl.Factory.removeCurrentInstance();
+    }
 
     private static Service getService(final String xmlFilePath) throws IOException {
         String xmlContent = IOUtils.toString(JsonSerializerTest.class.getResource(xmlFilePath), "UTF-8");

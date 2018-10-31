@@ -1,14 +1,11 @@
 package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.RuntimeInstance;
-import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 
 import java.util.List;
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
- *
  * @author lihuimin
  * @date 2017/12/26
  */
@@ -19,6 +16,7 @@ public class LoadBalanceAlgorithm {
 
     /**
      * 带权重的随机算法
+     *
      * @param instances
      * @return
      */
@@ -26,9 +24,9 @@ public class LoadBalanceAlgorithm {
         //随机选择一个可用server
         RuntimeInstance result = null;
 
-        if(instances.size() > 0) {
+        if (instances.size() > 0) {
             int length = instances.size();
-            final Random random = new Random();
+            final ThreadLocalRandom random = ThreadLocalRandom.current();
 
             int totalWeight = 0;
             int minWeight = Integer.MAX_VALUE;
@@ -43,13 +41,13 @@ public class LoadBalanceAlgorithm {
 
             if (totalWeight > 0 && !isSame) {
                 int offset = random.nextInt(totalWeight);
-                for (int i = 0; i < length; i++){
+                for (int i = 0; i < length; i++) {
                     offset -= instances.get(i).weight;
-                    if (offset < 0){
+                    if (offset < 0) {
                         return instances.get(i);
                     }
                 }
-            }else {
+            } else {
                 return instances.get(random.nextInt(length));
             }
         }
@@ -73,6 +71,7 @@ public class LoadBalanceAlgorithm {
 
     /**
      * 带权重的轮询算法
+     *
      * @param instances
      * @return
      */
@@ -80,7 +79,7 @@ public class LoadBalanceAlgorithm {
 
         RuntimeInstance result = null;
 
-        if (instances.size() >0){
+        if (instances.size() > 0) {
             int length = instances.size();
             int[] weights = new int[length];
             int maxWeight = 0;
@@ -93,27 +92,27 @@ public class LoadBalanceAlgorithm {
             }
             boolean isSame = (minWeight == maxWeight);
             //计算权重最大公约数
-            int gcdWeight = gcdWeight(weights,weights.length);
+            int gcdWeight = gcdWeight(weights, weights.length);
 
             //实例权重相同
-            if (isSame){
-                return  instances.get((++lastIndex) % length);
+            if (isSame) {
+                return instances.get((++lastIndex) % length);
             }
 
 
-            if(lastIndex >= length){
-                lastIndex = length -1;
+            if (lastIndex >= length) {
+                lastIndex = length - 1;
             }
-            while (true){
-                lastIndex = (lastIndex+1) % length;
-                if (lastIndex == 0){
+            while (true) {
+                lastIndex = (lastIndex + 1) % length;
+                if (lastIndex == 0) {
                     currentWeight = currentWeight - gcdWeight;
-                    if (currentWeight <= 0){
+                    if (currentWeight <= 0) {
                         currentWeight = maxWeight;
                     }
                 }
-                if (weights[lastIndex] >= currentWeight){
-                    return  instances.get(lastIndex);
+                if (weights[lastIndex] >= currentWeight) {
+                    return instances.get(lastIndex);
                 }
             }
         }
@@ -122,25 +121,26 @@ public class LoadBalanceAlgorithm {
 
     /**
      * 计算所有权重的最大公约数
+     *
      * @param weights
      * @param lenght
      * @return
      */
-    public static int gcdWeight(int[] weights, int lenght){
+    public static int gcdWeight(int[] weights, int lenght) {
 
-        if (lenght == 1){
+        if (lenght == 1) {
             return weights[0];
-        }else {
+        } else {
             return gcd(weights[lenght - 1], gcdWeight(weights, lenght - 1));
         }
     }
 
-    public static int gcd(int a,int b){
+    public static int gcd(int a, int b) {
 
-        if (b == 0){
+        if (b == 0) {
             return a;
-        }else {
-            return gcd(b,a%b);
+        } else {
+            return gcd(b, a % b);
         }
     }
 }

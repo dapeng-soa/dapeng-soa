@@ -131,7 +131,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
         assert (result != null);
 
         //请求响应，在途请求-1
-        RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service,host, port);
+        RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service, host, port);
         if (runtimeInstance == null) {
             LOGGER.error("SoaBaseConnection::runtimeInstance not found.");
         } else {
@@ -213,8 +213,15 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     LOGGER.error(e.getMessage(), e);
                     SoaException soaException = convertToSoaException(e);
                     Result<RESP> result = new Result<>(null, soaException);
-
                     ctx.setAttribute("result", result);
+
+                    // fix  sendAsync  json序列化异常  LogFilter respCode == null
+                    InvocationContextImpl invocationContext = (InvocationContextImpl) ctx.getAttribute("context");
+                    InvocationInfoImpl lastInfo = (InvocationInfoImpl) invocationContext.lastInvocationInfo();
+                    lastInfo.responseCode(soaException.getCode());
+                    invocationContext.lastInvocationInfo(lastInfo);
+                    ctx.setAttribute("context", invocationContext);
+
                     onExit(ctx, getPrevChain(ctx));
                 } finally {
                     InvocationContextImpl.Factory.removeCurrentInstance();
@@ -269,7 +276,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         assert (resultFuture != null);
         //请求响应，在途请求-1
-        RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service,host, port);
+        RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service, host, port);
         if (runtimeInstance == null) {
             LOGGER.error("SoaBaseConnection::runtimeInstance not found.");
         } else {
