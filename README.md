@@ -38,3 +38,7 @@ Dapeng-soa 是一个轻量级、高性能的微服务框架，构建在Netty以�
 # Documents
 - [x] [中文](https://github.com/dapeng-soa/dapeng-soa/blob/master/README.md)
 - [x] [English](https://github.com/dapeng-soa/dapeng-soa/blob/master/README_en.md)
+
+# Faqs
+- [x] [中文](https://github.com/dapeng-soa/dapeng-soa/blob/master/faqs.md)
+- [x] [English](https://github.com/dapeng-soa/dapeng-soa/blob/master/faqs_en.md)
