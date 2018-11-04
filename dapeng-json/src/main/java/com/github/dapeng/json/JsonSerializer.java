@@ -25,6 +25,7 @@ public class JsonSerializer implements BeanSerializer<String> {
      * https://github.com/dapeng-soa/dapeng-soa/issues/5
      */
     private final static long MAX_JSON_LONG = 1L << 53;
+    private final static long MIN_JSON_LONG = -1 << 53;
 
     private final OptimizedMetadata.OptimizedStruct optimizedStruct;
     private final OptimizedMetadata.OptimizedService optimizedService;
@@ -152,7 +153,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                 break;
             case TType.I64:
                 long lValue = iproto.readI64();
-                if (lValue <= MAX_JSON_LONG) {
+                if (lValue <= MAX_JSON_LONG && lValue >= MIN_JSON_LONG) {
                     writer.onNumber(lValue);
                 } else {
                     writer.onNumber(String.valueOf(lValue));
