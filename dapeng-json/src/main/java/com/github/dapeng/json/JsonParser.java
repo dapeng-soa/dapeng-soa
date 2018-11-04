@@ -405,7 +405,7 @@ class JsonParser {
         exp();
 
         // TODO double = -1 * i * e ^ exp
-        callback.onNumber(Double.parseDouble(new String(input.sliceCharArray(start, input.cursor()))));
+        callback.onNumber(new String(input.sliceCharArray(start, input.cursor())));
         ws();
     }
 

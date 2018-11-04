@@ -1,15 +1,25 @@
 package com.github.dapeng.json;
 
 
-import com.github.dapeng.core.*;
-import com.github.dapeng.core.metadata.*;
+import com.github.dapeng.core.InvocationContext;
+import com.github.dapeng.core.InvocationContextImpl;
+import com.github.dapeng.core.SoaCode;
+import com.github.dapeng.core.SoaException;
+import com.github.dapeng.core.metadata.DataType;
+import com.github.dapeng.core.metadata.Field;
+import com.github.dapeng.core.metadata.Struct;
+import com.github.dapeng.core.metadata.TEnum;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.*;
 import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.List;
+import java.util.Stack;
 
 import static com.github.dapeng.core.enums.CodecProtocol.CompressedBinary;
 import static com.github.dapeng.json.JsonUtils.*;
@@ -351,8 +361,9 @@ class JsonReader implements JsonCallback {
                         requestByteBuf.writerIndex(),
                         optimizedService.optimizedStructs.get(field.dataType.qualifiedName),
                         name);
-            } else
+            } else {
                 logAndThrowTException("field " + name + " type " + toString(current.dataType) + " not compatible with json object");
+            }
         }
     }
 
@@ -440,48 +451,20 @@ class JsonReader implements JsonCallback {
         oproto.writeBool(value);
     }
 
+    @Deprecated
     @Override
     public void onNumber(double value) throws TException {
-        DataType.KIND currentType = current.dataType.kind;
+        throw new NotImplementedException();
+    }
 
-        if (skip) {
-            return;
-        }
-
-        StackNode peek = peek();
-        if (peek != null && isMultiElementKind(peek.dataType.kind)) {
-            peek.incrElementSize();
-        }
-
-        switch (currentType) {
-            case SHORT:
-                oproto.writeI16((short) value);
-                break;
-            case INTEGER:
-            case ENUM:
-                oproto.writeI32((int) value);
-                break;
-            case LONG:
-                oproto.writeI64((long) value);
-                break;
-            case DOUBLE:
-                oproto.writeDouble(value);
-                break;
-            case BIGDECIMAL:
-                oproto.writeString(String.valueOf(value));
-                break;
-            case BYTE:
-                oproto.writeByte((byte) value);
-                break;
-            default:
-                throw new TException("Field:" + current.fieldName + ", DataType(" + current.dataType.kind
-                        + ") for " + current.dataType.qualifiedName + " is not a Number");
-
-        }
+    @Deprecated
+    @Override
+    public void onNumber(long value) throws TException {
+        throw new NotImplementedException();
     }
 
     @Override
-    public void onNumber(long value) throws TException {
+    public void onNumber(String value) throws TException {
         DataType.KIND currentType = current.dataType.kind;
 
         if (skip) {
@@ -495,20 +478,23 @@ class JsonReader implements JsonCallback {
 
         switch (currentType) {
             case SHORT:
-                oproto.writeI16((short) value);
+                oproto.writeI16(Short.parseShort(value));
                 break;
             case INTEGER:
             case ENUM:
-                oproto.writeI32((int) value);
+                oproto.writeI32(Integer.parseInt(value));
                 break;
             case LONG:
-                oproto.writeI64((long) value);
+                oproto.writeI64(Long.parseLong(value));
                 break;
             case DOUBLE:
-                oproto.writeDouble(value);
+                oproto.writeDouble(Double.parseDouble(value));
+                break;
+            case BIGDECIMAL:
+                oproto.writeString(value);
                 break;
             case BYTE:
-                oproto.writeByte((byte) value);
+                oproto.writeByte(Byte.parseByte(value));
                 break;
             default:
                 throw new TException("Field:" + current.fieldName + ", DataType(" + current.dataType.kind
@@ -574,10 +560,13 @@ class JsonReader implements JsonCallback {
 
     // only used in startField
     private void push(final DataType dataType, final int tFieldPos, final int valuePos, final OptimizedMetadata.OptimizedStruct optimizedStruct, String fieldName) {
-        StackNode node = null;
+        StackNode node;
 
-        if (nodePool.size() > 0) node = nodePool.remove(nodePool.size() - 1);
-        else node = new StackNode();
+        if (nodePool.size() > 0) {
+            node = nodePool.remove(nodePool.size() - 1);
+        } else {
+            node = new StackNode();
+        }
 
         node.init(dataType, valuePos, tFieldPos, optimizedStruct, fieldName);
         //if(current != null)

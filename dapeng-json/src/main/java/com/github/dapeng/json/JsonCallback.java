@@ -68,6 +68,14 @@ public interface JsonCallback {
     void onBoolean(boolean value) throws TException;
 
     /**
+     * Called when number is met.
+     *
+     * @param value
+     * @throws TException
+     */
+    void onNumber(String value) throws TException;
+
+    /**
      * Called when a double value is met.
      *
      * @param value
