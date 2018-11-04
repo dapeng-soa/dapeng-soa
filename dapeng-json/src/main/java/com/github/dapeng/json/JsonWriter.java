@@ -1,7 +1,8 @@
 package com.github.dapeng.json;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
+/**
+ * thrift -> json
+ */
 public class JsonWriter implements JsonCallback {
 
     private StringBuilder builder = new StringBuilder(64);
@@ -45,13 +46,6 @@ public class JsonWriter implements JsonCallback {
     @Override
     public void onBoolean(boolean value) {
         builder.append(value ? "true" : "false");
-    }
-
-    @Override
-    public void onNumber(String value) {
-        builder.append('\"');
-        builder.append(value);
-        builder.append('\"');
     }
 
     @Override

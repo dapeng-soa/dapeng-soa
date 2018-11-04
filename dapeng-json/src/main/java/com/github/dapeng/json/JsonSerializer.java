@@ -156,7 +156,7 @@ public class JsonSerializer implements BeanSerializer<String> {
                 if (lValue <= MAX_JSON_LONG && lValue >= MIN_JSON_LONG) {
                     writer.onNumber(lValue);
                 } else {
-                    writer.onNumber(String.valueOf(lValue));
+                    writer.onString(String.valueOf(lValue));
                 }
                 break;
             case TType.STRING:

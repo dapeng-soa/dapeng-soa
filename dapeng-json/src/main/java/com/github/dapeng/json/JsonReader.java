@@ -27,6 +27,7 @@ import static com.github.dapeng.util.MetaDataUtil.dataType2Byte;
 import static com.github.dapeng.util.MetaDataUtil.findEnumItemValue;
 
 /**
+ * Json -> Thrift
  * format:
  * url:http://xxx/api/callService?serviceName=xxx&version=xx&method=xx
  * post body:
@@ -38,7 +39,6 @@ import static com.github.dapeng.util.MetaDataUtil.findEnumItemValue;
  * }
  * </pre>
  */
-
 class JsonReader implements JsonCallback {
     private final Logger logger = LoggerFactory.getLogger(JsonReader.class);
 
@@ -451,20 +451,8 @@ class JsonReader implements JsonCallback {
         oproto.writeBool(value);
     }
 
-    @Deprecated
     @Override
     public void onNumber(double value) throws TException {
-        throw new NotImplementedException();
-    }
-
-    @Deprecated
-    @Override
-    public void onNumber(long value) throws TException {
-        throw new NotImplementedException();
-    }
-
-    @Override
-    public void onNumber(String value) throws TException {
         DataType.KIND currentType = current.dataType.kind;
 
         if (skip) {
@@ -478,29 +466,34 @@ class JsonReader implements JsonCallback {
 
         switch (currentType) {
             case SHORT:
-                oproto.writeI16(Short.parseShort(value));
+                oproto.writeI16((short) value);
                 break;
             case INTEGER:
             case ENUM:
-                oproto.writeI32(Integer.parseInt(value));
+                oproto.writeI32((int) value);
                 break;
             case LONG:
-                oproto.writeI64(Long.parseLong(value));
+                oproto.writeI64((long) value);
                 break;
             case DOUBLE:
-                oproto.writeDouble(Double.parseDouble(value));
+                oproto.writeDouble(value);
                 break;
             case BIGDECIMAL:
-                oproto.writeString(value);
+                oproto.writeString(String.valueOf(value));
                 break;
             case BYTE:
-                oproto.writeByte(Byte.parseByte(value));
+                oproto.writeByte((byte) value);
                 break;
             default:
                 throw new TException("Field:" + current.fieldName + ", DataType(" + current.dataType.kind
                         + ") for " + current.dataType.qualifiedName + " is not a Number");
 
         }
+    }
+
+    @Override
+    public void onNumber(long value) throws TException {
+        throw new NotImplementedException();
     }
 
     @Override
