@@ -218,7 +218,16 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     if (invocationContext.lastInvocationInfo().responseCode() == null) {
                         ((InvocationInfoImpl)invocationContext.lastInvocationInfo()).responseCode(soaException.getCode());
                     }
+
                     ctx.setAttribute("result", result);
+
+                    // fix  sendAsync  json序列化异常  LogFilter respCode == null
+                    InvocationContextImpl invocationContext = (InvocationContextImpl) ctx.getAttribute("context");
+                    InvocationInfoImpl lastInfo = (InvocationInfoImpl) invocationContext.lastInvocationInfo();
+                    lastInfo.responseCode(soaException.getCode());
+                    invocationContext.lastInvocationInfo(lastInfo);
+                    ctx.setAttribute("context", invocationContext);
+
                     onExit(ctx, getPrevChain(ctx));
                 } finally {
                     InvocationContextImpl.Factory.removeCurrentInstance();
