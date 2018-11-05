@@ -20,6 +20,13 @@ import static com.github.dapeng.util.MetaDataUtil.findEnumItemLabel;
 public class JsonSerializer implements BeanSerializer<String> {
     private final Logger logger = LoggerFactory.getLogger(JsonSerializer.class);
 
+    /**
+     * Json能处理的最大long
+     * https://github.com/dapeng-soa/dapeng-soa/issues/5
+     */
+    private final static long MAX_JSON_LONG = 1L << 53;
+    private final static long MIN_JSON_LONG = -1 << 53;
+
     private final OptimizedMetadata.OptimizedStruct optimizedStruct;
     private final OptimizedMetadata.OptimizedService optimizedService;
     private final Method method;
@@ -146,7 +153,11 @@ public class JsonSerializer implements BeanSerializer<String> {
                 break;
             case TType.I64:
                 long lValue = iproto.readI64();
-                writer.onNumber(lValue);
+                if (lValue <= MAX_JSON_LONG && lValue >= MIN_JSON_LONG) {
+                    writer.onNumber(lValue);
+                } else {
+                    writer.onString(String.valueOf(lValue));
+                }
                 break;
             case TType.STRING:
                 String strValue = iproto.readString();
