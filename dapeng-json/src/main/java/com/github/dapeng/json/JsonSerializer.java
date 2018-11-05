@@ -25,7 +25,7 @@ public class JsonSerializer implements BeanSerializer<String> {
      * https://github.com/dapeng-soa/dapeng-soa/issues/5
      */
     private final static long MAX_JSON_LONG = 1L << 53;
-    private final static long MIN_JSON_LONG = -1 << 53;
+    private final static long MIN_JSON_LONG = -1L << 53;
 
     private final OptimizedMetadata.OptimizedStruct optimizedStruct;
     private final OptimizedMetadata.OptimizedService optimizedService;
