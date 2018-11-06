@@ -83,8 +83,8 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
 
             transactionContext.soaException(soaException);
             SoaResponseWrapper responseWrapper = new SoaResponseWrapper(transactionContext,
-                    Optional.ofNullable(null),
-                    Optional.ofNullable(null));
+                    Optional.empty(),
+                    Optional.empty());
 
             TransactionContext.Factory.removeCurrentInstance();
 

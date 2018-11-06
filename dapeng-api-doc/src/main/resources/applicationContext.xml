@@ -14,6 +14,7 @@
     <mvc:annotation-driven enable-matrix-variables="true">
         <mvc:message-converters register-defaults="false">
             <bean class="org.springframework.http.converter.ByteArrayHttpMessageConverter"/>
+            <bean class="org.springframework.http.converter.StringHttpMessageConverter" />
             <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
                 <property name="supportedMediaTypes">
                     <list>
@@ -30,7 +31,8 @@
     <bean class="com.github.dapeng.doc.ServiceInvocationProxy" init-method="init" destroy-method="destroy"/>
 
     <!-- 由ApiDocPlugin 实例化 -->
-    <bean id="serviceCache" class="com.github.dapeng.doc.cache.ServiceCache" init-method="init" destroy-method="destory"/>
+    <bean id="serviceCache" class="com.github.dapeng.doc.cache.ServiceCache" init-method="init"
+          destroy-method="destory"/>
 
     <bean id="jspViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
         <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>

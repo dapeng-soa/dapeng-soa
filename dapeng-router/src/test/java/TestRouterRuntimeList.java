@@ -12,8 +12,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.matchers.JUnitMatchers.containsString;
-
 /**
  * 描述:
  *
@@ -617,19 +615,29 @@ public class TestRouterRuntimeList {
     }
 
     @Test
-    public void testRegexCookieTest() {
-        String pattern = "  cookie_storeId  match r'100.*'  => ip\"192.168.1.101\"";
+    public void testMoreThenIp3() {
+        try {
+            String pattern = "otherwise => ~ip\"192.168.10.126\" , , ~ip\"192.168.10.130\"";
+            List<Route> routes = RoutesExecutor.parseAll(pattern);
+            InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+            ctx.setCookie("storeId", "118666200");
+            ctx.methodName("updateOrderMemberId");
 
-        List<Route> routes = RoutesExecutor.parseAll(pattern);
-        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-        ctx.setCookie("storeId", "100201");
-        List<RuntimeInstance> prepare = prepare(ctx, routes);
+            List<RuntimeInstance> prepare = prepare(ctx, routes);
 
-        List<RuntimeInstance> expectInstances = new ArrayList<>();
-        expectInstances.add(runtimeInstance1);
 
-        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+            List<RuntimeInstance> expectInstances = new ArrayList<>();
+            expectInstances.add(runtimeInstance1);
+            Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+
+        } catch (ParsingException ex) {
+            Assert.assertThat(ex.getMessage(), CoreMatchers.containsString(
+                    ("[Validate Token Error]:target token: [(2,'=>')] is not in expects token: [(15,'逗号'), (-1,'文件结束符'), (1,'回车换行符')]")));
+        }
+
     }
+
+
 
 
 }

@@ -31,6 +31,7 @@ public class SpringAppLoader implements Plugin {
         this.appClassLoaders = appClassLoaders;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void start() {
         LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");

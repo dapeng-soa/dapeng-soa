@@ -1,7 +1,8 @@
 package com.github.dapeng.json;
 
-import com.github.dapeng.org.apache.thrift.TException;
-
+/**
+ * thrift -> json
+ */
 public class JsonWriter implements JsonCallback {
 
     private StringBuilder builder = new StringBuilder(64);

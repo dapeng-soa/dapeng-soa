@@ -108,36 +108,36 @@ public class JsonSerializerTest {
 //        System.out.println("average:" + t2/round/1000000);
 
         try {
-            final String purchaseDescriptorXmlPath = "/com.today.api.purchase.service.PurchaseService.xml";
-            OptimizedMetadata.OptimizedService purchaseService = new OptimizedMetadata.OptimizedService(getService(purchaseDescriptorXmlPath));
-
-            Method createTransferOrder = purchaseService.getMethodMap().get("createTransferOrder");
-            String json = loadJson("/createTransferOrder.json");
-
-            String desc = "createTransferOrderTest.json";
-
-            OptimizedMetadata.OptimizedStruct struct = constructOptimizedStruct(purchaseService, createTransferOrder.request);
-            while (true) {
-                doTest2(purchaseService, createTransferOrder, struct, json, desc);
-
-                Thread.sleep(200);
-            }
-//            queryExportReportTest();
-//            createTransferOrderTest();
-//            optionalBooleanTest();
-//            simpleStructTest();
-//            simpleMapTest();
-//            createTransferOrderTest();
-//            intArrayTest();
-//            intMapTest();
-//            enumTest();
-//            simpleStructWithEnumTest();
-//            simpleStructWithOptionTest();
+//            final String purchaseDescriptorXmlPath = "/com.today.api.purchase.service.PurchaseService.xml";
+//            OptimizedMetadata.OptimizedService purchaseService = new OptimizedMetadata.OptimizedService(getService(purchaseDescriptorXmlPath));
 //
-//            complexStructTest();
-//            complexStructTest1();
-//            noTagStructTest();
-//            memberRegisterByUnionIdAndOpenIdServiceTest();
+//            Method createTransferOrder = purchaseService.getMethodMap().get("createTransferOrder");
+//            String json = loadJson("/createTransferOrder.json");
+//
+//            String desc = "createTransferOrderTest.json";
+//
+//            OptimizedMetadata.OptimizedStruct struct = constructOptimizedStruct(purchaseService, createTransferOrder.request);
+//            while (true) {
+//                doTest2(purchaseService, createTransferOrder, struct, json, desc);
+//
+//                Thread.sleep(200);
+//            }
+//            queryExportReportTest();
+            createTransferOrderTest();
+            optionalBooleanTest();
+            simpleStructTest();
+            simpleMapTest();
+            createTransferOrderTest();
+            intArrayTest();
+            intMapTest();
+            enumTest();
+            simpleStructWithEnumTest();
+            simpleStructWithOptionTest();
+//
+            complexStructTest();
+            complexStructTest1();
+            noTagStructTest();
+            memberRegisterByUnionIdAndOpenIdServiceTest();
 //            concurrentTest();
         } catch (Exception e) {
             Thread.sleep(50);
@@ -446,7 +446,7 @@ public class JsonSerializerTest {
 //        parser.getHeader();
         parser.parseBody();
 //        System.out.println(parser.getHeader());
-//        System.out.println("after enCode and decode:\n" + parser.getBody());
+        System.out.println("after enCode and decode:\n" + parser.getBody());
 //        System.out.println(desc + " ends=====================" + "counters:" + counter + "/" + counter2);
         buf.release();
         InvocationContextImpl.Factory.removeCurrentInstance();
