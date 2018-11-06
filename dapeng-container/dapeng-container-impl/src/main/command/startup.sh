@@ -32,11 +32,20 @@ do
   CLASSPATH=$CLASSPATH:$filename
 done
 
+JAVA_VERSION=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
+
 #DEBUG="-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9997"
 JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=1091 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
 NETTY_OPTS=" -Dio.netty.leakDetectionLevel=advanced "
 #GC_OPTS=" -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDateStamps -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintGCDetails -XX:+PrintPromotionFailure -XX:+PrintGCApplicationStoppedTime -Dlog.dir=$PRGDIR/.."
-GC_OPTS=" -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDateStamps -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintPromotionFailure -XX:+PrintGCApplicationStoppedTime -XX:+PrintGCDetails -Dlog.dir=$PRGDIR/.."
+
+
+if [ "$JAVA_VERSION" \< "11" ]; then
+    GC_OPTS=" -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDateStamps -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintPromotionFailure -XX:+PrintGCApplicationStoppedTime -XX:+PrintGCDetails -Dlog.dir=$PRGDIR/.. -XX:+UseParallelGC -XX:+UseParallelOldGC"
+else
+    GC_OPTS=" -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+HeapDumpOnOutOfMemoryError -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintGCDetails -Dlog.dir=$PRGDIR/.. -XX:+UnlockExperimentalVMOptions -XX:+UseZGC"
+fi
+
 
 
 #预分配内存, 会造成jvm进程启动的时候慢一点, 但运行时减轻gc停顿, 减少内存碎片
@@ -50,7 +59,7 @@ MEM_OPTS="$MEM_OPTS -Xss256k"
 #CMSInitiatingOccupancyFraction 设置年老代空间被使用75%后出发CMS收集器
 #UseCMSInitiatingOccupancyOnly 只在达到阈值后才触发CMS
 #GC_OPTS="$GC_OPTS -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=75 -XX:+UseCMSInitiatingOccupancyOnly"
-GC_OPTS="$GC_OPTS -XX:+UseParallelGC -XX:+UseParallelOldGC"
+
 
 # System.gc() 使用CMS算法
 #GC_OPTS="$GC_OPTS -XX:+ExplicitGCInvokesConcurrent"
@@ -80,8 +89,6 @@ else
     JAVA_OPTS="$E_JAVA_OPTS $NETTY_OPTS $SOA_BASE $DEBUG_OPTS $USER_OPTS $MEM_OPTS $GC_OPTS $OPTIMIZE_OPTS $SHOTTING_OPTS $JMX_OPTS $OTHER_OPTS"
 fi
 
-echo JAVA_OPTS=$JAVA_OPTS
-
 # SIGTERM-handler  graceful-shutdown
 pid=0
 process_exit() {
@@ -100,6 +107,8 @@ process_exit() {
 
 trap 'kill ${!};process_exit' SIGTERM
 
+echo $JAVA_OPTS > $LOGDIR/console.log
+
 nohup java -server $JAVA_OPTS -cp ./dapeng-bootstrap.jar com.github.dapeng.bootstrap.Bootstrap >> $LOGDIR/console.log 2>&1 &
 pid="$!"
 echo $pid > $LOGDIR/pid.txt
@@ -115,3 +124,4 @@ if [ "$fluentBitEnable" == "true" ]; then
 fi
 
 wait $pid
+

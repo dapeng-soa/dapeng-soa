@@ -149,7 +149,12 @@ class ThriftCodeParser(var language: String) {
           if (line.length > 0) {
             if (buffer.length > 0)
               buffer.append("\n")
-            buffer.append(line);
+            if (line.trim.startsWith("#")) {
+              buffer.append(line.trim);
+            } else {
+              buffer.append(line);
+            }
+
           } else {
             buffer.append("\n");
           }

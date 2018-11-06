@@ -9,6 +9,7 @@ import com.github.dapeng.core.ServiceFreqControl;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.*;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,9 +71,20 @@ public class ServerZkAgentImpl implements RegistryAgent {
     public void unregisterService(String serverName, String versionName) {
         try {
             //fixme
-            String path = "/soa/runtime/services/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
+            String path = "/soa/runtime/services/" + serverName;
+            String instPath =  SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
             LOGGER.info(" logger zookeeper unRegister service: " + path);
-//            serverZk.zk.delete(path, -1);
+            List<String> children = serverZk.zk.getChildren(path, false);
+            children.forEach(child -> {
+                if(child.contains(instPath)){
+                    try {
+                        String fullPath = path + "/" + child;
+                        serverZk.zk.delete(fullPath,-1);
+                    } catch (InterruptedException | KeeperException e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
+                }
+            });
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }

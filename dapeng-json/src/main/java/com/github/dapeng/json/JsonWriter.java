@@ -1,5 +1,8 @@
 package com.github.dapeng.json;
 
+/**
+ * thrift -> json
+ */
 public class JsonWriter implements JsonCallback {
 
     private StringBuilder builder = new StringBuilder(64);
