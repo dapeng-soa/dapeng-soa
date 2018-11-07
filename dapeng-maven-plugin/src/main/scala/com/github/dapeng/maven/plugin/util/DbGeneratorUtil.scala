@@ -66,7 +66,7 @@ object DbGeneratorUtil {
       sb.append(" import java.time.LocalDateTime \r\n")
     }
 
-    sb.append(" import wangzx.scala_commons.sql.ResultSetMapper \r\n\r\n ")
+    sb.append(" import com.isuwang.scala_commons.sql.ResultSetMapper \r\n\r\n ")
 
     sb.append(s" case class ${className} ( \r\n")
     columns.foreach(column => {
