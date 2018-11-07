@@ -180,6 +180,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             filterContext.setAttribute("application", application);
             filterContext.setAttribute("isAsync", serviceDef.isAsync);
             filterContext.setAttach(dispatchFilter, "chain", sharedChain);
+            filterContext.setAttribute("container", this.container);
+            filterContext.setAttribute("chain",sharedChain);
 
             sharedChain.onEntry(filterContext);
         } catch (SoaException e) {
