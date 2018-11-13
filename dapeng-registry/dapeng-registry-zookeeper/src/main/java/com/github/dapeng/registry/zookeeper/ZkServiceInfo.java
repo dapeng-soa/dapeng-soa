@@ -21,7 +21,11 @@ public class ZkServiceInfo {
 
     public enum Status {
 
-        CREATED, ACTIVE, CANCELED,
+        CREATED, ACTIVE,
+        /**
+         * 给GC掉，
+         */
+        GCED, CANCELED,
     }
 
     private final String service;

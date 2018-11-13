@@ -29,22 +29,22 @@ public class RoutesWatcher<T> implements Watcher {
 
     public enum RouteType {
         SERVICE_ROUTE,
-        COOKIE_ROUTE
+        COOKIE_RULE
     }
 
     @Override
     public void process(WatchedEvent event) {
-        LOGGER.warn("RoutesWatcher::getRoutes zkEvent: " + event);
+        LOGGER.warn("RoutesWatcher::process zkEvent: " + event);
         if (event.getType() == Event.EventType.NodeDataChanged) {
             if (type == RouteType.SERVICE_ROUTE) {
                 LOGGER.info("RoutesWatcher::watcher service  routes节点data发现变更,重新获取信息. event: {}", event);
                 routesMap.remove(service);
                 ClientZk.getMasterInstance().getRoutes(service);
 
-            } else if (type == RouteType.COOKIE_ROUTE) {
-                LOGGER.info("RoutesWatcher::watcher cookie routes 节点data发现变更,重新获取信息,event:{}", event);
+            } else if (type == RouteType.COOKIE_RULE) {
+                LOGGER.info("RoutesWatcher::watcher cookie rules 节点data发现变更,重新获取信息,event:{}", event);
                 routesMap.remove(service);
-                ClientZk.getMasterInstance().getCookieRoutes(service);
+                ClientZk.getMasterInstance().getCookieRules(service);
             }
         }
 

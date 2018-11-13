@@ -1,7 +1,7 @@
 package com.github.dapeng.client.netty;
 
 import com.github.dapeng.cookie.CookieExecutor;
-import com.github.dapeng.cookie.CookieRoute;
+import com.github.dapeng.cookie.CookieRule;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.helper.IPUtils;
@@ -13,7 +13,6 @@ import com.github.dapeng.registry.zookeeper.LoadBalanceAlgorithm;
 import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
-import io.netty.handler.codec.http.cookie.Cookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -231,8 +230,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + ":" + version + "], not found available version of instances");
             throw new SoaException(NoMatchedService, "服务 [ " + service + ":" + version + "] 无可用实例:没有找到对应的服务版本");
         }
-        //set cookies routes
-        cookieRouter(service, method, version);
+        //set cookies if cookie injection rule matches
+        injectCookie(service, method, version);
 
         // router
         List<RuntimeInstance> routedInstances = router(service, method, version, checkVersionInstances);
@@ -283,12 +282,12 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * @return
      */
     private List<RuntimeInstance> router(String service, String method, String version, List<RuntimeInstance> compatibles) throws SoaException {
-        InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         List<Route> routes = zkAgent.getRoutes(service);
         if (routes == null || routes.size() == 0) {
             logger.debug("router 获取 路由信息为空或size为0,跳过router,服务实例数：{}", compatibles.size());
             return compatibles;
         } else {
+            InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
             context.serviceName(service);
             context.methodName(method);
             context.versionName(version);
@@ -301,18 +300,18 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     }
 
     /**
-     * cookie 服务路由
+     * cookie injection
      */
-    private void cookieRouter(String service, String method, String version) {
-        InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-        List<CookieRoute> cookieRoutes = zkAgent.getCookieRoutes(service);
-        if (cookieRoutes == null || cookieRoutes.size() == 0) {
-            logger.debug("cookie router 路由信息为空或size为0, 跳过 cookie router");
+    private void injectCookie(String service, String method, String version) {
+        List<CookieRule> cookieRules = zkAgent.getCookieRules(service);
+        if (cookieRules == null || cookieRules.size() == 0) {
+            logger.debug("cookie rules 信息为空或size为0, 跳过 cookie injection");
         } else {
+            InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
             context.serviceName(service);
             context.methodName(method);
             context.versionName(version);
-            CookieExecutor.cookieRoutes(context, cookieRoutes);
+            CookieExecutor.injectCookies(context, cookieRules);
         }
     }
 

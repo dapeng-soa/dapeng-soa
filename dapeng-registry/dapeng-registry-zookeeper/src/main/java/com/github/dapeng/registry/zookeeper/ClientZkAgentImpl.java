@@ -1,7 +1,7 @@
 package com.github.dapeng.registry.zookeeper;
 
 
-import com.github.dapeng.cookie.CookieRoute;
+import com.github.dapeng.cookie.CookieRule;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.router.Route;
 import org.slf4j.Logger;
@@ -83,7 +83,7 @@ public class ClientZkAgentImpl implements ClientZkAgent {
     }
 
     @Override
-    public List<CookieRoute> getCookieRoutes(String service) {
-        return masterZk.getCookieRoutes(service);
+    public List<CookieRule> getCookieRules(String service) {
+        return masterZk.getCookieRules(service);
     }
 }

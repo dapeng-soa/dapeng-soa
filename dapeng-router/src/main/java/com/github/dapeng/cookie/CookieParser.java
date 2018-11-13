@@ -13,8 +13,8 @@ import static com.github.dapeng.router.RoutesLexer.*;
 /**
  * 描述: 语法, 路由规则解析
  * <pre>
- * routes :  (route eol)*
- * route  : left '=>' right
+ * rules :  (rule eol)*
+ * rule  : left '=>' right
  * left  : 'otherwise' matcher (';' matcher)*
  * matcher : id 'match' patterns
  * patterns: pattern (',' pattern)*
@@ -27,7 +27,7 @@ import static com.github.dapeng.router.RoutesLexer.*;
  * | kv
  * | mod
  * right : rightPattern (',' rightPattern)*
- * rightPattern : '~' rightPattern | ip
+ * rightPattern : '~' rightPattern | 'c(' string '#' string ')'
  * </pre>
  *
  * @author hz.lei
@@ -40,22 +40,22 @@ public class CookieParser extends RoutesParser {
     }
 
     /**
-     * 第一步： 多行路由规则，根据回车符 ' \n '  进行split  do while 解析
+     * 第一步： 多行规则，根据回车符 ' \n '  进行split  do while 解析
      */
-    public List<CookieRoute> cookieRoutes() {
-        List<CookieRoute> routes = new ArrayList<>();
+    public List<CookieRule> cookieRoutes() {
+        List<CookieRule> routes = new ArrayList<>();
         Token token = lexer.peek();
         switch (token.type()) {
             case Token.EOL:
             case Token.OTHERWISE:
             case Token.ID:
-                CookieRoute route = cookieRoute();
+                CookieRule route = cookieRoute();
                 if (route != null) {
                     routes.add(route);
                 }
                 while (lexer.peek() == Token_EOL) {
                     lexer.next(Token.EOL);
-                    CookieRoute route1 = cookieRoute();
+                    CookieRule route1 = cookieRoute();
                     if (route1 != null) {
                         routes.add(route1);
                     }
@@ -71,12 +71,12 @@ public class CookieParser extends RoutesParser {
     }
 
     /**
-     * 解析一条路由规则，形如:
+     * 解析一条规则，形如:
      * route  : left '=>' right
      * <p>
-     * method match s'getFoo'  => ~ip'192.168.3.39'
+     * method match s'getFoo'  => ~c'a#b'
      */
-    public CookieRoute cookieRoute() {
+    public CookieRule cookieRoute() {
         Token token = lexer.peek();
         switch (token.type()) {
             case Token.OTHERWISE:
@@ -84,7 +84,7 @@ public class CookieParser extends RoutesParser {
                 Condition left = left();
                 lexer.next(Token.THEN);
                 List<CookieRight> right = cookieRiget();
-                return new CookieRoute(left, right);
+                return new CookieRule(left, right);
             default:
                 warn("expect `otherwise` or `id match ...` but got " + token);
         }
@@ -95,7 +95,7 @@ public class CookieParser extends RoutesParser {
     /**
      * right : rightPattern (',' rightPattern)*
      * rightPattern : '~' rightPattern
-     * | ip
+     * | 'c(' string '#' string ')'
      */
     protected List<CookieRight> cookieRiget() {
         List<CookieRight> cookieInfoList = new ArrayList<>();

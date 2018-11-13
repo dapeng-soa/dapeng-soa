@@ -28,9 +28,9 @@ public class CommonZk {
      */
     final static String ROUTES_PATH = "/soa/config/routes";
     /**
-     * service instance cookie route  message
+     * service instance cookie rule  message
      */
-    final static String COOKIE_ROUTES_PATH = "/soa/config/cookies";
+    final static String COOKIE_RULES_PATH = "/soa/config/cookies";
     /**
      * service instance freq limiting  message
      */

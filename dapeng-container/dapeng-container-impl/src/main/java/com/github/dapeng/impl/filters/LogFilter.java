@@ -36,7 +36,6 @@ public class LogFilter implements Filter {
             MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
             MdcCtxInfoUtil.putMdcToAppClassLoader(application, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
 
-            //DEBUG
             InvocationContextImpl invocationCtx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
             String logLevel = invocationCtx.cookie(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
 

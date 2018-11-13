@@ -1,7 +1,7 @@
 package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.cookie.CookieExecutor;
-import com.github.dapeng.cookie.CookieRoute;
+import com.github.dapeng.cookie.CookieRule;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.ConfigKey;
@@ -42,9 +42,9 @@ public class ClientZk extends CommonZk {
     private final Map<String, RoutesWatcher> routesWatcherMap = new ConcurrentHashMap<>(64);
 
     /**
-     * cookie 路由配置信息
+     * cookie injection rules
      */
-    private final Map<String, List<CookieRoute>> cookieRoutesMap = new ConcurrentHashMap<>(32);
+    private final Map<String, List<CookieRule>> cookieRulesMap = new ConcurrentHashMap<>(32);
 
     /**
      * master zkHost
@@ -185,27 +185,27 @@ public class ClientZk extends CommonZk {
         return null;
     }
 
-    public List<CookieRoute> getCookieRoutes(String service) {
-        if (cookieRoutesMap.get(service) != null) {
-            LOGGER.debug("获取 cookie route信息, service: {} , route size {}", service, cookieRoutesMap.get(service).size());
-            return this.cookieRoutesMap.get(service);
+    public List<CookieRule> getCookieRules(String service) {
+        if (cookieRulesMap.get(service) != null) {
+            LOGGER.debug("获取 cookie injection rules 信息, service: {} , rules size {}", service, cookieRulesMap.get(service).size());
+            return this.cookieRulesMap.get(service);
         } else {
-            LOGGER.info("ClientZK::getCookieRoutes routesMap service:{} 为空,从zk获取 route信息。");
-            String servicePath = COOKIE_ROUTES_PATH + "/" + service;
+            LOGGER.info("ClientZK::getCookieRules rulesMap service:{} 为空,从zk获取 route信息。");
+            String servicePath = COOKIE_RULES_PATH + "/" + service;
             try {
                 RoutesWatcher cookieWatcher = routesWatcherMap.get(servicePath);
                 if (cookieWatcher == null) {
                     routesWatcherMap.putIfAbsent(servicePath,
-                            new RoutesWatcher<>(service, cookieRoutesMap, RoutesWatcher.RouteType.COOKIE_ROUTE));
+                            new RoutesWatcher<>(service, cookieRulesMap, RoutesWatcher.RouteType.COOKIE_RULE));
                     cookieWatcher = routesWatcherMap.get(servicePath);
                 }
 
                 byte[] data = zk.getData(servicePath, cookieWatcher, null);
-                List<CookieRoute> routes = processCookieRouteData(service, data);
-                LOGGER.warn("ClientZk::getCookieRoutes routes changes:" + routes);
+                List<CookieRule> routes = processCookieRuleData(service, data);
+                LOGGER.warn("ClientZk::getCookieRules rules changes:" + routes);
                 return routes;
             } catch (KeeperException | InterruptedException e) {
-                LOGGER.error("获取route service 节点: {} 出现异常", service);
+                LOGGER.error("获取cookie rules service 节点: {} 出现异常", service);
             }
         }
         return null;
@@ -229,19 +229,19 @@ public class ClientZk extends CommonZk {
     }
 
     /**
-     * process zk data 解析route 信息
+     * process zk data 解析cookie rule 信息
      */
-    public List<CookieRoute> processCookieRouteData(String service, byte[] data) {
-        List<CookieRoute> zkRoutes;
+    public List<CookieRule> processCookieRuleData(String service, byte[] data) {
+        List<CookieRule> zkCookieRules;
         try {
-            String routeData = new String(data, StandardCharsets.UTF_8);
-            zkRoutes = CookieExecutor.parseCookieRoutes(routeData);
-            cookieRoutesMap.put(service, zkRoutes);
+            String ruleData = new String(data, StandardCharsets.UTF_8);
+            zkCookieRules = CookieExecutor.parseCookieRules(ruleData);
+            cookieRulesMap.put(service, zkCookieRules);
         } catch (Exception e) {
-            zkRoutes = new ArrayList<>(16);
-            LOGGER.error("parser routes 信息 失败，请检查路由规则写法是否正确!");
+            zkCookieRules = new ArrayList<>(16);
+            LOGGER.error("parser cookie rule 信息 失败，请检查cookie规则写法是否正确!");
         }
-        return zkRoutes;
+        return zkCookieRules;
     }
 
     /**

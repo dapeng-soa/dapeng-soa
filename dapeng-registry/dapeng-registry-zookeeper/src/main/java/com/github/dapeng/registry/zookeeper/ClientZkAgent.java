@@ -1,7 +1,7 @@
 package com.github.dapeng.registry.zookeeper;
 
 
-import com.github.dapeng.cookie.CookieRoute;
+import com.github.dapeng.cookie.CookieRule;
 import com.github.dapeng.router.Route;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public interface ClientZkAgent {
     List<Route> getRoutes(String service);
 
 
-    List<CookieRoute> getCookieRoutes(String service);
+    List<CookieRule> getCookieRules(String service);
 
 
 }
