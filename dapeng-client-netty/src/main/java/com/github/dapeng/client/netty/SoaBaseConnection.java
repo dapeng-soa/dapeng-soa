@@ -216,7 +216,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     Result<RESP> result = new Result<>(null, soaException);
 
                     if (invocationContext.lastInvocationInfo().responseCode() == null) {
-                        ((InvocationInfoImpl)invocationContext.lastInvocationInfo()).responseCode(soaException.getCode());
+                        ((InvocationInfoImpl) invocationContext.lastInvocationInfo()).responseCode(soaException.getCode());
                     }
 
                     ctx.setAttribute("result", result);
@@ -344,7 +344,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         } catch (SoaException ex) {
             return new Result<>(null, ex);
-        } catch (TException|RuntimeException ex) {
+        } catch (TException | RuntimeException ex) {
             LOGGER.error("通讯包解析出错:\n" + ex.getMessage(), ex);
             LOGGER.error(DumpUtil.dumpToStr(responseBuf.readerIndex(readerIndex)));
             return new Result<>(null,
