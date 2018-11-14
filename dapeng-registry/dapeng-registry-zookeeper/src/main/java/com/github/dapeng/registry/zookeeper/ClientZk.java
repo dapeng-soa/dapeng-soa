@@ -215,10 +215,6 @@ public class ClientZk extends CommonZk {
         //根据同一个zkInfo对象锁住即可
         synchronized (zkInfo) {
             switch (zkInfo.getStatus()) {
-                case TRANSIENT:
-                    if (zkInfo.getRuntimeInstances().size() > 0) {
-                        break;
-                    }
                 case CREATED:
                 case OUT_OF_SYNC:
                     LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[serviceName:" + zkInfo.getService() + "]:zkInfo status: " + zkInfo.getStatus() + ", now sync with zk");
@@ -232,17 +228,11 @@ public class ClientZk extends CommonZk {
                         LOGGER.error(e.getMessage(), e);
                     }
                     break;
+                case TRANSIENT:
+                    zkInfo.setStatus(ZkServiceInfo.Status.SYNCED);
                 case SYNCED:
                 default:
                     break;
-            }
-            if (zkInfo.getStatus() != ZkServiceInfo.Status.SYNCED) {
-                //判断,runtimeList size
-                if (zkInfo.getRuntimeInstances().size() > 0) {
-                    zkInfo.setStatus(ZkServiceInfo.Status.SYNCED);
-                }
-
-                LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[serviceName:" + zkInfo.getService() + ", status:" + zkInfo.getStatus() + "]");
             }
         }
 
@@ -277,7 +267,7 @@ public class ClientZk extends CommonZk {
                 }
 
                 if (childrens.size() == 0) {
-                    zkInfo.setStatus(ZkServiceInfo.Status.OUT_OF_SYNC);
+                    zkInfo.setStatus(ZkServiceInfo.Status.SYNCED);
                     zkInfo.getRuntimeInstances().clear();
                     LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[{}]:no service instances found", zkInfo.getService());
                     return;
@@ -314,6 +304,7 @@ public class ClientZk extends CommonZk {
 
     /**
      * 取消跟zk的信息同步
+     *
      * @param serviceName
      */
     public void cancelSyncService(String serviceName) {

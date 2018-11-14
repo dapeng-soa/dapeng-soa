@@ -29,7 +29,7 @@ public class ZkServiceInfo {
      *  4. ZkServiceInfo进入TRANSIENT状态后，会有2种情况:
      *    4.1 zk上该服务信息发生变化(例如服务重启引起节点数目变化)，这时候watch最后一次给唤醒，把ZkServiceInfo状态变为OUT_OF_SYNC，
      *        表示本地服务信息跟zk服务信息不一致了
-     *    4.2 zk上改服务信息发生变化前，该服务又一个新的客户端给创建， 这时候ZkServiceInfo状态重新变为SYNCED.
+     *    4.2 zk上该服务信息发生变化前，该服务又一个新的客户端给创建， 这时候ZkServiceInfo状态重新变为SYNCED.
      *  5. 该服务的新客户端给创建时，ZkServiceInfo已经在步骤1中给创建，判断其状态:
      *    5.1 如果对应的ZkServiceInfo状态为SYNCED，那么不需要对ZkServiceInfo做任何操作。
      *    5.2 如果对应的ZkServiceInfo状态为TRANSIENT，那么把ZkServiceInfo状态改为SYNCED，但不需要同步远端zk信息(因为此时本地跟zk信息还是一致的)
