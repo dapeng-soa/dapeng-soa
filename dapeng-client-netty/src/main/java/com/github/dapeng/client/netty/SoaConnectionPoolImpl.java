@@ -16,9 +16,11 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 
 import static com.github.dapeng.core.SoaCode.*;
@@ -47,11 +49,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     private Map<String, ClientInfoWeakRef> clientInfos = new ConcurrentHashMap<>(16);
     private final ReferenceQueue<ClientInfo> referenceQueue = new ReferenceQueue<>();
-    /**
-     * 重用 ZkServiceInfo , 每一个 serviceName 对应 唯一一个ZkServiceInfo实例.
-     */
-    private Map<String, ZkServiceInfo> zkServiceInfoMap = new ConcurrentHashMap<>(128);
-
 
     Thread cleanThread = new Thread(() -> {
         while (true) {
@@ -67,11 +64,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
                 clientInfos.remove(key);
 
-                ZkServiceInfo zkServiceInfo = zkServiceInfoMap.get(clientInfoRef.serviceName);
-
-                if (zkServiceInfo != null) {
-                    zkAgent.cancelSyncService(zkServiceInfo);
-                }
+                zkAgent.cancelSyncService(clientInfoRef.serviceName);
             } catch (Throwable e) {
                 logger.error(e.getMessage(), e);
             }
@@ -101,13 +94,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
             clientInfos.put(key, clientInfoRef);
 
-            ZkServiceInfo zkInfo = zkServiceInfoMap.get(serviceName);
-            if (zkInfo == null) {
-                zkInfo = new ZkServiceInfo(serviceName, new CopyOnWriteArrayList<>());
-                zkServiceInfoMap.put(serviceName, zkInfo);
-            }
-
-            zkAgent.syncService(zkInfo);
+            zkAgent.syncService(serviceName);
 
             return clientInfo;
         }
@@ -156,7 +143,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     @Override
     public RuntimeInstance getRuntimeInstance(String serviceName, String serviceIp, int servicePort) {
-        ZkServiceInfo zkInfo = zkServiceInfoMap.get(serviceName);
+        ZkServiceInfo zkInfo = zkAgent.getZkServiceInfo(serviceName);
         if (zkInfo == null) {
             return null;
         }
@@ -175,7 +162,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
         InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
 
-        ZkServiceInfo zkInfo = zkServiceInfoMap.get(service);
+        ZkServiceInfo zkInfo = zkAgent.getZkServiceInfo(service);
 
 
         //设置慢服务检测时间阈值
@@ -189,23 +176,20 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             return SubPoolFactory.getSubPool(IPUtils.transferIp(context.calleeIp().get()), context.calleePort().get()).getConnection();
         }
 
-        if (zkInfo == null || zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
+        if (zkInfo == null || zkInfo.getStatus() != ZkServiceInfo.Status.SYNCED) {
             //todo should find out why zkInfo is null
             // 1. target service not exists
             logger.error(getClass().getSimpleName() + "::findConnection-0[service: " + service + "], zkInfo not found, now reSyncService");
 
             if (zkInfo == null) {
                 synchronized (this) {
-                    zkInfo = zkServiceInfoMap.get(service);
-                    if (zkInfo == null) {
-                        zkInfo = new ZkServiceInfo(service, new CopyOnWriteArrayList<>());
-                        zkServiceInfoMap.put(service, zkInfo);
-                    }
+                    zkAgent.syncService(service);
+                    zkInfo = zkAgent.getZkServiceInfo(service);
                 }
             }
 
-            zkAgent.syncService(zkInfo);
-            if (zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
+
+            if (zkInfo.getStatus() != ZkServiceInfo.Status.SYNCED) {
                 logger.error(getClass().getSimpleName() + "::findConnection-1[service: " + service + "], zkInfo not found");
                 return null;
             }
@@ -230,6 +214,8 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
 
         // router
+        // 把路由需要用到的条件放到InvocationContext中
+        capsuleContext(context, service, method, version);
         List<RuntimeInstance> routedInstances = router(service, method, version, checkVersionInstances);
         if (routedInstances == null || routedInstances.isEmpty()) {
             logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + "], not found available instances by routing rules");
@@ -278,20 +264,42 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * @return
      */
     private List<RuntimeInstance> router(String service, String method, String version, List<RuntimeInstance> compatibles) throws SoaException {
-        InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         List<Route> routes = zkAgent.getRoutes(service);
         if (routes == null || routes.size() == 0) {
             logger.debug("router 获取 路由信息为空或size为0,跳过router,服务实例数：{}", compatibles.size());
             return compatibles;
         } else {
-            context.serviceName(service);
-            context.methodName(method);
-            context.versionName(version);
+            InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+
             List<RuntimeInstance> runtimeInstances = RoutesExecutor.executeRoutes(context, routes, compatibles);
             if (runtimeInstances.size() == 0) {
                 throw new SoaException(SoaCode.NoMatchedRouting);
             }
             return runtimeInstances;
+        }
+    }
+
+    /**
+     * 封装InvocationContext， 把路由需要用到的东西放到InvocationContext中。
+     *
+     * @param context
+     * @param service
+     * @param method
+     * @param version
+     */
+    private void capsuleContext(InvocationContextImpl context, String service, String method, String version) {
+        context.serviceName(service);
+        context.methodName(method);
+        context.versionName(version);
+
+        InvocationContextImpl.InvocationContextProxy invocationCtxProxy = InvocationContextImpl.Factory.getInvocationContextProxy();
+
+        if (invocationCtxProxy != null) {
+            context.userIp(invocationCtxProxy.userIp().orElse(null));
+            context.userId(invocationCtxProxy.userId().orElse(null));
+            context.operatorId(invocationCtxProxy.operatorId().orElse(null));
+            context.callerMid(invocationCtxProxy.callerMid().orElse(null));
+            context.cookies(invocationCtxProxy.cookies());
         }
     }
 
@@ -413,7 +421,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         Optional<Long> envTimeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT == 0 ?
                 Optional.empty() : Optional.of(SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT);
 
-        ZkServiceInfo zkServiceInfo = zkServiceInfoMap.get(service);
+        ZkServiceInfo zkServiceInfo = zkAgent.getZkServiceInfo(service);
 
         Optional<Long> zkTimeout = getZkTimeout(method, zkServiceInfo);
         Optional<Long> idlTimeout = getIdlTimeout(method);

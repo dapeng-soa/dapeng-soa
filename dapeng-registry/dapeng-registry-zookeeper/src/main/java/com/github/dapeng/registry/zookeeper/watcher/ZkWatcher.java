@@ -21,20 +21,26 @@ public class ZkWatcher implements Watcher {
 
     @Override
     public void process(WatchedEvent event) {
-        LOGGER.warn("ZkWatcher::process zkEvent: " + event);
+        LOGGER.warn("ZkWatcher::process, zkServiceInfo status: " + zkServiceInfo.getStatus() + ", zkEvent: " + event);
         if (event.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-            if (zkServiceInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
-                LOGGER.info("{}::syncZkRuntimeInfo[{}]::子节点发生变化，重新获取信息,event:{}",
+            if (zkServiceInfo.getStatus() != ZkServiceInfo.Status.OUT_OF_SYNC) {
+                LOGGER.warn("{}::syncZkRuntimeInfo[{}]::子节点发生变化，重新获取信息,event:{}",
                         getClass().getSimpleName(), zkServiceInfo.getService(), event);
-
-                ClientZk.getMasterInstance().syncZkRuntimeInfo(zkServiceInfo);
+                if (zkServiceInfo.getStatus() == ZkServiceInfo.Status.TRANSIENT) {
+                    zkServiceInfo.setStatus(ZkServiceInfo.Status.OUT_OF_SYNC);
+                } else {
+                    ClientZk.getMasterInstance().syncZkRuntimeInfo(zkServiceInfo);
+                }
             }
         } else if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
-            if (zkServiceInfo.getStatus() != ZkServiceInfo.Status.CANCELED) {
-                LOGGER.info("{}::syncZkConfigInfo[{}]::节点内容发生变化，重新获取配置信息,event:{}",
+            if (zkServiceInfo.getStatus() != ZkServiceInfo.Status.OUT_OF_SYNC) {
+                LOGGER.warn("{}::syncZkConfigInfo[{}]::节点内容发生变化，重新获取配置信息,event:{}",
                         getClass().getSimpleName(), zkServiceInfo.getService(), event);
-
-                ClientZk.getMasterInstance().syncZkConfigInfo(zkServiceInfo);
+                if (zkServiceInfo.getStatus() == ZkServiceInfo.Status.TRANSIENT) {
+                    zkServiceInfo.setStatus(ZkServiceInfo.Status.OUT_OF_SYNC);
+                } else {
+                    ClientZk.getMasterInstance().syncZkConfigInfo(zkServiceInfo);
+                }
             }
         }
     }

@@ -15,10 +15,11 @@ public interface ClientZkAgent {
 
     void stop();
 
-    void syncService(ZkServiceInfo zkInfo);
+    void syncService(String serviceName);
 
-    void cancelSyncService(ZkServiceInfo zkInfo);
+    void cancelSyncService(String serviceName);
 
+    ZkServiceInfo getZkServiceInfo(String serviceName);
 
     List<Route> getRoutes(String service);
 

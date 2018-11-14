@@ -27,9 +27,9 @@ public class RoutesWatcher implements Watcher {
 
     @Override
     public void process(WatchedEvent event) {
-        LOGGER.warn("RoutesWatcher::getRoutes zkEvent: " + event);
+        LOGGER.warn("RoutesWatcher::process zkEvent: " + event);
         if (event.getType() == Event.EventType.NodeDataChanged) {
-            LOGGER.info("RoutesWatcher::watcher routes节点data发现变更,重新获取信息. watcherEvent: {}", event);
+            LOGGER.warn("RoutesWatcher::watcher routes节点data发现变更,重新获取信息. watcherEvent: {}", event);
             routesMap.remove(service);
             ClientZk.getMasterInstance().getRoutes(service);
         }

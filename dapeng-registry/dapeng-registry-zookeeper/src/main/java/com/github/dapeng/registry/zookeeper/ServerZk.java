@@ -39,14 +39,14 @@ public class ServerZk extends CommonZk {
     private RegistryAgent registryAgent;
 
     /**
-     * 路由配置信息
+     * 限流配置信息
      */
-    private final Map<String, ServiceFreqControl> freqControlMap = new ConcurrentHashMap<>(16);
+    private final Map<String, ServiceFreqControl> freqControlMap = new ConcurrentHashMap<>(128);
 
     /**
      * zk 配置 缓存 ，根据 serivceName + versionName 作为 key
      */
-    public final ConcurrentMap<String, ZkServiceInfo> zkConfigMap = new ConcurrentHashMap<>();
+    public final ConcurrentMap<String, ZkServiceInfo> zkConfigMap = new ConcurrentHashMap<>(128);
 
     public ServerZk(RegistryAgent registryAgent) {
         this.registryAgent = registryAgent;
@@ -60,13 +60,10 @@ public class ServerZk extends CommonZk {
         try {
             CountDownLatch semaphore = new CountDownLatch(1);
             // zk 需要为空
-            if (zk != null) {
-                zk.close();
-                zk = null;
-            }
+            destroy();
 
             zk = new ZooKeeper(zkHost, 30000, watchedEvent -> {
-                LOGGER.info("ServerZk::connect zkEvent:" + watchedEvent);
+                LOGGER.warn("ServerZk::connect zkEvent:" + watchedEvent);
                 switch (watchedEvent.getState()) {
 
                     case Expired:
@@ -94,6 +91,7 @@ public class ServerZk extends CommonZk {
 
                         isMaster.clear(); //断开连接后，认为，master应该失效，避免某个孤岛一直以为自己是master
 
+                        // as runtime nodes are ephemeral nodes, we need to remove it before reconnect.
                         destroy();
                         connect();
                         break;
@@ -122,6 +120,8 @@ public class ServerZk extends CommonZk {
                 LOGGER.info("ServerZk closing connection to zookeeper {}", zkHost);
                 zk.close();
                 zk = null;
+                freqControlMap.clear();
+                zkConfigMap.clear();
             } catch (InterruptedException e) {
                 LOGGER.error(e.getMessage(), e);
             }

@@ -48,36 +48,24 @@ public class ClientZkAgentImpl implements ClientZkAgent {
     }
 
     @Override
-    public void cancelSyncService(ZkServiceInfo zkInfo) {
-        LOGGER.info("cancelSyncService:[" + zkInfo.getService() + "]");
-        zkInfo.setStatus(ZkServiceInfo.Status.CANCELED);
+    public void cancelSyncService(String serviceName) {
+        LOGGER.info("cancelSyncService:[" + serviceName + "]");
+        masterZk.cancelSyncService(serviceName);
     }
 
     @Override
-    public void syncService(ZkServiceInfo zkInfo) {
-        //根据同一个zkInfo对象锁住即可
-        synchronized (zkInfo) {
-            if (zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE) {
-                LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.getService() + "]:zkInfo just created, now sync with zk");
-                masterZk.syncServiceZkInfo(zkInfo);
-                if (zkInfo.getStatus() != ZkServiceInfo.Status.ACTIVE && usingFallbackZk) {
-                    fallbackZk.syncServiceZkInfo(zkInfo);
-                }
-
-                LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.getService() + ", status:" + zkInfo.getStatus() + "]");
-            }
-        }
-
-        if (zkInfo.getStatus() == ZkServiceInfo.Status.ACTIVE && zkInfo.getRuntimeInstances() != null) {
-
-            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.getService() + "]:zkInfo succeed");
-        } else {
-            LOGGER.info(getClass().getSimpleName() + "::syncService[serviceName:" + zkInfo.getService() + "]:zkInfo failed");
-        }
+    public void syncService(String serviceName) {
+        masterZk.syncServiceZkInfo(serviceName);
+        //TODO fallbackZk?
     }
 
     @Override
     public List<Route> getRoutes(String service) {
         return masterZk.getRoutes(service);
+    }
+
+    @Override
+    public ZkServiceInfo getZkServiceInfo(String service) {
+        return masterZk.getZkServiceInfo(service);
     }
 }

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -37,7 +38,13 @@ public class ClientZk extends CommonZk {
     /**
      * route watcher map
      */
-    private final Map<String, RoutesWatcher> routesWatcherMap = new ConcurrentHashMap<>(64);
+    private final Map<String, RoutesWatcher> routesWatcherMap = new ConcurrentHashMap<>(128);
+
+    /**
+     * 重用 ZkServiceInfo , 每一个 serviceName 对应 唯一一个ZkServiceInfo实例.
+     */
+    private Map<String, ZkServiceInfo> zkServiceInfoMap = new ConcurrentHashMap<>(128);
+
 
     /**
      * master zkHost
@@ -107,7 +114,6 @@ public class ClientZk extends CommonZk {
                 switch (e.getState()) {
                     case Expired:
                         LOGGER.info("Client's host: {} 到zookeeper Server的session过期，重连", zkHost);
-
                         destroy();
                         init();
                         break;
@@ -117,9 +123,7 @@ public class ClientZk extends CommonZk {
                         config.clear();
                         break;
                     case Disconnected:
-                        LOGGER.error("Client's host: {} 到zookeeper的连接被断开", zkHost);
-                        destroy();
-                        init();
+                        LOGGER.error("Client's host: {} 到zookeeper的连接被断开， do nothing.", zkHost);
                         break;
                     case AuthFailed:
                         LOGGER.error("Zookeeper connection auth failed ...");
@@ -141,6 +145,10 @@ public class ClientZk extends CommonZk {
                 LOGGER.info("Client's host: {} 关闭到zookeeper的连接", zkHost);
                 zk.close();
                 zk = null;
+                config.clear();
+                routesMap.clear();
+                routesWatcherMap.clear();
+                zkServiceInfoMap.values().forEach(zkServiceInfo -> zkServiceInfo.setStatus(ZkServiceInfo.Status.OUT_OF_SYNC));
             } catch (InterruptedException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -156,7 +164,7 @@ public class ClientZk extends CommonZk {
             LOGGER.debug("获取route信息, service: {} , route size {}", service, routesMap.get(service).size());
             return this.routesMap.get(service);
         } else {
-            LOGGER.info("ClientZK::getRoutes routesMap service:{} 为空,从zk获取 route信息。");
+            LOGGER.warn("ClientZK::getRoutes routesMap service:{} 为空,从zk获取 route信息。");
             String servicePath = ROUTES_PATH + "/" + service;
             try {
                 RoutesWatcher routesWatcher = routesWatcherMap.get(servicePath);
@@ -195,21 +203,54 @@ public class ClientZk extends CommonZk {
     /**
      * 客户端 同步zk 服务信息  syncServiceZkInfo
      *
-     * @param zkInfo zkInfo
+     * @param serviceName
      */
-    public void syncServiceZkInfo(ZkServiceInfo zkInfo) {
-        try {
-            // sync runtimeList
-            syncZkRuntimeInfo(zkInfo);
-            //syncService config
-            syncZkConfigInfo(zkInfo);
-
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage(), e);
+    public void syncServiceZkInfo(String serviceName) {
+        ZkServiceInfo zkInfo = zkServiceInfoMap.get(serviceName);
+        if (zkInfo == null) {
+            zkServiceInfoMap.putIfAbsent(serviceName, new ZkServiceInfo(serviceName, new CopyOnWriteArrayList<>()));
+            zkInfo = zkServiceInfoMap.get(serviceName);
         }
-        //判断,runtimeList size
-        if (zkInfo.getRuntimeInstances().size() > 0) {
-            zkInfo.setStatus(ZkServiceInfo.Status.ACTIVE);
+
+        //根据同一个zkInfo对象锁住即可
+        synchronized (zkInfo) {
+            switch (zkInfo.getStatus()) {
+                case TRANSIENT:
+                    if (zkInfo.getRuntimeInstances().size() > 0) {
+                        break;
+                    }
+                case CREATED:
+                case OUT_OF_SYNC:
+                    LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[serviceName:" + zkInfo.getService() + "]:zkInfo status: " + zkInfo.getStatus() + ", now sync with zk");
+                    try {
+                        // sync runtimeList
+                        syncZkRuntimeInfo(zkInfo);
+                        //syncService config
+                        syncZkConfigInfo(zkInfo);
+
+                    } catch (Exception e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
+                    break;
+                case SYNCED:
+                default:
+                    break;
+            }
+            if (zkInfo.getStatus() != ZkServiceInfo.Status.SYNCED) {
+                //判断,runtimeList size
+                if (zkInfo.getRuntimeInstances().size() > 0) {
+                    zkInfo.setStatus(ZkServiceInfo.Status.SYNCED);
+                }
+
+                LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[serviceName:" + zkInfo.getService() + ", status:" + zkInfo.getStatus() + "]");
+            }
+        }
+
+        if (zkInfo.getStatus() == ZkServiceInfo.Status.SYNCED && zkInfo.getRuntimeInstances() != null) {
+
+            LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[serviceName:" + zkInfo.getService() + "]:zkInfo succeed");
+        } else {
+            LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[serviceName:" + zkInfo.getService() + "]:zkInfo failed");
         }
     }
 
@@ -236,7 +277,7 @@ public class ClientZk extends CommonZk {
                 }
 
                 if (childrens.size() == 0) {
-                    zkInfo.setStatus(ZkServiceInfo.Status.CANCELED);
+                    zkInfo.setStatus(ZkServiceInfo.Status.OUT_OF_SYNC);
                     zkInfo.getRuntimeInstances().clear();
                     LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[{}]:no service instances found", zkInfo.getService());
                     return;
@@ -259,7 +300,7 @@ public class ClientZk extends CommonZk {
 
                 LOGGER.info("ClientZk::syncZkRuntimeInfo 触发服务实例同步，目前服务实例列表: {} -> {}",
                         zkInfo.getService(), zkInfo.getRuntimeInstances().toString());
-                zkInfo.setStatus(ZkServiceInfo.Status.ACTIVE);
+                zkInfo.setStatus(ZkServiceInfo.Status.SYNCED);
                 return;
             } catch (KeeperException | InterruptedException e) {
                 LOGGER.error(e.getMessage(), e);
@@ -269,5 +310,20 @@ public class ClientZk extends CommonZk {
                 }
             }
         } while (retry-- > 0);
+    }
+
+    /**
+     * 取消跟zk的信息同步
+     * @param serviceName
+     */
+    public void cancelSyncService(String serviceName) {
+        ZkServiceInfo zkServiceInfo = zkServiceInfoMap.get(serviceName);
+        if (zkServiceInfo != null) {
+            zkServiceInfo.setStatus(ZkServiceInfo.Status.TRANSIENT);
+        }
+    }
+
+    public ZkServiceInfo getZkServiceInfo(String serviceName) {
+        return zkServiceInfoMap.get(serviceName);
     }
 }

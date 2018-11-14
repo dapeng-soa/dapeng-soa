@@ -126,9 +126,7 @@ public class ServerZkAgentImpl implements RegistryAgent {
             return;
         }
 
-        services.forEach(service -> {
-            registerService(service.name(), service.version());
-        });
+        services.forEach(service -> registerService(service.name(), service.version()));
 
         //如果开启了全局事务，将事务服务也注册到zookeeper,为了主从竞选，只有主全局事务管理器会执行
         if (SoaSystemEnvProperties.SOA_TRANSACTIONAL_ENABLE) {

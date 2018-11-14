@@ -344,7 +344,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         } catch (SoaException ex) {
             return new Result<>(null, ex);
-        } catch (TException ex) {
+        } catch (TException|RuntimeException ex) {
             LOGGER.error("通讯包解析出错:\n" + ex.getMessage(), ex);
             LOGGER.error(DumpUtil.dumpToStr(responseBuf.readerIndex(readerIndex)));
             return new Result<>(null,
