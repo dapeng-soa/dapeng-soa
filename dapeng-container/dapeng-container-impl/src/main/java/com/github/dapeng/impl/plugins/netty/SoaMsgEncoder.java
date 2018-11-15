@@ -54,6 +54,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         //容器不是运行状态
         if (container.status() != STATUS_RUNNING) {
             writeErrorResponse(transactionContext, out);
+            return;
         }
 
         try {
@@ -65,6 +66,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             if (application == null) {
                 LOGGER.error("Application is null, container status:" + container.status());
                 writeErrorResponse(transactionContext, out);
+                return;
             }
 
             if (respCode.isPresent() && !respCode.get().equals(SOA_NORMAL_RESP_CODE)) {
