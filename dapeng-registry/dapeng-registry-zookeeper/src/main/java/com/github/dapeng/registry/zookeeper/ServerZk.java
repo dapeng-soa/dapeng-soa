@@ -401,8 +401,13 @@ public class ServerZk extends CommonZk {
                 info = zkConfigMap.get(serviceName);
                 if (info == null) {
                     info = new ZkServiceInfo(serviceName);
-                    syncZkConfigInfo(info);
-                    zkConfigMap.put(serviceName, info);
+                    try {
+                        syncZkConfigInfo(info);
+                        zkConfigMap.put(serviceName, info);
+                    } catch (Throwable e) {
+                        LOGGER.error("ServerZk::getConfigData failed.", e);
+                        info = null;
+                    }
                 }
             }
         }
