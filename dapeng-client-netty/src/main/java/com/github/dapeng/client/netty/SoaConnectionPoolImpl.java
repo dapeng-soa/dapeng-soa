@@ -181,9 +181,11 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             // 1. target service not exists
             logger.error(getClass().getSimpleName() + "::findConnection-0[service: " + service + "], zkInfo not found, now reSyncService");
 
+            synchronized (this) {
+                zkAgent.syncService(service);
+            }
+
             if (zkInfo == null) {
-                synchronized (this) {
-                    zkAgent.syncService(service);
                     zkInfo = zkAgent.getZkServiceInfo(service);
                 }
             }

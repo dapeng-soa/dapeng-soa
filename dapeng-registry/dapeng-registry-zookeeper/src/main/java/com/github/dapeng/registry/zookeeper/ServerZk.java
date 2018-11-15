@@ -405,7 +405,7 @@ public class ServerZk extends CommonZk {
                         syncZkConfigInfo(info);
                         zkConfigMap.put(serviceName, info);
                     } catch (Throwable e) {
-                        LOGGER.error("ServerZk::getConfigData failed.", e);
+                        LOGGER.error("ServerZk::getConfigData failed." + e.getMessage());
                         info = null;
                     }
                 }

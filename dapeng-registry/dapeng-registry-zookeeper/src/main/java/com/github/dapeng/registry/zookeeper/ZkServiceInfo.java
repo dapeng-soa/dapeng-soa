@@ -25,7 +25,7 @@ public class ZkServiceInfo {
      *  1. ZkServiceInfo被创建，初始状态: CREATED
      *  2. 某服务客户端第一次被创建的时候，会去同步对应服务在zk上的信息，同步完成后，ZkServiceInfo状态设置为SYNCED.
      *     在该状态下， 本地信息跟zk上的信息保持同步，始终一致。
-     *  3. 该服务客户端给gc后，ZkServiceInfo进入TRANSIENT状态。注意这时候本地的服务信息跟zk的服务信息还是一致的。
+     *  3. 该服务客户端给gc后,。注意这时候本地的服务信息跟zk的服务信息还是一致的。
      *  4. ZkServiceInfo进入TRANSIENT状态后，会有2种情况:
      *    4.1 zk上该服务信息发生变化(例如服务重启引起节点数目变化)，这时候watch最后一次给唤醒，把ZkServiceInfo状态变为OUT_OF_SYNC，
      *        表示本地服务信息跟zk服务信息不一致了

@@ -308,12 +308,12 @@ public class ClientZk extends CommonZk {
      * @param serviceName
      */
     public void cancelSyncService(String serviceName) {
-        ZkServiceInfo zkServiceInfo = zkServiceInfoMap.get(serviceName);
-        if (zkServiceInfo != null) {
-            synchronized (zkServiceInfo) {
-                zkServiceInfo.setStatus(ZkServiceInfo.Status.TRANSIENT);
-            }
-        }
+        ZkServiceInfo zkServiceInfo = zkServiceInfoMap.remove(serviceName);
+//        if (zkServiceInfo != null) {
+//            synchronized (zkServiceInfo) {
+//                zkServiceInfo.setStatus(ZkServiceInfo.Status.TRANSIENT);
+//            }
+//        }
     }
 
     public ZkServiceInfo getZkServiceInfo(String serviceName) {
