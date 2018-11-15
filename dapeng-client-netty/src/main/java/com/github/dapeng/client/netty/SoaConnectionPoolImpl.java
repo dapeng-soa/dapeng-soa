@@ -186,8 +186,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             }
 
             if (zkInfo == null) {
-                    zkInfo = zkAgent.getZkServiceInfo(service);
-                }
+                zkInfo = zkAgent.getZkServiceInfo(service);
             }
 
 
