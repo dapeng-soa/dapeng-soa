@@ -164,7 +164,7 @@ public class ClientZk extends CommonZk {
             LOGGER.debug("获取route信息, service: {} , route size {}", service, routesMap.get(service).size());
             return this.routesMap.get(service);
         } else {
-            LOGGER.warn("ClientZK::getRoutes routesMap service:{} 为空,从zk获取 route信息。");
+            LOGGER.warn("ClientZK::getRoutes routesMap service:{} 为空,从zk获取 route信息。", service);
             String servicePath = ROUTES_PATH + "/" + service;
             try {
                 RoutesWatcher routesWatcher = routesWatcherMap.get(servicePath);
@@ -237,8 +237,7 @@ public class ClientZk extends CommonZk {
             }
         }
 
-        if (zkInfo.getStatus() == ZkServiceInfo.Status.SYNCED && zkInfo.getRuntimeInstances() != null) {
-
+        if (zkInfo.getStatus() == ZkServiceInfo.Status.SYNCED) {
             LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[serviceName:" + zkInfo.getService() + "]:zkInfo succeed, zkInfo status: " + zkInfo.getStatus());
         } else {
             LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[serviceName:" + zkInfo.getService() + "]:zkInfo failed, zkInfo status: " + zkInfo.getStatus());
@@ -311,7 +310,9 @@ public class ClientZk extends CommonZk {
     public void cancelSyncService(String serviceName) {
         ZkServiceInfo zkServiceInfo = zkServiceInfoMap.get(serviceName);
         if (zkServiceInfo != null) {
-            zkServiceInfo.setStatus(ZkServiceInfo.Status.TRANSIENT);
+            synchronized (zkServiceInfo) {
+                zkServiceInfo.setStatus(ZkServiceInfo.Status.TRANSIENT);
+            }
         }
     }
 
