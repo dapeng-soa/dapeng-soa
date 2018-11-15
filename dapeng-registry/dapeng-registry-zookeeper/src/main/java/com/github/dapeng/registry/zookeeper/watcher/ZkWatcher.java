@@ -47,5 +47,6 @@ public class ZkWatcher implements Watcher {
                 }
             }
         }
+        LOGGER.warn("ZkWatcher::process after, zkServiceInfo status: " + zkServiceInfo.getStatus());
     }
 }

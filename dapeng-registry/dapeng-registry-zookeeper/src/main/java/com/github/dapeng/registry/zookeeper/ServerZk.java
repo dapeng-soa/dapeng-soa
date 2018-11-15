@@ -90,10 +90,6 @@ public class ServerZk extends CommonZk {
                         LOGGER.error("[Disconnected]: ServerZookeeper Registry zk 连接断开，可能是zookeeper重启或重建");
 
                         isMaster.clear(); //断开连接后，认为，master应该失效，避免某个孤岛一直以为自己是master
-
-                        // as runtime nodes are ephemeral nodes, we need to remove it before reconnect.
-                        destroy();
-                        connect();
                         break;
                     case AuthFailed:
                         LOGGER.info("Zookeeper connection auth failed ...");
@@ -259,6 +255,22 @@ public class ServerZk extends CommonZk {
      * 异步添加serverInfo,为临时有序节点，如果server挂了就木有了
      */
     public void createEphemeral(String path, RegisterContext context) {
+        // 如果存在重复的临时节点， 删除之
+        int i = path.lastIndexOf("/");
+        if (i > 0) {
+            String parentPath = path.substring(0, i);
+            try {
+                List<String> childNodes = zk.getChildren(parentPath, false);
+                String _path = path.substring(i + 1);
+                for (String nodeName : childNodes) {
+                    if (nodeName.startsWith(_path)) {
+                        zk.delete(parentPath + "/" + nodeName, -1);
+                    }
+                }
+            } catch (KeeperException | InterruptedException e) {
+                LOGGER.error("ServerZk::createEphemeral delete exist nodes failed", e);
+            }
+        }
         zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, serverInfoCreateCallback, context);
     }
 

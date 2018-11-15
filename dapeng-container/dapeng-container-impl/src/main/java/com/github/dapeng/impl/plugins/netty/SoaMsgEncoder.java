@@ -62,6 +62,10 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
 
             Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
+            if (application == null) {
+                LOGGER.error("Application is null, container status:" + container.status());
+                writeErrorResponse(transactionContext, out);
+            }
 
             if (respCode.isPresent() && !respCode.get().equals(SOA_NORMAL_RESP_CODE)) {
                 writeErrorResponse(transactionContext, application, out);

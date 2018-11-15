@@ -214,6 +214,7 @@ public class ClientZk extends CommonZk {
 
         //根据同一个zkInfo对象锁住即可
         synchronized (zkInfo) {
+            LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[serviceName:" + zkInfo.getService() + "]:zkInfo status: " + zkInfo.getStatus());
             switch (zkInfo.getStatus()) {
                 case CREATED:
                 case OUT_OF_SYNC:
@@ -238,9 +239,9 @@ public class ClientZk extends CommonZk {
 
         if (zkInfo.getStatus() == ZkServiceInfo.Status.SYNCED && zkInfo.getRuntimeInstances() != null) {
 
-            LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[serviceName:" + zkInfo.getService() + "]:zkInfo succeed");
+            LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[serviceName:" + zkInfo.getService() + "]:zkInfo succeed, zkInfo status: " + zkInfo.getStatus());
         } else {
-            LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[serviceName:" + zkInfo.getService() + "]:zkInfo failed");
+            LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[serviceName:" + zkInfo.getService() + "]:zkInfo failed, zkInfo status: " + zkInfo.getStatus());
         }
     }
 

@@ -86,6 +86,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
                     Optional.empty(),
                     Optional.empty());
 
+            // 后续只能通过SoaResponseWrapper去获取TransactionContext
             TransactionContext.Factory.removeCurrentInstance();
 
             ctx.writeAndFlush(responseWrapper).addListener(FIRE_EXCEPTION_ON_FAILURE);
