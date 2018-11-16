@@ -52,8 +52,8 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(getClass().getSimpleName() + "::encode");
         }
-        //容器不是运行状态
-        if (container.status() != STATUS_RUNNING && container.status() != STATUS_SHUTTING) {
+        //容器不是运行状态或者将要关闭状态
+        if (container.status() != STATUS_RUNNING || container.status() != STATUS_SHUTTING) {
             writeErrorResponse(transactionContext, out);
             return;
         }
@@ -65,7 +65,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
             if (application == null) {
-                LOGGER.error("Application is null, container status:" + container.status());
+                LOGGER.error("SoaMsgEncoder::encode application is null, container status:" + container.status());
                 writeErrorResponse(transactionContext, out);
                 return;
             }

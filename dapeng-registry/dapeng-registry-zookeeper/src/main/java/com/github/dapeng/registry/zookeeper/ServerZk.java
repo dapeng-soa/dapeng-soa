@@ -402,6 +402,8 @@ public class ServerZk extends CommonZk {
                 if (info == null) {
                     info = new ZkServiceInfo(serviceName);
                     try {
+                        // when container is shutdown, zk is down and will throw execptions
+
                         syncZkConfigInfo(info);
                         zkConfigMap.put(serviceName, info);
                     } catch (Throwable e) {
