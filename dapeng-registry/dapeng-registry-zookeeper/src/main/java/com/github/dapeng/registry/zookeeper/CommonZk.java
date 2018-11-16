@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 public class CommonZk {
     private static Logger logger = LoggerFactory.getLogger(CommonZk.class);
 
-    String zkHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
+    protected String zkHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
 
     final static String RUNTIME_PATH = "/soa/runtime/services";
     final static String CONFIG_PATH = "/soa/config/services";

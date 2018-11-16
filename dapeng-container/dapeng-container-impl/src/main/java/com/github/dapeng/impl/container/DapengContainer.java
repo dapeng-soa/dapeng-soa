@@ -236,6 +236,7 @@ public class DapengContainer implements Container {
                 status = STATUS_SHUTTING;
                 // fixme not so graceful
                 getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
+
                 Lists.reverse(getPlugins()).stream().filter(plugin -> !(plugin instanceof ZookeeperRegistryPlugin)).forEach(Plugin::stop);
                 try {
                     Thread.sleep(4000);
