@@ -190,53 +190,69 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             }
 
 
-            if (zkInfo.getStatus() != ZkServiceInfo.Status.SYNCED) {
-                logger.error(getClass().getSimpleName() + "::findConnection-1[service: " + service + "], zkInfo not found");
-                return null;
-            }
-        }
-        //当zk上服务节点发生变化的时候, 可能会导致拿到不存在的服务运行时实例或者根本拿不到任何实例.
-        List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances();
-        if (compatibles == null || compatibles.isEmpty()) {
+        if (zkInfo.getStatus() != ZkServiceInfo.Status.SYNCED || zkInfo.getStatus() != ZkServiceInfo.Status.TRANSIENT) {
+            logger.error(getClass().getSimpleName() + "::findConnection-1[service: " + service + "], zkInfo not found");
             return null;
         }
+    }
 
-        // checkVersion
-        List<RuntimeInstance> checkVersionInstances = new ArrayList<>(8);
-        for (RuntimeInstance rt : compatibles) {
-            if (checkVersion(version, rt.version)) {
-                checkVersionInstances.add(rt);
-            }
-        }
+    //当zk上服务节点发生变化的时候, 可能会导致拿到不存在的服务运行时实例或者根本拿不到任何实例.
+    List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances();
+        if(compatibles ==null||compatibles.isEmpty())
 
-        if (checkVersionInstances.isEmpty()) {
-            logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + ":" + version + "], not found available version of instances");
-            throw new SoaException(NoMatchedService, "服务 [ " + service + ":" + version + "] 无可用实例:没有找到对应的服务版本");
-        }
+    {
+        return null;
+    }
 
-        // router
-        // 把路由需要用到的条件放到InvocationContext中
-        capsuleContext(context, service, method, version);
-        List<RuntimeInstance> routedInstances = router(service, method, version, checkVersionInstances);
-        if (routedInstances == null || routedInstances.isEmpty()) {
-            logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + "], not found available instances by routing rules");
-            throw new SoaException(NoMatchedRouting, "服务 [ " + service + " ] 无可用实例:路由规则没有解析到可运行的实例");
-        }
+    // checkVersion
+    List<RuntimeInstance> checkVersionInstances = new ArrayList<>(8);
+        for(
+    RuntimeInstance rt :compatibles)
 
-        //loadBalance
-        RuntimeInstance inst = loadBalance(method, zkInfo, routedInstances);
-        if (inst == null) {
-            // should not reach here
-            throw new SoaException(NotFoundServer, "服务 [ " + service + " ] 无可用实例:负载均衡没有找到合适的运行实例");
+    {
+        if (checkVersion(version, rt.version)) {
+            checkVersionInstances.add(rt);
         }
+    }
+
+        if(checkVersionInstances.isEmpty())
+
+    {
+        logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + ":" + version + "], not found available version of instances");
+        throw new SoaException(NoMatchedService, "服务 [ " + service + ":" + version + "] 无可用实例:没有找到对应的服务版本");
+    }
+
+    // router
+    // 把路由需要用到的条件放到InvocationContext中
+    capsuleContext(context, service, method, version);
+
+    List<RuntimeInstance> routedInstances = router(service, method, version, checkVersionInstances);
+        if(routedInstances ==null||routedInstances.isEmpty())
+
+    {
+        logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + "], not found available instances by routing rules");
+        throw new SoaException(NoMatchedRouting, "服务 [ " + service + " ] 无可用实例:路由规则没有解析到可运行的实例");
+    }
+
+    //loadBalance
+    RuntimeInstance inst = loadBalance(method, zkInfo, routedInstances);
+        if(inst ==null)
+
+    {
+        // should not reach here
+        throw new SoaException(NotFoundServer, "服务 [ " + service + " ] 无可用实例:负载均衡没有找到合适的运行实例");
+    }
 
         inst.increaseActiveCount();
 
-        // TODO: 2018-08-04  服务端需要返回来正确的版本号
+    // TODO: 2018-08-04  服务端需要返回来正确的版本号
         context.versionName(inst.version);
 
-        return SubPoolFactory.getSubPool(inst.ip, inst.port).getConnection();
-    }
+        return SubPoolFactory.getSubPool(inst.ip,inst.port).
+
+    getConnection();
+
+}
 
     /**
      * 版本 兼容(主版本不兼容，副版本向下兼容)
