@@ -270,19 +270,19 @@ public class DapengContainer implements Container {
         return requestCounter;
     }
 
-    public void retryCompareCounter(){
+    public void retryCompareCounter() {
         int retry = 1;
         do {
-            if (requestCounter.intValue() == 0){
+            if (requestCounter.intValue() == 0) {
                 return;
-            }else {
+            } else {
                 try {
                     Thread.sleep(3000);
                 } catch (InterruptedException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
             }
-        }while (retry++ < 3);
+        } while (retry++ < 3);
     }
 
     public static InputStream loadInputStreamInClassLoader(String path) throws FileNotFoundException {
