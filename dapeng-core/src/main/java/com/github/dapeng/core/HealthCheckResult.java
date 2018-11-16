@@ -8,16 +8,22 @@ import com.github.dapeng.core.enums.ServiceHealthStatus;
  */
 public class HealthCheckResult {
 
-    private String serviceName;
+    private Class<?> serviceClass ;
     private ServiceHealthStatus healthStatus;
     private String remark;
 
-    public String getServiceName() {
-        return serviceName;
+    public HealthCheckResult(Class<?> serviceClass, ServiceHealthStatus healthStatus, String remark) {
+        this.serviceClass = serviceClass;
+        this.healthStatus = healthStatus;
+        this.remark = remark;
     }
 
-    public void setServiceName(String serviceName) {
-        this.serviceName = serviceName;
+    public Class<?> getServiceClass() {
+        return serviceClass;
+    }
+
+    public void setServiceClass(Class<?> serviceClass) {
+        this.serviceClass = serviceClass;
     }
 
     public ServiceHealthStatus getHealthStatus() {

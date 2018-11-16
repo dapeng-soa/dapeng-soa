@@ -9,7 +9,9 @@ import java.lang.annotation.Target;
  * @author hui
  * @date 2018/11/7 0007 14:27
  */
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface HealthCheck {
+public interface HealthCheck {
+     /**
+      * 业务方实现健康检查逻辑并上报的接口
+      */
+     HealthCheckResult checkReport();
 }

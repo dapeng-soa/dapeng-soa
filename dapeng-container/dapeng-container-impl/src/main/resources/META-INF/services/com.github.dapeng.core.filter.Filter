@@ -1,3 +1,2 @@
 com.github.dapeng.impl.filters.LogFilter
-com.github.dapeng.impl.filters.HealthCheckFilter
 com.github.dapeng.impl.filters.slow.service.SlowServiceCheckFilter

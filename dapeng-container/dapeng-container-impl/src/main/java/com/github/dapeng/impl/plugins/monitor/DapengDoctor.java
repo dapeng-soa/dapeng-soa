@@ -3,13 +3,13 @@ package com.github.dapeng.impl.plugins.monitor;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.healthcheck.Doctor;
-import com.github.dapeng.core.enums.ServiceHealthStatus;
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
+import com.github.dapeng.core.HealthCheck;
+import com.github.dapeng.core.HealthCheckResult;
+import com.github.dapeng.core.enums.ServiceHealthStatus;
 import com.google.common.base.Joiner;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -21,6 +21,8 @@ public class DapengDoctor implements Doctor {
 
 
     private Map<String, String> map = new HashMap<>(16);
+
+    private List<HealthCheck> healthChecks = new ArrayList<>(16);
 
     DapengDoctor() {
     }
@@ -45,6 +47,20 @@ public class DapengDoctor implements Doctor {
         diagnoseMap.put("errors", errorsInfo);
         diagnoseMap.put("serviceInfo", map);
         return diagnoseMap;
+    }
+
+    @Override
+    public void addHealthChecks(Collection<HealthCheck> healthChecks) {
+        this.healthChecks.addAll(healthChecks);
+    }
+
+    @Override
+    public void triggerHealthChecks() {
+        /*this.healthChecks.forEach(HealthCheck::checkReport);*/
+        this.healthChecks.forEach(healthCheck -> {
+            HealthCheckResult healthCheckResult = healthCheck.checkReport();
+            report(healthCheckResult.getHealthStatus(), healthCheckResult.getRemark(), healthCheckResult.getServiceClass());
+        });
     }
 
 

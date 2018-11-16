@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import static com.github.dapeng.api.Container.STATUS_RUNNING;
 import static com.github.dapeng.util.ExceptionUtil.convertToSoaException;
 import static io.netty.channel.ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE;
 
@@ -55,7 +56,8 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             try {
                 String methodName = transactionContext.getHeader().getMethodName();
 
-                if ("echo".equalsIgnoreCase(methodName)) {
+                if ("echo".equalsIgnoreCase(methodName) && container.status() == STATUS_RUNNING) {
+                    DoctorFactory.getDoctor().triggerHealthChecks();
                     String echoInfo = DumpUtil.dumpThreadPool((ThreadPoolExecutor) container.getDispatcher());
                     Map<String, Object> diagnoseMap = DoctorFactory.getDoctor().diagnoseReport();
                     diagnoseMap.put("service", transactionContext.getHeader().getServiceName());

@@ -1,7 +1,9 @@
 package com.github.dapeng.api.healthcheck;
 
+import com.github.dapeng.core.HealthCheck;
 import com.github.dapeng.core.enums.ServiceHealthStatus;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -57,4 +59,14 @@ public interface Doctor {
      * @return
      */
     Map<String, Object> diagnoseReport();
+
+     /**
+      * 添加healthChecks
+      */
+    void addHealthChecks(final Collection<HealthCheck> healthChecks);
+
+     /**
+      * 触发业务的健康检查
+      */
+    void triggerHealthChecks();
 }

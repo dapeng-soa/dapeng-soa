@@ -3,6 +3,7 @@ package com.github.dapeng.impl.plugins;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.Plugin;
+import com.github.dapeng.api.healthcheck.DoctorFactory;
 import com.github.dapeng.api.lifecycle.LifecycleProcessorFactory;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
@@ -61,6 +62,8 @@ public class SpringAppLoader implements Plugin {
                 LifecycleProcessorFactory.getLifecycleProcessor().addLifecycles(((Map<String, LifeCycleAware>)
                         method.invoke(springCtx, appClassLoader.loadClass(LifeCycleAware.class.getName()))).values());
 
+                DoctorFactory.getDoctor().addHealthChecks(((Map<String, HealthCheck>)
+                        method.invoke(springCtx, appClassLoader.loadClass(HealthCheck.class.getName()))).values());
 
                 //TODO: 需要构造Application对象
                 Map<String, ServiceInfo> appInfos = toServiceInfos(processorMap);
