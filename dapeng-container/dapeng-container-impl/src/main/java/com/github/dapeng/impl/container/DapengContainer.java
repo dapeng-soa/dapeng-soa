@@ -244,11 +244,6 @@ public class DapengContainer implements Container {
                 // fixme not so graceful
                 getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
                 Lists.reverse(getPlugins()).stream().filter(plugin -> !(plugin instanceof ZookeeperRegistryPlugin)).forEach(Plugin::stop);
-                try {
-                    Thread.sleep(4000);
-                } catch (InterruptedException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
                 SHUTDOWN_SIGNAL.countDown();
                 LOGGER.warn("Container graceful shutdown end.");
             }
