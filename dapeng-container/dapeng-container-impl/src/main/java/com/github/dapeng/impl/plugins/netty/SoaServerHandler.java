@@ -55,6 +55,12 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             LOGGER.trace(getClass().getSimpleName() + "::read");
         }
 
+        if (container.status() != Container.STATUS_RUNNING){
+            writeErrorMessage(channelHandlerContext, transactionContext, new SoaException(SoaCode.ContainerStatusError.getCode(),"容器不存于运行状态"));
+            return;
+        }
+        //容器内请求数+1
+        container.requestCounter().incrementAndGet();
         try {
             SoaHeader soaHeader = transactionContext.getHeader();
 
@@ -75,6 +81,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             transactionContext,
                             ExceptionUtil.convertToSoaException(e));
                 } finally {
+                    //请求完成，请求数 -1
+                    container.requestCounter().decrementAndGet();
                     TransactionContext.Factory.removeCurrentInstance();
                 }
             });

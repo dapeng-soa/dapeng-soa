@@ -8,6 +8,7 @@ import com.github.dapeng.core.filter.Filter;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 大鹏容器的主结构，负责管理容器相关的监听器，插件，应用程序。
@@ -105,4 +106,9 @@ public interface Container {
      * @return status of container
      */
     int status();
+
+    /**
+    * 容器内未完成的请求计数
+     * */
+    AtomicInteger requestCounter();
 }
