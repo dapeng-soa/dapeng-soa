@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.github.dapeng.api.Container.STATUS_RUNNING;
+import static com.github.dapeng.api.Container.STATUS_SHUTTING;
 import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
 
 /**
@@ -51,9 +52,10 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(getClass().getSimpleName() + "::encode");
         }
-        //容器不是运行状态
-        if (container.status() != STATUS_RUNNING) {
+        //容器不是运行状态或者将要关闭状态
+        if (container.status() != STATUS_RUNNING || container.status() != STATUS_SHUTTING) {
             writeErrorResponse(transactionContext, out);
+            return;
         }
 
         try {
@@ -62,6 +64,11 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
 
             Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
+            if (application == null) {
+                LOGGER.error("SoaMsgEncoder::encode application is null, container status:" + container.status());
+                writeErrorResponse(transactionContext, out);
+                return;
+            }
 
             if (respCode.isPresent() && !respCode.get().equals(SOA_NORMAL_RESP_CODE)) {
                 writeErrorResponse(transactionContext, application, out);

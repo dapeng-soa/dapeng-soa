@@ -118,8 +118,6 @@ public class ClientZk extends CommonZk {
                         break;
                     case Disconnected:
                         LOGGER.error("Client's host: {} 到zookeeper的连接被断开", zkHost);
-                        destroy();
-                        init();
                         break;
                     case AuthFailed:
                         LOGGER.error("Zookeeper connection auth failed ...");
