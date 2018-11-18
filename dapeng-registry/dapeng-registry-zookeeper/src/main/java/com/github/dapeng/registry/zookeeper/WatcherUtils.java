@@ -2,6 +2,7 @@ package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.Weight;
+import com.github.dapeng.core.ZkServiceInfo;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.ServiceInfo;
@@ -20,59 +21,6 @@ import java.util.Map;
 public class WatcherUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WatcherUtils.class);
-
-    /*public static void processConfigData(String configNode, byte[] data, Map<String, Map<ConfigKey, Object>> config) {
-        try {
-            String propertiesStr = new String(data, "utf-8");
-
-            String[] properties = propertiesStr.split(";");
-
-            Map<ConfigKey, Object> propertyMap = new HashMap<>(properties.length);
-
-            for (String property : properties) {
-
-                String[] key_values = property.split("=");
-                if (key_values.length == 2) {
-
-                    ConfigKey type = ConfigKey.findByValue(key_values[0]);
-                    switch (type) {
-
-                        case Thread:
-                            Integer value = Integer.valueOf(key_values[1]);
-                            propertyMap.put(type, value);
-                            break;
-                        case ThreadPool:
-                            Boolean bool = Boolean.valueOf(key_values[1]);
-                            propertyMap.put(type, bool);
-                            break;
-                        case ClientTimeout:
-                            long clientTimeout = Long.valueOf(key_values[1]);
-                            propertyMap.put(type, clientTimeout);
-                            break;
-                        case ServerTimeout:
-                            long serverTimeout = Long.valueOf(key_values[1]);
-                            propertyMap.put(type, serverTimeout);
-                            break;
-                        case LoadBalance:
-                            propertyMap.put(type, key_values[1]);
-                            break;
-                        case FailOver:
-                            propertyMap.put(type, Integer.valueOf(key_values[1]));
-                            break;
-                        case Compatible:
-                            propertyMap.put(type, key_values[1].split(","));
-                            break;
-                        default:
-                            //just skip
-                    }
-                }
-            }
-            config.put(configNode, propertyMap);
-            LOGGER.info("get config form {} with data [{}]", configNode, propertiesStr);
-        } catch (UnsupportedEncodingException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }*/
 
     /**
      * new get config data
@@ -159,7 +107,7 @@ public class WatcherUtils {
                 }
             }
             recalculateRuntimeInstanceWeight(zkInfo);
-            LOGGER.info("get config from {} with data [{}]", zkInfo.getService(), configData);
+            LOGGER.info("get config from {} with data [{}]", zkInfo.serviceName(), configData);
         } catch (UnsupportedEncodingException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -173,7 +121,7 @@ public class WatcherUtils {
      */
     public static void recalculateRuntimeInstanceWeight(ZkServiceInfo zkInfo) {
         if (zkInfo != null) {
-            List<RuntimeInstance> runtimeInstances = zkInfo.getRuntimeInstances();
+            List<RuntimeInstance> runtimeInstances = zkInfo.runtimeInstances();
             if (runtimeInstances != null && runtimeInstances.size() > 0) {
                 for (RuntimeInstance runtimeInstance : runtimeInstances) {
                     if (zkInfo.weightGlobalConfig.ip != null) {   //没有全局配置的情况下ip = null，有全局配置ip = ""
@@ -269,4 +217,58 @@ public class WatcherUtils {
         number = number.replaceAll("[^(0-9)]", "");
         return Long.valueOf(number);
     }
+
+
+    /*public static void processConfigData(String configNode, byte[] data, Map<String, Map<ConfigKey, Object>> config) {
+        try {
+            String propertiesStr = new String(data, "utf-8");
+
+            String[] properties = propertiesStr.split(";");
+
+            Map<ConfigKey, Object> propertyMap = new HashMap<>(properties.length);
+
+            for (String property : properties) {
+
+                String[] key_values = property.split("=");
+                if (key_values.length == 2) {
+
+                    ConfigKey type = ConfigKey.findByValue(key_values[0]);
+                    switch (type) {
+
+                        case Thread:
+                            Integer value = Integer.valueOf(key_values[1]);
+                            propertyMap.put(type, value);
+                            break;
+                        case ThreadPool:
+                            Boolean bool = Boolean.valueOf(key_values[1]);
+                            propertyMap.put(type, bool);
+                            break;
+                        case ClientTimeout:
+                            long clientTimeout = Long.valueOf(key_values[1]);
+                            propertyMap.put(type, clientTimeout);
+                            break;
+                        case ServerTimeout:
+                            long serverTimeout = Long.valueOf(key_values[1]);
+                            propertyMap.put(type, serverTimeout);
+                            break;
+                        case LoadBalance:
+                            propertyMap.put(type, key_values[1]);
+                            break;
+                        case FailOver:
+                            propertyMap.put(type, Integer.valueOf(key_values[1]));
+                            break;
+                        case Compatible:
+                            propertyMap.put(type, key_values[1].split(","));
+                            break;
+                        default:
+                            //just skip
+                    }
+                }
+            }
+            config.put(configNode, propertyMap);
+            LOGGER.info("get config form {} with data [{}]", configNode, propertiesStr);
+        } catch (UnsupportedEncodingException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }*/
 }

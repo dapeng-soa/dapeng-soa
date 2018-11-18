@@ -4,23 +4,17 @@ import com.github.dapeng.core.*;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.github.dapeng.core.router.Route;
 import com.github.dapeng.registry.ConfigKey;
-import com.github.dapeng.registry.zookeeper.ClientZkAgent;
-import com.github.dapeng.registry.zookeeper.ClientZkAgentImpl;
 import com.github.dapeng.registry.zookeeper.LoadBalanceAlgorithm;
-import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
-import com.github.dapeng.router.Route;
+import com.github.dapeng.registry.zookeeper.ClientRefManager;
 import com.github.dapeng.router.RoutesExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
 import static com.github.dapeng.core.SoaCode.*;
@@ -33,226 +27,124 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private final Logger logger = LoggerFactory.getLogger(SoaConnectionPoolImpl.class);
     private final LoadBalanceStrategy DEFAULT_LB_STRATEGY = LoadBalanceStrategy.Random;
 
-    class ClientInfoWeakRef extends WeakReference<SoaConnectionPool.ClientInfo> {
-        final String serviceName;
-        final String version;
-
-        ClientInfoWeakRef(SoaConnectionPool.ClientInfo referent,
-                          ReferenceQueue<? super SoaConnectionPool.ClientInfo> q) {
-            super(referent, q);
-            this.serviceName = referent.serviceName;
-            this.version = referent.version;
-        }
-    }
-
-    private ClientZkAgent zkAgent = new ClientZkAgentImpl();
-
-    private Map<String, ClientInfoWeakRef> clientInfos = new ConcurrentHashMap<>(16);
-    private final ReferenceQueue<ClientInfo> referenceQueue = new ReferenceQueue<>();
-
-    Thread cleanThread = new Thread(() -> {
-        while (true) {
-            try {
-                ClientInfoWeakRef clientInfoRef = (ClientInfoWeakRef) referenceQueue.remove(1000);
-                if (clientInfoRef == null) continue;
-
-                final String key = clientInfoRef.serviceName + ":" + clientInfoRef.version;
-
-                if (logger.isDebugEnabled()) {
-                    logger.debug("client for service:" + key + " is gone.");
-                }
-
-                clientInfos.remove(key);
-
-                zkAgent.cancelSyncService(clientInfoRef.serviceName);
-            } catch (Throwable e) {
-                logger.error(e.getMessage(), e);
-            }
-        }
-    }, "dapeng-clientInfo-monitor-thread");
+    private ClientRefManager clientRefManager = ClientRefManager.getInstance();
 
 
     public SoaConnectionPoolImpl() {
         IdleConnectionManager connectionManager = new IdleConnectionManager();
         connectionManager.start();
-
-        cleanThread.setDaemon(true);
-        cleanThread.start();
     }
 
     @Override
-    public synchronized ClientInfo registerClientInfo(String serviceName, String version) {
-        final String key = serviceName + ":" + version;
-
-        ClientInfoWeakRef clientInfoRef = clientInfos.get(key);
-        ClientInfo clientInfo = (clientInfoRef == null) ? null : clientInfoRef.get();
-        if (clientInfo != null) {
-            return clientInfo;
-        } else {
-            clientInfo = new ClientInfo(serviceName, version);
-            clientInfoRef = new ClientInfoWeakRef(clientInfo, referenceQueue);
-
-            clientInfos.put(key, clientInfoRef);
-
-            zkAgent.syncService(serviceName);
-
-            return clientInfo;
-        }
-
+    public synchronized ClientHandle registerClientInfo(String serviceName, String version) {
+        return clientRefManager.registerClient(serviceName, version);
     }
 
     @Override
-    public <REQ, RESP> RESP send(String service, String version,
+    public <REQ, RESP> RESP send(ClientHandle clientHandle,
                                  String method, REQ request,
                                  BeanSerializer<REQ> requestSerializer,
                                  BeanSerializer<RESP> responseSerializer)
             throws SoaException {
-        SoaConnection connection = retryFindConnection(service, version, method);
+        SoaConnection connection = retryFindConnection(clientHandle, method);
         // 选好的服务版本(可能不同于请求的版本)
         String serverVersion = InvocationContextImpl.Factory.currentInstance().versionName();
         if (connection == null) {
-            throw new SoaException(SoaCode.NotFoundServer, "服务 [ " + service + " ] 无可用实例");
+            throw new SoaException(SoaCode.NotFoundServer, "服务 [ " + clientHandle.serviceName() + " ] 无可用实例");
         }
-        long timeout = getTimeout(service, method);
+        long timeout = getTimeout(clientHandle.serviceInfo(), method);
         if (logger.isDebugEnabled()) {
-            logger.debug("findConnection:serviceName:{},methodName:{},version:[{} -> {}] ,TimeOut:{}", service, method, version, serverVersion, timeout);
+            logger.debug("findConnection:serviceName:{},methodName:{},version:[{} -> {}] ,TimeOut:{}",
+                    clientHandle.serviceInfo(), method, clientHandle.version(), serverVersion, timeout);
         }
-        return connection.send(service, serverVersion, method, request, requestSerializer, responseSerializer, timeout);
+        return connection.send(clientHandle, method, request, requestSerializer, responseSerializer, timeout);
     }
 
     @Override
-    public <REQ, RESP> Future<RESP> sendAsync(String service,
-                                              String version,
-                                              String method,
-                                              REQ request,
+    public <REQ, RESP> Future<RESP> sendAsync(ClientHandle clientHandle,
+                                              String method, REQ request,
                                               BeanSerializer<REQ> requestSerializer,
                                               BeanSerializer<RESP> responseSerializer) throws SoaException {
 
-        SoaConnection connection = retryFindConnection(service, version, method);
+        SoaConnection connection = retryFindConnection(clientHandle, method);
 
         String serverVersion = InvocationContextImpl.Factory.currentInstance().versionName();
         if (connection == null) {
-            throw new SoaException(SoaCode.NotFoundServer, "服务 [ " + service + " ] 无可用实例");
+            throw new SoaException(SoaCode.NotFoundServer, "服务 [ " + clientHandle.serviceName() + " ] 无可用实例");
         }
-        long timeout = getTimeout(service, method);
+        long timeout = getTimeout(clientHandle.serviceInfo(), method);
         if (logger.isDebugEnabled()) {
-            logger.debug("findConnection:serviceName:{},methodName:{},version:[{} -> {}] ,TimeOut:{}", service, method, version, serverVersion, timeout);
+            logger.debug("findConnection:serviceName:{},methodName:{},version:[{} -> {}] ,TimeOut:{}",
+                    clientHandle.serviceName(), method, clientHandle.version(), serverVersion, timeout);
         }
-        return connection.sendAsync(service, serverVersion, method, request, requestSerializer, responseSerializer, timeout);
+        return connection.sendAsync(clientHandle, method, request, requestSerializer, responseSerializer, timeout);
     }
 
-    @Override
-    public RuntimeInstance getRuntimeInstance(String serviceName, String serviceIp, int servicePort) {
-        ZkServiceInfo zkInfo = zkAgent.getZkServiceInfo(serviceName);
-        if (zkInfo == null) {
-            return null;
-        }
-        List<RuntimeInstance> runtimeInstances = zkInfo.getRuntimeInstances();
-        for (RuntimeInstance runtimeInstance : runtimeInstances) {
-            if (runtimeInstance.ip.equals(serviceIp) && runtimeInstance.port == servicePort) {
-                return runtimeInstance;
-            }
-        }
-        return null;
-    }
-
-    private SoaConnection findConnection(final String service,
-                                         final String version,
+    private SoaConnection findConnection(final ClientHandle clientHandle,
                                          final String method) throws SoaException {
 
         InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
 
-        ZkServiceInfo zkInfo = zkAgent.getZkServiceInfo(service);
-
+        ZkServiceInfo zkInfo = clientHandle.serviceInfo();
+        String version = clientHandle.version();
 
         //设置慢服务检测时间阈值
         /*Optional<Long> maxProcessTime = getZkProcessTime(method, zkInfo);
         context.maxProcessTime(maxProcessTime.orElse(null));*/
         // TODO: 2018-10-12 慢服务时间 取自超时时间[TimeOut]
-        context.maxProcessTime(getTimeout(service, method));
+        context.maxProcessTime(getTimeout(zkInfo, method));
 
         //如果设置了calleeip 和 calleport 直接调用服务 不走路由
         if (context.calleeIp().isPresent() && context.calleePort().isPresent()) {
             return SubPoolFactory.getSubPool(IPUtils.transferIp(context.calleeIp().get()), context.calleePort().get()).getConnection();
         }
 
-        if (zkInfo == null || zkInfo.getStatus() != ZkServiceInfo.Status.SYNCED) {
-            //todo should find out why zkInfo is null
-            // 1. target service not exists
-            logger.error(getClass().getSimpleName() + "::findConnection-0[service: " + service + "], zkInfo not found, now reSyncService");
-
-            synchronized (this) {
-                zkAgent.syncService(service);
-            }
-
-            if (zkInfo == null) {
-                zkInfo = zkAgent.getZkServiceInfo(service);
-            }
-
-
-        if (zkInfo.getStatus() != ZkServiceInfo.Status.SYNCED || zkInfo.getStatus() != ZkServiceInfo.Status.TRANSIENT) {
-            logger.error(getClass().getSimpleName() + "::findConnection-1[service: " + service + "], zkInfo not found");
+        //当zk上服务节点发生变化的时候, 可能会导致拿到不存在的服务运行时实例或者根本拿不到任何实例.
+        List<RuntimeInstance> compatibles = zkInfo.runtimeInstances();
+        if (compatibles == null || compatibles.isEmpty()) {
             return null;
         }
-    }
 
-    //当zk上服务节点发生变化的时候, 可能会导致拿到不存在的服务运行时实例或者根本拿不到任何实例.
-    List<RuntimeInstance> compatibles = zkInfo.getRuntimeInstances();
-        if(compatibles ==null||compatibles.isEmpty())
-
-    {
-        return null;
-    }
-
-    // checkVersion
-    List<RuntimeInstance> checkVersionInstances = new ArrayList<>(8);
-        for(
-    RuntimeInstance rt :compatibles)
-
-    {
-        if (checkVersion(version, rt.version)) {
-            checkVersionInstances.add(rt);
+        // checkVersion
+        List<RuntimeInstance> checkVersionInstances = new ArrayList<>(8);
+        for (RuntimeInstance rt : compatibles) {
+            if (checkVersion(version, rt.version)) {
+                checkVersionInstances.add(rt);
+            }
         }
-    }
 
-        if(checkVersionInstances.isEmpty())
+        if (checkVersionInstances.isEmpty()) {
+            logger.error(getClass().getSimpleName() + "::findConnection[service: " + zkInfo.serviceName() + ":" + version + "], not found available version of instances");
+            throw new SoaException(NoMatchedService, "服务 [ " + zkInfo.serviceName() + ":" + version + "] 无可用实例:没有找到对应的服务版本");
+        }
 
-    {
-        logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + ":" + version + "], not found available version of instances");
-        throw new SoaException(NoMatchedService, "服务 [ " + service + ":" + version + "] 无可用实例:没有找到对应的服务版本");
-    }
+        // router
+        // 把路由需要用到的条件放到InvocationContext中
+        capsuleContext(context, clientHandle, method);
 
-    // router
-    // 把路由需要用到的条件放到InvocationContext中
-    capsuleContext(context, service, method, version);
+        List<RuntimeInstance> routedInstances = router(zkInfo, checkVersionInstances);
+        if (routedInstances == null || routedInstances.isEmpty()) {
+            logger.error(getClass().getSimpleName() + "::findConnection[service: " + zkInfo.serviceName() + "], not found available instances by routing rules");
+            throw new SoaException(NoMatchedRouting, "服务 [ " + zkInfo.serviceName() + " ] 无可用实例:路由规则没有解析到可运行的实例");
+        }
 
-    List<RuntimeInstance> routedInstances = router(service, method, version, checkVersionInstances);
-        if(routedInstances ==null||routedInstances.isEmpty())
-
-    {
-        logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + "], not found available instances by routing rules");
-        throw new SoaException(NoMatchedRouting, "服务 [ " + service + " ] 无可用实例:路由规则没有解析到可运行的实例");
-    }
-
-    //loadBalance
-    RuntimeInstance inst = loadBalance(method, zkInfo, routedInstances);
-        if(inst ==null)
-
-    {
-        // should not reach here
-        throw new SoaException(NotFoundServer, "服务 [ " + service + " ] 无可用实例:负载均衡没有找到合适的运行实例");
-    }
+        //loadBalance
+        RuntimeInstance inst = loadBalance(method, zkInfo, routedInstances);
+        if (inst == null) {
+            // should not reach here
+            throw new SoaException(NotFoundServer, "服务 [ " + zkInfo.serviceName() + " ] 无可用实例:负载均衡没有找到合适的运行实例");
+        }
 
         inst.increaseActiveCount();
 
-    // TODO: 2018-08-04  服务端需要返回来正确的版本号
+        // TODO: 2018-08-04  服务端需要返回来正确的版本号
         context.versionName(inst.version);
 
-        return SubPoolFactory.getSubPool(inst.ip,inst.port).
+        return SubPoolFactory.getSubPool(inst.ip, inst.port).
 
-    getConnection();
+                getConnection();
 
-}
+    }
 
     /**
      * 版本 兼容(主版本不兼容，副版本向下兼容)
@@ -274,14 +166,12 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     /**
      * 服务路由
      *
-     * @param service
-     * @param method
-     * @param version
+     * @param serviceInfo
      * @param compatibles
      * @return
      */
-    private List<RuntimeInstance> router(String service, String method, String version, List<RuntimeInstance> compatibles) throws SoaException {
-        List<Route> routes = zkAgent.getRoutes(service);
+    private List<RuntimeInstance> router(ZkServiceInfo serviceInfo, List<RuntimeInstance> compatibles) throws SoaException {
+        List<Route> routes = serviceInfo.routes();
         if (routes == null || routes.size() == 0) {
             logger.debug("router 获取 路由信息为空或size为0,跳过router,服务实例数：{}", compatibles.size());
             return compatibles;
@@ -300,14 +190,13 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * 封装InvocationContext， 把路由需要用到的东西放到InvocationContext中。
      *
      * @param context
-     * @param service
+     * @param clientHandle
      * @param method
-     * @param version
      */
-    private void capsuleContext(InvocationContextImpl context, String service, String method, String version) {
-        context.serviceName(service);
+    private void capsuleContext(InvocationContextImpl context, ClientHandle clientHandle, String method) {
+        context.serviceName(clientHandle.serviceName());
         context.methodName(method);
-        context.versionName(version);
+        context.versionName(clientHandle.version());
 
         InvocationContextImpl.InvocationContextProxy invocationCtxProxy = InvocationContextImpl.Factory.getInvocationContextProxy();
 
@@ -323,14 +212,13 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     /**
      * 如果出现异常（ConcurrentModifyException）,或获取到的实例为0，进行重试
      */
-    private SoaConnection retryFindConnection(final String service,
-                                              final String version,
+    private SoaConnection retryFindConnection(final ClientHandle clientHandle,
                                               final String method) throws SoaException {
         SoaConnection soaConnection;
         int retry = 1;
         do {
             try {
-                soaConnection = findConnection(service, version, method);
+                soaConnection = findConnection(clientHandle, method);
                 if (soaConnection != null) {
                     return soaConnection;
                 }
@@ -426,10 +314,10 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * 最后校验一下,拿到的值不能超过系统设置的最大值
      *
      * @param method
-     * @param service
+     * @param serviceInfo
      * @return
      */
-    private long getTimeout(String service, String method) {
+    private long getTimeout(ZkServiceInfo serviceInfo, String method) {
 
         long maxTimeout = SoaSystemEnvProperties.SOA_MAX_TIMEOUT;
         long defaultTimeout = SoaSystemEnvProperties.SOA_DEFAULT_TIMEOUT;
@@ -438,9 +326,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         Optional<Long> envTimeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT == 0 ?
                 Optional.empty() : Optional.of(SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT);
 
-        ZkServiceInfo zkServiceInfo = zkAgent.getZkServiceInfo(service);
-
-        Optional<Long> zkTimeout = getZkTimeout(method, zkServiceInfo);
+        Optional<Long> zkTimeout = getZkTimeout(method, serviceInfo);
         Optional<Long> idlTimeout = getIdlTimeout(method);
 
         Optional<Long> timeout;

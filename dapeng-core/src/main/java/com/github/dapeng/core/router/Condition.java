@@ -1,4 +1,4 @@
-package com.github.dapeng.router.condition;
+package com.github.dapeng.core.router;
 
 /**
  * 描述: 路由解析 条件 标识 接口

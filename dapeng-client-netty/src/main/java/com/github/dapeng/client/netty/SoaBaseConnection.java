@@ -50,7 +50,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
     @Override
     public <REQ, RESP> RESP send(
-            String service, String version,
+            ClientHandle clientHandle,
             String method, REQ request,
             BeanSerializer<REQ> requestSerializer,
             BeanSerializer<RESP> responseSerializer,
@@ -58,6 +58,8 @@ public abstract class SoaBaseConnection implements SoaConnection {
             throws SoaException {
         int seqid = seqidAtomic.getAndIncrement();
 
+        String service = clientHandle.serviceName();
+        String version = clientHandle.version();
         InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         invocationContext.seqId(seqid);
         invocationContext.serviceName(service);
@@ -132,7 +134,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
         assert (result != null);
 
         //请求响应，在途请求-1
-        RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service, host, port);
+        RuntimeInstance runtimeInstance = clientHandle.serviceInfo().runtimeInstance(host, port);
         if (runtimeInstance == null) {
             LOGGER.error("SoaBaseConnection::runtimeInstance not found.");
         } else {
@@ -148,13 +150,16 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
     @Override
     public <REQ, RESP> Future<RESP> sendAsync(
-            String service, String version,
+            ClientHandle clientHandle,
             String method, REQ request,
             BeanSerializer<REQ> requestSerializer,
             BeanSerializer<RESP> responseSerializer,
             long timeout) throws SoaException {
 
         int seqid = seqidAtomic.getAndIncrement();
+
+        String service = clientHandle.serviceName();
+        String version = clientHandle.version();
 
         InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         invocationContext.seqId(seqid);
@@ -282,7 +287,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         assert (resultFuture != null);
         //请求响应，在途请求-1
-        RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service, host, port);
+        RuntimeInstance runtimeInstance = clientHandle.serviceInfo().runtimeInstance(host, port);
         if (runtimeInstance == null) {
             LOGGER.error("SoaBaseConnection::runtimeInstance not found.");
         } else {

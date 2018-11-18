@@ -3,9 +3,7 @@ package com.github.dapeng.registry.zookeeper;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.lifecycle.LifecycleProcessorFactory;
-import com.github.dapeng.core.FreqControlRule;
-import com.github.dapeng.core.ServiceFreqControl;
-import com.github.dapeng.core.SoaException;
+import com.github.dapeng.core.*;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.MasterHelper;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
@@ -17,10 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.regex.Pattern;
 
 import static com.github.dapeng.core.SoaCode.FreqConfigError;
@@ -46,7 +41,7 @@ public class ServerZk extends CommonZk {
     /**
      * zk 配置 缓存 ，根据 serivceName + versionName 作为 key
      */
-    public final ConcurrentMap<String, ZkServiceInfo> zkConfigMap = new ConcurrentHashMap<>(128);
+    public final Map<String, ZkServiceInfo> zkConfigMap = new ConcurrentHashMap<>(128);
 
     public ServerZk(RegistryAgent registryAgent) {
         this.registryAgent = registryAgent;
@@ -387,6 +382,7 @@ public class ServerZk extends CommonZk {
             String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
 
 
+
     /**
      * 获取zk 配置信息，封装到 ZkConfigInfo
      * 加入并发考虑
@@ -400,10 +396,9 @@ public class ServerZk extends CommonZk {
             synchronized (this) {
                 info = zkConfigMap.get(serviceName);
                 if (info == null) {
-                    info = new ZkServiceInfo(serviceName);
+                    info = new ZkServiceInfo(serviceName, new CopyOnWriteArrayList<>());
                     try {
                         // when container is shutdown, zk is down and will throw execptions
-
                         syncZkConfigInfo(info);
                         zkConfigMap.put(serviceName, info);
                     } catch (Throwable e) {
@@ -559,5 +554,23 @@ public class ServerZk extends CommonZk {
         ServiceFreqControl freqControl = new ServiceFreqControl(serviceName, rules4service, rules4method);
         LOGGER.info("doParseRuleData限流规则解析后内容: " + freqControl);
         return freqControl;
+    }
+
+    @Override
+    public void process(WatchedEvent event) {
+        LOGGER.warn("ClientZkAgent::process, zkEvent: " + event);
+        String serviceName = event.getPath().substring(event.getPath().lastIndexOf("/") + 1);
+        switch (event.getType()) {
+            case NodeDataChanged:
+                if (event.getPath().startsWith(CONFIG_PATH)) {
+                    getConfigData(serviceName);
+                } else if (event.getPath().startsWith(FREQ_PATH)) {
+                    getFreqControl(serviceName);
+                }
+                break;
+            default:
+                LOGGER.warn("ClientZkAgent::process Just ignore this event.");
+                break;
+        }
     }
 }

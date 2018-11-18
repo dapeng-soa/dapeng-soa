@@ -9,16 +9,14 @@ import java.util.concurrent.Future;
 public interface SoaConnection {
 
     <REQ, RESP> RESP send(
-            String service,
-            String version,
+            ClientHandle clientHandle,
             String method,
             REQ request,
             BeanSerializer<REQ> requestSerializer,
             BeanSerializer<RESP> responseSerializer,long timeout) throws SoaException;
 
     <REQ, RESP> Future<RESP> sendAsync(
-            String service,
-            String version,
+            ClientHandle clientHandle,
             String method,
             REQ request,
             BeanSerializer<REQ> requestSerializer,

@@ -1,4 +1,4 @@
-package com.github.dapeng.registry.zookeeper2;
+package com.github.dapeng.core;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -9,17 +9,26 @@ import java.lang.ref.WeakReference;
  */
 public class ClientHandle {
     private final ZkServiceInfo serviceInfo;
+    private final String version;
 
-
-    public ClientHandle(final ZkServiceInfo serviceInfo) {
+    public ClientHandle(final ZkServiceInfo serviceInfo, final String version) {
         this.serviceInfo = serviceInfo;
+        this.version =version;
     }
 
     public ZkServiceInfo serviceInfo() {
         return serviceInfo;
     }
 
-    static class ClientHandleWeakRef extends WeakReference<ClientHandle> {
+    public String serviceName() {
+        return serviceInfo.serviceName();
+    }
+
+    public String version() {
+        return version;
+    }
+
+    public static class ClientHandleWeakRef extends WeakReference<ClientHandle> {
         private final ZkServiceInfo serviceInfo;
 
         public ClientHandleWeakRef(ClientHandle referent, ReferenceQueue<? super ClientHandle> q) {
@@ -29,6 +38,10 @@ public class ClientHandle {
 
         public ZkServiceInfo serviceInfo() {
             return serviceInfo;
+        }
+
+        public String serviceName() {
+            return serviceInfo.serviceName();
         }
     }
 }

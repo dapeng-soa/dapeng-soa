@@ -12,13 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 
 /**
@@ -35,13 +31,13 @@ public class JsonPost {
 
 
     private SoaConnectionPool pool;
-    private final SoaConnectionPool.ClientInfo clientInfo;
+    private final ClientHandle clientHandle;
     private final String methodName;
 
     public JsonPost(final String serviceName, final String version, final String methodName) {
         this.methodName = methodName;
         this.pool = factory.getPool();
-        this.clientInfo = this.pool.registerClientInfo(serviceName, version);
+        this.clientHandle = this.pool.registerClientInfo(serviceName, version);
     }
 
     public JsonPost(final String serviceName, final String version, final String methodName, boolean doNotThrowError) {
@@ -64,7 +60,7 @@ public class JsonPost {
         if (method == null) {
             return String.format("{\"responseCode\":\"%s\", \"responseMsg\":\"%s\", \"success\":\"{}\", \"status\":0}",
                     SoaCode.NoMatchedMethod,
-                    "method:" + methodName + " for service:" + clientInfo.serviceName + " not found");
+                    "method:" + methodName + " for service:" + clientHandle.serviceName() + " not found");
         }
 
         try {
@@ -74,8 +70,8 @@ public class JsonPost {
             OptimizedMetadata.OptimizedStruct req = optimizedService.getOptimizedStructs().get(method.request.namespace + "." + method.request.name);
             OptimizedMetadata.OptimizedStruct resp = optimizedService.getOptimizedStructs().get(method.response.namespace + "." + method.response.name);
 
-            JsonSerializer jsonEncoder = new JsonSerializer(optimizedService, method, clientInfo.version, req);
-            JsonSerializer jsonDecoder = new JsonSerializer(optimizedService, method, clientInfo.version, resp);
+            JsonSerializer jsonEncoder = new JsonSerializer(optimizedService, method, clientHandle.version(), req);
+            JsonSerializer jsonDecoder = new JsonSerializer(optimizedService, method, clientHandle.version(), resp);
 
             final long beginTime = System.currentTimeMillis();
 
@@ -84,8 +80,7 @@ public class JsonPost {
                     + ":" + origService.meta.version + "], method:" + methodName + ", param:"
                     + jsonParameter);
 
-            String jsonResponse = post(clientInfo.serviceName, clientInfo.version,
-                    methodName, jsonParameter, jsonEncoder, jsonDecoder);
+            String jsonResponse = post(methodName, jsonParameter, jsonEncoder, jsonDecoder);
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("soa-response: " + jsonResponse + " cost:" + (System.currentTimeMillis() - beginTime) + "ms");
             } else {
@@ -104,12 +99,12 @@ public class JsonPost {
      *
      * @return
      */
-    private String post(String serviceName, String version, String method, String requestJson, JsonSerializer jsonEncoder, JsonSerializer jsonDecoder) throws Exception {
+    private String post(String method, String requestJson, JsonSerializer jsonEncoder, JsonSerializer jsonDecoder) throws Exception {
 
         String jsonResponse;
         String sessionTid = MDC.get(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         try {
-            String result = this.pool.send(serviceName, version, method, requestJson, jsonEncoder, jsonDecoder);
+            String result = this.pool.send(clientHandle, method, requestJson, jsonEncoder, jsonDecoder);
             jsonResponse = result.equals("{}") ? "{\"status\":1}" : result.substring(0, result.lastIndexOf('}')) + ",\"status\":1}";
             //MDC will be remove by client filter
             MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
@@ -157,7 +152,7 @@ public class JsonPost {
 
             String resp = String.format("{\"responseCode\":\"%s\", \"responseMsg\":\"%s\", \"success\":\"{}\", \"status\":0}",
                     SoaCode.NoMatchedMethod,
-                    "method:" + methodName + " for service:" + clientInfo.serviceName + " not found");
+                    "method:" + methodName + " for service:" + clientHandle.serviceName() + " not found");
             return CompletableFuture.completedFuture(resp);
         }
 
@@ -168,8 +163,8 @@ public class JsonPost {
             OptimizedMetadata.OptimizedStruct req = optimizedService.getOptimizedStructs().get(method.request.namespace + "." + method.request.name);
             OptimizedMetadata.OptimizedStruct resp = optimizedService.getOptimizedStructs().get(method.response.namespace + "." + method.response.name);
 
-            JsonSerializer jsonEncoder = new JsonSerializer(optimizedService, method, clientInfo.version, req);
-            JsonSerializer jsonDecoder = new JsonSerializer(optimizedService, method, clientInfo.version, resp);
+            JsonSerializer jsonEncoder = new JsonSerializer(optimizedService, method, clientHandle.version(), req);
+            JsonSerializer jsonDecoder = new JsonSerializer(optimizedService, method, clientHandle.version(), resp);
 
             Service origService = optimizedService.getService();
 
@@ -177,8 +172,7 @@ public class JsonPost {
                     + ":" + origService.meta.version + "], method:" + methodName + ", param:"
                     + jsonParameter);
 
-            Future<String> jsonResponse = postAsync(clientInfo.serviceName, clientInfo.version,
-                    methodName, jsonParameter, jsonEncoder, jsonDecoder);
+            Future<String> jsonResponse = postAsync(methodName, jsonParameter, jsonEncoder, jsonDecoder);
             //MDC will be remove by client filter
             MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
 
@@ -195,10 +189,10 @@ public class JsonPost {
      *
      * @return
      */
-    private Future<String> postAsync(String serviceName, String version, String method, String requestJson, JsonSerializer jsonEncoder, JsonSerializer jsonDecoder) throws Exception {
+    private Future<String> postAsync(String method, String requestJson, JsonSerializer jsonEncoder, JsonSerializer jsonDecoder) throws Exception {
         Future<String> jsonResponse;
         try {
-            jsonResponse = this.pool.sendAsync(serviceName, version, method, requestJson, jsonEncoder, jsonDecoder);
+            jsonResponse = this.pool.sendAsync(clientHandle, method, requestJson, jsonEncoder, jsonDecoder);
         } catch (SoaException e) {
             if (DapengUtil.isDapengCoreException(e)) {
                 LOGGER.error(e.getMsg(), e);

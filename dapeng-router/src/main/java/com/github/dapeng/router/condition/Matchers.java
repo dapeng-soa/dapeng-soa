@@ -1,5 +1,7 @@
 package com.github.dapeng.router.condition;
 
+import com.github.dapeng.core.router.Condition;
+
 import java.util.ArrayList;
 import java.util.List;
 

@@ -1,8 +1,7 @@
-package com.github.dapeng.registry.zookeeper2;
+package com.github.dapeng.core;
 
-import com.github.dapeng.core.RuntimeInstance;
-import com.github.dapeng.core.Weight;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
+import com.github.dapeng.core.router.Route;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,13 +22,42 @@ public class ZkServiceInfo {
      */
     private List<RuntimeInstance> runtimeInstances;
 
+    /**
+     * 路由规则
+     */
+    private List<Route> routes = new ArrayList<>(16);
+
     public ZkServiceInfo(String serviceName, List<RuntimeInstance> runtimeInstances) {
         this.ServiceName = serviceName;
         this.runtimeInstances = runtimeInstances;
     }
 
-    public List<RuntimeInstance> getRuntimeInstances() {
+    public List<RuntimeInstance> runtimeInstances() {
         return runtimeInstances;
+    }
+
+    /**
+     * 根据节点ip以及端口， 找到对应的服务节点
+     * @param ip
+     * @param port
+     * @return
+     */
+    public RuntimeInstance runtimeInstance(String ip, int port) {
+        for (RuntimeInstance runtimeInstance : runtimeInstances) {
+            if (runtimeInstance.ip.equals(ip) && runtimeInstance.port == port) {
+                return runtimeInstance;
+            }
+        }
+
+        return null;
+    }
+
+    public void routes(List<Route> routes) {
+        this.routes = routes;
+    }
+
+    public List<Route> routes() {
+        return routes;
     }
 
     public String serviceName() {
@@ -43,16 +71,16 @@ public class ZkServiceInfo {
     /**
      * processTime zk config
      */
-    public com.github.dapeng.registry.zookeeper.ZkServiceInfo.Config<Long> processTimeConfig = new com.github.dapeng.registry.zookeeper.ZkServiceInfo.Config<>();
+    public Config<Long> processTimeConfig = new Config<>();
 
     /**
      * timeout zk config
      */
-    public com.github.dapeng.registry.zookeeper.ZkServiceInfo.Config<Long> timeConfig = new com.github.dapeng.registry.zookeeper.ZkServiceInfo.Config<>();
+    public Config<Long> timeConfig = new Config<>();
     /**
      * loadBalance zk config
      */
-    public com.github.dapeng.registry.zookeeper.ZkServiceInfo.Config<LoadBalanceStrategy> loadbalanceConfig = new com.github.dapeng.registry.zookeeper.ZkServiceInfo.Config<>();
+    public Config<LoadBalanceStrategy> loadbalanceConfig = new Config<>();
 
     /**
      * weight zk config
