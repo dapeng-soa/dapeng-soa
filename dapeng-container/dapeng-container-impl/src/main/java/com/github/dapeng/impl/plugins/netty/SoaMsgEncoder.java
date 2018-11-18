@@ -53,7 +53,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             LOGGER.trace(getClass().getSimpleName() + "::encode");
         }
         //容器不是运行状态或者将要关闭状态
-        if (container.status() != STATUS_RUNNING || container.status() != STATUS_SHUTTING) {
+        if (container.status() != STATUS_RUNNING && container.status() != STATUS_SHUTTING) {
             writeErrorResponse(transactionContext, out);
             return;
         }
