@@ -123,6 +123,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         capsuleContext(context, clientHandle, method);
 
         List<RuntimeInstance> routedInstances = router(zkInfo, checkVersionInstances);
+
         if (routedInstances == null || routedInstances.isEmpty()) {
             logger.error(getClass().getSimpleName() + "::findConnection[service: " + zkInfo.serviceName() + "], not found available instances by routing rules");
             throw new SoaException(NoMatchedRouting, "服务 [ " + zkInfo.serviceName() + " ] 无可用实例:路由规则没有解析到可运行的实例");
@@ -144,6 +145,30 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
                 getConnection();
 
+    }
+
+    /**
+     * 封装InvocationContext， 把路由需要用到的东西放到InvocationContext中。
+     *
+     * @param context
+     * @param service
+     * @param method
+     * @param version
+     */
+    private void capsuleContext(InvocationContextImpl context, String service, String method, String version) {
+        context.serviceName(service);
+        context.methodName(method);
+        context.versionName(version);
+
+        InvocationContextImpl.InvocationContextProxy invocationCtxProxy = InvocationContextImpl.Factory.getInvocationContextProxy();
+
+        if (invocationCtxProxy != null) {
+            context.userIp(invocationCtxProxy.userIp().orElse(null));
+            context.userId(invocationCtxProxy.userId().orElse(null));
+            context.operatorId(invocationCtxProxy.operatorId().orElse(null));
+            context.callerMid(invocationCtxProxy.callerMid().orElse(null));
+            context.cookies(invocationCtxProxy.cookies());
+        }
     }
 
     /**
