@@ -34,6 +34,8 @@ import java.util.Vector;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_RETRY_SLEEPTIME;
+
 public class DapengContainer implements Container {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DapengContainer.class);
@@ -237,12 +239,12 @@ public class DapengContainer implements Container {
                 lifecycleProcessor.onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.STOP));
 
                 status = STATUS_SHUTTING;
+                // fixme not so graceful
+                getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
 
                 //重试3次，保证容器内请求已完成
                 retryCompareCounter();
 
-                // fixme not so graceful
-                getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
                 Lists.reverse(getPlugins()).stream().filter(plugin -> !(plugin instanceof ZookeeperRegistryPlugin)).forEach(Plugin::stop);
                 SHUTDOWN_SIGNAL.countDown();
                 LOGGER.warn("Container graceful shutdown end.");
@@ -277,12 +279,16 @@ public class DapengContainer implements Container {
                 return;
             } else {
                 try {
-                    Thread.sleep(3000);
+                    Thread.sleep(SOA_RETRY_SLEEPTIME);
                 } catch (InterruptedException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
             }
         } while (retry++ < 3);
+
+        if(requestCounter.intValue() != 0){
+            LOGGER.warn("3次等待之后，容器内请求还未处理完，容器即将关闭...");
+        }
     }
 
     public static InputStream loadInputStreamInClassLoader(String path) throws FileNotFoundException {

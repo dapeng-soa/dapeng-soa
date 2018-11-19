@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.github.dapeng.api.Container.STATUS_RUNNING;
+import static com.github.dapeng.api.Container.STATUS_SHUTTING;
 import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
 
 /**
@@ -52,8 +53,9 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             LOGGER.trace(getClass().getSimpleName() + "::encode");
         }
         //容器不是运行状态
-        if (container.status() != STATUS_RUNNING) {
+        if (container.status() != STATUS_RUNNING && container.status() != STATUS_SHUTTING) {
             writeErrorResponse(transactionContext, out);
+            return;
         }
 
         try {
@@ -65,6 +67,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
 
             if (respCode.isPresent() && !respCode.get().equals(SOA_NORMAL_RESP_CODE)) {
                 writeErrorResponse(transactionContext, application, out);
+                return;
             } else {
                 try {
                     //fix java.util.NoSuchElementException: No value present
@@ -91,7 +94,8 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     }
                     messageProcessor.writeMessageEnd();
                     transport.flush();
-
+                    //请求返回，容器请求数 -1
+                    container.requestCounter().decrementAndGet();
                     if (LOGGER.isDebugEnabled()) {
                         String debugLog = "response[seqId:" + transactionContext.seqId() + ", respCode:" + respCode.get() + "]:"
                                 + "service[" + soaHeader.getServiceName()
@@ -193,6 +197,8 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
+            //请求返回，容器请求数 -1
+            container.requestCounter().decrementAndGet();
             MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), null);
             MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         }
@@ -236,6 +242,8 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
+            //请求返回，容器请求数 -1
+            container.requestCounter().decrementAndGet();
             MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         }
     }
