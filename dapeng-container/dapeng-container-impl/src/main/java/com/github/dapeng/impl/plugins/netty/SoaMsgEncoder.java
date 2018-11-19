@@ -53,7 +53,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             LOGGER.trace(getClass().getSimpleName() + "::encode");
         }
         //容器不是运行状态或者将要关闭状态
-        if (container.status() != STATUS_RUNNING || container.status() != STATUS_SHUTTING) {
+        if (container.status() != STATUS_RUNNING && container.status() != STATUS_SHUTTING) {
             writeErrorResponse(transactionContext, out);
             return;
         }
@@ -214,6 +214,11 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
     private void writeErrorResponse(TransactionContext transactionContext,
                                     ByteBuf out) {
         SoaHeader soaHeader = transactionContext.getHeader();
+        // make sure responseCode of error responses do not equal to SOA_NORMAL_RESP_CODE
+        if (soaHeader.getRespCode().isPresent() && soaHeader.getRespCode().get().equals(SOA_NORMAL_RESP_CODE)) {
+            soaHeader.setRespCode(SoaCode.ContainerStatusError.getCode());
+            soaHeader.setRespMessage(SoaCode.ContainerStatusError.getMsg());
+        }
         SoaException soaException = transactionContext.soaException();
         if (soaException == null) {
             soaException = new SoaException(soaHeader.getRespCode().orElse(SoaCode.ContainerStatusError.getCode()),
