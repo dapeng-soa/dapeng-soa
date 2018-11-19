@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class SchedulerJobListener implements JobListener {
     private Logger logger = LoggerFactory.getLogger(getClass());
-    private final static String TASK_DATABASE = "dapeng-task";
+    private final static String TASK_DATABASE = "dapengTask";
     private static CounterService COUNTER_CLIENT = new CounterServiceClient();
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
     // 线程池

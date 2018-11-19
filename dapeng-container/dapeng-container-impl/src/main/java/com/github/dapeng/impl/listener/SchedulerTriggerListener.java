@@ -27,7 +27,7 @@ import java.util.concurrent.Executors;
 public class SchedulerTriggerListener implements TriggerListener {
     private Logger logger = LoggerFactory.getLogger(getClass());
     private static CounterService COUNTER_CLIENT = new CounterServiceClient();
-    private final static String TASK_DATABASE = "dapeng-task";
+    private final static String TASK_DATABASE = "dapengTask";
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
     // 线程池
     private static ExecutorService executorService = Executors.newCachedThreadPool();
