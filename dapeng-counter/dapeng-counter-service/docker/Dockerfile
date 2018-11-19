@@ -1,4 +1,4 @@
-FROM dapengsoa/dapeng-container:2.1.1-SNAPSHOT
+FROM dapengsoa/dapeng-container:2.1.1
 MAINTAINER dapengsoa@gmail.com
 
 ENV CONTAINER_HOME /dapeng-container
