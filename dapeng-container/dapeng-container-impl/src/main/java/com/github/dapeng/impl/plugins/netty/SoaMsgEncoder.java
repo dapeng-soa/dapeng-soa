@@ -64,10 +64,14 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
 
             Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
 
+            if (application == null) {
+                LOGGER.error(getClass().getSimpleName() + "::encode application is null, container status:" + container.status());
+                writeErrorResponse(transactionContext, out);
+                return;
+            }
 
             if (respCode.isPresent() && !respCode.get().equals(SOA_NORMAL_RESP_CODE)) {
                 writeErrorResponse(transactionContext, application, out);
-                return;
             } else {
                 try {
                     //fix java.util.NoSuchElementException: No value present
