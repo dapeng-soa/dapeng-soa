@@ -1,6 +1,5 @@
 package com.github.dapeng.metadata;
 
-import com.github.dapeng.core.ClientHandle;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.SoaConnectionPool;
 import com.github.dapeng.core.SoaConnectionPoolFactory;
@@ -20,7 +19,7 @@ public class MetadataClient {
 
     private final SoaConnectionPool pool;
 
-    private final ClientHandle clientHandle;
+    private final SoaConnectionPool.ClientInfo clientInfo;
 
     public MetadataClient(String serviceName, String version) {
         this.serviceName = serviceName;
@@ -28,7 +27,7 @@ public class MetadataClient {
 
         ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class, getClass().getClassLoader());
         this.pool = factories.iterator().next().getPool();
-        this.clientHandle = this.pool.registerClientInfo(serviceName, version);
+        this.clientInfo = this.pool.registerClientInfo(serviceName, version);
 
     }
 
@@ -39,7 +38,7 @@ public class MetadataClient {
         InvocationContextImpl.Factory.currentInstance()
                 .sessionTid(DapengUtil.generateTid())
                 .callerMid("InnerApiSite");
-        getServiceMetadata_result result = pool.send(clientHandle, methodName,
+        getServiceMetadata_result result = pool.send(serviceName, version, methodName,
                 new getServiceMetadata_args(),
                 new GetServiceMetadata_argsSerializer(),
                 new GetServiceMetadata_resultSerializer());

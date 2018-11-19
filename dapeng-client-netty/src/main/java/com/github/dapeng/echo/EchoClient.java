@@ -12,7 +12,7 @@ public class EchoClient {
 
     private final SoaConnectionPool pool;
 
-    private final ClientHandle clientHandle;
+    private final SoaConnectionPool.ClientInfo clientInfo;
 
     public EchoClient(String serviceName, String version) {
         this.serviceName = serviceName;
@@ -20,7 +20,7 @@ public class EchoClient {
 
         ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class, getClass().getClassLoader());
         this.pool = factories.iterator().next().getPool();
-        this.clientHandle = this.pool.registerClientInfo(serviceName, version);
+        this.clientInfo = this.pool.registerClientInfo(serviceName, version);
 
     }
 
@@ -29,7 +29,7 @@ public class EchoClient {
      **/
     public String echo() throws SoaException {
         InvocationContextImpl.Factory.currentInstance().sessionTid(DapengUtil.generateTid()).callerMid("InnerApiSite");
-        echo_result response = pool.send(clientHandle, methodName, new echo_args(), new echo_argsSerializer(), new echo_resultSerializer());
+        echo_result response = pool.send(serviceName, version, methodName, new echo_args(), new echo_argsSerializer(), new echo_resultSerializer());
         return response.getSuccess();
     }
 

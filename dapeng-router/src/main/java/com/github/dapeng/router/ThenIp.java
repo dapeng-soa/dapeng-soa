@@ -1,4 +1,4 @@
-package com.github.dapeng.core.router;
+package com.github.dapeng.router;
 
 import com.github.dapeng.core.helper.IPUtils;
 

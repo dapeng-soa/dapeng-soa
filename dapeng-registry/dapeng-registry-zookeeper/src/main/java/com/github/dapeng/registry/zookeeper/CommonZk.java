@@ -1,6 +1,5 @@
 package com.github.dapeng.registry.zookeeper;
 
-import com.github.dapeng.core.ZkServiceInfo;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.KeeperException;

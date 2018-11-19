@@ -1,9 +1,7 @@
 package com.github.dapeng.router;
 
 
-import com.github.dapeng.core.router.Condition;
-import com.github.dapeng.core.router.Route;
-import com.github.dapeng.core.router.ThenIp;
+import com.github.dapeng.router.condition.Condition;
 import com.github.dapeng.router.condition.*;
 import com.github.dapeng.router.exception.ParsingException;
 import com.github.dapeng.router.pattern.*;

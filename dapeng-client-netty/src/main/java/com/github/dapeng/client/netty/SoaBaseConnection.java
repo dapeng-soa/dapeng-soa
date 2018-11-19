@@ -35,6 +35,8 @@ public abstract class SoaBaseConnection implements SoaConnection {
     private Channel channel = null;
     private NettyClient client;
     private final static AtomicInteger seqidAtomic = new AtomicInteger(0);
+    private ClientRefManager clientRefManager = ClientRefManager.getInstance();
+
 
     SoaBaseConnection(String host, int port) {
         this.client = NettyClientFactory.getNettyClient();
@@ -50,7 +52,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
     @Override
     public <REQ, RESP> RESP send(
-            ClientHandle clientHandle,
+            String service, String version,
             String method, REQ request,
             BeanSerializer<REQ> requestSerializer,
             BeanSerializer<RESP> responseSerializer,
@@ -58,8 +60,6 @@ public abstract class SoaBaseConnection implements SoaConnection {
             throws SoaException {
         int seqid = seqidAtomic.getAndIncrement();
 
-        String service = clientHandle.serviceName();
-        String version = clientHandle.version();
         InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         invocationContext.seqId(seqid);
         invocationContext.serviceName(service);
@@ -134,7 +134,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
         assert (result != null);
 
         //请求响应，在途请求-1
-        RuntimeInstance runtimeInstance = clientHandle.serviceInfo().runtimeInstance(host, port);
+        RuntimeInstance runtimeInstance = clientRefManager.serviceInfo(service).runtimeInstance(host, port);
         if (runtimeInstance == null) {
             LOGGER.error("SoaBaseConnection::runtimeInstance not found.");
         } else {
@@ -150,16 +150,13 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
     @Override
     public <REQ, RESP> Future<RESP> sendAsync(
-            ClientHandle clientHandle,
+            String service, String version,
             String method, REQ request,
             BeanSerializer<REQ> requestSerializer,
             BeanSerializer<RESP> responseSerializer,
             long timeout) throws SoaException {
 
         int seqid = seqidAtomic.getAndIncrement();
-
-        String service = clientHandle.serviceName();
-        String version = clientHandle.version();
 
         InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         invocationContext.seqId(seqid);
@@ -287,7 +284,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         assert (resultFuture != null);
         //请求响应，在途请求-1
-        RuntimeInstance runtimeInstance = clientHandle.serviceInfo().runtimeInstance(host, port);
+        RuntimeInstance runtimeInstance = clientRefManager.serviceInfo(service).runtimeInstance(host, port);
         if (runtimeInstance == null) {
             LOGGER.error("SoaBaseConnection::runtimeInstance not found.");
         } else {

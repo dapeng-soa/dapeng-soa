@@ -1,8 +1,7 @@
 package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.RuntimeInstance;
-import com.github.dapeng.core.ZkServiceInfo;
-import com.github.dapeng.core.router.Route;
+import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
@@ -12,7 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,7 +25,7 @@ public class ClientZkAgent extends CommonZk {
 
     private static final ClientZkAgent instance = new ClientZkAgent();
 
-    private final Map<String, List<ZkServiceInfo>> serviceInfosByName = new ConcurrentHashMap<>(128);
+    private final Map<String, ZkServiceInfo> serviceInfoByName = new ConcurrentHashMap<>(128);
 
     private ClientZkAgent() {
         init();
@@ -43,18 +41,9 @@ public class ClientZkAgent extends CommonZk {
      * @param serviceInfo
      */
     public void sync(ZkServiceInfo serviceInfo) {
-        List serviceInfos = serviceInfosByName.get(serviceInfo.serviceName());
-
-        if (serviceInfos == null) {
-            serviceInfos = new LinkedList<>();
-            serviceInfosByName.put(serviceInfo.serviceName(), serviceInfos);
+        synchronized (serviceInfoByName) {
+            serviceInfoByName.put(serviceInfo.serviceName(), serviceInfo);
         }
-
-        synchronized (serviceInfos) {
-            serviceInfos.add(serviceInfo);
-        }
-
-
         startWatch(serviceInfo);
     }
 
@@ -65,14 +54,22 @@ public class ClientZkAgent extends CommonZk {
      */
     public void cancel(ZkServiceInfo serviceInfo) {
         LOGGER.info("ClientZkAgent::cancel, serviceName:" + serviceInfo.serviceName());
-        if (serviceInfosByName.containsKey(serviceInfo.serviceName())) {
-            List serviceInfos = serviceInfosByName.get(serviceInfo.serviceName());
-            synchronized (serviceInfos) {
-                serviceInfos.remove(serviceInfo);
+        synchronized (serviceInfoByName) {
+            // 1
+            ZkServiceInfo oldServiceInfo = serviceInfoByName.get(serviceInfo.serviceName());
+
+            if (oldServiceInfo != null && serviceInfo == oldServiceInfo) {
+                // 2, 步骤1跟2之间， serviceInfosByName可能会发生变化， 所以需要做同步
+                serviceInfoByName.remove(serviceInfo.serviceName());
+                LOGGER.info("ClientZkAgent::cancel succeed, serviceName:" + serviceInfo.serviceName());
+            } else {
+                LOGGER.warn("ClientZkAgent::cancel, no serviceInfo found for:" + serviceInfo.serviceName());
             }
-        } else {
-            LOGGER.warn("ClientZkAgent::cancel, no serviceInfo found for:" + serviceInfo.serviceName());
         }
+    }
+
+    public ZkServiceInfo serviceInfo(String serviceName) {
+        return serviceInfoByName.get(serviceName);
     }
 
     /**
@@ -84,76 +81,25 @@ public class ClientZkAgent extends CommonZk {
     public void process(WatchedEvent event) {
         LOGGER.warn("ClientZkAgent::process, zkEvent: " + event);
         String serviceName = event.getPath().substring(event.getPath().lastIndexOf("/") + 1);
-        List<ZkServiceInfo> serviceInfos = serviceInfosByName.get(serviceName);
-        if (serviceInfos == null || serviceInfos.isEmpty()) {
+        ZkServiceInfo serviceInfo = serviceInfoByName.get(serviceName);
+        if (serviceInfo == null) {
             LOGGER.warn("ClientZkAgent::process, no need to sync any more: " + serviceName);
             return;
         }
         switch (event.getType()) {
             case NodeChildrenChanged:
-                synchronized (serviceInfos) {
-                    ZkServiceInfo firstServiceInfo = serviceInfos.get(0);
-                    syncZkRuntimeInfo(firstServiceInfo);
-                    boolean isFirstNode = true;
-                    for (ZkServiceInfo serviceInfo : serviceInfos) {
-                        if (isFirstNode) {
-                            isFirstNode = false;
-                            continue;
-                        }
-                        serviceInfo.runtimeInstances().clear();
-                        serviceInfo.runtimeInstances().addAll(firstServiceInfo.runtimeInstances());
-                    }
-                }
+                syncZkRuntimeInfo(serviceInfo);
                 break;
             case NodeDataChanged:
                 if (event.getPath().startsWith(CONFIG_PATH)) {
-                    synchronized (serviceInfos) {
-                        ZkServiceInfo firstServiceInfo = serviceInfos.get(0);
-                        syncZkConfigInfo(firstServiceInfo);
-                        boolean isFirstNode = true;
-                        for (ZkServiceInfo serviceInfo : serviceInfos) {
-                            if (isFirstNode) {
-                                isFirstNode = false;
-                                continue;
-                            }
-                            copyConfigInfo(firstServiceInfo, serviceInfo);
-                        }
-                    }
+                    syncZkConfigInfo(serviceInfo);
                 } else if (event.getPath().startsWith(ROUTES_PATH)) {
-                    synchronized (serviceInfos) {
-                        ZkServiceInfo firstServiceInfo = serviceInfos.get(0);
-                        syncZkRuntimeInfo(firstServiceInfo);
-                        boolean isFirstNode = true;
-                        boolean isEmpty = firstServiceInfo.routes().isEmpty();
-                        for (ZkServiceInfo serviceInfo : serviceInfos) {
-                            if (isFirstNode) {
-                                isFirstNode = false;
-                                continue;
-                            }
-                            if (isEmpty) {
-                                serviceInfo.routes().clear();
-                            } else {
-                                serviceInfo.routes(firstServiceInfo.routes());
-                            }
-                        }
-                    }
+                    syncZkRouteInfo(serviceInfo);
                 }
                 break;
             default:
                 LOGGER.warn("ClientZkAgent::process Just ignore this event.");
                 break;
-        }
-    }
-
-    private void copyConfigInfo(ZkServiceInfo from, ZkServiceInfo to) {
-        to.loadbalanceConfig = from.loadbalanceConfig;
-        to.processTimeConfig = from.processTimeConfig;
-        to.timeConfig = from.timeConfig;
-        to.weightGlobalConfig = from.weightGlobalConfig;
-
-        to.weightServiceConfigs.clear();
-        if (!from.weightServiceConfigs.isEmpty()) {
-            to.weightServiceConfigs.addAll(from.weightServiceConfigs);
         }
     }
 
@@ -204,7 +150,7 @@ public class ClientZkAgent extends CommonZk {
                 LOGGER.info("Client's host: {} 关闭到zookeeper的连接", zkHost);
                 zk.close();
                 zk = null;
-                serviceInfosByName.clear();
+                serviceInfoByName.clear();
             } catch (InterruptedException e) {
                 LOGGER.error(e.getMessage(), e);
             }

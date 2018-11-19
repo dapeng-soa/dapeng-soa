@@ -2,8 +2,8 @@ package com.github.dapeng.registry;
 
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.ServiceFreqControl;
-import com.github.dapeng.core.ZkServiceInfo;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
+import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
 
 import java.util.Map;
 
