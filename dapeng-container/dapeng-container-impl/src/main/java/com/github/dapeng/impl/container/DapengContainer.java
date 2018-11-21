@@ -273,12 +273,18 @@ public class DapengContainer implements Container {
     }
 
     public void retryCompareCounter() {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Retry to ensure requests processing is complete");
+        }
         int retry = 1;
         do {
             if (requestCounter.intValue() == 0) {
                 return;
             } else {
                 try {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("requests haven't been processed  completely, sleep " + SOA_RETRY_SLEEPTIME + "ms");
+                    }
                     Thread.sleep(SOA_RETRY_SLEEPTIME);
                 } catch (InterruptedException e) {
                     LOGGER.error(e.getMessage(), e);
@@ -286,7 +292,7 @@ public class DapengContainer implements Container {
             }
         } while (retry++ < 3);
 
-        if(requestCounter.intValue() != 0){
+        if (requestCounter.intValue() != 0) {
             LOGGER.warn("3次等待之后，容器内请求还未处理完，容器即将关闭...");
         }
     }
