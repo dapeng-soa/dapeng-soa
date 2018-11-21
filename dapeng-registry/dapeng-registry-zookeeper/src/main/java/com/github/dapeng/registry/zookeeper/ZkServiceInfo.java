@@ -1,6 +1,7 @@
 package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.RuntimeInstance;
+import com.github.dapeng.core.ServiceFreqControl;
 import com.github.dapeng.core.Weight;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.router.Route;
@@ -28,6 +29,8 @@ public class ZkServiceInfo {
      * 路由规则
      */
     private List<Route> routes = new ArrayList<>(16);
+
+    private ServiceFreqControl freqControl = null;
 
     public ZkServiceInfo(String serviceName, List<RuntimeInstance> runtimeInstances) {
         this.ServiceName = serviceName;
@@ -60,6 +63,14 @@ public class ZkServiceInfo {
 
     public List<Route> routes() {
         return routes;
+    }
+
+    public void freqControl(ServiceFreqControl freqControl) {
+        this.freqControl = freqControl;
+    }
+
+    public ServiceFreqControl freqControl() {
+        return freqControl;
     }
 
     public String serviceName() {

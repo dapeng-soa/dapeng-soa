@@ -101,16 +101,16 @@ public class ServerZkAgentImpl implements RegistryAgent {
                 return;
             }
             // 注册服务 runtime 实例 到 zk
-            serverZk.create(path, registerContext, true);
+            serverZk.create(path, "", registerContext, true);
 
             // 创建  zk  config 服务 持久节点  eg:  /soa/config/com.github.dapeng.soa.UserService
-            serverZk.create(CONFIG_PATH + "/" + serverName, null, false);
+            serverZk.create(CONFIG_PATH + "/" + serverName, "", null, false);
 
             // 创建路由节点
-            serverZk.create(ROUTES_PATH + "/" + serverName, null, false);
+            serverZk.create(ROUTES_PATH + "/" + serverName, "", null, false);
 
             // 创建限流节点
-            serverZk.create(FREQ_PATH + "/" + serverName, null, false);
+            serverZk.create(FREQ_PATH + "/" + serverName, "",null, false);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -149,13 +149,8 @@ public class ServerZkAgentImpl implements RegistryAgent {
      * @return
      */
     @Override
-    public ZkServiceInfo getConfig(boolean usingFallback, String serviceKey) {
-        return serverZk.getConfigData(serviceKey);
-    }
-
-    @Override
-    public ServiceFreqControl getFreqControlRule(boolean usingFallback, String serviceKey) {
-        return serverZk.getFreqControl(serviceKey);
+    public ZkServiceInfo getZkServiceInfo(boolean usingFallback, String serviceKey) {
+        return serverZk.getZkServiceInfo(serviceKey);
     }
 
     /**

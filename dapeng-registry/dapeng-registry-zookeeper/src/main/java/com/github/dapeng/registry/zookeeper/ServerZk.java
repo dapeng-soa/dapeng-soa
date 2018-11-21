@@ -10,7 +10,6 @@ import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.lifecycle.LifeCycleEvent;
 import com.github.dapeng.registry.RegistryAgent;
 import org.apache.zookeeper.*;
-import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,14 +33,9 @@ public class ServerZk extends CommonZk {
     private RegistryAgent registryAgent;
 
     /**
-     * 限流配置信息
-     */
-    private final Map<String, ServiceFreqControl> freqControlMap = new ConcurrentHashMap<>(128);
-
-    /**
      * zk 配置 缓存 ，根据 serivceName + versionName 作为 key
      */
-    public final Map<String, ZkServiceInfo> zkConfigMap = new ConcurrentHashMap<>(128);
+    public final Map<String, ZkServiceInfo> serviceInfoByName = new ConcurrentHashMap<>(128);
 
     public ServerZk(RegistryAgent registryAgent) {
         this.registryAgent = registryAgent;
@@ -63,21 +57,20 @@ public class ServerZk extends CommonZk {
 
                     case Expired:
                         LOGGER.info("ServerZk session timeout to  {} [Zookeeper]", zkHost);
-                        destroy();
                         connect();
                         break;
 
                     case SyncConnected:
                         semaphore.countDown();
                         //创建根节点
-                        create(RUNTIME_PATH, null, false);
-                        create(CONFIG_PATH, null, false);
-                        create(ROUTES_PATH, null, false);
-                        zkConfigMap.clear();
+                        create(RUNTIME_PATH, "", null, false);
+                        create(CONFIG_PATH, "", null, false);
+                        create(ROUTES_PATH, "", null, false);
                         LOGGER.info("ServerZk connected to  {} [Zookeeper]", zkHost);
                         if (registryAgent != null) {
                             registryAgent.registerAllServices();//重新注册服务
                         }
+                        resyncZkInfos();
                         break;
 
                     case Disconnected:
@@ -85,6 +78,9 @@ public class ServerZk extends CommonZk {
                         LOGGER.error("[Disconnected]: ServerZookeeper Registry zk 连接断开，可能是zookeeper重启或重建");
 
                         isMaster.clear(); //断开连接后，认为，master应该失效，避免某个孤岛一直以为自己是master
+                        // 一般来说， zk重启导致的Disconnected事件不需要处理；
+                        // 但对于zk实例重建，需要清理当前zk客户端并重连(自动重连的话会一直拿当前sessionId去重连).
+                        connect();
                         break;
                     case AuthFailed:
                         LOGGER.info("Zookeeper connection auth failed ...");
@@ -102,6 +98,19 @@ public class ServerZk extends CommonZk {
         }
     }
 
+    private void resyncZkInfos() {
+        synchronized (serviceInfoByName) {
+            if (!serviceInfoByName.isEmpty()) {
+                serviceInfoByName.values().forEach(serviceInfo -> {
+                    syncZkConfigInfo(serviceInfo);
+                    if (SoaSystemEnvProperties.SOA_FREQ_LIMIT_ENABLE) {
+                        syncZkFreqControl(serviceInfo);
+                    };
+                });
+            }
+        }
+    }
+
     /**
      * 关闭 zk 连接
      */
@@ -111,8 +120,6 @@ public class ServerZk extends CommonZk {
                 LOGGER.info("ServerZk closing connection to zookeeper {}", zkHost);
                 zk.close();
                 zk = null;
-                freqControlMap.clear();
-                zkConfigMap.clear();
             } catch (InterruptedException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -124,46 +131,6 @@ public class ServerZk extends CommonZk {
     //                           that's begin                                      ～
     //                                                                             ～
     //～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～
-
-
-    /**
-     * 递归节点创建
-     */
-    public void create(String path, RegisterContext context, boolean ephemeral) {
-
-        int i = path.lastIndexOf("/");
-        if (i > 0) {
-            String parentPath = path.substring(0, i);
-            //判断父节点是否存在...
-            if (!checkExists(parentPath)) {
-                create(parentPath, null, false);
-            }
-        }
-        if (ephemeral) {
-            createEphemeral(path + ":", context);
-
-            //添加 watch ，监听子节点变化
-//            watchInstanceChange(context);
-        } else {
-            createPersistent(path, "");
-
-        }
-    }
-
-    /**
-     * 检查节点是否存在
-     */
-    public boolean checkExists(String path) {
-        try {
-            Stat exists = zk.exists(path, false);
-            if (exists != null) {
-                return true;
-            }
-            return false;
-        } catch (Throwable t) {
-        }
-        return false;
-    }
 
 
     /**
@@ -195,32 +162,8 @@ public class ServerZk extends CommonZk {
                             context.getService(), _isMaster));
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
-            create(context.getServicePath() + "/" + context.getInstanceInfo(), context, true);
+            create(context.getServicePath() + "/" + context.getInstanceInfo(), "", context, true);
         }
-    }
-
-
-    /**
-     * 异步添加持久化的节点
-     *
-     * @param path
-     * @param data
-     */
-    private void createPersistent(String path, String data) {
-        Stat stat = exists(path);
-
-        if (stat == null) {
-            zk.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, persistNodeCreateCallback, data);
-        }
-    }
-
-    private Stat exists(String path) {
-        Stat stat = null;
-        try {
-            stat = zk.exists(path, false);
-        } catch (KeeperException | InterruptedException e) {
-        }
-        return stat;
     }
 
     /**
@@ -231,7 +174,7 @@ public class ServerZk extends CommonZk {
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 LOGGER.info("创建节点:{},连接断开，重新创建", path);
-                createPersistent(path, (String) ctx);
+                create(path, (String) ctx, null, false);
                 break;
             case OK:
                 LOGGER.info("创建节点:{},成功", path);
@@ -245,30 +188,6 @@ public class ServerZk extends CommonZk {
         }
     };
 
-
-    /**
-     * 异步添加serverInfo,为临时有序节点，如果server挂了就木有了
-     */
-    public void createEphemeral(String path, RegisterContext context) {
-        // 如果存在重复的临时节点， 删除之
-        int i = path.lastIndexOf("/");
-        if (i > 0) {
-            String parentPath = path.substring(0, i);
-            try {
-                List<String> childNodes = zk.getChildren(parentPath, false);
-                String _path = path.substring(i + 1);
-                for (String nodeName : childNodes) {
-                    if (nodeName.startsWith(_path)) {
-                        zk.delete(parentPath + "/" + nodeName, -1);
-                    }
-                }
-            } catch (KeeperException | InterruptedException e) {
-                LOGGER.error("ServerZk::createEphemeral delete exist nodes failed", e);
-            }
-        }
-        zk.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, serverInfoCreateCallback, context);
-    }
-
     /**
      * 异步添加serverInfo 临时节点 的回调处理
      */
@@ -278,7 +197,7 @@ public class ServerZk extends CommonZk {
             case CONNECTIONLOSS:
                 LOGGER.info("添加serviceInfo:{},连接断开，重新添加", path);
                 //重新调用
-                create(path, (RegisterContext) ctx, true);
+                create(path, "", (RegisterContext) ctx, true);
                 break;
             case OK:
                 /**
@@ -296,7 +215,7 @@ public class ServerZk extends CommonZk {
                 } catch (Exception e) {
                     LOGGER.error("删除serviceInfo:{} 失败:{}", path, e.getMessage());
                 }
-                create(path, (RegisterContext) ctx, true);
+                create(path, "", (RegisterContext) ctx, true);
                 break;
             default:
                 LOGGER.info("添加serviceInfo:{}，出错", path);
@@ -382,7 +301,6 @@ public class ServerZk extends CommonZk {
             String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
 
 
-
     /**
      * 获取zk 配置信息，封装到 ZkConfigInfo
      * 加入并发考虑
@@ -390,17 +308,20 @@ public class ServerZk extends CommonZk {
      * @param serviceName 服务名(服务唯一)
      * @return ZkServiceInfo
      */
-    protected ZkServiceInfo getConfigData(String serviceName) {
-        ZkServiceInfo info = zkConfigMap.get(serviceName);
+    protected ZkServiceInfo getZkServiceInfo(String serviceName) {
+        ZkServiceInfo info = serviceInfoByName.get(serviceName);
         if (info == null) {
-            synchronized (this) {
-                info = zkConfigMap.get(serviceName);
+            synchronized (serviceInfoByName) {
+                info = serviceInfoByName.get(serviceName);
                 if (info == null) {
                     info = new ZkServiceInfo(serviceName, new CopyOnWriteArrayList<>());
                     try {
                         // when container is shutdown, zk is down and will throw execptions
                         syncZkConfigInfo(info);
-                        zkConfigMap.put(serviceName, info);
+                        if (SoaSystemEnvProperties.SOA_FREQ_LIMIT_ENABLE) {
+                            syncZkFreqControl(info);
+                        }
+                        serviceInfoByName.put(serviceName, info);
                     } catch (Throwable e) {
                         LOGGER.error("ServerZk::getConfigData failed." + e.getMessage());
                         info = null;
@@ -416,49 +337,29 @@ public class ServerZk extends CommonZk {
      *
      * @return
      */
-    public ServiceFreqControl getFreqControl(String service) {
-        if (freqControlMap.get(service) == null) {
-            try {
-                byte[] data = zk.getData(FREQ_PATH + "/" + service, event -> {
-                    LOGGER.warn("ServerZk::getFreqControl zkEvent: " + event);
-                    if (event.getType() == Watcher.Event.EventType.NodeDataChanged) {
-                        LOGGER.info("freq 节点 data 发生变更，重新获取信息");
-                        freqControlMap.remove(service);
-                        getFreqControl(service);
-                    }
-                }, null);
-                return processFreqRuleData(service, data, freqControlMap);
-            } catch (KeeperException | InterruptedException e) {
-                LOGGER.error("获取freq 节点: {} 出现异常", service);
-                return new ServiceFreqControl(service, new ArrayList<>(8), new HashMap<>(8));
-            }
-        } else {
-            ServiceFreqControl serviceFreqControl = freqControlMap.get(service);
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("获取freq信息, service: {} , freq: {}", service, serviceFreqControl);
-            }
-            return serviceFreqControl;
+    private void syncZkFreqControl(ZkServiceInfo serviceInfo) {
+        try {
+            byte[] data = zk.getData(FREQ_PATH + "/" + serviceInfo.serviceName(), this, null);
+            processFreqRuleData(serviceInfo, data);
+        } catch (KeeperException | InterruptedException e) {
+            LOGGER.error("获取freq 节点: {} 出现异常", serviceInfo.serviceName());
         }
     }
 
     /**
      * process zk data freqControl 限流规则信息
      *
-     * @param service
+     * @param serviceInfo
      * @param data
      * @return
      */
-    public static synchronized ServiceFreqControl processFreqRuleData(String service, byte[] data, Map<String, ServiceFreqControl> freqControlMap) {
-        ServiceFreqControl serviceFreqControl = null;
+    private synchronized void processFreqRuleData(ZkServiceInfo serviceInfo, byte[] data) {
         try {
             String ruleData = new String(data, "utf-8");
-            serviceFreqControl = doParseRuleData(service, ruleData);
-
-            freqControlMap.put(service, serviceFreqControl);
+            serviceInfo.freqControl(doParseRuleData(serviceInfo.serviceName(), ruleData));
         } catch (Exception e) {
             LOGGER.error("parser freq rule 信息 失败，请检查 rule data 写法是否正确!");
         }
-        return serviceFreqControl;
 
     }
 
@@ -468,7 +369,7 @@ public class ServerZk extends CommonZk {
      * @param ruleData data from zk node
      * @return
      */
-    private static ServiceFreqControl doParseRuleData(final String serviceName, final String ruleData) throws Exception {
+    private ServiceFreqControl doParseRuleData(final String serviceName, final String ruleData) throws Exception {
         LOGGER.info("doParseRuleData,限流规则解析前ruleData:" + ruleData);
         List<FreqControlRule> rules4service = new ArrayList<>(16);
         Map<String, List<FreqControlRule>> rules4method = new HashMap<>(16);
@@ -558,19 +459,36 @@ public class ServerZk extends CommonZk {
 
     @Override
     public void process(WatchedEvent event) {
-        LOGGER.warn("ClientZkAgent::process, zkEvent: " + event);
+        LOGGER.warn("ServerZk::process, zkEvent: " + event);
+        if (event.getPath() == null) {
+            // when zk restart, a zkEvent is trigger: WatchedEvent state:SyncConnected type:None path:null
+            // we should ignore this.
+            LOGGER.warn("ServerZk::process Just ignore this event.");
+            return;
+        }
         String serviceName = event.getPath().substring(event.getPath().lastIndexOf("/") + 1);
+        ZkServiceInfo serviceInfo = serviceInfoByName.get(serviceName);
+        if (serviceInfo == null) {
+            LOGGER.warn("ServerZk::process, no such service: " + serviceName + " Just ignore this event.");
+            return;
+        }
+
         switch (event.getType()) {
             case NodeDataChanged:
                 if (event.getPath().startsWith(CONFIG_PATH)) {
-                    getConfigData(serviceName);
+                    syncZkConfigInfo(serviceInfo);
                 } else if (event.getPath().startsWith(FREQ_PATH)) {
-                    getFreqControl(serviceName);
+                    syncZkFreqControl(serviceInfo);
                 }
                 break;
             default:
                 LOGGER.warn("ClientZkAgent::process Just ignore this event.");
                 break;
         }
+    }
+
+    public void create(String path, String data, RegisterContext registerContext, boolean ephemeral) {
+        AsyncCallback.StringCallback callback = ephemeral ? serverInfoCreateCallback : persistNodeCreateCallback;
+        ZkUtils.create(path, data, registerContext, ephemeral, callback, zk);
     }
 }

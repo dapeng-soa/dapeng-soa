@@ -28,7 +28,7 @@ public class ClientZkAgent extends CommonZk {
     private final Map<String, ZkServiceInfo> serviceInfoByName = new ConcurrentHashMap<>(128);
 
     private ClientZkAgent() {
-        init();
+        connect();
     }
 
     public static ClientZkAgent getInstance() {
@@ -80,6 +80,12 @@ public class ClientZkAgent extends CommonZk {
     @Override
     public void process(WatchedEvent event) {
         LOGGER.warn("ClientZkAgent::process, zkEvent: " + event);
+        if (event.getPath() == null) {
+            // when zk restart, a zkEvent is trigger: WatchedEvent state:SyncConnected type:None path:null
+            // we should ignore this.
+            LOGGER.warn("ClientZkAgent::process Just ignore this event.");
+            return;
+        }
         String serviceName = event.getPath().substring(event.getPath().lastIndexOf("/") + 1);
         ZkServiceInfo serviceInfo = serviceInfoByName.get(serviceName);
         if (serviceInfo == null) {
@@ -103,10 +109,6 @@ public class ClientZkAgent extends CommonZk {
         }
     }
 
-    private void init() {
-        connect();
-    }
-
     /**
      * 连接zookeeper
      */
@@ -114,21 +116,25 @@ public class ClientZkAgent extends CommonZk {
         try {
             CountDownLatch semaphore = new CountDownLatch(1);
 
+            destroy();
+
             // default watch
             zk = new ZooKeeper(zkHost, 30000, e -> {
                 LOGGER.info("ClientZk::connect zkEvent:" + e);
                 switch (e.getState()) {
                     case Expired:
                         LOGGER.info("Client's host: {} 到zookeeper Server的session过期，重连", zkHost);
-                        destroy();
-                        init();
+                        connect();
                         break;
                     case SyncConnected:
                         semaphore.countDown();
+                        resyncZkInfos();
                         LOGGER.info("Client's host: {}  已连接 zookeeper Server", zkHost);
                         break;
                     case Disconnected:
-                        LOGGER.error("Client's host: {} 到zookeeper的连接被断开， just ignore.", zkHost);
+                        LOGGER.error("Client's host: {} 到zookeeper的连接被断开, 重连", zkHost);
+                        // zk服务端重建的时候，需要清理并重连
+                        connect();
                         break;
                     case AuthFailed:
                         LOGGER.error("Zookeeper connection auth failed ...");
@@ -144,13 +150,20 @@ public class ClientZkAgent extends CommonZk {
         }
     }
 
+    private void resyncZkInfos() {
+        synchronized (serviceInfoByName) {
+            if (!serviceInfoByName.isEmpty()) {
+                serviceInfoByName.values().forEach(this::startWatch);
+            }
+        }
+    }
+
     public void destroy() {
         if (zk != null) {
             try {
                 LOGGER.info("Client's host: {} 关闭到zookeeper的连接", zkHost);
                 zk.close();
                 zk = null;
-                serviceInfoByName.clear();
             } catch (InterruptedException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -170,7 +183,7 @@ public class ClientZkAgent extends CommonZk {
             syncZkRuntimeInfo(serviceInfo);
             // sync router config
             syncZkRouteInfo(serviceInfo);
-            // sync service config
+            // sync service config, no need to try 5 times any more
             syncZkConfigInfo(serviceInfo);
 
             LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[serviceName:" + serviceInfo.serviceName() + "]:zkInfo succeed, runtimeInstants:" + serviceInfo.runtimeInstances().size());
@@ -190,15 +203,15 @@ public class ClientZkAgent extends CommonZk {
             try {
                 if (zk == null) {
                     LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + serviceInfo.serviceName() + "]:zk is null, now init()");
-                    init();
+                    connect();
                 }
 
-                List<String> childrens;
+                // zk服务端重建的时候，dapeng服务可能没来得及注册， 多试两次即可
+                List<String> childrens = null;
                 try {
                     childrens = zk.getChildren(servicePath, this);
-                } catch (KeeperException.NoNodeException e) {
-                    LOGGER.error("sync service:  " + serviceInfo.serviceName() + " zk node is not exist");
-                    return;
+                } catch (InterruptedException e) {
+                    LOGGER.error(getClass() + "::syncZkRuntimeInfo", e);
                 }
 
                 if (childrens.size() == 0) {
@@ -228,10 +241,10 @@ public class ClientZkAgent extends CommonZk {
                 LOGGER.info("ClientZk::syncZkRuntimeInfo 触发服务实例同步，目前服务实例列表: "
                         + serviceInfo.serviceName() + " -> " + serviceInfo.runtimeInstances());
                 return;
-            } catch (KeeperException | InterruptedException e) {
+            } catch (KeeperException e) {
                 LOGGER.error(e.getMessage(), e);
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(300);
                 } catch (InterruptedException ignored) {
                 }
             }
@@ -244,13 +257,27 @@ public class ClientZkAgent extends CommonZk {
     private void syncZkRouteInfo(ZkServiceInfo serviceInfo) {
         LOGGER.warn("ClientZKAgent::syncZkRouteInfo routesMap service:" + serviceInfo.serviceName());
         String servicePath = ROUTES_PATH + "/" + serviceInfo.serviceName();
-        try {
-            byte[] data = zk.getData(servicePath, this, null);
-            processRouteData(serviceInfo, data);
-            LOGGER.warn("ClientZk::getRoutes routes changes:" + serviceInfo.routes());
-        } catch (KeeperException | InterruptedException e) {
-            LOGGER.error("获取route service 节点: " + serviceInfo.serviceName() + " 出现异常");
-        }
+        int retry = 5;
+        do {
+            try {
+                byte[] data;
+                try {
+                    data = zk.getData(servicePath, this, null);
+                } catch (InterruptedException e) {
+                    LOGGER.error(getClass() + "::syncZkRuntimeInfo", e);
+                    return;
+                }
+                processRouteData(serviceInfo, data);
+                LOGGER.warn("ClientZk::getRoutes routes changes:" + serviceInfo.routes());
+                return;
+            } catch (KeeperException e) {
+                LOGGER.error(e.getMessage(), e);
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException ignored) {
+                }
+            }
+        } while (retry-- > 0);
     }
 
     /**

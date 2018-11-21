@@ -30,9 +30,6 @@ public abstract class CommonZk implements Watcher {
         //1.获取 globalConfig  异步模式
         zk.getData(CONFIG_PATH, this, globalConfigDataCb, zkInfo);
 
-        //异步监听子节点变动
-//        watchConfigServiceNodeChange();
-
         // 2. 获取 service
         String configPath = CONFIG_PATH + "/" + zkInfo.serviceName();
 

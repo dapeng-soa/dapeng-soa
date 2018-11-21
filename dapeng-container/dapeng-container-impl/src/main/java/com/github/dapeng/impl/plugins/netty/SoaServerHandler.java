@@ -249,7 +249,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         long envTimeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT;
 
 
-        ZkServiceInfo configInfo = ServerZkAgentImpl.getInstance().getConfig(false, serviceKey);
+        ZkServiceInfo configInfo = ServerZkAgentImpl.getInstance().getZkServiceInfo(false, serviceKey);
 
         if (null != configInfo) {
             //方法级别
