@@ -22,8 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.github.dapeng.api.Container.STATUS_RUNNING;
-import static com.github.dapeng.api.Container.STATUS_SHUTTING;
+import static com.github.dapeng.api.Container.*;
 import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
 
 /**
@@ -52,8 +51,8 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(getClass().getSimpleName() + "::encode");
         }
-        //容器不是运行状态
-        if (container.status() != STATUS_RUNNING && container.status() != STATUS_SHUTTING) {
+        //容器处于关闭或者未知状态
+        if (container.status() == STATUS_DOWN || container.status() == STATUS_UNKNOWN) {
             writeErrorResponse(transactionContext, out);
             return;
         }
