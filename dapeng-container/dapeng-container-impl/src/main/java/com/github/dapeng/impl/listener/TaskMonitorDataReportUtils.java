@@ -3,11 +3,16 @@ package com.github.dapeng.impl.listener;
 import com.github.dapeng.basic.api.counter.CounterServiceClient;
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
 import com.github.dapeng.basic.api.counter.service.CounterService;
+import com.github.dapeng.core.InvocationContext;
+import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.SoaException;
+import com.github.dapeng.core.helper.DapengUtil;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,5 +75,20 @@ public class TaskMonitorDataReportUtils {
                 }
             }
         });
+    }
+
+
+    public static void setSessionTid() {
+        long tid = DapengUtil.generateTid();
+        String sessionTid = DapengUtil.longToHexStr(tid);
+        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
+        if (invocationContext.sessionTid().isPresent()) { //存在sessionTid
+            sessionTid = DapengUtil.longToHexStr(invocationContext.sessionTid().get());
+        } else {
+            invocationContext.sessionTid(tid);
+            sessionTid = DapengUtil.longToHexStr(tid);
+        }
+        InvocationContextImpl.Factory.currentInstance(invocationContext);
+        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
     }
 }
