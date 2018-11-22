@@ -1,6 +1,9 @@
 package com.github.dapeng.impl.listener;
 
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
+import com.github.dapeng.core.InvocationContext;
+import com.github.dapeng.core.InvocationContextImpl;
+import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -10,6 +13,7 @@ import org.quartz.JobExecutionException;
 import org.quartz.JobListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -37,6 +41,7 @@ public class SchedulerJobListener implements JobListener {
             .setNameFormat("dapeng-SchedulerJobListener-%d")
             .build());
 
+    @Override
     public String getName() {
         return "SchedulerJobListener";
     }
@@ -71,9 +76,9 @@ public class SchedulerJobListener implements JobListener {
         String serviceName = jobDataMap.getString("serviceName");
         String versionName = jobDataMap.getString("versionName");
         String methodName = jobDataMap.getString("methodName");
-
+        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
         String message = String.format("SchedulerJobListener::jobExecutionVetoed;Task[%s:%s:%s] 触发失败", serviceName, versionName, methodName);
-        sendMessage(serviceName, versionName, methodName, message, true, jobDataMap, "failed");
+        sendMessage(serviceName, versionName, methodName, message, true, jobDataMap, "failed", invocationContext);
     }
 
     /**
@@ -88,11 +93,13 @@ public class SchedulerJobListener implements JobListener {
         String versionName = jobDataMap.getString("versionName");
         String methodName = jobDataMap.getString("methodName");
 
+
+        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
         int execute_count = context.getRefireCount();
         if (exp != null) {//任务执行出现异常
             if (execute_count <= 5) {//任务执行出错(出异常)  最多重试 5次  ,防止出现死循环
                 String message = String.format("SchedulerJobListener::jobWasExecuted;Task[%s:%s:%s] 执行出现异常:%s", serviceName, versionName, methodName, exp.getMessage());
-                sendMessage(serviceName, versionName, methodName, message, true, jobDataMap, "failed");
+                sendMessage(serviceName, versionName, methodName, message, true, jobDataMap, "failed", invocationContext);
                 //错过挤压重试
                 try {
                     TimeUnit.SECONDS.sleep(30);
@@ -106,30 +113,46 @@ public class SchedulerJobListener implements JobListener {
             LocalDateTime startTime = (LocalDateTime) jobDataMap.get("startTime");
             long taskCost = Duration.between(startTime, currentTime).toMillis();
             String message = String.format("SchedulerJobListener::jobWasExecuted;Task[%s:%s:%s] 执行完成[%s],cost:%sms", serviceName, versionName, methodName, currentTime.format(DATE_TIME), taskCost);
-            sendMessage(serviceName, versionName, methodName, message, false, jobDataMap, "succeed");
+            sendMessage(serviceName, versionName, methodName, message, false, jobDataMap, "succeed", invocationContext);
         }
     }
 
-    private void sendMessage(String serviceName, String versionName, String methodName, final String message, boolean isError, JobDataMap jobDataMap, String executeState) {
-        executorService.submit(() -> {
+    private void sendMessage(String serviceName, String versionName, String methodName, final String message, boolean isError, JobDataMap jobDataMap, String executeState, InvocationContext invocationContext) {
+        try {
+            executorService.submit(() -> {
+                try {
+                    InvocationContextImpl.Factory.currentInstance(invocationContext);
+                    MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, DapengUtil.longToHexStr(invocationContext.sessionTid().orElse(0L)));
             /*MailService mailService = new ApacheMailServiceImpl();
             MailMsg msg = new MailMsg();
             msg.setType(MailMsgType.text);
             msg.setSubject("dapeng定时任务消息");
             msg.setContent(content);
             mailService.sendMail(MailCfg.DEFAULT_TO_NAME, msg);*/
-            if (logger.isInfoEnabled()) {
-                logger.info(message);
-            }
-            if (isError) {
-                logger.error(message);
-            }
+                    if (logger.isInfoEnabled()) {
+                        logger.info(message);
+                    }
+                    if (isError) {
+                        logger.error(message);
+                    }
 
-            if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
-                taskInfoReport(jobDataMap, executeState);
-            }
-            //System.out.println(message);
-        });
+                    if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
+                        taskInfoReport(jobDataMap, executeState);
+                    }
+                } catch (Throwable e) {
+                    logger.error(e.getMessage(), e);
+                } finally {
+                    MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+                    InvocationContextImpl.Factory.removeCurrentInstance();
+                }
+                //System.out.println(message);
+            });
+        } catch (Throwable e) {
+            logger.error(e.getMessage(), e);
+        } finally {
+            InvocationContextImpl.Factory.removeCurrentInstance();
+            MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+        }
     }
 
     private void taskInfoReport(JobDataMap jobDataMap, String executeState) {

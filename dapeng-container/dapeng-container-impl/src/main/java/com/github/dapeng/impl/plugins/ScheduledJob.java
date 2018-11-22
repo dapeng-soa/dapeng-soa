@@ -46,8 +46,7 @@ public class ScheduledJob implements Job {
         if (!invocationContext.sessionTid().isPresent()) {
             invocationContext.sessionTid(tid);
         }
-        InvocationContextImpl.Factory.currentInstance(invocationContext);
-        String sessionTid = DapengUtil.longToHexStr(tid);
+        String sessionTid = DapengUtil.longToHexStr(invocationContext.sessionTid().orElse(0L));
         MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
 
         logger.info("定时任务({})开始执行", context.getJobDetail().getKey().getName());
@@ -73,9 +72,9 @@ public class ScheduledJob implements Job {
             logger.error("定时任务({})执行异常,cost({}ms)", context.getJobDetail().getKey().getName(), stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
             logger.error(e.getMessage(), e);
         } finally {
-            MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+            //MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
             MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), null);
-            InvocationContextImpl.Factory.removeCurrentInstance();
+           // InvocationContextImpl.Factory.removeCurrentInstance();
         }
 
     }
