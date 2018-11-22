@@ -1,11 +1,13 @@
 package com.github.dapeng.impl.listener;
 
-import com.github.dapeng.basic.api.counter.CounterServiceClient;
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
-import com.github.dapeng.basic.api.counter.service.CounterService;
-import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import org.quartz.*;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.quartz.JobDataMap;
+import org.quartz.JobExecutionContext;
+import org.quartz.Trigger;
+import org.quartz.TriggerListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,12 +27,13 @@ import java.util.concurrent.Executors;
  * @Created 2018-11-14 10:36
  */
 public class SchedulerTriggerListener implements TriggerListener {
-    private Logger logger = LoggerFactory.getLogger(getClass());
-    private static CounterService COUNTER_CLIENT = new CounterServiceClient();
-    private final static String TASK_DATABASE = "dapengTask";
+    private Logger logger = LoggerFactory.getLogger("container.scheduled.task");
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
     // 线程池
-    private static ExecutorService executorService = Executors.newCachedThreadPool();
+    private static ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
+            .setDaemon(true)
+            .setNameFormat("dapeng-SchedulerTriggerListener-%d")
+            .build());
 
     @Override
     public String getName() {
@@ -137,8 +140,8 @@ public class SchedulerTriggerListener implements TriggerListener {
 
     private void taskInfoReport(JobDataMap jobDataMap, String executeState) {
         DataPoint influxdbDataPoint = new DataPoint();
-        influxdbDataPoint.setDatabase(TASK_DATABASE);
-        influxdbDataPoint.setBizTag("dapeng_task_info");
+        influxdbDataPoint.setDatabase(TaskMonitorDataReportUtils.TASK_DATABASE);
+        influxdbDataPoint.setBizTag(TaskMonitorDataReportUtils.TASK_DATABASE_TABLE);
 
         Map<String, String> tags = new HashMap<>(8);
         tags.put("serviceName", jobDataMap.getString("serviceName"));
@@ -159,10 +162,7 @@ public class SchedulerTriggerListener implements TriggerListener {
         influxdbDataPoint.setValues(fields);
         influxdbDataPoint.setTimestamp(System.currentTimeMillis());
 
-        try {
-            COUNTER_CLIENT.submitPoint(influxdbDataPoint);
-        } catch (SoaException e) {
-            logger.error(e.getMsg(), e);
-        }
+        //放入上送列表
+        TaskMonitorDataReportUtils.appendDataPoint(Lists.newArrayList(influxdbDataPoint));
     }
 }

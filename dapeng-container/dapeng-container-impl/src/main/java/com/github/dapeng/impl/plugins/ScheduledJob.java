@@ -42,9 +42,12 @@ public class ScheduledJob implements Job {
          * 添加sessionTid
          */
         long tid = DapengUtil.generateTid();
+        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
+        if (!invocationContext.sessionTid().isPresent()) {
+            invocationContext.sessionTid(tid);
+        }
+        InvocationContextImpl.Factory.currentInstance(invocationContext);
         String sessionTid = DapengUtil.longToHexStr(tid);
-        InvocationContext invocationContext = InvocationContextImpl.Factory.createNewInstance();
-        invocationContext.sessionTid(tid);
         MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
 
         logger.info("定时任务({})开始执行", context.getJobDetail().getKey().getName());

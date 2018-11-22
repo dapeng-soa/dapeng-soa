@@ -1,10 +1,9 @@
 package com.github.dapeng.impl.listener;
 
-import com.github.dapeng.basic.api.counter.CounterServiceClient;
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
-import com.github.dapeng.basic.api.counter.service.CounterService;
-import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -29,12 +28,14 @@ import java.util.concurrent.TimeUnit;
  * @Created 2018-11-14 11:20
  */
 public class SchedulerJobListener implements JobListener {
-    private Logger logger = LoggerFactory.getLogger(getClass());
-    private final static String TASK_DATABASE = "dapengTask";
-    private static CounterService COUNTER_CLIENT = new CounterServiceClient();
+    private Logger logger = LoggerFactory.getLogger("container.scheduled.task");
+
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
     // 线程池
-    private static ExecutorService executorService = Executors.newCachedThreadPool();
+    private static ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
+            .setDaemon(true)
+            .setNameFormat("dapeng-SchedulerJobListener-%d")
+            .build());
 
     public String getName() {
         return "SchedulerJobListener";
@@ -53,7 +54,7 @@ public class SchedulerJobListener implements JobListener {
         String methodName = jobDataMap.getString("methodName");
 
         context.getJobDetail().getJobDataMap().put("startTime", LocalDateTime.now(ZoneId.of("Asia/Shanghai")));
-         String message = String.format("SchedulerJobListener::jobToBeExecuted;Task[%s:%s:%s] 即将被执行", serviceName, versionName, methodName);
+        String message = String.format("SchedulerJobListener::jobToBeExecuted;Task[%s:%s:%s] 即将被执行", serviceName, versionName, methodName);
         //sendMessage(serviceName, versionName, methodName, message, false,"normal");
     }
 
@@ -72,7 +73,7 @@ public class SchedulerJobListener implements JobListener {
         String methodName = jobDataMap.getString("methodName");
 
         String message = String.format("SchedulerJobListener::jobExecutionVetoed;Task[%s:%s:%s] 触发失败", serviceName, versionName, methodName);
-        sendMessage(serviceName, versionName, methodName, message, true, jobDataMap,"failed");
+        sendMessage(serviceName, versionName, methodName, message, true, jobDataMap, "failed");
     }
 
     /**
@@ -91,7 +92,7 @@ public class SchedulerJobListener implements JobListener {
         if (exp != null) {//任务执行出现异常
             if (execute_count <= 5) {//任务执行出错(出异常)  最多重试 5次  ,防止出现死循环
                 String message = String.format("SchedulerJobListener::jobWasExecuted;Task[%s:%s:%s] 执行出现异常:%s", serviceName, versionName, methodName, exp.getMessage());
-                sendMessage(serviceName, versionName, methodName, message, true, jobDataMap,"failed");
+                sendMessage(serviceName, versionName, methodName, message, true, jobDataMap, "failed");
                 //错过挤压重试
                 try {
                     TimeUnit.SECONDS.sleep(30);
@@ -105,11 +106,11 @@ public class SchedulerJobListener implements JobListener {
             LocalDateTime startTime = (LocalDateTime) jobDataMap.get("startTime");
             long taskCost = Duration.between(startTime, currentTime).toMillis();
             String message = String.format("SchedulerJobListener::jobWasExecuted;Task[%s:%s:%s] 执行完成[%s],cost:%sms", serviceName, versionName, methodName, currentTime.format(DATE_TIME), taskCost);
-            sendMessage(serviceName, versionName, methodName, message, false, jobDataMap,"succeed");
+            sendMessage(serviceName, versionName, methodName, message, false, jobDataMap, "succeed");
         }
     }
 
-    private void sendMessage(String serviceName, String versionName, String methodName, final String message, boolean isError, JobDataMap jobDataMap,String executeState) {
+    private void sendMessage(String serviceName, String versionName, String methodName, final String message, boolean isError, JobDataMap jobDataMap, String executeState) {
         executorService.submit(() -> {
             /*MailService mailService = new ApacheMailServiceImpl();
             MailMsg msg = new MailMsg();
@@ -125,16 +126,16 @@ public class SchedulerJobListener implements JobListener {
             }
 
             if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
-                taskInfoReport(jobDataMap,executeState);
+                taskInfoReport(jobDataMap, executeState);
             }
             //System.out.println(message);
         });
     }
 
-    private void taskInfoReport(JobDataMap jobDataMap,String executeState) {
+    private void taskInfoReport(JobDataMap jobDataMap, String executeState) {
         DataPoint influxdbDataPoint = new DataPoint();
-        influxdbDataPoint.setDatabase(TASK_DATABASE);
-        influxdbDataPoint.setBizTag("dapeng_task_info");
+        influxdbDataPoint.setDatabase(TaskMonitorDataReportUtils.TASK_DATABASE);
+        influxdbDataPoint.setBizTag(TaskMonitorDataReportUtils.TASK_DATABASE_TABLE);
 
         Map<String, String> tags = new HashMap<>(8);
         tags.put("serviceName", jobDataMap.getString("serviceName"));
@@ -142,7 +143,7 @@ public class SchedulerJobListener implements JobListener {
         tags.put("versionName", jobDataMap.getString("versionName"));
         tags.put("serverIp", jobDataMap.getString("serverIp"));
         tags.put("serverPort", jobDataMap.getString("serverPort"));
-        tags.put("executeState",executeState);
+        tags.put("executeState", executeState);
         influxdbDataPoint.setTags(tags);
 
         Map<String, Long> fields = new HashMap<>(8);
@@ -155,11 +156,8 @@ public class SchedulerJobListener implements JobListener {
         influxdbDataPoint.setValues(fields);
         influxdbDataPoint.setTimestamp(System.currentTimeMillis());
 
-        try {
-            COUNTER_CLIENT.submitPoint(influxdbDataPoint);
-        } catch (SoaException e) {
-            logger.error(e.getMsg(), e);
-        }
+        //放入上送列表
+        TaskMonitorDataReportUtils.appendDataPoint(Lists.newArrayList(influxdbDataPoint));
     }
 
 }
