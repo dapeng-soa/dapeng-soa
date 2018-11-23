@@ -47,11 +47,9 @@ public class TaskMonitorDataReportUtils {
             dataPointList.addAll(uploadList);
 
             if (dataPointList.size() >= BATCH_MAX_SIZE) {
-                try {
-                    taskDataQueue.put(Lists.newArrayList(dataPointList));
-                } catch (InterruptedException e) {
-                    logger.error("TaskMonitorDataReportUtils::appendDataPoint taskDataQueue put is Interrupted", e);
-                    logger.error(e.getMessage(), e);
+                //taskDataQueue.put(Lists.newArrayList(dataPointList));
+                if (!taskDataQueue.offer(Lists.newArrayList(dataPointList))) {
+                    logger.info("TaskMonitorDataReportUtils::appendDataPoint put into taskDataQueue failed maxSzie = {}", MAX_SIZE);
                 }
                 dataPointList.clear();
             }

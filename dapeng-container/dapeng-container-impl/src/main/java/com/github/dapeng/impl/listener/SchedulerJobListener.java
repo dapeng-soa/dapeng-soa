@@ -124,7 +124,9 @@ public class SchedulerJobListener implements JobListener {
                     logger.error(message);
                 }
 
-                if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
+                //是否上报监听数据(错误必须上报)
+                boolean isReported = isError || jobDataMap.getBoolean("isReported");
+                if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE && isReported) {
                     taskInfoReport(jobDataMap, executeState);
                 }
             } catch (Throwable e) {
@@ -141,6 +143,12 @@ public class SchedulerJobListener implements JobListener {
         influxdbDataPoint.setDatabase(TaskMonitorDataReportUtils.TASK_DATABASE);
         influxdbDataPoint.setBizTag(TaskMonitorDataReportUtils.TASK_DATABASE_TABLE);
 
+
+        if (jobDataMap.getString("methodName").equalsIgnoreCase("taskDemo2")) {
+            logger.error("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*--*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-");
+        }else{
+            logger.error("*****taskDemo1*****");
+        }
         Map<String, String> tags = new HashMap<>(8);
         tags.put("serviceName", jobDataMap.getString("serviceName"));
         tags.put("methodName", jobDataMap.getString("methodName"));

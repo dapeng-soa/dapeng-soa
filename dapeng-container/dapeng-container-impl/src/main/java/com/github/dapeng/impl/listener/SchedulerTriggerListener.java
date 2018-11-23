@@ -132,7 +132,9 @@ public class SchedulerTriggerListener implements TriggerListener {
                     logger.error(message);
                 }
 
-                if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
+                //是否上报监听数据(错误必须上报)
+                boolean isReported = isError || jobDataMap.getBoolean("isReported");
+                if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE && isReported) {
                     taskInfoReport(jobDataMap, executeState);
                 }
             } catch (Throwable e) {

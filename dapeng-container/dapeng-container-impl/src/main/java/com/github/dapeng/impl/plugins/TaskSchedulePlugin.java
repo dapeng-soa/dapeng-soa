@@ -128,6 +128,8 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
 
             ScheduledTaskCron cron = method.getAnnotation(ScheduledTaskCron.class);
             String cronStr = cron.cron();
+            //监控数据是否上报
+            boolean isReported = cron.isMonitored();
 
             //new quartz job
             JobDataMap jobDataMap = new JobDataMap();
@@ -138,6 +140,7 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
             jobDataMap.put("methodName", methodName);
             jobDataMap.put("serverIp", SoaSystemEnvProperties.SOA_CONTAINER_IP);
             jobDataMap.putAsString("serverPort", SoaSystemEnvProperties.SOA_CONTAINER_PORT);
+            jobDataMap.put("isReported", isReported);
 
             JobDetail job = JobBuilder.newJob(ScheduledJob.class)
                     .withIdentity(ifaceClass.getName() + ":" + methodName)
