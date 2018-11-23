@@ -114,32 +114,26 @@ public class SchedulerJobListener implements JobListener {
 
     private void sendMessage(String serviceName, String versionName, String methodName, final String message, boolean isError, JobDataMap jobDataMap, String executeState) {
         InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
-        try {
-            executorService.submit(() -> {
-                try {
-                    TaskMonitorDataReportUtils.setSessionTid(invocationContext);
-                    if (logger.isInfoEnabled()) {
-                        logger.info(message);
-                    }
-                    if (isError) {
-                        logger.error(message);
-                    }
-
-                    if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
-                        taskInfoReport(jobDataMap, executeState);
-                    }
-                } catch (Throwable e) {
-                    logger.error(e.getMessage(), e);
-                } finally {
-                    TaskMonitorDataReportUtils.removeSessionTid();
+        executorService.submit(() -> {
+            try {
+                TaskMonitorDataReportUtils.setSessionTid(invocationContext);
+                if (logger.isInfoEnabled()) {
+                    logger.info(message);
                 }
-                //System.out.println(message);
-            });
-        } catch (Throwable e) {
-            logger.error(e.getMessage(), e);
-        } finally {
-            //TaskMonitorDataReportUtils.removeSessionTid();
-        }
+                if (isError) {
+                    logger.error(message);
+                }
+
+                if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
+                    taskInfoReport(jobDataMap, executeState);
+                }
+            } catch (Throwable e) {
+                logger.error(e.getMessage(), e);
+            } finally {
+                TaskMonitorDataReportUtils.removeSessionTid();
+            }
+            //System.out.println(message);
+        });
     }
 
     private void taskInfoReport(JobDataMap jobDataMap, String executeState) {

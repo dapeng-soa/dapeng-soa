@@ -57,7 +57,7 @@ public class SchedulerTriggerListener implements TriggerListener {
         String methodName = jobDataMap.getString("methodName");
 
         String message = String.format("SchedulerTriggerListener::triggerFired;Task[%s:%s:%s] 即将被触发", serviceName, versionName, methodName);
-        sendMessage(serviceName, versionName, methodName, message, false,jobDataMap,"normal");
+        sendMessage(serviceName, versionName, methodName, message, false, jobDataMap, "normal");
     }
 
     /**
@@ -75,7 +75,7 @@ public class SchedulerTriggerListener implements TriggerListener {
         context.getJobDetail().getJobDataMap().put("startTime", LocalDateTime.now(ZoneId.of("Asia/Shanghai")));
 
         String message = String.format("SchedulerTriggerListener::vetoJobExecution;Task[%s:%s:%s] 即将开始执行", serviceName, versionName, methodName);
-        sendMessage(serviceName, versionName, methodName, message, false,jobDataMap,"normal");
+        sendMessage(serviceName, versionName, methodName, message, false, jobDataMap, "normal");
         return false;
     }
 
@@ -115,39 +115,33 @@ public class SchedulerTriggerListener implements TriggerListener {
         long taskCost = Duration.between(startTime, currentTime).toMillis();
 
         String message = String.format("SchedulerTriggerListener::triggerComplete;Task[%s:%s:%s] 执行完成[%s] ,cost:%sms", serviceName, versionName, methodName, currentTime.format(DATE_TIME), taskCost);
-        sendMessage(serviceName, versionName, methodName, message, false,jobDataMap,"succeed");
+        sendMessage(serviceName, versionName, methodName, message, false, jobDataMap, "succeed");
         TaskMonitorDataReportUtils.removeSessionTid();
     }
 
 
     private void sendMessage(String serviceName, String versionName, String methodName, final String message, boolean isError, JobDataMap jobDataMap, String executeState) {
-        try {
-            InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
-            executorService.submit(() -> {
-                try {
-                    TaskMonitorDataReportUtils.setSessionTid(invocationContext);
-                    if (logger.isInfoEnabled()) {
-                        logger.info(message);
-                    }
-                    if (isError) {
-                        logger.error(message);
-                    }
-
-                    if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
-                        taskInfoReport(jobDataMap, executeState);
-                    }
-                } catch (Throwable e) {
-                    logger.error(e.getMessage(), e);
-                } finally {
-                    TaskMonitorDataReportUtils.removeSessionTid();
+        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
+        executorService.submit(() -> {
+            try {
+                TaskMonitorDataReportUtils.setSessionTid(invocationContext);
+                if (logger.isInfoEnabled()) {
+                    logger.info(message);
                 }
-                //System.out.println(message);
-            });
-        } catch (Throwable e) {
-            logger.error(e.getMessage(), e);
-        } finally {
-            //TaskMonitorDataReportUtils.removeSessionTid();
-        }
+                if (isError) {
+                    logger.error(message);
+                }
+
+                if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
+                    taskInfoReport(jobDataMap, executeState);
+                }
+            } catch (Throwable e) {
+                logger.error(e.getMessage(), e);
+            } finally {
+                TaskMonitorDataReportUtils.removeSessionTid();
+            }
+            //System.out.println(message);
+        });
     }
 
 
