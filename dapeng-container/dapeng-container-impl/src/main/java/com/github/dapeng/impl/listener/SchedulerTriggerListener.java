@@ -3,7 +3,6 @@ package com.github.dapeng.impl.listener;
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
 import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
-import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -13,7 +12,6 @@ import org.quartz.Trigger;
 import org.quartz.TriggerListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -51,6 +49,8 @@ public class SchedulerTriggerListener implements TriggerListener {
      */
     @Override
     public void triggerFired(Trigger trigger, JobExecutionContext context) {
+        TaskMonitorDataReportUtils.setSessionTid(null);
+
         JobDataMap jobDataMap = context.getJobDetail().getJobDataMap();
         String serviceName = jobDataMap.getString("serviceName");
         String versionName = jobDataMap.getString("versionName");
@@ -91,13 +91,11 @@ public class SchedulerTriggerListener implements TriggerListener {
         String versionName = jobDataMap.getString("versionName");
         String methodName = jobDataMap.getString("methodName");
 
-        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
-
         trigger.getJobDataMap().put("startTime", LocalDateTime.now(ZoneId.of("Asia/Shanghai")));
 
         String currentTime = LocalDateTime.now(ZoneId.of("Asia/Shanghai")).format(DATE_TIME);
         String message = String.format("SchedulerTriggerListener::triggerMisfired;Task[%s:%s:%s] 触发超时,错过[%s]这一轮触发", serviceName, versionName, methodName, currentTime);
-        sendMessage(serviceName, versionName, methodName, message, true, jobDataMap, "triggerTimeOut", invocationContext);
+        sendMessage(serviceName, versionName, methodName, message, true, jobDataMap, "triggerTimeOut");
     }
 
     /**
@@ -121,18 +119,12 @@ public class SchedulerTriggerListener implements TriggerListener {
     }
 
 
-    private void sendMessage(String serviceName, String versionName, String methodName, final String message, boolean isError, JobDataMap jobDataMap, String executeState, InvocationContext invocationContext) {
+    private void sendMessage(String serviceName, String versionName, String methodName, final String message, boolean isError, JobDataMap jobDataMap, String executeState) {
         try {
+            InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
             executorService.submit(() -> {
                 try {
-                    InvocationContextImpl.Factory.currentInstance(invocationContext);
-                    MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, DapengUtil.longToHexStr(invocationContext.sessionTid().orElse(0L)));
-            /*MailService mailService = new ApacheMailServiceImpl();
-            MailMsg msg = new MailMsg();
-            msg.setType(MailMsgType.text);
-            msg.setSubject("dapeng定时任务消息");
-            msg.setContent(content);
-            mailService.sendMail(MailCfg.DEFAULT_TO_NAME, msg);*/
+                    TaskMonitorDataReportUtils.setSessionTid(invocationContext);
                     if (logger.isInfoEnabled()) {
                         logger.info(message);
                     }
@@ -146,16 +138,14 @@ public class SchedulerTriggerListener implements TriggerListener {
                 } catch (Throwable e) {
                     logger.error(e.getMessage(), e);
                 } finally {
-                    InvocationContextImpl.Factory.removeCurrentInstance();
-                    MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+                    TaskMonitorDataReportUtils.removeSessionTid();
                 }
                 //System.out.println(message);
             });
         } catch (Throwable e) {
             logger.error(e.getMessage(), e);
         } finally {
-            InvocationContextImpl.Factory.removeCurrentInstance();
-            MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+            TaskMonitorDataReportUtils.removeSessionTid();
         }
     }
 

@@ -66,9 +66,11 @@ public class TaskMonitorDataReportUtils {
                 try {
                     uploaderDataPointList = taskDataQueue.take();
                     COUNTER_CLIENT.submitPoints(uploaderDataPointList);
+                    logger.info("taskMonitorDataUploaderExecutor::upload dataPoint size = {}", uploaderDataPointList.size());
                 } catch (SoaException e) {
+                    logger.error("TaskMonitorDataReportUtils::taskMonitorUploader dataPoint size = {} upload Exception and re-append to taskDataQueue", uploaderDataPointList.size());
                     logger.error(e.getMsg(), e);
-                    dataPointList.addAll(uploaderDataPointList);
+                    appendDataPoint(uploaderDataPointList);
                 } catch (InterruptedException e) {
                     logger.error("TaskMonitorDataReportUtils::taskMonitorUploader taskDataQueue take is Interrupted", e);
                     logger.error(e.getMessage(), e);
@@ -78,17 +80,20 @@ public class TaskMonitorDataReportUtils {
     }
 
 
-    public static void setSessionTid() {
-        long tid = DapengUtil.generateTid();
-        String sessionTid = DapengUtil.longToHexStr(tid);
-        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
-        if (invocationContext.sessionTid().isPresent()) { //存在sessionTid
-            sessionTid = DapengUtil.longToHexStr(invocationContext.sessionTid().get());
-        } else {
+    public static String setSessionTid(InvocationContext context) {
+        InvocationContext invocationContext = context != null ? InvocationContextImpl.Factory.currentInstance(context) : InvocationContextImpl.Factory.createNewInstance();
+        if (!invocationContext.sessionTid().isPresent()) {
+            long tid = DapengUtil.generateTid();
             invocationContext.sessionTid(tid);
-            sessionTid = DapengUtil.longToHexStr(tid);
         }
-        InvocationContextImpl.Factory.currentInstance(invocationContext);
+        String sessionTid = DapengUtil.longToHexStr(invocationContext.sessionTid().orElse(0L));
         MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
+
+        return sessionTid;
+    }
+
+    public static void removeSessionTid() {
+        MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+        InvocationContextImpl.Factory.removeCurrentInstance();
     }
 }
