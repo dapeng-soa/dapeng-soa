@@ -57,7 +57,7 @@ public class SchedulerTriggerListener implements TriggerListener {
         String methodName = jobDataMap.getString("methodName");
 
         String message = String.format("SchedulerTriggerListener::triggerFired;Task[%s:%s:%s] 即将被触发", serviceName, versionName, methodName);
-        //sendMessage(serviceName, versionName, methodName, message, false,jobDataMap,"normal");
+        sendMessage(serviceName, versionName, methodName, message, false,jobDataMap,"normal");
     }
 
     /**
@@ -75,7 +75,7 @@ public class SchedulerTriggerListener implements TriggerListener {
         context.getJobDetail().getJobDataMap().put("startTime", LocalDateTime.now(ZoneId.of("Asia/Shanghai")));
 
         String message = String.format("SchedulerTriggerListener::vetoJobExecution;Task[%s:%s:%s] 即将开始执行", serviceName, versionName, methodName);
-        //sendMessage(serviceName, versionName, methodName, message, false,jobDataMap,"normal");
+        sendMessage(serviceName, versionName, methodName, message, false,jobDataMap,"normal");
         return false;
     }
 
@@ -115,7 +115,8 @@ public class SchedulerTriggerListener implements TriggerListener {
         long taskCost = Duration.between(startTime, currentTime).toMillis();
 
         String message = String.format("SchedulerTriggerListener::triggerComplete;Task[%s:%s:%s] 执行完成[%s] ,cost:%sms", serviceName, versionName, methodName, currentTime.format(DATE_TIME), taskCost);
-        //sendMessage(serviceName, versionName, methodName, message, false,jobDataMap,"succeed");
+        sendMessage(serviceName, versionName, methodName, message, false,jobDataMap,"succeed");
+        TaskMonitorDataReportUtils.removeSessionTid();
     }
 
 
@@ -145,7 +146,7 @@ public class SchedulerTriggerListener implements TriggerListener {
         } catch (Throwable e) {
             logger.error(e.getMessage(), e);
         } finally {
-            TaskMonitorDataReportUtils.removeSessionTid();
+            //TaskMonitorDataReportUtils.removeSessionTid();
         }
     }
 

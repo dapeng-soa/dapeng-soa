@@ -138,7 +138,7 @@ public class SchedulerJobListener implements JobListener {
         } catch (Throwable e) {
             logger.error(e.getMessage(), e);
         } finally {
-            TaskMonitorDataReportUtils.removeSessionTid();
+            //TaskMonitorDataReportUtils.removeSessionTid();
         }
     }
 
