@@ -21,6 +21,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.github.dapeng.core.helper.IPUtils.transferIp;
+
 /**
  * @author lihuimin
  */
@@ -227,6 +229,9 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     InvocationContextImpl invocationContext = (InvocationContextImpl) ctx.getAttribute("context");
                     InvocationInfoImpl lastInfo = (InvocationInfoImpl) invocationContext.lastInvocationInfo();
                     lastInfo.responseCode(soaException.getCode());
+                    lastInfo.calleeIp(transferIp(host));
+                    lastInfo.calleePort(port);
+
                     invocationContext.lastInvocationInfo(lastInfo);
                     ctx.setAttribute("context", invocationContext);
 
