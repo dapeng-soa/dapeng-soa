@@ -198,54 +198,63 @@ public class ClientZkAgent extends CommonZk {
      */
     private void syncZkRuntimeInfo(ZkServiceInfo serviceInfo) {
         String servicePath = RUNTIME_PATH + "/" + serviceInfo.serviceName();
+        if (zk == null) {
+            LOGGER.warn(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + serviceInfo.serviceName() + "]:zkIsNull, now_init()");
+            connect();
+        }
+
         int retry = 5;
         do {
-            try {
-                if (zk == null) {
-                    LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + serviceInfo.serviceName() + "]:zk is null, now init()");
-                    connect();
-                }
-
-                // zk服务端重建的时候，dapeng服务可能没来得及注册， 多试两次即可
-                List<String> childrens = null;
-                try {
-                    childrens = zk.getChildren(servicePath, this);
-                } catch (InterruptedException e) {
-                    LOGGER.error(getClass() + "::syncZkRuntimeInfo", e);
-                }
-
-                if (childrens.size() == 0) {
-                    serviceInfo.runtimeInstances().clear();
-                    LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo["
-                            + serviceInfo.serviceName() + "]:no service instances found");
-                    return;
-                }
-
-                LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo["
-                        + serviceInfo.serviceName() + "], 获取" + servicePath + "的子节点成功");
-                List<RuntimeInstance> runtimeInstances = new ArrayList<>(8);
-                //child = 10.168.13.96:9085:1.0.0:0000000300
-                for (String children : childrens) {
-                    String[] infos = children.split(":");
-                    RuntimeInstance instance = new RuntimeInstance(serviceInfo.serviceName(),
-                            infos[0], Integer.valueOf(infos[1]), infos[2]);
-                    runtimeInstances.add(instance);
-                }
-
-                // copyOnWriteArrayList
-                List<RuntimeInstance> runtimeInstanceList = serviceInfo.runtimeInstances();
-                //这里要clear掉，因为接下来会重新将实例信息放入list中，不清理会导致重复...
-                runtimeInstanceList.clear();
-                runtimeInstanceList.addAll(runtimeInstances);
-
-                LOGGER.info("ClientZk::syncZkRuntimeInfo 触发服务实例同步，目前服务实例列表: "
-                        + serviceInfo.serviceName() + " -> " + serviceInfo.runtimeInstances());
-                return;
-            } catch (KeeperException e) {
-                LOGGER.error(e.getMessage(), e);
+            if (!zk.getState().isConnected()) {
+                LOGGER.error(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + serviceInfo.serviceName()
+                        + "]:zk doesn't connected yet, status:" + zk.getState() + ", retry:" + retry + " times after 300ms");
                 try {
                     Thread.sleep(300);
                 } catch (InterruptedException ignored) {
+                }
+            } else {
+                try {
+                    // zk服务端重建的时候，dapeng服务可能没来得及注册， 多试两次即可
+                    List<String> childrens = null;
+                    try {
+                        childrens = zk.getChildren(servicePath, this);
+                    } catch (InterruptedException e) {
+                        LOGGER.error(getClass() + "::syncZkRuntimeInfo", e);
+                    }
+
+                    if (childrens.size() == 0) {
+                        serviceInfo.runtimeInstances().clear();
+                        LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo["
+                                + serviceInfo.serviceName() + "]:no service instances found");
+                        return;
+                    }
+
+                    LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo["
+                            + serviceInfo.serviceName() + "], 获取" + servicePath + "的子节点成功");
+                    List<RuntimeInstance> runtimeInstances = new ArrayList<>(8);
+                    //child = 10.168.13.96:9085:1.0.0:0000000300
+                    for (String children : childrens) {
+                        String[] infos = children.split(":");
+                        RuntimeInstance instance = new RuntimeInstance(serviceInfo.serviceName(),
+                                infos[0], Integer.valueOf(infos[1]), infos[2]);
+                        runtimeInstances.add(instance);
+                    }
+
+                    // copyOnWriteArrayList
+                    List<RuntimeInstance> runtimeInstanceList = serviceInfo.runtimeInstances();
+                    //这里要clear掉，因为接下来会重新将实例信息放入list中，不清理会导致重复...
+                    runtimeInstanceList.clear();
+                    runtimeInstanceList.addAll(runtimeInstances);
+
+                    LOGGER.info("ClientZk::syncZkRuntimeInfo 触发服务实例同步，目前服务实例列表: "
+                            + serviceInfo.serviceName() + " -> " + serviceInfo.runtimeInstances());
+                    return;
+                } catch (KeeperException e) {
+                    LOGGER.error(e.getMessage(), e);
+                    try {
+                        Thread.sleep(300);
+                    } catch (InterruptedException ignored) {
+                    }
                 }
             }
         } while (retry-- > 0);
@@ -255,30 +264,43 @@ public class ClientZkAgent extends CommonZk {
      * route 根据给定路由规则对可运行实例进行过滤
      */
     private void syncZkRouteInfo(ZkServiceInfo serviceInfo) {
-        LOGGER.warn("ClientZKAgent::syncZkRouteInfo routesMap service:" + serviceInfo.serviceName());
+        LOGGER.warn("ClientZKAgent::syncZkRouteInfo service:" + serviceInfo.serviceName());
         String servicePath = ROUTES_PATH + "/" + serviceInfo.serviceName();
         int retry = 5;
         do {
-            try {
-                byte[] data;
-                try {
-                    data = zk.getData(servicePath, this, null);
-                } catch (InterruptedException e) {
-                    LOGGER.error(getClass() + "::syncZkRuntimeInfo", e);
-                    return;
-                }
-                processRouteData(serviceInfo, data);
-                LOGGER.warn("ClientZk::getRoutes routes changes:" + serviceInfo.routes());
-                return;
-            } catch (KeeperException e) {
-                LOGGER.error(e.getMessage(), e);
+            if (zk == null || !zk.getState().isConnected()) {
+                LOGGER.warn("ClientZKAgent::syncZkRouteInfo service:"
+                        + serviceInfo.serviceName() + ", zk status:"
+                        + (zk == null ? null : zk.getState()) + ", retry:"
+                        + retry + " times after 300ms");
                 try {
                     Thread.sleep(300);
                 } catch (InterruptedException ignored) {
                 }
+            } else {
+                try {
+                    byte[] data;
+
+                    try {
+                        data = zk.getData(servicePath, this, null);
+                    } catch (InterruptedException e) {
+                        LOGGER.error(getClass() + "::syncZkRouteInfo", e);
+                        return;
+                    }
+                    processRouteData(serviceInfo, data);
+                    LOGGER.warn("ClientZk::getRoutes routes changes:" + serviceInfo.routes());
+                    return;
+                } catch (KeeperException e) {
+                    LOGGER.error(e.getMessage(), e);
+                    try {
+                        Thread.sleep(300);
+                    } catch (InterruptedException ignored) {
+                    }
+                }
             }
         } while (retry-- > 0);
     }
+
 
     /**
      * process zk data 解析route 信息

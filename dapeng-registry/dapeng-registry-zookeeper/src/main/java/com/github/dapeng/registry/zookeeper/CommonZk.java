@@ -27,6 +27,11 @@ public abstract class CommonZk implements Watcher {
     protected ZooKeeper zk;
 
     public void syncZkConfigInfo(ZkServiceInfo zkInfo) {
+        if (zk == null || !zk.getState().isConnected()) {
+            logger.warn(getClass() + "::syncZkConfigInfo zk is not ready, status:"
+                    + (zk == null ? null : zk.getState()));
+            return;
+        }
         //1.获取 globalConfig  异步模式
         zk.getData(CONFIG_PATH, this, globalConfigDataCb, zkInfo);
 
