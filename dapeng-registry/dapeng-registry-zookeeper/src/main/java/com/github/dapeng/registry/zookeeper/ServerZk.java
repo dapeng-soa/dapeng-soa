@@ -105,7 +105,7 @@ public class ServerZk extends CommonZk {
                     syncZkConfigInfo(serviceInfo);
                     if (SoaSystemEnvProperties.SOA_FREQ_LIMIT_ENABLE) {
                         syncZkFreqControl(serviceInfo);
-                    };
+                    }
                 });
             }
         }
@@ -338,6 +338,11 @@ public class ServerZk extends CommonZk {
      * @return
      */
     private void syncZkFreqControl(ZkServiceInfo serviceInfo) {
+        if (zk == null || !zk.getState().isConnected()) {
+            LOGGER.warn(getClass() + "::syncZkFreqControl zk is not ready, status:"
+                    + (zk == null ? null : zk.getState()));
+            return;
+        }
         try {
             byte[] data = zk.getData(FREQ_PATH + "/" + serviceInfo.serviceName(), this, null);
             processFreqRuleData(serviceInfo, data);
