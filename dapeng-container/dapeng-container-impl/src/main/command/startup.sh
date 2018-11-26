@@ -96,11 +96,13 @@ process_exit() {
   kill -SIGTERM "$pid"
   wait "$pid"
  fi
- fluentPid=`pgrep -f fluent-bit`
- if [ $fluentPid -ne 0 ]; then
-   kill -SIGTERM "$fluentPid"
-   wait "$fluentPid"
-  fi
+
+for fluentPid in $(pgrep -f fluent-bit)
+ do
+    kill -SIGTERM "$fluentPid"
+    wait "$fluentPid"
+ done
+
  exit 143; # 128 + 15 -- SIGTERM
 }
 
