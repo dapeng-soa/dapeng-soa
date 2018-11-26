@@ -1,17 +1,17 @@
 package com.github.dapeng.impl.plugins;
 
 import com.github.dapeng.api.ContainerFactory;
-import com.github.dapeng.core.*;
+import com.github.dapeng.core.Application;
+import com.github.dapeng.core.InvocationContextImpl;
+import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
-import com.github.dapeng.core.helper.DapengUtil;
-import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.github.dapeng.impl.listener.TaskMonitorDataReportUtils;
 import com.github.dapeng.impl.plugins.netty.MdcCtxInfoUtil;
 import com.google.common.base.Stopwatch;
 import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -41,11 +41,7 @@ public class ScheduledJob implements Job {
         /**
          * 添加sessionTid
          */
-        long tid = DapengUtil.generateTid();
-        String sessionTid = DapengUtil.longToHexStr(tid);
-        InvocationContext invocationContext = InvocationContextImpl.Factory.createNewInstance();
-        invocationContext.sessionTid(tid);
-        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
+        String sessionTid = TaskMonitorDataReportUtils.setSessionTid(InvocationContextImpl.Factory.currentInstance());
 
         logger.info("定时任务({})开始执行", context.getJobDetail().getKey().getName());
 
@@ -70,9 +66,9 @@ public class ScheduledJob implements Job {
             logger.error("定时任务({})执行异常,cost({}ms)", context.getJobDetail().getKey().getName(), stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
             logger.error(e.getMessage(), e);
         } finally {
-            MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+            //MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
             MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), null);
-            InvocationContextImpl.Factory.removeCurrentInstance();
+            // InvocationContextImpl.Factory.removeCurrentInstance();
         }
 
     }
