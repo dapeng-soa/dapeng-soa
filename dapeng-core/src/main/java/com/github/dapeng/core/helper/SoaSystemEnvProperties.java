@@ -124,6 +124,11 @@ public class SoaSystemEnvProperties {
      */
     private static final String KEY_SOA_DATABASE_ENCRYPT_PUBLICKEY = "database.encrypt.publickey";
 
+     /**
+      * 优雅关闭中重试机制下的休眠时间（默认10000）
+      */
+    private static final String KEY_SOA_SHUTDOWN_TIMEOUT = "soa.shutdown.timeout";
+
 
 
     public static final String SOA_ZOOKEEPER_HOST = get(KEY_SOA_ZOOKEEPER_HOST, "127.0.0.1:2181");
@@ -178,6 +183,7 @@ public class SoaSystemEnvProperties {
      */
     public static final Integer SOA_INSTANCE_WEIGHT = Integer.valueOf(get(KEY_SOA_INSTANCE_WEIGHT, "100"));
 
+    public static final long SOA_SHUTDOWN_TIMEOUT = Long.valueOf(get(KEY_SOA_SHUTDOWN_TIMEOUT, "10000"));
 
 
     public static String get(String key) {
