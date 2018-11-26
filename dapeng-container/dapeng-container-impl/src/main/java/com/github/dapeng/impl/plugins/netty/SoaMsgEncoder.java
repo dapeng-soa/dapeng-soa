@@ -13,16 +13,14 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
-import io.netty.util.Attribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
-import static com.github.dapeng.api.Container.*;
+import static com.github.dapeng.api.Container.STATUS_RUNNING;
+import static com.github.dapeng.api.Container.STATUS_SHUTTING;
 import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
 
 /**
@@ -51,23 +49,19 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(getClass().getSimpleName() + "::encode");
         }
-        //容器处于关闭或者未知状态
-        if (container.status() == STATUS_DOWN || container.status() == STATUS_UNKNOWN) {
+
+        SoaHeader soaHeader = transactionContext.getHeader();
+        Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
+
+        //容器不是运行状态或者将要关闭状态
+        if (application == null) {
+            LOGGER.error(getClass() + "::encode application is null, container status:" + container.status());
             writeErrorResponse(transactionContext, out);
             return;
         }
 
         try {
-            SoaHeader soaHeader = transactionContext.getHeader();
             Optional<String> respCode = soaHeader.getRespCode();
-
-            Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
-
-            if (application == null) {
-                LOGGER.error(getClass().getSimpleName() + "::encode application is null, container status:" + container.status());
-                writeErrorResponse(transactionContext, out);
-                return;
-            }
 
             if (respCode.isPresent() && !respCode.get().equals(SOA_NORMAL_RESP_CODE)) {
                 writeErrorResponse(transactionContext, application, out);
@@ -216,6 +210,11 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
     private void writeErrorResponse(TransactionContext transactionContext,
                                     ByteBuf out) {
         SoaHeader soaHeader = transactionContext.getHeader();
+        // make sure responseCode of error responses do not equal to SOA_NORMAL_RESP_CODE
+        if (soaHeader.getRespCode().isPresent() && soaHeader.getRespCode().get().equals(SOA_NORMAL_RESP_CODE)) {
+            soaHeader.setRespCode(SoaCode.ContainerStatusError.getCode());
+            soaHeader.setRespMessage(SoaCode.ContainerStatusError.getMsg());
+        }
         SoaException soaException = transactionContext.soaException();
         if (soaException == null) {
             soaException = new SoaException(soaHeader.getRespCode().orElse(SoaCode.ContainerStatusError.getCode()),

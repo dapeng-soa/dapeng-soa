@@ -125,9 +125,9 @@ public class SoaSystemEnvProperties {
     private static final String KEY_SOA_DATABASE_ENCRYPT_PUBLICKEY = "database.encrypt.publickey";
 
      /**
-      * 优雅关闭中重试机制下的休眠时间（默认3000）
+      * 优雅关闭中重试机制下的休眠时间（默认10000）
       */
-    private static final String KEY_SOA_RETRY_SLEEPTIME = "soa.retry.sleeptime";
+    private static final String KEY_SOA_SHUTDOWN_TIMEOUT = "soa.shutdown.timeout";
 
 
 
@@ -183,7 +183,7 @@ public class SoaSystemEnvProperties {
      */
     public static final Integer SOA_INSTANCE_WEIGHT = Integer.valueOf(get(KEY_SOA_INSTANCE_WEIGHT, "100"));
 
-    public static final long SOA_RETRY_SLEEPTIME = Long.valueOf(get(KEY_SOA_RETRY_SLEEPTIME, "3000"));
+    public static final long SOA_SHUTDOWN_TIMEOUT = Long.valueOf(get(KEY_SOA_SHUTDOWN_TIMEOUT, "10000"));
 
 
     public static String get(String key) {

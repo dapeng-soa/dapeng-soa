@@ -389,8 +389,14 @@ public class ServerZk extends CommonZk {
                 info = zkConfigMap.get(serviceName);
                 if (info == null) {
                     info = new ZkServiceInfo(serviceName);
-                    syncZkConfigInfo(info);
-                    zkConfigMap.put(serviceName, info);
+                    try {
+                        // when container is shutdown, zk is down and will throw execptions
+                        syncZkConfigInfo(info);
+                        zkConfigMap.put(serviceName, info);
+                    } catch (Throwable e) {
+                        LOGGER.error("ServerZk::getConfigData getConfigData failed", e);
+                        info = null;
+                    }
                 }
             }
         }

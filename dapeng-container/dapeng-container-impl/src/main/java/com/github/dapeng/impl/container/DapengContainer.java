@@ -34,7 +34,7 @@ import java.util.Vector;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_RETRY_SLEEPTIME;
+import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_SHUTDOWN_TIMEOUT;
 
 public class DapengContainer implements Container {
 
@@ -276,24 +276,28 @@ public class DapengContainer implements Container {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Retry to ensure requests processing is complete");
         }
-        int retry = 1;
+
+        LOGGER.warn("容器内尚余[" + requestCounter.get() + "]个请求还未处理，现在等待[" + SOA_SHUTDOWN_TIMEOUT + "ms]");
+
+        int retry = 5;
+        long sleepTime = SOA_SHUTDOWN_TIMEOUT / retry;
         do {
-            if (requestCounter.intValue() == 0) {
+            if (requestCounter.intValue() <= 0) {
                 return;
             } else {
                 try {
                     if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("requests haven't been processed  completely, sleep " + SOA_RETRY_SLEEPTIME + "ms");
+                        LOGGER.debug("requests haven't been processed  completely, sleep " + sleepTime + "ms");
                     }
-                    Thread.sleep(SOA_RETRY_SLEEPTIME);
+                    Thread.sleep(sleepTime);
                 } catch (InterruptedException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
             }
-        } while (retry++ < 3);
+        } while (--retry > 0);
 
         if (requestCounter.intValue() != 0) {
-            LOGGER.warn("3次等待之后，容器内请求还未处理完，容器即将关闭...");
+            LOGGER.warn(retry + "次等待共[" + SOA_SHUTDOWN_TIMEOUT + "ms]之后，容器内尚余[" + requestCounter.get() + "]个请求还未处理完，容器即将关闭...");
         }
     }
 

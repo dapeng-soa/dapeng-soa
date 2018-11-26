@@ -55,8 +55,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             LOGGER.trace(getClass().getSimpleName() + "::read");
         }
 
-        //容器内请求数+1
-        container.requestCounter().incrementAndGet();
         try {
             SoaHeader soaHeader = transactionContext.getHeader();
 
