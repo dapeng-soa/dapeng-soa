@@ -48,6 +48,12 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(getClass().getSimpleName() + "::decode");
             }
+            //容器内请求数+1
+            container.requestCounter().incrementAndGet();
+
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("目前共有" + container.requestCounter().get() + "个请求正在处理");
+            }
 
             Object request = parseSoaMsg(msg);
             final TransactionContext transactionContext = TransactionContext.Factory.currentInstance();
