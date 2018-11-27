@@ -1,15 +1,19 @@
 package com.github.dapeng.impl.plugins.monitor;
 
+import com.github.dapeng.basic.api.counter.CounterServiceAsyncClient;
 import com.github.dapeng.basic.api.counter.CounterServiceClient;
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
 import com.github.dapeng.basic.api.counter.service.CounterService;
+import com.github.dapeng.basic.api.counter.service.CounterServiceAsync;
 import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
+import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.plugins.monitor.config.MonitorFilterProperties;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.css.Counter;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -347,6 +351,27 @@ public class ServerCounterContainer {
             fields.put("avg_response_flow", avgResponseFlow);
             point.setValues(fields);
             point.setTimestamp(System.currentTimeMillis());
+
+            /**
+             * 异步模式
+             */
+            CounterServiceAsync counterServiceAsyncClient = new CounterServiceAsyncClient();
+            Future<Void> voidFuture = counterServiceAsyncClient.submitPoint(point);
+            ((CompletableFuture)voidFuture).exceptionally(ex -> {
+                LOGGER.error("something wrong with submitting point[" + point + "]");
+                return null;
+            });
+
+            /**
+             * 同步模式
+             */
+            CounterService counterServiceClient = new CounterServiceClient();
+            try {
+                counterServiceClient.submitPoint(point);
+            } catch (SoaException e) {
+                LOGGER.error("something wrong with submitting point[" + point + "]");
+            }
+
             return point;
 
         } else {

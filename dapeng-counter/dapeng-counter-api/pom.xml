@@ -17,6 +17,11 @@
             <artifactId>dapeng-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.dapeng-soa</groupId>
+            <artifactId>dapeng-utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <!--<build>

@@ -1,9 +1,9 @@
 package com.github.dapeng.basic.api.counter;
 
       import com.github.dapeng.core.*;
-
+      import com.github.dapeng.org.apache.thrift.*;
       import java.util.ServiceLoader;
-
+      import com.github.dapeng.basic.api.counter.CounterServiceCodec.*;
       import com.github.dapeng.basic.api.counter.CounterServiceSuperCodec.*;
       import com.github.dapeng.basic.api.counter.service.CounterService;
 
@@ -29,6 +29,15 @@ package com.github.dapeng.basic.api.counter;
         this.clientInfo = this.pool.registerClientInfo(serviceName,version);
       }
 
+      public CounterServiceClient(String serviceVersion) {
+        this.serviceName = "com.github.dapeng.basic.api.counter.service.CounterService";
+        this.version = serviceVersion;
+
+        ServiceLoader<SoaConnectionPoolFactory> factories = ServiceLoader.load(SoaConnectionPoolFactory.class,getClass().getClassLoader());
+        this.pool = factories.iterator().next().getPool();
+        this.clientInfo = this.pool.registerClientInfo(serviceName,version);
+      }
+
       
           
             /**
@@ -43,7 +52,7 @@ package com.github.dapeng.basic.api.counter;
               submitPoint_args.setDataPoint(dataPoint);
                 
 
-              submitPoint_result response = pool.send(serviceName, version,"submitPoint",submitPoint_args, new SubmitPoint_argsSerializer(), new SubmitPoint_resultSerializer());
+              submitPoint_result response = pool.send(serviceName,version,"submitPoint",submitPoint_args, new SubmitPoint_argsSerializer(), new SubmitPoint_resultSerializer());
 
               
                   
@@ -66,7 +75,7 @@ package com.github.dapeng.basic.api.counter;
               submitPoints_args.setDataPoints(dataPoints);
                 
 
-              submitPoints_result response = pool.send(serviceName, version,"submitPoints",submitPoints_args, new SubmitPoints_argsSerializer(), new SubmitPoints_resultSerializer());
+              submitPoints_result response = pool.send(serviceName,version,"submitPoints",submitPoints_args, new SubmitPoints_argsSerializer(), new SubmitPoints_resultSerializer());
 
               
                   
@@ -91,7 +100,7 @@ package com.github.dapeng.basic.api.counter;
                 queryPoints_args.setEndTimeStamp(endTimeStamp);
                 
 
-              queryPoints_result response = pool.send(serviceName, version,"queryPoints",queryPoints_args, new QueryPoints_argsSerializer(), new QueryPoints_resultSerializer());
+              queryPoints_result response = pool.send(serviceName,version,"queryPoints",queryPoints_args, new QueryPoints_argsSerializer(), new QueryPoints_resultSerializer());
 
               
                   
@@ -110,7 +119,7 @@ package com.github.dapeng.basic.api.counter;
       public String getServiceMetadata() throws SoaException {
         String methodName = "getServiceMetadata";
         getServiceMetadata_args getServiceMetadata_args = new getServiceMetadata_args();
-        getServiceMetadata_result response = pool.send(serviceName, version,methodName,getServiceMetadata_args, new GetServiceMetadata_argsSerializer(), new GetServiceMetadata_resultSerializer());
+        getServiceMetadata_result response = pool.send(serviceName,version,methodName,getServiceMetadata_args, new GetServiceMetadata_argsSerializer(), new GetServiceMetadata_resultSerializer());
         return response.getSuccess();
       }
 
@@ -120,7 +129,7 @@ package com.github.dapeng.basic.api.counter;
       public String echo() throws SoaException {
         String methodName = "echo";
         echo_args echo_args = new echo_args();
-        echo_result response = pool.send(serviceName, version,methodName,echo_args, new echo_argsSerializer(), new echo_resultSerializer());
+        echo_result response = pool.send(serviceName,version,methodName,echo_args, new echo_argsSerializer(), new echo_resultSerializer());
         return response.getSuccess();
       }
 
