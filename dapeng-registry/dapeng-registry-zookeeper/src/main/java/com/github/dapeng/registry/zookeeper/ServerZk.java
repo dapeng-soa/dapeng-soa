@@ -70,6 +70,7 @@ public class ServerZk extends CommonZk {
                         if (registryAgent != null) {
                             registryAgent.registerAllServices();//重新注册服务
                         }
+                        //todo need?
                         resyncZkInfos();
                         break;
 

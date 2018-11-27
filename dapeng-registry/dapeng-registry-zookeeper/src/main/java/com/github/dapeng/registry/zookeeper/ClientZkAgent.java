@@ -208,19 +208,11 @@ public class ClientZkAgent extends CommonZk {
             if (!zk.getState().isConnected()) {
                 LOGGER.error(getClass().getSimpleName() + "::syncZkRuntimeInfo[" + serviceInfo.serviceName()
                         + "]:zk doesn't connected yet, status:" + zk.getState() + ", retry:" + retry + " times after 300ms");
-                try {
-                    Thread.sleep(300);
-                } catch (InterruptedException ignored) {
-                }
+                sleep(300);
             } else {
                 try {
                     // zk服务端重建的时候，dapeng服务可能没来得及注册， 多试两次即可
-                    List<String> childrens = null;
-                    try {
-                        childrens = zk.getChildren(servicePath, this);
-                    } catch (InterruptedException e) {
-                        LOGGER.error(getClass() + "::syncZkRuntimeInfo", e);
-                    }
+                    List<String> childrens = zk.getChildren(servicePath, this);
 
                     if (childrens.size() == 0) {
                         serviceInfo.runtimeInstances().clear();
@@ -231,6 +223,8 @@ public class ClientZkAgent extends CommonZk {
 
                     LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo["
                             + serviceInfo.serviceName() + "], 获取" + servicePath + "的子节点成功");
+
+                    //todo abstract as a function
                     List<RuntimeInstance> runtimeInstances = new ArrayList<>(8);
                     //child = 10.168.13.96:9085:1.0.0:0000000300
                     for (String children : childrens) {
@@ -249,12 +243,9 @@ public class ClientZkAgent extends CommonZk {
                     LOGGER.info("ClientZk::syncZkRuntimeInfo 触发服务实例同步，目前服务实例列表: "
                             + serviceInfo.serviceName() + " -> " + serviceInfo.runtimeInstances());
                     return;
-                } catch (KeeperException e) {
+                } catch (KeeperException | InterruptedException e) {
                     LOGGER.error(e.getMessage(), e);
-                    try {
-                        Thread.sleep(300);
-                    } catch (InterruptedException ignored) {
-                    }
+                    sleep(300);
                 }
             }
         } while (retry-- > 0);
@@ -273,29 +264,16 @@ public class ClientZkAgent extends CommonZk {
                         + serviceInfo.serviceName() + ", zk status:"
                         + (zk == null ? null : zk.getState()) + ", retry:"
                         + retry + " times after 300ms");
-                try {
-                    Thread.sleep(300);
-                } catch (InterruptedException ignored) {
-                }
+                sleep(300);
             } else {
                 try {
-                    byte[] data;
-
-                    try {
-                        data = zk.getData(servicePath, this, null);
-                    } catch (InterruptedException e) {
-                        LOGGER.error(getClass() + "::syncZkRouteInfo", e);
-                        return;
-                    }
+                    byte[] data = zk.getData(servicePath, this, null);
                     processRouteData(serviceInfo, data);
                     LOGGER.warn("ClientZk::getRoutes routes changes:" + serviceInfo.routes());
                     return;
-                } catch (KeeperException e) {
+                } catch (KeeperException | InterruptedException e) {
                     LOGGER.error(e.getMessage(), e);
-                    try {
-                        Thread.sleep(300);
-                    } catch (InterruptedException ignored) {
-                    }
+                    sleep(300);
                 }
             }
         } while (retry-- > 0);
@@ -312,6 +290,17 @@ public class ClientZkAgent extends CommonZk {
             serviceInfo.routes(zkRoutes);
         } catch (Exception e) {
             LOGGER.error("parser routes 信息 失败，请检查路由规则写法是否正确:" + e.getMessage());
+        }
+    }
+
+    /**
+     * sleep for time ms
+     * @param time
+     */
+    private void sleep(long time) {
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException ignored) {
         }
     }
 }
