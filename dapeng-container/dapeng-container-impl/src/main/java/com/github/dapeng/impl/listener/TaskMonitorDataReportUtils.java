@@ -1,8 +1,8 @@
 package com.github.dapeng.impl.listener;
 
-import com.github.dapeng.basic.api.counter.CounterServiceClient;
+import com.github.dapeng.basic.api.counter.CounterServiceAsyncClient;
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
-import com.github.dapeng.basic.api.counter.service.CounterService;
+import com.github.dapeng.basic.api.counter.service.CounterServiceAsync;
 import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.SoaException;
@@ -32,7 +32,8 @@ public class TaskMonitorDataReportUtils {
 
     public final static String TASK_DATABASE = "dapengTask";
     public final static String TASK_DATABASE_TABLE = "dapeng_task_info";
-    private static CounterService COUNTER_CLIENT = new CounterServiceClient();
+    //private static CounterService COUNTER_CLIENT = new CounterServiceClient();
+    private static CounterServiceAsync COUNTER_CLIENT = new CounterServiceAsyncClient();
     private static final List<DataPoint> dataPointList = new ArrayList<>();
     private static final ArrayBlockingQueue<List<DataPoint>> taskDataQueue = new ArrayBlockingQueue<>(MAX_SIZE);
 

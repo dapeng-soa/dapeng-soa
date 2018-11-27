@@ -34,7 +34,7 @@ public class SchedulerJobListener implements JobListener {
 
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
     // 线程池
-    private static ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
+    private static ExecutorService executorService = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
             .setDaemon(true)
             .setNameFormat("dapeng-SchedulerJobListener-%d")
             .build());
@@ -143,12 +143,6 @@ public class SchedulerJobListener implements JobListener {
         influxdbDataPoint.setDatabase(TaskMonitorDataReportUtils.TASK_DATABASE);
         influxdbDataPoint.setBizTag(TaskMonitorDataReportUtils.TASK_DATABASE_TABLE);
 
-
-        if (jobDataMap.getString("methodName").equalsIgnoreCase("taskDemo2")) {
-            logger.error("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*--*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-");
-        }else{
-            logger.error("*****taskDemo1*****");
-        }
         Map<String, String> tags = new HashMap<>(8);
         tags.put("serviceName", jobDataMap.getString("serviceName"));
         tags.put("methodName", jobDataMap.getString("methodName"));
