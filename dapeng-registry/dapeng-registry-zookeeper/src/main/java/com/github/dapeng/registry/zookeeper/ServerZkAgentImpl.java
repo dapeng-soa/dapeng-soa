@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.github.dapeng.registry.zookeeper.CommonZk.*;
+import static com.github.dapeng.registry.zookeeper.ZkUtils.*;
 
 /**
  * RegistryAgent using Synchronous zookeeper requesting
@@ -71,17 +71,7 @@ public class ServerZkAgentImpl implements RegistryAgent {
             String path = "/soa/runtime/services/" + serverName;
             String instPath =  SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
             LOGGER.info(" logger zookeeper unRegister service: " + path);
-            List<String> children = serverZk.zk.getChildren(path, false);
-            children.forEach(child -> {
-                if(child.contains(instPath)){
-                    try {
-                        String fullPath = path + "/" + child;
-                        serverZk.zk.delete(fullPath,-1);
-                    } catch (InterruptedException | KeeperException e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
-                }
-            });
+            serverZk.unregisterRuntimeNode(path, instPath);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }

@@ -143,7 +143,6 @@ public class ServerZk implements Watcher {
     }
 
 
-
     /**
      * 获取zk 配置信息，封装到 ZkConfigInfo
      * 加入并发考虑
@@ -220,6 +219,7 @@ public class ServerZk implements Watcher {
 
     /**
      * 注册服务信息到zk /soa/runtime/services节点
+     *
      * @param path
      * @param data
      * @param context
@@ -238,6 +238,26 @@ public class ServerZk implements Watcher {
             }
         } catch (InterruptedException e) {
             LOGGER.error("ServerZk::registerPersistNode failed", e);
+        }
+    }
+
+    /**
+     * 删除/soa/runtime/services/{serviceName} 的临时节点
+     *
+     * @param parentPath
+     * @param childPathPrefix 临时节点前缀， ip:port:version
+     */
+    public void unregisterRuntimeNode(String parentPath, String childPathPrefix) {
+        try {
+            List<String> children = zk.getChildren(parentPath, false);
+            for (String child : children) {
+                if (child.contains(childPathPrefix)) {
+                    String fullPath = parentPath + "/" + child;
+                    zk.delete(fullPath, -1);
+                }
+            }
+        } catch (InterruptedException | KeeperException e) {
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
