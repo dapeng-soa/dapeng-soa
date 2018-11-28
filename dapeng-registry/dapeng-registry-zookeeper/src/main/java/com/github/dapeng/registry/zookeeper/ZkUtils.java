@@ -64,7 +64,7 @@ public class ZkUtils {
             }
         }
         //serverInfoCreateCallback
-        zkClient.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
+        zkClient.create(path + ":", data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
     }
 
     /**
@@ -101,7 +101,11 @@ public class ZkUtils {
         try {
             zkClient.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         } catch (KeeperException | InterruptedException e) {
-            LOGGER.error("ZkUtils::createPersistNodeOnly failed, zk status:" + zkClient.getState(), e);
+            if (e instanceof KeeperException.NodeExistsException) {
+                LOGGER.info("ZkUtils::createPersistNodeOnly failed," + e.getMessage());
+            } else {
+                LOGGER.error("ZkUtils::createPersistNodeOnly failed, zk status:" + zkClient.getState(), e);
+            }
         }
     }
 

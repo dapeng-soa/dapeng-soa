@@ -321,19 +321,7 @@ public class ServerZk implements Watcher {
     private void watchInstanceChange(RegisterContext context) {
         String watchPath = context.getServicePath();
         try {
-            List<String> children = zk.getChildren(watchPath, event -> {
-                LOGGER.warn("ServerZk::watchInstanceChange zkEvent:" + event);
-                //Children发生变化，则重新获取最新的services列表
-                if (event.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-                    LOGGER.info("容器状态:{}, {}子节点发生变化，重新获取子节点...", ContainerFactory.getContainer().status(), event.getPath());
-                    if (ContainerFactory.getContainer().status() == Container.STATUS_SHUTTING
-                            || ContainerFactory.getContainer().status() == Container.STATUS_DOWN) {
-                        LOGGER.warn("Container is shutting down");
-                        return;
-                    }
-                    watchInstanceChange(context);
-                }
-            });
+            List<String> children = zk.getChildren(watchPath, this);
             boolean _isMaster = false;
             if (children.size() > 0) {
                 _isMaster = checkIsMaster(children, MasterHelper.generateKey(context.getService(), context.getVersion()), context.getInstanceInfo());
