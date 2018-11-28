@@ -82,38 +82,4 @@ public abstract class CommonZk implements Watcher {
                 break;
         }
     };
-
-
-    /**
-     * 监听 "/soa/config/services" 下的子节点变动
-     */
-    /*private void watchConfigServiceNodeChange() {
-        zk.exists(CONFIG_PATH, configServiceNodeChangeWatcher, nodeChildrenCb, null);
-
-    }
-
-    private Watcher configServiceNodeChangeWatcher = event -> {
-        logger.warn("CommonZk::configServiceNodeChangeWatcher zkEvent:" + event);
-        if (event.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-            logger.info("{}子节点发生变化，重新获取子节点...", event.getPath());
-        }
-    };
-
-    private AsyncCallback.StatCallback nodeChildrenCb = (rc, path, ctx, stat) -> {
-        logger.warn("CommonZk::configServiceNodeChangeWatcher zkEvent:" + rc + ", " + path + ", " + stat);
-        switch (KeeperException.Code.get(rc)) {
-            case CONNECTIONLOSS:
-                logger.info("监听配置子节点时，session超时，重新监听", path);
-                watchConfigServiceNodeChange();
-                break;
-            case OK:
-                logger.info("watch 监听配置子节点成功", path);
-                break;
-            case NODEEXISTS:
-                logger.info("watch监听配置子节点存在", path);
-                break;
-            default:
-                logger.info("创建节点:{},失败", path);
-        }
-    };*/
 }

@@ -110,7 +110,9 @@ public class ServerZkAgentImpl implements RegistryAgent {
             serverZk.create(ROUTES_PATH + "/" + serverName, "", null, false);
 
             // 创建限流节点
-            serverZk.create(FREQ_PATH + "/" + serverName, "",null, false);
+            if (SoaSystemEnvProperties.SOA_FREQ_LIMIT_ENABLE) {
+                serverZk.create(FREQ_PATH + "/" + serverName, "", null, false);
+            }
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }

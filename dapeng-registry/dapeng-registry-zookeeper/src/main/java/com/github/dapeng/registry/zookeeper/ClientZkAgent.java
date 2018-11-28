@@ -237,10 +237,10 @@ public class ClientZkAgent extends CommonZk {
                     sleep(300);
                 }
             }
-        } while (retry-- > 0);
+        } while (--retry > 0);
     }
 
-    List<RuntimeInstance> getRuntimeInstances(List<String> children, String serviceName) {
+    private List<RuntimeInstance> getRuntimeInstances(List<String> children, String serviceName) {
         List<RuntimeInstance> runtimeInstances = new ArrayList<>(8);
         //child = 10.168.13.96:9085:1.0.0:0000000300
         for (String child : children) {
@@ -278,7 +278,7 @@ public class ClientZkAgent extends CommonZk {
                     sleep(300);
                 }
             }
-        } while (retry-- > 0);
+        } while (--retry > 0);
     }
 
 

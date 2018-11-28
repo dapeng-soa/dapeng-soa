@@ -3,8 +3,6 @@ package com.github.dapeng.registry.zookeeper;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.lifecycle.LifecycleProcessorFactory;
-import com.github.dapeng.core.*;
-import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.MasterHelper;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.lifecycle.LifeCycleEvent;
@@ -13,11 +11,13 @@ import org.apache.zookeeper.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.regex.Pattern;
-
-import static com.github.dapeng.core.SoaCode.FreqConfigError;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -56,6 +56,7 @@ public class ServerZk extends CommonZk {
                 switch (watchedEvent.getState()) {
 
                     case Expired:
+                        //超时事件发生在Disconnected事件之后(如果断开连接后，sessionTimeout时间过了之后才连上zk服务端的话，就会产生Expired Event)
                         LOGGER.info("ServerZk session timeout to  {} [Zookeeper]", zkHost);
                         connect();
                         break;
@@ -66,6 +67,11 @@ public class ServerZk extends CommonZk {
                         create(RUNTIME_PATH, "", null, false);
                         create(CONFIG_PATH, "", null, false);
                         create(ROUTES_PATH, "", null, false);
+
+                        if (SoaSystemEnvProperties.SOA_FREQ_LIMIT_ENABLE) {
+                            create(FREQ_PATH, "", null, false);
+                        }
+
                         LOGGER.info("ServerZk connected to  {} [Zookeeper]", zkHost);
                         if (registryAgent != null) {
                             registryAgent.registerAllServices();//重新注册服务
@@ -251,53 +257,6 @@ public class ServerZk extends CommonZk {
     //-----竞选master---
     private static Map<String, Boolean> isMaster = MasterHelper.isMaster;
 
-    /**
-     * @param children     当前方法下的实例列表，        eg 127.0.0.1:9081:1.0.0,192.168.1.12:9081:1.0.0
-     * @param serviceKey   当前服务信息                eg com.github.user.UserService:1.0.0
-     * @param instanceInfo 当前服务节点实例信息         eg  192.168.10.17:9081:1.0.0
-     */
-    public boolean checkIsMaster(List<String> children, String serviceKey, String instanceInfo) {
-        if (children.size() <= 0) {
-            return false;
-        }
-
-        boolean _isMaster = false;
-
-        /**
-         * 排序规则
-         * a: 192.168.100.1:9081:1.0.0:0000000022
-         * b: 192.168.100.1:9081:1.0.0:0000000014
-         * 根据 lastIndexOf :  之后的数字进行排序，由小到大，每次取zk临时有序节点中的序列最小的节点作为master
-         */
-        try {
-            Collections.sort(children, (o1, o2) -> {
-                Integer int1 = Integer.valueOf(o1.substring(o1.lastIndexOf(":") + 1));
-                Integer int2 = Integer.valueOf(o2.substring(o2.lastIndexOf(":") + 1));
-                return int1 - int2;
-            });
-
-            String firstNode = children.get(0);
-            LOGGER.info("serviceInfo firstNode {}", firstNode);
-
-            String firstInfo = firstNode.replace(firstNode.substring(firstNode.lastIndexOf(":")), "");
-
-            if (firstInfo.equals(instanceInfo)) {
-                isMaster.put(serviceKey, true);
-                _isMaster = true;
-                LOGGER.info("({})竞选master成功, master({})", serviceKey, CURRENT_CONTAINER_ADDR);
-            } else {
-                isMaster.put(serviceKey, false);
-                _isMaster = false;
-                LOGGER.info("({})竞选master失败，当前节点为({})", serviceKey);
-            }
-        } catch (NumberFormatException e) {
-            LOGGER.error("临时节点格式不正确,请使用新版，正确格式为 etc. 192.168.100.1:9081:1.0.0:0000000022");
-        }
-
-        return _isMaster;
-    }
-
-
     private static final String CURRENT_CONTAINER_ADDR = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" +
             String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
 
@@ -346,121 +305,10 @@ public class ServerZk extends CommonZk {
         }
         try {
             byte[] data = zk.getData(FREQ_PATH + "/" + serviceInfo.serviceName(), this, null);
-            processFreqRuleData(serviceInfo, data);
+            serviceInfo.freqControl(ZkUtils.processFreqRuleData(serviceInfo.serviceName(), data));
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error("获取freq 节点: {} 出现异常", serviceInfo.serviceName());
         }
-    }
-
-    /**
-     * process zk data freqControl 限流规则信息
-     *
-     * @param serviceInfo
-     * @param data
-     * @return
-     */
-    private synchronized void processFreqRuleData(ZkServiceInfo serviceInfo, byte[] data) {
-        try {
-            String ruleData = new String(data, "utf-8");
-            serviceInfo.freqControl(doParseRuleData(serviceInfo.serviceName(), ruleData));
-        } catch (Exception e) {
-            LOGGER.error("parser freq rule 信息 失败，请检查 rule data 写法是否正确!");
-        }
-
-    }
-
-    /**
-     * 解析 zookeeper 上 配置的 ruleData数据 为FreqControlRule对象
-     *
-     * @param ruleData data from zk node
-     * @return
-     */
-    private ServiceFreqControl doParseRuleData(final String serviceName, final String ruleData) throws Exception {
-        LOGGER.info("doParseRuleData,限流规则解析前ruleData:" + ruleData);
-        List<FreqControlRule> rules4service = new ArrayList<>(16);
-        Map<String, List<FreqControlRule>> rules4method = new HashMap<>(16);
-
-        String[] str = ruleData.split("\n|\r|\r\n");
-        String pattern1 = "^\\[.*\\]$";
-        String pattern2 = "^[a-zA-Z]+\\[.*\\]$";
-
-        for (int i = 0; i < str.length; ) {
-            if (Pattern.matches(pattern1, str[i])) {
-                FreqControlRule rule = new FreqControlRule();
-                rule.targets = new HashSet<>(16);
-
-                while (!Pattern.matches(pattern1, str[++i])) {
-                    if ("".equals(str[i].trim())) continue;
-
-                    String[] s = str[i].split("=");
-                    switch (s[0].trim()) {
-                        case "match_app":
-                            rule.app = s[1].trim();
-                            break;
-                        case "rule_type":
-                            if (Pattern.matches(pattern2, s[1].trim())) {
-                                rule.ruleType = s[1].trim().split("\\[")[0];
-                                String[] str1 = s[1].trim().split("\\[")[1].trim().split("\\]")[0].trim().split(",");
-                                for (String aStr1 : str1) {
-                                    if (!aStr1.contains(".")) {
-                                        rule.targets.add(Integer.parseInt(aStr1.trim()));
-                                    } else {
-                                        rule.targets.add(IPUtils.transferIp(aStr1.trim()));
-                                    }
-                                }
-                            } else {
-                                rule.targets = null;
-                                rule.ruleType = s[1].trim();
-                            }
-                            break;
-                        case "min_interval":
-                            rule.minInterval = Integer.parseInt(s[1].trim().split(",")[0]);
-                            rule.maxReqForMinInterval = Integer.parseInt(s[1].trim().split(",")[1]);
-                            break;
-                        case "mid_interval":
-                            rule.midInterval = Integer.parseInt(s[1].trim().split(",")[0]);
-                            rule.maxReqForMidInterval = Integer.parseInt(s[1].trim().split(",")[1]);
-                            break;
-                        case "max_interval":
-                            rule.maxInterval = Integer.parseInt(s[1].trim().split(",")[0]);
-                            rule.maxReqForMaxInterval = Integer.parseInt(s[1].trim().split(",")[1]);
-                            break;
-                        default:
-                            LOGGER.warn("FreqConfig parse error:" + str[i]);
-                    }
-                    if (i == str.length - 1) {
-                        i++;
-                        break;
-                    }
-                }
-                if (rule.app == null || rule.ruleType == null ||
-                        rule.minInterval == 0 ||
-                        rule.midInterval == 0 ||
-                        rule.maxInterval == 0) {
-                    LOGGER.error("doParseRuleData, 限流规则解析失败。rule:{}", rule);
-                    throw new SoaException(FreqConfigError);
-                }
-                if (rule.app.equals("*")) {
-                    rule.app = serviceName;
-                    rules4service.add(rule);
-                } else {
-                    if (rules4method.containsKey(rule.app)) {
-                        rules4method.get(rule.app).add(rule);
-                    } else {
-                        List<FreqControlRule> rules = new ArrayList<>(8);
-                        rules.add(rule);
-                        rules4method.put(rule.app, rules);
-                    }
-                }
-
-            } else {
-                i++;
-            }
-        }
-
-        ServiceFreqControl freqControl = new ServiceFreqControl(serviceName, rules4service, rules4method);
-        LOGGER.info("doParseRuleData限流规则解析后内容: " + freqControl);
-        return freqControl;
     }
 
     @Override
@@ -496,5 +344,51 @@ public class ServerZk extends CommonZk {
     public void create(String path, String data, RegisterContext registerContext, boolean ephemeral) {
         AsyncCallback.StringCallback callback = ephemeral ? serverInfoCreateCallback : persistNodeCreateCallback;
         ZkUtils.create(path, data, registerContext, ephemeral, callback, zk);
+    }
+
+    /**
+     * @param children     当前方法下的实例列表，        eg 127.0.0.1:9081:1.0.0,192.168.1.12:9081:1.0.0
+     * @param serviceKey   当前服务信息                eg com.github.user.UserService:1.0.0
+     * @param instanceInfo 当前服务节点实例信息         eg  192.168.10.17:9081:1.0.0
+     */
+    public boolean checkIsMaster(List<String> children, String serviceKey, String instanceInfo) {
+        if (children.size() <= 0) {
+            return false;
+        }
+
+        boolean _isMaster = false;
+
+        /**
+         * 排序规则
+         * a: 192.168.100.1:9081:1.0.0:0000000022
+         * b: 192.168.100.1:9081:1.0.0:0000000014
+         * 根据 lastIndexOf :  之后的数字进行排序，由小到大，每次取zk临时有序节点中的序列最小的节点作为master
+         */
+        try {
+            Collections.sort(children, (o1, o2) -> {
+                Integer int1 = Integer.valueOf(o1.substring(o1.lastIndexOf(":") + 1));
+                Integer int2 = Integer.valueOf(o2.substring(o2.lastIndexOf(":") + 1));
+                return int1 - int2;
+            });
+
+            String firstNode = children.get(0);
+            LOGGER.info("serviceInfo firstNode {}", firstNode);
+
+            String firstInfo = firstNode.replace(firstNode.substring(firstNode.lastIndexOf(":")), "");
+
+            if (firstInfo.equals(instanceInfo)) {
+                isMaster.put(serviceKey, true);
+                _isMaster = true;
+                LOGGER.info("({})竞选master成功, master({})", serviceKey, CURRENT_CONTAINER_ADDR);
+            } else {
+                isMaster.put(serviceKey, false);
+                _isMaster = false;
+                LOGGER.info("({})竞选master失败，当前节点为({})", serviceKey);
+            }
+        } catch (NumberFormatException e) {
+            LOGGER.error("临时节点格式不正确,请使用新版，正确格式为 etc. 192.168.100.1:9081:1.0.0:0000000022");
+        }
+
+        return _isMaster;
     }
 }
