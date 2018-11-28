@@ -1,25 +1,26 @@
 package com.github.dapeng.registry.zookeeper;
 
-import com.github.dapeng.core.RuntimeInstance;
-import com.github.dapeng.core.Weight;
+import com.github.dapeng.core.*;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
+import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.ServiceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Pattern;
+
+import static com.github.dapeng.core.SoaCode.FreqConfigError;
 
 /**
  * @author tangliu
  * @date 2016/8/8
  */
-public class WatcherUtils {
+public class ZkDataProcessor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WatcherUtils.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZkDataProcessor.class);
 
     /**
      * new get config data
@@ -218,56 +219,115 @@ public class WatcherUtils {
     }
 
 
-    /*public static void processConfigData(String configNode, byte[] data, Map<String, Map<ConfigKey, Object>> config) {
+    /**
+     * process zk data freqControl 限流规则信息
+     *
+     * @param serviceName
+     * @param data
+     * @return
+     */
+    static synchronized ServiceFreqControl processFreqRuleData(String serviceName, byte[] data) {
         try {
-            String propertiesStr = new String(data, "utf-8");
+            String ruleData = new String(data, "utf-8");
+            return doParseRuleData(serviceName, ruleData);
+        } catch (Exception e) {
+            LOGGER.error("parser freq rule 信息 失败，请检查 rule data 写法是否正确!");
+        }
+        return null;
+    }
 
-            String[] properties = propertiesStr.split(";");
+    /**
+     * 解析 zookeeper 上 配置的 ruleData数据 为FreqControlRule对象
+     *
+     * @param ruleData data from zk node
+     * @return
+     */
+    static ServiceFreqControl doParseRuleData(final String serviceName, final String ruleData) throws Exception {
+        LOGGER.info("doParseRuleData,限流规则解析前ruleData:" + ruleData);
+        List<FreqControlRule> rules4service = new ArrayList<>(16);
+        Map<String, List<FreqControlRule>> rules4method = new HashMap<>(16);
 
-            Map<ConfigKey, Object> propertyMap = new HashMap<>(properties.length);
+        String[] str = ruleData.split("\n|\r|\r\n");
+        String pattern1 = "^\\[.*\\]$";
+        String pattern2 = "^[a-zA-Z]+\\[.*\\]$";
 
-            for (String property : properties) {
+        for (int i = 0; i < str.length; ) {
+            if (Pattern.matches(pattern1, str[i])) {
+                FreqControlRule rule = new FreqControlRule();
+                rule.targets = new HashSet<>(16);
 
-                String[] key_values = property.split("=");
-                if (key_values.length == 2) {
+                while (!Pattern.matches(pattern1, str[++i])) {
+                    if ("".equals(str[i].trim())) continue;
 
-                    ConfigKey type = ConfigKey.findByValue(key_values[0]);
-                    switch (type) {
-
-                        case Thread:
-                            Integer value = Integer.valueOf(key_values[1]);
-                            propertyMap.put(type, value);
+                    String[] s = str[i].split("=");
+                    switch (s[0].trim()) {
+                        case "match_app":
+                            rule.app = s[1].trim();
                             break;
-                        case ThreadPool:
-                            Boolean bool = Boolean.valueOf(key_values[1]);
-                            propertyMap.put(type, bool);
+                        case "rule_type":
+                            if (Pattern.matches(pattern2, s[1].trim())) {
+                                rule.ruleType = s[1].trim().split("\\[")[0];
+                                String[] str1 = s[1].trim().split("\\[")[1].trim().split("\\]")[0].trim().split(",");
+                                for (String aStr1 : str1) {
+                                    if (!aStr1.contains(".")) {
+                                        rule.targets.add(Integer.parseInt(aStr1.trim()));
+                                    } else {
+                                        rule.targets.add(IPUtils.transferIp(aStr1.trim()));
+                                    }
+                                }
+                            } else {
+                                rule.targets = null;
+                                rule.ruleType = s[1].trim();
+                            }
                             break;
-                        case ClientTimeout:
-                            long clientTimeout = Long.valueOf(key_values[1]);
-                            propertyMap.put(type, clientTimeout);
+                        case "min_interval":
+                            rule.minInterval = Integer.parseInt(s[1].trim().split(",")[0]);
+                            rule.maxReqForMinInterval = Integer.parseInt(s[1].trim().split(",")[1]);
                             break;
-                        case ServerTimeout:
-                            long serverTimeout = Long.valueOf(key_values[1]);
-                            propertyMap.put(type, serverTimeout);
+                        case "mid_interval":
+                            rule.midInterval = Integer.parseInt(s[1].trim().split(",")[0]);
+                            rule.maxReqForMidInterval = Integer.parseInt(s[1].trim().split(",")[1]);
                             break;
-                        case LoadBalance:
-                            propertyMap.put(type, key_values[1]);
-                            break;
-                        case FailOver:
-                            propertyMap.put(type, Integer.valueOf(key_values[1]));
-                            break;
-                        case Compatible:
-                            propertyMap.put(type, key_values[1].split(","));
+                        case "max_interval":
+                            rule.maxInterval = Integer.parseInt(s[1].trim().split(",")[0]);
+                            rule.maxReqForMaxInterval = Integer.parseInt(s[1].trim().split(",")[1]);
                             break;
                         default:
-                            //just skip
+                            LOGGER.warn("FreqConfig parse error:" + str[i]);
+                    }
+                    if (i == str.length - 1) {
+                        i++;
+                        break;
                     }
                 }
+                if (rule.app == null || rule.ruleType == null ||
+                        rule.minInterval == 0 ||
+                        rule.midInterval == 0 ||
+                        rule.maxInterval == 0) {
+                    LOGGER.error("doParseRuleData, 限流规则解析失败。rule:{}", rule);
+                    throw new SoaException(FreqConfigError);
+                }
+                if (rule.app.equals("*")) {
+                    rule.app = serviceName;
+                    rules4service.add(rule);
+                } else {
+                    if (rules4method.containsKey(rule.app)) {
+                        rules4method.get(rule.app).add(rule);
+                    } else {
+                        List<FreqControlRule> rules = new ArrayList<>(8);
+                        rules.add(rule);
+                        rules4method.put(rule.app, rules);
+                    }
+                }
+
+            } else {
+                i++;
             }
-            config.put(configNode, propertyMap);
-            LOGGER.info("get config form {} with data [{}]", configNode, propertiesStr);
-        } catch (UnsupportedEncodingException e) {
-            LOGGER.error(e.getMessage(), e);
         }
-    }*/
+
+        ServiceFreqControl freqControl = new ServiceFreqControl(serviceName, rules4service, rules4method);
+        LOGGER.info("doParseRuleData限流规则解析后内容: " + freqControl);
+        return freqControl;
+    }
+
 }

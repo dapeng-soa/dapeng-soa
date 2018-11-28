@@ -64,19 +64,19 @@ public class ServerZk extends CommonZk {
                     case SyncConnected:
                         semaphore.countDown();
                         //创建根节点
-                        create(RUNTIME_PATH, "", null, false);
-                        create(CONFIG_PATH, "", null, false);
-                        create(ROUTES_PATH, "", null, false);
+                        createPersistNodeOnly(RUNTIME_PATH);
+                        createPersistNodeOnly(CONFIG_PATH);
+                        createPersistNodeOnly(ROUTES_PATH);
 
                         if (SoaSystemEnvProperties.SOA_FREQ_LIMIT_ENABLE) {
-                            create(FREQ_PATH, "", null, false);
+                            createPersistNodeOnly(FREQ_PATH);
                         }
 
                         LOGGER.info("ServerZk connected to  {} [Zookeeper]", zkHost);
                         if (registryAgent != null) {
                             registryAgent.registerAllServices();//重新注册服务
                         }
-                        //todo need?
+
                         resyncZkInfos();
                         break;
 
@@ -169,7 +169,7 @@ public class ServerZk extends CommonZk {
                             context.getService(), _isMaster));
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
-            create(context.getServicePath() + "/" + context.getInstanceInfo(), "", context, true);
+            registerRuntimeNode(context.getServicePath() + "/" + context.getInstanceInfo(), "", context);
         }
     }
 
@@ -181,14 +181,13 @@ public class ServerZk extends CommonZk {
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 LOGGER.info("创建节点:{},连接断开，重新创建", path);
-                create(path, (String) ctx, null, false);
+                registerPersistNode(path, (String) ctx);
                 break;
             case OK:
                 LOGGER.info("创建节点:{},成功", path);
                 break;
             case NODEEXISTS:
                 LOGGER.info("创建节点:{},已存在", path);
-                updateServerInfo(path, (String) ctx);
                 break;
             default:
                 LOGGER.info("创建节点:{},失败", path);
@@ -198,13 +197,13 @@ public class ServerZk extends CommonZk {
     /**
      * 异步添加serverInfo 临时节点 的回调处理
      */
-    private AsyncCallback.StringCallback serverInfoCreateCallback = (rc, path, ctx, name) -> {
-        LOGGER.warn("ServerZk::serverInfoCreateCallback zkEvent: " + rc + ", " + path + ", " + name);
+    private AsyncCallback.StringCallback serverRuntimeInfoCreateCallback = (rc, path, ctx, name) -> {
+        LOGGER.warn("ServerZk::serverRuntimeInfoCreateCallback zkEvent: " + rc + ", " + path + ", " + name);
         switch (KeeperException.Code.get(rc)) {
             case CONNECTIONLOSS:
                 LOGGER.info("添加serviceInfo:{},连接断开，重新添加", path);
                 //重新调用
-                create(path, "", (RegisterContext) ctx, true);
+                registerRuntimeNode(path, "", (RegisterContext) ctx);
                 break;
             case OK:
                 /**
@@ -215,38 +214,13 @@ public class ServerZk extends CommonZk {
                 LOGGER.info("添加serviceInfo:{},成功,注册实例监听watch watchInstanceChange", path);
                 break;
             case NODEEXISTS:
-                LOGGER.info("添加serviceInfo:{},已存在，删掉后重新添加", path);
-                try {
-                    //只删除了当前serviceInfo的节点
-                    zk.delete(path, -1);
-                } catch (Exception e) {
-                    LOGGER.error("删除serviceInfo:{} 失败:{}", path, e.getMessage());
-                }
-                create(path, "", (RegisterContext) ctx, true);
+                // 如果存在重复的临时节点， 删除之。
+                // 由于目前临时节点采用CreateMode.EPHEMERAL_SEQUENTIAL的方式， 会自动带有一个序号(ip:port:version:seq)，
+                // 故这个路径不可能存在
+                LOGGER.error("添加serviceInfo:{},已存在!!", path);
                 break;
             default:
                 LOGGER.info("添加serviceInfo:{}，出错", path);
-        }
-    };
-
-    /**
-     * 异步更新节点信息
-     */
-    private void updateServerInfo(String path, String data) {
-        zk.setData(path, data.getBytes(), -1, serverInfoUpdateCallback, data);
-    }
-
-    /**
-     * 异步更新节点信息的回调方法
-     */
-    private AsyncCallback.StatCallback serverInfoUpdateCallback = (rc, path1, ctx, stat) -> {
-        LOGGER.warn("ServerZk::serverInfoUpdateCallback zkEvent: " + rc + ", " + path1 + ", " + stat);
-        switch (KeeperException.Code.get(rc)) {
-            case CONNECTIONLOSS:
-                updateServerInfo(path1, (String) ctx);
-                return;
-            default:
-                //just skip
         }
     };
 
@@ -305,7 +279,7 @@ public class ServerZk extends CommonZk {
         }
         try {
             byte[] data = zk.getData(FREQ_PATH + "/" + serviceInfo.serviceName(), this, null);
-            serviceInfo.freqControl(ZkUtils.processFreqRuleData(serviceInfo.serviceName(), data));
+            serviceInfo.freqControl(ZkDataProcessor.processFreqRuleData(serviceInfo.serviceName(), data));
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error("获取freq 节点: {} 出现异常", serviceInfo.serviceName());
         }
@@ -341,9 +315,20 @@ public class ServerZk extends CommonZk {
         }
     }
 
-    public void create(String path, String data, RegisterContext registerContext, boolean ephemeral) {
-        AsyncCallback.StringCallback callback = ephemeral ? serverInfoCreateCallback : persistNodeCreateCallback;
-        ZkUtils.create(path, data, registerContext, ephemeral, callback, zk);
+    public void registerRuntimeNode(String path, String data, RegisterContext context) {
+        ZkUtils.createEphemeral(path, data, context, serverRuntimeInfoCreateCallback, zk);
+    }
+
+    public void registerPersistNode(String path, String data) {
+        ZkUtils.createPersistent(path, data, persistNodeCreateCallback, zk);
+    }
+
+    /**
+     * 仅创建持久节点， 不监听
+     * @param path
+     */
+    public void createPersistNodeOnly(String path) {
+        ZkUtils.createPersistNodeOnly(path, zk);
     }
 
     /**

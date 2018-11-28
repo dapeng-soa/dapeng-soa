@@ -56,7 +56,7 @@ public abstract class CommonZk implements Watcher {
                 logger.error("全局配置节点不存在");
                 break;
             case OK:
-                WatcherUtils.processZkConfig(data, (ZkServiceInfo) ctx, true);
+                ZkDataProcessor.processZkConfig(data, (ZkServiceInfo) ctx, true);
                 break;
             default:
                 break;
@@ -76,7 +76,7 @@ public abstract class CommonZk implements Watcher {
                 logger.error("服务 [{}] 的service配置节点不存在，无法获取service级配置信息 ", ((ZkServiceInfo) ctx).serviceName());
                 break;
             case OK:
-                WatcherUtils.processZkConfig(data, (ZkServiceInfo) ctx, false);
+                ZkDataProcessor.processZkConfig(data, (ZkServiceInfo) ctx, false);
                 break;
             default:
                 break;

@@ -101,17 +101,17 @@ public class ServerZkAgentImpl implements RegistryAgent {
                 return;
             }
             // 注册服务 runtime 实例 到 zk
-            serverZk.create(path, "", registerContext, true);
+            serverZk.registerRuntimeNode(path, "", registerContext);
 
             // 创建  zk  config 服务 持久节点  eg:  /soa/config/com.github.dapeng.soa.UserService
-            serverZk.create(CONFIG_PATH + "/" + serverName, "", null, false);
+            serverZk.createPersistNodeOnly(CONFIG_PATH + "/" + serverName);
 
             // 创建路由节点
-            serverZk.create(ROUTES_PATH + "/" + serverName, "", null, false);
+            serverZk.createPersistNodeOnly(ROUTES_PATH + "/" + serverName);
 
             // 创建限流节点
             if (SoaSystemEnvProperties.SOA_FREQ_LIMIT_ENABLE) {
-                serverZk.create(FREQ_PATH + "/" + serverName, "", null, false);
+                serverZk.createPersistNodeOnly(FREQ_PATH + "/" + serverName);
             }
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
