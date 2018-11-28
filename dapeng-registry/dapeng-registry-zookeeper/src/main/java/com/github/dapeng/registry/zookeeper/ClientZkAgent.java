@@ -1,15 +1,18 @@
 package com.github.dapeng.registry.zookeeper;
 
 import com.github.dapeng.core.RuntimeInstance;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Watchable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,13 +20,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static com.github.dapeng.registry.zookeeper.ZkUtils.*;
+
 /**
  * @author ever maple
  */
-public class ClientZkAgent extends CommonZk {
+public class ClientZkAgent implements Watcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientZkAgent.class);
 
     private static final ClientZkAgent instance = new ClientZkAgent();
+
+    private ZooKeeper zk;
+
+    private String zkHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
 
     private final Map<String, ZkServiceInfo> serviceInfoByName = new ConcurrentHashMap<>(128);
 
@@ -98,7 +107,7 @@ public class ClientZkAgent extends CommonZk {
                 break;
             case NodeDataChanged:
                 if (event.getPath().startsWith(CONFIG_PATH)) {
-                    syncZkConfigInfo(serviceInfo);
+                    syncZkConfigInfo(serviceInfo, zk, this);
                 } else if (event.getPath().startsWith(ROUTES_PATH)) {
                     syncZkRouteInfo(serviceInfo);
                 }
@@ -184,7 +193,7 @@ public class ClientZkAgent extends CommonZk {
             // sync router config
             syncZkRouteInfo(serviceInfo);
             // sync service config, no need to try 5 times any more
-            syncZkConfigInfo(serviceInfo);
+            syncZkConfigInfo(serviceInfo, zk, this);
 
             LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[serviceName:" + serviceInfo.serviceName() + "]:zkInfo succeed, runtimeInstants:" + serviceInfo.runtimeInstances().size());
         } catch (Exception e) {

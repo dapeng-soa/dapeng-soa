@@ -19,6 +19,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static com.github.dapeng.registry.zookeeper.ZkUtils.*;
+
 
 /**
  * 服务端  zk 服务注册
@@ -26,18 +28,33 @@ import java.util.concurrent.TimeUnit;
  * @author hz.lei
  * @date 2018-03-20
  */
-public class ServerZk extends CommonZk {
+public class ServerZk implements Watcher {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerZk.class);
 
     private RegistryAgent registryAgent;
+
+    private ZooKeeper zk;
+
+    private String zkHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
+
 
     /**
      * zk 配置 缓存 ，根据 serivceName + versionName 作为 key
      */
     public final Map<String, ZkServiceInfo> serviceInfoByName = new ConcurrentHashMap<>(128);
 
-    public ServerZk(RegistryAgent registryAgent) {
+    /**
+     * key = /soa/runtime/services/{serviceName}
+     */
+    private final Map<String, RegisterContext> registerContextMap = new ConcurrentHashMap<>(16);
+
+    private static Map<String, Boolean> isMaster = MasterHelper.isMaster;
+
+    private static final String CURRENT_CONTAINER_ADDR = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" +
+            String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
+
+    ServerZk(RegistryAgent registryAgent) {
         this.registryAgent = registryAgent;
     }
 
@@ -45,7 +62,7 @@ public class ServerZk extends CommonZk {
      * zk 客户端实例化
      * 使用 CountDownLatch 门闩 锁，保证zk连接成功后才返回
      */
-    public synchronized void connect() {
+    synchronized void connect() {
         try {
             CountDownLatch semaphore = new CountDownLatch(1);
             // zk 需要为空
@@ -105,23 +122,10 @@ public class ServerZk extends CommonZk {
         }
     }
 
-    private void resyncZkInfos() {
-        synchronized (serviceInfoByName) {
-            if (!serviceInfoByName.isEmpty()) {
-                serviceInfoByName.values().forEach(serviceInfo -> {
-                    syncZkConfigInfo(serviceInfo);
-                    if (SoaSystemEnvProperties.SOA_FREQ_LIMIT_ENABLE) {
-                        syncZkFreqControl(serviceInfo);
-                    }
-                });
-            }
-        }
-    }
-
     /**
      * 关闭 zk 连接
      */
-    public synchronized void destroy() {
+    synchronized void destroy() {
         if (zk != null) {
             try {
                 LOGGER.info("ServerZk closing connection to zookeeper {}", zkHost);
@@ -134,105 +138,10 @@ public class ServerZk extends CommonZk {
 
     }
 
-    //～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～
-    //                           that's begin                                      ～
-    //                                                                             ～
-    //～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～
-
-
-    /**
-     * 监听服务节点下面的子节点（临时节点，实例信息）变化
-     */
-    public void watchInstanceChange(RegisterContext context) {
-        String watchPath = context.getServicePath();
-        try {
-            List<String> children = zk.getChildren(watchPath, event -> {
-                LOGGER.warn("ServerZk::watchInstanceChange zkEvent:" + event);
-                //Children发生变化，则重新获取最新的services列表
-                if (event.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
-                    LOGGER.info("容器状态:{}, {}子节点发生变化，重新获取子节点...", ContainerFactory.getContainer().status(), event.getPath());
-                    if (ContainerFactory.getContainer().status() == Container.STATUS_SHUTTING
-                            || ContainerFactory.getContainer().status() == Container.STATUS_DOWN) {
-                        LOGGER.warn("Container is shutting down");
-                        return;
-                    }
-                    watchInstanceChange(context);
-                }
-            });
-            boolean _isMaster = false;
-            if (children.size() > 0) {
-                _isMaster = checkIsMaster(children, MasterHelper.generateKey(context.getService(), context.getVersion()), context.getInstanceInfo());
-            }
-            //masterChange响应
-            LifecycleProcessorFactory.getLifecycleProcessor().onLifecycleEvent(
-                    new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.MASTER_CHANGE,
-                            context.getService(), _isMaster));
-        } catch (KeeperException | InterruptedException e) {
-            LOGGER.error(e.getMessage(), e);
-            registerRuntimeNode(context.getServicePath() + "/" + context.getInstanceInfo(), "", context);
-        }
-    }
-
-    /**
-     * 异步添加持久化节点回调方法
-     */
-    private AsyncCallback.StringCallback persistNodeCreateCallback = (rc, path, ctx, name) -> {
-        LOGGER.warn("ServerZk::persistNodeCreateCallback zkEvent: " + rc + ", " + path + ", " + name);
-        switch (KeeperException.Code.get(rc)) {
-            case CONNECTIONLOSS:
-                LOGGER.info("创建节点:{},连接断开，重新创建", path);
-                registerPersistNode(path, (String) ctx);
-                break;
-            case OK:
-                LOGGER.info("创建节点:{},成功", path);
-                break;
-            case NODEEXISTS:
-                LOGGER.info("创建节点:{},已存在", path);
-                break;
-            default:
-                LOGGER.info("创建节点:{},失败", path);
-        }
-    };
-
-    /**
-     * 异步添加serverInfo 临时节点 的回调处理
-     */
-    private AsyncCallback.StringCallback serverRuntimeInfoCreateCallback = (rc, path, ctx, name) -> {
-        LOGGER.warn("ServerZk::serverRuntimeInfoCreateCallback zkEvent: " + rc + ", " + path + ", " + name);
-        switch (KeeperException.Code.get(rc)) {
-            case CONNECTIONLOSS:
-                LOGGER.info("添加serviceInfo:{},连接断开，重新添加", path);
-                //重新调用
-                registerRuntimeNode(path, "", (RegisterContext) ctx);
-                break;
-            case OK:
-                /**
-                 * callback 时 注册监听
-                 */
-                watchInstanceChange((RegisterContext) ctx);
-
-                LOGGER.info("添加serviceInfo:{},成功,注册实例监听watch watchInstanceChange", path);
-                break;
-            case NODEEXISTS:
-                // 如果存在重复的临时节点， 删除之。
-                // 由于目前临时节点采用CreateMode.EPHEMERAL_SEQUENTIAL的方式， 会自动带有一个序号(ip:port:version:seq)，
-                // 故这个路径不可能存在
-                LOGGER.error("添加serviceInfo:{},已存在!!", path);
-                break;
-            default:
-                LOGGER.info("添加serviceInfo:{}，出错", path);
-        }
-    };
-
-    public void setZookeeperHost(String zkHost) {
+    void setZookeeperHost(String zkHost) {
         this.zkHost = zkHost;
     }
 
-    //-----竞选master---
-    private static Map<String, Boolean> isMaster = MasterHelper.isMaster;
-
-    private static final String CURRENT_CONTAINER_ADDR = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" +
-            String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
 
 
     /**
@@ -251,7 +160,7 @@ public class ServerZk extends CommonZk {
                     info = new ZkServiceInfo(serviceName, new CopyOnWriteArrayList<>());
                     try {
                         // when container is shutdown, zk is down and will throw execptions
-                        syncZkConfigInfo(info);
+                        syncZkConfigInfo(info, zk, this);
                         if (SoaSystemEnvProperties.SOA_FREQ_LIMIT_ENABLE) {
                             syncZkFreqControl(info);
                         }
@@ -266,25 +175,6 @@ public class ServerZk extends CommonZk {
         return info;
     }
 
-    /**
-     * 获取 zookeeper 上的 限流规则 freqRule
-     *
-     * @return
-     */
-    private void syncZkFreqControl(ZkServiceInfo serviceInfo) {
-        if (zk == null || !zk.getState().isConnected()) {
-            LOGGER.warn(getClass() + "::syncZkFreqControl zk is not ready, status:"
-                    + (zk == null ? null : zk.getState()));
-            return;
-        }
-        try {
-            byte[] data = zk.getData(FREQ_PATH + "/" + serviceInfo.serviceName(), this, null);
-            serviceInfo.freqControl(ZkDataProcessor.processFreqRuleData(serviceInfo.serviceName(), data));
-        } catch (KeeperException | InterruptedException e) {
-            LOGGER.error("获取freq 节点: {} 出现异常", serviceInfo.serviceName());
-        }
-    }
-
     @Override
     public void process(WatchedEvent event) {
         LOGGER.warn("ServerZk::process, zkEvent: " + event);
@@ -294,19 +184,32 @@ public class ServerZk extends CommonZk {
             LOGGER.warn("ServerZk::process Just ignore this event.");
             return;
         }
-        String serviceName = event.getPath().substring(event.getPath().lastIndexOf("/") + 1);
-        ZkServiceInfo serviceInfo = serviceInfoByName.get(serviceName);
-        if (serviceInfo == null) {
-            LOGGER.warn("ServerZk::process, no such service: " + serviceName + " Just ignore this event.");
-            return;
-        }
+        String path = event.getPath();
 
         switch (event.getType()) {
             case NodeDataChanged:
+                String serviceName = event.getPath().substring(path.lastIndexOf("/") + 1);
+                ZkServiceInfo serviceInfo = serviceInfoByName.get(serviceName);
+                if (serviceInfo == null) {
+                    LOGGER.warn("ServerZk::process, no such service: " + serviceName + " Just ignore this event.");
+                    return;
+                }
                 if (event.getPath().startsWith(CONFIG_PATH)) {
-                    syncZkConfigInfo(serviceInfo);
+                    syncZkConfigInfo(serviceInfo, zk, this);
                 } else if (event.getPath().startsWith(FREQ_PATH)) {
                     syncZkFreqControl(serviceInfo);
+                }
+                break;
+            case NodeChildrenChanged:
+                RegisterContext registerContext = registerContextMap.get(event.getPath());
+                if (registerContext != null) {
+                    LOGGER.info("容器状态:{}, {}子节点发生变化，重新获取子节点...", ContainerFactory.getContainer().status(), event.getPath());
+                    if (ContainerFactory.getContainer().status() == Container.STATUS_SHUTTING
+                            || ContainerFactory.getContainer().status() == Container.STATUS_DOWN) {
+                        LOGGER.warn("Container is shutting down");
+                        return;
+                    }
+                    watchInstanceChange(registerContext);
                 }
                 break;
             default:
@@ -315,19 +218,35 @@ public class ServerZk extends CommonZk {
         }
     }
 
+    /**
+     * 注册服务信息到zk /soa/runtime/services节点
+     * @param path
+     * @param data
+     * @param context
+     */
     public void registerRuntimeNode(String path, String data, RegisterContext context) {
-        ZkUtils.createEphemeral(path, data, context, serverRuntimeInfoCreateCallback, zk);
-    }
-
-    public void registerPersistNode(String path, String data) {
-        ZkUtils.createPersistent(path, data, persistNodeCreateCallback, zk);
+        try {
+            ZkUtils.createEphemeral(path, data, zk);
+            registerContextMap.put(context.getServicePath(), context);
+            watchInstanceChange(context);
+        } catch (KeeperException e) {
+            LOGGER.error("ServerZk::registerPersistNode failed, zk status:" + zk.getState(), e);
+            if (e instanceof KeeperException.ConnectionLossException) {
+                if (zk.getState().isConnected()) {
+                    registerRuntimeNode(path, data, context);
+                }
+            }
+        } catch (InterruptedException e) {
+            LOGGER.error("ServerZk::registerPersistNode failed", e);
+        }
     }
 
     /**
      * 仅创建持久节点， 不监听
+     *
      * @param path
      */
-    public void createPersistNodeOnly(String path) {
+    void createPersistNodeOnly(String path) {
         ZkUtils.createPersistNodeOnly(path, zk);
     }
 
@@ -336,7 +255,7 @@ public class ServerZk extends CommonZk {
      * @param serviceKey   当前服务信息                eg com.github.user.UserService:1.0.0
      * @param instanceInfo 当前服务节点实例信息         eg  192.168.10.17:9081:1.0.0
      */
-    public boolean checkIsMaster(List<String> children, String serviceKey, String instanceInfo) {
+    private boolean checkIsMaster(List<String> children, String serviceKey, String instanceInfo) {
         if (children.size() <= 0) {
             return false;
         }
@@ -375,5 +294,71 @@ public class ServerZk extends CommonZk {
         }
 
         return _isMaster;
+    }
+
+    /**
+     * 监听服务节点下面的子节点（临时节点，实例信息）变化
+     */
+    private void watchInstanceChange(RegisterContext context) {
+        String watchPath = context.getServicePath();
+        try {
+            List<String> children = zk.getChildren(watchPath, event -> {
+                LOGGER.warn("ServerZk::watchInstanceChange zkEvent:" + event);
+                //Children发生变化，则重新获取最新的services列表
+                if (event.getType() == Watcher.Event.EventType.NodeChildrenChanged) {
+                    LOGGER.info("容器状态:{}, {}子节点发生变化，重新获取子节点...", ContainerFactory.getContainer().status(), event.getPath());
+                    if (ContainerFactory.getContainer().status() == Container.STATUS_SHUTTING
+                            || ContainerFactory.getContainer().status() == Container.STATUS_DOWN) {
+                        LOGGER.warn("Container is shutting down");
+                        return;
+                    }
+                    watchInstanceChange(context);
+                }
+            });
+            boolean _isMaster = false;
+            if (children.size() > 0) {
+                _isMaster = checkIsMaster(children, MasterHelper.generateKey(context.getService(), context.getVersion()), context.getInstanceInfo());
+            }
+            //masterChange响应
+            LifecycleProcessorFactory.getLifecycleProcessor().onLifecycleEvent(
+                    new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.MASTER_CHANGE,
+                            context.getService(), _isMaster));
+        } catch (KeeperException | InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
+            registerRuntimeNode(context.getServicePath() + "/" + context.getInstanceInfo(), "", context);
+        }
+    }
+
+
+    private void resyncZkInfos() {
+        synchronized (serviceInfoByName) {
+            if (!serviceInfoByName.isEmpty()) {
+                serviceInfoByName.values().forEach(serviceInfo -> {
+                    syncZkConfigInfo(serviceInfo, zk, this);
+                    if (SoaSystemEnvProperties.SOA_FREQ_LIMIT_ENABLE) {
+                        syncZkFreqControl(serviceInfo);
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * 获取 zookeeper 上的 限流规则 freqRule
+     *
+     * @return
+     */
+    private void syncZkFreqControl(ZkServiceInfo serviceInfo) {
+        if (zk == null || !zk.getState().isConnected()) {
+            LOGGER.warn(getClass() + "::syncZkFreqControl zk is not ready, status:"
+                    + (zk == null ? null : zk.getState()));
+            return;
+        }
+        try {
+            byte[] data = zk.getData(FREQ_PATH + "/" + serviceInfo.serviceName(), this, null);
+            serviceInfo.freqControl(ZkDataProcessor.processFreqRuleData(serviceInfo.serviceName(), data));
+        } catch (KeeperException | InterruptedException e) {
+            LOGGER.error("获取freq 节点: {} 出现异常", serviceInfo.serviceName());
+        }
     }
 }

@@ -1,26 +1,49 @@
 package com.github.dapeng.registry.zookeeper;
 
-import com.github.dapeng.core.FreqControlRule;
-import com.github.dapeng.core.ServiceFreqControl;
-import com.github.dapeng.core.SoaException;
-import com.github.dapeng.core.helper.IPUtils;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.regex.Pattern;
-
-import static com.github.dapeng.core.SoaCode.FreqConfigError;
+import java.util.List;
 
 public class ZkUtils {
     private final static Logger LOGGER = LoggerFactory.getLogger(ZkUtils.class);
 
+    final static String RUNTIME_PATH = "/soa/runtime/services";
+    final static String CONFIG_PATH = "/soa/config/services";
+    final static String ROUTES_PATH = "/soa/config/routes";
+    final static String FREQ_PATH = "/soa/config/freq";
+
+    public static void syncZkConfigInfo(ZkServiceInfo zkInfo, ZooKeeper zk, Watcher watcher) {
+        if (zk == null || !zk.getState().isConnected()) {
+            LOGGER.warn(ZkUtils.class + "::syncZkConfigInfo zk is not ready, status:"
+                    + (zk == null ? null : zk.getState()));
+            return;
+        }
+        //1.获取 globalConfig  异步模式
+        try {
+            byte[] data = zk.getData(CONFIG_PATH, watcher, null);
+            ZkDataProcessor.processZkConfig(data, zkInfo, true);
+        } catch (KeeperException | InterruptedException e) {
+            LOGGER.error("CommonZk::syncZkConfigInfo failed, zk status:" + zk.getState(), e);
+        }
+
+        // 2. 获取 service
+        String configPath = CONFIG_PATH + "/" + zkInfo.serviceName();
+
+        // zk config 有具体的service节点存在时，这一步在异步callback中进行判断
+        try {
+            byte[] data = zk.getData(configPath, watcher, null);
+            ZkDataProcessor.processZkConfig(data, zkInfo, false);
+        } catch (KeeperException | InterruptedException e) {
+            LOGGER.error("CommonZk::syncZkConfigInfo failed, zk status:" + zk.getState(), e);
+        }
+    }
     /**
      * 异步添加serverInfo,为临时有序节点，如果server挂了就木有了
      */
-    public static void createEphemeral(String path, String data, Object context, AsyncCallback.StringCallback callback, ZooKeeper zkClient) {
+    public static void createEphemeral(String path, String data, ZooKeeper zkClient) throws KeeperException, InterruptedException {
         // 如果存在重复的临时节点， 删除之。
         // 由于目前临时节点采用CreateMode.EPHEMERAL_SEQUENTIAL的方式， 会自动带有一个序号(ip:port:version:seq)，
         // 故判重方式需要比较(ip:port:version)即可
@@ -37,11 +60,11 @@ public class ZkUtils {
                     }
                 }
             } catch (KeeperException | InterruptedException e) {
-                LOGGER.error("ServerZk::createEphemeral delete exist nodes failed", e);
+                LOGGER.error("ServerZk::createEphemeral delete exist nodes failed, zk status:" + zkClient.getState(), e);
             }
         }
         //serverInfoCreateCallback
-        zkClient.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, callback, context);
+        zkClient.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
     }
 
     /**
@@ -50,14 +73,14 @@ public class ZkUtils {
      * @param path
      * @param data
      */
-    public static void createPersistent(String path, String data, AsyncCallback.StringCallback callback, ZooKeeper zkClient) {
+    public static void createPersistent(String path, String data, ZooKeeper zkClient) throws KeeperException, InterruptedException {
         int i = path.lastIndexOf("/");
         if (i > 0) {
             String parentPath = path.substring(0, i);
             createPersistNodeOnly(parentPath, zkClient);
         }
         if (!exists(path, zkClient)) {
-            zkClient.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, callback, data);
+            zkClient.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
     }
 
@@ -78,7 +101,7 @@ public class ZkUtils {
         try {
             zkClient.create(path, "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         } catch (KeeperException | InterruptedException e) {
-            LOGGER.error("ZkUtils::createPersistNodeOnly failed", e);
+            LOGGER.error("ZkUtils::createPersistNodeOnly failed, zk status:" + zkClient.getState(), e);
         }
     }
 
@@ -90,7 +113,7 @@ public class ZkUtils {
             Stat exists = zkClient.exists(path, false);
             return exists != null;
         } catch (Throwable t) {
-            LOGGER.error(ZkUtils.class + "::exists: " + t.getMessage(), t);
+            LOGGER.error(ZkUtils.class + "::exists check failed, zk status:" + zkClient.getState(), t);
         }
         return false;
     }
