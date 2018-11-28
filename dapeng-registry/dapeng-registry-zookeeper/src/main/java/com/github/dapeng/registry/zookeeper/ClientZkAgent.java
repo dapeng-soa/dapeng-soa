@@ -212,9 +212,9 @@ public class ClientZkAgent extends CommonZk {
             } else {
                 try {
                     // zk服务端重建的时候，dapeng服务可能没来得及注册， 多试两次即可
-                    List<String> childrens = zk.getChildren(servicePath, this);
+                    List<String> children = zk.getChildren(servicePath, this);
 
-                    if (childrens.size() == 0) {
+                    if (children.size() == 0) {
                         serviceInfo.runtimeInstances().clear();
                         LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo["
                                 + serviceInfo.serviceName() + "]:no service instances found");
@@ -224,21 +224,10 @@ public class ClientZkAgent extends CommonZk {
                     LOGGER.info(getClass().getSimpleName() + "::syncZkRuntimeInfo["
                             + serviceInfo.serviceName() + "], 获取" + servicePath + "的子节点成功");
 
-                    //todo abstract as a function
-                    List<RuntimeInstance> runtimeInstances = new ArrayList<>(8);
-                    //child = 10.168.13.96:9085:1.0.0:0000000300
-                    for (String children : childrens) {
-                        String[] infos = children.split(":");
-                        RuntimeInstance instance = new RuntimeInstance(serviceInfo.serviceName(),
-                                infos[0], Integer.valueOf(infos[1]), infos[2]);
-                        runtimeInstances.add(instance);
-                    }
-
                     // copyOnWriteArrayList
                     List<RuntimeInstance> runtimeInstanceList = serviceInfo.runtimeInstances();
-                    //这里要clear掉，因为接下来会重新将实例信息放入list中，不清理会导致重复...
                     runtimeInstanceList.clear();
-                    runtimeInstanceList.addAll(runtimeInstances);
+                    runtimeInstanceList.addAll(getRuntimeInstances(children, serviceInfo.serviceName()));
 
                     LOGGER.info("ClientZk::syncZkRuntimeInfo 触发服务实例同步，目前服务实例列表: "
                             + serviceInfo.serviceName() + " -> " + serviceInfo.runtimeInstances());
@@ -249,6 +238,19 @@ public class ClientZkAgent extends CommonZk {
                 }
             }
         } while (retry-- > 0);
+    }
+
+    List<RuntimeInstance> getRuntimeInstances(List<String> children, String serviceName) {
+        List<RuntimeInstance> runtimeInstances = new ArrayList<>(8);
+        //child = 10.168.13.96:9085:1.0.0:0000000300
+        for (String child : children) {
+            String[] infos = child.split(":");
+            RuntimeInstance instance = new RuntimeInstance(serviceName,
+                    infos[0], Integer.valueOf(infos[1]), infos[2]);
+            runtimeInstances.add(instance);
+        }
+
+        return runtimeInstances;
     }
 
     /**

@@ -51,6 +51,9 @@ package com.github.dapeng.basic.api.counter.domain;
           
             /**
             *
+
+ 时间戳
+
             **/
             public long timestamp ;
             public long getTimestamp(){ return this.timestamp; }
