@@ -138,11 +138,6 @@ public class ServerZk implements Watcher {
 
     }
 
-    void setZookeeperHost(String zkHost) {
-        this.zkHost = zkHost;
-    }
-
-
     /**
      * 获取zk 配置信息，封装到 ZkConfigInfo
      * 加入并发考虑
@@ -268,6 +263,10 @@ public class ServerZk implements Watcher {
      */
     void createPersistNodeOnly(String path) {
         ZkUtils.createPersistNodeOnly(path, zk);
+    }
+
+    void setZookeeperHost(String zkHost) {
+        this.zkHost = zkHost;
     }
 
     /**
