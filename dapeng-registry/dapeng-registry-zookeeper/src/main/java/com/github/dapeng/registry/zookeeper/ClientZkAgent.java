@@ -242,7 +242,7 @@ public class ClientZkAgent implements Watcher {
                             + serviceInfo.serviceName() + " -> " + serviceInfo.runtimeInstances());
                     return;
                 } catch (KeeperException | InterruptedException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    LOGGER.error(getClass() + "::syncZkRuntimeInfo serviceName: " + serviceInfo.serviceName() + " 出现异常, zkStatus:" + zk.getState(), e);
                     sleep(300);
                 }
             }
@@ -283,7 +283,7 @@ public class ClientZkAgent implements Watcher {
                     LOGGER.warn("ClientZk::getRoutes routes changes:" + serviceInfo.routes());
                     return;
                 } catch (KeeperException | InterruptedException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    LOGGER.error(getClass() + "::syncZkRouteInfo serviceName: " + serviceInfo.serviceName() + " 出现异常, zkStatus:" + zk.getState(), e);
                     sleep(300);
                 }
             }

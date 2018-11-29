@@ -6,7 +6,6 @@ import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.*;
-import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +68,7 @@ public class ServerZkAgentImpl implements RegistryAgent {
         try {
             //fixme
             String path = "/soa/runtime/services/" + serverName;
-            String instPath =  SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
+            String instPath = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
             LOGGER.info(" logger zookeeper unRegister service: " + path);
             serverZk.unregisterRuntimeNode(path, instPath);
         } catch (Exception e) {
@@ -84,14 +83,14 @@ public class ServerZkAgentImpl implements RegistryAgent {
             String servicePath = RUNTIME_PATH + "/" + serverName;
             String instanceInfo = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
 
-            RegisterContext registerContext = new RegisterContext(serverName, versionName, servicePath, instanceInfo);
+            RegisterInfo registerInfo = new RegisterInfo(serverName, versionName, servicePath, instanceInfo);
             if (ContainerFactory.getContainer().status() == Container.STATUS_SHUTTING
                     || ContainerFactory.getContainer().status() == Container.STATUS_DOWN) {
                 LOGGER.warn("Container is shutting down");
                 return;
             }
             // 注册服务 runtime 实例 到 zk
-            serverZk.registerRuntimeNode(path, "", registerContext);
+            serverZk.registerRuntimeNode(path, "", registerInfo);
 
             // 创建  zk  config 服务 持久节点  eg:  /soa/config/com.github.dapeng.soa.UserService
             serverZk.createPersistNodeOnly(CONFIG_PATH + "/" + serverName);
@@ -100,9 +99,7 @@ public class ServerZkAgentImpl implements RegistryAgent {
             serverZk.createPersistNodeOnly(ROUTES_PATH + "/" + serverName);
 
             // 创建限流节点
-            if (SoaSystemEnvProperties.SOA_FREQ_LIMIT_ENABLE) {
-                serverZk.createPersistNodeOnly(FREQ_PATH + "/" + serverName);
-            }
+            serverZk.createPersistNodeOnly(FREQ_PATH + "/" + serverName);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }

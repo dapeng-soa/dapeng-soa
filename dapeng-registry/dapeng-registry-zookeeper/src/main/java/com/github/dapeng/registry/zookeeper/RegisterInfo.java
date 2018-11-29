@@ -1,31 +1,31 @@
 package com.github.dapeng.registry.zookeeper;
 
 /**
- * 描述:  服务注册上下文，包括服务名，版本，注册到zk 的 path
+ * 描述:  服务注册信息，包括服务名，版本，注册到zk 的 path
  *
  * @author hz.lei
  * @date 2018年03月20日 下午11:09
  */
-public class RegisterContext {
+public class RegisterInfo {
     /**
      * 服务名
      */
-    private String service;
+    private final String service;
     /**
      * 版本号
      */
-    private String version;
+    private final String version;
 
     /**
      * like /soa/runtime/services/com.api.UserService
      */
-    private String servicePath;
+    private final String servicePath;
     /**
      * like 192.168.1.121:9081:1.0.0
      */
-    private String instanceInfo;
+    private final String instanceInfo;
 
-    public RegisterContext(String service, String version, String servicePath, String instanceInfo) {
+    public RegisterInfo(final String service, final String version, final String servicePath, final String instanceInfo) {
         this.service = service;
         this.version = version;
         this.servicePath = servicePath;
@@ -36,16 +36,8 @@ public class RegisterContext {
         return service;
     }
 
-    public void setService(String service) {
-        this.service = service;
-    }
-
     public String getVersion() {
         return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
     }
 
 
@@ -53,15 +45,7 @@ public class RegisterContext {
         return servicePath;
     }
 
-    public void setServicePath(String servicePath) {
-        this.servicePath = servicePath;
-    }
-
     public String getInstanceInfo() {
         return instanceInfo;
-    }
-
-    public void setInstanceInfo(String instanceInfo) {
-        this.instanceInfo = instanceInfo;
     }
 }
