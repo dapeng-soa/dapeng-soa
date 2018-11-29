@@ -13,16 +13,14 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
-import io.netty.util.Attribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static com.github.dapeng.api.Container.STATUS_RUNNING;
+import static com.github.dapeng.api.Container.STATUS_SHUTTING;
 import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
 
 /**
@@ -51,17 +49,19 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(getClass().getSimpleName() + "::encode");
         }
-        //容器不是运行状态
-        if (container.status() != STATUS_RUNNING) {
+
+        SoaHeader soaHeader = transactionContext.getHeader();
+        Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
+
+        //容器不是运行状态或者将要关闭状态
+        if (application == null) {
+            LOGGER.error(getClass() + "::encode application is null, container status:" + container.status());
             writeErrorResponse(transactionContext, out);
+            return;
         }
 
         try {
-            SoaHeader soaHeader = transactionContext.getHeader();
             Optional<String> respCode = soaHeader.getRespCode();
-
-            Application application = container.getApplication(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
-
 
             if (respCode.isPresent() && !respCode.get().equals(SOA_NORMAL_RESP_CODE)) {
                 writeErrorResponse(transactionContext, application, out);
@@ -91,7 +91,8 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     }
                     messageProcessor.writeMessageEnd();
                     transport.flush();
-
+                    //请求返回，容器请求数 -1
+                    container.requestCounter().decrementAndGet();
                     if (LOGGER.isDebugEnabled()) {
                         String debugLog = "response[seqId:" + transactionContext.seqId() + ", respCode:" + respCode.get() + "]:"
                                 + "service[" + soaHeader.getServiceName()
@@ -174,7 +175,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             messageProcessor.writeMessageEnd();
 
             transport.flush();
-            MdcCtxInfoUtil.putMdcToAppClassLoader(application, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID,
+            MdcCtxInfoUtil.putMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID,
                     transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
             String infoLog = "response[seqId:" + transactionContext.seqId() + ", respCode:" + soaHeader.getRespCode().get() + "]:"
                     + "service[" + soaHeader.getServiceName()
@@ -194,7 +195,9 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
-            MdcCtxInfoUtil.removeMdcToAppClassLoader(application, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+            //请求返回，容器请求数 -1
+            container.requestCounter().decrementAndGet();
+            MdcCtxInfoUtil.removeMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
             MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         }
     }
@@ -208,6 +211,11 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
     private void writeErrorResponse(TransactionContext transactionContext,
                                     ByteBuf out) {
         SoaHeader soaHeader = transactionContext.getHeader();
+        // make sure responseCode of error responses do not equal to SOA_NORMAL_RESP_CODE
+        if (soaHeader.getRespCode().isPresent() && soaHeader.getRespCode().get().equals(SOA_NORMAL_RESP_CODE)) {
+            soaHeader.setRespCode(SoaCode.ContainerStatusError.getCode());
+            soaHeader.setRespMessage(SoaCode.ContainerStatusError.getMsg());
+        }
         SoaException soaException = transactionContext.soaException();
         if (soaException == null) {
             soaException = new SoaException(soaHeader.getRespCode().orElse(SoaCode.ContainerStatusError.getCode()),
@@ -237,6 +245,8 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
+            //请求返回，容器请求数 -1
+            container.requestCounter().decrementAndGet();
             MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         }
     }

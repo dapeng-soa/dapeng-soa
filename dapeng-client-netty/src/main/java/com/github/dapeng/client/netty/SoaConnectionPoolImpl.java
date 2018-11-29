@@ -234,7 +234,11 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         injectCookie(service, method, version);
 
         // router
-        List<RuntimeInstance> routedInstances = router(service, method, version, checkVersionInstances);
+        // 把路由需要用到的条件放到InvocationContext中
+        capsuleContext(context, service, method, version);
+
+        // router
+        List<RuntimeInstance> routedInstances = router(service, checkVersionInstances);
         if (routedInstances == null || routedInstances.isEmpty()) {
             logger.error(getClass().getSimpleName() + "::findConnection[service: " + service + "], not found available instances by routing rules");
             throw new SoaException(NoMatchedRouting, "服务 [ " + service + " ] 无可用实例:路由规则没有解析到可运行的实例");
@@ -253,6 +257,30 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         context.versionName(inst.version);
 
         return SubPoolFactory.getSubPool(inst.ip, inst.port).getConnection();
+    }
+
+    /**
+     * 封装InvocationContext， 把路由需要用到的东西放到InvocationContext中。
+     *
+     * @param context
+     * @param service
+     * @param method
+     * @param version
+     */
+    private void capsuleContext(InvocationContextImpl context, String service, String method, String version) {
+        context.serviceName(service);
+        context.methodName(method);
+        context.versionName(version);
+
+        InvocationContextImpl.InvocationContextProxy invocationCtxProxy = InvocationContextImpl.Factory.getInvocationContextProxy();
+
+        if (invocationCtxProxy != null) {
+            context.userIp(invocationCtxProxy.userIp().orElse(null));
+            context.userId(invocationCtxProxy.userId().orElse(null));
+            context.operatorId(invocationCtxProxy.operatorId().orElse(null));
+            context.callerMid(invocationCtxProxy.callerMid().orElse(null));
+            context.cookies(invocationCtxProxy.cookies());
+        }
     }
 
     /**
@@ -276,21 +304,16 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      * 服务路由
      *
      * @param service
-     * @param method
-     * @param version
      * @param compatibles
      * @return
      */
-    private List<RuntimeInstance> router(String service, String method, String version, List<RuntimeInstance> compatibles) throws SoaException {
+    private List<RuntimeInstance> router(String service, List<RuntimeInstance> compatibles) throws SoaException {
+        InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         List<Route> routes = zkAgent.getRoutes(service);
         if (routes == null || routes.size() == 0) {
             logger.debug("router 获取 路由信息为空或size为0,跳过router,服务实例数：{}", compatibles.size());
             return compatibles;
         } else {
-            InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-            context.serviceName(service);
-            context.methodName(method);
-            context.versionName(version);
             List<RuntimeInstance> runtimeInstances = RoutesExecutor.executeRoutes(context, routes, compatibles);
             if (runtimeInstances.size() == 0) {
                 throw new SoaException(SoaCode.NoMatchedRouting);
@@ -413,9 +436,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
     /**
      * 超时逻辑:
      * 1. 如果invocationContext有设置的话, 那么用invocationContext的(这个值每次调用都可能不一样)
-     * 2. invocationContext没有的话, 就拿Option的(命令行或者环境变量)
-     * 3. 没设置Option的话, 那么取ZK的.
-     * 4. ZK没有的话, 拿IDL的(暂没实现该参数)
+     * 2. invocationContext没有的话, 就拿ZK设置的
+     * 3. ZK没有设置的话, 那么取Option的(命令行或者环境变量)
+     * 4. 没设置Option的话, 拿IDL的(暂没实现该参数)
      * 5. 都没有的话, 拿默认值.(这个值所有方法一致, 假设为50S)
      * <p>
      * 最后校验一下,拿到的值不能超过系统设置的最大值
@@ -441,12 +464,12 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         Optional<Long> timeout;
         if (invocationTimeout.isPresent()) {
             timeout = invocationTimeout.map(Long::valueOf);
+        } else if (zkTimeout.isPresent()) {
+            timeout = zkTimeout;
         } else if (envTimeout.isPresent()) {
             timeout = envTimeout;
         } else if (idlTimeout.isPresent()) {
             timeout = idlTimeout;
-        } else if (zkTimeout.isPresent()) {
-            timeout = zkTimeout;
         } else {
             timeout = Optional.of(defaultTimeout);
         }

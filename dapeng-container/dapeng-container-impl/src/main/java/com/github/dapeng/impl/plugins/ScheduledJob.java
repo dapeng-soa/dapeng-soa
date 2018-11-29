@@ -53,7 +53,7 @@ public class ScheduledJob implements Job {
 //        SoaProcessFunction<Object, Object, Object, ? extends TCommonBeanSerializer<Object>, ? extends TCommonBeanSerializer<Object>> soaProcessFunction =
 //                (SoaProcessFunction<Object, Object, Object, ? extends TCommonBeanSerializer<Object>, ? extends TCommonBeanSerializer<Object>>) data.get("function");
         Object iface = data.get("iface");
-        MdcCtxInfoUtil.putMdcToAppClassLoader(application, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
+        MdcCtxInfoUtil.putMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
         try {
             if (soaServiceDefinition.isAsync) {
                 SoaFunctionDefinition.Async<Object, Object, Object> functionDefinition = (SoaFunctionDefinition.Async<Object, Object, Object>) data.get("function");
@@ -68,7 +68,7 @@ public class ScheduledJob implements Job {
             logger.error(e.getMessage(), e);
         } finally {
             MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
-            MdcCtxInfoUtil.removeMdcToAppClassLoader(application, SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+            MdcCtxInfoUtil.removeMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
             InvocationContextImpl.Factory.removeCurrentInstance();
         }
 

@@ -32,6 +32,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_SHUTDOWN_TIMEOUT;
 
 public class DapengContainer implements Container {
 
@@ -48,6 +51,8 @@ public class DapengContainer implements Container {
      * 容器状态, 初始状态为STATUS_UNKNOWN
      */
     private static int status = STATUS_UNKNOWN;
+
+    private static AtomicInteger requestCounter = new AtomicInteger(0);
 
     private final static CountDownLatch SHUTDOWN_SIGNAL = new CountDownLatch(1);
 
@@ -236,12 +241,11 @@ public class DapengContainer implements Container {
                 status = STATUS_SHUTTING;
                 // fixme not so graceful
                 getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
+
+                //重试3次，保证容器内请求已完成
+                retryCompareCounter();
+
                 Lists.reverse(getPlugins()).stream().filter(plugin -> !(plugin instanceof ZookeeperRegistryPlugin)).forEach(Plugin::stop);
-                try {
-                    Thread.sleep(4000);
-                } catch (InterruptedException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
                 SHUTDOWN_SIGNAL.countDown();
                 LOGGER.warn("Container graceful shutdown end.");
             }
@@ -261,6 +265,40 @@ public class DapengContainer implements Container {
     @Override
     public int status() {
         return status;
+    }
+
+    @Override
+    public AtomicInteger requestCounter() {
+        return requestCounter;
+    }
+
+    public void retryCompareCounter() {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Retry to ensure requests processing is complete");
+        }
+
+        LOGGER.warn("容器内尚余[" + requestCounter.get() + "]个请求还未处理，现在等待[" + SOA_SHUTDOWN_TIMEOUT + "ms]");
+
+        int retry = 5;
+        long sleepTime = SOA_SHUTDOWN_TIMEOUT / retry;
+        do {
+            if (requestCounter.intValue() <= 0) {
+                return;
+            } else {
+                try {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("requests haven't been processed  completely, sleep " + sleepTime + "ms");
+                    }
+                    Thread.sleep(sleepTime);
+                } catch (InterruptedException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+            }
+        } while (--retry > 0);
+
+        if (requestCounter.intValue() != 0) {
+            LOGGER.warn(retry + "次等待共[" + SOA_SHUTDOWN_TIMEOUT + "ms]之后，容器内尚余[" + requestCounter.get() + "]个请求还未处理完，容器即将关闭...");
+        }
     }
 
     public static InputStream loadInputStreamInClassLoader(String path) throws FileNotFoundException {
