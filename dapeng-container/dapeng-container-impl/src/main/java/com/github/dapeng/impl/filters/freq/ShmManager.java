@@ -117,6 +117,9 @@ public class ShmManager {
         unsafe = (Unsafe) f.get(null);
 
         File file = new File(SoaSystemEnvProperties.SOA_FREQ_SHM_DATA);
+        if (!file.exists()) {
+            file.createNewFile();
+        }
         RandomAccessFile access = new RandomAccessFile(file, "rw");
 
         buffer = access.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, TOTAL_MEM_BYTES);
