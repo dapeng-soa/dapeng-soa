@@ -87,6 +87,11 @@ public interface Token {
     int COMMA = 15;
 
     /**
+     * cookie 设置 cookie值
+     */
+    int COOKIE = 16;
+
+    /**
      * token 类型 type
      *
      * @return

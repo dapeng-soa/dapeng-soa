@@ -30,15 +30,15 @@ import static com.github.dapeng.registry.zookeeper.ZkUtils.*;
  * @date 2018-03-20
  */
 public class ServerZk implements Watcher {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerZk.class);
-
+    /**
+     * 服务注册代理 agent
+     */
     private RegistryAgent registryAgent;
 
     private ZooKeeper zk;
 
     private String zkHost = SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST;
-
 
     /**
      * zk 配置 缓存 ，根据 serivceName + versionName 作为 key
@@ -72,7 +72,6 @@ public class ServerZk implements Watcher {
             zk = new ZooKeeper(zkHost, 30000, watchedEvent -> {
                 LOGGER.warn("ServerZk::connect zkEvent:" + watchedEvent);
                 switch (watchedEvent.getState()) {
-
                     case Expired:
                         //超时事件发生在Disconnected事件之后(如果断开连接后，sessionTimeout时间过了之后才连上zk服务端的话，就会产生Expired Event)
                         LOGGER.info("ServerZk session timeout to  {} [Zookeeper]", zkHost);

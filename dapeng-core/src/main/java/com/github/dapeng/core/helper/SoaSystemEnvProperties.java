@@ -11,6 +11,8 @@ public class SoaSystemEnvProperties {
     public static final long SOA_MAX_TIMEOUT = 300000L;
     public static final long SOA_DEFAULT_TIMEOUT = 1000L;
 
+    public static final String THREAD_LEVEL_KEY = "thread-log-level";
+
     /**
      * 容器IP
      */
@@ -38,7 +40,7 @@ public class SoaSystemEnvProperties {
      */
     private static final String KEY_SOA_ZOOKEEPER_HOST = "soa.zookeeper.host";
     /**
-     *是否使用 灰度 zk (需要时配置IP:2181)
+     * 是否使用 灰度 zk (需要时配置IP:2181)
      */
     private static final String KEY_SOA_ZOOKEEPER_FALLBACK_HOST = "soa.zookeeper.fallback.host";
     /**
@@ -94,9 +96,9 @@ public class SoaSystemEnvProperties {
      */
     private static final String KEY_SOA_FILTER_INCLUDES = "soa.filter.includes";
 
-     /**
-      * subPool 连接数， 单个客户端跟单个服务节点之间的连接数， 默认是1
-      */
+    /**
+     * subPool 连接数， 单个客户端跟单个服务节点之间的连接数， 默认是1
+     */
     private static final String KEY_SOA_SUBPOOL_SIZE = "soa.subPool.size";
 
 
@@ -130,7 +132,6 @@ public class SoaSystemEnvProperties {
     private static final String KEY_SOA_SHUTDOWN_TIMEOUT = "soa.shutdown.timeout";
 
 
-
     public static final String SOA_ZOOKEEPER_HOST = get(KEY_SOA_ZOOKEEPER_HOST, "127.0.0.1:2181");
     public static final boolean SOA_POOLED_BYTEBUF = get(KEY_SOA_BYTEBUF_ALLOCATOR, "pooled").equals("pooled");
 
@@ -159,7 +160,7 @@ public class SoaSystemEnvProperties {
     public static final String SOA_FILTER_EXCLUDES = get(KEY_SOA_FILTER_EXCLUDES, "");
     public static final String SOA_FILTER_INCLUDES = get(KEY_SOA_FILTER_INCLUDES, "");
 
-    public static final int SOA_SUBPOOL_SIZE = Integer.valueOf(get(KEY_SOA_SUBPOOL_SIZE,"1"));
+    public static final int SOA_SUBPOOL_SIZE = Integer.valueOf(get(KEY_SOA_SUBPOOL_SIZE, "1"));
     /**
      * 默认服务处理最大时间为10s, 超过即认为是慢服务
      */
@@ -168,8 +169,8 @@ public class SoaSystemEnvProperties {
 
 
     /*
-    * 数据库加密配置
-    * */
+     * 数据库加密配置
+     * */
     public static final String SOA_DATABASE_ENCRYPT_PUBLICKEY = get(KEY_SOA_DATABASE_ENCRYPT_PUBLICKEY, null);
     public static final boolean SOA_DATABASE_ENCRYPT_ENABLE = Boolean.valueOf(get(KEY_SOA_DATABASE_ENCRYPT_ENABLE, "false"));
 
@@ -184,7 +185,6 @@ public class SoaSystemEnvProperties {
     public static final Integer SOA_INSTANCE_WEIGHT = Integer.valueOf(get(KEY_SOA_INSTANCE_WEIGHT, "100"));
 
     public static final long SOA_SHUTDOWN_TIMEOUT = Long.valueOf(get(KEY_SOA_SHUTDOWN_TIMEOUT, "10000"));
-
 
     public static String get(String key) {
         return get(key, null);
@@ -201,8 +201,6 @@ public class SoaSystemEnvProperties {
     private static boolean isNotBlank(String val) {
         return val != null && !val.trim().isEmpty();
     }
-
-
 
 
     /*---暂时未使用的环境变量名称-------------------------------------*/

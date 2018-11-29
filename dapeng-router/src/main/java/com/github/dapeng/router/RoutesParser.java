@@ -44,7 +44,7 @@ public class RoutesParser {
 
     private static Logger logger = LoggerFactory.getLogger(RoutesParser.class);
 
-    private RoutesLexer lexer;
+    protected RoutesLexer lexer;
 
     public RoutesParser(RoutesLexer lexer) {
         this.lexer = lexer;
@@ -276,15 +276,15 @@ public class RoutesParser {
     }
 
 
-    private void error(String errorInfo) {
+    protected void error(String errorInfo) {
         logger.error(errorInfo);
     }
 
-    private void warn(String errorInfo) {
+    protected void warn(String errorInfo) {
         logger.warn(errorInfo);
     }
 
-    private void validate(Token target, Token... expects) {
+    protected void validate(Token target, Token... expects) {
         boolean flag = false;
         for (Token expect : expects) {
             if (target == expect) {

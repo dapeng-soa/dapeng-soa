@@ -58,7 +58,7 @@ public class RoutesExecutor {
 
                     if (logger.isDebugEnabled()) {
                         StringBuilder append = new StringBuilder();
-                        instances.forEach(ins -> append.append(ins.toString() + " "));
+                        instances.forEach(ins -> append.append(ins.toString()).append(" "));
                         logger.debug(RoutesExecutor.class.getSimpleName() + "::route left " + route.getLeft().toString() +
                                         "::executeRoutes过滤结果 size: {}, 实例: {}",
                                 instances.size(), append.toString());
@@ -84,7 +84,7 @@ public class RoutesExecutor {
      * @param left
      * @return
      */
-    private static boolean matchCondition(InvocationContextImpl ctx, Condition left) {
+    protected static boolean matchCondition(InvocationContextImpl ctx, Condition left) {
         if (left instanceof Otherwise) {
             return true;
         }

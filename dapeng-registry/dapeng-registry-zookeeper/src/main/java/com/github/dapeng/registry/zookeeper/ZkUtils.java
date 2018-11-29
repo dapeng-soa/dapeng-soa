@@ -13,6 +13,7 @@ public class ZkUtils {
     final static String RUNTIME_PATH = "/soa/runtime/services";
     final static String CONFIG_PATH = "/soa/config/services";
     final static String ROUTES_PATH = "/soa/config/routes";
+    final static String COOKIE_RULES_PATH = "/soa/config/cookies";
     final static String FREQ_PATH = "/soa/config/freq";
 
     public static void syncZkConfigInfo(ZkServiceInfo zkInfo, ZooKeeper zk, Watcher watcher) {
