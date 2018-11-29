@@ -108,8 +108,10 @@ public class ClientZkAgent implements Watcher {
                 syncZkRuntimeInfo(serviceInfo);
                 break;
             case NodeDataChanged:
-                if (event.getPath().startsWith(CONFIG_PATH)) {
-                    syncZkConfigInfo(serviceInfo, zk, this);
+                if (event.getPath().equals(CONFIG_PATH)) {
+                    syncZkConfigInfo(serviceInfo, zk, this, true);
+                } else if (event.getPath().startsWith(CONFIG_PATH)) {
+                    syncZkConfigInfo(serviceInfo, zk, this, false);
                 } else if (event.getPath().startsWith(ROUTES_PATH)) {
                     syncZkRouteInfo(serviceInfo);
                 } else if (event.getPath().startsWith(COOKIE_RULES_PATH)) {
@@ -197,7 +199,8 @@ public class ClientZkAgent implements Watcher {
             // sync router config
             syncZkRouteInfo(serviceInfo);
             // sync service config, no need to try 5 times any more
-            syncZkConfigInfo(serviceInfo, zk, this);
+            syncZkConfigInfo(serviceInfo, zk, this, true);
+            syncZkConfigInfo(serviceInfo, zk, this, false);
             // sync cookie injection rule
             syncZkCookieRuleInfo(serviceInfo);
 
@@ -298,6 +301,7 @@ public class ClientZkAgent implements Watcher {
 
     /**
      * 同步cookie注入的规则
+     *
      * @param serviceInfo
      */
     private void syncZkCookieRuleInfo(ZkServiceInfo serviceInfo) {
@@ -342,6 +346,7 @@ public class ClientZkAgent implements Watcher {
 
     /**
      * sleep for time ms
+     *
      * @param time
      */
     private void sleep(long time) {

@@ -152,7 +152,8 @@ public class ServerZk implements Watcher {
                     info = new ZkServiceInfo(serviceName, new CopyOnWriteArrayList<>());
                     try {
                         // when container is shutdown, zk is down and will throw execptions
-                        syncZkConfigInfo(info, zk, this);
+                        syncZkConfigInfo(info, zk, this, true);
+                        syncZkConfigInfo(info, zk, this, false);
                         syncZkFreqControl(info);
                         serviceInfoByName.put(serviceName, info);
                     } catch (Throwable e) {
@@ -183,8 +184,10 @@ public class ServerZk implements Watcher {
                     LOGGER.warn("ServerZk::process, no such service: " + serviceName + " Just ignore this event.");
                     return;
                 }
-                if (event.getPath().startsWith(CONFIG_PATH)) {
-                    syncZkConfigInfo(serviceInfo, zk, this);
+                if (event.getPath().equals(CONFIG_PATH)) {
+                    syncZkConfigInfo(serviceInfo, zk, this, true);
+                } else if (event.getPath().startsWith(CONFIG_PATH)) {
+                    syncZkConfigInfo(serviceInfo, zk, this, false);
                 } else if (event.getPath().startsWith(FREQ_PATH)) {
                     syncZkFreqControl(serviceInfo);
                 }
@@ -284,7 +287,8 @@ public class ServerZk implements Watcher {
         synchronized (serviceInfoByName) {
             if (!serviceInfoByName.isEmpty()) {
                 serviceInfoByName.values().forEach(serviceInfo -> {
-                    syncZkConfigInfo(serviceInfo, zk, this);
+                    syncZkConfigInfo(serviceInfo, zk, this, true);
+                    syncZkConfigInfo(serviceInfo, zk, this, false);
                     syncZkFreqControl(serviceInfo);
                 });
             }

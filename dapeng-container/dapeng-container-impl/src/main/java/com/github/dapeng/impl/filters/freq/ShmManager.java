@@ -118,7 +118,11 @@ public class ShmManager {
 
         File file = new File(SoaSystemEnvProperties.SOA_FREQ_SHM_DATA);
         if (!file.exists()) {
-            file.createNewFile();
+            LOGGER.warn("ShmManager::init, MMAP file not exist, now create one");
+            String parentPath = SoaSystemEnvProperties.SOA_FREQ_SHM_DATA.substring(0,SoaSystemEnvProperties.SOA_FREQ_SHM_DATA.lastIndexOf('/'));
+            new File(parentPath).mkdirs();
+            boolean succeed = file.createNewFile();
+            LOGGER.warn("ShmManager::init, MMAP file created:" + (succeed?"succeed":"failed"));
         }
         RandomAccessFile access = new RandomAccessFile(file, "rw");
 

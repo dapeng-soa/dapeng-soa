@@ -16,22 +16,20 @@ public class ZkUtils {
     final static String COOKIE_RULES_PATH = "/soa/config/cookies";
     final static String FREQ_PATH = "/soa/config/freq";
 
-    public static void syncZkConfigInfo(ZkServiceInfo zkInfo, ZooKeeper zk, Watcher watcher) {
+    public static void syncZkConfigInfo(ZkServiceInfo zkInfo, ZooKeeper zk, Watcher watcher, boolean isGlobal) {
         if (!isZkReady(zk)) return;
 
-        //1.获取 globalConfig
+        String configPath = CONFIG_PATH;
+        if (isGlobal) {
+            configPath += "/" + zkInfo.serviceName();
+        }
+
         try {
-            byte[] globalData = zk.getData(CONFIG_PATH, watcher, null);
-            ZkDataProcessor.processZkConfig(globalData, zkInfo, true);
-
-            // 2. 获取 service
-            String configPath = CONFIG_PATH + "/" + zkInfo.serviceName();
-
-            // zk config
             byte[] data = zk.getData(configPath, watcher, null);
-            ZkDataProcessor.processZkConfig(data, zkInfo, false);
+            ZkDataProcessor.processZkConfig(data, zkInfo, isGlobal);
         } catch (KeeperException | InterruptedException e) {
-            LOGGER.error(ZkUtils.class + "::syncZkConfigInfo failed, service:" + zkInfo.serviceName() + ", zk status:" + zk.getState(), e);
+            LOGGER.error(ZkUtils.class + "::syncZkConfigInfo failed, service:"
+                    + zkInfo.serviceName() + ", zk status:" + zk.getState(), e);
         }
     }
 
