@@ -71,4 +71,11 @@ public interface ContainerRuntimeInfoMBean {
      */
     String getNettyConnections();
 
+     /**
+      * 校验本地zk节点元数据与服务端是否一致
+      * @param path 指定需要校验的路径
+      * @return
+      */
+    String checkZkNodeMetadata(String path);
+
 }

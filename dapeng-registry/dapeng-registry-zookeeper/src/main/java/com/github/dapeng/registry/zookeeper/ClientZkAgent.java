@@ -8,6 +8,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +37,11 @@ public class ClientZkAgent implements Watcher {
 
     private final Map<String, ZkServiceInfo> serviceInfoByName = new ConcurrentHashMap<>(128);
 
+    /**
+     * zk节点元数据本地缓存 以节点的的路径作为 key
+     */
+    private final Map<String, Stat> clientZkNodeInfo = new ConcurrentHashMap<>(16);
+
     private ClientZkAgent() {
         connect();
     }
@@ -54,6 +60,10 @@ public class ClientZkAgent implements Watcher {
             serviceInfoByName.put(serviceInfo.serviceName(), serviceInfo);
         }
         startWatch(serviceInfo);
+    }
+
+    public Map<String, Stat> getServiceZkNodeInfo() {
+        return clientZkNodeInfo;
     }
 
     /**
@@ -221,7 +231,12 @@ public class ClientZkAgent implements Watcher {
             } else {
                 try {
                     // zk服务端重建的时候，dapeng服务可能没来得及注册， 多试两次即可
-                    List<String> children = zk.getChildren(servicePath, this);
+                    Stat stat = new Stat();
+                    zk.getData(RUNTIME_PATH, false, stat);
+                    clientZkNodeInfo.put(RUNTIME_PATH, stat);
+                    Stat statService = new Stat();
+                    List<String> children = zk.getChildren(servicePath, this, statService);
+                    clientZkNodeInfo.put(servicePath, statService);
 
                     if (children.size() == 0) {
                         serviceInfo.runtimeInstances().clear();
@@ -253,6 +268,14 @@ public class ClientZkAgent implements Watcher {
         List<RuntimeInstance> runtimeInstances = new ArrayList<>(8);
         //child = 10.168.13.96:9085:1.0.0:0000000300
         for (String child : children) {
+            String fullPath = RUNTIME_PATH + "/" + serviceName + "/" + child;
+            Stat stat = new Stat();
+            try {
+                zk.getData(fullPath, false, stat);
+                clientZkNodeInfo.put(fullPath, stat);
+            } catch (KeeperException | InterruptedException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
             String[] infos = child.split(":");
             RuntimeInstance instance = new RuntimeInstance(serviceName,
                     infos[0], Integer.valueOf(infos[1]), infos[2]);
@@ -278,7 +301,12 @@ public class ClientZkAgent implements Watcher {
                 sleep(300);
             } else {
                 try {
-                    byte[] data = zk.getData(servicePath, this, null);
+                    Stat stat = new Stat();
+                    zk.getData(ROUTES_PATH, false, stat);
+                    clientZkNodeInfo.put(ROUTES_PATH, stat);
+                    Stat statService = new Stat();
+                    byte[] data = zk.getData(servicePath, this, statService);
+                    clientZkNodeInfo.put(servicePath, statService);
                     processRouteData(serviceInfo, data);
                     LOGGER.warn("ClientZk::getRoutes routes changes:" + serviceInfo.routes());
                     return;
@@ -306,6 +334,7 @@ public class ClientZkAgent implements Watcher {
 
     /**
      * sleep for time ms
+     *
      * @param time
      */
     private void sleep(long time) {

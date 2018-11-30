@@ -7,6 +7,7 @@ import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.registry.*;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -143,6 +144,11 @@ public class ServerZkAgentImpl implements RegistryAgent {
     @Override
     public ZkServiceInfo getZkServiceInfo(boolean usingFallback, String serviceKey) {
         return serverZk.getZkServiceInfo(serviceKey);
+    }
+
+    @Override
+    public Map<String, Stat> getServiceZkNodeInfo() {
+        return serverZk.getServerZkNodeInfo();
     }
 
     /**

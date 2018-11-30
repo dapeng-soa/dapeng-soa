@@ -8,6 +8,7 @@ import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.lifecycle.LifeCycleEvent;
 import com.github.dapeng.registry.RegistryAgent;
 import org.apache.zookeeper.*;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +49,11 @@ public class ServerZk implements Watcher {
      * key = /soa/runtime/services/{serviceName}
      */
     private final Map<String, RegisterContext> registerContextMap = new ConcurrentHashMap<>(16);
+
+     /**
+      * zk节点元数据本地缓存 以节点的的路径作为 key
+      */
+    public final Map<String, Stat> serverZkNodeInfo = new ConcurrentHashMap<>(16);
 
     private static Map<String, Boolean> isMaster = MasterHelper.isMaster;
 
@@ -167,6 +173,10 @@ public class ServerZk implements Watcher {
             }
         }
         return info;
+    }
+
+    public Map<String, Stat> getServerZkNodeInfo(){
+        return serverZkNodeInfo;
     }
 
     @Override
@@ -362,7 +372,12 @@ public class ServerZk implements Watcher {
             return;
         }
         try {
-            byte[] data = zk.getData(FREQ_PATH + "/" + serviceInfo.serviceName(), this, null);
+            Stat stat = new Stat();
+            zk.getData(FREQ_PATH, false,stat);
+            serverZkNodeInfo.put(FREQ_PATH, stat);
+            Stat statService = new Stat();
+            byte[] data = zk.getData(FREQ_PATH + "/" + serviceInfo.serviceName(), this, statService);
+            serverZkNodeInfo.put(FREQ_PATH + "/" + serviceInfo.serviceName(),statService);
             serviceInfo.freqControl(ZkDataProcessor.processFreqRuleData(serviceInfo.serviceName(), data));
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error("获取freq 节点: {} 出现异常", serviceInfo.serviceName());

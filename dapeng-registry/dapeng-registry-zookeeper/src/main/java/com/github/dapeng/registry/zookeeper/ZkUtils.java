@@ -23,7 +23,9 @@ public class ZkUtils {
         }
         //1.获取 globalConfig  异步模式
         try {
-            byte[] data = zk.getData(CONFIG_PATH, watcher, null);
+            Stat stat = new Stat();
+            byte[] data = zk.getData(CONFIG_PATH, watcher, stat);
+            ServerZkAgentImpl.getInstance().getServiceZkNodeInfo().put(CONFIG_PATH, stat);
             ZkDataProcessor.processZkConfig(data, zkInfo, true);
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error("CommonZk::syncZkConfigInfo failed, zk status:" + zk.getState(), e);
@@ -34,7 +36,9 @@ public class ZkUtils {
 
         // zk config 有具体的service节点存在时，这一步在异步callback中进行判断
         try {
-            byte[] data = zk.getData(configPath, watcher, null);
+            Stat stat = new Stat();
+            byte[] data = zk.getData(configPath, watcher, stat);
+            ServerZkAgentImpl.getInstance().getServiceZkNodeInfo().put(configPath, stat);
             ZkDataProcessor.processZkConfig(data, zkInfo, false);
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error("CommonZk::syncZkConfigInfo failed, zk status:" + zk.getState(), e);

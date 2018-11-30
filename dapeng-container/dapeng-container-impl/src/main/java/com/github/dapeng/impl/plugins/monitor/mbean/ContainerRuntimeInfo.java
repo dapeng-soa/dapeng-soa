@@ -4,13 +4,25 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.core.Application;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.github.dapeng.impl.plugins.monitor.CheckZkInfoScheduled;
 import com.github.dapeng.impl.plugins.monitor.ServerCounterContainer;
 import com.github.dapeng.impl.plugins.monitor.config.MonitorFilterProperties;
 import com.github.dapeng.impl.plugins.netty.SoaInvokeCounter;
+import com.github.dapeng.registry.zookeeper.ClientZkAgent;
+import com.github.dapeng.registry.zookeeper.ServerZkAgentImpl;
+import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
 import com.github.dapeng.util.DumpUtil;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.concurrent.ThreadPoolExecutor;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -26,6 +38,7 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     private final static String METHOD_NAME_KEY = "method_name";
     private final static String containerVersion = "2.1.1";
     private final static ServerCounterContainer counterContainer = ServerCounterContainer.getInstance();
+    private final static CheckZkInfoScheduled checkZkInfo = CheckZkInfoScheduled.getInstance();
     private final Container container;
 
     public ContainerRuntimeInfo(Container container) {
@@ -33,8 +46,8 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
         this.container = container;
         try {
             loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        }catch (Exception e){
-            LOGGER.info("loggerContext get error",e);
+        } catch (Exception e) {
+            LOGGER.info("loggerContext get error", e);
         }
     }
 
@@ -49,7 +62,7 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
         loggerName = loggerName.trim();
         levelStr = levelStr.trim();
 
-        LOGGER.info("Jmx Trying to set logger level [" + levelStr + "] to logger [" + loggerName +"]");
+        LOGGER.info("Jmx Trying to set logger level [" + levelStr + "] to logger [" + loggerName + "]");
 
         ch.qos.logback.classic.Logger logger = loggerContext.getLogger(loggerName);
         if ("null".equalsIgnoreCase(levelStr)) {
@@ -186,6 +199,100 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
         LOGGER.info(sb.toString());
         return sb.toString();
     }
+
+    @Override
+    public String checkZkNodeMetadata(String path) {
+
+        StringBuilder sb = new StringBuilder();
+        Map<String, Stat> localZkNodeInfoMap = checkZkInfo.getZkLocalInfo(sb);
+        ZooKeeper zk = checkZkInfo.createZk();
+        try {
+        checkZkInfo.checkZkNodeMetadata(zk,path,localZkNodeInfoMap,sb);
+        }finally {
+            if (zk != null) {
+                try {
+                    zk.close();
+                } catch (Exception e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+            }
+        }
+       /* //获取本地zk信息
+        Map<String, Stat> localZkNodeInfoMap = new ConcurrentHashMap<>(16);
+        Map<String, Stat> localServerZkNodeInfo = ServerZkAgentImpl.getInstance().getServiceZkNodeInfo();
+        Map<String, Stat> localClientZkNodeInfo = ClientZkAgent.getInstance().getServiceZkNodeInfo();
+        localZkNodeInfoMap.putAll(localServerZkNodeInfo);
+        localZkNodeInfoMap.putAll(localClientZkNodeInfo);
+
+        sb.append("本地zk元数据：\n");
+        if (!localZkNodeInfoMap.isEmpty()){
+            for (String key : localZkNodeInfoMap.keySet()) {
+                Stat info = localZkNodeInfoMap.get(key);
+                sb.append(key).append("==>").append(info).append("\n");
+            }
+        }else {
+            sb.append("本地zk元数据为空 \n");
+        }
+
+        ZooKeeper zk = null;
+        CountDownLatch connectedSignal = new CountDownLatch(1);
+        try {
+            zk = new ZooKeeper(SoaSystemEnvProperties.SOA_ZOOKEEPER_HOST, 30000, event -> {
+                if (event.getState() == Watcher.Event.KeeperState.SyncConnected) {
+                    connectedSignal.countDown();
+                }
+            });
+            connectedSignal.await(10000, TimeUnit.MILLISECONDS);
+            if (compareZkInfo(zk, path, localZkNodeInfoMap,sb)) {
+                sb.append("本地zk节点元数据与服务端相同");
+            } else {
+                sb.append("本地zk节点元数据与服务端不同");
+            }
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        } finally {
+            if (zk != null) {
+                try {
+                    zk.close();
+                } catch (Exception e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+            }
+        }*/
+        return sb.toString();
+    }
+
+   /* public boolean compareZkInfo(ZooKeeper zk, String path, Map<String, Stat> localZkNodeInfoMap, StringBuilder sb) {
+        try {
+            //获取当前路径下服务端zk节点元数据
+            Stat serverZkNodeInfo = new Stat();
+            serverZkNodeInfo = zk.exists(path,false);
+            if (serverZkNodeInfo==null){
+                sb.append(path).append(" 该节点不存在\n");
+                return false;
+            }
+
+            sb.append("检验的节点和对应元数据:\n");
+            sb.append(path).append("==>").append(serverZkNodeInfo).append("\n");
+            //对比本地与服务端的节点元数据,如果相同则比较子节点的元数据
+            if (!serverZkNodeInfo.equals(localZkNodeInfoMap.get(path))) {
+                sb.append("不相同的节点和对应元数据： ").append(path).append("==>").append(serverZkNodeInfo).append("\n");
+                return false;
+            }
+            List<String> children = zk.getChildren(path, false, null);
+            if (!children.isEmpty()) {
+                for (String child : children) {
+                    String childPath = path + "/" + child;
+                    if (!compareZkInfo(zk, childPath, localZkNodeInfoMap, sb)) {
+                        return false;
+                    }
+                }
+            }
+        } catch (KeeperException | InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return true;
+    }*/
 
     private String getContainerVersion() {
         return containerVersion;
