@@ -63,8 +63,9 @@ public class ScheduledJob implements Job {
             }
             logger.info("定时任务({})执行完成,cost({}ms)", context.getJobDetail().getKey().getName(), stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
         } catch (Exception e) {
-            logger.error("定时任务({})执行异常,cost({}ms)", context.getJobDetail().getKey().getName(), stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
+            //logger.error("定时任务({})执行异常,cost({}ms)", context.getJobDetail().getKey().getName(), stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
             logger.error(e.getMessage(), e);
+            throw new JobExecutionException(e.getMessage(), e);
         } finally {
             //MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
             MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), null);
