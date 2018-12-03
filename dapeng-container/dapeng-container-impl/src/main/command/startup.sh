@@ -41,11 +41,10 @@ NETTY_OPTS=" -Dio.netty.leakDetectionLevel=advanced "
 
 
 if [ "$JAVA_VERSION" \< "11" ]; then
-    GC_OPTS=" -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDateStamps -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintPromotionFailure -XX:+PrintGCApplicationStoppedTime -XX:+PrintGCDetails -Dlog.dir=$PRGDIR/.. -XX:+UseParallelGC -XX:+UseParallelOldGC"
+    GC_OPTS=" -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$LOGDIR/$ADATE.hprof -XX:+PrintGCDateStamps -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintPromotionFailure -XX:+PrintGCApplicationStoppedTime -XX:+PrintGCDetails -Dlog.dir=$PRGDIR/.. -XX:+UseParallelGC -XX:+UseParallelOldGC"
 else
-    GC_OPTS=" -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+HeapDumpOnOutOfMemoryError -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintGCDetails -Dlog.dir=$PRGDIR/.. -XX:+UnlockExperimentalVMOptions -XX:+UseZGC"
+    GC_OPTS=" -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$LOGDIR/$ADATE.hprof -Xloggc:$LOGDIR/gc-$PRGNAME-$ADATE.log -XX:+PrintGCDetails -Dlog.dir=$PRGDIR/.. -XX:+UnlockExperimentalVMOptions -XX:+UseZGC"
 fi
-
 
 
 #预分配内存, 会造成jvm进程启动的时候慢一点, 但运行时减轻gc停顿, 减少内存碎片
