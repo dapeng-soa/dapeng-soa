@@ -1,10 +1,5 @@
 package com.github.dapeng.impl.listener;
 
-import com.github.dapeng.basic.api.counter.domain.DataPoint;
-import com.github.dapeng.core.InvocationContext;
-import com.github.dapeng.core.InvocationContextImpl;
-import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -17,10 +12,11 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import static com.github.dapeng.impl.listener.TaskMonitorDataReportUtils.sendMessage;
+
 
 /**
  * 定时任务监听器
@@ -74,7 +70,7 @@ public class SchedulerJobListener implements JobListener {
         String versionName = jobDataMap.getString("versionName");
         String methodName = jobDataMap.getString("methodName");
         String message = String.format("SchedulerJobListener::jobExecutionVetoed;Task[%s:%s:%s] 触发失败", serviceName, versionName, methodName);
-        sendMessage(serviceName, versionName, methodName, message, true, jobDataMap, "failed");
+        sendMessage(serviceName, versionName, methodName, executorService, message, true, jobDataMap, "failed");
     }
 
     /**
@@ -90,85 +86,17 @@ public class SchedulerJobListener implements JobListener {
         String methodName = jobDataMap.getString("methodName");
 
         int execute_count = context.getRefireCount();
-        if (exp != null) {//任务执行出现异常
-
-            //任务执行出错(出异常)  最多重试 5次  ,防止出现死循环
-            /*if (execute_count <= 5) {
-                String message = String.format("SchedulerJobListener::jobWasExecuted;Task[%s:%s:%s] 执行出现异常:%s", serviceName, versionName, methodName, exp.getMessage());
-                sendMessage(serviceName, versionName, methodName, message, true, jobDataMap, "failed");
-                //错过挤压重试
-                try {
-                    TimeUnit.SECONDS.sleep(30);
-                } catch (InterruptedException e) {
-                    logger.error(e.getMessage(), e);
-                }
-                exp.setRefireImmediately(true);
-            }*/
-
+        if (exp != null) {
             String message = String.format("SchedulerJobListener::jobWasExecuted;Task[%s:%s:%s] 执行出现异常:%s", serviceName, versionName, methodName, exp.getMessage());
-            sendMessage(serviceName, versionName, methodName, message, true, jobDataMap, "failed");
+            sendMessage(serviceName, versionName, methodName, executorService, message, true, jobDataMap, "failed");
 
         } else {//任务执行成功
             LocalDateTime currentTime = LocalDateTime.now(ZoneId.of("Asia/Shanghai"));
             LocalDateTime startTime = (LocalDateTime) jobDataMap.get("startTime");
             long taskCost = Duration.between(startTime, currentTime).toMillis();
             String message = String.format("SchedulerJobListener::jobWasExecuted;Task[%s:%s:%s] 执行完成[%s],cost:%sms", serviceName, versionName, methodName, currentTime.format(DATE_TIME), taskCost);
-            sendMessage(serviceName, versionName, methodName, message, false, jobDataMap, "succeed");
+            sendMessage(serviceName, versionName, methodName, executorService, message, false, jobDataMap, "succeed");
         }
-    }
-
-    private void sendMessage(String serviceName, String versionName, String methodName, final String message, boolean isError, JobDataMap jobDataMap, String executeState) {
-        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
-        executorService.submit(() -> {
-            try {
-                TaskMonitorDataReportUtils.setSessionTid(invocationContext);
-                if (logger.isInfoEnabled()) {
-                    logger.info(message);
-                }
-                if (isError) {
-                    logger.error(message);
-                }
-
-                //是否上报监听数据(错误必须上报)
-                boolean isReported = isError || jobDataMap.getBoolean("isReported");
-                if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE && isReported) {
-                    taskInfoReport(jobDataMap, executeState);
-                }
-            } catch (Throwable e) {
-                logger.error(e.getMessage(), e);
-            } finally {
-                TaskMonitorDataReportUtils.removeSessionTid();
-            }
-            //System.out.println(message);
-        });
-    }
-
-    private void taskInfoReport(JobDataMap jobDataMap, String executeState) {
-        DataPoint influxdbDataPoint = new DataPoint();
-        influxdbDataPoint.setDatabase(TaskMonitorDataReportUtils.TASK_DATABASE);
-        influxdbDataPoint.setBizTag(TaskMonitorDataReportUtils.TASK_DATABASE_TABLE);
-
-        Map<String, String> tags = new HashMap<>(8);
-        tags.put("serviceName", jobDataMap.getString("serviceName"));
-        tags.put("methodName", jobDataMap.getString("methodName"));
-        tags.put("versionName", jobDataMap.getString("versionName"));
-        tags.put("serverIp", jobDataMap.getString("serverIp"));
-        tags.put("serverPort", jobDataMap.getString("serverPort"));
-        tags.put("executeState", executeState);
-        influxdbDataPoint.setTags(tags);
-
-        Map<String, Long> fields = new HashMap<>(8);
-
-        LocalDateTime currentTime = LocalDateTime.now(ZoneId.of("Asia/Shanghai"));
-        LocalDateTime startTime = (LocalDateTime) jobDataMap.get("startTime");
-        long taskCost = Duration.between(startTime, currentTime).toMillis();
-        fields.put("costTime", taskCost);
-
-        influxdbDataPoint.setValues(fields);
-        influxdbDataPoint.setTimestamp(System.currentTimeMillis());
-
-        //放入上送列表
-        TaskMonitorDataReportUtils.appendDataPoint(Lists.newArrayList(influxdbDataPoint));
     }
 
 }

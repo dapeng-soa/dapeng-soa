@@ -10,12 +10,18 @@ import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.quartz.JobDataMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,7 +38,6 @@ public class TaskMonitorDataReportUtils {
 
     public final static String TASK_DATABASE = "dapengTask";
     public final static String TASK_DATABASE_TABLE = "dapeng_task_info";
-    //private static CounterService COUNTER_CLIENT = new CounterServiceClient();
     private static CounterServiceAsync COUNTER_CLIENT = new CounterServiceAsyncClient();
     private static final List<DataPoint> dataPointList = new ArrayList<>();
     private static final ArrayBlockingQueue<List<DataPoint>> taskDataQueue = new ArrayBlockingQueue<>(MAX_SIZE);
@@ -48,7 +53,6 @@ public class TaskMonitorDataReportUtils {
             dataPointList.addAll(uploadList);
 
             if (dataPointList.size() >= BATCH_MAX_SIZE) {
-                //taskDataQueue.put(Lists.newArrayList(dataPointList));
                 if (!taskDataQueue.offer(Lists.newArrayList(dataPointList))) {
                     logger.info("TaskMonitorDataReportUtils::appendDataPoint put into taskDataQueue failed maxSzie = {}", MAX_SIZE);
                 }
@@ -78,6 +82,60 @@ public class TaskMonitorDataReportUtils {
         });
     }
 
+    static void sendMessage(String serviceName, String versionName, String methodName, ExecutorService executorService,
+                     final String message, boolean isError, JobDataMap jobDataMap, String executeState) {
+        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
+        executorService.submit(() -> {
+            try {
+                TaskMonitorDataReportUtils.setSessionTid(invocationContext);
+                logger.info(message);
+
+                if (isError) {
+                    logger.error(message);
+                }
+
+                //是否上报监听数据(错误必须上报)
+                boolean isReported = isError || jobDataMap.getBoolean("isReported");
+                if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE && isReported) {
+                    taskInfoReport(jobDataMap, executeState);
+                }
+            } catch (Throwable e) {
+                logger.error(e.getMessage(), e);
+            } finally {
+                removeSessionTid();
+            }
+        });
+    }
+
+
+
+    static void taskInfoReport(JobDataMap jobDataMap, String executeState) {
+        DataPoint influxdbDataPoint = new DataPoint();
+        influxdbDataPoint.setDatabase(TaskMonitorDataReportUtils.TASK_DATABASE);
+        influxdbDataPoint.setBizTag(TaskMonitorDataReportUtils.TASK_DATABASE_TABLE);
+
+        Map<String, String> tags = new HashMap<>(8);
+        tags.put("serviceName", jobDataMap.getString("serviceName"));
+        tags.put("methodName", jobDataMap.getString("methodName"));
+        tags.put("versionName", jobDataMap.getString("versionName"));
+        tags.put("serverIp", jobDataMap.getString("serverIp"));
+        tags.put("serverPort", jobDataMap.getString("serverPort"));
+        tags.put("executeState", executeState);
+        influxdbDataPoint.setTags(tags);
+
+        Map<String, Long> fields = new HashMap<>(8);
+
+        LocalDateTime currentTime = LocalDateTime.now(ZoneId.of("Asia/Shanghai"));
+        LocalDateTime startTime = (LocalDateTime) jobDataMap.get("startTime");
+        long taskCost = Duration.between(startTime, currentTime).toMillis();
+        fields.put("costTime", taskCost);
+
+        influxdbDataPoint.setValues(fields);
+        influxdbDataPoint.setTimestamp(System.currentTimeMillis());
+
+        //放入上送列表
+        appendDataPoint(Lists.newArrayList(influxdbDataPoint));
+    }
 
     public static String setSessionTid(InvocationContext context) {
         InvocationContext invocationContext = context != null ? InvocationContextImpl.Factory.currentInstance(context) : InvocationContextImpl.Factory.createNewInstance();
