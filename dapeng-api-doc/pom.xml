@@ -123,7 +123,7 @@
 
         <!-- log -->
         <dependency>
-            <groupId>com.github.dapeng-soa</groupId>
+            <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
         </dependency>
 

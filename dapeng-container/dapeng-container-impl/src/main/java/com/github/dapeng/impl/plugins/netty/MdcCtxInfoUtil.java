@@ -1,6 +1,5 @@
 package com.github.dapeng.impl.plugins.netty;
 
-import com.github.dapeng.core.Application;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

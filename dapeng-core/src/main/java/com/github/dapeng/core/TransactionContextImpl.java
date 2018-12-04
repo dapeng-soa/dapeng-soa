@@ -284,6 +284,7 @@ public class TransactionContextImpl implements TransactionContext {
         return maxProcessTime;
     }
 
+    @Override
     public TransactionContextImpl maxProcessTime(Long maxProcessTime) {
         this.maxProcessTime = Optional.ofNullable(maxProcessTime);
         return this;

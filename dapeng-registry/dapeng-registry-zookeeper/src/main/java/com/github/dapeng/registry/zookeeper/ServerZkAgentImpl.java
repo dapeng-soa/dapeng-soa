@@ -68,7 +68,7 @@ public class ServerZkAgentImpl implements RegistryAgent {
         try {
             //fixme
             String path = "/soa/runtime/services/" + serverName;
-            String instPath = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
+            String instPath = SoaSystemEnvProperties.HOST_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
             LOGGER.info(" logger zookeeper unRegister service: " + path);
             serverZk.unregisterRuntimeNode(path, instPath);
         } catch (Exception e) {
@@ -79,9 +79,9 @@ public class ServerZkAgentImpl implements RegistryAgent {
     @Override
     public void registerService(String serverName, String versionName) {
         try {
-            String path = RUNTIME_PATH + "/" + serverName + "/" + SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
+            String path = RUNTIME_PATH + "/" + serverName + "/" + SoaSystemEnvProperties.HOST_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
             String servicePath = RUNTIME_PATH + "/" + serverName;
-            String instanceInfo = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
+            String instanceInfo = SoaSystemEnvProperties.HOST_IP + ":" + SoaSystemEnvProperties.SOA_CONTAINER_PORT + ":" + versionName;
 
             RegisterInfo registerInfo = new RegisterInfo(serverName, versionName, servicePath, instanceInfo);
             if (ContainerFactory.getContainer().status() == Container.STATUS_SHUTTING

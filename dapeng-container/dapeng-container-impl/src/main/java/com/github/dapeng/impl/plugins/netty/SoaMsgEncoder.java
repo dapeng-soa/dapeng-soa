@@ -125,7 +125,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
 
         Long cost = System.currentTimeMillis() - requestTimestamp;
         soaHeader.setCalleeTime2(cost.intValue());
-        soaHeader.setCalleeIp(Optional.of(IPUtils.transferIp(SoaSystemEnvProperties.SOA_CONTAINER_IP)));
+        soaHeader.setCalleeIp(Optional.of(IPUtils.transferIp(SoaSystemEnvProperties.HOST_IP)));
         soaHeader.setCalleePort(Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
         Joiner joiner = Joiner.on(":");
         soaHeader.setCalleeMid(joiner.join(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName()));

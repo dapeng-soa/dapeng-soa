@@ -52,7 +52,7 @@ public class ServerZk implements Watcher {
 
     private static Map<String, Boolean> isMaster = MasterHelper.isMaster;
 
-    private static final String CURRENT_CONTAINER_ADDR = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" +
+    private static final String CURRENT_CONTAINER_ADDR = SoaSystemEnvProperties.HOST_IP + ":" +
             String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
 
     ServerZk(RegistryAgent registryAgent) {
@@ -84,7 +84,7 @@ public class ServerZk implements Watcher {
                         createPersistNodeOnly(RUNTIME_PATH);
                         createPersistNodeOnly(CONFIG_PATH);
                         createPersistNodeOnly(ROUTES_PATH);
-
+                        createPersistNodeOnly(COOKIE_RULES_PATH);
                         createPersistNodeOnly(FREQ_PATH);
 
                         LOGGER.info("ServerZk connected to  {} [Zookeeper]", zkHost);

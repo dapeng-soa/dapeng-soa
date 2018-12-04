@@ -13,8 +13,10 @@ import com.github.dapeng.registry.zookeeper.LoadBalanceAlgorithm;
 import com.github.dapeng.router.RoutesExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +24,7 @@ import java.util.Optional;
 import java.util.concurrent.Future;
 
 import static com.github.dapeng.core.SoaCode.*;
+import static com.github.dapeng.util.InvocationContextUtils.capsuleContext;
 
 /**
  * @author lihuimin
@@ -33,12 +36,12 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     private ClientRefManager clientRefManager = ClientRefManager.getInstance();
 
-    static class ClientInfoWeakRef extends WeakReference<ClientInfo> {
+    static class ClientInfoSoftRef extends SoftReference<ClientInfo> {
         final ZkServiceInfo serviceInfo;
         final String serviceName;
         final String version;
 
-        ClientInfoWeakRef(SoaConnectionPool.ClientInfo referent,
+        ClientInfoSoftRef(SoaConnectionPool.ClientInfo referent,
                           ZkServiceInfo zkServiceInfo,
                           ReferenceQueue<? super ClientInfo> q) {
             super(referent, q);
@@ -153,11 +156,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         }
         // router
         // 把路由需要用到的条件放到InvocationContext中
-        capsuleContext(context, serviceInfo, version, method);
-
-        //set cookies if cookie injection rule matches
-        injectCookie(serviceInfo.serviceName());
-
+        capsuleContext(context, serviceInfo.serviceName(), version, method);
 
         List<RuntimeInstance> routedInstances = router(serviceInfo, checkVersionInstances);
 
@@ -221,50 +220,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 throw new SoaException(SoaCode.NoMatchedRouting);
             }
             return runtimeInstances;
-        }
-    }
-
-    /**
-     * 封装InvocationContext， 把路由需要用到的东西放到InvocationContext中。
-     *
-     * @param context
-     * @param serviceInfo
-     * @param method
-     */
-    private void capsuleContext(InvocationContextImpl context, final ZkServiceInfo serviceInfo, final String version, final String method) {
-        context.serviceName(serviceInfo.serviceName());
-        context.methodName(method);
-        context.versionName(version);
-
-        InvocationContextImpl.InvocationContextProxy invocationCtxProxy = InvocationContextImpl.Factory.getInvocationContextProxy();
-
-        if (invocationCtxProxy != null) {
-            context.userIp(invocationCtxProxy.userIp().orElse(null));
-            context.userId(invocationCtxProxy.userId().orElse(null));
-            context.operatorId(invocationCtxProxy.operatorId().orElse(null));
-            context.callerMid(invocationCtxProxy.callerMid().orElse(null));
-            context.cookies(invocationCtxProxy.cookies());
-        }
-    }
-
-    /**
-     * cookie injection
-     */
-    private void injectCookie(String service) throws SoaException {
-        ZkServiceInfo zkServiceInfo = clientRefManager.serviceInfo(service);
-
-        if (zkServiceInfo == null) {
-            logger.error(getClass() + "::injectCookie serviceInfo not found: " + service);
-            throw new SoaException(SoaCode.NotFoundServer, "服务 [ " + service + " ] 无可用实例");
-        }
-
-        List<CookieRule> cookieRules = zkServiceInfo.cookieRules();
-
-        if (cookieRules == null || cookieRules.size() == 0) {
-            logger.debug("cookie rules 信息为空或size为0, 跳过 cookie injection");
-        } else {
-            InvocationContextImpl context = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-            CookieExecutor.injectCookies(context, cookieRules);
         }
     }
 

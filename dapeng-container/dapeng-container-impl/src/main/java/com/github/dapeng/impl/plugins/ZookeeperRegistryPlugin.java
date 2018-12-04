@@ -25,7 +25,7 @@ public class ZookeeperRegistryPlugin implements AppListener, Plugin {
     public ZookeeperRegistryPlugin(Container container) {
         this.container = container;
         container.registerAppListener(this);
-        if (SoaSystemEnvProperties.SOA_CONTAINER_IP.trim().equals("")) {
+        if (SoaSystemEnvProperties.HOST_IP.trim().equals("")) {
             LOGGER.error("soa_container_ip is empty, exit..");
             System.exit(-1);
         }

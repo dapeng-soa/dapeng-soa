@@ -291,6 +291,8 @@ public class ClientZkAgent implements Watcher {
                     processRouteData(serviceInfo, data);
                     LOGGER.warn("ClientZk::getRoutes routes changes:" + serviceInfo.routes());
                     return;
+                } catch (KeeperException.NoNodeException e) {
+                    ZkUtils.createPersistNodeOnly(servicePath, zk);
                 } catch (KeeperException | InterruptedException e) {
                     LOGGER.error(getClass() + "::syncZkRouteInfo serviceName: " + serviceInfo.serviceName() + " 出现异常, zkStatus:" + zk.getState(), e);
                     sleep(300);
@@ -310,7 +312,11 @@ public class ClientZkAgent implements Watcher {
         try {
             byte[] data = zk.getData(servicePath, this, null);
             List<CookieRule> cookieRules = processCookieRuleData(data);
+            serviceInfo.cookieRules(cookieRules);
             LOGGER.warn("ClientZk::syncZkCookieRuleInfo rules changes:" + cookieRules);
+        } catch (KeeperException.NoNodeException e) {
+            ZkUtils.createPersistNodeOnly(servicePath, zk);
+            syncZkCookieRuleInfo(serviceInfo);
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error(getClass() + "::syncZkCookieRuleInfo serviceName: " + serviceInfo.serviceName()
                     + " 出现异常, zkStatus:" + zk.getState(), e);

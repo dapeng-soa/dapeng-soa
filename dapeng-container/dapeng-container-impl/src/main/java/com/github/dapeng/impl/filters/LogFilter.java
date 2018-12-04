@@ -36,8 +36,8 @@ public class LogFilter implements Filter {
             MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
             MdcCtxInfoUtil.putMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
 
-            InvocationContextImpl invocationCtx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-            String logLevel = invocationCtx.cookie(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
+            SoaHeader soaHeader = transactionContext.getHeader();
+            String logLevel = soaHeader.getCookie(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
 
             if (logLevel != null) {
                 MDC.put(SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
@@ -47,8 +47,6 @@ public class LogFilter implements Filter {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.seqId() + "]");
             }
-
-            SoaHeader soaHeader = transactionContext.getHeader();
 
             String infoLog = "request[seqId:" + transactionContext.seqId() + "]:"
                     + "service[" + soaHeader.getServiceName()
@@ -95,8 +93,8 @@ public class LogFilter implements Filter {
                     MdcCtxInfoUtil.putMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
 
                     //DEBUG
-                    InvocationContextImpl invocationCtx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-                    String logLevel = invocationCtx.cookie(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
+                    SoaHeader soaHeader = transactionContext.getHeader();
+                    String logLevel = soaHeader.getCookie(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
 
                     if (logLevel != null) {
                         MDC.put(SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
