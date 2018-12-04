@@ -28,7 +28,7 @@ public class SoaSystemEnvProperties {
     /**
      * 宿主机IP
      */
-    private static final String KEY_HOST_IP = "host_ip";
+    private static final String KEY_HOST_IP = "host.ip";
     /**
      * 容器端口(默认9090)
      */
