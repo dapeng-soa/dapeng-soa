@@ -32,7 +32,7 @@ public class SchedulerTriggerListener implements TriggerListener {
     private Logger logger = LoggerFactory.getLogger("container.scheduled.task");
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
     // 线程池
-    private static ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
+    private static ExecutorService executorService = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
             .setDaemon(true)
             .setNameFormat("dapeng-SchedulerTriggerListener-%d")
             .build());

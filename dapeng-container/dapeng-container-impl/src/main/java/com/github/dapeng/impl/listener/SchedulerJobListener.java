@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 定时任务监听器
@@ -34,7 +33,7 @@ public class SchedulerJobListener implements JobListener {
 
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
     // 线程池
-    private static ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
+    private static ExecutorService executorService = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
             .setDaemon(true)
             .setNameFormat("dapeng-SchedulerJobListener-%d")
             .build());
@@ -92,7 +91,9 @@ public class SchedulerJobListener implements JobListener {
 
         int execute_count = context.getRefireCount();
         if (exp != null) {//任务执行出现异常
-            if (execute_count <= 5) {//任务执行出错(出异常)  最多重试 5次  ,防止出现死循环
+
+            //任务执行出错(出异常)  最多重试 5次  ,防止出现死循环
+            /*if (execute_count <= 5) {
                 String message = String.format("SchedulerJobListener::jobWasExecuted;Task[%s:%s:%s] 执行出现异常:%s", serviceName, versionName, methodName, exp.getMessage());
                 sendMessage(serviceName, versionName, methodName, message, true, jobDataMap, "failed");
                 //错过挤压重试
@@ -102,7 +103,11 @@ public class SchedulerJobListener implements JobListener {
                     logger.error(e.getMessage(), e);
                 }
                 exp.setRefireImmediately(true);
-            }
+            }*/
+
+            String message = String.format("SchedulerJobListener::jobWasExecuted;Task[%s:%s:%s] 执行出现异常:%s", serviceName, versionName, methodName, exp.getMessage());
+            sendMessage(serviceName, versionName, methodName, message, true, jobDataMap, "failed");
+
         } else {//任务执行成功
             LocalDateTime currentTime = LocalDateTime.now(ZoneId.of("Asia/Shanghai"));
             LocalDateTime startTime = (LocalDateTime) jobDataMap.get("startTime");
@@ -143,12 +148,6 @@ public class SchedulerJobListener implements JobListener {
         influxdbDataPoint.setDatabase(TaskMonitorDataReportUtils.TASK_DATABASE);
         influxdbDataPoint.setBizTag(TaskMonitorDataReportUtils.TASK_DATABASE_TABLE);
 
-
-        if (jobDataMap.getString("methodName").equalsIgnoreCase("taskDemo2")) {
-            logger.error("*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*--*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-");
-        }else{
-            logger.error("*****taskDemo1*****");
-        }
         Map<String, String> tags = new HashMap<>(8);
         tags.put("serviceName", jobDataMap.getString("serviceName"));
         tags.put("methodName", jobDataMap.getString("methodName"));
