@@ -1,11 +1,13 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.sun.org.apache.regexp.internal.RE;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 
 public class ZkUtils {
     private final static Logger LOGGER = LoggerFactory.getLogger(ZkUtils.class);
@@ -26,6 +28,7 @@ public class ZkUtils {
             Stat stat = new Stat();
             byte[] data = zk.getData(CONFIG_PATH, watcher, stat);
             ServerZkAgentImpl.getInstance().getServiceZkNodeInfo().put(CONFIG_PATH, stat);
+            ClientZkAgent.getInstance().getServiceZkNodeInfo().put(CONFIG_PATH, stat);
             ZkDataProcessor.processZkConfig(data, zkInfo, true);
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error("CommonZk::syncZkConfigInfo failed, zk status:" + zk.getState(), e);
@@ -39,11 +42,13 @@ public class ZkUtils {
             Stat stat = new Stat();
             byte[] data = zk.getData(configPath, watcher, stat);
             ServerZkAgentImpl.getInstance().getServiceZkNodeInfo().put(configPath, stat);
+            ClientZkAgent.getInstance().getServiceZkNodeInfo().put(configPath, stat);
             ZkDataProcessor.processZkConfig(data, zkInfo, false);
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error("CommonZk::syncZkConfigInfo failed, zk status:" + zk.getState(), e);
         }
     }
+
     /**
      * 异步添加serverInfo,为临时有序节点，如果server挂了就木有了
      */
@@ -125,4 +130,34 @@ public class ZkUtils {
         }
         return false;
     }
+
+    public static boolean compareZkInfo(ZooKeeper zk, Map<String, Stat> localZkNodeInfo) {
+        try {
+            if (!localZkNodeInfo.isEmpty()) {
+                for (String path : localZkNodeInfo.keySet()) {
+                    //获取当前路径下服务端zk节点元数据
+                    Stat serverNodeInfo = zk.exists(path, false);
+                    if (serverNodeInfo == null) {
+                        LOGGER.warn(path + " 该节点不存在\n");
+                        return false;
+                    }
+                    if (!localZkNodeInfo.get(path).equals(serverNodeInfo)) {
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("不相同的节点： ").append(path).append("\n");
+                        sb.append("本地对应元数据： ").append(localZkNodeInfo).append("\n");
+                        sb.append("服务端对应元数据： ").append(serverNodeInfo).append("\n");
+                        LOGGER.warn(sb.toString());
+                        return false;
+                    }
+                }
+            } else {
+                LOGGER.warn("本地serverZk元数据为空 \n");
+                return false;
+            }
+        } catch (KeeperException | InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return true;
+    }
+
 }

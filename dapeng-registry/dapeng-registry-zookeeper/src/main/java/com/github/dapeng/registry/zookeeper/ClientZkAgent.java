@@ -4,6 +4,7 @@ import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -17,9 +18,7 @@ import java.nio.file.Watchable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static com.github.dapeng.registry.zookeeper.ZkUtils.*;
 
@@ -42,6 +41,17 @@ public class ClientZkAgent implements Watcher {
      */
     private final Map<String, Stat> clientZkNodeInfo = new ConcurrentHashMap<>(16);
 
+     /**
+      * 周期 一天
+      */
+    private final int PERIOD = 86400000;
+
+    private final ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(1,
+            new ThreadFactoryBuilder()
+                    .setDaemon(true)
+                    .setNameFormat("dapeng-" + getClass().getSimpleName() + "-scheduler-%d")
+                    .build());
+
     private ClientZkAgent() {
         connect();
     }
@@ -60,6 +70,7 @@ public class ClientZkAgent implements Watcher {
             serviceInfoByName.put(serviceInfo.serviceName(), serviceInfo);
         }
         startWatch(serviceInfo);
+        initThreads();
     }
 
     public Map<String, Stat> getServiceZkNodeInfo() {
@@ -231,9 +242,6 @@ public class ClientZkAgent implements Watcher {
             } else {
                 try {
                     // zk服务端重建的时候，dapeng服务可能没来得及注册， 多试两次即可
-                    Stat stat = new Stat();
-                    zk.getData(RUNTIME_PATH, false, stat);
-                    clientZkNodeInfo.put(RUNTIME_PATH, stat);
                     Stat statService = new Stat();
                     List<String> children = zk.getChildren(servicePath, this, statService);
                     clientZkNodeInfo.put(servicePath, statService);
@@ -301,9 +309,6 @@ public class ClientZkAgent implements Watcher {
                 sleep(300);
             } else {
                 try {
-                    Stat stat = new Stat();
-                    zk.getData(ROUTES_PATH, false, stat);
-                    clientZkNodeInfo.put(ROUTES_PATH, stat);
                     Stat statService = new Stat();
                     byte[] data = zk.getData(servicePath, this, statService);
                     clientZkNodeInfo.put(servicePath, statService);
@@ -342,5 +347,17 @@ public class ClientZkAgent implements Watcher {
             Thread.sleep(time);
         } catch (InterruptedException ignored) {
         }
+    }
+
+    private void initThreads() {
+        schedulerExecutorService.scheduleWithFixedDelay(() -> {
+            LOGGER.info("dapeng check clientZk node metadata started, interval:" + PERIOD + "ms");
+
+            if (compareZkInfo(zk, clientZkNodeInfo)) {
+                LOGGER.info("本地clientZk元数据与服务端相同");
+            } else {
+                LOGGER.warn("本地clientZk元数据与服务端不同");
+            }
+        }, 600000, PERIOD, TimeUnit.MILLISECONDS);
     }
 }

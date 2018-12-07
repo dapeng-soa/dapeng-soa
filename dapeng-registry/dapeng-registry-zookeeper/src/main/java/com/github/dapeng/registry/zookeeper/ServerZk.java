@@ -7,18 +7,18 @@ import com.github.dapeng.core.helper.MasterHelper;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.lifecycle.LifeCycleEvent;
 import com.github.dapeng.registry.RegistryAgent;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.datatype.DatatypeConstants;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static com.github.dapeng.registry.zookeeper.ZkUtils.*;
 
@@ -50,15 +50,23 @@ public class ServerZk implements Watcher {
      */
     private final Map<String, RegisterContext> registerContextMap = new ConcurrentHashMap<>(16);
 
-     /**
-      * zk节点元数据本地缓存 以节点的的路径作为 key
-      */
+    /**
+     * zk节点元数据本地缓存 以节点的的路径作为 key
+     */
     public final Map<String, Stat> serverZkNodeInfo = new ConcurrentHashMap<>(16);
 
     private static Map<String, Boolean> isMaster = MasterHelper.isMaster;
 
     private static final String CURRENT_CONTAINER_ADDR = SoaSystemEnvProperties.SOA_CONTAINER_IP + ":" +
             String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
+
+    private final int PERIOD = 86400000;
+
+    private final ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(1,
+            new ThreadFactoryBuilder()
+                    .setDaemon(true)
+                    .setNameFormat("dapeng-" + getClass().getSimpleName() + "-scheduler-%d")
+                    .build());
 
     ServerZk(RegistryAgent registryAgent) {
         this.registryAgent = registryAgent;
@@ -175,7 +183,7 @@ public class ServerZk implements Watcher {
         return info;
     }
 
-    public Map<String, Stat> getServerZkNodeInfo(){
+    public Map<String, Stat> getServerZkNodeInfo() {
         return serverZkNodeInfo;
     }
 
@@ -331,9 +339,17 @@ public class ServerZk implements Watcher {
     private void watchInstanceChange(RegisterContext context) {
         String watchPath = context.getServicePath();
         try {
-            List<String> children = zk.getChildren(watchPath, this);
+            Stat serviceStat = new Stat();
+            List<String> children = zk.getChildren(watchPath, this, serviceStat);
+            serverZkNodeInfo.put(watchPath, serviceStat);
             boolean _isMaster = false;
             if (children.size() > 0) {
+                for (String child : children) {
+                    String fullPath = watchPath + "/" + child;
+                    Stat childStat = new Stat();
+                    zk.getData(fullPath, false, childStat);
+                    serverZkNodeInfo.put(fullPath, childStat);
+                }
                 _isMaster = checkIsMaster(children, MasterHelper.generateKey(context.getService(), context.getVersion()), context.getInstanceInfo());
             }
             //masterChange响应
@@ -358,6 +374,7 @@ public class ServerZk implements Watcher {
                 });
             }
         }
+        initThreads();
     }
 
     /**
@@ -372,15 +389,24 @@ public class ServerZk implements Watcher {
             return;
         }
         try {
-            Stat stat = new Stat();
-            zk.getData(FREQ_PATH, false,stat);
-            serverZkNodeInfo.put(FREQ_PATH, stat);
             Stat statService = new Stat();
             byte[] data = zk.getData(FREQ_PATH + "/" + serviceInfo.serviceName(), this, statService);
-            serverZkNodeInfo.put(FREQ_PATH + "/" + serviceInfo.serviceName(),statService);
+            serverZkNodeInfo.put(FREQ_PATH + "/" + serviceInfo.serviceName(), statService);
             serviceInfo.freqControl(ZkDataProcessor.processFreqRuleData(serviceInfo.serviceName(), data));
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error("获取freq 节点: {} 出现异常", serviceInfo.serviceName());
         }
+    }
+
+    private void initThreads() {
+        schedulerExecutorService.scheduleWithFixedDelay(() -> {
+            LOGGER.info("dapeng check serverZk node metadata started, interval:" + PERIOD + "ms");
+
+            if (compareZkInfo(zk, serverZkNodeInfo)) {
+                LOGGER.info("本地serverZk元数据与服务端相同");
+            } else {
+                LOGGER.warn("本地serverZk元数据与服务端不同");
+            }
+        }, 600000, PERIOD, TimeUnit.MILLISECONDS);
     }
 }

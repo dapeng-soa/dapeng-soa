@@ -1,9 +1,10 @@
 package com.github.dapeng.impl.plugins.monitor;
 
+import com.github.dapeng.api.Container;
+import com.github.dapeng.api.ContainerFactory;
+import com.github.dapeng.core.Application;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.github.dapeng.registry.zookeeper.ClientZkAgent;
-import com.github.dapeng.registry.zookeeper.ServerZkAgentImpl;
-import com.google.common.collect.Lists;
+import com.github.dapeng.registry.RegistryAgent;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
@@ -12,7 +13,7 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -22,20 +23,10 @@ import java.util.concurrent.*;
  */
 public class CheckZkInfoScheduled {
     private static final Logger LOGGER = LoggerFactory.getLogger(CheckZkInfoScheduled.class);
-    private final static String RUNTIME_PATH = "/soa/runtime/services";
-    private final static String CONFIG_PATH = "/soa/config/services";
-    private final static String ROUTES_PATH = "/soa/config/routes";
-    private final static String FREQ_PATH = "/soa/config/freq";
     private final static CheckZkInfoScheduled instance = new CheckZkInfoScheduled();
-    private final static List<String> checkList = new ArrayList<String>() {{
-        add(RUNTIME_PATH);
-        add(CONFIG_PATH);
-        add(ROUTES_PATH);
-        add(FREQ_PATH);
-    }};
 
     //周期 一天
-    private final int PERIOD = 60000;
+    private final int PERIOD = 86400000;
 
     private final ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(1,
             new ThreadFactoryBuilder()
@@ -53,17 +44,15 @@ public class CheckZkInfoScheduled {
 
 
     private void initThreads() {
-        LOGGER.info("dapeng check zk node metadata started, interval:" + PERIOD + "ms");
         schedulerExecutorService.scheduleWithFixedDelay(() -> {
-            LOGGER.info("::schedulerExecutorService exec............");
+            LOGGER.info("dapeng check zk node metadata started, interval:" + PERIOD + "ms");
             StringBuilder sb = new StringBuilder();
-            Map<String, Stat> localZkNodeInfoMap = getZkLocalInfo(sb);
+            Map<String, Stat> localZkNodeInfoMap = getZkLocalInfo();
             ZooKeeper zk = createZk();
             try {
-                for (String path : checkList) {
-                    checkZkNodeMetadata(zk, path, localZkNodeInfoMap, sb);
-                    LOGGER.info("the result of zkNodeInfo:" + sb);
-                }
+                String result = checkZkNodeMetadata(zk, null, localZkNodeInfoMap);
+                sb.append(result);
+                LOGGER.info("the result of zkNodeInfo:" + sb.toString());
             } finally {
                 if (zk != null) {
                     try {
@@ -73,23 +62,36 @@ public class CheckZkInfoScheduled {
                     }
                 }
             }
-        }, 20000, PERIOD, TimeUnit.MILLISECONDS);
+        }, 600000, PERIOD, TimeUnit.MILLISECONDS);
     }
 
-    public Map<String, Stat> getZkLocalInfo(StringBuilder sb) {
+    public Map<String, Stat> getZkLocalInfo() {
+        LOGGER.info(getClass().getSimpleName() + " get zk localInfo...");
         Map<String, Stat> localZkNodeInfoMap = new ConcurrentHashMap<>(16);
-        Map<String, Stat> localServerZkNodeInfo = ServerZkAgentImpl.getInstance().getServiceZkNodeInfo();
-        Map<String, Stat> localClientZkNodeInfo = ClientZkAgent.getInstance().getServiceZkNodeInfo();
-        localZkNodeInfoMap.putAll(localServerZkNodeInfo);
-        localZkNodeInfoMap.putAll(localClientZkNodeInfo);
-        sb.append("本地zk元数据：\n");
-        if (!localZkNodeInfoMap.isEmpty()) {
-            for (String key : localZkNodeInfoMap.keySet()) {
-                Stat info = localZkNodeInfoMap.get(key);
-                sb.append(key).append("==>").append(info).append("\n");
+        try {
+            Map<String, Stat> localClientZkNodeInfo = new ConcurrentHashMap<>(16);
+            Container container = ContainerFactory.getContainer();
+            for (Application application : container.getApplications()) {
+                Class<?> clientZkCl = application.getAppClasssLoader().loadClass("com.github.dapeng.registry.zookeeper.ClientZkAgent");
+                Method getClientInstance = clientZkCl.getMethod("getInstance");
+                Method getClientZkNodeInfo = clientZkCl.getMethod("getServiceZkNodeInfo");
+                Map<String, Stat> appClientZkNodeInfo = (Map<String, Stat>) getClientZkNodeInfo.invoke(getClientInstance.invoke(clientZkCl));
+                localClientZkNodeInfo.putAll(appClientZkNodeInfo);
             }
-        } else {
-            sb.append("本地zk元数据为空 \n");
+
+            Class<?> serverZk = container.getClass().getClassLoader().loadClass("com.github.dapeng.registry.zookeeper.ServerZkAgentImpl");
+            Method getServerInstance = serverZk.getMethod("getInstance");
+            RegistryAgent serverZkAgentImpl = (RegistryAgent) getServerInstance.invoke(serverZk);
+            Method getServerZkNodeInfo = serverZk.getMethod("getServiceZkNodeInfo");
+            Map<String, Stat> localServerZkNodeInfo = (Map<String, Stat>) getServerZkNodeInfo.invoke(serverZkAgentImpl);
+
+            localZkNodeInfoMap.putAll(localServerZkNodeInfo);
+            localZkNodeInfoMap.putAll(localClientZkNodeInfo);
+            if (localZkNodeInfoMap.isEmpty()) {
+                LOGGER.warn("本地zk元数据为空 \n");
+            }
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
         }
         return localZkNodeInfoMap;
     }
@@ -110,41 +112,73 @@ public class CheckZkInfoScheduled {
         return zk;
     }
 
-    public void checkZkNodeMetadata(ZooKeeper zk, String path, Map<String, Stat> localZkNodeInfoMap, StringBuilder sb) {
-       // StringBuilder sb = new StringBuilder();
+    public String checkZkNodeMetadata(ZooKeeper zk, String path, Map<String, Stat> localZkNodeInfoMap) {
+        StringBuilder sb = new StringBuilder();
         if (compareZkInfo(zk, path, localZkNodeInfoMap, sb)) {
-            sb.append("本地zk节点元数据与服务端相同\n");
+            sb.append(" 本地元数据与服务端相同\n");
         } else {
-            sb.append("本地zk节点元数据与服务端不同\n");
+            sb.append(" 本地元数据与服务端不同\n");
         }
-       // return sb.toString();
+        return sb.toString();
     }
 
     public boolean compareZkInfo(ZooKeeper zk, String path, Map<String, Stat> localZkNodeInfoMap, StringBuilder sb) {
         try {
-            //获取当前路径下服务端zk节点元数据
-            Stat serverZkNodeInfo = zk.exists(path, false);
-            if (serverZkNodeInfo == null) {
-                sb.append(path).append(" 该节点不存在\n");
-                return false;
-            }
-
-            sb.append("检验的节点和对应元数据:\n");
-            sb.append(path).append("==>").append(serverZkNodeInfo).append("\n");
-
-            //对比本地与服务端的节点元数据,如果相同则比较子节点的元数据
-            if (!serverZkNodeInfo.equals(localZkNodeInfoMap.get(path))) {
-                sb.append("不相同的节点和对应元数据： ").append(path).append("==>").append(serverZkNodeInfo).append("\n");
-                return false;
-            }
-            List<String> children = zk.getChildren(path, false, null);
-            if (!children.isEmpty()) {
-                for (String child : children) {
-                    String childPath = path + "/" + child;
-                    if (!compareZkInfo(zk, childPath, localZkNodeInfoMap, sb)) {
+            if (path == null) {
+                for (String key : localZkNodeInfoMap.keySet()) {
+                    StringBuilder localStr = new StringBuilder().append(localZkNodeInfoMap.get(key));
+                    if(!compareStat(zk, key, localStr, sb)){
                         return false;
                     }
                 }
+            } else {
+                StringBuilder localStr = new StringBuilder().append(localZkNodeInfoMap.get(path));
+                //获取当前路径下服务端zk节点元数据
+                Stat serverZkNodeInfo = zk.exists(path, false);
+                if (serverZkNodeInfo == null) {
+                    sb.append(path).append(" 该节点在服务端不存在\n");
+                    return false;
+                }
+                if (localStr.toString().isEmpty()) {
+                    sb.append(path).append(" 该节点不在本地缓存中\n");
+                    return false;
+                }
+
+                if (!compareStat(zk, path, localStr, sb)) {
+                    return false;
+                }
+
+                List<String> children = zk.getChildren(path, false, null);
+                if (!children.isEmpty()) {
+                    for (String child : children) {
+                        String childPath = path + "/" + child;
+                        if (!compareZkInfo(zk, childPath, localZkNodeInfoMap, sb)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        } catch (KeeperException | InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return true;
+    }
+
+    public boolean compareStat(ZooKeeper zk, String path, StringBuilder localStr, StringBuilder sb) {
+        try {
+            //获取当前路径下服务端zk节点元数据
+            Stat serverNodeInfo = zk.exists(path, false);
+            if (serverNodeInfo == null) {
+                sb.append(path).append(" 该节点不存在\n");
+                return false;
+            }
+            StringBuilder serviceStr = new StringBuilder().append(serverNodeInfo);
+            //对比本地与服务端的节点元数据,如果相同则比较子节点的元数据
+            if (!serviceStr.toString().equals(localStr.toString())) {
+                sb.append("不相同的节点： ").append(path).append("\n");
+                sb.append("本地缓存对应元数据： ").append(localStr).append("\n");
+                sb.append("服务端对应元数据： ").append(serverNodeInfo).append("\n");
+                return false;
             }
         } catch (KeeperException | InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
