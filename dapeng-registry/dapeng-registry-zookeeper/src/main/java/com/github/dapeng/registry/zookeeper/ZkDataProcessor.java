@@ -107,7 +107,7 @@ public class ZkDataProcessor {
                 }
             }
             recalculateRuntimeInstanceWeight(zkInfo);
-            LOGGER.info("get config from {} with data [{}]", zkInfo.serviceName(), configData);
+            LOGGER.info("get " + (isGlobal?"global":"") + " config from " + zkInfo.serviceName() + " with data [" + configData + "]");
         } catch (UnsupportedEncodingException e) {
             LOGGER.error(e.getMessage(), e);
         }

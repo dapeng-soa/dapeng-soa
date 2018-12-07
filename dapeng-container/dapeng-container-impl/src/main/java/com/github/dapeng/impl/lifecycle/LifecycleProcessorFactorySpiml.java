@@ -2,7 +2,6 @@ package com.github.dapeng.impl.lifecycle;
 
 import com.github.dapeng.api.lifecycle.LifecycleProcessor;
 import com.github.dapeng.api.lifecycle.LifecycleProcessorFactorySpi;
-import com.github.dapeng.impl.plugins.monitor.DapengDoctor;
 
 /**
  * @Author: ever

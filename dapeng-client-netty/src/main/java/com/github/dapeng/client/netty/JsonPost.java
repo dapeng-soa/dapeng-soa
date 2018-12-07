@@ -16,6 +16,8 @@ import java.util.ServiceLoader;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
+import static com.github.dapeng.util.InvocationContextUtils.capsuleContext;
+
 
 /**
  * @author tangliu
@@ -64,7 +66,16 @@ public class JsonPost {
         }
 
         try {
-            String sessionTid = InvocationContextImpl.Factory.currentInstance().sessionTid().map(DapengUtil::longToHexStr).orElse("0");
+            InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
+            capsuleContext((InvocationContextImpl)invocationContext, clientInfo.serviceName, clientInfo.version, methodName);
+            String sessionTid = invocationContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0");
+
+            String logLevel = invocationContext.cookie(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
+
+            if (logLevel != null) {
+                MDC.put(SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
+            }
+
             MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
 
             OptimizedMetadata.OptimizedStruct req = optimizedService.getOptimizedStructs().get(method.request.namespace + "." + method.request.name);
@@ -91,6 +102,7 @@ public class JsonPost {
             return jsonResponse;
         } finally {
             MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+            MDC.remove(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
         }
     }
 
@@ -158,8 +170,17 @@ public class JsonPost {
         }
 
         try {
-            String sessionTid = InvocationContextImpl.Factory.currentInstance().sessionTid().map(DapengUtil::longToHexStr).orElse("0");
+            InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
+            capsuleContext((InvocationContextImpl)invocationContext, clientInfo.serviceName, clientInfo.version, methodName);
+            String sessionTid = invocationContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0");
+
             MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
+
+            String logLevel = invocationContext.cookie(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
+
+            if (logLevel != null) {
+                MDC.put(SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
+            }
 
             OptimizedMetadata.OptimizedStruct req = optimizedService.getOptimizedStructs().get(method.request.namespace + "." + method.request.name);
             OptimizedMetadata.OptimizedStruct resp = optimizedService.getOptimizedStructs().get(method.response.namespace + "." + method.response.name);
@@ -181,6 +202,7 @@ public class JsonPost {
             return jsonResponse;
         } finally {
             MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+            MDC.remove(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
         }
 
 

@@ -4,6 +4,7 @@ import com.github.dapeng.core.enums.CodecProtocol;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.IPUtils;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import static com.github.dapeng.core.helper.IPUtils.transferIp;
  */
 
 public class InvocationContextImpl implements InvocationContext {
+    private final static int I_HOST_IP = IPUtils.transferIp(SoaSystemEnvProperties.HOST_IP);
     /**
      * 服务名称
      */
@@ -51,7 +53,7 @@ public class InvocationContextImpl implements InvocationContext {
     private Optional<Integer> calleeIp = Optional.empty();
     private Optional<Integer> calleePort = Optional.empty();
 
-    private Optional<Integer> callerIp = Optional.ofNullable(IPUtils.localIpAsInt());
+    private Optional<Integer> callerIp = Optional.ofNullable(I_HOST_IP);
 
     private Optional<String> callerMid = Optional.empty();
 
@@ -158,6 +160,11 @@ public class InvocationContextImpl implements InvocationContext {
         return this.calleePort;
     }
 
+    /**
+     * should never call this method
+     * @param callerIp
+     * @return
+     */
     @Override
     public InvocationContext callerIp(Integer callerIp) {
         this.callerIp = Optional.ofNullable(callerIp);

@@ -26,7 +26,7 @@ public class CheckZkInfoScheduled {
     private final static CheckZkInfoScheduled instance = new CheckZkInfoScheduled();
 
     //周期 一天
-    private final int PERIOD = 86400000;
+    private final int PERIOD = 60000;
 
     private final ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(1,
             new ThreadFactoryBuilder()
@@ -62,7 +62,7 @@ public class CheckZkInfoScheduled {
                     }
                 }
             }
-        }, 600000, PERIOD, TimeUnit.MILLISECONDS);
+        }, 10000, PERIOD, TimeUnit.MILLISECONDS);
     }
 
     public Map<String, Stat> getZkLocalInfo() {

@@ -1,5 +1,6 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.cookie.CookieRule;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.ServiceFreqControl;
 import com.github.dapeng.core.Weight;
@@ -32,6 +33,8 @@ public class ZkServiceInfo {
 
     private ServiceFreqControl freqControl = null;
 
+    private List<CookieRule> cookieRules = new ArrayList<>(8);
+
     public ZkServiceInfo(String serviceName, List<RuntimeInstance> runtimeInstances) {
         this.ServiceName = serviceName;
         this.runtimeInstances = runtimeInstances;
@@ -63,6 +66,14 @@ public class ZkServiceInfo {
 
     public List<Route> routes() {
         return routes;
+    }
+
+    public void cookieRules(List<CookieRule> cookieRules) {
+        this.cookieRules = cookieRules;
+    }
+
+    public List<CookieRule> cookieRules() {
+        return cookieRules;
     }
 
     public void freqControl(ServiceFreqControl freqControl) {

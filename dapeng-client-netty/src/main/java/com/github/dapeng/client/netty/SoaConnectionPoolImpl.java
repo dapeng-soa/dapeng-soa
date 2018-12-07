@@ -1,5 +1,7 @@
 package com.github.dapeng.client.netty;
 
+import com.github.dapeng.cookie.CookieExecutor;
+import com.github.dapeng.cookie.CookieRule;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.helper.IPUtils;
@@ -11,8 +13,10 @@ import com.github.dapeng.registry.zookeeper.LoadBalanceAlgorithm;
 import com.github.dapeng.router.RoutesExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +24,7 @@ import java.util.Optional;
 import java.util.concurrent.Future;
 
 import static com.github.dapeng.core.SoaCode.*;
+import static com.github.dapeng.util.InvocationContextUtils.capsuleContext;
 
 /**
  * @author lihuimin
@@ -31,12 +36,12 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
 
     private ClientRefManager clientRefManager = ClientRefManager.getInstance();
 
-    static class ClientInfoWeakRef extends WeakReference<ClientInfo> {
+    static class ClientInfoSoftRef extends SoftReference<ClientInfo> {
         final ZkServiceInfo serviceInfo;
         final String serviceName;
         final String version;
 
-        ClientInfoWeakRef(SoaConnectionPool.ClientInfo referent,
+        ClientInfoSoftRef(SoaConnectionPool.ClientInfo referent,
                           ZkServiceInfo zkServiceInfo,
                           ReferenceQueue<? super ClientInfo> q) {
             super(referent, q);
@@ -149,10 +154,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             logger.error(getClass().getSimpleName() + "::findConnection[service: " + serviceInfo.serviceName() + ":" + version + "], not found available version of instances");
             throw new SoaException(NoMatchedService, "服务 [ " + serviceInfo.serviceName() + ":" + version + "] 无可用实例:没有找到对应的服务版本");
         }
-
         // router
         // 把路由需要用到的条件放到InvocationContext中
-        capsuleContext(context, serviceInfo, version, method);
+        capsuleContext(context, serviceInfo.serviceName(), version, method);
 
         List<RuntimeInstance> routedInstances = router(serviceInfo, checkVersionInstances);
 
@@ -216,29 +220,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 throw new SoaException(SoaCode.NoMatchedRouting);
             }
             return runtimeInstances;
-        }
-    }
-
-    /**
-     * 封装InvocationContext， 把路由需要用到的东西放到InvocationContext中。
-     *
-     * @param context
-     * @param serviceInfo
-     * @param method
-     */
-    private void capsuleContext(InvocationContextImpl context, final ZkServiceInfo serviceInfo, final String version, final String method) {
-        context.serviceName(serviceInfo.serviceName());
-        context.methodName(method);
-        context.versionName(version);
-
-        InvocationContextImpl.InvocationContextProxy invocationCtxProxy = InvocationContextImpl.Factory.getInvocationContextProxy();
-
-        if (invocationCtxProxy != null) {
-            context.userIp(invocationCtxProxy.userIp().orElse(null));
-            context.userId(invocationCtxProxy.userId().orElse(null));
-            context.operatorId(invocationCtxProxy.operatorId().orElse(null));
-            context.callerMid(invocationCtxProxy.callerMid().orElse(null));
-            context.cookies(invocationCtxProxy.cookies());
         }
     }
 
@@ -449,42 +430,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         } else if (globalTimeOut != null) {
 
             return Optional.of(globalTimeOut);
-        } else {
-            return Optional.empty();
-        }
-    }
-
-
-    /**
-     * 获取 zookeeper processTime config
-     * <p>
-     * method level -> service level -> global level
-     * <</p>
-     *
-     * @return
-     */
-    private Optional<Long> getZkProcessTime(String methodName, ZkServiceInfo configInfo) {
-        //方法级别
-        Long methodProcessTime = null;
-        //服务配置
-        Long serviceProcessTime = null;
-
-        Long globalProcessTime = null;
-
-        if (configInfo != null) {
-            //方法级别
-            methodProcessTime = configInfo.processTimeConfig.serviceConfigs.get(methodName);
-            //服务配置
-            serviceProcessTime = configInfo.processTimeConfig.serviceConfigs.get(ConfigKey.ProcessTime.getValue());
-            globalProcessTime = configInfo.processTimeConfig.globalConfig;
-        }
-
-        if (methodProcessTime != null) {
-            return Optional.of(methodProcessTime);
-        } else if (serviceProcessTime != null) {
-            return Optional.of(serviceProcessTime);
-        } else if (globalProcessTime != null) {
-            return Optional.of(globalProcessTime);
         } else {
             return Optional.empty();
         }

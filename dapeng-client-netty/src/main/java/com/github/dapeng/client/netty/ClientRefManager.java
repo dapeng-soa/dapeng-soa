@@ -23,7 +23,7 @@ public class ClientRefManager {
     /**
      * in only, never out
      */
-    private static final Map<String, SoaConnectionPoolImpl.ClientInfoWeakRef> handlesByName = new ConcurrentHashMap<>(128);
+    private static final Map<String, SoaConnectionPoolImpl.ClientInfoSoftRef> handlesByName = new ConcurrentHashMap<>(128);
     private static final ReferenceQueue<SoaConnectionPool.ClientInfo> referenceQueue = new ReferenceQueue<>();
 
     private ClientRefManager() {
@@ -36,10 +36,10 @@ public class ClientRefManager {
     }
 
     public SoaConnectionPool.ClientInfo registerClient(String serviceName, String version) {
-        SoaConnectionPoolImpl.ClientInfoWeakRef wr = handlesByName.get(serviceName);
+        SoaConnectionPoolImpl.ClientInfoSoftRef softRef = handlesByName.get(serviceName);
         SoaConnectionPool.ClientInfo clientInfo;
-        if (wr != null) {
-            clientInfo = wr.get();
+        if (softRef != null) {
+            clientInfo = softRef.get();
             if (clientInfo != null) {
                 return clientInfo;
             }
@@ -52,8 +52,8 @@ public class ClientRefManager {
             ZkServiceInfo serviceInfo = new ZkServiceInfo(serviceName, new CopyOnWriteArrayList<>());
             clientZkAgent.sync(serviceInfo);
 
-            SoaConnectionPoolImpl.ClientInfoWeakRef weakRef = new SoaConnectionPoolImpl.ClientInfoWeakRef(clientInfo, serviceInfo, referenceQueue);
-            handlesByName.put(serviceName, weakRef);
+            SoaConnectionPoolImpl.ClientInfoSoftRef clientInfoSoftRef = new SoaConnectionPoolImpl.ClientInfoSoftRef(clientInfo, serviceInfo, referenceQueue);
+            handlesByName.put(serviceName, clientInfoSoftRef);
         }
 
         return clientInfo;
@@ -63,7 +63,7 @@ public class ClientRefManager {
         return clientZkAgent.serviceInfo(serviceName);
     }
 
-    private void onGcCallback(SoaConnectionPoolImpl.ClientInfoWeakRef ref) {
+    private void onGcCallback(SoaConnectionPoolImpl.ClientInfoSoftRef ref) {
         clientZkAgent.cancel(ref.serviceInfo);
     }
 
@@ -71,7 +71,7 @@ public class ClientRefManager {
     Thread cleanThread = new Thread(() -> {
         while (true) {
             try {
-                SoaConnectionPoolImpl.ClientInfoWeakRef clientInfoRef = (SoaConnectionPoolImpl.ClientInfoWeakRef) referenceQueue.remove(1000);
+                SoaConnectionPoolImpl.ClientInfoSoftRef clientInfoRef = (SoaConnectionPoolImpl.ClientInfoSoftRef) referenceQueue.remove(1000);
                 if (clientInfoRef == null) continue;
 
                 if (LOGGER.isDebugEnabled()) {

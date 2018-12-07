@@ -125,7 +125,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
 
         Long cost = System.currentTimeMillis() - requestTimestamp;
         soaHeader.setCalleeTime2(cost.intValue());
-        soaHeader.setCalleeIp(Optional.of(IPUtils.transferIp(SoaSystemEnvProperties.SOA_CONTAINER_IP)));
+        soaHeader.setCalleeIp(Optional.of(IPUtils.transferIp(SoaSystemEnvProperties.HOST_IP)));
         soaHeader.setCalleePort(Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
         Joiner joiner = Joiner.on(":");
         soaHeader.setCalleeMid(joiner.join(soaHeader.getServiceName(), soaHeader.getMethodName(), soaHeader.getVersionName()));
@@ -175,7 +175,8 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
             messageProcessor.writeMessageEnd();
 
             transport.flush();
-            MdcCtxInfoUtil.switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
+            MdcCtxInfoUtil.putMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID,
+                    transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
             String infoLog = "response[seqId:" + transactionContext.seqId() + ", respCode:" + soaHeader.getRespCode().get() + "]:"
                     + "service[" + soaHeader.getServiceName()
                     + "]:version[" + soaHeader.getVersionName()
@@ -196,7 +197,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
         } finally {
             //请求返回，容器请求数 -1
             container.requestCounter().decrementAndGet();
-            MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), null);
+            MdcCtxInfoUtil.removeMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
             MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         }
     }

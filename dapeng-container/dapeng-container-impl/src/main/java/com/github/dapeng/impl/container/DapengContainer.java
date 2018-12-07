@@ -277,10 +277,12 @@ public class DapengContainer implements Container {
             LOGGER.debug("Retry to ensure requests processing is complete");
         }
 
-        LOGGER.warn("容器内尚余[" + requestCounter.get() + "]个请求还未处理，现在等待[" + SOA_SHUTDOWN_TIMEOUT + "ms]");
+        LOGGER.warn("容器内尚余[" + requestCounter.get() + "]个请求还未处理..."
+                + (requestCounter.get() > 0 ? "现在最多等待[" + SOA_SHUTDOWN_TIMEOUT + "ms]" : ""));
 
-        int retry = 5;
-        long sleepTime = SOA_SHUTDOWN_TIMEOUT / retry;
+        long sleepTime = 2000;
+        long retry = SOA_SHUTDOWN_TIMEOUT / sleepTime;
+
         do {
             if (requestCounter.intValue() <= 0) {
                 return;

@@ -1,7 +1,9 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.cookie.CookieExecutor;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.github.dapeng.cookie.CookieRule;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -44,7 +46,7 @@ public class ClientZkAgent implements Watcher {
      /**
       * 周期 一天
       */
-    private final int PERIOD = 86400000;
+    private final int PERIOD = 60000;
 
     private final ScheduledExecutorService schedulerExecutorService = Executors.newScheduledThreadPool(1,
             new ThreadFactoryBuilder()
@@ -127,10 +129,14 @@ public class ClientZkAgent implements Watcher {
                 syncZkRuntimeInfo(serviceInfo);
                 break;
             case NodeDataChanged:
-                if (event.getPath().startsWith(CONFIG_PATH)) {
-                    syncZkConfigInfo(serviceInfo, zk, this);
+                if (event.getPath().equals(CONFIG_PATH)) {
+                    syncZkConfigInfo(serviceInfo, zk, this, true);
+                } else if (event.getPath().startsWith(CONFIG_PATH)) {
+                    syncZkConfigInfo(serviceInfo, zk, this, false);
                 } else if (event.getPath().startsWith(ROUTES_PATH)) {
                     syncZkRouteInfo(serviceInfo);
+                } else if (event.getPath().startsWith(COOKIE_RULES_PATH)) {
+                    syncZkCookieRuleInfo(serviceInfo);
                 }
                 break;
             default:
@@ -214,7 +220,10 @@ public class ClientZkAgent implements Watcher {
             // sync router config
             syncZkRouteInfo(serviceInfo);
             // sync service config, no need to try 5 times any more
-            syncZkConfigInfo(serviceInfo, zk, this);
+            syncZkConfigInfo(serviceInfo, zk, this, true);
+            syncZkConfigInfo(serviceInfo, zk, this, false);
+            // sync cookie injection rule
+            syncZkCookieRuleInfo(serviceInfo);
 
             LOGGER.info(getClass().getSimpleName() + "::syncServiceZkInfo[serviceName:" + serviceInfo.serviceName() + "]:zkInfo succeed, runtimeInstants:" + serviceInfo.runtimeInstances().size());
         } catch (Exception e) {
@@ -265,7 +274,7 @@ public class ClientZkAgent implements Watcher {
                             + serviceInfo.serviceName() + " -> " + serviceInfo.runtimeInstances());
                     return;
                 } catch (KeeperException | InterruptedException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    LOGGER.error(getClass() + "::syncZkRuntimeInfo serviceName: " + serviceInfo.serviceName() + " 出现异常, zkStatus:" + zk.getState(), e);
                     sleep(300);
                 }
             }
@@ -315,12 +324,36 @@ public class ClientZkAgent implements Watcher {
                     processRouteData(serviceInfo, data);
                     LOGGER.warn("ClientZk::getRoutes routes changes:" + serviceInfo.routes());
                     return;
+                } catch (KeeperException.NoNodeException e) {
+                    ZkUtils.createPersistNodeOnly(servicePath, zk);
                 } catch (KeeperException | InterruptedException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    LOGGER.error(getClass() + "::syncZkRouteInfo serviceName: " + serviceInfo.serviceName() + " 出现异常, zkStatus:" + zk.getState(), e);
                     sleep(300);
                 }
             }
         } while (--retry > 0);
+    }
+
+    /**
+     * 同步cookie注入的规则
+     *
+     * @param serviceInfo
+     */
+    private void syncZkCookieRuleInfo(ZkServiceInfo serviceInfo) {
+        LOGGER.warn("ClientZKAgent::syncZkCookieRuleInfo service:" + serviceInfo.serviceName());
+        String servicePath = COOKIE_RULES_PATH + "/" + serviceInfo.serviceName();
+        try {
+            byte[] data = zk.getData(servicePath, this, null);
+            List<CookieRule> cookieRules = processCookieRuleData(data);
+            serviceInfo.cookieRules(cookieRules);
+            LOGGER.warn("ClientZk::syncZkCookieRuleInfo rules changes:" + cookieRules);
+        } catch (KeeperException.NoNodeException e) {
+            ZkUtils.createPersistNodeOnly(servicePath, zk);
+            syncZkCookieRuleInfo(serviceInfo);
+        } catch (KeeperException | InterruptedException e) {
+            LOGGER.error(getClass() + "::syncZkCookieRuleInfo serviceName: " + serviceInfo.serviceName()
+                    + " 出现异常, zkStatus:" + zk.getState(), e);
+        }
     }
 
 
@@ -333,7 +366,20 @@ public class ClientZkAgent implements Watcher {
             List<Route> zkRoutes = RoutesExecutor.parseAll(routeData);
             serviceInfo.routes(zkRoutes);
         } catch (Exception e) {
-            LOGGER.error("parser routes 信息 失败，请检查路由规则写法是否正确:" + e.getMessage());
+            LOGGER.error(getClass() + "::processCookieRuleData, parser routes 信息 失败，请检查路由规则写法是否正确:" + e.getMessage());
+        }
+    }
+
+    /**
+     * process zk data 解析cookie rule 信息
+     */
+    private List<CookieRule> processCookieRuleData(byte[] data) {
+        try {
+            String ruleData = new String(data, StandardCharsets.UTF_8);
+            return CookieExecutor.parseCookieRules(ruleData);
+        } catch (Exception e) {
+            LOGGER.error(getClass() + "::processCookieRuleData, parser cookie rule 信息 失败，请检查cookie规则写法是否正确:" + e.getMessage());
+            return new ArrayList<>(16);
         }
     }
 
@@ -358,6 +404,6 @@ public class ClientZkAgent implements Watcher {
             } else {
                 LOGGER.warn("本地clientZk元数据与服务端不同");
             }
-        }, 600000, PERIOD, TimeUnit.MILLISECONDS);
+        }, 10000, PERIOD, TimeUnit.MILLISECONDS);
     }
 }
