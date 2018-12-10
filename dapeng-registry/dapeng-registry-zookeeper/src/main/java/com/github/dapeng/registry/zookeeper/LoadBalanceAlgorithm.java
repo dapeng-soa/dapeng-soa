@@ -139,7 +139,6 @@ public class LoadBalanceAlgorithm {
         RuntimeInstance result = null;
         if (instances.size() > 0) {
             int multiple = 160;
-            InvocationContextImpl.Factory.currentInstance().setCookie("cookie_hash", "&callerIp");
             SortedMap<Integer, RuntimeInstance> virtualHashCircle = new TreeMap<>();
             createCircle(instances, virtualHashCircle, multiple);
             String request = InvocationContextImpl.Factory.currentInstance().cookie("cookie_hash");
