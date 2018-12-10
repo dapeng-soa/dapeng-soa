@@ -3,6 +3,7 @@ package com.github.dapeng.cookie;
 
 import com.github.dapeng.router.*;
 import com.github.dapeng.router.condition.Condition;
+import com.github.dapeng.router.exception.ParsingException;
 import com.github.dapeng.router.token.*;
 
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ public class CookieParser extends RoutesParser {
     /**
      * 第一步： 多行规则，根据回车符 ' \n '  进行split  do while 解析
      */
-    public List<CookieRule> cookieRoutes() {
+    public List<CookieRule> cookieRoutes() throws ParsingException {
         List<CookieRule> routes = new ArrayList<>();
         Token token = lexer.peek();
         switch (token.type()) {
@@ -65,7 +66,7 @@ public class CookieParser extends RoutesParser {
                 warn("current service hava no route express config");
                 break;
             default:
-                error("expect `otherwise` or `id match ...` but got " + token);
+                throw new ParsingException("cookieRoutes error", "expect `otherwise` or `id match ...` but got " + token);
         }
         return routes;
     }
@@ -76,19 +77,18 @@ public class CookieParser extends RoutesParser {
      * <p>
      * method match s'getFoo'  => ~c'a#b'
      */
-    public CookieRule cookieRoute() {
+    public CookieRule cookieRoute() throws ParsingException {
         Token token = lexer.peek();
         switch (token.type()) {
             case Token.OTHERWISE:
             case Token.ID:
                 Condition left = left();
                 lexer.next(Token.THEN);
-                List<CookieRight> right = cookieRiget();
+                List<CookieRight> right = cookieRight();
                 return new CookieRule(left, right);
             default:
-                warn("expect `otherwise` or `id match ...` but got " + token);
+                throw new ParsingException("cookieRoute error", "expect `otherwise` or `id match ...` but got " + token);
         }
-        return null;
     }
 
 
@@ -97,7 +97,7 @@ public class CookieParser extends RoutesParser {
      * rightPattern : '~' rightPattern
      * | 'c(' string '#' string ')'
      */
-    protected List<CookieRight> cookieRiget() {
+    protected List<CookieRight> cookieRight() throws ParsingException {
         List<CookieRight> cookieInfoList = new ArrayList<>();
 
         Token token = lexer.peek();
@@ -115,8 +115,7 @@ public class CookieParser extends RoutesParser {
                 }
                 return cookieInfoList;
             default:
-                error("expect 'c' cookie token , but got:" + token);
-                return null;
+                throw new ParsingException("cookieRight error", "expect 'c' cookie token , but got:" + token);
         }
     }
 }

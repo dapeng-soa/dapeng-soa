@@ -4,9 +4,8 @@ import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
 import com.github.dapeng.router.exception.ParsingException;
-import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,8 +39,14 @@ public class TestRouterRuntimeList {
     }
 
     @Test
+    public void testEmptyRule() {
+        List<Route> routes = RoutesExecutor.parseAll("");
+        Assert.assertEquals(0, routes.size());
+    }
+
+    @Test
     public void testSimpleOne() {
-        String pattern = "  method match 'getFoo'  => ip\"192.168.1.101:9090\"";
+        String pattern = "  method match 'getFoo'  => ip\"192.168.1.101:9090\"".trim();
 
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
@@ -58,7 +63,7 @@ public class TestRouterRuntimeList {
     @Test
     public void testRouterOneMatch() {
         String pattern = "  method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip\"192.168.1.101/30\"" +
-                System.getProperty("line.separator") + " method match 'getFoo1' , 'setFoo' ; version match '1.0.0' => ip\"192.168.1.101/30\"";
+                System.getProperty("line.separator") + " method match 'getFoo1' , 'setFoo' ; version match '1.0.0' => ip\"192.168.1.101/30\"".trim();
 
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
@@ -85,7 +90,7 @@ public class TestRouterRuntimeList {
      */
     @Test
     public void testRouter() {
-        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip'192.168.1.102' , ~ip'192.168.1.101' ";
+        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ip'192.168.1.102' , ~ip'192.168.1.101' ".trim();
         List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         ctx.methodName("getFoo");
@@ -107,7 +112,7 @@ public class TestRouterRuntimeList {
      */
     @Test
     public void testRouterOne() {
-        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ~ip'192.168.1.103' ";
+        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ~ip'192.168.1.103' ".trim();
         List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         ctx.methodName("getFoo");
@@ -130,7 +135,7 @@ public class TestRouterRuntimeList {
      */
     @Test
     public void testRouterNot() {
-        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ~ip'192.168.1.101' , ~ip'192.168.1.103' ";
+        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ~ip'192.168.1.101' , ~ip'192.168.1.103' ".trim();
         List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         ctx.methodName("getFoo");
@@ -152,7 +157,7 @@ public class TestRouterRuntimeList {
      */
     @Test
     public void testRouterNotOne() {
-        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ~ip'192.168.1.101' ";
+        String onePattern_oneMatcher = "method match 'getFoo' , 'setFoo' ; version match '1.0.0' => ~ip'192.168.1.101' ".trim();
         List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         ctx.methodName("getFoo");
@@ -172,7 +177,7 @@ public class TestRouterRuntimeList {
 
     @Test
     public void testRouterRegex1() {
-        String onePattern_oneMatcher = "method match 'getFoo' , r'setFoo.*' ; version match '1.0.0' => ip'192.168.1.101' , ip'192.168.1.103' ";
+        String onePattern_oneMatcher = "method match 'getFoo' , r'setFoo.*' ; version match '1.0.0' => ip'192.168.1.101' , ip'192.168.1.103' ".trim();
         List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         ctx.methodName("setFooById");
@@ -195,7 +200,7 @@ public class TestRouterRuntimeList {
      */
     @Test
     public void testRouterRegex2() {
-        String onePattern_oneMatcher = "method match 'getFoo' , r'[a-zA-Z]{3}[0-9]{2}id' ; version match '1.0.0' => ip'192.168.1.101' , ip'192.168.1.103' ";
+        String onePattern_oneMatcher = "method match 'getFoo' , r'[a-zA-Z]{3}[0-9]{2}id' ; version match '1.0.0' => ip'192.168.1.101' , ip'192.168.1.103' ".trim();
         List<Route> routes = RoutesExecutor.parseAll(onePattern_oneMatcher);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         ctx.methodName("sat22id");
@@ -215,7 +220,7 @@ public class TestRouterRuntimeList {
     @Test
     public void testRouterOneMatch3() {
         String pattern = "  method match r'get.*' , 'setFoo' ; version match '1.0.0' => ~ip\"192.168.1.101\"  " +
-                System.getProperty("line.separator") + " otherwise => ip\"192.168.1.101\" , ip\"192.168.1.103\"";
+                System.getProperty("line.separator") + " otherwise => ip\"192.168.1.101\" , ip\"192.168.1.103\"".trim();
 
 //        String onePattern_oneMatcher = "method match 'get.*ById'  => ip'192.168.1.101/23' , ip'192.168.1.103/24' ";
         List<Route> routes = RoutesExecutor.parseAll(pattern);
@@ -238,7 +243,7 @@ public class TestRouterRuntimeList {
 
     @Test
     public void testRouterOneMatch4() {
-        String pattern = "  userId match %\"1024n+2..4\"; version match '1.0.0' => ip\"192.168.1.101\" ";
+        String pattern = "  userId match %\"1024n+2..4\"; version match '1.0.0' => ip\"192.168.1.101\" ".trim();
 
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
@@ -259,22 +264,18 @@ public class TestRouterRuntimeList {
 
     @Test
     public void testRouterOneMatch5() {
-        try {
 
-            String pattern = "  userId match %\"1024n+2..4\"; version match '1.0.0' => ip\"192.168.1.101\' ";
+        String pattern = "  userId match %\"1024n+2..4\"; version match '1.0.0' => ip\"192.168.1.101\' ".trim();
 
-            List<Route> routes = RoutesExecutor.parseAll(pattern);
-            InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-            ctx.serviceName("getSkuById");
-            ctx.versionName("1.0.0");
-            ctx.userId(2052L);
-            List<RuntimeInstance> prepare = prepare(ctx, routes);
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.serviceName("getSkuById");
+        ctx.versionName("1.0.0");
+        ctx.userId(2052L);
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
 
-            List<RuntimeInstance> expectInstances = new ArrayList<>();
-            expectInstances.add(runtimeInstance1);
-        } catch (ParsingException e) {
-//            Assert.a(" 抛出了ParsingException 异常 ");
-        }
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        expectInstances.add(runtimeInstance1);
 
 //        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
@@ -282,7 +283,7 @@ public class TestRouterRuntimeList {
 
     @Test
     public void testRouterMode2() {
-        String pattern = "  userId match %\"1025n+2..4\"; version match '1.0.0' => ip\"192.168.1.101\" ";
+        String pattern = "  userId match %\"1025n+2..4\"; version match '1.0.0' => ip\"192.168.1.101\" ".trim();
 
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
@@ -303,7 +304,7 @@ public class TestRouterRuntimeList {
 
     @Test
     public void testRouterOtherwise() {
-        String pattern = "  otherwise => ~ip\"192.168.1.104/30\" ";
+        String pattern = "  otherwise => ~ip\"192.168.1.104/30\" ".trim();
 
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
@@ -321,7 +322,7 @@ public class TestRouterRuntimeList {
     @Test
     public void testRouterMode() {
 
-        String pattern = "  userId match %'1024n+1..2' => ~ip\"192.168.1.104/30\" ";
+        String pattern = "  userId match %'1024n+1..2' => ~ip\"192.168.1.104/30\" ".trim();
 
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
@@ -341,7 +342,7 @@ public class TestRouterRuntimeList {
     @Test
     public void testRouterMode1() {
 
-        String pattern = "  userId match %'1024n+3' => ~ip\"192.168.1.104/30\" ";
+        String pattern = "  userId match %'1024n+3' => ~ip\"192.168.1.104/30\" ".trim();
 
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
@@ -361,7 +362,7 @@ public class TestRouterRuntimeList {
     @Test
     public void testRouterRanger() {
 
-        String pattern = "  userId match 10..30 => ~ip\"192.168.1.104/30\" ";
+        String pattern = "  userId match 10..30 => ~ip\"192.168.1.104/30\" ".trim();
 
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
@@ -381,7 +382,7 @@ public class TestRouterRuntimeList {
     @Test
     public void testRouterNumber() {
 
-        String pattern = "  userId match ~11 => ~ip\"192.168.1.104/30\" ";
+        String pattern = "  userId match ~11 => ~ip\"192.168.1.104/30\" ".trim();
 
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
@@ -405,7 +406,7 @@ public class TestRouterRuntimeList {
     @Test
     public void testRouterIp() {
 //        String pattern = "  calleeIp match ip'192.168.1.101/24' => ip\"192.168.2.105/30\" ";
-        String pattern = "  calleeIp match ip'192.168.1.101/24' => ip\"192.168.2.105/30\" ";
+        String pattern = "  calleeIp match ip'192.168.1.101/24' => ip\"192.168.2.105/30\" ".trim();
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
 
@@ -424,7 +425,7 @@ public class TestRouterRuntimeList {
      */
     @Test
     public void testRouterServiceDown() {
-        String pattern = "  otherwise => ip\"192.168.2.105/30\" ";
+        String pattern = "  otherwise => ip\"192.168.2.105/30\" ".trim();
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
 
@@ -448,7 +449,7 @@ public class TestRouterRuntimeList {
         builder.append("method match 'register' => ip'192.168.10.12'" + "\r\n");
 
 
-        List<Route> routes = RoutesExecutor.parseAll(builder.toString());
+        List<Route> routes = RoutesExecutor.parseAll(builder.toString().trim());
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         ctx.methodName("register");
 
@@ -471,7 +472,7 @@ public class TestRouterRuntimeList {
         sb.append(pattern);
         sb.append("\r\n");
         sb.append("\r\n");
-        List<Route> routes = RoutesExecutor.parseAll(sb.toString());
+        List<Route> routes = RoutesExecutor.parseAll(sb.toString().trim());
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
 
 
@@ -489,7 +490,7 @@ public class TestRouterRuntimeList {
     @Test
     public void testCookieRouter() {
         String pattern = "cookie_storeId match 11866600  => ip\"192.168.1.101\"\n" +
-                "otherwise => ~ip\"192.168.10.126\" ";
+                "otherwise => ~ip\"192.168.10.126\" ".trim();
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         ctx.setCookie("storeId", "11866600");
@@ -507,7 +508,7 @@ public class TestRouterRuntimeList {
     @Test
     public void testErrorRouteLexer() {
         String pattern = "cookie_storeId match 11866600 ; method match  \"updateOrderMemberId\" => ip\"192.168.1.101\"\n" +
-                "otherwise => ~ip\"192.168.10.126\" ";
+                "otherwise => ~ip\"192.168.10.126\" ".trim();
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         ctx.setCookie("storeId", "11866600");
@@ -527,7 +528,7 @@ public class TestRouterRuntimeList {
     @Test
     public void testOtherWiseTwoIp() {
         //"192.168.1.101",
-        String pattern = "otherwise => ~ip\"192.168.1.101\" , ~ip\"192.168.1.102\" , ~ip\"192.168.1.103\" ";
+        String pattern = "otherwise => ~ip\"192.168.1.101\" , ~ip\"192.168.1.102\" , ~ip\"192.168.1.103\" ".trim();
 
 
         List<Route> routes = RoutesExecutor.parseAll(pattern);
@@ -547,7 +548,7 @@ public class TestRouterRuntimeList {
     @Test
     public void testOtherWiseIpMark() {
         //"192.168.1.101",
-        String pattern = "otherwise => ~ip\"192.168.1.101/24\"    ";
+        String pattern = "otherwise => ~ip\"192.168.1.101/24\"    ".trim();
 
 
         List<Route> routes = RoutesExecutor.parseAll(pattern);
@@ -563,77 +564,60 @@ public class TestRouterRuntimeList {
         Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
 
-    @Test
+    @Test(expected=ParsingException.class)
     public void testMoreThenError() {
-        try {
 
-            String pattern = "cookie_storeId match 11866600  => ip\"192.168.1.101\"   => ip\"192.168.1.102\"\n" +
-                    "otherwise => ~ip\"192.168.10.126\" ";
-            List<Route> routes = RoutesExecutor.parseAll(pattern);
-            InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-            ctx.setCookie("storeId", "118666200");
-            ctx.methodName("updateOrderMemberId");
+        String pattern = "cookie_storeId match 11866600  => ip\"192.168.1.101\"   => ip\"192.168.1.102\"\n" +
+                "otherwise => ~ip\"192.168.10.126\" ".trim();
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.setCookie("storeId", "118666200");
+        ctx.methodName("updateOrderMemberId");
 
-            List<RuntimeInstance> prepare = prepare(ctx, routes);
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
 
 
-            List<RuntimeInstance> expectInstances = new ArrayList<>();
-            expectInstances.add(runtimeInstance1);
-            Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
-        } catch (ParsingException ex) {
-            Assert.assertThat(ex.getMessage(), CoreMatchers.containsString(
-                    ("[Validate Token Error]:target token: [(2,'=>')] is not in expects token: [(15,'逗号'), (-1,'文件结束符'), (1,'回车换行符')]")));
-        }
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        expectInstances.add(runtimeInstance1);
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
 
     @Test
     public void testMoreThenIp2() {
-        try {
-            String pattern = "cookie_storeId match 11888900 , 11728901 , 11735000 , 11799200 ; method match \"reverseOrderPayment\" => ip\"1.1.1.1\"\n" +
-                    "method match \"createOfflineOrder\"  => ip\"192.168.10.126\"\n" +
-                    "method match \"getServiceMetadata\" , \"createMiniOrders\" , \"createDoneOrderPayments\" , \"createCanceledOrderPayments\" => ip\"192.168.10.130\"\n" +
-                    "cookie_storeId match 11866600 , 11799200 , 11735000 , 11739600  =>  ip\"192.168.10.130\"=> ip\"192.168.10.130\"\n" +
-                    "cookie_storeId match 11888900 , 11728901 , 11735000 , 11799200 => ip\"192.168.10.126\"\n" +
-                    "otherwise => ~ip\"192.168.10.0/24\"";
-            List<Route> routes = RoutesExecutor.parseAll(pattern);
-            InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-            ctx.setCookie("storeId", "118666200");
-            ctx.methodName("updateOrderMemberId");
+        String pattern = "cookie_storeId match 11888900 , 11728901 , 11735000 , 11799200 ; method match \"reverseOrderPayment\" => ip\"1.1.1.1\"\n" +
+                "method match \"createOfflineOrder\"  => ip\"192.168.10.126\"\n" +
+                "method match \"getServiceMetadata\" , \"createMiniOrders\" , \"createDoneOrderPayments\" , \"createCanceledOrderPayments\" => ip\"192.168.10.130\"\n" +
+                "cookie_storeId match 11866600 , 11799200 , 11735000 , 11739600  =>  ip\"192.168.10.130\"=> ip\"192.168.10.130\"\n" +
+                "cookie_storeId match 11888900 , 11728901 , 11735000 , 11799200 => ip\"192.168.10.126\"\n" +
+                "otherwise => ~ip\"192.168.10.0/24\"".trim();
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.setCookie("storeId", "118666200");
+        ctx.methodName("updateOrderMemberId");
 
-            List<RuntimeInstance> prepare = prepare(ctx, routes);
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
 
 
-            List<RuntimeInstance> expectInstances = new ArrayList<>();
-            expectInstances.add(runtimeInstance1);
-            Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
-
-        } catch (ParsingException ex) {
-            Assert.assertThat(ex.getMessage(), CoreMatchers.containsString(
-                    ("[Validate Token Error]:target token: [(2,'=>')] is not in expects token: [(15,'逗号'), (-1,'文件结束符'), (1,'回车换行符')]")));
-        }
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        expectInstances.add(runtimeInstance1);
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
 
     }
 
     @Test
     public void testMoreThenIp3() {
-        try {
-            String pattern = "otherwise => ~ip\"192.168.10.126\" , , ~ip\"192.168.10.130\"";
-            List<Route> routes = RoutesExecutor.parseAll(pattern);
-            InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-            ctx.setCookie("storeId", "118666200");
-            ctx.methodName("updateOrderMemberId");
+        String pattern = "otherwise => ~ip\"192.168.10.126\" , , ~ip\"192.168.10.130\"".trim();
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.setCookie("storeId", "118666200");
+        ctx.methodName("updateOrderMemberId");
 
-            List<RuntimeInstance> prepare = prepare(ctx, routes);
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
 
 
-            List<RuntimeInstance> expectInstances = new ArrayList<>();
-            expectInstances.add(runtimeInstance1);
-            Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
-
-        } catch (ParsingException ex) {
-            Assert.assertThat(ex.getMessage(), CoreMatchers.containsString(
-                    ("[Validate Token Error]:target token: [(2,'=>')] is not in expects token: [(15,'逗号'), (-1,'文件结束符'), (1,'回车换行符')]")));
-        }
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        expectInstances.add(runtimeInstance1);
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
 
     }
 

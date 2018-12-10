@@ -37,7 +37,7 @@ public class ZkDataProcessor {
     public static void processZkConfig(byte[] data, ZkServiceInfo zkInfo, boolean isGlobal) {
         try {
 
-            String configData = new String(data, "utf-8");
+            String configData = new String(data, "utf-8").trim();
 
             String[] properties = configData.split("\n|\r|\r\n");
 

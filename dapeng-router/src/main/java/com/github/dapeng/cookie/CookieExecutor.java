@@ -2,6 +2,7 @@ package com.github.dapeng.cookie;
 
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.router.*;
+import com.github.dapeng.router.exception.ParsingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +30,7 @@ public class CookieExecutor extends RoutesExecutor {
      * @param content 设置在 zk cookies 节点下的规则内容信息
      * @return
      */
-    public static List<CookieRule> parseCookieRules(String content) {
+    public static List<CookieRule> parseCookieRules(String content) throws ParsingException {
         CookieParser parser = new CookieParser(new RoutesLexer(content));
         return parser.cookieRoutes();
     }
