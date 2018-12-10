@@ -1,8 +1,17 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.core.InvocationContext;
+import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.RuntimeInstance;
+import com.github.dapeng.core.helper.DapengUtil;
+import com.github.dapeng.core.helper.IPUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.LinkedList;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -12,6 +21,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class LoadBalanceAlgorithm {
     private static int lastIndex = -1;
     private static int currentWeight = 0;
+    private final static Logger logger = LoggerFactory.getLogger(LoadBalanceAlgorithm.class);
 
 
     /**
@@ -120,6 +130,30 @@ public class LoadBalanceAlgorithm {
     }
 
     /**
+     * 一致性哈希算法
+     *
+     * @param instances
+     * @return
+     */
+    public static RuntimeInstance consistentHash(List<RuntimeInstance> instances) {
+        RuntimeInstance result = null;
+        if (instances.size() > 0) {
+            int multiple = 160;
+            InvocationContextImpl.Factory.currentInstance().setCookie("cookie_hash", "&callerIp");
+            SortedMap<Integer, RuntimeInstance> virtualHashCircle = new TreeMap<>();
+            createCircle(instances, virtualHashCircle, multiple);
+            String request = InvocationContextImpl.Factory.currentInstance().cookie("cookie_hash");
+            if (request == null) {
+                result = random(instances);
+            } else {
+                result = getServer(request, virtualHashCircle);
+            }
+        }
+        return result;
+    }
+
+
+    /**
      * 计算所有权重的最大公约数
      *
      * @param weights
@@ -142,5 +176,66 @@ public class LoadBalanceAlgorithm {
         } else {
             return gcd(b, a % b);
         }
+    }
+
+    private static void createCircle(List<RuntimeInstance> instances, SortedMap<Integer, RuntimeInstance> virtualHashCircle, int multiple) {
+        for (RuntimeInstance ins : instances) {
+            for (int i = 0; i < multiple; i++) {
+                String virtualServer = ins.ip + ":" + ins.port + "#" + i;
+                int virtualHash = getHash(virtualServer);
+                virtualHashCircle.put(virtualHash, ins);
+            }
+        }
+    }
+
+    /**
+     * FNV1_32_HASH算法
+     *
+     * @param
+     * @return
+     */
+    private static int getHash(String str) {
+        String hashParameter = null;
+        if (str.startsWith("&")) {
+            switch (str.substring(1)) {
+                case "methodName":
+                    hashParameter = InvocationContextImpl.Factory.currentInstance().methodName();
+                    break;
+                case "callerIp":
+                    hashParameter = InvocationContextImpl.Factory.currentInstance().callerIp().map(String::valueOf).orElse("");
+                    break;
+                case "userIp":
+                    hashParameter = InvocationContextImpl.Factory.currentInstance().userIp().map(String::valueOf).orElse("");
+                default:
+                    // won't be here
+            }
+        } else {
+            hashParameter = str;
+        }
+        final int p = 16777619;
+        int hash = (int) 2166136261L;
+        for (int i = 0; i < hashParameter.length(); i++) {
+            hash = (hash ^ hashParameter.charAt(i)) * p;
+        }
+        hash += hash << 13;
+        hash ^= hash >> 7;
+        hash += hash << 3;
+        hash ^= hash >> 17;
+        hash += hash << 5;
+        // 如果算出来的值为负数则取其绝对值
+        if (hash < 0) {
+            hash = Math.abs(hash);
+        }
+        return hash;
+    }
+
+    private static RuntimeInstance getServer(String request, SortedMap<Integer, RuntimeInstance> virtualHashCircle) {
+        int hash = getHash(request);
+        SortedMap<Integer, RuntimeInstance> subMap = virtualHashCircle.tailMap(hash);
+        if (subMap.isEmpty()) {
+            return virtualHashCircle.get(virtualHashCircle.firstKey());
+        }
+        Integer target = subMap.firstKey();
+        return subMap.get(target);
     }
 }

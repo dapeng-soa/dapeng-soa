@@ -32,7 +32,7 @@ import static com.github.dapeng.util.InvocationContextUtils.capsuleContext;
  */
 public class SoaConnectionPoolImpl implements SoaConnectionPool {
     private final Logger logger = LoggerFactory.getLogger(SoaConnectionPoolImpl.class);
-    private final LoadBalanceStrategy DEFAULT_LB_STRATEGY = LoadBalanceStrategy.Random;
+    private final LoadBalanceStrategy DEFAULT_LB_STRATEGY = LoadBalanceStrategy.ConsistentHash;
 
     private ClientRefManager clientRefManager = ClientRefManager.getInstance();
 
@@ -310,7 +310,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
                 instance = LoadBalanceAlgorithm.leastActive(compatibles);
                 break;
             case ConsistentHash:
-                //TODO
+                instance = LoadBalanceAlgorithm.consistentHash(compatibles);
                 break;
             default:
                 // won't be here
