@@ -21,7 +21,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public class LoadBalanceAlgorithm {
     private static int lastIndex = -1;
     private static int currentWeight = 0;
-    private final static Logger logger = LoggerFactory.getLogger(LoadBalanceAlgorithm.class);
 
 
     /**
