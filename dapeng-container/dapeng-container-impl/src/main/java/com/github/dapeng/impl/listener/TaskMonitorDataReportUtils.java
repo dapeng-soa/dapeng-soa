@@ -34,7 +34,7 @@ public class TaskMonitorDataReportUtils {
     private static Logger logger = LoggerFactory.getLogger("container.scheduled.task");
 
     private static final int MAX_SIZE = 32;
-    private static final int BATCH_MAX_SIZE = 50;
+    private static final int BATCH_MAX_SIZE = 5;
 
     public final static String TASK_DATABASE = "dapengTask";
     public final static String TASK_DATABASE_TABLE = "dapeng_task_info";
@@ -82,8 +82,7 @@ public class TaskMonitorDataReportUtils {
         });
     }
 
-    static void sendMessage(String serviceName, String versionName, String methodName, ExecutorService executorService,
-                     final String message, boolean isError, JobDataMap jobDataMap, String executeState) {
+    static void sendMessage(String serviceName, String versionName, String methodName, ExecutorService executorService, final String message, boolean isError, JobDataMap jobDataMap, String executeState) {
         InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
         executorService.submit(() -> {
             try {
@@ -108,7 +107,6 @@ public class TaskMonitorDataReportUtils {
     }
 
 
-
     static void taskInfoReport(JobDataMap jobDataMap, String executeState) {
         DataPoint influxdbDataPoint = new DataPoint();
         influxdbDataPoint.setDatabase(TaskMonitorDataReportUtils.TASK_DATABASE);
@@ -121,6 +119,9 @@ public class TaskMonitorDataReportUtils {
         tags.put("serverIp", jobDataMap.getString("serverIp"));
         tags.put("serverPort", jobDataMap.getString("serverPort"));
         tags.put("executeState", executeState);
+        //
+        tags.put("cronStr", jobDataMap.getString("cronStr"));
+
         influxdbDataPoint.setTags(tags);
 
         Map<String, Long> fields = new HashMap<>(8);
@@ -129,6 +130,28 @@ public class TaskMonitorDataReportUtils {
         LocalDateTime startTime = (LocalDateTime) jobDataMap.get("startTime");
         long taskCost = Duration.between(startTime, currentTime).toMillis();
         fields.put("costTime", taskCost);
+        fields.put("executeCount", 1L);
+        fields.put("expectedCount", (Long) jobDataMap.get("expectedCount"));
+
+        switch (executeState) {
+            case "triggerTimeOut":
+                fields.put("succeedCount", 0L);
+                fields.put("failedCount", 0L);
+                fields.put("timeoutCount", 1L);
+                break;
+            case "failed":
+                fields.put("succeedCount", 0L);
+                fields.put("failedCount", 1L);
+                fields.put("timeoutCount", 0L);
+                break;
+            case "succeed":
+                fields.put("succeedCount", 1L);
+                fields.put("failedCount", 0L);
+                fields.put("timeoutCount", 0L);
+                break;
+            default:
+                break;
+        }
 
         influxdbDataPoint.setValues(fields);
         influxdbDataPoint.setTimestamp(System.currentTimeMillis());

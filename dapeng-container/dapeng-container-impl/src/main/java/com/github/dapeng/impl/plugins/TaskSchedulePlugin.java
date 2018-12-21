@@ -12,6 +12,7 @@ import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.timer.ScheduledTask;
 import com.github.dapeng.core.timer.ScheduledTaskCron;
+import com.github.dapeng.impl.listener.CronCountUtils;
 import com.github.dapeng.impl.listener.SchedulerJobListener;
 import com.github.dapeng.impl.listener.SchedulerTriggerListener;
 import com.github.dapeng.impl.listener.TaskMonitorDataReportUtils;
@@ -141,6 +142,8 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
             jobDataMap.put("serverIp", SoaSystemEnvProperties.SOA_CONTAINER_IP);
             jobDataMap.putAsString("serverPort", SoaSystemEnvProperties.SOA_CONTAINER_PORT);
             jobDataMap.put("isReported", isReported);
+            jobDataMap.put("cronStr", cronStr);
+            jobDataMap.put("expectedCount", CronCountUtils.count(cronStr));
 
             JobDetail job = JobBuilder.newJob(ScheduledJob.class)
                     .withIdentity(ifaceClass.getName() + ":" + methodName)
