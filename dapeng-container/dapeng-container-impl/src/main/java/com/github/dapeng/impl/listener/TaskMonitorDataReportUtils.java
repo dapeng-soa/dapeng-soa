@@ -34,7 +34,7 @@ public class TaskMonitorDataReportUtils {
     private static Logger logger = LoggerFactory.getLogger("container.scheduled.task");
 
     private static final int MAX_SIZE = 32;
-    private static final int BATCH_MAX_SIZE = 5;
+    private static final int BATCH_MAX_SIZE = 20;
 
     public final static String TASK_DATABASE = "dapengTask";
     public final static String TASK_DATABASE_TABLE = "dapeng_task_info";
