@@ -10,6 +10,7 @@ import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.filters.HeadFilter;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.registry.ConfigKey;
+
 import com.github.dapeng.registry.zookeeper.ServerZkAgentImpl;
 import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
 import com.github.dapeng.util.DumpUtil;
@@ -127,7 +128,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
             //check if request expired
             final long waitingTime = System.currentTimeMillis() - invokeTime;
-            //fixme if zk down ?
             long timeout = soaHeader.getTimeout().map(Long::valueOf).orElse(getTimeout(soaHeader));
             if (waitingTime > timeout) {
                 if (LOGGER.isDebugEnabled()) {
@@ -245,9 +245,12 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     private long getTimeout(SoaHeader soaHeader) {
         long timeout = 0L;
         String serviceKey = soaHeader.getServiceName();
-        ZkServiceInfo configInfo = ServerZkAgentImpl.getInstance().getConfig(false, serviceKey);
 
         long envTimeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT;
+
+
+        ZkServiceInfo configInfo = ServerZkAgentImpl.getInstance().getZkServiceInfo(false, serviceKey);
+
         if (null != configInfo) {
             //方法级别
             Long methodTimeOut = configInfo.timeConfig.serviceConfigs.get(soaHeader.getMethodName());

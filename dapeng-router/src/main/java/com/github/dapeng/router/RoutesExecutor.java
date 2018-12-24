@@ -4,6 +4,7 @@ import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.IPUtils;
+import com.github.dapeng.router.condition.Condition;
 import com.github.dapeng.router.condition.*;
 import com.github.dapeng.router.pattern.*;
 import com.github.dapeng.router.token.IpToken;
@@ -57,7 +58,7 @@ public class RoutesExecutor {
 
                     if (logger.isDebugEnabled()) {
                         StringBuilder append = new StringBuilder();
-                        instances.forEach(ins -> append.append(ins.toString() + " "));
+                        instances.forEach(ins -> append.append(ins.toString()).append(" "));
                         logger.debug(RoutesExecutor.class.getSimpleName() + "::route left " + route.getLeft().toString() +
                                         "::executeRoutes过滤结果 size: {}, 实例: {}",
                                 instances.size(), append.toString());
@@ -83,7 +84,7 @@ public class RoutesExecutor {
      * @param left
      * @return
      */
-    private static boolean matchCondition(InvocationContextImpl ctx, Condition left) {
+    protected static boolean matchCondition(InvocationContextImpl ctx, Condition left) {
         if (left instanceof Otherwise) {
             return true;
         }

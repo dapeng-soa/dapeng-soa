@@ -1,10 +1,11 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.cookie.CookieRule;
 import com.github.dapeng.core.RuntimeInstance;
+import com.github.dapeng.core.ServiceFreqControl;
 import com.github.dapeng.core.Weight;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
-import com.github.dapeng.registry.zookeeper.watcher.ZkWatcher;
-import org.apache.zookeeper.Watcher;
+import com.github.dapeng.router.Route;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,54 +13,79 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author lihuimin
- * @date 2017/12/25
+ * service information of ZK, including runtime and config
+ *
+ * @author ever
+ * @date 2018/11/16
  */
 public class ZkServiceInfo {
-
-    private Watcher watcher = new ZkWatcher(this);
-
-    public enum Status {
-
-        CREATED, ACTIVE, CANCELED,
-    }
-
-    private final String service;
-
-    private Status status = Status.CREATED;
+    private final String ServiceName;
 
     /**
      * instances list, always use cow collection
      */
     private List<RuntimeInstance> runtimeInstances;
 
-    public ZkServiceInfo(String service) {
-        this.service = service;
-    }
+    /**
+     * 路由规则
+     */
+    private List<Route> routes = new ArrayList<>(16);
 
-    public ZkServiceInfo(String service, List<RuntimeInstance> runtimeInstances) {
-        this.service = service;
+    private ServiceFreqControl freqControl = null;
+
+    private List<CookieRule> cookieRules = new ArrayList<>(8);
+
+    public ZkServiceInfo(String serviceName, List<RuntimeInstance> runtimeInstances) {
+        this.ServiceName = serviceName;
         this.runtimeInstances = runtimeInstances;
     }
 
-    public List<RuntimeInstance> getRuntimeInstances() {
+    public List<RuntimeInstance> runtimeInstances() {
         return runtimeInstances;
     }
 
-    public String getService() {
-        return service;
+    /**
+     * 根据节点ip以及端口， 找到对应的服务节点
+     * @param ip
+     * @param port
+     * @return
+     */
+    public RuntimeInstance runtimeInstance(String ip, int port) {
+        for (RuntimeInstance runtimeInstance : runtimeInstances) {
+            if (runtimeInstance.ip.equals(ip) && runtimeInstance.port == port) {
+                return runtimeInstance;
+            }
+        }
+
+        return null;
     }
 
-    public Status getStatus() {
-        return status;
+    public void routes(List<Route> routes) {
+        this.routes = routes;
     }
 
-    public Watcher getWatcher() {
-        return watcher;
+    public List<Route> routes() {
+        return routes;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
+    public void cookieRules(List<CookieRule> cookieRules) {
+        this.cookieRules = cookieRules;
+    }
+
+    public List<CookieRule> cookieRules() {
+        return cookieRules;
+    }
+
+    public void freqControl(ServiceFreqControl freqControl) {
+        this.freqControl = freqControl;
+    }
+
+    public ServiceFreqControl freqControl() {
+        return freqControl;
+    }
+
+    public String serviceName() {
+        return ServiceName;
     }
 
     //～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～

@@ -6,6 +6,7 @@ import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.listener.TaskMonitorDataReportUtils;
 import com.github.dapeng.impl.plugins.netty.MdcCtxInfoUtil;
 import com.google.common.base.Stopwatch;
@@ -26,6 +27,7 @@ public class ScheduledJob implements Job {
 
     private static final Logger logger = LoggerFactory.getLogger("container.scheduled.task");
 
+    @SuppressWarnings("unchecked")
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
 
@@ -33,10 +35,6 @@ public class ScheduledJob implements Job {
         String serviceName = data.getString("serviceName");
         String versionName = data.getString("versionName");
 
-//        if (!MasterHelper.isMaster(serviceName, versionName)) {
-//            logger.info("--定时任务({}:{})不是Master，跳过--", serviceName, versionName);
-//            return;
-//        }
         Stopwatch stopwatch = Stopwatch.createStarted();
         /**
          * 添加sessionTid
@@ -49,10 +47,8 @@ public class ScheduledJob implements Job {
         Map<ProcessorKey, SoaServiceDefinition<?>> processorMap = ContainerFactory.getContainer().getServiceProcessors();
         SoaServiceDefinition soaServiceDefinition = processorMap.get(processorKey);
         Application application = ContainerFactory.getContainer().getApplication(processorKey);
-//        SoaProcessFunction<Object, Object, Object, ? extends TCommonBeanSerializer<Object>, ? extends TCommonBeanSerializer<Object>> soaProcessFunction =
-//                (SoaProcessFunction<Object, Object, Object, ? extends TCommonBeanSerializer<Object>, ? extends TCommonBeanSerializer<Object>>) data.get("function");
         Object iface = data.get("iface");
-        MdcCtxInfoUtil.switchMdcToAppClassLoader("put", application.getAppClasssLoader(), sessionTid);
+        MdcCtxInfoUtil.putMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
         try {
             if (soaServiceDefinition.isAsync) {
                 SoaFunctionDefinition.Async<Object, Object, Object> functionDefinition = (SoaFunctionDefinition.Async<Object, Object, Object>) data.get("function");
@@ -67,8 +63,9 @@ public class ScheduledJob implements Job {
             logger.error(e.getMessage(), e);
             throw new JobExecutionException(e.getMessage(), e);
         } finally {
+            // sessionTid will be used at SchedulerTriggerListener
             //MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
-            MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), null);
+            MdcCtxInfoUtil.removeMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
             // InvocationContextImpl.Factory.removeCurrentInstance();
         }
 

@@ -37,6 +37,8 @@ public abstract class SoaBaseConnection implements SoaConnection {
     private Channel channel = null;
     private NettyClient client;
     private final static AtomicInteger seqidAtomic = new AtomicInteger(0);
+    private ClientRefManager clientRefManager = ClientRefManager.getInstance();
+
 
     SoaBaseConnection(String host, int port) {
         this.client = NettyClientFactory.getNettyClient();
@@ -62,9 +64,6 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         invocationContext.seqId(seqid);
-        invocationContext.serviceName(service);
-        invocationContext.versionName(version);
-        invocationContext.methodName(method);
 
         Filter dispatchFilter = new Filter() {
             private FilterChain getPrevChain(FilterContext ctx) {
@@ -134,7 +133,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
         assert (result != null);
 
         //请求响应，在途请求-1
-        RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service, host, port);
+        RuntimeInstance runtimeInstance = clientRefManager.serviceInfo(service).runtimeInstance(host, port);
         if (runtimeInstance == null) {
             LOGGER.error("SoaBaseConnection::runtimeInstance not found.");
         } else {
@@ -160,9 +159,6 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         invocationContext.seqId(seqid);
-        invocationContext.serviceName(service);
-        invocationContext.versionName(version);
-        invocationContext.methodName(method);
 
         Filter dispatchFilter = new Filter() {
             private FilterChain getPrevChain(FilterContext ctx) {
@@ -218,7 +214,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     Result<RESP> result = new Result<>(null, soaException);
 
                     if (invocationContext.lastInvocationInfo().responseCode() == null) {
-                        ((InvocationInfoImpl)invocationContext.lastInvocationInfo()).responseCode(soaException.getCode());
+                        ((InvocationInfoImpl) invocationContext.lastInvocationInfo()).responseCode(soaException.getCode());
                     }
 
                     ctx.setAttribute("result", result);
@@ -287,7 +283,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         assert (resultFuture != null);
         //请求响应，在途请求-1
-        RuntimeInstance runtimeInstance = factory.getPool().getRuntimeInstance(service, host, port);
+        RuntimeInstance runtimeInstance = clientRefManager.serviceInfo(service).runtimeInstance(host, port);
         if (runtimeInstance == null) {
             LOGGER.error("SoaBaseConnection::runtimeInstance not found.");
         } else {
@@ -349,7 +345,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         } catch (SoaException ex) {
             return new Result<>(null, ex);
-        } catch (TException ex) {
+        } catch (TException | RuntimeException ex) {
             LOGGER.error("通讯包解析出错:\n" + ex.getMessage(), ex);
             LOGGER.error(DumpUtil.dumpToStr(responseBuf.readerIndex(readerIndex)));
             return new Result<>(null,

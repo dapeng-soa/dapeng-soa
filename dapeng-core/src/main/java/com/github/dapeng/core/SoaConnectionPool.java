@@ -43,5 +43,6 @@ public interface SoaConnectionPool {
      * @param servicePort
      * @return
      */
+    @Deprecated
     RuntimeInstance getRuntimeInstance(String serviceName, String serviceIp, int servicePort);
 }

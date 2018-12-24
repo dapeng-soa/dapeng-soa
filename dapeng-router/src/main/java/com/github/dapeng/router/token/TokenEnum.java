@@ -85,6 +85,11 @@ public enum TokenEnum {
     COMMA(15, "逗号"),
 
     /**
+     * cookie <c> 区分多个 cookies
+     */
+    COOKIE(16, "COOKIES"),
+
+    /**
      * 未知
      */
     UNKNOWN(16, "未知Token");
@@ -139,6 +144,8 @@ public enum TokenEnum {
                 return SEMI_COLON;
             case 15:
                 return COMMA;
+            case 16:
+                return COOKIE;
             default:
                 return UNKNOWN;
         }

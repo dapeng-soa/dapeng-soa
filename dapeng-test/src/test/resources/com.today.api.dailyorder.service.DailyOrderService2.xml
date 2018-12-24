@@ -1,0 +1,1696 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<service namespace="com.today.api.dailyorder.service" name="DailyOrderService2">
+    <doc>
+
+ 日结服务
+</doc>
+    <meta>
+        <version>1.0.0</version>
+        <timeout>30000</timeout>
+    </meta>
+    <methods>
+        <method name="orderDailySumQuery">
+            <doc>
+
+# 日结每日营业额接口
+## 业务描述
+   需要查询门店每天pos机根据口座分类的日结营业额
+## 接口依赖
+    ListSkuDetailByNosQuery
+## 边界异常说明
+    无
+## 输入
+    storeId 门店ID
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+    无
+## 逻辑处理
+
+## 输出
+   门店每天pos机根据口座分类的日结营业额,以及汇总总览（总代收，总代售，礼品卡充值，礼品卡充值促销），支付总览（移动支付，刷卡支付，会员支付，外卖，城市一卡通），现金总览（备用金，银行送金金额），其他总览（报废金额）
+</doc>
+            <request name="orderDailySumQuery_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.request.TQueryOrderDailySumListRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="orderDailySumQuery_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.response.TQueryDailyReportSumListResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="paymentDetailQuery">
+            <doc>
+
+# 日结支付详情列表接口
+## 业务描述
+   需要查询门店每天不同支付方式的支付详情
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    storeId 门店ID
+    tradeType 支付方式
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+    无
+## 逻辑处理
+
+## 输出
+   门店每天不同支付方式的支付详情(支付时间，订单号，支付金额，pos机号，收银员，工号,支付方式)
+</doc>
+            <request name="paymentDetailQuery_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.request.TQueryPaymentDetailListRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="paymentDetailQuery_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.response.TQueryPaymentDetailListResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="promotionDetailQuery">
+            <doc>
+
+# 日结促销详情列表接口
+## 业务描述
+   需要查询门店每天不同促销详情
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    storeId 门店ID
+    businessTime 营业时间
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+    无
+## 逻辑处理
+
+## 输出
+   门店每天不同的促销详情(优惠劵id,优惠劵类型,订单号,订单总金额,订单实际付款金额,优惠金额,订单完成时间,POS机编号,工号)
+</doc>
+            <request name="promotionDetailQuery_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.request.TQueryPromotionDetailListRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="promotionDetailQuery_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.response.TQueryPromotionDetailListResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="scrapDetailListQuery">
+            <doc>
+
+# 日结报废详情列表接口
+## 业务描述
+   需要查询门店每天报废详情
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    storeId 门店ID
+    businessTime 营业时间
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+    无
+## 逻辑处理
+
+## 输出
+   门店每天的报废详情
+</doc>
+            <request name="scrapDetailListQuery_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.request.TQueryScrapDetailListRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="scrapDetailListQuery_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.response.ScrapDetailListResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="dailyReportListQuery">
+            <doc>
+
+# 日结列表接口
+## 业务描述
+   需要查询门店日结列表
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    storeId 门店ID
+    page 分页
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+    无
+## 逻辑处理
+
+## 输出
+   门店日结列表
+</doc>
+            <request name="dailyReportListQuery_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.request.ListDailyReportListRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="dailyReportListQuery_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.response.ListDailyReportResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="SaveDailyOrderReport">
+            <doc>
+
+# 手动落地日结数据接口
+## 业务描述
+   手动落地日结数据
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    storeId 门店ID
+    businessTime 营业时间
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+    无
+## 逻辑处理
+
+## 输出
+   无
+</doc>
+            <request name="SaveDailyOrderReport_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.request.TQueryOrderDailySumListRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="SaveDailyOrderReport_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="NewSaveDailyOrderReport">
+            <doc>
+
+# 新手动落地日结数据接口(daily_report新版日结)
+## 业务描述
+   手动落地日结数据
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    storeId 门店ID
+    businessTime 营业时间
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+    无
+## 逻辑处理
+
+## 输出
+   无
+</doc>
+            <request name="NewSaveDailyOrderReport_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.request.TQueryOrderDailySumListRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="NewSaveDailyOrderReport_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>VOID</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="zOrderQuery">
+            <doc>
+
+# Z账接口
+## 业务描述
+   需要查询门店Z账
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    storeId 门店ID
+    businessTime营业时间
+## 数据库变更
+    无
+##  事务处理
+    无
+## 前置检查
+    无
+## 逻辑处理
+
+## 输出
+   Z账详情
+</doc>
+            <request name="zOrderQuery_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.request.TQueryZOrderRequest</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="zOrderQuery_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.response.ListZOrderResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+    </methods>
+    <structs>
+        <struct namespace="com.today.api.dailyorder.response" name="PayTypeItem">
+            <fields>
+                <field tag="1" name="tradeType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 支付方式
+</doc>
+                </field>
+                <field tag="2" name="totalAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.response" name="OrderTypeItem">
+            <fields>
+                <field tag="1" name="orderType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 订单类型
+</doc>
+                </field>
+                <field tag="2" name="totalAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.response" name="ListZOrderResponse">
+            <doc>
+
+ Z账返回体
+</doc>
+            <fields>
+                <field tag="1" name="zOrderDetailList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.response.ZOrderDetail</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ Z账详情列表
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.request" name="TQueryOrderDailySumListRequest">
+            <doc>
+
+ 日结每日营业额请求
+</doc>
+            <fields>
+                <field tag="1" name="storeId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 门店号
+</doc>
+                </field>
+                <field tag="2" name="businessTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 营业时间
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.response" name="PosDailyOrderItem">
+            <fields>
+                <field tag="1" name="posId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ POS机Id
+</doc>
+                </field>
+                <field tag="2" name="count" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 营业额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.response" name="DailyReportListDetail">
+            <doc>
+
+ 日结列表详情
+</doc>
+            <fields>
+                <field tag="1" name="dailyReportNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 日结编号
+</doc>
+                </field>
+                <field tag="2" name="serviceDate" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 营业日期
+</doc>
+                </field>
+                <field tag="3" name="totalAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 营业额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="4" name="refundAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 退款金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="5" name="cashAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 现金金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="6" name="bankMoney" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 银行送金金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.response" name="TQueryDailyReportSumListResponse">
+            <doc>
+
+ 日结每日营业额返回
+</doc>
+            <fields>
+                <field tag="1" name="posDailyOrderList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.response.PosDailyOrderItem</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 每日pos营业额列表
+</doc>
+                </field>
+                <field tag="2" name="payTypeItemList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.response.PayTypeItem</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 支付方式金额列表
+</doc>
+                </field>
+                <field tag="3" name="orderTypeItemList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.response.OrderTypeItem</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 订单类型金额列表
+</doc>
+                </field>
+                <field tag="4" name="refund" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 退款总额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="5" name="totalSale" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 总代售
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="6" name="totalCollection" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 总代收
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="7" name="giftCardRecharge" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 礼品卡充值
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="8" name="giftCardRechargePromotion" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 礼品卡充值促销
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="9" name="pettyCash" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 备用金
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="10" name="bankMoney" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 银行送金金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="11" name="scrapAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 报废金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="12" name="smallCashAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 现金抹零总金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="13" name="deliveryAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 配送费
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="14" name="refundLogisticsAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 外卖违约金
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.response" name="ScrapDetailListResponse">
+            <doc>
+
+ 日结报废详情返回
+</doc>
+            <fields>
+                <field tag="1" name="ScrapDetailList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.response.ScrapDetail</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 报废详情列表
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.request" name="ListDailyReportListRequest">
+            <doc>
+
+ 日结列表请求
+</doc>
+            <fields>
+                <field tag="1" name="pageRequest" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageRequest</ref>
+                    </dataType>
+                    <doc>
+
+分页
+</doc>
+                </field>
+                <field tag="2" name="storeId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 门店号
+</doc>
+                </field>
+                <field tag="3" name="dailyReportNo" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 日结编号
+</doc>
+                </field>
+                <field tag="4" name="startTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 营业日期开始
+</doc>
+                </field>
+                <field tag="5" name="endTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 营业日期结束
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.request" name="TQueryPaymentDetailListRequest">
+            <doc>
+
+ 日结支付详情列表请求
+</doc>
+            <fields>
+                <field tag="1" name="pageRequest" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageRequest</ref>
+                    </dataType>
+                    <doc>
+
+分页
+</doc>
+                </field>
+                <field tag="2" name="storeId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 门店号
+</doc>
+                </field>
+                <field tag="3" name="tradeType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.dailyorder.enums.PayTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 支付方式
+</doc>
+                </field>
+                <field tag="4" name="businessTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 营业时间
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.response" name="ZOrderDetail">
+            <fields>
+                <field tag="1" name="posId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ pos机编号
+</doc>
+                </field>
+                <field tag="2" name="startTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 开始时间
+</doc>
+                </field>
+                <field tag="3" name="endTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 结束时间
+</doc>
+                </field>
+                <field tag="4" name="guestCount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 来客数
+</doc>
+                </field>
+                <field tag="5" name="totalAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 营业额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="6" name="mobilePayAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 移动支付金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="7" name="cardPayAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 银行卡支付金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="8" name="takeOutFoodPayAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 外卖金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="9" name="memberPayAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 会员支付金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="10" name="cityCardPayAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 城市一卡通支付金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="11" name="cashPayAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 现金支付金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="12" name="refundAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 退款金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="13" name="collectionAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 代收金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="14" name="saleAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 代售金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="15" name="smallCashAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 抹零金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="16" name="bankMoneyAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 缴金金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.response" name="PromotionDetail">
+            <doc>
+
+ 促销详情
+</doc>
+            <fields>
+                <field tag="1" name="couponId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠劵id
+</doc>
+                </field>
+                <field tag="2" name="couponType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠劵类型
+</doc>
+                </field>
+                <field tag="3" name="orderNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 订单号
+</doc>
+                </field>
+                <field tag="4" name="orderTotalAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 订单总金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="5" name="orderActualAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 订单实际付款金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="6" name="discountPrice" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="7" name="finishTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 订单完成时间
+</doc>
+                </field>
+                <field tag="8" name="posId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ POS机编号
+</doc>
+                </field>
+                <field tag="9" name="cashierId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 工号
+</doc>
+                </field>
+                <field tag="10" name="couponKey" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠券key
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.response" name="ScrapDetail">
+            <doc>
+
+ 报废详情
+</doc>
+            <fields>
+                <field tag="1" name="lev2Category" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 中类
+</doc>
+                </field>
+                <field tag="2" name="lev3Category" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 小类
+</doc>
+                </field>
+                <field tag="3" name="skuNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 货号
+</doc>
+                </field>
+                <field tag="4" name="skuName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品名称
+</doc>
+                </field>
+                <field tag="5" name="spec" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 规格
+</doc>
+                </field>
+                <field tag="6" name="sellingPrice" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 售价
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="7" name="ScrapAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 报废数量
+</doc>
+                </field>
+                <field tag="8" name="ScrapCount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 报废金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="9" name="categoryId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 类目Id
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.response" name="ListDailyReportResponse">
+            <doc>
+
+ 日结列表返回
+</doc>
+            <fields>
+                <field tag="1" name="DailyReportList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.response.DailyReportListDetail</ref>
+                        </valueType>
+                    </dataType>
+                </field>
+                <field tag="2" name="pageResponse" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.page.TPageResponse</ref>
+                    </dataType>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.response" name="TQueryPaymentDetailListResponse">
+            <doc>
+
+ 日结支付详情列表返回
+</doc>
+            <fields>
+                <field tag="1" name="paymentDetailList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.response.PaymentDetail</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 日结支付详情列表
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.request" name="TQueryScrapDetailListRequest">
+            <fields>
+                <field tag="1" name="storeId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 门店id
+</doc>
+                </field>
+                <field tag="2" name="businessTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 营业时间
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.page" name="TPageResponse">
+            <fields>
+                <field tag="1" name="start" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 查询的开始序号（序号从零开始）
+</doc>
+                </field>
+                <field tag="2" name="limit" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 最大返回的记录数
+</doc>
+                </field>
+                <field tag="3" name="results" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 结果记录数
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.response" name="SkuPromotionDetail">
+            <doc>
+
+ 商品促销详情
+</doc>
+            <fields>
+                <field tag="1" name="skuPromotionId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 商品促销id
+</doc>
+                </field>
+                <field tag="2" name="skuPromotionType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品促销类型
+</doc>
+                </field>
+                <field tag="3" name="orderNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 订单号
+</doc>
+                </field>
+                <field tag="4" name="orderTotalAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 订单总金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="5" name="orderActualAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 订单实际付款金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="6" name="discountPrice" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 优惠金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="7" name="finishTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 订单完成时间
+</doc>
+                </field>
+                <field tag="8" name="posId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ POS机编号
+</doc>
+                </field>
+                <field tag="9" name="cashierId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 工号
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.request" name="TQueryPromotionDetailListRequest">
+            <doc>
+
+ 促销详情列表请求
+</doc>
+            <fields>
+                <field tag="1" name="storeId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 门店id
+</doc>
+                </field>
+                <field tag="2" name="businessTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 营业时间
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.response" name="PaymentDetail">
+            <doc>
+
+ 支付详情
+</doc>
+            <fields>
+                <field tag="1" name="payTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 支付时间
+</doc>
+                </field>
+                <field tag="2" name="orderNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 订单号
+</doc>
+                </field>
+                <field tag="3" name="tradeAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 支付金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="4" name="posId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ POS机号
+</doc>
+                </field>
+                <field tag="5" name="cashierId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 工号
+</doc>
+                </field>
+                <field tag="6" name="tradeType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.dailyorder.enums.PayTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 支付渠道
+</doc>
+                </field>
+                <field tag="7" name="totalAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 支付总额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="8" name="totalNum" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 支付列表总条数
+</doc>
+                </field>
+                <field tag="9" name="moreEarn" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 订单溢收金额
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.page" name="TPageRequest">
+            <doc>
+
+ 分页查询请求包
+</doc>
+            <fields>
+                <field tag="1" name="start" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 查询的开始序号（序号从零开始）
+</doc>
+                </field>
+                <field tag="2" name="limit" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 返回记录数
+</doc>
+                </field>
+                <field tag="3" name="sortFields" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 排序的字段
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.request" name="TQueryZOrderRequest">
+            <doc>
+
+ Z账请求
+</doc>
+            <fields>
+                <field tag="1" name="storeId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 门店id
+</doc>
+                </field>
+                <field tag="2" name="businessTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 营业时间
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.dailyorder.response" name="TQueryPromotionDetailListResponse">
+            <doc>
+
+ 促销详情列表返回
+</doc>
+            <fields>
+                <field tag="1" name="promotionDetailList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.response.PromotionDetail</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 优惠详情列表
+</doc>
+                </field>
+                <field tag="2" name="skuPromotionDetailList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.dailyorder.response.SkuPromotionDetail</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 商品优惠详情列表
+</doc>
+                </field>
+            </fields>
+        </struct>
+    </structs>
+    <enums>
+        <tenum namespace="com.today.api.dailyorder.enums" name="PayTypeEnum">
+            <doc>
+
+ （日结查询）支付类型枚举
+</doc>
+            <items>
+                <item>
+                    <label>MEMBER_PAY</label>
+                    <value>1</value>
+                    <doc>
+
+ 会员支付
+</doc>
+                </item>
+                <item>
+                    <label>CARD_PAY</label>
+                    <value>2</value>
+                    <doc>
+
+ 刷卡支付
+</doc>
+                </item>
+                <item>
+                    <label>CITYCARD_PAY</label>
+                    <value>3</value>
+                    <doc>
+
+ 城市一卡通支付
+</doc>
+                </item>
+                <item>
+                    <label>TAKEOUTFOOD_PAY</label>
+                    <value>4</value>
+                    <doc>
+
+ 外卖
+</doc>
+                </item>
+                <item>
+                    <label>CASH_PAY</label>
+                    <value>5</value>
+                    <doc>
+
+ 现金支付
+</doc>
+                </item>
+                <item>
+                    <label>MOBILE_PAY</label>
+                    <value>6</value>
+                    <doc>
+
+ 移动支付
+</doc>
+                </item>
+                <item>
+                    <label>DONGHE_PAY</label>
+                    <value>7</value>
+                    <doc>
+
+ 东合支付
+</doc>
+                </item>
+                <item>
+                    <label>YOUZAN_PAY</label>
+                    <value>8</value>
+                    <doc>
+
+ 有赞支付
+</doc>
+                </item>
+                <item>
+                    <label>MINI2_PAY</label>
+                    <value>9</value>
+                    <doc>
+
+ mini2.0支付
+</doc>
+                </item>
+            </items>
+        </tenum>
+    </enums>
+    <annotations>
+        <annotation key="group" value="DailyReport"/>
+    </annotations>
+</service>

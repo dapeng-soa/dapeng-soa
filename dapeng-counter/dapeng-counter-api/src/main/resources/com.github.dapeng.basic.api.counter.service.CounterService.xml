@@ -110,7 +110,10 @@
                     </dataType>
                     <doc>
 
- 业务类型, 在时序数据库中也叫metric/measurement, 相当于关系型数据库的数据表
+ 业务类型, 在时序数据库中也叫metric/measurement,
+ 相当于关系型数据库的数据表
+ 流量数据:dapeng_node_flow
+ 调用统计、耗时、成功率:dapeng_service_process
 </doc>
                 </field>
                 <field tag="2" name="values" optional="false" privacy="false">
@@ -135,6 +138,10 @@
                     <dataType>
                         <kind>LONG</kind>
                     </dataType>
+                    <doc>
+
+ 时间戳
+</doc>
                 </field>
                 <field tag="4" name="tags" optional="false" privacy="false">
                     <dataType>
@@ -155,6 +162,10 @@
                     <dataType>
                         <kind>STRING</kind>
                     </dataType>
+                    <doc>
+
+ influxdb的库:dapengState
+</doc>
                 </field>
             </fields>
         </struct>
