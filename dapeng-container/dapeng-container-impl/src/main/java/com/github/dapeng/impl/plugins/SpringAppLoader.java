@@ -158,9 +158,6 @@ public class SpringAppLoader implements Plugin {
                 if (processor.functions.keySet().contains(item.getName())) {
                     long maxProcessTime = SoaSystemEnvProperties.SOA_MAX_PROCESS_TIME;
                     maxProcessTime = item.isAnnotationPresent(MaxProcessTime.class) ? item.getAnnotation(MaxProcessTime.class).maxTime() : maxProcessTime;
-                    if (LOGGER.isInfoEnabled()) {
-                        LOGGER.info("{}:{}:{} ; maxProcessTime:{} ", service.name(), version, item.getName(), maxProcessTime);
-                    }
                     methodsMaxProcessTimeMap.put(item.getName(), maxProcessTime);
                 }
             });

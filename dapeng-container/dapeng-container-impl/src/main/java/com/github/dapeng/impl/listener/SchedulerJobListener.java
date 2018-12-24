@@ -70,7 +70,7 @@ public class SchedulerJobListener implements JobListener {
         String versionName = jobDataMap.getString("versionName");
         String methodName = jobDataMap.getString("methodName");
         String message = String.format("SchedulerJobListener::jobExecutionVetoed;Task[%s:%s:%s] 触发失败", serviceName, versionName, methodName);
-        sendMessage(serviceName, versionName, methodName, executorService, message, true, jobDataMap, "failed");
+       // sendMessage(serviceName, versionName, methodName, executorService, message, true, jobDataMap, "failed");
     }
 
     /**
