@@ -242,7 +242,7 @@ public class DapengContainer implements Container {
                 // fixme not so graceful
                 getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
 
-                //重试3次，保证容器内请求已完成
+                //保证容器内请求已完成
                 retryCompareCounter();
 
                 Lists.reverse(getPlugins()).stream().filter(plugin -> !(plugin instanceof ZookeeperRegistryPlugin)).forEach(Plugin::stop);

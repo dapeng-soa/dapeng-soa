@@ -27,6 +27,9 @@ public class RoutesLexer {
 
     private static Logger logger = LoggerFactory.getLogger(RoutesLexer.class);
 
+    /**
+     * 已经给trim处理过
+     */
     private String content;
     private int pos;
 
@@ -68,7 +71,7 @@ public class RoutesLexer {
      *
      * @return
      */
-    public Token peek() {
+    public Token peek() throws ParsingException {
         int temPos = pos;
         Token token = next();
         pos = temPos;
@@ -81,7 +84,7 @@ public class RoutesLexer {
      *
      * @return
      */
-    public Token next() {
+    public Token next() throws ParsingException {
         ws();
         char ch = nextChar();
         switch (ch) {
@@ -152,7 +155,7 @@ public class RoutesLexer {
      *
      * @param type
      */
-    public Token next(int type) {
+    public Token next(int type) throws ParsingException {
         Token nextToken = next();
         throwExWithCondition(nextToken.type() != type,
                 "[Not expected token]",
@@ -168,7 +171,7 @@ public class RoutesLexer {
      *
      * @return
      */
-    private Token parserRegex() {
+    private Token parserRegex() throws ParsingException {
         char quotation = currentChar();
         char ch = nextChar();
         StringBuilder sb = new StringBuilder(16);
@@ -186,7 +189,7 @@ public class RoutesLexer {
      *
      * @return
      */
-    private Token parseCookies() {
+    private Token parseCookies() throws ParsingException {
         char quotation = currentChar();
         char ch = nextChar();
         StringBuilder sb = new StringBuilder(16);
@@ -247,7 +250,7 @@ public class RoutesLexer {
     /**
      * parse string
      */
-    private Token parserString() {
+    private Token parserString() throws ParsingException {
         StringBuilder sb = new StringBuilder(16);
         char quotation = currentChar();
         char ch = nextChar();
@@ -256,18 +259,21 @@ public class RoutesLexer {
                     "[StringEx]", "parse string failed,check the string express:" + sb.toString());
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
+
         return new StringToken(sb.toString());
     }
 
     /**
      * 解析整数常量
      */
-    private Token parserNumber() {
+    private Token parserNumber() throws ParsingException {
         StringBuilder sb = new StringBuilder(16);
         char ch = currentChar();
         do {
             sb.append(ch);
         } while (Character.isDigit(ch = nextChar()) || ch == '.');
+        // added by Ever @20181207
+        pos--;
         String value = sb.toString();
         try {
             if (value.contains("..")) {
@@ -292,7 +298,7 @@ public class RoutesLexer {
      *
      * @return
      */
-    private ModeToken parserMode() {
+    private ModeToken parserMode() throws ParsingException {
         char quotation = currentChar();
         char ch = nextChar();
         StringBuilder sb = new StringBuilder(16);
@@ -302,7 +308,6 @@ public class RoutesLexer {
                     "[ModeEx]", "parse mode failed,check the mode express:" + sb.toString());
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
-
         String value = sb.toString();
 
         try {
@@ -324,7 +329,7 @@ public class RoutesLexer {
         throw new ParsingException("[ModeEx]", "unknown exception, check the mode expression again:" + value);
     }
 
-    private IpToken processIp() {
+    private IpToken processIp() throws ParsingException {
         char quotation = nextChar();
         char ch = nextChar();
 
@@ -334,7 +339,6 @@ public class RoutesLexer {
                     "[IpEx]", "parse ip failed,check the ip express:" + sb.toString());
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
-
         Matcher matcher = IP_PATTERN.matcher(sb.toString());
         if (matcher.matches()) {
             String ipStr = matcher.group(1);
@@ -354,7 +358,7 @@ public class RoutesLexer {
     }
 
 
-    private void throwExWithCondition(boolean condition, String summary, String detail) {
+    private void throwExWithCondition(boolean condition, String summary, String detail) throws ParsingException {
         if (condition) {
             throw new ParsingException(summary, detail);
         }
@@ -391,7 +395,7 @@ public class RoutesLexer {
      * @param isThrow if or not throw ex
      * @return {@code true } or {@code false}
      */
-    private boolean require(char[] expects, boolean isThrow) {
+    private boolean require(char[] expects, boolean isThrow) throws ParsingException {
         char actual = nextChar();
         for (char expect : expects) {
             if (expect == actual) {

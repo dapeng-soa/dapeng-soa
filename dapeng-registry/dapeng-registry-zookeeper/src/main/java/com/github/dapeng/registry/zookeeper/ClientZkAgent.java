@@ -288,7 +288,10 @@ public class ClientZkAgent implements Watcher {
             } else {
                 try {
                     byte[] data = zk.getData(servicePath, this, null);
-                    processRouteData(serviceInfo, data);
+                    List<Route> newRoutes = processRouteData(data);
+                    List<Route> routes = serviceInfo.routes();
+                    routes.clear();
+                    routes.addAll(newRoutes);
                     LOGGER.warn("ClientZk::getRoutes routes changes:" + serviceInfo.routes());
                     return;
                 } catch (KeeperException.NoNodeException e) {
@@ -327,13 +330,13 @@ public class ClientZkAgent implements Watcher {
     /**
      * process zk data 解析route 信息
      */
-    private void processRouteData(ZkServiceInfo serviceInfo, byte[] data) {
+    private List<Route> processRouteData(byte[] data) {
         try {
-            String routeData = new String(data, StandardCharsets.UTF_8);
-            List<Route> zkRoutes = RoutesExecutor.parseAll(routeData);
-            serviceInfo.routes(zkRoutes);
+            String routeData = new String(data, StandardCharsets.UTF_8).trim();
+            return RoutesExecutor.parseAll(routeData);
         } catch (Exception e) {
-            LOGGER.error(getClass() + "::processCookieRuleData, parser routes 信息 失败，请检查路由规则写法是否正确:" + e.getMessage());
+            LOGGER.error(getClass() + "::processCookieRuleData, parser routes 信息 失败，请检查路由规则写法是否正确:" + e.getMessage(), e);
+            return new ArrayList<>(0);
         }
     }
 
@@ -342,11 +345,11 @@ public class ClientZkAgent implements Watcher {
      */
     private List<CookieRule> processCookieRuleData(byte[] data) {
         try {
-            String ruleData = new String(data, StandardCharsets.UTF_8);
+            String ruleData = new String(data, StandardCharsets.UTF_8).trim();
             return CookieExecutor.parseCookieRules(ruleData);
         } catch (Exception e) {
-            LOGGER.error(getClass() + "::processCookieRuleData, parser cookie rule 信息 失败，请检查cookie规则写法是否正确:" + e.getMessage());
-            return new ArrayList<>(16);
+            LOGGER.error(getClass() + "::processCookieRuleData, parser cookie rule 信息 失败，请检查cookie规则写法是否正确:" + e.getMessage(), e);
+            return new ArrayList<>(0);
         }
     }
 
