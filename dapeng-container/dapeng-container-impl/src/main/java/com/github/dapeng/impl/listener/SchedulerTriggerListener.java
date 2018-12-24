@@ -1,5 +1,6 @@
 package com.github.dapeng.impl.listener;
 
+import com.github.dapeng.core.helper.MasterHelper;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -66,6 +67,9 @@ public class SchedulerTriggerListener implements TriggerListener {
         String serviceName = jobDataMap.getString("serviceName");
         String versionName = jobDataMap.getString("versionName");
         String methodName = jobDataMap.getString("methodName");
+        if(!MasterHelper.isMaster(serviceName,versionName)){
+            return true;
+        }
 
         context.getJobDetail().getJobDataMap().put("startTime", LocalDateTime.now(ZoneId.of("Asia/Shanghai")));
 
