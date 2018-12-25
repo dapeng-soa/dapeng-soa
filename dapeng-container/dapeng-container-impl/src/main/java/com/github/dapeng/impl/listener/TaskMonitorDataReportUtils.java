@@ -54,7 +54,7 @@ public class TaskMonitorDataReportUtils {
 
             if (dataPointList.size() >= BATCH_MAX_SIZE) {
                 if (!taskDataQueue.offer(Lists.newArrayList(dataPointList))) {
-                    logger.info("TaskMonitorDataReportUtils::appendDataPoint put into taskDataQueue failed maxSzie = {}", MAX_SIZE);
+                    logger.info("TaskMonitorDataReportUtils::appendDataPoint put into taskDataQueue failed maxSzie = " + MAX_SIZE);
                 }
                 dataPointList.clear();
             }
@@ -69,9 +69,9 @@ public class TaskMonitorDataReportUtils {
                 try {
                     uploaderDataPointList = taskDataQueue.take();
                     COUNTER_CLIENT.submitPoints(uploaderDataPointList);
-                    logger.info("taskMonitorDataUploaderExecutor::upload dataPoint size = {}", uploaderDataPointList.size());
+                    logger.info("taskMonitorDataUploaderExecutor::upload dataPoint size = " + uploaderDataPointList.size());
                 } catch (SoaException e) {
-                    logger.error("TaskMonitorDataReportUtils::taskMonitorUploader dataPoint size = {} upload Exception and re-append to taskDataQueue", uploaderDataPointList.size());
+                    logger.error("TaskMonitorDataReportUtils::taskMonitorUploader dataPoint size = " + uploaderDataPointList.size() + ", upload Exception and re-append to taskDataQueue");
                     logger.error(e.getMsg(), e);
                     appendDataPoint(uploaderDataPointList);
                 } catch (InterruptedException e) {
@@ -111,7 +111,7 @@ public class TaskMonitorDataReportUtils {
         DataPoint influxdbDataPoint = new DataPoint();
         influxdbDataPoint.setDatabase(TaskMonitorDataReportUtils.TASK_DATABASE);
         influxdbDataPoint.setBizTag(TaskMonitorDataReportUtils.TASK_DATABASE_TABLE);
-
+        influxdbDataPoint.setTimestamp(System.currentTimeMillis());
         Map<String, String> tags = new HashMap<>(8);
         tags.put("serviceName", jobDataMap.getString("serviceName"));
         tags.put("methodName", jobDataMap.getString("methodName"));

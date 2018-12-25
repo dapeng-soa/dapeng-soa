@@ -9,7 +9,6 @@ import org.quartz.TriggerListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -46,14 +45,6 @@ public class SchedulerTriggerListener implements TriggerListener {
     @Override
     public void triggerFired(Trigger trigger, JobExecutionContext context) {
         TaskMonitorDataReportUtils.setSessionTid(null);
-
-        JobDataMap jobDataMap = context.getJobDetail().getJobDataMap();
-        String serviceName = jobDataMap.getString("serviceName");
-        String versionName = jobDataMap.getString("versionName");
-        String methodName = jobDataMap.getString("methodName");
-
-        String message = String.format("SchedulerTriggerListener::triggerFired;Task[%s:%s:%s] 即将被触发", serviceName, versionName, methodName);
-        //sendMessage(serviceName, versionName, methodName, message, false, jobDataMap, "normal");
     }
 
     /**
@@ -72,9 +63,6 @@ public class SchedulerTriggerListener implements TriggerListener {
         }
 
         context.getJobDetail().getJobDataMap().put("startTime", LocalDateTime.now(ZoneId.of("Asia/Shanghai")));
-
-        String message = String.format("SchedulerTriggerListener::vetoJobExecution;Task[%s:%s:%s] 即将开始执行", serviceName, versionName, methodName);
-        //sendMessage(serviceName, versionName, methodName, message, false, jobDataMap, "normal");
         return false;
     }
 
@@ -105,17 +93,6 @@ public class SchedulerTriggerListener implements TriggerListener {
      */
     @Override
     public void triggerComplete(Trigger trigger, JobExecutionContext context, Trigger.CompletedExecutionInstruction triggerInstructionCode) {
-        JobDataMap jobDataMap = context.getJobDetail().getJobDataMap();
-        String serviceName = jobDataMap.getString("serviceName");
-        String versionName = jobDataMap.getString("versionName");
-        String methodName = jobDataMap.getString("methodName");
-
-        LocalDateTime currentTime = LocalDateTime.now(ZoneId.of("Asia/Shanghai"));
-        LocalDateTime startTime = (LocalDateTime) jobDataMap.get("startTime");
-        long taskCost = Duration.between(startTime, currentTime).toMillis();
-
-        String message = String.format("SchedulerTriggerListener::triggerComplete;Task[%s:%s:%s] 执行完成[%s] ,cost:%sms", serviceName, versionName, methodName, currentTime.format(DATE_TIME), taskCost);
-        //sendMessage(serviceName, versionName, methodName, message, false, jobDataMap, "succeed");
         TaskMonitorDataReportUtils.removeSessionTid();
     }
 }

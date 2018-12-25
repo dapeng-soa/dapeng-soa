@@ -46,14 +46,7 @@ public class SchedulerJobListener implements JobListener {
      */
     @Override
     public void jobToBeExecuted(final JobExecutionContext context) {
-        JobDataMap jobDataMap = context.getJobDetail().getJobDataMap();
-        String serviceName = jobDataMap.getString("serviceName");
-        String versionName = jobDataMap.getString("versionName");
-        String methodName = jobDataMap.getString("methodName");
-
         context.getJobDetail().getJobDataMap().put("startTime", LocalDateTime.now(ZoneId.of("Asia/Shanghai")));
-        String message = String.format("SchedulerJobListener::jobToBeExecuted;Task[%s:%s:%s] 即将被执行", serviceName, versionName, methodName);
-        //sendMessage(serviceName, versionName, methodName, message, false,"normal");
     }
 
     /**
@@ -65,12 +58,6 @@ public class SchedulerJobListener implements JobListener {
      */
     @Override
     public void jobExecutionVetoed(JobExecutionContext context) {
-        JobDataMap jobDataMap = context.getJobDetail().getJobDataMap();
-        String serviceName = jobDataMap.getString("serviceName");
-        String versionName = jobDataMap.getString("versionName");
-        String methodName = jobDataMap.getString("methodName");
-        String message = String.format("SchedulerJobListener::jobExecutionVetoed;Task[%s:%s:%s] 触发失败", serviceName, versionName, methodName);
-       // sendMessage(serviceName, versionName, methodName, executorService, message, true, jobDataMap, "failed");
     }
 
     /**
