@@ -1,7 +1,6 @@
 package com.github.dapeng.trace
 
 import com.github.dapeng.basic.api.counter.domain.DataPoint
-import com.github.dapeng.trace.TraceReportHandler
 
 import scala.collection.JavaConverters._
 
@@ -13,7 +12,7 @@ class STraceClient {
     **/
   def trace(monitorId: String, tags: Map[String, String], values: Map[String, Long]): Unit = {
     val result: DataPoint = new DataPoint().bizTag(monitorId).tags(tags.asJava)
-    result.setValues(values.map{case (a,b) => (a.toString, java.lang.Long.valueOf(b))}.toMap.asJava)
+    result.setValues(values.map{case (a,b) => (a.toString, java.lang.Long.valueOf(b))}.asJava)
     TraceReportHandler.getInstance.appendPoint(result)
   }
 

@@ -51,7 +51,7 @@ public class TraceReportHandler {
                         .setDaemon(true)
                         .setNameFormat("dapeng-tracePoint-Upload-scheduler-%d")
                         .build());
-        this.traceDataQueue = new LinkedList<DataPoint>();
+        this.traceDataQueue = new LinkedList<>();
         this.failedTraceQueue = new ArrayBlockingQueue<>(CACHE_SIZE);
         this.executorService = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
                 .setDaemon(true)

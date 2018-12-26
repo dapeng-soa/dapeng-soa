@@ -13,6 +13,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java-version>1.8</java-version>
         <scala.version>2.12.4</scala.version>
+        <dapeng.version>2.1.1</dapeng.version>
     </properties>
 
     <artifactId>dapeng-counter-api</artifactId>
@@ -21,12 +22,12 @@
         <dependency>
             <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-core</artifactId>
-            <version>${project.version}</version>
+            <version>${dapeng.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-utils</artifactId>
-            <version>${project.version}</version>
+            <version>${dapeng.version}</version>
         </dependency>
 
         <dependency>
@@ -94,10 +95,10 @@
                     <scalaVersion>${scala.version}</scalaVersion>
                 </configuration>
             </plugin>
-            <!--<plugin>
+            <plugin>
                 <groupId>com.github.dapeng-soa</groupId>
                 <artifactId>dapeng-maven-plugin</artifactId>
-                <version>2.1.2-SNAPSHOT</version>
+                <version>${dapeng.version}</version>
                 <executions>
                     <execution>
                         <phase>generate-sources</phase>
@@ -109,7 +110,7 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>-->
+            </plugin>
         </plugins>
     </build>
 
