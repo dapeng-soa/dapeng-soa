@@ -95,7 +95,7 @@
                     <scalaVersion>${scala.version}</scalaVersion>
                 </configuration>
             </plugin>
-            <plugin>
+            <!--<plugin>
                 <groupId>com.github.dapeng-soa</groupId>
                 <artifactId>dapeng-maven-plugin</artifactId>
                 <version>${dapeng.version}</version>
@@ -110,7 +110,7 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin>-->
         </plugins>
     </build>
 
