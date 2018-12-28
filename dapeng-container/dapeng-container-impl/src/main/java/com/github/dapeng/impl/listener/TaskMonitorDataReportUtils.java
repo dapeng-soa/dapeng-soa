@@ -38,9 +38,15 @@ public class TaskMonitorDataReportUtils {
 
     public final static String TASK_DATABASE = "dapengTask";
     public final static String TASK_DATABASE_TABLE = "dapeng_task_info";
-    private static CounterServiceAsync COUNTER_CLIENT = new CounterServiceAsyncClient();
+    private static CounterServiceAsync COUNTER_CLIENT = null;
     private static final List<DataPoint> dataPointList = new ArrayList<>();
     private static final ArrayBlockingQueue<List<DataPoint>> taskDataQueue = new ArrayBlockingQueue<>(MAX_SIZE);
+
+    public TaskMonitorDataReportUtils() {
+        if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
+            COUNTER_CLIENT = new CounterServiceAsyncClient();
+        }
+    }
 
     //上送线程池
     private static final ExecutorService taskMonitorDataUploaderExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
