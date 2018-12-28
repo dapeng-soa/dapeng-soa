@@ -99,6 +99,10 @@ public class TraceReportHandler {
 
 
     public void flush() {
+        if (this.traceDataQueue.isEmpty()) {
+            return;
+        }
+
         LinkedList<DataPoint> uploaderDataPoints;
         spinLock();
         uploaderDataPoints = Lists.newLinkedList(this.traceDataQueue);
