@@ -52,7 +52,10 @@ public class TraceReportHandler {
     }
 
     public TraceReportHandler() {
-        this.COUNTER_CLIENT = new CounterServiceAsyncClient();
+        if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
+            this.COUNTER_CLIENT = new CounterServiceAsyncClient();
+        }
+
         this.schedulerExecutorService = Executors.newScheduledThreadPool(1,
                 new ThreadFactoryBuilder()
                         .setDaemon(true)
