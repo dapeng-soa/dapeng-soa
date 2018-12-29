@@ -3,14 +3,23 @@ package com.github.dapeng.trace;
 import com.github.dapeng.basic.api.counter.CounterServiceAsyncClient;
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
 import com.github.dapeng.core.SoaException;
+import com.github.dapeng.core.SoaHeader;
+import com.github.dapeng.core.TransactionContext;
+import com.github.dapeng.core.TransactionContextImpl;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -33,8 +42,6 @@ public class TraceReportHandler {
     private final static TraceReportHandler instance = new TraceReportHandler();
     //定时上报定时器
     private ScheduledExecutorService schedulerExecutorService = null;
-    // 线程池
-    private ExecutorService executorService = null;
     private CounterServiceAsyncClient COUNTER_CLIENT = null;
     //local cache for Trace data
     private LinkedList<DataPoint> traceDataQueue = null;
@@ -45,7 +52,10 @@ public class TraceReportHandler {
     }
 
     public TraceReportHandler() {
-        this.COUNTER_CLIENT = new CounterServiceAsyncClient();
+        if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
+            this.COUNTER_CLIENT = new CounterServiceAsyncClient();
+        }
+
         this.schedulerExecutorService = Executors.newScheduledThreadPool(1,
                 new ThreadFactoryBuilder()
                         .setDaemon(true)
@@ -53,39 +63,30 @@ public class TraceReportHandler {
                         .build());
         this.traceDataQueue = new LinkedList<>();
         this.failedTraceQueue = new ArrayBlockingQueue<>(CACHE_SIZE);
-        this.executorService = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
-                .setDaemon(true)
-                .setNameFormat("dapeng-tracePoint-append-Thread-%d")
-                .build());
-
         //启动定时任务
         initUploadScheduler();
     }
 
     public void appendPoints(List<DataPoint> points) {
-        this.executorService.execute(() -> {
-            if (points != null && !points.isEmpty()) {
-                for (DataPoint point : points) {
-                    point.setDatabase(TRACE_DB);
-                    point.setTimestamp(System.currentTimeMillis());
-                }
-
-                spinLock();
-                this.traceDataQueue.addAll(points);
-                resetSpinLock();
+        if (points != null && !points.isEmpty()) {
+            for (DataPoint point : points) {
+                setPointBasicData(point);
             }
 
-            //上报数据
-            if (this.traceDataQueue.size() >= MAX_ALARM_SIZE) {
-                flush();
-            }
-        });
+            spinLock();
+            this.traceDataQueue.addAll(points);
+            resetSpinLock();
+        }
+
+        //上报数据
+        if (this.traceDataQueue.size() >= MAX_ALARM_SIZE) {
+            flush();
+        }
     }
 
     public void appendPoint(DataPoint point) {
         LinkedList<DataPoint> traceData = new LinkedList<DataPoint>();
-        point.setDatabase(TRACE_DB);
-        point.setTimestamp(System.currentTimeMillis());
+        setPointBasicData(point);
         traceData.add(point);
         appendPoints(traceData);
     }
@@ -95,19 +96,25 @@ public class TraceReportHandler {
     private void initUploadScheduler() {
         LOGGER.info("dapeng trace point task started, upload interval:" + PERIOD + "s");
 
-        // 定时上报数据  延迟5秒后，每10秒执行一次
+        // 定时上报数据  延迟10秒后，每10秒执行一次
         schedulerExecutorService.scheduleAtFixedRate(this::flush, 10, PERIOD, TimeUnit.SECONDS);
     }
 
 
     public void flush() {
+        if (this.traceDataQueue.isEmpty()) {
+            return;
+        }
+
         LinkedList<DataPoint> uploaderDataPoints;
         spinLock();
         uploaderDataPoints = Lists.newLinkedList(this.traceDataQueue);
         this.traceDataQueue = new LinkedList<>();
         resetSpinLock();
         try {
-            this.COUNTER_CLIENT.submitPoints(uploaderDataPoints);
+            if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
+                this.COUNTER_CLIENT.submitPoints(uploaderDataPoints);
+            }
             LOGGER.info("trace::flush succeed dataPoint size =" + uploaderDataPoints.size());
         } catch (Exception e) {
             LOGGER.error("trace::flush error,dataPoint size=" + uploaderDataPoints.size(), e);
@@ -121,7 +128,9 @@ public class TraceReportHandler {
         LinkedList<DataPoint> failedDataPoints;
         while ((failedDataPoints = failedTraceQueue.poll()) != null) {
             try {
-                this.COUNTER_CLIENT.submitPoints(failedDataPoints);
+                if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
+                    this.COUNTER_CLIENT.submitPoints(failedDataPoints);
+                }
             } catch (SoaException e) {
                 LOGGER.error("trace::faild Queue  upload error,dataPoint size=" + failedDataPoints.size(), e);
                 //缓存到失败的队列
@@ -139,7 +148,6 @@ public class TraceReportHandler {
     public void destory() {
         LOGGER.info(" stop trace  upload !");
         schedulerExecutorService.shutdown();
-        executorService.shutdown();
         LOGGER.info(" trace upload is shutdown");
     }
 
@@ -154,4 +162,22 @@ public class TraceReportHandler {
         queueLock.set(0);
     }
 
+    private void setPointBasicData(DataPoint point) {
+        Map<String, String> tags = point.getTags();
+        if (tags == null) {
+            tags = new HashMap<>();
+        }
+        TransactionContext transactionContext = TransactionContextImpl.Factory.currentInstance();
+        SoaHeader soaHeader = TransactionContextImpl.Factory.currentInstance().getHeader();
+
+        tags.put("serviceName", soaHeader.getServiceName());
+        tags.put("methodName", soaHeader.getMethodName());
+        tags.put("version", soaHeader.getVersionName());
+        tags.put("hostIp", SoaSystemEnvProperties.HOST_IP);
+        tags.put("hostPort", String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
+
+        point.tags(tags);
+        point.setDatabase(TRACE_DB);
+        point.setTimestamp(System.currentTimeMillis());
+    }
 }
