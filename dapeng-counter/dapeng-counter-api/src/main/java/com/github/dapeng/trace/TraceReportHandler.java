@@ -54,17 +54,18 @@ public class TraceReportHandler {
     public TraceReportHandler() {
         if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
             this.COUNTER_CLIENT = new CounterServiceAsyncClient();
+
+            this.schedulerExecutorService = Executors.newScheduledThreadPool(1,
+                    new ThreadFactoryBuilder()
+                            .setDaemon(true)
+                            .setNameFormat("dapeng-tracePoint-Upload-scheduler-%d")
+                            .build());
+            //启动定时任务
+            initUploadScheduler();
         }
 
-        this.schedulerExecutorService = Executors.newScheduledThreadPool(1,
-                new ThreadFactoryBuilder()
-                        .setDaemon(true)
-                        .setNameFormat("dapeng-tracePoint-Upload-scheduler-%d")
-                        .build());
         this.traceDataQueue = new LinkedList<>();
         this.failedTraceQueue = new ArrayBlockingQueue<>(CACHE_SIZE);
-        //启动定时任务
-        initUploadScheduler();
     }
 
     public void appendPoints(List<DataPoint> points) {
@@ -97,7 +98,7 @@ public class TraceReportHandler {
         LOGGER.info("dapeng trace point task started, upload interval:" + PERIOD + "s");
 
         // 定时上报数据  延迟10秒后，每10秒执行一次
-        schedulerExecutorService.scheduleAtFixedRate(this::flush, 10, PERIOD, TimeUnit.SECONDS);
+        schedulerExecutorService.scheduleAtFixedRate(this::flush, PERIOD, PERIOD, TimeUnit.SECONDS);
     }
 
 
@@ -147,8 +148,10 @@ public class TraceReportHandler {
      */
     public void destory() {
         LOGGER.info(" stop trace  upload !");
-        schedulerExecutorService.shutdown();
-        LOGGER.info(" trace upload is shutdown");
+        if (schedulerExecutorService != null) {
+            schedulerExecutorService.shutdown();
+            LOGGER.info(" trace upload is shutdown");
+        }
     }
 
 

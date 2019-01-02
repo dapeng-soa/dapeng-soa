@@ -15,9 +15,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static com.github.dapeng.impl.listener.TaskMonitorDataReportUtils.sendMessage;
-
-
 /**
  * 定时任务监听器
  *
@@ -75,14 +72,14 @@ public class SchedulerJobListener implements JobListener {
         int execute_count = context.getRefireCount();
         if (exp != null) {
             String message = String.format("SchedulerJobListener::jobWasExecuted;Task[%s:%s:%s] 执行出现异常:%s", serviceName, versionName, methodName, exp.getMessage());
-            sendMessage(serviceName, versionName, methodName, executorService, message, true, jobDataMap, "failed");
+            TaskMonitorDataReportUtils.getInstance().sendMessage(serviceName, versionName, methodName, executorService, message, true, jobDataMap, "failed");
 
         } else {//任务执行成功
             LocalDateTime currentTime = LocalDateTime.now(ZoneId.of("Asia/Shanghai"));
             LocalDateTime startTime = (LocalDateTime) jobDataMap.get("startTime");
             long taskCost = Duration.between(startTime, currentTime).toMillis();
             String message = String.format("SchedulerJobListener::jobWasExecuted;Task[%s:%s:%s] 执行完成[%s],cost:%sms", serviceName, versionName, methodName, currentTime.format(DATE_TIME), taskCost);
-            sendMessage(serviceName, versionName, methodName, executorService, message, false, jobDataMap, "succeed");
+            TaskMonitorDataReportUtils.getInstance().sendMessage(serviceName, versionName, methodName, executorService, message, false, jobDataMap, "succeed");
         }
     }
 

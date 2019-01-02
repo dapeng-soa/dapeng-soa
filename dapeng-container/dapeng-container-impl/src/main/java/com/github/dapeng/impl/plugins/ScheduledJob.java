@@ -39,7 +39,7 @@ public class ScheduledJob implements Job {
         /**
          * 添加sessionTid
          */
-        String sessionTid = TaskMonitorDataReportUtils.setSessionTid(InvocationContextImpl.Factory.currentInstance());
+        String sessionTid = TaskMonitorDataReportUtils.getInstance().setSessionTid(InvocationContextImpl.Factory.currentInstance());
 
         logger.info("定时任务({})开始执行", context.getJobDetail().getKey().getName());
 

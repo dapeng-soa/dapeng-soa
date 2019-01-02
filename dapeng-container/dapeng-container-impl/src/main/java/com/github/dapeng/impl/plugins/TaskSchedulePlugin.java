@@ -15,7 +15,6 @@ import com.github.dapeng.core.timer.ScheduledTaskCron;
 import com.github.dapeng.impl.listener.CronCountUtils;
 import com.github.dapeng.impl.listener.SchedulerJobListener;
 import com.github.dapeng.impl.listener.SchedulerTriggerListener;
-import com.github.dapeng.impl.listener.TaskMonitorDataReportUtils;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.triggers.CronTriggerImpl;
@@ -80,12 +79,6 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
 
         try {
             scheduler.start();
-
-            //启动监听数据上送线程
-            if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
-                TaskMonitorDataReportUtils.taskMonitorUploader();
-            }
-
         } catch (SchedulerException e) {
             LOGGER.error("TaskSchedulePlugin::start 定时器启动失败", e);
         }

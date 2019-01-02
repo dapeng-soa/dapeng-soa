@@ -15,7 +15,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static com.github.dapeng.impl.listener.TaskMonitorDataReportUtils.sendMessage;
 
 /**
  * 定时任务触发器监听器
@@ -44,7 +43,7 @@ public class SchedulerTriggerListener implements TriggerListener {
      */
     @Override
     public void triggerFired(Trigger trigger, JobExecutionContext context) {
-        TaskMonitorDataReportUtils.setSessionTid(null);
+        TaskMonitorDataReportUtils.getInstance().setSessionTid(null);
     }
 
     /**
@@ -83,7 +82,7 @@ public class SchedulerTriggerListener implements TriggerListener {
 
         String currentTimeAsString = currentTime.format(DATE_TIME);
         String message = String.format("SchedulerTriggerListener::triggerMisfired;Task[%s:%s:%s] 触发超时,错过[%s]这一轮触发", serviceName, versionName, methodName, currentTimeAsString);
-        sendMessage(serviceName, versionName, methodName, executorService, message, true, jobDataMap, "triggerTimeOut");
+        TaskMonitorDataReportUtils.getInstance().sendMessage(serviceName, versionName, methodName, executorService, message, true, jobDataMap, "triggerTimeOut");
     }
 
     /**
@@ -93,6 +92,6 @@ public class SchedulerTriggerListener implements TriggerListener {
      */
     @Override
     public void triggerComplete(Trigger trigger, JobExecutionContext context, Trigger.CompletedExecutionInstruction triggerInstructionCode) {
-        TaskMonitorDataReportUtils.removeSessionTid();
+        TaskMonitorDataReportUtils.getInstance().removeSessionTid();
     }
 }
