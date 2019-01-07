@@ -124,10 +124,10 @@ public class TaskMonitorDataReportUtils {
         executorService.submit(() -> {
             try {
                 setSessionTid(invocationContext);
-                logger.info(message);
-
                 if (isError) {
                     logger.error(message);
+                } else {
+                    logger.info(message);
                 }
 
                 //是否上报监听数据(错误必须上报)
