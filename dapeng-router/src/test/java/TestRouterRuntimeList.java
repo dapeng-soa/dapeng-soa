@@ -545,6 +545,29 @@ public class TestRouterRuntimeList {
         Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
 
+     /**
+      * 测试otherwise没有空格区分
+      */
+    @Test
+    public void testOtherWiseTwoIp2() {
+        //"192.168.1.101",
+        String pattern = "otherwise=>~ip\"192.168.1.101\",~ip\"192.168.1.102\",~ip\"192.168.1.103\" ".trim();
+
+
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.setCookie("storeId", "11866600");
+        ctx.methodName("updateOrderMemberId");
+
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+//        expectInstances.add(runtimeInstance3);
+        expectInstances.add(runtimeInstance4);
+        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+    }
+
     @Test
     public void testOtherWiseIpMark() {
         //"192.168.1.101",
@@ -564,7 +587,26 @@ public class TestRouterRuntimeList {
         Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
 
-    @Test(expected=ParsingException.class)
+    /**
+     * 测试多个~符号的情况
+     *
+     * @param
+     * @return
+     */
+    @Test
+    public void testOtherWiseIpMark2() {
+        //"192.168.1.101",
+        String pattern = "otherwise => ~~~ip\"192.168.1.101/24\"    ".trim();
+
+
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.setCookie("storeId", "11866600");
+        ctx.methodName("updateOrderMemberId");
+        Assert.assertTrue(routes.isEmpty());
+    }
+
+    @Test
     public void testMoreThenError() {
 
         String pattern = "cookie_storeId match 11866600  => ip\"192.168.1.101\"   => ip\"192.168.1.102\"\n" +
@@ -573,13 +615,7 @@ public class TestRouterRuntimeList {
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         ctx.setCookie("storeId", "118666200");
         ctx.methodName("updateOrderMemberId");
-
-        List<RuntimeInstance> prepare = prepare(ctx, routes);
-
-
-        List<RuntimeInstance> expectInstances = new ArrayList<>();
-        expectInstances.add(runtimeInstance1);
-        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+        Assert.assertTrue(routes.isEmpty());
     }
 
     @Test
@@ -636,12 +672,7 @@ public class TestRouterRuntimeList {
         ctx.setCookie("storeId", "118666200");
         ctx.methodName("updateOrderMemberId");
 
-        List<RuntimeInstance> prepare = prepare(ctx, routes);
-
-
-        List<RuntimeInstance> expectInstances = new ArrayList<>();
-        expectInstances.add(runtimeInstance1);
-        Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
+        Assert.assertTrue(routes.isEmpty());
 
     }
 
