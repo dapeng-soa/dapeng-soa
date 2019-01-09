@@ -44,9 +44,9 @@ public class CronCountUtils {
             date = generator.next(date);
             calendar.setTime(date);
             now = calendar.get(Calendar.DATE);
-            if(now == today) {
-                count++;
-            } else {
+
+            count++;
+            if (now != today) {
                 break;
             }
         }
@@ -54,6 +54,6 @@ public class CronCountUtils {
     }
 
     public static void main(String[] args) {
-        System.out.println(count("1 0/5 * * * ?"));
+        System.out.println(count("0 0/5 * * * ?"));
     }
 }
