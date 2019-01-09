@@ -8,7 +8,6 @@ package com.github.dapeng.core.helper;
  */
 public class SoaSystemEnvProperties {
 
-    public static final long SOA_MAX_TIMEOUT = 300000L;
     public static final long SOA_DEFAULT_TIMEOUT = 1000L;
 
     public static final String THREAD_LEVEL_KEY = "thread-log-level";
