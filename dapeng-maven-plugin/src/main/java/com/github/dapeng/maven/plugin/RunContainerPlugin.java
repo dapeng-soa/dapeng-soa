@@ -87,7 +87,7 @@ public class RunContainerPlugin extends SoaAbstractMojo {
                 List<ClassLoader> pluginClassLoaders = new ArrayList<>();
                 pluginClassLoaders.add(coreClassLoader);
 
-                System.out.println("------set classloader-------------");
+                System.out.println("----------set classloader-------------");
                 Thread.currentThread().setContextClassLoader(coreClassLoader);
 
 

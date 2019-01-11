@@ -87,7 +87,7 @@ public class SoaSystemEnvProperties {
 
     public static final String SOA_LOCAL_HOST_NAME = get(KEY_SOA_LOCAL_HOST_NAME);
     public static final boolean SOA_TRANSACTIONAL_ENABLE = Boolean.valueOf(get(KEY_SOA_TRANSACTIONAL_ENABLE, "true"));
-        public static final boolean SOA_LOG_FORMAT_ENABLE = Boolean.valueOf(get(KEY_SOA_LOG_FORMAT_ENABLE, "true"));
+    public static final boolean SOA_LOG_FORMAT_ENABLE = Boolean.valueOf(get(KEY_SOA_LOG_FORMAT_ENABLE, "true"));
 
 
     public static final String SOA_FILTER_EXCLUDES = get(KEY_SOA_FILTER_EXCLUDES, "");

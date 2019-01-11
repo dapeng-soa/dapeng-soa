@@ -243,7 +243,7 @@ public class ClientZk extends CommonZk {
 
     //～～～～～～～～～～～～～～～～～～
     //      目前暂时没有用到的方法
-    //～～～～～～～～～～～～～～～
+    //～～～～～～～～～～～～～～～～～～
 
     public List<ServiceInfo> getServiceInfoCached(String serviceName, String versionName, boolean compatible) {
 
