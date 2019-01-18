@@ -13,15 +13,14 @@ import com.github.dapeng.core.helper.IPUtils;
  * @author hz.lei
  * @date 2018年04月13日 下午9:42
  */
-public class ThenIp {
-    public final boolean not;
+public class ThenIp extends CommonThen {
     public final int ip;
     public final int port;
     public final int mask;
 
 
-    public ThenIp(boolean not, int ip, int port, int mask) {
-        this.not = not;
+    public ThenIp(int routeType, boolean not, int ip, int port, int mask) {
+        super(routeType,not);
         this.ip = ip;
         this.port = port;
         this.mask = mask;

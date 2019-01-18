@@ -98,4 +98,9 @@ public interface Token {
      */
     int type();
 
+
+    /**
+     * v "1.0.2"
+     */
+    int VERSION = 17;
 }

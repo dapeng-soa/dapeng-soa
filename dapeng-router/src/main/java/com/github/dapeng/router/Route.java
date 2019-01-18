@@ -13,23 +13,26 @@ import java.util.List;
 public class Route {
 
     private final Condition left;
-    private final List<ThenIp> thenRouteIps;
+    private final List<CommonThen> thenRouteDests;
 
-    public Route(Condition left, List<ThenIp> thenRouteIps) {
+    public Route(Condition left, List<CommonThen> thenRouteDests) {
         this.left = left;
-        this.thenRouteIps = thenRouteIps;
+        this.thenRouteDests = thenRouteDests;
     }
 
     public Condition getLeft() {
         return left;
     }
 
-    public List<ThenIp> getThenRouteIps() {
-        return thenRouteIps;
+    public List<CommonThen> getThenRouteDests() {
+        return thenRouteDests;
     }
 
     @Override
     public String toString() {
-        return "Route{ left=" + left + ", thenRouteIps:" + thenRouteIps + '}';
+        return "Route{" +
+                "left=" + left +
+                ", thenRouteDests=" + thenRouteDests +
+                '}';
     }
 }

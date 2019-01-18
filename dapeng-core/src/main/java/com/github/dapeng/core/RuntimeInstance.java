@@ -55,6 +55,6 @@ public class RuntimeInstance {
 
     @Override
     public String toString() {
-        return "IP:【" + ip + ":" + port + '】';
+        return "IP:【" + ip + ":" + port + ":" + version + '】';
     }
 }

@@ -3,11 +3,11 @@ import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
-import com.github.dapeng.router.exception.ParsingException;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,23 +18,26 @@ import java.util.List;
  * @date 2018年04月13日 下午10:00
  */
 public class TestRouterRuntimeList {
-
-
     private RuntimeInstance runtimeInstance1 = new RuntimeInstance("com.maple.Uservice", "192.168.1.101", 9090, "1.0.0");
+    private RuntimeInstance runtimeInstance11 = new RuntimeInstance("com.maple.Uservice", "192.168.1.101", 9090, "1.0.1");
+    private RuntimeInstance runtimeInstance12 = new RuntimeInstance("com.maple.Uservice", "192.168.1.101", 9090, "1.1.3");
     private RuntimeInstance runtimeInstance2 = new RuntimeInstance("com.maple.Uservice", "192.168.1.102", 9091, "1.0.0");
+    private RuntimeInstance runtimeInstance21 = new RuntimeInstance("com.maple.Uservice", "192.168.1.102", 9091, "2.1.2");
+    private RuntimeInstance runtimeInstance22 = new RuntimeInstance("com.maple.Uservice", "192.168.1.102", 9091, "2.1.5");
     private RuntimeInstance runtimeInstance3 = new RuntimeInstance("com.maple.Uservice", "192.168.1.103", 9092, "1.0.0");
+    private RuntimeInstance runtimeInstance31 = new RuntimeInstance("com.maple.Uservice", "192.168.1.103", 9092, "2.0.0");
+    private RuntimeInstance runtimeInstance32 = new RuntimeInstance("com.maple.Uservice", "192.168.1.103", 9092, "3.0.0");
+    private RuntimeInstance runtimeInstance33 = new RuntimeInstance("com.maple.Uservice", "192.168.1.103", 9092, "1.0.1");
     private RuntimeInstance runtimeInstance4 = new RuntimeInstance("com.maple.Uservice", "192.168.1.104", 9093, "1.0.0");
+    private RuntimeInstance runtimeInstance41 = new RuntimeInstance("com.maple.Uservice", "192.168.1.104", 9093, "4.0.3");
+    private RuntimeInstance runtimeInstance42 = new RuntimeInstance("com.maple.Uservice", "192.168.1.104", 9093, "4.2.1");
 
+    private List<RuntimeInstance> testRuntimeInstances = Arrays.asList(runtimeInstance1, runtimeInstance11, runtimeInstance12, runtimeInstance2, runtimeInstance21, runtimeInstance22, runtimeInstance3, runtimeInstance31, runtimeInstance32,  runtimeInstance33, runtimeInstance4, runtimeInstance41, runtimeInstance42);
 
     public List<RuntimeInstance> prepare(InvocationContextImpl ctx, List<Route> routes) {
-        List<RuntimeInstance> instances = new ArrayList<>();
 
-        instances.add(runtimeInstance1);
-        instances.add(runtimeInstance2);
-        instances.add(runtimeInstance3);
-        instances.add(runtimeInstance4);
+        List<RuntimeInstance> filterInstances = RoutesExecutor.executeRoutes(ctx, routes, testRuntimeInstances);
 
-        List<RuntimeInstance> filterInstances = RoutesExecutor.executeRoutes(ctx, routes, instances);
         return filterInstances;
     }
 
@@ -42,6 +45,43 @@ public class TestRouterRuntimeList {
     public void testEmptyRule() {
         List<Route> routes = RoutesExecutor.parseAll("");
         Assert.assertEquals(0, routes.size());
+    }
+
+    @Test
+    public void testVersionRule() {
+        /*String pattern = "  method match 'getSkuById' , 'setFoo' => v\"1.0.0\"" +
+                System.getProperty("line.separator") + " method match 'getSkuById' , 'setFoo' ; version match '1.0.0' => ~ip\"192.168.1.104\"".trim();*/
+
+        //String pattern = "method match 'getSkuById' , 'setFoo' => ~v\"1.0.0\",ip\"192.168.1.103\"";
+        //String pattern = "method match 'getSkuById' , 'setFoo' => ~v\"1.0.0\",~v\"2.0.0\"";
+       // String pattern = "method match 'getSkuById' , 'setFoo' => ~v\"1.0.0\",v\"2.0.0\"";
+        //String pattern = "method match 'getSkuById' , 'setFoo' => ~ip\"192.168.1.103\",~v\"2.0.0\"";
+        //String pattern = "method match 'getSkuById' , 'setFoo' => ~ip\"192.168.1.103\",~ip\"192.168.1.102\"";
+        //String pattern = "method match 'getSkuById' , 'setFoo' => ~ip\"192.168.1.103\",~ip\"192.168.1.102\",~v\"1.0.0\",~v\"4.0.0\"";
+        //String pattern = "method match 'getSkuById' , 'setFoo' => ~ip\"192.168.1.103\",~ip\"192.168.1.102\",~v\"1.0.0\",v\"4.0.0\"";
+        //String pattern = "method match 'getSkuById' , 'setFoo' ; version match '1.0.0' => ~ip\"192.168.1.103\",~v\"1.0.0\"";
+        //String pattern = "method match 'getSkuById' , 'setFoo' ; version match '1.0.0' => ~ip\"192.168.1.103\"";
+        //String pattern = "method match 'getSkuById' , 'setFoo' ; version match '1.0.0' => ip\"192.168.1.103\"";
+        //String pattern = "method match 'getSkuById' , 'setFoo' ; version match '1.0.0' => ~v\"1.0.0\"";
+        String pattern = "method match 'getSkuById' , 'setFoo' ; version match '1.0.0' => v\"1.0.0\"";
+
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+        InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
+        ctx.methodName("getSkuById");
+        ctx.versionName("1.0.0");
+        List<RuntimeInstance> prepare = prepare(ctx, routes);
+
+        System.out.println("route before runtimeinstance list:");
+        testRuntimeInstances.forEach(System.out::println);
+
+        System.out.println("\nroute rule[method = getSkuById]:\n" + pattern);
+
+        System.out.println("\nroute after runtimeinstance list:");
+        prepare.forEach(System.out::println);
+
+        List<RuntimeInstance> expectInstances = new ArrayList<>();
+        expectInstances.add(runtimeInstance1);
+        //Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
 
     @Test
@@ -545,9 +585,9 @@ public class TestRouterRuntimeList {
         Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
 
-     /**
-      * 测试otherwise没有空格区分
-      */
+    /**
+     * 测试otherwise没有空格区分
+     */
     @Test
     public void testOtherWiseTwoIp2() {
         //"192.168.1.101",
@@ -664,8 +704,6 @@ public class TestRouterRuntimeList {
         Assert.assertTrue(routes.isEmpty());
 
     }
-
-
 
 
 }

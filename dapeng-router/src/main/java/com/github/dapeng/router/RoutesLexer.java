@@ -79,6 +79,23 @@ public class RoutesLexer {
         return token;
     }
 
+
+    /**
+     * 拿下一个 peek ，判断是不是 需要的类型。
+     * <p>
+     * todo 优化： 做一下缓存。不需要再次执行 next（）,方案？
+     *
+     * @return
+     */
+    public boolean ifPeek(int type) throws ParsingException {
+        int temPos = pos;
+        Token token = next();
+        pos = temPos;
+
+        return type == token.type();
+    }
+
+
     /**
      * 获取下一个token 并改变 偏移量
      *
@@ -127,6 +144,15 @@ public class RoutesLexer {
             case 'c':
                 if (require(new char[]{'\"', '\''}, false)) {
                     return parseCookies();
+                } else {
+                    pos--;
+                    return processId();
+                }
+
+                //process version
+            case 'v':
+                if (require(new char[]{'\"', '\''}, false)) {
+                    return parseVersion();
                 } else {
                     pos--;
                     return processId();
@@ -211,6 +237,24 @@ public class RoutesLexer {
         throw new ParsingException("[CookiesEx]", "parse COOKIE_RULES failed,check the cookie value contains '#' or more than one ");
     }
 
+    /**
+     * v"2.0.1"
+     *
+     * @return
+     */
+    private Token parseVersion() throws ParsingException {
+        char quotation = currentChar();
+        char ch = nextChar();
+        StringBuilder sb = new StringBuilder(16);
+        do {
+            throwExWithCondition(ch == EOI,
+                    "[VersionEx]", "parse VERSION_RULES failed,check the VERSION_REGEX express:" + sb.toString());
+            sb.append(ch);
+        } while ((ch = nextChar()) != quotation);
+        String value = sb.toString();
+        return new VersionToken(value);
+    }
+
 
     /**
      * 解析 id
@@ -243,7 +287,7 @@ public class RoutesLexer {
      * @return
      */
     private boolean isValidIdChar(char ch) {
-        return Character.isLetter(ch) || Character.isDigit(ch) || ch == '_';
+        return Character.isLetter(ch) || Character.isDigit(ch) || ch == '_' || ch == '.';
     }
 
 
