@@ -268,7 +268,8 @@ public class RoutesParser {
         switch (token.type()) {
             case Token.NOT: {
                 lexer.next(Token.NOT);
-                ThenIp it = rightPattern();
+                IpToken ip = (IpToken) lexer.next(Token.IP);
+                ThenIp it = new ThenIp(false, ip.ip, ip.port, ip.mask);
                 return new ThenIp(!it.not, it.ip, it.port, it.mask);
             }
             case Token.IP: {

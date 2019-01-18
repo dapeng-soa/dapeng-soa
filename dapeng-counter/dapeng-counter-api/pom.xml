@@ -13,7 +13,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java-version>1.8</java-version>
         <scala.version>2.12.4</scala.version>
-        <dapeng.version>2.1.1</dapeng.version>
+        <dapeng.version>2.1.2-SNAPSHOT</dapeng.version>
     </properties>
 
     <artifactId>dapeng-counter-api</artifactId>

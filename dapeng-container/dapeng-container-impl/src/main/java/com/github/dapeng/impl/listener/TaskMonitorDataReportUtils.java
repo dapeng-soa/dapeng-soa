@@ -22,9 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 /**
  * @author huyj
@@ -34,7 +32,9 @@ public class TaskMonitorDataReportUtils {
     private static Logger logger = LoggerFactory.getLogger("container.scheduled.task");
 
     private static final int MAX_SIZE = 32;
-    private static final int BATCH_MAX_SIZE = 20;
+    private static final int BATCH_MAX_SIZE = 50;
+    //定时上报  单位:秒
+    private static final int UPLOAD_PERIOD = 20;
 
     public final static String TASK_DATABASE = "dapengTask";
     public final static String TASK_DATABASE_TABLE = "dapeng_task_info";
@@ -42,32 +42,63 @@ public class TaskMonitorDataReportUtils {
     private static final List<DataPoint> dataPointList = new ArrayList<>();
     private static final ArrayBlockingQueue<List<DataPoint>> taskDataQueue = new ArrayBlockingQueue<>(MAX_SIZE);
 
+    private final static TaskMonitorDataReportUtils instance = new TaskMonitorDataReportUtils();
+    private static ExecutorService taskMonitorDataUploaderExecutor = null;
+    //定时上报定时器
+    private static ScheduledExecutorService schedulerExecutorService = null;
+
+    public static TaskMonitorDataReportUtils getInstance() {
+        return instance;
+    }
+
     public TaskMonitorDataReportUtils() {
         if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
             COUNTER_CLIENT = new CounterServiceAsyncClient();
+            //启动监听数据上送线程
+            taskMonitorDataUploaderExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
+                    .setDaemon(true)
+                    .setNameFormat("dapeng-taskMonitorDataUploader-%d")
+                    .build());
+            taskMonitorUploader();
+
+            //定时上送线程
+            schedulerExecutorService = Executors.newScheduledThreadPool(1,
+                    new ThreadFactoryBuilder()
+                            .setDaemon(true)
+                            .setNameFormat("dapeng-tracePoint-Upload-scheduler-%d")
+                            .build());
+            // 定时上报数据  延迟10秒后，每10秒执行一次
+            schedulerExecutorService.scheduleAtFixedRate(this::flushDataPoint, UPLOAD_PERIOD, UPLOAD_PERIOD, TimeUnit.SECONDS);
         }
     }
 
-    //上送线程池
-    private static final ExecutorService taskMonitorDataUploaderExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
-            .setDaemon(true)
-            .setNameFormat("dapeng-taskMonitorDataUploader-%d")
-            .build());
 
-    public static void appendDataPoint(List<DataPoint> uploadList) {
+    public void appendDataPoint(List<DataPoint> uploadList) {
         synchronized (dataPointList) {
             dataPointList.addAll(uploadList);
 
             if (dataPointList.size() >= BATCH_MAX_SIZE) {
                 if (!taskDataQueue.offer(Lists.newArrayList(dataPointList))) {
-                    logger.info("TaskMonitorDataReportUtils::appendDataPoint put into taskDataQueue failed maxSzie = " + MAX_SIZE);
+                    logger.info("TaskMonitorDataReportUtils::appendDataPoint put into taskDataQueue failed Szie = " + dataPointList.size());
                 }
                 dataPointList.clear();
             }
         }
     }
 
-    public static void taskMonitorUploader() {
+    /*刷新缓存*/
+    public void flushDataPoint() {
+        synchronized (dataPointList) {
+            if (!dataPointList.isEmpty()) {
+                if (!taskDataQueue.offer(Lists.newArrayList(dataPointList))) {
+                    logger.info("TaskMonitorDataReportUtils::appendDataPoint put into taskDataQueue failed Szie = " + dataPointList.size());
+                }
+                dataPointList.clear();
+            }
+        }
+    }
+
+    public void taskMonitorUploader() {
         // uploader point thread.
         taskMonitorDataUploaderExecutor.execute(() -> {
             while (true) {
@@ -88,15 +119,15 @@ public class TaskMonitorDataReportUtils {
         });
     }
 
-    static void sendMessage(String serviceName, String versionName, String methodName, ExecutorService executorService, final String message, boolean isError, JobDataMap jobDataMap, String executeState) {
+    public void sendMessage(String serviceName, String versionName, String methodName, ExecutorService executorService, final String message, boolean isError, JobDataMap jobDataMap, String executeState) {
         InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
         executorService.submit(() -> {
             try {
-                TaskMonitorDataReportUtils.setSessionTid(invocationContext);
-                logger.info(message);
-
+                setSessionTid(invocationContext);
                 if (isError) {
                     logger.error(message);
+                } else {
+                    logger.info(message);
                 }
 
                 //是否上报监听数据(错误必须上报)
@@ -113,7 +144,7 @@ public class TaskMonitorDataReportUtils {
     }
 
 
-    static void taskInfoReport(JobDataMap jobDataMap, String executeState) {
+    private void taskInfoReport(JobDataMap jobDataMap, String executeState) {
         DataPoint influxdbDataPoint = new DataPoint();
         influxdbDataPoint.setDatabase(TaskMonitorDataReportUtils.TASK_DATABASE);
         influxdbDataPoint.setBizTag(TaskMonitorDataReportUtils.TASK_DATABASE_TABLE);
@@ -162,11 +193,13 @@ public class TaskMonitorDataReportUtils {
         influxdbDataPoint.setValues(fields);
         influxdbDataPoint.setTimestamp(System.currentTimeMillis());
 
-        //放入上送列表
-        appendDataPoint(Lists.newArrayList(influxdbDataPoint));
+        if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
+            //放入上送列表
+            appendDataPoint(Lists.newArrayList(influxdbDataPoint));
+        }
     }
 
-    public static String setSessionTid(InvocationContext context) {
+    public String setSessionTid(InvocationContext context) {
         InvocationContext invocationContext = context != null ? InvocationContextImpl.Factory.currentInstance(context) : InvocationContextImpl.Factory.createNewInstance();
         if (!invocationContext.sessionTid().isPresent()) {
             long tid = DapengUtil.generateTid();
@@ -178,7 +211,7 @@ public class TaskMonitorDataReportUtils {
         return sessionTid;
     }
 
-    public static void removeSessionTid() {
+    public void removeSessionTid() {
         MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         InvocationContextImpl.Factory.removeCurrentInstance();
     }
