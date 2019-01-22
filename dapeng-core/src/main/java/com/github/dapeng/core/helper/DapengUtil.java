@@ -50,6 +50,7 @@ public class DapengUtil {
         int low = seqId.getAndIncrement();
         long tid = 0xffff_ffff_ffff_ffffL;
         return ((tid & high) << 32) | ((tid >>> 32) & low);
+        // ((long)high) << 32 | (（long)low & -1L)
     }
 
     public static String longToHexStr(long tid) {
