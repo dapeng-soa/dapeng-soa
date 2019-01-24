@@ -10,11 +10,12 @@ import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.json.OptimizedMetadata;
 import com.github.dapeng.metadata.MetadataClient;
 import com.google.gson.Gson;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.PooledByteBufAllocator;
 
 import javax.xml.bind.JAXB;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
 import java.io.StringReader;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -30,7 +31,7 @@ public class TCCFilter implements Filter {
 
     private final String tmServiceName = "com.github.dapeng.tm.service.TransactionManagerService";
     private final String tmVersionName = "1.0.0";
-    private final String tmMethodName = "beginTransaction";
+    private final String tmMethodName = "beginGtx";
     private final String tmConfirmName = "confirm";
     private final String tmCancelName = "cancel";
     private final Gson gson = new Gson();
@@ -49,7 +50,7 @@ public class TCCFilter implements Filter {
             if (tcc != null) {
                 //构建JsonPost请求
                 JsonPost jsonPost = new JsonPost(tmServiceName, tmVersionName, tmMethodName);
-                MetadataClient client = new MetadataClient(serviceName, versionName);
+                MetadataClient client = new MetadataClient(tmServiceName, tmVersionName);
                 String metadata = client.getServiceMetadata();
                 OptimizedMetadata.OptimizedService service = null;
                 Object args = transactionContext.getAttribute("args");
@@ -59,17 +60,19 @@ public class TCCFilter implements Filter {
                     }
                 }
                 //构建beginRequest请求参数
-                Map<String, Object> map = new HashMap<>();
-                map.put("method", methodName);
-                map.put("version", serviceName);
-                map.put("serviceName", serviceName);
-
-                map.put("confirmMethod", Optional.of(tcc.confirmMethod()));
-                map.put("cancelMethod", Optional.of(tcc.cancelMethod()));
-                map.put("expiredAt", Optional.of(60000));
-                map.put("params", Optional.of(args));
-
-                String jsonResponse = jsonPost.callServiceMethod(gson.toJson(map), service);
+                Map<String, Object> map = new HashMap<>(16);
+                Map<String, Map<String, Object>> requestMap = new HashMap<>(16);
+                Map<String, Map<String, Map<String, Object>>> bodyMap = new HashMap<>(16);
+                map.put("method", tmMethodName);
+                map.put("version", tmVersionName);
+                map.put("serviceName", tmServiceName);
+                map.put("confirmMethod", tcc.confirmMethod());
+                map.put("cancelMethod", tcc.cancelMethod());
+                map.put("expiredAt", 60000);
+                map.put("params", args);
+                requestMap.put("gtxReq", map);
+                bodyMap.put("body", requestMap);
+                String jsonResponse = jsonPost.callServiceMethod(gson.toJson(bodyMap), service);
                 Map resultMap = gson.fromJson(jsonResponse, Map.class);
                 Object gtxId = resultMap.get("gtxId");
                 Object stepId = resultMap.get("stepId");
@@ -103,7 +106,7 @@ public class TCCFilter implements Filter {
             if (tcc != null) {
                 Stack stack = (Stack) transactionContext.getAttribute("stack");
                 stack.pop();
-                MetadataClient client = new MetadataClient(serviceName, versionName);
+                MetadataClient client = new MetadataClient(tmServiceName, tmVersionName);
                 String metadata = client.getServiceMetadata();
                 OptimizedMetadata.OptimizedService service = null;
                 JsonPost jsonPost = null;
@@ -123,9 +126,13 @@ public class TCCFilter implements Filter {
                     }
                 }
                 long gtxId = Long.parseLong(transactionContext.getAttribute("gtxId").toString());
-                Map<String, Long> map = new <String, Long>HashMap();
+                Map<String, Long> map = new HashMap<>(16);
+                Map<String, Map<String, Long>> requestMap = new HashMap<>(16);
+                Map<String, Map<String, Map<String, Long>>> bodyMap = new HashMap<>(16);
                 map.put("gtxId", gtxId);
-                jsonPost.callServiceMethod(gson.toJson(map), service);
+                requestMap.put("gtxReq", map);
+                bodyMap.put("body", requestMap);
+                jsonPost.callServiceMethod(gson.toJson(bodyMap), service);
             }
 
             prev.onExit(ctx);
@@ -133,4 +140,20 @@ public class TCCFilter implements Filter {
             e.printStackTrace();
         }
     }
+
+/*    public byte[] toByteArray (Object obj) {
+        byte[] bytes = null;
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
+            oos.writeObject(obj);
+            oos.flush();
+            bytes = bos.toByteArray ();
+            oos.close();
+            bos.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return bytes;
+    }*/
 }
