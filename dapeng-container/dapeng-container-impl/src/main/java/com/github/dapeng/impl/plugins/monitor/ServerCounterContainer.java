@@ -17,7 +17,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Stream;
 
 /**
  * @author ever
@@ -105,7 +104,7 @@ public class ServerCounterContainer {
 
 
     private final String DATA_BASE = MonitorFilterProperties.SOA_MONITOR_INFLUXDB_DATABASE;
-    private final String NODE_IP = SoaSystemEnvProperties.SOA_CONTAINER_IP;
+    private final String NODE_IP = SoaSystemEnvProperties.HOST_IP;
     private final String NODE_PORT = String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
 
     private final int PERIOD = MonitorFilterProperties.SOA_MONITOR_SERVICE_PROCESS_PERIOD;

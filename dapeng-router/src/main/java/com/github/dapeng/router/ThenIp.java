@@ -16,20 +16,19 @@ import com.github.dapeng.core.helper.IPUtils;
 public class ThenIp {
     public final boolean not;
     public final int ip;
+    public final int port;
     public final int mask;
 
-    ThenIp(boolean not, int ip, int mask) {
+
+    public ThenIp(boolean not, int ip, int port, int mask) {
         this.not = not;
         this.ip = ip;
+        this.port = port;
         this.mask = mask;
     }
 
     @Override
     public String toString() {
-        return "ThenIp{" +
-                "not=" + not +
-                ", ip=" + IPUtils.transferIp(ip) +
-                ", mask=" + mask +
-                '}';
+        return "ThenIp{" + "not=" + not + ", ip=" + IPUtils.transferIp(ip) + "/" + mask + ", port=" + port + '}';
     }
 }

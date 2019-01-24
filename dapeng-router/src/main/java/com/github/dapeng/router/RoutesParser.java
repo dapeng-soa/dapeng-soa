@@ -1,6 +1,7 @@
 package com.github.dapeng.router;
 
 
+import com.github.dapeng.router.condition.Condition;
 import com.github.dapeng.router.condition.*;
 import com.github.dapeng.router.exception.ParsingException;
 import com.github.dapeng.router.pattern.*;
@@ -43,39 +44,48 @@ public class RoutesParser {
 
     private static Logger logger = LoggerFactory.getLogger(RoutesParser.class);
 
-    private RoutesLexer lexer;
+    protected RoutesLexer lexer;
 
     public RoutesParser(RoutesLexer lexer) {
         this.lexer = lexer;
     }
 
     /**
-     * 第一步： 多行路由规则，根据回车符 ' \n '  进行split  do while 解析
+     * 第一步： 多行路由规则，根据回车符 ' \n '  进行split  do while 解析，
+     * 路由规则已经给trim处理
      */
-    public List<Route> routes() {
+    public List<Route> routes() throws ParsingException {
         List<Route> routes = new ArrayList<>();
         Token token = lexer.peek();
         switch (token.type()) {
-            case Token.EOL:
             case Token.OTHERWISE:
             case Token.ID:
                 Route route = route();
                 if (route != null) {
                     routes.add(route);
                 }
-                while (lexer.peek() == Token_EOL) {
-                    lexer.next(Token.EOL);
-                    Route route1 = route();
-                    if (route1 != null) {
-                        routes.add(route1);
+
+                Token nextToken = lexer.peek();
+                while (nextToken.type() == Token.EOL || nextToken.type() == Token.EOF) {
+                    lexer.next();
+                    if (nextToken.type() == Token.EOF) return routes;
+
+                    nextToken = lexer.peek();
+                    while (nextToken.type() == Token.EOL || nextToken.type() == Token.EOF) {
+                        lexer.next();
+                        if (nextToken.type() == Token.EOF) return routes;
+                        nextToken = lexer.peek();
                     }
+
+                    routes.add(route());
+                    nextToken = lexer.peek();
                 }
                 break;
             case Token.EOF:
                 warn("current service hava no route express config");
                 break;
             default:
-                error("expect `otherwise` or `id match ...` but got " + token);
+                throw new ParsingException("routes error", "expect `otherwise` or `id match ...` but got " + token);
         }
         return routes;
     }
@@ -86,7 +96,7 @@ public class RoutesParser {
      * <p>
      * method match s'getFoo'  => ~ip'192.168.3.39'
      */
-    public Route route() {
+    public Route route() throws ParsingException {
         Token token = lexer.peek();
         switch (token.type()) {
             case Token.OTHERWISE:
@@ -96,26 +106,21 @@ public class RoutesParser {
                 List<ThenIp> right = right();
                 return new Route(left, right);
             default:
-                warn("expect `otherwise` or `id match ...` but got " + token);
+                throw new ParsingException("route error", "expect `otherwise` or `id match ...` but got " + token);
         }
-        return null;
     }
 
     /**
      * left  : 'otherwise' matcher (';' matcher)*
      * <p>
      * method match pattern1,pattern2
-     */
-
-    /**
+     * <p>
      * method match s'getFoo',s'setFoo' ; version match s'1.0.0',s'1.0.1' => right
      * 分号 分隔 之间 是一个 Matcher
      * <p>
      * 一个 Matcher 有多个 pattern
-     *
-     * @return
      */
-    public Condition left() {
+    public Condition left() throws ParsingException {
         Matchers matchers = new Matchers();
         Token token = lexer.peek();
         switch (token.type()) {
@@ -124,28 +129,23 @@ public class RoutesParser {
                 return new Otherwise();
             case Token.ID:
                 Matcher matcher = matcher();
-                matchers.macthers.add(matcher);
+                matchers.matchers.add(matcher);
                 while (lexer.peek() == Token_SEMI_COLON) {
                     lexer.next(Token.SEMI_COLON);
-                    matchers.macthers.add(matcher());
+                    matchers.matchers.add(matcher());
                 }
                 return matchers;
             default:
-                error("expect `otherwise` or `id match ...` but got " + token);
-                return null;
+                throw new ParsingException("left error", "expect `otherwise` or `id match ...` but got " + token);
         }
     }
 
-    /*
-     matcher : id 'match' patterns
-     */
-
     /**
+     * matcher : id 'match' patterns
+     * <p>
      * method match "getFoo","setFoo"
-     *
-     * @return
      */
-    public Matcher matcher() {
+    public Matcher matcher() throws ParsingException {
 
         // method
         IdToken id = (IdToken) lexer.next();
@@ -173,10 +173,8 @@ public class RoutesParser {
      * method match s'getFoo',s'setFoo';version match s'1.0.0',s'1.0.1' => right    (1)
      * <p>
      * method match s'getFoo',s'setFoo' => right                (2)
-     *
-     * @return
      */
-    public List<Pattern> patterns() {
+    public List<Pattern> patterns() throws ParsingException {
         List<Pattern> patterns = new ArrayList<>();
 
         Pattern p = pattern();
@@ -196,10 +194,8 @@ public class RoutesParser {
      * s'setFoo'
      * <p>
      * s'getFoo*'
-     *
-     * @return
      */
-    public Pattern pattern() {
+    public Pattern pattern() throws ParsingException {
         // s'getFoo'
         Token token = lexer.peek();
         switch (token.type()) {
@@ -241,7 +237,7 @@ public class RoutesParser {
      * rightPattern : '~' rightPattern
      * | ip
      */
-    public List<ThenIp> right() {
+    public List<ThenIp> right() throws ParsingException {
         List<ThenIp> thenIps = new ArrayList<>();
 
         Token token = lexer.peek();
@@ -260,44 +256,36 @@ public class RoutesParser {
                 }
                 return thenIps;
             default:
-                error("expect '~ip' or 'ip' but got:" + token);
-                return null;
+                throw new ParsingException("right error", "expect '~ip' or 'ip' but got:" + token);
         }
     }
 
     /**
      * ？
-     *
-     * @return
      */
-    public ThenIp rightPattern() {
+    public ThenIp rightPattern() throws ParsingException {
         Token token = lexer.peek();
         switch (token.type()) {
             case Token.NOT: {
                 lexer.next(Token.NOT);
-                ThenIp it = rightPattern();
-                return new ThenIp(!it.not, it.ip, it.mask);
+                IpToken ip = (IpToken) lexer.next(Token.IP);
+                ThenIp it = new ThenIp(false, ip.ip, ip.port, ip.mask);
+                return new ThenIp(!it.not, it.ip, it.port, it.mask);
             }
             case Token.IP: {
                 IpToken ip = (IpToken) lexer.next(Token.IP);
-                return new ThenIp(false, ip.ip, ip.mask);
+                return new ThenIp(false, ip.ip, ip.port, ip.mask);
             }
             default:
-                error("expect '~ip' or 'ip' but got:" + token);
-                return null;
+                throw new ParsingException("rightPattern error", "expect '~ip' or 'ip' but got:" + token);
         }
     }
 
-
-    private void error(String errorInfo) {
-        logger.error(errorInfo);
-    }
-
-    private void warn(String errorInfo) {
+    protected void warn(String errorInfo) {
         logger.warn(errorInfo);
     }
 
-    private void validate(Token target, Token... expects) {
+    protected void validate(Token target, Token... expects) throws ParsingException {
         boolean flag = false;
         for (Token expect : expects) {
             if (target == expect) {

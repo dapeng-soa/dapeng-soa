@@ -6,6 +6,7 @@ import com.github.dapeng.router.token.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,26 +27,31 @@ public class RoutesLexer {
 
     private static Logger logger = LoggerFactory.getLogger(RoutesLexer.class);
 
+    /**
+     * 已经给trim处理过
+     */
     private String content;
     private int pos;
 
-    static SimpleToken Token_EOL = new SimpleToken(Token.EOL);
-    static SimpleToken Token_THEN = new SimpleToken(Token.THEN);
-    static SimpleToken Token_OTHERWISE = new SimpleToken(Token.OTHERWISE);
-    static SimpleToken Token_MATCH = new SimpleToken(Token.MATCH);
-    static SimpleToken Token_NOT = new SimpleToken(Token.NOT);
-    static SimpleToken Token_EOF = new SimpleToken(EOF);
-    static SimpleToken Token_SEMI_COLON = new SimpleToken(Token.SEMI_COLON);
-    static SimpleToken Token_COMMA = new SimpleToken(Token.COMMA);
+    public static SimpleToken Token_EOL = new SimpleToken(Token.EOL);
+    public static SimpleToken Token_THEN = new SimpleToken(Token.THEN);
+    public static SimpleToken Token_OTHERWISE = new SimpleToken(Token.OTHERWISE);
+    public static SimpleToken Token_MATCH = new SimpleToken(Token.MATCH);
+    public static SimpleToken Token_NOT = new SimpleToken(Token.NOT);
+    public static SimpleToken Token_EOF = new SimpleToken(EOF);
+    public static SimpleToken Token_SEMI_COLON = new SimpleToken(Token.SEMI_COLON);
+    public static SimpleToken Token_COMMA = new SimpleToken(Token.COMMA);
+
 
     /**
      * IP_REGEX
-     * todo: 暂时只支持全格式IP(加掩码), 对于192.168.10/24这种不支持
+     * 暂时只支持全格式IP(加掩码), 对于192.168.10/24这种不支持
      */
     private static final String IP_REGEX = "(^(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|[1-9])\\.(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\."
-            + "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\.(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d))(/(\\d{2}))?$";
+            + "(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\.(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d))(/(\\d{2}))?(:(\\d{2,5}))?$";
+
     private static final Pattern IP_PATTERN = Pattern.compile(IP_REGEX);
-    private static final int DEFAULT_MASK = 32;
+
 
     /**
      * 求模正则, 例如 1024n+0-8
@@ -65,7 +71,7 @@ public class RoutesLexer {
      *
      * @return
      */
-    public Token peek() {
+    public Token peek() throws ParsingException {
         int temPos = pos;
         Token token = next();
         pos = temPos;
@@ -78,7 +84,7 @@ public class RoutesLexer {
      *
      * @return
      */
-    public Token next() {
+    public Token next() throws ParsingException {
         ws();
         char ch = nextChar();
         switch (ch) {
@@ -117,6 +123,14 @@ public class RoutesLexer {
                     pos--;
                     return processId();
                 }
+                //process cookies
+            case 'c':
+                if (require(new char[]{'\"', '\''}, false)) {
+                    return parseCookies();
+                } else {
+                    pos--;
+                    return processId();
+                }
             case '-':
             case '+':
             case '0':
@@ -141,7 +155,7 @@ public class RoutesLexer {
      *
      * @param type
      */
-    public Token next(int type) {
+    public Token next(int type) throws ParsingException {
         Token nextToken = next();
         throwExWithCondition(nextToken.type() != type,
                 "[Not expected token]",
@@ -157,17 +171,44 @@ public class RoutesLexer {
      *
      * @return
      */
-    private Token parserRegex() {
+    private Token parserRegex() throws ParsingException {
         char quotation = currentChar();
         char ch = nextChar();
         StringBuilder sb = new StringBuilder(16);
         do {
-            throwExWithCondition(ch == EOI || ch == EOF,
+            throwExWithCondition(ch == EOI,
                     "[RegexEx]", "parse IP_REGEX failed,check the IP_REGEX express:" + sb.toString());
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
         String value = sb.toString();
         return new RegexToken(value);
+    }
+
+    /**
+     * c"storeId#11928654"
+     *
+     * @return
+     */
+    private Token parseCookies() throws ParsingException {
+        char quotation = currentChar();
+        char ch = nextChar();
+        StringBuilder sb = new StringBuilder(16);
+        do {
+            throwExWithCondition(ch == EOI,
+                    "[CookiesEx]", "parse COOKIE_RULES failed,check the COOKIE_REGEX express:" + sb.toString());
+            sb.append(ch);
+        } while ((ch = nextChar()) != quotation);
+        String value = sb.toString();
+
+        int pos = value.indexOf("#");
+
+        if (pos != -1) {
+            String backValue = value.substring(pos + 1);
+            if (!backValue.contains("#")) {
+                return new CookieToken(value.substring(0, pos), backValue);
+            }
+        }
+        throw new ParsingException("[CookiesEx]", "parse COOKIE_RULES failed,check the cookie value contains '#' or more than one ");
     }
 
 
@@ -209,27 +250,30 @@ public class RoutesLexer {
     /**
      * parse string
      */
-    private Token parserString() {
+    private Token parserString() throws ParsingException {
         StringBuilder sb = new StringBuilder(16);
         char quotation = currentChar();
         char ch = nextChar();
         do {
-            throwExWithCondition(ch == EOI || ch == EOF,
+            throwExWithCondition(ch == EOI,
                     "[StringEx]", "parse string failed,check the string express:" + sb.toString());
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
+
         return new StringToken(sb.toString());
     }
 
     /**
      * 解析整数常量
      */
-    private Token parserNumber() {
+    private Token parserNumber() throws ParsingException {
         StringBuilder sb = new StringBuilder(16);
         char ch = currentChar();
         do {
             sb.append(ch);
         } while (Character.isDigit(ch = nextChar()) || ch == '.');
+        // added by Ever @20181207
+        pos--;
         String value = sb.toString();
         try {
             if (value.contains("..")) {
@@ -254,17 +298,16 @@ public class RoutesLexer {
      *
      * @return
      */
-    private ModeToken parserMode() {
+    private ModeToken parserMode() throws ParsingException {
         char quotation = currentChar();
         char ch = nextChar();
         StringBuilder sb = new StringBuilder(16);
 
         do {
-            throwExWithCondition(ch == EOI || ch == EOF,
+            throwExWithCondition(ch == EOI,
                     "[ModeEx]", "parse mode failed,check the mode express:" + sb.toString());
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
-
         String value = sb.toString();
 
         try {
@@ -286,36 +329,36 @@ public class RoutesLexer {
         throw new ParsingException("[ModeEx]", "unknown exception, check the mode expression again:" + value);
     }
 
-    private IpToken processIp() {
+    private IpToken processIp() throws ParsingException {
         char quotation = nextChar();
         char ch = nextChar();
 
         StringBuilder sb = new StringBuilder(16);
         do {
-            throwExWithCondition(ch == EOI || ch == EOF,
+            throwExWithCondition(ch == EOI,
                     "[IpEx]", "parse ip failed,check the ip express:" + sb.toString());
             sb.append(ch);
         } while ((ch = nextChar()) != quotation);
-
         Matcher matcher = IP_PATTERN.matcher(sb.toString());
         if (matcher.matches()) {
             String ipStr = matcher.group(1);
             int ip = IPUtils.transferIp(ipStr);
 
-            String masks = matcher.group(7);
-            if (masks != null) {
-                int mask = Integer.parseInt(masks);
-                return new IpToken(ip, mask);
-            } else {
-                // 默认值，mask
-                return new IpToken(ip, DEFAULT_MASK);
-            }
+            // parse ip mask
+            String maskStr = matcher.group(7);
+            int mask = maskStr != null ? Integer.parseInt(maskStr) : IpToken.DEFAULT_MASK;
+
+            // parse ip port
+            String portStr = matcher.group(9);
+            int port = portStr != null ? Integer.parseInt(portStr) : IpToken.DEFAULT_PORT;
+
+            return new IpToken(ip, port, mask);
         }
         throw new ParsingException("[IpEx]", "parse ip failed,check the ip express");
     }
 
 
-    private void throwExWithCondition(boolean condition, String summary, String detail) {
+    private void throwExWithCondition(boolean condition, String summary, String detail) throws ParsingException {
         if (condition) {
             throw new ParsingException(summary, detail);
         }
@@ -346,11 +389,13 @@ public class RoutesLexer {
 
 
     /**
-     * @param expects
-     * @param isThrow
-     * @return
+     * require next char or throw ex
+     *
+     * @param expects expects char []
+     * @param isThrow if or not throw ex
+     * @return {@code true } or {@code false}
      */
-    private boolean require(char[] expects, boolean isThrow) {
+    private boolean require(char[] expects, boolean isThrow) throws ParsingException {
         char actual = nextChar();
         for (char expect : expects) {
             if (expect == actual) {
@@ -358,8 +403,8 @@ public class RoutesLexer {
             }
         }
         throwExWithCondition(isThrow,
-                "[RequireEx]", "require char: " + expects.toString() + " but actual char: " + actual);
-        logger.debug("require char: " + expects.toString() + " but actual char: " + actual);
+                "[RequireEx]", "require char: " + Arrays.toString(expects) + " but actual char: " + actual);
+        logger.debug("require char: " + Arrays.toString(expects) + " but actual char: " + actual);
         return false;
     }
 }

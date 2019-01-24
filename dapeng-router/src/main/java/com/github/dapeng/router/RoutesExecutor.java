@@ -4,8 +4,11 @@ import com.github.dapeng.core.InvocationContext;
 import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.IPUtils;
+import com.github.dapeng.router.condition.Condition;
 import com.github.dapeng.router.condition.*;
+import com.github.dapeng.router.exception.ParsingException;
 import com.github.dapeng.router.pattern.*;
+import com.github.dapeng.router.token.IpToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +36,14 @@ public class RoutesExecutor {
      */
     public static List<Route> parseAll(String content) {
         RoutesParser parser = new RoutesParser(new RoutesLexer(content));
-        List<Route> routes = parser.routes();
-        return routes;
+        List<Route> routes;
+        try {
+            routes = parser.routes();
+            return routes;
+        } catch (ParsingException e) {
+            logger.error(e.getSummary() + "," + e.getDetail(), e);
+            return new ArrayList<>(0);
+        }
     }
 
     /**
@@ -56,7 +65,7 @@ public class RoutesExecutor {
 
                     if (logger.isDebugEnabled()) {
                         StringBuilder append = new StringBuilder();
-                        instances.forEach(ins -> append.append(ins.toString() + " "));
+                        instances.forEach(ins -> append.append(ins.toString()).append(" "));
                         logger.debug(RoutesExecutor.class.getSimpleName() + "::route left " + route.getLeft().toString() +
                                         "::executeRoutes过滤结果 size: {}, 实例: {}",
                                 instances.size(), append.toString());
@@ -82,12 +91,12 @@ public class RoutesExecutor {
      * @param left
      * @return
      */
-    private static boolean matchCondition(InvocationContextImpl ctx, Condition left) {
+    protected static boolean matchCondition(InvocationContextImpl ctx, Condition left) {
         if (left instanceof Otherwise) {
             return true;
         }
         Matchers matcherCondition = (Matchers) left;
-        List<Matcher> matchers = matcherCondition.macthers;
+        List<Matcher> matchers = matcherCondition.matchers;
         /**
          * left = matcher(;matcher)*
          * matcher = id match patterns
@@ -135,9 +144,8 @@ public class RoutesExecutor {
                 ips.add(ip);
             }
         });
-        List<RuntimeInstance> filters = instances.stream().filter(inst ->
-                ipMatch(ips, notIps, IPUtils.transferIp(inst.ip))).collect(Collectors.toList());
-        return filters;
+        return instances.stream().filter(inst ->
+                ipMatch(ips, notIps, IPUtils.transferIp(inst.ip), inst.port)).collect(Collectors.toList());
     }
 
     /**
@@ -145,54 +153,69 @@ public class RoutesExecutor {
      *
      * @param ips    路由规则定义路由到的 ip 列表
      * @param notIps 路由规则定义 非 路由到的 ip 列表
-     * @param value  传入的 instance ip
-     * @return
+     * @param value  传入的 remote server instance ip
+     * @param port   传入的 remote server instance port
+     * @return {@code true} or {@code false }
      */
-    private static boolean ipMatch(Set<ThenIp> ips, Set<ThenIp> notIps, int value) {
+    private static boolean ipMatch(Set<ThenIp> ips, Set<ThenIp> notIps, int value, int port) {
         if (!ips.isEmpty() && notIps.isEmpty()) {
-            for (ThenIp ip : ips) {
-                boolean result = matchIpWithMask(ip.ip, value, ip.mask);
-                if (result) {
-                    return true;
-                }
-            }
-            return false;
+            return ipMatchPositive(ips, value, port);
         }
 
         /**
-         * right 同时存在 撇配 ip 和 非 匹配 ip 模式时。
+         * right 同时存在 {@code 匹配 ip} 和 {@code 非匹配 ip} 模式时。
          * 1.先对非匹配ip模式进行 match判断，如果 instances ip 匹配上， 则 返回 false ，因为这里是 非匹配模式
          * 2。 如果非匹配模式里的ip 没有和 instance ip 匹配上，则进入下一步
          * 3,  instance ip 和 正常 匹配模式进行匹配 ，如果 匹配上 返回 true ,如果 都没匹配上，则返回 false
          */
-        if (!ips.isEmpty() && !notIps.isEmpty()) {
-            for (ThenIp notMatch : notIps) {
-                boolean result = matchIpWithMask(notMatch.ip, value, notMatch.mask);
-                if (result) {
-                    return false;
-                }
-            }
+        if (!ips.isEmpty()) {
+            // if true, go next
+            boolean notMatch = ipMatchNegative(notIps, value, port);
 
-            for (ThenIp match : ips) {
-                boolean matchResult = matchIpWithMask(match.ip, value, match.mask);
-                if (matchResult) {
-                    return true;
-                }
+            if (!notMatch) {
+                return false;
             }
-            return false;
+            return ipMatchPositive(ips, value, port);
         }
-
-        if (!notIps.isEmpty() && ips.isEmpty()) {
-            for (ThenIp notMatch : notIps) {
-                boolean result = matchIpWithMask(notMatch.ip, value, notMatch.mask);
-                if (result) {
-                    return false;
-                }
-            }
-            return true;
+        //只存在 notIp 模式
+        if (!notIps.isEmpty()) {
+            return ipMatchNegative(notIps, value, port);
         }
         return false;
     }
+
+    /**
+     * 正匹配模式
+     */
+    private static boolean ipMatchPositive(Set<ThenIp> ips, int value, int port) {
+        for (ThenIp ip : ips) {
+            boolean result = matchIpWithMask(ip.ip, value, ip.mask);
+            if (result) {
+                //如果路由表达式没有配置port，这里就是默认的端口，不参与route，直接返回 true
+                //如果不是默认端口，则说明需要根据端口进行路由，需要二者相等才能成功路由。
+                if (ip.port == IpToken.DEFAULT_PORT || ip.port == port) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 反匹配模式
+     */
+    private static boolean ipMatchNegative(Set<ThenIp> notIps, int value, int port) {
+        for (ThenIp notMatch : notIps) {
+            boolean result = matchIpWithMask(notMatch.ip, value, notMatch.mask);
+            if (result) {
+                if (notMatch.port == IpToken.DEFAULT_PORT || notMatch.port == port) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
 
     /**
      * match on Matcher.id
@@ -223,6 +246,9 @@ public class RoutesExecutor {
                 break;
             case "callerIp":
                 ctxValue = ctx.callerIp().map(String::valueOf).orElse("");
+                break;
+            case "calleeIp":
+                ctxValue = ctx.calleeIp().map(String::valueOf).orElse("");
                 break;
             case "userIp":
                 ctxValue = ctx.userIp().map(String::valueOf).orElse("");

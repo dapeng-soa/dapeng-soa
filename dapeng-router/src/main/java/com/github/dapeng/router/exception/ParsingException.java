@@ -6,7 +6,7 @@ package com.github.dapeng.router.exception;
  * @author hz.lei
  * @date 2018年04月20日 下午1:07
  */
-public class ParsingException extends RuntimeException {
+public class ParsingException extends Exception {
     private String summary;
     private String detail;
 

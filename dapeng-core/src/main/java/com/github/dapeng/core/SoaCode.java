@@ -13,9 +13,10 @@ public enum SoaCode implements SoaBaseCodeInterface {
     NoMatchedMethod("Err-Core-405", "没有对应的方法"),
     NotConnected("Err-Core-406", "连接失败"),
     ReqTimeOut("Err-Core-407", "请求超时"),
-    ReqFieldNull("Err-Core-411" , "请求对象字段不允许为空"),
-    RespFieldNull("Err-Core-412" , "响应对象字段不允许为空"),
+    ReqFieldNull("Err-Core-411", "请求对象字段不允许为空"),
+    RespFieldNull("Err-Core-412", "响应对象字段不允许为空"),
     RespDecodeError("Err-Core-413", "响应通讯包解析出错"),
+    RespDecodeUnknownError("Err-Core-414", "响应通讯包未知异常,可能API版本不一致"),
 
     // 服务端
     ServerUnKnown("Err-Core-500", "系统出错了!"),
@@ -31,8 +32,10 @@ public enum SoaCode implements SoaBaseCodeInterface {
     FreqLimited("Err-Core-521", "客户端已被限流"),
     FreqConfigError("Err-Core-522", "限流规则解析出错"),
     FreqControlError("Err-Core-523", "限流处理出错"),
+    ContainerStatusError("Err-Core-524", "服务容器不在运行状态"),
     // 通用错误码
-    StructFieldNull("Err-Core-600", "结构体字段不允许为空");
+    StructFieldNull("Err-Core-600", "结构体字段不允许为空"),
+    ScheduledFailed("Err-Core-700", "定时任务执行失败");
     private String code;
     private String msg;
 

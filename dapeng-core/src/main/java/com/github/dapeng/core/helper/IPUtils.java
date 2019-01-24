@@ -38,7 +38,7 @@ public class IPUtils {
     }
 
     public static String containerIp() {
-        return (SoaSystemEnvProperties.SOA_LOCAL_HOST_NAME != null && !SoaSystemEnvProperties.SOA_LOCAL_HOST_NAME.trim().isEmpty()) ? SoaSystemEnvProperties.SOA_LOCAL_HOST_NAME : inetAddress.getHostAddress();
+        return inetAddress.getHostAddress();
     }
 
 
@@ -78,7 +78,7 @@ public class IPUtils {
      *
      * @param ip1
      * @param ip2
-     * @param mask     子网掩码
+     * @param mask 子网掩码
      * @return
      */
     public static boolean matchIpWithMask(int ip1, int ip2, int mask) {
@@ -86,10 +86,12 @@ public class IPUtils {
         return (ip1 & maskIp) == (ip2 & maskIp);
     }
 
+
     /**
      * transfer ip from int to human-readable format,
      * for example:
      * -1062729086 ==> 192.168.10.130
+     *
      * @param ip
      * @return
      */

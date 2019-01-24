@@ -2,6 +2,7 @@ package com.github.dapeng.impl.filters;
 
 
 import com.github.dapeng.core.Application;
+import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.SoaHeader;
 import com.github.dapeng.core.TransactionContext;
 import com.github.dapeng.core.filter.Filter;
@@ -15,10 +16,6 @@ import com.github.dapeng.org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-
-import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Ever
@@ -35,14 +32,21 @@ public class LogFilter implements Filter {
 
         try {
             // 容器的IO线程MDC以及应用的MDC(不同classLoader)设置
-            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
-            MdcCtxInfoUtil.switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
+            String sessionTid = transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0");
+            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
+            MdcCtxInfoUtil.putMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
+
+            SoaHeader soaHeader = transactionContext.getHeader();
+            String logLevel = soaHeader.getCookie(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
+
+            if (logLevel != null) {
+                MDC.put(SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
+                MdcCtxInfoUtil.putMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
+            }
 
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.seqId() + "]");
             }
-
-            SoaHeader soaHeader = transactionContext.getHeader();
 
             String infoLog = "request[seqId:" + transactionContext.seqId() + "]:"
                     + "service[" + soaHeader.getServiceName()
@@ -55,6 +59,8 @@ public class LogFilter implements Filter {
 
             application.info(this.getClass(), infoLog);
         } finally {
+            //remove current invocation
+            InvocationContextImpl.Factory.removeCurrentInstance();
             try {
                 next.onEntry(filterContext);
             } catch (TException e) {
@@ -63,7 +69,10 @@ public class LogFilter implements Filter {
                 boolean isAsync = (Boolean) filterContext.getAttribute("isAsync");
                 if (isAsync) {
                     MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
-                    MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), null);
+                    MdcCtxInfoUtil.removeMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+
+                    MDC.remove(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
+                    MdcCtxInfoUtil.removeMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.THREAD_LEVEL_KEY);
                 }
             }
         }
@@ -78,8 +87,23 @@ public class LogFilter implements Filter {
 
         try {
             if (isAsync) {
-                MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
-                MdcCtxInfoUtil.switchMdcToAppClassLoader("put", application.getAppClasssLoader(), transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
+                try {
+                    String sessionTid = transactionContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0");
+                    MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
+                    MdcCtxInfoUtil.putMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
+
+                    //DEBUG
+                    SoaHeader soaHeader = transactionContext.getHeader();
+                    String logLevel = soaHeader.getCookie(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
+
+                    if (logLevel != null) {
+                        MDC.put(SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
+                        MdcCtxInfoUtil.putMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
+                    }
+                } finally {
+                    //remove current invocation
+                    InvocationContextImpl.Factory.removeCurrentInstance();
+                }
             }
 
             if (LOGGER.isTraceEnabled()) {
@@ -109,8 +133,12 @@ public class LogFilter implements Filter {
             } catch (TException e) {
                 LOGGER.error(e.getMessage(), e);
             } finally {
-                MdcCtxInfoUtil.switchMdcToAppClassLoader("remove", application.getAppClasssLoader(), null);
                 MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+                MdcCtxInfoUtil.removeMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+
+                MDC.remove(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
+                MdcCtxInfoUtil.removeMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.THREAD_LEVEL_KEY);
+
             }
         }
     }

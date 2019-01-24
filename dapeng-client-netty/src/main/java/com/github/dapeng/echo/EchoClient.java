@@ -5,7 +5,8 @@ import com.github.dapeng.core.helper.DapengUtil;
 
 import java.util.ServiceLoader;
 
-public class EchoClient {    private final String serviceName;
+public class EchoClient {
+    private final String serviceName;
     private final String version;
     private final String methodName = "echo";
 
@@ -28,7 +29,7 @@ public class EchoClient {    private final String serviceName;
      **/
     public String echo() throws SoaException {
         InvocationContextImpl.Factory.currentInstance().sessionTid(DapengUtil.generateTid()).callerMid("InnerApiSite");
-        echo_result response = pool.send(serviceName,version,methodName,new echo_args(), new echo_argsSerializer(), new echo_resultSerializer());
+        echo_result response = pool.send(serviceName, version, methodName, new echo_args(), new echo_argsSerializer(), new echo_resultSerializer());
         return response.getSuccess();
     }
 

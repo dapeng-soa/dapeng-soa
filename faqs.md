@@ -8,7 +8,11 @@ Caused by: java.lang.RuntimeException: wrong with get ip
 
 解决方案：在/etc/hosts中绑定本地内网ip跟机器名
 以centos为例：
->echo $(ifconfig eth0|grep "inet "|awk '{print $2}') `hostname` >> /etc/hosts
+>echo $(ifconfig eth0|grep -w "inet"|awk '{print $2}') `hostname` >> /etc/hosts
+
+Mac 环境
+
+> echo $(ifconfig en0 | grep -w "inet"|awk '{print $2}') `hostname` 
 
 ## 2.IDL中服务接口注释，在文档站点中解析错误
 注释需符合markdown的规范，例如
@@ -81,3 +85,4 @@ Caused by: java.lang.RuntimeException: wrong with get ip
     void createOrder(1: order_request_new.TCreateOrderRequestNew request)
     (events="com.today.api.order.events.CreateOrderEventNew")
 ```
+

@@ -25,7 +25,7 @@ public class ApiWebSite {
 
         ServerConnector connector = new ServerConnector(server);
         connector.setPort(port);
-        connector.setReuseAddress(false);
+        connector.setReuseAddress(true);
 
         server.setConnectors(new Connector[]{connector});
 

@@ -10,6 +10,7 @@ import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.filters.HeadFilter;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.registry.ConfigKey;
+
 import com.github.dapeng.registry.zookeeper.ServerZkAgentImpl;
 import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
 import com.github.dapeng.util.DumpUtil;
@@ -27,6 +28,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
+import static com.github.dapeng.util.ExceptionUtil.convertToSoaException;
+import static io.netty.channel.ChannelFutureListener.CLOSE;
 import static io.netty.channel.ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE;
 
 /**
@@ -95,7 +98,23 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         // short error log and detail error log, for the sake of elasticsearch indexing
         LOGGER.error("exceptionCaught:seqId:" + (tranCtx == null ? "" : tranCtx.seqId()) + ", channel:" + ctx.channel() + ", msg:" + cause.getMessage());
         LOGGER.error("exceptionCaught:seqId:" + (tranCtx == null ? "" : tranCtx.seqId()) + ", " + cause.getMessage(), cause);
-        ctx.close();
+
+        SoaException soaException = convertToSoaException(cause);
+        SoaHeader soaHeader = tranCtx.getHeader();
+        if (soaHeader == null) {
+            soaHeader = new SoaHeader();
+        }
+        soaHeader.setRespCode(soaException.getCode());
+        soaHeader.setRespMessage("Netty Handler caught unknown exception: " + soaException.getMessage());
+
+        tranCtx.soaException(soaException);
+        SoaResponseWrapper responseWrapper = new SoaResponseWrapper(tranCtx,
+                Optional.empty(),
+                Optional.empty());
+
+        TransactionContext.Factory.removeCurrentInstance();
+
+        ctx.writeAndFlush(responseWrapper).addListener(CLOSE);
     }
 
     @SuppressWarnings("unchecked")
@@ -109,7 +128,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
 
             //check if request expired
             final long waitingTime = System.currentTimeMillis() - invokeTime;
-            //fixme if zk down ?
             long timeout = soaHeader.getTimeout().map(Long::valueOf).orElse(getTimeout(soaHeader));
             if (waitingTime > timeout) {
                 if (LOGGER.isDebugEnabled()) {
@@ -191,8 +209,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         attachErrorInfo(transactionContext, e);
 
         SoaResponseWrapper responseWrapper = new SoaResponseWrapper(transactionContext,
-                Optional.ofNullable(null),
-                Optional.ofNullable(null));
+                Optional.empty(),
+                Optional.empty());
 
         ctx.writeAndFlush(responseWrapper).addListener(FIRE_EXCEPTION_ON_FAILURE);
     }
@@ -230,9 +248,12 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
     private long getTimeout(SoaHeader soaHeader) {
         long timeout = 0L;
         String serviceKey = soaHeader.getServiceName();
-        ZkServiceInfo configInfo = ServerZkAgentImpl.getInstance().getConfig(false, serviceKey);
 
         long envTimeout = SoaSystemEnvProperties.SOA_SERVICE_TIMEOUT;
+
+
+        ZkServiceInfo configInfo = ServerZkAgentImpl.getInstance().getZkServiceInfo(false, serviceKey);
+
         if (null != configInfo) {
             //方法级别
             Long methodTimeOut = configInfo.timeConfig.serviceConfigs.get(soaHeader.getMethodName());
@@ -263,10 +284,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         }
         if (timeout == 0L) {
             timeout = (envTimeout == 0) ? SoaSystemEnvProperties.SOA_DEFAULT_TIMEOUT : envTimeout;
-        }
-
-        if (timeout > SoaSystemEnvProperties.SOA_MAX_TIMEOUT) {
-            timeout = SoaSystemEnvProperties.SOA_MAX_TIMEOUT;
         }
         return timeout;
     }

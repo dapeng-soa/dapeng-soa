@@ -4,6 +4,7 @@ import com.github.dapeng.core.*;
 import com.github.dapeng.impl.filters.freq.ShmManager;
 import com.github.dapeng.registry.RegistryAgent;
 import com.github.dapeng.registry.zookeeper.ServerZkAgentImpl;
+import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -48,8 +49,13 @@ public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
      */
     private boolean processServiceFreqControl() {
         final TransactionContext context = TransactionContext.Factory.currentInstance();
-        final ServiceFreqControl freqControl = serverZkAgent.getFreqControlRule(false, context.getHeader().getServiceName());
+        final ZkServiceInfo serviceInfo = serverZkAgent.getZkServiceInfo(false, context.getHeader().getServiceName());
 
+        if (serviceInfo == null || serviceInfo.freqControl() == null) {
+            return true;
+        }
+
+        final ServiceFreqControl freqControl = serviceInfo.freqControl();
         String method = context.getHeader().getMethodName();
         if (freqControl.globalRules.isEmpty() && !freqControl.rules4methods.containsKey(method)) {
             return true;

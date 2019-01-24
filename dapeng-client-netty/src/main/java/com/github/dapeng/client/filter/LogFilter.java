@@ -42,6 +42,12 @@ public class LogFilter implements Filter {
                 }
             }
 
+            String logLevel = invocationContext.cookie(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
+
+            if (logLevel != null) {
+                MDC.put(SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
+            }
+
             MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
 
             String infoLog = "request[seqId:" + invocationContext.seqId() + ", server:" + filterContext.getAttribute("serverInfo") + "]:"
@@ -85,6 +91,7 @@ public class LogFilter implements Filter {
                 // 如果在服务里面, 那么不清理MDC
                 if (!TransactionContext.hasCurrentInstance()) {
                     MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+                    MDC.remove(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
                 }
             }
         }

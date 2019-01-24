@@ -33,9 +33,6 @@ public class Matcher {
 
     @Override
     public String toString() {
-        return "Matcher{" +
-                "id='" + id + '\'' +
-                ", patterns=" + patterns +
-                '}';
+        return "Matcher{" + "id='" + id + '\'' + ", patterns=" + patterns + '}';
     }
 }

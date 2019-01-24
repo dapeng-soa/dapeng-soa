@@ -9,8 +9,12 @@ import com.github.dapeng.api.events.AppEvent;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.ServiceInfo;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.timer.ScheduledTask;
 import com.github.dapeng.core.timer.ScheduledTaskCron;
+import com.github.dapeng.impl.listener.CronCountUtils;
+import com.github.dapeng.impl.listener.SchedulerJobListener;
+import com.github.dapeng.impl.listener.SchedulerTriggerListener;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.triggers.CronTriggerImpl;
@@ -28,8 +32,6 @@ import java.util.stream.Collectors;
  * @author JackLiang
  */
 public class TaskSchedulePlugin implements AppListener, Plugin {
-
-    //private static final Logger LOGGER = LoggerFactory.getLogger(TaskSchedulePlugin.class);
     private static final Logger LOGGER = LoggerFactory.getLogger("container.scheduled.task");
 
     private final Container container;
@@ -39,6 +41,18 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
     public TaskSchedulePlugin(Container container) {
         this.container = container;
         container.registerAppListener(this);
+        if (scheduler == null) {
+            try {
+                scheduler = StdSchedulerFactory.getDefaultScheduler();
+
+                //添加监听器
+                scheduler.getListenerManager().addJobListener(new SchedulerJobListener());
+                scheduler.getListenerManager().addTriggerListener(new SchedulerTriggerListener());
+
+            } catch (SchedulerException e) {
+                LOGGER.error("TaskSchedulePlugin 初始化出错", e);
+            }
+        }
     }
 
     @Override
@@ -62,6 +76,12 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
                     .collect(Collectors.toList());
             serviceInfos.forEach(serviceInfo -> runTask(serviceInfo));
         });
+
+        try {
+            scheduler.start();
+        } catch (SchedulerException e) {
+            LOGGER.error("TaskSchedulePlugin::start 定时器启动失败", e);
+        }
     }
 
     @Override
@@ -100,6 +120,8 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
 
             ScheduledTaskCron cron = method.getAnnotation(ScheduledTaskCron.class);
             String cronStr = cron.cron();
+            //监控数据是否上报
+            boolean isReported = cron.isMonitored();
 
             //new quartz job
             JobDataMap jobDataMap = new JobDataMap();
@@ -107,6 +129,13 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
             jobDataMap.put("iface", soaServiceDefinition.iface);
             jobDataMap.put("serviceName", serviceInfo.serviceName);
             jobDataMap.put("versionName", serviceInfo.version);
+            jobDataMap.put("methodName", methodName);
+            jobDataMap.put("serverIp", SoaSystemEnvProperties.SOA_CONTAINER_IP);
+            jobDataMap.putAsString("serverPort", SoaSystemEnvProperties.SOA_CONTAINER_PORT);
+            jobDataMap.put("isReported", isReported);
+            jobDataMap.put("cronStr", cronStr);
+            jobDataMap.put("expectedCount", CronCountUtils.count(cronStr));
+
             JobDetail job = JobBuilder.newJob(ScheduledJob.class)
                     .withIdentity(ifaceClass.getName() + ":" + methodName)
                     .setJobData(jobDataMap)
@@ -115,6 +144,8 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
             CronTriggerImpl trigger = new CronTriggerImpl();
             trigger.setName(job.getKey().getName());
             trigger.setJobKey(job.getKey());
+            trigger.setJobDataMap(jobDataMap);
+
             try {
                 trigger.setCronExpression(cronStr);
             } catch (ParseException e) {
@@ -122,22 +153,10 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
                 LOGGER.error(e.getMessage(), e);
                 return;
             }
-
-            if (scheduler == null) {
-                try {
-                    scheduler = StdSchedulerFactory.getDefaultScheduler();
-                    scheduler.start();
-                } catch (SchedulerException e) {
-                    LOGGER.error("ScheduledTaskContainer启动失败");
-                    LOGGER.error(e.getMessage(), e);
-                    return;
-                }
-            }
             try {
                 scheduler.scheduleJob(job, trigger);
             } catch (SchedulerException e) {
-                LOGGER.error(" Failed to scheduleJob....job: " + job.getKey().getName() + ", reason:" + e.getMessage(),
-                        e);
+                LOGGER.error(" Failed to scheduleJob....job: " + job.getKey().getName() + ", reason:" + e.getMessage(), e);
                 return;
             }
             LOGGER.info("添加定时任务({}:{})成功", ifaceClass.getName(), methodName);
