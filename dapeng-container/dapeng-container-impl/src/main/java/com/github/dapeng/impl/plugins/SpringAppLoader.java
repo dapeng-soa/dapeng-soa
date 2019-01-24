@@ -12,6 +12,7 @@ import com.github.dapeng.impl.container.DapengApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -153,6 +154,8 @@ public class SpringAppLoader implements Plugin {
 
             //封装方法的慢服务时间
             HashMap<String, Long> methodsMaxProcessTimeMap = new HashMap<>(16);
+            //获取tcc注解
+            HashMap<String,TCC> tccMap = new HashMap<String,TCC>();
             Arrays.asList(ifaceClass.getMethods()).forEach(item -> {
                 if (processor.functions.keySet().contains(item.getName())) {
                     long maxProcessTime = SoaSystemEnvProperties.SOA_MAX_PROCESS_TIME;
@@ -162,10 +165,14 @@ public class SpringAppLoader implements Plugin {
                     }
                     methodsMaxProcessTimeMap.put(item.getName(), maxProcessTime);
                 }
+                if(item.isAnnotationPresent(TCC.class)){
+                    TCC tcc = (TCC)item.getAnnotation(TCC.class);
+                    tccMap.put(item.getName(),tcc);
+                }
             });
 
             if (serviceVersionAnnotation == null || serviceVersionAnnotation.isRegister()) {
-                ServiceInfo serviceInfo = new ServiceInfo(service.name(), version, "service", ifaceClass, processor.getConfigInfo(), methodsConfigMap, methodsMaxProcessTimeMap);
+                ServiceInfo serviceInfo = new ServiceInfo(service.name(), version, "service", ifaceClass, processor.getConfigInfo(), methodsConfigMap, methodsMaxProcessTimeMap,tccMap);
                 serviceInfoMap.put(processorKey, serviceInfo);
             }
 
