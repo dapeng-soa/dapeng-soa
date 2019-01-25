@@ -18,7 +18,7 @@ public class SoaConnectionImpl extends SoaBaseConnection {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SoaConnectionImpl.class);
 
-    SoaConnectionImpl(String host, int port) {
+    SoaConnectionImpl(String host, int port) throws SoaException {
         super(host, port);
     }
 
@@ -48,6 +48,8 @@ public class SoaConnectionImpl extends SoaBaseConnection {
             } else {
                 throw new SoaException(e);
             }
+        }finally {
+            requestBuf.release();
         }
     }
 }

@@ -40,7 +40,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
     private ClientRefManager clientRefManager = ClientRefManager.getInstance();
 
 
-    SoaBaseConnection(String host, int port) {
+    SoaBaseConnection(String host, int port) throws SoaException {
         this.client = NettyClientFactory.getNettyClient();
         this.host = host;
         this.port = port;
@@ -48,6 +48,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
             channel = connect(host, port);
         } catch (Exception e) {
             LOGGER.error("connect to {}:{} failed", host, port);
+            throw new SoaException(SoaCode.NotConnected);
         }
     }
 

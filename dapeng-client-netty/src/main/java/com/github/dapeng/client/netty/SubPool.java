@@ -1,6 +1,7 @@
 package com.github.dapeng.client.netty;
 
 import com.github.dapeng.core.SoaConnection;
+import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,7 +24,7 @@ public class SubPool {
     private final SoaConnection[] soaConnections;
     private final AtomicInteger index = new AtomicInteger(0);
 
-    SubPool(String ip, int port) {
+    SubPool(String ip, int port) throws SoaException {
         this.ip = ip;
         this.port = port;
 
