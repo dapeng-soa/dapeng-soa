@@ -1,5 +1,7 @@
 package com.github.dapeng.client.netty;
 
+import com.github.dapeng.core.SoaException;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,7 +16,7 @@ class SubPoolFactory {
     private final static Map<IpPort, SubPool> subPoolsMap = new HashMap<>(16);
     private static final ReentrantLock subPoolLock = new ReentrantLock();
 
-    static SubPool getSubPool(String ip, int port) {
+    static SubPool getSubPool(String ip, int port) throws SoaException {
         IpPort ipPort = new IpPort(ip, port);
         SubPool subPool = subPoolsMap.get(ipPort);
         if (subPool == null) {
