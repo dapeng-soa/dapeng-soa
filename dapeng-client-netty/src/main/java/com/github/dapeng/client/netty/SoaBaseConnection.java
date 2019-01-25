@@ -79,8 +79,14 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 }
                 ByteBuf requestBuf = buildRequestBuf(service, version, method, seqid, request, requestSerializer);
 
-                // TODO filter
-                checkChannel();
+                try {
+                    // TODO filter
+                    checkChannel();
+                } catch (Throwable e) {
+                    LOGGER.error(e.getMessage(), e);
+                    requestBuf.release();
+                    throw e;
+                }
 
                 try {
                     ByteBuf responseBuf = client.send(channel, seqid, requestBuf, timeout, service);
@@ -170,12 +176,10 @@ public abstract class SoaBaseConnection implements SoaConnection {
             @Override
             public void onEntry(FilterContext ctx, FilterChain next) throws SoaException {
                 try {
-
                     ByteBuf requestBuf = buildRequestBuf(service, version, method, seqid, request, requestSerializer);
-
+                    checkChannel();
                     CompletableFuture<ByteBuf> responseBufFuture;
                     try {
-                        checkChannel();
                         responseBufFuture = client.sendAsync(channel, seqid, requestBuf, timeout);
                     } catch (Exception e) {
                         LOGGER.error(e.getMessage(), e);
