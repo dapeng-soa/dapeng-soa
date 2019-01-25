@@ -266,6 +266,11 @@
         </dependency>
         <!--counter-->
         <dependency>
+            <groupId>com.github.dapeng-soa</groupId>
+            <artifactId>dapeng-counter-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.github.dapeng</groupId>
             <artifactId>transaction-manager-api_2.12</artifactId>
             <version>${project.version}</version>
