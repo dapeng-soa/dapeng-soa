@@ -130,6 +130,10 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         TProtocol contentProtocol = parser.getContentProtocol();
         REQ args;
         try {
+            msg.markReaderIndex();
+            ByteBuf buf = msg.readBytes(msg.readableBytes());
+            msg.resetReaderIndex();
+            context.setAttribute("REQ_PARAM",buf);
             args = soaFunction.reqSerializer.read(contentProtocol);
         } catch (SoaException e) {
             if (e.getCode().equals(SoaCode.StructFieldNull.getCode())) {
