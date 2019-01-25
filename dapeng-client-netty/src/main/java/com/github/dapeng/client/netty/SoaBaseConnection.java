@@ -77,18 +77,11 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 if (LOGGER.isTraceEnabled()) {
                     LOGGER.trace("dispatchFilter::onEntry");
                 }
+
                 ByteBuf requestBuf = buildRequestBuf(service, version, method, seqid, request, requestSerializer);
-
                 try {
-                    // TODO filter
                     checkChannel();
-                } catch (Throwable e) {
-                    LOGGER.error(e.getMessage(), e);
-                    requestBuf.release();
-                    throw e;
-                }
 
-                try {
                     ByteBuf responseBuf = client.send(channel, seqid, requestBuf, timeout, service);
 
                     Result<RESP> result = processResponse(responseBuf, responseSerializer);
@@ -96,6 +89,9 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
                     onExit(ctx, getPrevChain(ctx));
                 } finally {
+                    if (requestBuf != null && requestBuf.refCnt() > 0) {
+                        requestBuf.release();
+                    }
                     InvocationContextImpl.Factory.removeCurrentInstance();
                 }
             }
@@ -177,7 +173,15 @@ public abstract class SoaBaseConnection implements SoaConnection {
             public void onEntry(FilterContext ctx, FilterChain next) throws SoaException {
                 try {
                     ByteBuf requestBuf = buildRequestBuf(service, version, method, seqid, request, requestSerializer);
-                    checkChannel();
+                    try {
+                        checkChannel();
+                    } catch (Throwable e) {
+                        LOGGER.error(e.getMessage(), e);
+                        if (requestBuf != null && requestBuf.refCnt() > 0) {
+                            requestBuf.release();
+                        }
+                        throw e;
+                    }
                     CompletableFuture<ByteBuf> responseBufFuture;
                     try {
                         responseBufFuture = client.sendAsync(channel, seqid, requestBuf, timeout);
