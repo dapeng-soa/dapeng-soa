@@ -130,7 +130,10 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
         TProtocol contentProtocol = parser.getContentProtocol();
         REQ args;
         try {
+            //请求参数字节长度
+            int argsLength = msg.readableBytes();
             args = soaFunction.reqSerializer.read(contentProtocol);
+            context.setAttribute("reqLength", argsLength);
         } catch (SoaException e) {
             if (e.getCode().equals(SoaCode.StructFieldNull.getCode())) {
                 e.setCode(SoaCode.ServerReqFieldNull.getCode());

@@ -162,9 +162,6 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             Long maxProcessTimeZk = soaHeader.getMaxProcessTime().orElse(maxProcessTimeAnnotation);
             transactionContext.maxProcessTime(maxProcessTimeZk);
 
-            //请求参数
-            transactionContext.setAttribute("args",args);
-
             SoaFunctionDefinition<I, REQ, RESP> soaFunction =
                     (SoaFunctionDefinition<I, REQ, RESP>) serviceDef.functions.get(soaHeader.getMethodName());
 
@@ -182,6 +179,8 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
             filterContext.setAttribute("context", transactionContext);
             filterContext.setAttribute("application", application);
             filterContext.setAttribute("isAsync", serviceDef.isAsync);
+            filterContext.setAttribute("reqArgs", args);
+            filterContext.setAttribute("soaFunction", soaFunction);
             filterContext.setAttach(dispatchFilter, "chain", sharedChain);
 
             sharedChain.onEntry(filterContext);

@@ -46,6 +46,8 @@ public class TCCFilter implements Filter {
             String versionName = header.getVersionName();
             String serviceName = header.getServiceName();
             Optional<ServiceInfo> serviceInfo = application.getServiceInfo(serviceName, versionName);
+
+            //TODO 处理optional.empty的情况
             TCC tcc = serviceInfo.get().tccMap.get(methodName);
             if (tcc != null) {
                 //构建JsonPost请求
@@ -53,7 +55,7 @@ public class TCCFilter implements Filter {
                 MetadataClient client = new MetadataClient(tmServiceName, tmVersionName);
                 String metadata = client.getServiceMetadata();
                 OptimizedMetadata.OptimizedService service = null;
-                Object args = transactionContext.getAttribute("args");
+                Object args = ctx.getAttribute("args");
                 if (metadata != null) {
                     try (StringReader reader = new StringReader(metadata)) {
                         service = new OptimizedMetadata.OptimizedService(JAXB.unmarshal(reader, Service.class));
@@ -140,20 +142,4 @@ public class TCCFilter implements Filter {
             e.printStackTrace();
         }
     }
-
-/*    public byte[] toByteArray (Object obj) {
-        byte[] bytes = null;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        try {
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(obj);
-            oos.flush();
-            bytes = bos.toByteArray ();
-            oos.close();
-            bos.close();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        return bytes;
-    }*/
 }

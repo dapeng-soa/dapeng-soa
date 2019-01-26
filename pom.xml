@@ -64,6 +64,7 @@
         <module>dapeng-utils</module>
         <module>dapeng-client-netty</module>
         <module>dapeng-transaction</module>
+        <module>dapeng-tcc</module>
         <module>dapeng-json</module>
         <module>dapeng-test</module>
         <module>dapeng-counter</module>
