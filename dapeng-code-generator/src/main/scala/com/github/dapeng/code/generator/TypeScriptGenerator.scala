@@ -64,22 +64,65 @@ class TypeScriptGenerator(language: String) extends CodeGenerator{
     println()
     println("*************TypeScriptScript生成器*************")
 
-    val serviceTmeplates = services.map(service => new StringTemplate(toServiceTemplate(service)).toString)
-    val structsTemplates = structs.map(struct => new StringTemplate(toStructTemplate(struct)).toString)
-    val enumsTemplates = enums.map(enum => new StringTemplate(toEnumTemplate(enum)).toString)
+    val servicesTemplate = new StringTemplate(toServicesTemplate(services))
+    val structsTemplate = new StringTemplate(toStructsTemplate(structs))
+    val enumsTemplate =new StringTemplate(toEnumsTemplate(enums))
+    val importTemplate = new StringTemplate(toImportTemplate(services, structs, enums))
+
     val oriFileName = new File(resource).getName
     val fileName = s"${oriFileName.substring(0,oriFileName.indexOf("."))}.ts"
     println(s" 生成文件: ${outDir + File.separator + fileName}")
 
-    val finalContennt = (serviceTmeplates ++  structsTemplates ++ enumsTemplates)
     val writer = new PrintWriter(new File(new File(outDir), fileName))
-    finalContennt.foreach(i => {
-      writer.write(i)
-    })
+    writer.write(importTemplate.toString)
+    writer.write(enumsTemplate.toString)
+    writer.write(structsTemplate.toString)
+    writer.write(servicesTemplate.toString)
     writer.close()
 
     println("*************TypeScript 生成器*************")
 
+  }
+
+  /**
+    * TODO: 需要根据resource判断 哪些数据类型需要import， 且import的类型属于哪个文件
+    * 如： import {TaskRequest} from "./hello_domain"
+    * @param services
+    * @param structs
+    * @param enums
+    * @return
+    */
+  private def toImportTemplate(services: List[Service], structs: List[Struct], enums: List[TEnum]) = {
+    <div>
+      {if (services.nonEmpty || structs.nonEmpty || enums.nonEmpty)
+          <div>import <block>metadata, RecordMeta, EnumMeta</block> from  "./meta"</div>
+      }
+    </div>
+
+  }
+
+  private def toStructsTemplate(structs: List[Struct]) = {
+    {
+      <div>
+        {structs.map(struct => toStructTemplate(struct))}
+      </div>
+    }
+  }
+
+  private def toEnumsTemplate(enums: List[TEnum]) = {
+    {
+      <div>
+        {enums.map(enum => toEnumTemplate(enum))}
+      </div>
+    }
+  }
+
+  private def toServicesTemplate(services: List[Service]) = {
+    {
+      <div>
+        {services.map(service => toServiceTemplate(service))}
+      </div>
+    }
   }
 
   private def toStructTemplate(struct: Struct): Elem = {
@@ -89,7 +132,7 @@ class TypeScriptGenerator(language: String) extends CodeGenerator{
         * {struct.doc}
         */
         @metadata(<block>"name": "{struct.name}"{if (struct.annotations != null) <span>, {struct.annotations.asScala.map(i =>  {s""" "${i.key}" : "${i.value}"  """}).mkString(",")}</span>}</block>)
-        class {struct.name} <block>
+        export class {struct.name} <block>
             {struct.fields.asScala.map(field => {
           <div>
             @metadata(<block>"name": "{field.name}", "type": "{field.dataType.kind.name()}", "optional": "{field.optional}" , "visible": "{field.privacy}"{if (field.annotations != null) <span>, {field.annotations.asScala.map(i =>  {s""" "${i.key}" : "${i.value}"  """}).mkString(",")}</span>}</block>)
@@ -108,7 +151,7 @@ class TypeScriptGenerator(language: String) extends CodeGenerator{
     return {
       <div>
         @metadata(<block>{if (enum.annotations != null) <span>, {enum.annotations.asScala.map(i =>  {s""" "${i.key}" : "${i.value}"  """}).mkString(",")}</span>}</block>)
-        enum {enum.name}<block>
+        export enum {enum.name}<block>
         {enum.enumItems.asScala.map(i => {
             <div>
               {i.label} = {i.value},
@@ -125,6 +168,7 @@ class TypeScriptGenerator(language: String) extends CodeGenerator{
     return {
 
       <div>
+
         /**
         *
         {service.doc}
