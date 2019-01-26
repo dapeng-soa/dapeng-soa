@@ -151,11 +151,7 @@ object Scrooge {
           case "json" => new JsonGenerator().generate(services, outDir)
           case "java" => new JavaGenerator().generate(services, outDir, generateAll, structs, enums)
           case "scala" => new ScalaGenerator().generate(services, outDir, generateAll, structs, enums)
-          //case "ts" => new TypeScriptGenerator().generate(services, outDir,generateAll, structs, enums)
           case "ts" => new TypeScriptGenerator(language).generate(resources, services.asScala.toList, structs.asScala.toList, enums.asScala.toList,outDir)
-
-          //case "ts" => new TypeScriptGenerator(language).generate(services, outDir, generateAll,structs, enums)
-
         }
 
       } else if (resources == null || language == "") {
