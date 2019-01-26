@@ -67,7 +67,7 @@ class ThriftCodeParser(var language: String) {
     * @param resource 源文件
     * @return 文档
     */
-  private def generateDoc(resource: String): Document = {
+  def generateDoc(resource: String): Document = {
 
     val homeDir = resource.substring(0, if (resource.lastIndexOf("/") == -1) resource.lastIndexOf("\\") else resource.lastIndexOf("/"))
 
@@ -107,7 +107,7 @@ class ThriftCodeParser(var language: String) {
     * @param genHashcode 是否生成HashCode
     * @return 生成器
     */
-  private def getGenerator(doc0: Document, genHashcode: Boolean = false): ApacheJavaGenerator = {
+  def getGenerator(doc0: Document, genHashcode: Boolean = false): ApacheJavaGenerator = {
     new ApacheJavaGenerator(new ResolvedDocument(doc0, new TypeResolver()), "thrift", templateCache, genHashcode = genHashcode)
     //new ApacheJavaGenerator(Map(), "thrift", templateCache, genHashcode = genHashcode)
   }
@@ -472,7 +472,7 @@ class ThriftCodeParser(var language: String) {
     enumCache.toList
   }
 
-  def toServices(resources: Array[String], serviceVersion: String): util.List[metadata.Service] = {
+  def toServices(resources: Array[String]): util.List[metadata.Service] = {
     resources.foreach(resource => {
       val doc = generateDoc(resource)
 

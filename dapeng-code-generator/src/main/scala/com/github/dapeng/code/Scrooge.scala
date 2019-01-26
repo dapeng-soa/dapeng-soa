@@ -1,13 +1,16 @@
 package com.github.dapeng.code
 
 import java.io.{File, FileNotFoundException, FilenameFilter}
-import javax.annotation.processing.FilerException
+import java.util
 
-import com.github.dapeng.code.generator.ScalaGenerator
+import javax.annotation.processing.FilerException
+import com.github.dapeng.code.generator.{ScalaGenerator, TypeScriptGenerator}
+import com.github.dapeng.core.metadata.{Service, Struct, TEnum}
 
 //import com.github.dapeng.code.generator.scala.ScalaGenerator
 import com.github.dapeng.code.generator.{JavaGenerator, JavascriptGenerator, JsonGenerator, MetadataGenerator}
 import com.github.dapeng.code.parser.ThriftCodeParser
+import collection.JavaConverters._
 
 /**
   * @author craneding
@@ -138,9 +141,9 @@ object Scrooge {
       if (resources != null && language != "" && needUpdate) {
 
         val parserLanguage = if (language == "scala") "scala" else "java"
-        val services = new ThriftCodeParser(parserLanguage).toServices(resources, version)
-        val structs = if (generateAll) new ThriftCodeParser(parserLanguage).getAllStructs(resources) else null
-        val enums = if (generateAll) new ThriftCodeParser(parserLanguage).getAllEnums(resources) else null
+        val services: util.List[Service] = new ThriftCodeParser(parserLanguage).toServices(resources)
+        val structs: util.List[Struct] = if (generateAll) new ThriftCodeParser(parserLanguage).getAllStructs(resources) else null
+        val enums: util.List[TEnum] = if (generateAll) new ThriftCodeParser(parserLanguage).getAllEnums(resources) else null
 
         language match {
           case "metadata" => new MetadataGenerator().generate(services, outDir)
@@ -148,6 +151,11 @@ object Scrooge {
           case "json" => new JsonGenerator().generate(services, outDir)
           case "java" => new JavaGenerator().generate(services, outDir, generateAll, structs, enums)
           case "scala" => new ScalaGenerator().generate(services, outDir, generateAll, structs, enums)
+          //case "ts" => new TypeScriptGenerator().generate(services, outDir,generateAll, structs, enums)
+          case "ts" => new TypeScriptGenerator(language).generate(resources, services.asScala.toList, structs.asScala.toList, enums.asScala.toList,outDir)
+
+          //case "ts" => new TypeScriptGenerator(language).generate(services, outDir, generateAll,structs, enums)
+
         }
 
       } else if (resources == null || language == "") {
