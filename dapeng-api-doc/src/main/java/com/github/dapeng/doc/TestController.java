@@ -30,10 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Set;
@@ -58,22 +55,22 @@ public class TestController {
     @Autowired
     private ServiceCache serviceCache;
 
-    @RequestMapping(method = RequestMethod.POST)
+    @RequestMapping(method = RequestMethod.POST, value = "/{serviceName}/{version}/{methodName}")
     @ResponseBody
-    public String test(HttpServletRequest req) {
+    public String test2(HttpServletRequest req,
+                        @PathVariable String serviceName,
+                        @PathVariable String version,
+                        @PathVariable String methodName) {
 
         String jsonParameter = req.getParameter("parameter");
-        String serviceName = req.getParameter("serviceName");
-        String versionName = req.getParameter("version");
-        String methodName = req.getParameter("methodName");
 
-        OptimizedMetadata.OptimizedService service = serviceCache.getService(serviceName, versionName);
+        OptimizedMetadata.OptimizedService service = serviceCache.getService(serviceName, version);
 
         InvocationContext invocationCtx = InvocationContextImpl.Factory.createNewInstance();
         invocationCtx.sessionTid(DapengUtil.generateTid());
         fillInvocationCtx(invocationCtx, req);
 
-        JsonPost jsonPost = new JsonPost(serviceName, versionName, methodName, true);
+        JsonPost jsonPost = new JsonPost(serviceName, version, methodName, true);
 
         if (null == jsonParameter || "".equals(jsonParameter.trim())) {
             jsonParameter = "{}";
