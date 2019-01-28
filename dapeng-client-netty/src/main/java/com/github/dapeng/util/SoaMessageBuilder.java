@@ -74,7 +74,6 @@ public class SoaMessageBuilder<T> {
         boolean isStreamProcessor = bodySerializer instanceof JsonSerializer;
 
         if (isStreamProcessor) {
-            //如果是流式序列化器, 那么延后写入header信息
             ((JsonSerializer) bodySerializer).setRequestByteBuf(buffer);
         }
 
