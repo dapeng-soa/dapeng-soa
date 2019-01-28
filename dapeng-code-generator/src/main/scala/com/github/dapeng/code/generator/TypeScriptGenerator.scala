@@ -11,9 +11,14 @@ import com.twitter.scrooge.ast.Document
 import collection.JavaConverters._
 import scala.xml.Elem
 
-class TypeScriptGenerator(language: String) extends CodeGenerator{
+class TypeScriptGenerator(language: String, resources: List[String]) extends CodeGenerator{
 
   val thriftCodeParser =  new ThriftCodeParser(language)
+
+  val documentCache: Seq[(String, Document)] = {
+    resources.map(resource => (resource.substring(resource.lastIndexOf(File.separator) + 1) ,thriftCodeParser.generateDoc(resource)))
+  }
+
   /**
     * 基于resource生成ts 文件， 一个thrift文件对应一个ts 文件
     * @param resources
@@ -22,9 +27,14 @@ class TypeScriptGenerator(language: String) extends CodeGenerator{
                outDir: String) = {
 
     //加载所有thrift 对象
+    documentCache.foreach{case (fileName, document) => {
+      println(fileName)
+      println(document)
+    }}
 
-    resources.foreach(resource => {
-      val document: Document = thriftCodeParser.generateDoc(resource)
+
+    documentCache.foreach{case (fileName, document) => {
+      //val document: Document = thriftCodeParser.generateDoc(resource)
 
       val enums = if (document.enums != null && document.enums.nonEmpty) {
         val oriEnums = document.enums
@@ -43,15 +53,14 @@ class TypeScriptGenerator(language: String) extends CodeGenerator{
       val services = if (document.services != null && document.services.nonEmpty) {
         val oriServices = document.services
         val tempServices = cacheServices.filter(i => oriServices.map(_.sid.name).contains(i.name))
-        println(s" get services: ${tempServices.map(_.name)}")
 
         tempServices
       } else List.empty
 
-      generateFile(services, structs, enums,resource, outDir)
+      generateFile(services, structs, enums,fileName, outDir)
 
       println(" ")
-    })
+    }}
 
   }
 
@@ -63,15 +72,14 @@ class TypeScriptGenerator(language: String) extends CodeGenerator{
 
     println()
     println("*************TypeScriptScript生成器*************")
+    val oriFileName = new File(resource).getName
+    val fileName = s"${oriFileName.substring(0,oriFileName.indexOf("."))}.ts"
+    println(s" 生成文件: ${outDir + File.separator + fileName}")
 
     val servicesTemplate = new StringTemplate(toServicesTemplate(services))
     val structsTemplate = new StringTemplate(toStructsTemplate(structs))
     val enumsTemplate =new StringTemplate(toEnumsTemplate(enums))
     val importTemplate = new StringTemplate(toImportTemplate(services, structs, enums))
-
-    val oriFileName = new File(resource).getName
-    val fileName = s"${oriFileName.substring(0,oriFileName.indexOf("."))}.ts"
-    println(s" 生成文件: ${outDir + File.separator + fileName}")
 
     val writer = new PrintWriter(new File(new File(outDir), fileName))
     writer.write(importTemplate.toString)
@@ -94,8 +102,38 @@ class TypeScriptGenerator(language: String) extends CodeGenerator{
     */
   private def toImportTemplate(services: List[Service], structs: List[Struct], enums: List[TEnum]) = {
     <div>
-      {if (services.nonEmpty || structs.nonEmpty || enums.nonEmpty)
-          <div>import <block>metadata, RecordMeta, EnumMeta</block> from  "./meta"</div>
+      {
+      if (services.nonEmpty || structs.nonEmpty || enums.nonEmpty) {
+        <div>import <block>metadata, RecordMeta, EnumMeta</block> from  "./meta"</div>
+      }
+      }
+      {
+        val resourceInnerEntities = (structs.map(_.name) ++ enums.map(_.name)).distinct
+        val serviceRequestTypeNames = services.flatMap(_.methods.asScala).map(_.request)
+                                      .flatMap(i => i.fields.asScala.map(field => toInnerDataType(field.dataType)))
+                                      .filter(dataType => List(KIND.ENUM, KIND.STRUCT).contains(dataType.getKind) )
+                                      .map(dataType => dataType.getQualifiedName().replaceAll("^.*[.](.*?)$", "$1"))
+
+        val serviceResponseTypeNames = services.flatMap(_.methods.asScala).map(_.response)
+                                      .flatMap(i => i.fields.asScala.map(field => toInnerDataType(field.dataType)))
+                                      .filter(dataType => List(KIND.ENUM, KIND.STRUCT).contains(dataType.getKind) )
+                                      .map(dataType => dataType.getQualifiedName().replaceAll("^.*[.](.*?)$", "$1"))
+        val serviceTypeNames: Seq[String] = serviceRequestTypeNames ++ serviceResponseTypeNames
+
+        val structsFieldEntities = structs.flatMap(i => i.fields.asScala.map(field => toInnerDataType(field.dataType)))
+                                    .filter(dataType => List(KIND.ENUM, KIND.STRUCT).contains(dataType.getKind) )
+                                    .map(dataType => dataType.getQualifiedName().replaceAll("^.*[.](.*?)$", "$1"))
+        val allEntities = (serviceTypeNames ++ structsFieldEntities ++ resourceInnerEntities).distinct
+        val diffSet: Seq[String] = allEntities diff  resourceInnerEntities
+
+        documentCache.map{case (fileName, document) => {
+          val documentEntities = document.structs.map(_.originalName) ++ document.enums.map(_.sid.originalName)
+          val entitiesIntersection = documentEntities.intersect(diffSet)
+          if (entitiesIntersection.nonEmpty) {
+            <div>import <block>{entitiesIntersection.mkString(",")}</block> from  "./{fileName.substring(0, fileName.lastIndexOf("."))}"</div>
+          }
+        }}
+
       }
     </div>
 
@@ -200,6 +238,18 @@ class TypeScriptGenerator(language: String) extends CodeGenerator{
         </block>
 
       </div>
+    }
+  }
+
+  def toInnerDataType(dataType: DataType): DataType = {
+    dataType.getKind match {
+      case KIND.MAP =>
+        toInnerDataType(dataType.getKeyType())
+      case KIND.LIST =>
+        toInnerDataType(dataType.getValueType())
+      case KIND.SET =>
+        toInnerDataType(dataType.getValueType())
+      case _ => dataType
     }
   }
 
