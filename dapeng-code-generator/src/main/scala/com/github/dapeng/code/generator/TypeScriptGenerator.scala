@@ -207,7 +207,7 @@ class TypeScriptGenerator(language: String) extends CodeGenerator{
     dataType.getKind() match {
       case KIND.VOID =>
         return {
-          <div>VOID</div>
+          <div>void</div>
         }
       case KIND.BOOLEAN =>
         return {
