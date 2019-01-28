@@ -56,7 +56,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
     private ClientRefManager clientRefManager = ClientRefManager.getInstance();
 
 
-    SoaBaseConnection(String host, int port) {
+    SoaBaseConnection(String host, int port) throws SoaException {
         this.client = NettyClientFactory.getNettyClient();
         this.host = host;
         this.port = port;
@@ -64,6 +64,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
             channel = connect(host, port);
         } catch (Exception e) {
             LOGGER.error("connect to {}:{} failed", host, port);
+            throw new SoaException(SoaCode.NotConnected);
         }
     }
 
@@ -92,12 +93,11 @@ public abstract class SoaBaseConnection implements SoaConnection {
                 if (LOGGER.isTraceEnabled()) {
                     LOGGER.trace("dispatchFilter::onEntry");
                 }
+
                 ByteBuf requestBuf = buildRequestBuf(service, version, method, seqid, request, requestSerializer);
-
-                // TODO filter
-                checkChannel();
-
                 try {
+                    checkChannel();
+
                     ByteBuf responseBuf = client.send(channel, seqid, requestBuf, timeout, service);
 
                     Result<RESP> result = processResponse(responseBuf, responseSerializer);
@@ -105,6 +105,9 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
                     onExit(ctx, getPrevChain(ctx));
                 } finally {
+                    if (requestBuf != null && requestBuf.refCnt() > 0) {
+                        requestBuf.release();
+                    }
                     InvocationContextImpl.Factory.removeCurrentInstance();
                 }
             }
@@ -185,12 +188,18 @@ public abstract class SoaBaseConnection implements SoaConnection {
             @Override
             public void onEntry(FilterContext ctx, FilterChain next) throws SoaException {
                 try {
-
                     ByteBuf requestBuf = buildRequestBuf(service, version, method, seqid, request, requestSerializer);
-
-                    CompletableFuture<ByteBuf> responseBufFuture;
                     try {
                         checkChannel();
+                    } catch (Throwable e) {
+                        LOGGER.error(e.getMessage(), e);
+                        if (requestBuf != null && requestBuf.refCnt() > 0) {
+                            requestBuf.release();
+                        }
+                        throw e;
+                    }
+                    CompletableFuture<ByteBuf> responseBufFuture;
+                    try {
                         responseBufFuture = client.sendAsync(channel, seqid, requestBuf, timeout);
                     } catch (Exception e) {
                         LOGGER.error(e.getMessage(), e);

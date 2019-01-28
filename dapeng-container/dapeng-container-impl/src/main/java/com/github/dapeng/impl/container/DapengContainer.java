@@ -301,7 +301,7 @@ public class DapengContainer implements Container {
 
         do {
             if (requestCounter.intValue() <= 0) {
-                return;
+                break;
             } else {
                 try {
                     if (LOGGER.isDebugEnabled()) {

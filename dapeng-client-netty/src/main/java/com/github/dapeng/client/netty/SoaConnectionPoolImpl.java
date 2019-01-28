@@ -16,24 +16,20 @@
  */
 package com.github.dapeng.client.netty;
 
-import com.github.dapeng.cookie.CookieExecutor;
-import com.github.dapeng.cookie.CookieRule;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
-import com.github.dapeng.router.Route;
 import com.github.dapeng.registry.ConfigKey;
 import com.github.dapeng.registry.zookeeper.LoadBalanceAlgorithm;
+import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
+import com.github.dapeng.router.Route;
 import com.github.dapeng.router.RoutesExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -350,7 +346,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
      */
     private long getTimeout(ZkServiceInfo serviceInfo, String method) {
 
-        long maxTimeout = SoaSystemEnvProperties.SOA_MAX_TIMEOUT;
         long defaultTimeout = SoaSystemEnvProperties.SOA_DEFAULT_TIMEOUT;
 
         Optional<Integer> invocationTimeout = getInvocationTimeout();
@@ -372,7 +367,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         } else {
             timeout = Optional.of(defaultTimeout);
         }
-        return timeout.get() >= maxTimeout ? maxTimeout : timeout.get();
+        return timeout.get();
     }
 
 

@@ -22,6 +22,7 @@ import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.router.condition.Condition;
 import com.github.dapeng.router.condition.*;
+import com.github.dapeng.router.exception.ParsingException;
 import com.github.dapeng.router.pattern.*;
 import com.github.dapeng.router.token.IpToken;
 import org.slf4j.Logger;
@@ -51,8 +52,14 @@ public class RoutesExecutor {
      */
     public static List<Route> parseAll(String content) {
         RoutesParser parser = new RoutesParser(new RoutesLexer(content));
-        List<Route> routes = parser.routes();
-        return routes;
+        List<Route> routes;
+        try {
+            routes = parser.routes();
+            return routes;
+        } catch (ParsingException e) {
+            logger.error(e.getSummary() + "," + e.getDetail(), e);
+            return new ArrayList<>(0);
+        }
     }
 
     /**

@@ -109,4 +109,7 @@ public class InfluxdbDao {
     }
 
 
+    public static void main(String[] arg0){
+
+    }
 }

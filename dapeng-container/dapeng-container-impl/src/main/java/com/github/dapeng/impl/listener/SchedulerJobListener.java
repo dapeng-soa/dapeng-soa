@@ -31,9 +31,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static com.github.dapeng.impl.listener.TaskMonitorDataReportUtils.sendMessage;
-
-
 /**
  * 定时任务监听器
  *
@@ -62,14 +59,7 @@ public class SchedulerJobListener implements JobListener {
      */
     @Override
     public void jobToBeExecuted(final JobExecutionContext context) {
-        JobDataMap jobDataMap = context.getJobDetail().getJobDataMap();
-        String serviceName = jobDataMap.getString("serviceName");
-        String versionName = jobDataMap.getString("versionName");
-        String methodName = jobDataMap.getString("methodName");
-
         context.getJobDetail().getJobDataMap().put("startTime", LocalDateTime.now(ZoneId.of("Asia/Shanghai")));
-        String message = String.format("SchedulerJobListener::jobToBeExecuted;Task[%s:%s:%s] 即将被执行", serviceName, versionName, methodName);
-        //sendMessage(serviceName, versionName, methodName, message, false,"normal");
     }
 
     /**
@@ -81,12 +71,6 @@ public class SchedulerJobListener implements JobListener {
      */
     @Override
     public void jobExecutionVetoed(JobExecutionContext context) {
-        JobDataMap jobDataMap = context.getJobDetail().getJobDataMap();
-        String serviceName = jobDataMap.getString("serviceName");
-        String versionName = jobDataMap.getString("versionName");
-        String methodName = jobDataMap.getString("methodName");
-        String message = String.format("SchedulerJobListener::jobExecutionVetoed;Task[%s:%s:%s] 触发失败", serviceName, versionName, methodName);
-        sendMessage(serviceName, versionName, methodName, executorService, message, true, jobDataMap, "failed");
     }
 
     /**
@@ -104,14 +88,14 @@ public class SchedulerJobListener implements JobListener {
         int execute_count = context.getRefireCount();
         if (exp != null) {
             String message = String.format("SchedulerJobListener::jobWasExecuted;Task[%s:%s:%s] 执行出现异常:%s", serviceName, versionName, methodName, exp.getMessage());
-            sendMessage(serviceName, versionName, methodName, executorService, message, true, jobDataMap, "failed");
+            TaskMonitorDataReportUtils.getInstance().sendMessage(serviceName, versionName, methodName, executorService, message, true, jobDataMap, "failed");
 
         } else {//任务执行成功
             LocalDateTime currentTime = LocalDateTime.now(ZoneId.of("Asia/Shanghai"));
             LocalDateTime startTime = (LocalDateTime) jobDataMap.get("startTime");
             long taskCost = Duration.between(startTime, currentTime).toMillis();
             String message = String.format("SchedulerJobListener::jobWasExecuted;Task[%s:%s:%s] 执行完成[%s],cost:%sms", serviceName, versionName, methodName, currentTime.format(DATE_TIME), taskCost);
-            sendMessage(serviceName, versionName, methodName, executorService, message, false, jobDataMap, "succeed");
+            TaskMonitorDataReportUtils.getInstance().sendMessage(serviceName, versionName, methodName, executorService, message, false, jobDataMap, "succeed");
         }
     }
 

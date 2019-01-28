@@ -23,10 +23,8 @@ import com.github.dapeng.core.Weight;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
 import com.github.dapeng.router.Route;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * service information of ZK, including runtime and config
@@ -45,7 +43,7 @@ public class ZkServiceInfo {
     /**
      * 路由规则
      */
-    private List<Route> routes = new ArrayList<>(16);
+    private List<Route> routes = new CopyOnWriteArrayList<>();
 
     private ServiceFreqControl freqControl = null;
 
@@ -76,7 +74,7 @@ public class ZkServiceInfo {
         return null;
     }
 
-    public void routes(List<Route> routes) {
+    public void routes(CopyOnWriteArrayList<Route> routes) {
         this.routes = routes;
     }
 
