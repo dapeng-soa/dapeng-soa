@@ -201,3 +201,12 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
+Dapeng-soa submodules:
+Dapeng-soa includes a number of submodules with separate copyright notices
+and license terms. Your use of the source code for the these subcomponents
+is subject to the terms and conditions of the following licenses.
+
+This product bundles and repackages the following code in Apache Thrift, which is available under a
+"Apache License 2.0" license. For details, see https://github.com/apache/thrift/blob/master/LICENSE.
+
+ * org.apache.thrift
