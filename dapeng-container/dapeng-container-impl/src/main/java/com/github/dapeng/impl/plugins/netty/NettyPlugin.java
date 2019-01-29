@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 public class NettyPlugin implements AppListener, Plugin {
     private final Container container;
     private final boolean MONITOR_ENABLE = SoaSystemEnvProperties.SOA_MONITOR_ENABLE;
+    private final boolean FREQ_LIMIT_ENABLE = SoaSystemEnvProperties.SOA_FREQ_LIMIT_ENABLE;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NettyPlugin.class);
 
@@ -66,6 +67,9 @@ public class NettyPlugin implements AppListener, Plugin {
                     ChannelHandler soaServerHandler = new SoaServerHandler(container);
                     ChannelHandler soaInvokeCounter = MONITOR_ENABLE ? new SoaInvokeCounter() : null;
 
+                    //限流 handler
+                    SoaFreqHandler freqHandler = FREQ_LIMIT_ENABLE ? new SoaFreqHandler() : null;
+
                     bootstrap.group(bossGroup, workerGroup)
                             .channel(NioServerSocketChannel.class)
                             .childHandler(new ChannelInitializer<SocketChannel>() {
@@ -79,6 +83,12 @@ public class NettyPlugin implements AppListener, Plugin {
                                     ch.pipeline().addLast(HandlerConstants.SOA_IDLE_HANDLER, soaLinkStateHandler);
                                     ch.pipeline().addLast(HandlerConstants.SOA_MSG_ENCODER_HANDLER, soaMsgEncoder);
                                     ch.pipeline().addLast(HandlerConstants.SOA_MSG_DECODER_HANDLER, soaMsgDecoder);
+
+                                    if (FREQ_LIMIT_ENABLE) {
+                                        // 添加服务限流handler
+                                        ch.pipeline().addLast(HandlerConstants.SOA_FREQ_HANDLER, freqHandler);
+                                    }
+
                                     // 服务调用统计
                                     if (MONITOR_ENABLE) {
                                         ch.pipeline().addLast(HandlerConstants.SOA_INVOKE_COUNTER_HANDLER, soaInvokeCounter);

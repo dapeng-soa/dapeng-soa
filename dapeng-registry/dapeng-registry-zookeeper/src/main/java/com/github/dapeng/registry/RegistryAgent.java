@@ -52,13 +52,11 @@ public interface RegistryAgent {
 
 
     /**
-     * 获取配置
+     * 获取服务的zk配置信息
      *
      * @param usingFallback
      * @param serviceKey
      * @return
      */
-    ZkServiceInfo getConfig(boolean usingFallback, String serviceKey);
-
-
+    ZkServiceInfo getZkServiceInfo(boolean usingFallback, String serviceKey);
 }

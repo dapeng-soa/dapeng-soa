@@ -15,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import static com.github.dapeng.core.helper.IPUtils.transferIp;
+
 import java.sql.ResultSet;
 
 /**
@@ -42,7 +44,13 @@ public class LogFilter implements Filter {
                 }
             }
 
-            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().orElse("0"));
+            String logLevel = invocationContext.cookie(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
+
+            if (logLevel != null) {
+                MDC.put(SoaSystemEnvProperties.THREAD_LEVEL_KEY, logLevel);
+            }
+
+            MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
 
             String infoLog = "request[seqId:" + invocationContext.seqId() + ", server:" + filterContext.getAttribute("serverInfo") + "]:"
                     + "service[" + invocationContext.serviceName()
@@ -69,9 +77,13 @@ public class LogFilter implements Filter {
                     + "]:method[" + invocationContext.methodName()
                     + "] cost[total:" + invocationInfo.serviceTime()
                     + ", calleeTime1:" + invocationInfo.calleeTime1()
-                    + ", calleeTime2:" + invocationInfo.calleeTime2();
-
-            LOGGER.info(getClass().getSimpleName() + "::onExit," + infoLog);
+                    + ", calleeTime2:" + invocationInfo.calleeTime2()
+                    + ", calleeIp: " + transferIp(invocationInfo.calleeIp());
+            if (SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE.equals(invocationInfo.responseCode())) {
+                LOGGER.info(getClass().getSimpleName() + "::onExit," + infoLog);
+            } else {
+                LOGGER.error(getClass().getSimpleName() + "::onExit," + infoLog);
+            }
         } finally {
             try {
                 prev.onExit(filterContext);
@@ -81,6 +93,7 @@ public class LogFilter implements Filter {
                 // 如果在服务里面, 那么不清理MDC
                 if (!TransactionContext.hasCurrentInstance()) {
                     MDC.remove(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
+                    MDC.remove(SoaSystemEnvProperties.THREAD_LEVEL_KEY);
                 }
             }
         }

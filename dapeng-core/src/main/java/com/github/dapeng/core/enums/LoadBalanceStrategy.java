@@ -51,7 +51,7 @@ public enum LoadBalanceStrategy {
             case "consistentHash":
                 return ConsistentHash;
             default:
-                return null;
+                return Random;
         }
     }
 

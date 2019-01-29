@@ -4,6 +4,7 @@ import com.github.dapeng.client.filter.LogFilter;
 import com.github.dapeng.client.filter.HeadFilter;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.filter.*;
+import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.util.DumpUtil;
@@ -21,24 +22,29 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.github.dapeng.core.helper.IPUtils.transferIp;
+
 /**
  * @author lihuimin
  */
+@SuppressWarnings("unchecked")
 public abstract class SoaBaseConnection implements SoaConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(SoaBaseConnection.class);
 
     private final String host;
     private final int port;
-    private final SubPool parent;
+    private final static SoaConnectionPoolFactory factory = ServiceLoader.load(SoaConnectionPoolFactory.class,
+            SoaBaseConnection.class.getClassLoader()).iterator().next();
     private Channel channel = null;
     private NettyClient client;
     private final static AtomicInteger seqidAtomic = new AtomicInteger(0);
+    private ClientRefManager clientRefManager = ClientRefManager.getInstance();
 
-    public SoaBaseConnection(String host, int port, SubPool parent) {
+
+    SoaBaseConnection(String host, int port) {
         this.client = NettyClientFactory.getNettyClient();
         this.host = host;
         this.port = port;
-        this.parent = parent;
         try {
             channel = connect(host, port);
         } catch (Exception e) {
@@ -59,9 +65,6 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         invocationContext.seqId(seqid);
-        invocationContext.serviceName(service);
-        invocationContext.versionName(version);
-        invocationContext.methodName(method);
 
         Filter dispatchFilter = new Filter() {
             private FilterChain getPrevChain(FilterContext ctx) {
@@ -137,6 +140,15 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         Result<RESP> result = (Result<RESP>) filterContext.getAttribute("result");
         assert (result != null);
+
+        //请求响应，在途请求-1
+        RuntimeInstance runtimeInstance = clientRefManager.serviceInfo(service).runtimeInstance(host, port);
+        if (runtimeInstance == null) {
+            LOGGER.error("SoaBaseConnection::runtimeInstance not found.");
+        } else {
+            runtimeInstance.decreaseActiveCount();
+        }
+
         if (result.success != null) {
             return result.success;
         } else {
@@ -156,9 +168,6 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
         InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         invocationContext.seqId(seqid);
-        invocationContext.serviceName(service);
-        invocationContext.versionName(version);
-        invocationContext.methodName(method);
 
         Filter dispatchFilter = new Filter() {
             private FilterChain getPrevChain(FilterContext ctx) {
@@ -179,14 +188,14 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     } catch (Exception e) {
                         LOGGER.error(e.getMessage(), e);
                         Result<RESP> result = new Result<>(null,
-                                new SoaException(SoaCode.UnKnown, SoaCode.UnKnown.getMsg()));
+                                new SoaException(SoaCode.ClientUnKnown, SoaCode.ClientUnKnown.getMsg()));
                         ctx.setAttribute("result", result);
                         onExit(ctx, getPrevChain(ctx));
                         return;
                     }
 
                     responseBufFuture.whenComplete((realResult, ex) -> {
-                        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().orElse("0"));
+                        MDC.put(SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, invocationContext.sessionTid().map(DapengUtil::longToHexStr).orElse("0"));
                         if (ex != null) {
                             SoaException soaException = convertToSoaException(ex);
                             Result<RESP> result = new Result<>(null, soaException);
@@ -213,7 +222,22 @@ public abstract class SoaBaseConnection implements SoaConnection {
                     SoaException soaException = convertToSoaException(e);
                     Result<RESP> result = new Result<>(null, soaException);
 
+                    if (invocationContext.lastInvocationInfo().responseCode() == null) {
+                        ((InvocationInfoImpl) invocationContext.lastInvocationInfo()).responseCode(soaException.getCode());
+                    }
+
                     ctx.setAttribute("result", result);
+
+                    // fix  sendAsync  json序列化异常  LogFilter respCode == null
+                    InvocationContextImpl invocationContext = (InvocationContextImpl) ctx.getAttribute("context");
+                    InvocationInfoImpl lastInfo = (InvocationInfoImpl) invocationContext.lastInvocationInfo();
+                    lastInfo.responseCode(soaException.getCode());
+                    lastInfo.calleeIp(transferIp(host));
+                    lastInfo.calleePort(port);
+
+                    invocationContext.lastInvocationInfo(lastInfo);
+                    ctx.setAttribute("context", invocationContext);
+
                     onExit(ctx, getPrevChain(ctx));
                 } finally {
                     InvocationContextImpl.Factory.removeCurrentInstance();
@@ -272,18 +296,24 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
 
         assert (resultFuture != null);
-
+        //请求响应，在途请求-1
+        RuntimeInstance runtimeInstance = clientRefManager.serviceInfo(service).runtimeInstance(host, port);
+        if (runtimeInstance == null) {
+            LOGGER.error("SoaBaseConnection::runtimeInstance not found.");
+        } else {
+            runtimeInstance.decreaseActiveCount();
+        }
 
         return resultFuture;
     }
 
 
     private SoaException convertToSoaException(Throwable ex) {
-        SoaException soaException = null;
+        SoaException soaException;
         if (ex instanceof SoaException) {
             soaException = (SoaException) ex;
         } else {
-            soaException = new SoaException(SoaCode.UnKnown.getCode(), ex.getMessage());
+            soaException = new SoaException(SoaCode.ClientUnKnown.getCode(), ex.getMessage());
         }
         return soaException;
     }
@@ -307,7 +337,7 @@ public abstract class SoaBaseConnection implements SoaConnection {
 
     private <RESP> Result<RESP> processResponse(ByteBuf responseBuf, BeanSerializer<RESP> responseSerializer) {
         if (responseBuf == null) {
-            return new Result<>(null, new SoaException(SoaCode.TimeOut));
+            return new Result<>(null, new SoaException(SoaCode.ReqTimeOut));
         }
         final int readerIndex = responseBuf.readerIndex();
         try {
@@ -324,22 +354,24 @@ public abstract class SoaBaseConnection implements SoaConnection {
             } else {
                 return new Result<>(null, new SoaException(
                         lastInfo.responseCode(),
-                        (respHeader.getRespMessage().isPresent()) ? respHeader.getRespMessage().get() : SoaCode.UnKnown.getMsg()));
+                        (respHeader.getRespMessage().isPresent()) ? respHeader.getRespMessage().get() : SoaCode.ClientUnKnown.getMsg()));
             }
 
         } catch (SoaException ex) {
             return new Result<>(null, ex);
-        } catch (TException ex) {
+        } catch (TException | RuntimeException ex) {
             LOGGER.error("通讯包解析出错:\n" + ex.getMessage(), ex);
             LOGGER.error(DumpUtil.dumpToStr(responseBuf.readerIndex(readerIndex)));
             return new Result<>(null,
-                    new SoaException(SoaCode.UnKnown, "通讯包解析出错"));
-        } finally {
-            if (responseBuf != null) {
-                responseBuf.release();
-            }
-        }
+                    new SoaException(SoaCode.RespDecodeError, SoaCode.RespDecodeError.getMsg()));
 
+        } catch (Throwable ex) {
+            LOGGER.error("processResponse unknown exception: " + ex.getMessage(), ex);
+            return new Result<>(null,
+                    new SoaException(SoaCode.RespDecodeUnknownError, SoaCode.RespDecodeUnknownError.getMsg()));
+        } finally {
+            responseBuf.release();
+        }
     }
 
 
@@ -380,13 +412,13 @@ public abstract class SoaBaseConnection implements SoaConnection {
      */
     private void fillLastInvocationInfo(InvocationInfoImpl info, SoaHeader respHeader) {
         InvocationContextImpl invocationContext = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
-        info.calleeTid(respHeader.getCallerTid().orElse(""));
-        info.calleeIp(respHeader.getCalleeIp().orElse(""));
+        info.calleeTid(respHeader.getCallerTid().orElse(0L));
+        info.calleeIp(respHeader.getCalleeIp().orElse(0));
         info.calleePort(respHeader.getCalleePort().orElse(0));
         info.calleeMid(respHeader.getCalleeMid().orElse(""));
         info.calleeTime1(respHeader.getCalleeTime1().orElse(0));
         info.calleeTime2(respHeader.getCalleeTime2().orElse(0));
         info.loadBalanceStrategy(invocationContext.loadBalanceStrategy().orElse(null));
-        info.responseCode(respHeader.getRespCode().orElse(SoaCode.UnKnown.getCode()));
+        info.responseCode(respHeader.getRespCode().orElse(SoaCode.ClientUnKnown.getCode()));
     }
 }

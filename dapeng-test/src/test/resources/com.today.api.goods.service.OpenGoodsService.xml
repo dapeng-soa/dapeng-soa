@@ -1,0 +1,4172 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<service namespace="com.today.api.goods.service" name="OpenGoodsService">
+    <doc>
+
+ 商品服务对外接口
+</doc>
+    <meta>
+        <version>1.0.0</version>
+        <timeout>30000</timeout>
+    </meta>
+    <methods>
+        <method name="getSkuByNo">
+            <doc>
+
+# 通过 skuNo 货号查询商品sku信息
+## 业务描述
+    通过 skuNo 查询商品sku基本详情
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    skuNo
+## 前置检查
+    skuNo not null
+##  权限检查
+    无
+##  逻辑处理
+    无
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    商品sku基本详细信息
+</doc>
+            <request name="getSkuByNo_args">
+                <fields>
+                    <field tag="1" name="skuNo" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRING</kind>
+                        </dataType>
+                        <doc> 商品skuNo</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="getSkuByNo_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.goods.vo.TSku</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listSkuByConditions">
+            <doc>
+
+# 商品sku列表分页查询
+## 业务描述
+    商品列表分页查询
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    分页信息 和 查询条件信息
+## 前置检查
+     无
+##  权限检查
+    分权限查询
+##  逻辑处理
+     分页查询商品sku信息
+## 数据库变更
+    无
+##  事务处理
+    无
+##  输出
+    商品sku列表信息
+</doc>
+            <request name="listSkuByConditions_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.goods.request.ListSkuByConditionsRequest</ref>
+                        </dataType>
+                        <doc> 查询请求</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listSkuByConditions_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.goods.response.ListSkuByConditionsResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listSkuDetailByKeyword">
+            <doc>
+
+# 根据供应商id查询对应的所有商品
+## 业务描述
+    根据关键字(商品名称或单号等)模糊匹配查询商品信息
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    keyword关键字(商品名称或单号等)
+## 前置检查
+##  权限检查
+    用户业务权限检查
+##  逻辑处理
+## 数据库变更
+##  事务处理
+    无
+##  输出
+    List&lt;SkuDetailItem&gt;商品信息详情对象集合
+</doc>
+            <request name="listSkuDetailByKeyword_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.goods.request.ListSkuDetailByKeywordRequest</ref>
+                        </dataType>
+                        <doc>模糊查询请求参数</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listSkuDetailByKeyword_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.goods.response.ListSkuDetailByKeywordResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listSkuDetailBySkuNos">
+            <doc>
+
+# 根据商品货号批量查询商品
+## 业务描述
+ 根据skuNo批量查询商品信息
+## 接口依赖
+ 无
+## 边界异常说明
+ 无
+## 输入
+ 1.skuNos
+## 前置检查
+##  权限检查
+ 用户业务权限检查
+##  逻辑处理
+## 数据库变更
+##  事务处理
+ 无
+##  输出
+ List&lt;SkuDetailItem&gt;商品信息详情对象集合
+</doc>
+            <request name="listSkuDetailBySkuNos_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.goods.request.ListSkuDetailBySkuNosRequest</ref>
+                        </dataType>
+                        <doc>根据商品编号批量查询商品详情请求参数</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listSkuDetailBySkuNos_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRUCT</kind>
+<ref>com.today.api.goods.response.SkuDetailItem</ref>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="listSkuDetailByPurchase">
+            <doc>
+
+# 采购查询商品接口, 如果没有指定供应商那么查询的是该区域的主供应商信息, 包括进价, 进项税% , 当前生效进价(未税)
+## 业务描述
+ 根绝采购需求, 返回商品基本信息和商品当前售价,
+ 商品商品当前区域指定(指定门店)生效售价(含税),
+ 商品指定供应商(区域主供应商) 进项税%,
+ 商品指定供应商(区域主供应商) 销项税%.
+## 接口依赖
+ 无
+## 边界异常说明
+ 1.查不到指定供应商,返回异常
+ 2.查不到指定区域主供应商, 返回异常
+ 3.查询不到指定门店, 返回异常
+## 输入
+ 1.request
+## 前置检查
+ 1. skuNo 不能为空
+##  权限检查
+ 1. 用户业务权限检查
+##  逻辑处理
+## 数据库变更
+##  事务处理
+ 无
+##  输出
+ List&lt;ListSkuDetailByPurchaseResponse&gt;商品信息详情对象集合
+</doc>
+            <request name="listSkuDetailByPurchase_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.goods.request.ListSkuDetailByPurchaseRequest</ref>
+                        </dataType>
+                        <doc>采购查询商品接口</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="listSkuDetailByPurchase_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRUCT</kind>
+<ref>com.today.api.goods.response.ListSkuDetailByPurchaseResponse</ref>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="getBarcodeSkuByBarcode">
+            <doc>
+
+# 根据条码商品
+## 业务描述
+    根据条形码查询商品，精确查询
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    sku的名称，pos名称，sku货号
+## 前置检查
+##  权限检查
+    无
+##  逻辑处理
+## 数据库变更
+##  事务处理
+    无
+##  输出
+    barcodeSku
+</doc>
+            <request name="getBarcodeSkuByBarcode_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.goods.request.BarcodeSkuRequest</ref>
+                        </dataType>
+                        <doc>请求参数</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="getBarcodeSkuByBarcode_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.goods.response.BarcodeSkuResponse</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="backErrorBarcodeSku">
+            <doc>
+
+ 日志记录商品barcode的反馈信息
+</doc>
+            <request name="backErrorBarcodeSku_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.goods.request.BackErrorSkuRequest</ref>
+                        </dataType>
+                        <doc>请求参数</doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="backErrorBarcodeSku_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>BOOLEAN</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+    </methods>
+    <structs>
+        <struct namespace="com.today.api.goods.request" name="ListSkuDetailBySkuNosRequest">
+            <doc>
+
+ 根据商品编号查询商品详情请求参数
+</doc>
+            <fields>
+                <field tag="1" name="skuNos" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRING</kind>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 商品编号集合
+</doc>
+                </field>
+                <field tag="2" name="districtValue" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 供应商可配送区域
+</doc>
+                </field>
+                <field tag="3" name="skuDetailResponseTypes" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>ENUM</kind>
+                            <ref>com.today.api.goods.enums.SkuDetailResponseEnum</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 可选返回参数
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.goods.response" name="TSkuItem">
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 利用主键策略生成的唯一skuId
+</doc>
+                </field>
+                <field tag="2" name="categoryName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 类目名称
+</doc>
+                </field>
+                <field tag="3" name="type" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 商品类型,1:一般性商品(normal_sku);2:鲜食商品(fresh_sku);3:服务商品(service_sku)
+</doc>
+                </field>
+                <field tag="4" name="skuNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 货号唯一键
+</doc>
+                </field>
+                <field tag="5" name="masterBarcode" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 主条码
+</doc>
+                </field>
+                <field tag="6" name="skuName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ sku名称
+</doc>
+                </field>
+                <field tag="7" name="createdAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 创建时间
+</doc>
+                </field>
+                <field tag="8" name="channel" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.GoodsChannelEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 商品渠道(是否自有,1:是 2:否)
+</doc>
+                </field>
+                <field tag="9" name="publishApproveStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuPublishApproveStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 上架审核状态,1:上架待审核(publish_init);2:上架审核通过(publish_pass);3:上架审核拒绝(publish_failure)
+</doc>
+                </field>
+                <field tag="10" name="unPublishApproveStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuUnPublishApproveStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 上下架审核状态,1:下架待审核(unpublish_init);2:下架审核通过(unpublish_pass);3:下架审核拒绝(unpublish_failure)
+</doc>
+                </field>
+                <field tag="11" name="publishStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuPublishStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 状态,1:待上架(init);2:已上架(pass);3:已下架(failure);99:无效(invalid)
+</doc>
+                </field>
+                <field tag="12" name="changeAttrStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuChangeAttrStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ sku修改属性审核状态,1:属性修改待审核(change_attribute);2:属性修改审核通过(change_attribute_success);3:属性修改审核拒绝(change_attribute_failure);99:无效(invalid)
+</doc>
+                </field>
+                <field tag="13" name="buyingPriceStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.BuyingPriceChangeStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ sku修改进价审核状态,1:进价修改待审核(change_buying);2:进价修改审核通过(change_buying_success);3:进价修改审核拒绝(change_buying_failure);99:无效(invalid)
+</doc>
+                </field>
+                <field tag="14" name="sellingPriceStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SellingPriceChangeStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ sku修改售价审核状态,1:售价修改待审核(change_selling);2:售价修改审核通过(change_selling_success);3:售价修改审核拒绝(change_selling_failure);99:无效(invalid)
+</doc>
+                </field>
+                <field tag="15" name="masterSupplierName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 主供应商名称
+</doc>
+                </field>
+                <field tag="16" name="spec" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 包装规格
+</doc>
+                </field>
+                <field tag="17" name="saleUnit" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 销售单位
+</doc>
+                </field>
+                <field tag="18" name="categoryId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 类目Id
+</doc>
+                </field>
+                <field tag="19" name="categoryCode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 类目code
+</doc>
+                </field>
+                <field tag="20" name="version" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 版本号
+</doc>
+                </field>
+                <field tag="21" name="headquarterEffectiveDate" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 总部生效日期
+</doc>
+                </field>
+                <field tag="22" name="storeEffectiveDate" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 门店生效日期
+</doc>
+                </field>
+                <field tag="23" name="minOrderNum" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 最小订购数
+</doc>
+                </field>
+                <field tag="24" name="minOrderTimes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 最小订购倍数
+</doc>
+                </field>
+                <field tag="25" name="maxOrderTimes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 最大订购倍数
+</doc>
+                </field>
+                <field tag="26" name="outputTax" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 销项税%
+</doc>
+                </field>
+                <field tag="27" name="inputTax" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 进项税%
+</doc>
+                </field>
+                <field tag="28" name="logisticsOutputTax" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 物流销项税%
+</doc>
+                </field>
+                <field tag="29" name="sellingPrice" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 商品售价(含税)
+</doc>
+                </field>
+                <field tag="30" name="buyingPrice" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 商品进价(未税)
+</doc>
+                </field>
+                <field tag="31" name="grossMargin" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 当前价格毛利率(门店含税售价-供应商含税进价)/门店含税售价
+</doc>
+                </field>
+                <field tag="32" name="supplierId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 主供应商id
+</doc>
+                </field>
+                <field tag="33" name="supplierNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 主供应商编号
+</doc>
+                </field>
+                <field tag="34" name="flag" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 二进制标识位,从右到左0标识否1标识是.第一位:面板销售;第二位:是否称重;第三位:鲜食订购;第四位:用度品订购;第五位:新品订购;第六位:台账订购
+</doc>
+                </field>
+                <field tag="35" name="logisticsType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuLogisticsTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 商品配送方式,1:寄库(deposit);2:经由(via);3:巡回(tour);4:直纳(nonstop);5:直送(direct)
+</doc>
+                </field>
+                <field tag="36" name="shippingMethodValue" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品温层(送货便次)
+</doc>
+                </field>
+                <field tag="37" name="districtValue" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 可配送区域字典值
+</doc>
+                </field>
+                <field tag="38" name="inventoryAccountValue" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 口座字典值
+</doc>
+                </field>
+                <field tag="39" name="financeType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuFinanceTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 商品财务类型,1:正常商品(normal_sku);2:代售商品(commission_sku);3:包材(packing_sku);4:门店用品(store_use_sku)
+</doc>
+                </field>
+                <field tag="40" name="createdBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 商品创建人id
+</doc>
+                </field>
+                <field tag="41" name="shelflife" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 保质期
+</doc>
+                </field>
+                <field tag="42" name="shelflifeUnit" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuShelflifeUnitEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 保质期单位,1:小时(hour);2:天(day);3:月(month);4:年(year);5:永久有效(for_ever)
+</doc>
+                </field>
+                <field tag="43" name="creator" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品创建人名称
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.goods.response" name="SkuDetailItem">
+            <doc>
+
+ 商品详情
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 利用主键策略生成的唯一键
+</doc>
+                </field>
+                <field tag="2" name="publishStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuPublishStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 状态,1:待上架(init);2:已上架(pass);3:已下架(failure);99:无效(invalid)
+</doc>
+                </field>
+                <field tag="3" name="goodsId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 商品id
+</doc>
+                </field>
+                <field tag="4" name="type" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 商品类型,1:一般性商品(normal_sku);2:鲜食商品(fresh_sku);3:服务商品(service_sku);4:加工商品(machine_sku);5:原材料商品(material_sku)
+</doc>
+                </field>
+                <field tag="5" name="financeType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuFinanceTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 商品财务类型,1:正常商品(normal_sku);2:代售商品(commission_sku);3:包材(packing_sku);4:门店用品(store_use_sku)
+</doc>
+                </field>
+                <field tag="6" name="inventoryAccountValue" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 口座字典值
+</doc>
+                </field>
+                <field tag="7" name="skuNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品货号
+</doc>
+                </field>
+                <field tag="8" name="skuName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ sku名称
+</doc>
+                </field>
+                <field tag="9" name="skuNameEn" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ sku英文名称
+</doc>
+                </field>
+                <field tag="10" name="posname" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ pos名称
+</doc>
+                </field>
+                <field tag="11" name="brand" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 品牌
+</doc>
+                </field>
+                <field tag="12" name="spec" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 规格
+</doc>
+                </field>
+                <field tag="13" name="saleUnit" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 计价单位(可设置)
+</doc>
+                </field>
+                <field tag="14" name="shelflife" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 保质期
+</doc>
+                </field>
+                <field tag="15" name="shelflifeUnit" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuShelflifeUnitEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 保质期单位,1:小时(hour);2:天(day);3:月(month);4:年(year);5:永久有效(for_ever)
+</doc>
+                </field>
+                <field tag="16" name="channel" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuChannelEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 商品渠道,1:自有(pb);2:非自有(nb)
+</doc>
+                </field>
+                <field tag="17" name="categoryId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 类目id
+</doc>
+                </field>
+                <field tag="18" name="categoryCode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 类目code
+</doc>
+                </field>
+                <field tag="19" name="masterBarcodeProperty" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuBarcodePropertyEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 条码属性,1:店内条码(in_store_barcode);2:国际条码(international_barcode)
+</doc>
+                </field>
+                <field tag="20" name="masterBarcode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 主条码值
+</doc>
+                </field>
+                <field tag="21" name="headquarterEffectiveDate" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 总部生效日期
+</doc>
+                </field>
+                <field tag="22" name="storeEffectiveDate" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 门店生效日期
+</doc>
+                </field>
+                <field tag="23" name="minOrderNum" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 最小订购数
+</doc>
+                </field>
+                <field tag="24" name="minOrderTimes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 最小订购倍数
+</doc>
+                </field>
+                <field tag="25" name="maxOrderTimes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 最大订购倍数
+</doc>
+                </field>
+                <field tag="26" name="buyingPrice" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 商品当前生效进价(未税)
+</doc>
+                </field>
+                <field tag="27" name="sellingPrice" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 商品当前生效售价(含税)
+</doc>
+                </field>
+                <field tag="28" name="inputTax" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 进项税%
+</doc>
+                </field>
+                <field tag="29" name="outputTax" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 销项税%
+</doc>
+                </field>
+                <field tag="30" name="logisticsOutputTax" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 物流销项税%
+</doc>
+                </field>
+                <field tag="31" name="grossMargin" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 毛利率%
+</doc>
+                </field>
+                <field tag="32" name="supplierId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 供应商id
+</doc>
+                </field>
+                <field tag="33" name="supplierNo" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 供应商编号
+</doc>
+                </field>
+                <field tag="34" name="logisticsType" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuLogisticsTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 商品配送方式
+</doc>
+                </field>
+                <field tag="35" name="shippingMethodValue" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品温层
+</doc>
+                </field>
+                <field tag="36" name="length" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 长度单位毫米
+</doc>
+                </field>
+                <field tag="37" name="width" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 高度单位毫米
+</doc>
+                </field>
+                <field tag="38" name="height" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 高度单位毫米
+</doc>
+                </field>
+                <field tag="39" name="weight" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 毛重单位克
+</doc>
+                </field>
+                <field tag="40" name="flag" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 二进制标识位,从右到左0标识否1标识是.第一位:面板销售;第二位:是否称重;第三位:鲜食订购;第四位:用度品订购;第五位:新品订购;第六位:台账订购
+</doc>
+                </field>
+                <field tag="41" name="createdAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 创建时间
+</doc>
+                </field>
+                <field tag="42" name="createdBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台创建人(公司员工 id)
+</doc>
+                </field>
+                <field tag="43" name="updatedAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 更新时间
+</doc>
+                </field>
+                <field tag="44" name="updatedBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台更新人(公司员工id)
+</doc>
+                </field>
+                <field tag="45" name="remark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 备注
+</doc>
+                </field>
+                <field tag="46" name="masterSupplierName" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 主供应商名称
+</doc>
+                </field>
+                <field tag="47" name="skuBarcodeList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.goods.vo.TSkuBarcode</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 商品条码信息
+</doc>
+                </field>
+                <field tag="48" name="skuSupplierList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.goods.response.TSkuSupplierItem</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 商品关联供应商信息
+</doc>
+                </field>
+                <field tag="49" name="skuMaterialList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.goods.vo.TSkuMaterial</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 商品原材料信息
+</doc>
+                </field>
+                <field tag="50" name="deliveryTime" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 到货时长(天)
+</doc>
+                </field>
+                <field tag="51" name="districtValue" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 供应商可配送区域
+</doc>
+                </field>
+                <field tag="52" name="logisticsPrice" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 物流销价(商品进价*进价系数)
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.goods.request" name="ListSkuDetailByKeywordRequest">
+            <doc>
+
+ 商品模糊查询请求信息
+</doc>
+            <fields>
+                <field tag="1" name="pageRequest" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.common.PageRequest</ref>
+                    </dataType>
+                    <doc>
+
+ 分页数据
+</doc>
+                </field>
+                <field tag="2" name="keyword" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 关键字(商品名称或货号)
+</doc>
+                </field>
+                <field tag="3" name="supplierNo" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 供应商编号
+</doc>
+                </field>
+                <field tag="4" name="categoryCode" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 叶子结点后台类目code
+</doc>
+                </field>
+                <field tag="5" name="shippingMethodValue" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品温层
+</doc>
+                </field>
+                <field tag="6" name="districtValue" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 可配送区域字典值
+</doc>
+                </field>
+                <field tag="7" name="skuPublishStatusList" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>ENUM</kind>
+                            <ref>com.today.api.goods.enums.SkuPublishStatusEnum</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 商品上下架状态
+</doc>
+                </field>
+                <field tag="8" name="skuLogisticsTypeList" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>ENUM</kind>
+                            <ref>com.today.api.goods.enums.SkuLogisticsTypeEnum</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 商品配送方式
+</doc>
+                </field>
+                <field tag="9" name="skuDetailResponseTypes" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>ENUM</kind>
+                            <ref>com.today.api.goods.enums.SkuDetailResponseEnum</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 商品可选返回参数类型
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.goods.response" name="TSkuSupplierItem">
+            <doc>
+
+ 商品供应商关联关系信息
+</doc>
+            <fields>
+                <field tag="1" name="skuId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 商品id
+</doc>
+                </field>
+                <field tag="2" name="skuNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品编号
+</doc>
+                </field>
+                <field tag="3" name="supplierId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 供应商id
+</doc>
+                </field>
+                <field tag="4" name="supplierNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 供应商编号
+</doc>
+                </field>
+                <field tag="5" name="supplierName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 供应商名称
+</doc>
+                </field>
+                <field tag="6" name="supplierLogisticsId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 供应商对应的物流信息ID
+</doc>
+                </field>
+                <field tag="7" name="isPrimarySupplier" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BOOLEAN</kind>
+                    </dataType>
+                    <doc>
+
+ 是否主供应商,1:是(yes);0:否(no);
+</doc>
+                </field>
+                <field tag="8" name="purchasingCentreValue" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 采购中心编号(可配置项)
+</doc>
+                </field>
+                <field tag="9" name="purchasingCentreName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 采购中心名称(可配置项)
+</doc>
+                </field>
+                <field tag="10" name="logisticsCentreValue" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 物流中心编号(可配置项)
+</doc>
+                </field>
+                <field tag="11" name="logisticsCentreName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 物流中心名称(可配置项)
+</doc>
+                </field>
+                <field tag="12" name="shippingMethodValue" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 订购便次编号
+</doc>
+                </field>
+                <field tag="13" name="shippingMethodName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 订购便次名称
+</doc>
+                </field>
+                <field tag="14" name="miniOrderAmount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 最低订额(最低订购金额)
+</doc>
+                </field>
+                <field tag="15" name="weekOrderDay" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 周可订货日,二进制标识位,从右到左0标识否1标识是.第一位:全选订货日;第二位:周一可订货;第三位:周二可订货;第四位:周三可订货;第五位:周四可订货;第六位:周五可订货;第七位:周六可订货;第八位:周日可订货;
+</doc>
+                </field>
+                <field tag="16" name="weekDeliveryDay" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 周可送货日,二进制标识位,从右到左0标识否1标识是.第一位:全周可送货;第二位:周一可送货;第三位:周二可送货;第四位:周三可送货;第五位:周四可送货;第六位:周五可送货;第七位:周六可送货;第八位:周日可送货;
+</doc>
+                </field>
+                <field tag="17" name="buyingPrice" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 商品关联供应商当前生效进价
+</doc>
+                </field>
+                <field tag="18" name="supplierInputTax" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 商品关联供应商当前生效进项税
+</doc>
+                </field>
+                <field tag="19" name="logisticsType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuLogisticsTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 库存方式,1:寄库(deposit);2:经由(via);3:巡回(tour);4:直纳(nonstop);5:直送(direct)
+</doc>
+                </field>
+                <field tag="20" name="deliveryTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 到货时长(天)
+</doc>
+                </field>
+                <field tag="21" name="districtValue" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 供应商配送区域字典值
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.goods.request" name="ListSkuDetailByPurchaseRequest">
+            <doc>
+
+ 符合采购需求的请求参数
+</doc>
+            <fields>
+                <field tag="1" name="skuNos" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRING</kind>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 商品编号集合
+</doc>
+                </field>
+                <field tag="2" name="districtValue" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 业务区域,例如:4201/4301/4501
+</doc>
+                </field>
+                <field tag="3" name="supplierNo" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 供应商编号,不传值则返回标识区域的主供应商
+</doc>
+                </field>
+                <field tag="4" name="storeId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 门店财务编号,不传值则拿区域售价
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.common" name="PageResponse">
+            <fields>
+                <field tag="1" name="start" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 查询的开始序号（序号从零开始）
+</doc>
+                </field>
+                <field tag="2" name="limit" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 最大返回的记录数
+</doc>
+                </field>
+                <field tag="3" name="results" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 结果记录数
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.goods.vo" name="TSkuBarcode">
+            <doc>
+
+  SkuBarcode
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 利用主键策略生成的唯一键
+</doc>
+                </field>
+                <field tag="2" name="version" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 商品sku版本号
+</doc>
+                </field>
+                <field tag="3" name="status" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuBarcodeStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 状态,1:正常(normal);99:无效(invalid)
+</doc>
+                </field>
+                <field tag="4" name="skuId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ sku_id
+</doc>
+                </field>
+                <field tag="5" name="packingSize" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 包装入数(一箱或者一件单品的个数)
+</doc>
+                </field>
+                <field tag="6" name="packingSpec" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 包装结构
+</doc>
+                </field>
+                <field tag="7" name="packingMult" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 包装结构所需参数 例如:包装结构的最后一个参数 例如：1*6*2 的 2
+</doc>
+                </field>
+                <field tag="8" name="type" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuBarcodeTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 条码类型,1:单品条码(barcode),2:物流条码(box_barcode)
+</doc>
+                </field>
+                <field tag="9" name="property" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuBarcodePropertyEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 条码属性,1:店内条码(in_store_barcode);2:国际条码(international_barcode)
+</doc>
+                </field>
+                <field tag="10" name="standard" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuBarcodeStandardEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 条码规格,1:8位(ean8);2:13位(ean13)
+</doc>
+                </field>
+                <field tag="11" name="barcode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 条码值
+</doc>
+                </field>
+                <field tag="12" name="length" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 长度单位毫米
+</doc>
+                </field>
+                <field tag="13" name="width" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 宽度单位毫米
+</doc>
+                </field>
+                <field tag="14" name="height" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 高度单位毫米
+</doc>
+                </field>
+                <field tag="15" name="weight" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 毛重单位克
+</doc>
+                </field>
+                <field tag="16" name="flag" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 二进制标识位,从右到左0标识否1标识是.第一位:主条码;第二位:总部可订购;第三位:门店可销售;第四位:门店可订购
+</doc>
+                </field>
+                <field tag="17" name="createdAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 创建时间
+</doc>
+                </field>
+                <field tag="18" name="createdBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台创建人(公司员工 id)
+</doc>
+                </field>
+                <field tag="19" name="updatedAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 更新时间
+</doc>
+                </field>
+                <field tag="20" name="updatedBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台更新人(公司员工 id)
+</doc>
+                </field>
+                <field tag="21" name="remark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 备注
+</doc>
+                </field>
+                <field tag="22" name="skuNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品货号
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.goods.request" name="BackErrorSkuRequest">
+            <doc>
+
+ 记录名称不准确的商品
+</doc>
+            <fields>
+                <field tag="1" name="barcode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 条码值
+</doc>
+                </field>
+                <field tag="2" name="realName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 真实名称
+</doc>
+                </field>
+                <field tag="3" name="remark" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 其他备注
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.goods.response" name="BarcodeSkuResponse">
+            <doc>
+
+ 根据商品条码查询商品的一般信息
+</doc>
+            <fields>
+                <field tag="1" name="masterBarcode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品条形码
+</doc>
+                </field>
+                <field tag="2" name="skuNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品货号
+</doc>
+                </field>
+                <field tag="3" name="posname" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品pos名称
+</doc>
+                </field>
+                <field tag="4" name="skuName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品货号
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.common" name="PageRequest">
+            <doc>
+
+ 分页查询请求包
+</doc>
+            <fields>
+                <field tag="1" name="start" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 查询的开始序号（序号从零开始）
+</doc>
+                </field>
+                <field tag="2" name="limit" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 返回记录数
+</doc>
+                </field>
+                <field tag="3" name="sortFields" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 排序的字段
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.goods.response" name="ListSkuDetailByKeywordResponse">
+            <doc>
+
+ 模糊查询商品返回信息
+</doc>
+            <fields>
+                <field tag="1" name="pageResponse" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.common.PageResponse</ref>
+                    </dataType>
+                    <doc>
+
+ 分页数据
+</doc>
+                </field>
+                <field tag="2" name="skuDetailList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.goods.response.SkuDetailItem</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 商品数据
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.goods.response" name="ListSkuByConditionsResponse">
+            <doc>
+
+ 分页查询接口返回结果
+</doc>
+            <fields>
+                <field tag="1" name="pageResponse" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.common.PageResponse</ref>
+                    </dataType>
+                    <doc>
+
+ 分页信息
+</doc>
+                </field>
+                <field tag="2" name="skuList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.goods.response.TSkuItem</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 商品集合
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.goods.request" name="BarcodeSkuRequest">
+            <doc>
+
+ 根据商品条码精确查询商品
+</doc>
+            <fields>
+                <field tag="1" name="barcode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 条码值
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.goods.request" name="ListSkuByConditionsRequest">
+            <doc>
+
+ 分页查询请求接口
+</doc>
+            <fields>
+                <field tag="1" name="pageRequest" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.common.PageRequest</ref>
+                    </dataType>
+                    <doc>
+
+ 分页信息
+</doc>
+                </field>
+                <field tag="2" name="categoryCode" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 类目code
+</doc>
+                </field>
+                <field tag="3" name="skuType" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 商品类型
+</doc>
+                </field>
+                <field tag="4" name="skuNo" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品货号
+</doc>
+                </field>
+                <field tag="5" name="masterBarcode" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 主条码
+</doc>
+                </field>
+                <field tag="6" name="channel" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.GoodsChannelEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 渠道(是否自有)
+</doc>
+                </field>
+                <field tag="7" name="skuName" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品名称
+</doc>
+                </field>
+                <field tag="8" name="minSellingPrice" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 最低售价
+</doc>
+                </field>
+                <field tag="9" name="maxSellingPrice" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 最高售价
+</doc>
+                </field>
+                <field tag="10" name="minGrossMargin" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 最低毛利率
+</doc>
+                </field>
+                <field tag="11" name="maxGrossMargin" optional="true" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 最高毛利率
+</doc>
+                </field>
+                <field tag="12" name="publishApproveStatus" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuPublishApproveStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 上架审核状态
+</doc>
+                </field>
+                <field tag="13" name="unPublishApproveStatus" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuUnPublishApproveStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 下架审核状态
+</doc>
+                </field>
+                <field tag="14" name="changeAttrStatus" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuChangeAttrStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 属性变更审核状态
+</doc>
+                </field>
+                <field tag="15" name="publishStatus" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuPublishStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 上下架状态
+</doc>
+                </field>
+                <field tag="16" name="goodsOrderStatusList" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>ENUM</kind>
+                            <ref>com.today.api.goods.enums.SkuFlagEnum</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 商品订购状态,1:新品订购(new);2:鲜食订购(fresh);3:台账订购(book);4:用度品订购(self)
+</doc>
+                </field>
+                <field tag="17" name="logisticsTypeList" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>ENUM</kind>
+                            <ref>com.today.api.goods.enums.SkuLogisticsTypeEnum</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 商品配送方式,1:寄库(deposit);2:经由(via);3:巡回(tour);4:直纳(nonstop);5:直送(direct)
+</doc>
+                </field>
+                <field tag="18" name="shippingMethodValue" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品温层
+</doc>
+                </field>
+                <field tag="19" name="createdBy" optional="true" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 商品创建人id
+</doc>
+                </field>
+                <field tag="20" name="changeBuyingPriceStatus" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.BuyingPriceChangeStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 主供应商进价状态
+</doc>
+                </field>
+                <field tag="21" name="changeSellingPriceStatus" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SellingPriceChangeStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 商品基本售价状态
+</doc>
+                </field>
+                <field tag="22" name="skuFinanceType" optional="true" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuFinanceTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 商品财务分类
+</doc>
+                </field>
+                <field tag="23" name="supplierNo" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 供应商编号
+</doc>
+                </field>
+                <field tag="24" name="districtValue" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 业务城市字典值
+</doc>
+                </field>
+                <field tag="25" name="headquarterEffectiveDateStart" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 总部生效起始时间
+</doc>
+                </field>
+                <field tag="26" name="headquarterEffectiveDateEnd" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 总部生效结束时间
+</doc>
+                </field>
+                <field tag="27" name="storeEffectiveDateStart" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 门店生效起始时间
+</doc>
+                </field>
+                <field tag="28" name="storeEffectiveDateEnd" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 门店生效结束时间
+</doc>
+                </field>
+                <field tag="29" name="createdAtStart" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 创建起始时间
+</doc>
+                </field>
+                <field tag="30" name="createdAtEnd" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 创建结束时间
+</doc>
+                </field>
+                <field tag="31" name="inventoryAccountValue" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 口座字典值
+</doc>
+                </field>
+                <field tag="32" name="barcode" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品条码
+</doc>
+                </field>
+                <field tag="33" name="creator" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品创建人名称
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.goods.vo" name="TSkuMaterial">
+            <doc>
+
+ SkuMaterial
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 利用主键策略生成的唯一键
+</doc>
+                </field>
+                <field tag="2" name="status" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 状态,1:正常(normal);99:无效(invalid)
+</doc>
+                </field>
+                <field tag="3" name="skuId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 加工商品的sku_id
+</doc>
+                </field>
+                <field tag="4" name="skuNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 加工商品的sku_no
+</doc>
+                </field>
+                <field tag="5" name="materialSkuId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 原材料的sku_id
+</doc>
+                </field>
+                <field tag="6" name="materialSkuNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 原材料的sku_no
+</doc>
+                </field>
+                <field tag="7" name="useCount" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 原材料使用量
+</doc>
+                </field>
+                <field tag="8" name="useUnit" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 计量单位(可设置)
+</doc>
+                </field>
+                <field tag="9" name="createdAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 创建时间
+</doc>
+                </field>
+                <field tag="10" name="createdBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台创建人(公司员工 id)
+</doc>
+                </field>
+                <field tag="11" name="updatedAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 更新时间
+</doc>
+                </field>
+                <field tag="12" name="updatedBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台更新人(公司员工 id)
+</doc>
+                </field>
+                <field tag="13" name="remark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 备注
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.goods.vo" name="TSku">
+            <doc>
+
+  Sku
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 利用主键策略生成的唯一键
+</doc>
+                </field>
+                <field tag="2" name="version" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 商品sku版本号
+</doc>
+                </field>
+                <field tag="3" name="publishStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuPublishStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 状态,1:待上架(init);2:已上架(pass);3:已下架(failure);99:无效(invalid)
+</doc>
+                </field>
+                <field tag="4" name="goodsId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 商品ID
+</doc>
+                </field>
+                <field tag="5" name="type" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 商品类型,1:一般性商品(normal_sku);2:鲜食商品(fresh_sku);3:服务商品(service_sku);4:加工商品(machine_sku);5:原材料(material_sku)
+</doc>
+                </field>
+                <field tag="6" name="financeType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuFinanceTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 商品财务类型,1:正常商品(normal_sku);2:代售商品(commission_sku);3:包材(packing_sku);4:门店用品(store_use_sku)
+</doc>
+                </field>
+                <field tag="7" name="inventoryAccountValue" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 口座字典值
+</doc>
+                </field>
+                <field tag="8" name="skuNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 货号唯一键
+</doc>
+                </field>
+                <field tag="9" name="skuName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ sku名称
+</doc>
+                </field>
+                <field tag="10" name="skuNameEn" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ sku英文名称
+</doc>
+                </field>
+                <field tag="11" name="posname" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ pos名称
+</doc>
+                </field>
+                <field tag="12" name="brand" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 品牌
+</doc>
+                </field>
+                <field tag="13" name="spec" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 规格
+</doc>
+                </field>
+                <field tag="14" name="saleUnit" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 计价单位(可设置)
+</doc>
+                </field>
+                <field tag="15" name="shelflife" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 保质期
+</doc>
+                </field>
+                <field tag="16" name="shelflifeUnit" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuShelflifeUnitEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 保质期单位,1:小时(hour);2:天(day);3:月(month);4:年(year);5:永久有效(for_ever)
+</doc>
+                </field>
+                <field tag="17" name="inStockStandard" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 允许入库标准
+</doc>
+                </field>
+                <field tag="18" name="outStockStandard" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 允许出库标准
+</doc>
+                </field>
+                <field tag="19" name="stockStandardUnit" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuStockStandardUnitEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 允许入库标准单位,1:小时(hour);2:天(day);3:月(month);4:年(year);5:永久有效(for_ever)
+</doc>
+                </field>
+                <field tag="20" name="shippingMethodValue" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品温层
+</doc>
+                </field>
+                <field tag="21" name="channel" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuChannelEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 商品渠道,1:自有(pb);2:非自有(nb)
+</doc>
+                </field>
+                <field tag="22" name="categoryId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 新类目id
+</doc>
+                </field>
+                <field tag="23" name="categoryCode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 新类目code
+</doc>
+                </field>
+                <field tag="24" name="masterBarcodeProperty" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuBarcodePropertyEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 条码属性,1:店内条码(in_store_barcode);2:国际条码(international_barcode)
+</doc>
+                </field>
+                <field tag="25" name="masterBarcode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 条码值
+</doc>
+                </field>
+                <field tag="26" name="primaryAttributes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 关键属性存(spu)储方式 id:value;id:value1|value2
+</doc>
+                </field>
+                <field tag="27" name="sellAttributes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 销售属性(sku)存储方式 id:value;id:value1|value2
+</doc>
+                </field>
+                <field tag="28" name="normalAttributes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 一般属性存储方式 id:value;id:value1|value2
+</doc>
+                </field>
+                <field tag="29" name="skuHashCode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品名称+品牌+关键属性+销售属性对应的64位 hash 值可以作为unique索引
+</doc>
+                </field>
+                <field tag="30" name="headquarterEffectiveDate" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 总部生效日期
+</doc>
+                </field>
+                <field tag="31" name="storeEffectiveDate" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 门店生效日期
+</doc>
+                </field>
+                <field tag="32" name="minOrderNum" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 最小订购数
+</doc>
+                </field>
+                <field tag="33" name="minOrderTimes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 最小订购倍数
+</doc>
+                </field>
+                <field tag="34" name="maxOrderTimes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 最大订购倍数
+</doc>
+                </field>
+                <field tag="35" name="outputTax" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 销项税%
+</doc>
+                </field>
+                <field tag="36" name="logisticsOutputTax" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 物流销项税%
+</doc>
+                </field>
+                <field tag="37" name="length" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 长度单位毫米
+</doc>
+                </field>
+                <field tag="38" name="width" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 高度单位毫米
+</doc>
+                </field>
+                <field tag="39" name="height" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 高度单位毫米
+</doc>
+                </field>
+                <field tag="40" name="weight" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 毛重单位克
+</doc>
+                </field>
+                <field tag="41" name="flag" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 二进制标识位,从右到左0标识否1标识是.第一位:面板销售;第二位:是否称重;第三位:鲜食订购;第四位:用度品订购;第五位:新品订购;第六位:台账订购
+</doc>
+                </field>
+                <field tag="42" name="createdAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 创建时间
+</doc>
+                </field>
+                <field tag="43" name="createdBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台创建人(公司员工 id)
+</doc>
+                </field>
+                <field tag="44" name="updatedAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 更新时间
+</doc>
+                </field>
+                <field tag="45" name="updatedBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台更新人(公司员工 id)
+</doc>
+                </field>
+                <field tag="46" name="remark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 备注
+</doc>
+                </field>
+                <field tag="47" name="cvsArticleId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 原CVS商品货号
+</doc>
+                </field>
+                <field tag="48" name="cvsPurchasingCenterId" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 原CVS商品采购中心ID
+</doc>
+                </field>
+                <field tag="49" name="cvsCategoryIdA" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 大(A)分类id
+</doc>
+                </field>
+                <field tag="50" name="cvsCategoryIdB" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 中(B)分类id
+</doc>
+                </field>
+                <field tag="51" name="cvsCategoryIdC" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 小(C)分类id
+</doc>
+                </field>
+                <field tag="52" name="firstPublishDate" optional="true" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 商品首次上架时间
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.goods.response" name="ListSkuDetailByPurchaseResponse">
+            <doc>
+
+ 商品详情
+</doc>
+            <fields>
+                <field tag="1" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 利用主键策略生成的唯一键
+</doc>
+                </field>
+                <field tag="2" name="publishStatus" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuPublishStatusEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 状态,1:待上架(init);2:已上架(pass);3:已下架(failure);99:无效(invalid)
+</doc>
+                </field>
+                <field tag="3" name="goodsId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 商品id
+</doc>
+                </field>
+                <field tag="4" name="type" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 商品类型,1:一般性商品(normal_sku);2:鲜食商品(fresh_sku);3:服务商品(service_sku);4:加工商品(machine_sku);5:原材料商品(material_sku)
+</doc>
+                </field>
+                <field tag="5" name="financeType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuFinanceTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 商品财务类型,1:正常商品(normal_sku);2:代售商品(commission_sku);3:包材(packing_sku);4:门店用品(store_use_sku)
+</doc>
+                </field>
+                <field tag="6" name="inventoryAccountValue" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 口座字典值
+</doc>
+                </field>
+                <field tag="7" name="skuNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品货号
+</doc>
+                </field>
+                <field tag="8" name="skuName" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ sku名称
+</doc>
+                </field>
+                <field tag="9" name="skuNameEn" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ sku英文名称
+</doc>
+                </field>
+                <field tag="10" name="posname" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ pos名称
+</doc>
+                </field>
+                <field tag="11" name="brand" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 品牌
+</doc>
+                </field>
+                <field tag="12" name="spec" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 规格
+</doc>
+                </field>
+                <field tag="13" name="saleUnit" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 计价单位(可设置)
+</doc>
+                </field>
+                <field tag="14" name="shelflife" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 保质期
+</doc>
+                </field>
+                <field tag="15" name="shelflifeUnit" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuShelflifeUnitEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 保质期单位,1:小时(hour);2:天(day);3:月(month);4:年(year);5:永久有效(for_ever)
+</doc>
+                </field>
+                <field tag="16" name="channel" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuChannelEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 商品渠道,1:自有(pb);2:非自有(nb)
+</doc>
+                </field>
+                <field tag="17" name="categoryId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 类目id
+</doc>
+                </field>
+                <field tag="18" name="categoryCode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 三级类目code
+</doc>
+                </field>
+                <field tag="19" name="masterBarcodeProperty" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuBarcodePropertyEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 条码属性,1:店内条码(in_store_barcode);2:国际条码(international_barcode)
+</doc>
+                </field>
+                <field tag="20" name="masterBarcode" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 主条码值
+</doc>
+                </field>
+                <field tag="21" name="headquarterEffectiveDate" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 总部生效日期
+</doc>
+                </field>
+                <field tag="22" name="storeEffectiveDate" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 门店生效日期
+</doc>
+                </field>
+                <field tag="23" name="minOrderNum" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 最小订购数
+</doc>
+                </field>
+                <field tag="24" name="minOrderTimes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 最小订购倍数
+</doc>
+                </field>
+                <field tag="25" name="maxOrderTimes" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 最大订购倍数
+</doc>
+                </field>
+                <field tag="26" name="buyingPrice" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 商品指定供应商(区域主供应商)当前生效进价(未税)
+</doc>
+                </field>
+                <field tag="27" name="sellingPrice" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 商品当前指定门店(区域)生效售价(含税)
+</doc>
+                </field>
+                <field tag="28" name="inputTax" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 商品指定供应商(区域主供应商) 进项税%
+</doc>
+                </field>
+                <field tag="29" name="outputTax" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 商品指定供应商(区域主供应商) 销项税%
+</doc>
+                </field>
+                <field tag="30" name="logisticsOutputTax" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 物流销项税%
+</doc>
+                </field>
+                <field tag="32" name="supplierId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 商品指定供应商(区域主供应商)供应商id
+</doc>
+                </field>
+                <field tag="33" name="supplierNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品指定供应商(区域主供应商)供应商编号
+</doc>
+                </field>
+                <field tag="34" name="logisticsType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.goods.enums.SkuLogisticsTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 商品配送方式
+</doc>
+                </field>
+                <field tag="35" name="shippingMethodValue" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 商品温层
+</doc>
+                </field>
+                <field tag="36" name="length" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 长度单位毫米
+</doc>
+                </field>
+                <field tag="37" name="width" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 高度单位毫米
+</doc>
+                </field>
+                <field tag="38" name="height" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 高度单位毫米
+</doc>
+                </field>
+                <field tag="39" name="weight" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 毛重单位克
+</doc>
+                </field>
+                <field tag="40" name="flag" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 二进制标识位,从右到左0标识否1标识是.第一位:面板销售;第二位:是否称重;第三位:鲜食订购;第四位:用度品订购;第五位:新品订购;第六位:台账订购
+</doc>
+                </field>
+                <field tag="41" name="createdAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 创建时间
+</doc>
+                </field>
+                <field tag="42" name="createdBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台创建人(公司员工 id)
+</doc>
+                </field>
+                <field tag="43" name="updatedAt" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 更新时间
+</doc>
+                </field>
+                <field tag="44" name="updatedBy" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 特指后台更新人(公司员工id)
+</doc>
+                </field>
+                <field tag="45" name="remark" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 备注
+</doc>
+                </field>
+                <field tag="47" name="skuBarcodeList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.goods.vo.TSkuBarcode</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 商品条码信息
+</doc>
+                </field>
+                <field tag="48" name="skuSupplier" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRUCT</kind>
+                        <ref>com.today.api.goods.response.TSkuSupplierItem</ref>
+                    </dataType>
+                    <doc>
+
+ 商品指定供应商(区域主供应商)关联供应商信息
+</doc>
+                </field>
+                <field tag="51" name="districtValue" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 供应商可配送区域
+</doc>
+                </field>
+                <field tag="52" name="logisticsPrice" optional="false" privacy="false">
+                    <dataType>
+                        <kind>DOUBLE</kind>
+                    </dataType>
+                    <doc>
+
+ 物流销价(商品指定供应商(区域主供应商)商品进价*进价系数)
+</doc>
+                </field>
+            </fields>
+        </struct>
+    </structs>
+    <enums>
+        <tenum namespace="com.today.api.goods.enums" name="SkuBarcodeStandardEnum">
+            <doc>
+
+ 条码规格
+</doc>
+            <items>
+                <item>
+                    <label>EAN8</label>
+                    <value>1</value>
+                    <doc>
+
+ 8位
+</doc>
+                </item>
+                <item>
+                    <label>EAN13</label>
+                    <value>2</value>
+                    <doc>
+
+ 13位
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.goods.enums" name="SkuPublishStatusEnum">
+            <doc>
+
+ 状态
+</doc>
+            <items>
+                <item>
+                    <label>INIT</label>
+                    <value>1</value>
+                    <doc>
+
+ 待上架
+</doc>
+                </item>
+                <item>
+                    <label>PASS</label>
+                    <value>2</value>
+                    <doc>
+
+ 已上架
+</doc>
+                </item>
+                <item>
+                    <label>FAILURE</label>
+                    <value>3</value>
+                    <doc>
+
+ 已下架
+</doc>
+                </item>
+                <item>
+                    <label>INVALID</label>
+                    <value>99</value>
+                    <doc>
+
+ 无效
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.goods.enums" name="SkuShelflifeUnitEnum">
+            <doc>
+
+ 保质期单位
+</doc>
+            <items>
+                <item>
+                    <label>HOUR</label>
+                    <value>1</value>
+                    <doc>
+
+ 小时
+</doc>
+                </item>
+                <item>
+                    <label>DAY</label>
+                    <value>2</value>
+                    <doc>
+
+ 天
+</doc>
+                </item>
+                <item>
+                    <label>MONTH</label>
+                    <value>3</value>
+                    <doc>
+
+ 月
+</doc>
+                </item>
+                <item>
+                    <label>YEAR</label>
+                    <value>4</value>
+                    <doc>
+
+ 年
+</doc>
+                </item>
+                <item>
+                    <label>FOR_EVER</label>
+                    <value>5</value>
+                    <doc>
+
+ 永久有效
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.goods.enums" name="SkuChannelEnum">
+            <doc>
+
+ 商品渠道
+</doc>
+            <items>
+                <item>
+                    <label>PB</label>
+                    <value>1</value>
+                    <doc>
+
+ 自有
+</doc>
+                </item>
+                <item>
+                    <label>NB</label>
+                    <value>2</value>
+                    <doc>
+
+ 非自有
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.goods.enums" name="SkuPublishApproveStatusEnum">
+            <doc>
+
+ 上架状态
+</doc>
+            <items>
+                <item>
+                    <label>PUBLISH_INIT</label>
+                    <value>1</value>
+                    <doc>
+
+ 上架待审核
+</doc>
+                </item>
+                <item>
+                    <label>PUBLISH_PASS</label>
+                    <value>2</value>
+                    <doc>
+
+ 上架审核通过
+</doc>
+                </item>
+                <item>
+                    <label>PUBLISH_FAILURE</label>
+                    <value>3</value>
+                    <doc>
+
+ 上架审核拒绝
+</doc>
+                </item>
+                <item>
+                    <label>FINANCE_APPROVE_PASS</label>
+                    <value>4</value>
+                    <doc>
+
+ 财务审核通过
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.goods.enums" name="SkuTypeEnum">
+            <doc>
+
+ 商品类型
+</doc>
+            <items>
+                <item>
+                    <label>NORMAL_SKU</label>
+                    <value>1</value>
+                    <doc>
+
+ 一般性商品
+</doc>
+                </item>
+                <item>
+                    <label>FRESH_SKU</label>
+                    <value>2</value>
+                    <doc>
+
+ 鲜食商品
+</doc>
+                </item>
+                <item>
+                    <label>SERVICE_SKU</label>
+                    <value>3</value>
+                    <doc>
+
+ 服务商品
+</doc>
+                </item>
+                <item>
+                    <label>MACHINE_SKU</label>
+                    <value>4</value>
+                    <doc>
+
+ 加工商品
+</doc>
+                </item>
+                <item>
+                    <label>MATERIAL_SKU</label>
+                    <value>5</value>
+                    <doc>
+
+ 原材料商品
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.goods.enums" name="SkuDetailResponseEnum">
+            <doc>
+
+ 商品可选返回参数类型
+</doc>
+            <items>
+                <item>
+                    <label>SKU_BARCODE_LIST</label>
+                    <value>1</value>
+                    <doc>
+
+ 返回商品对应的条码信息集合
+</doc>
+                </item>
+                <item>
+                    <label>SKU_SUPPLIER_LIST</label>
+                    <value>2</value>
+                    <doc>
+
+ 返回商品关联的所有供应商集合
+</doc>
+                </item>
+                <item>
+                    <label>SKU_MACHINE_LIST</label>
+                    <value>3</value>
+                    <doc>
+
+ 返回加工商品信息集合
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.goods.enums" name="SkuBarcodeTypeEnum">
+            <doc>
+
+ 条码类型
+</doc>
+            <items>
+                <item>
+                    <label>BARCODE</label>
+                    <value>1</value>
+                    <doc>
+
+ 单品条码
+</doc>
+                </item>
+                <item>
+                    <label>BOX_BARCODE</label>
+                    <value>2</value>
+                    <doc>
+
+ 箱条码
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.goods.enums" name="SellingPriceChangeStatusEnum">
+            <doc>
+
+ 售价变更状态
+</doc>
+            <items>
+                <item>
+                    <label>NOT_EXIST_SELLING</label>
+                    <value>0</value>
+                    <doc>
+
+ 售价不存在
+</doc>
+                </item>
+                <item>
+                    <label>CHANGE_SELLING</label>
+                    <value>1</value>
+                    <doc>
+
+ 售价修改待审核
+</doc>
+                </item>
+                <item>
+                    <label>CHANGE_SELLING_SUCCESS</label>
+                    <value>2</value>
+                    <doc>
+
+ 售价修改审核通过
+</doc>
+                </item>
+                <item>
+                    <label>CHANGE_SELLING_FAILURE</label>
+                    <value>3</value>
+                    <doc>
+
+ 售价修改审核拒绝
+</doc>
+                </item>
+                <item>
+                    <label>CHANGE_SELLING_EFFECTIVE</label>
+                    <value>4</value>
+                    <doc>
+
+ 售价生效中
+</doc>
+                </item>
+                <item>
+                    <label>CHANGE_SELLING_INVALID</label>
+                    <value>5</value>
+                    <doc>
+
+ 已失效售价
+</doc>
+                </item>
+                <item>
+                    <label>CHANGE_SELLING_DELETE</label>
+                    <value>6</value>
+                    <doc>
+
+ 已删除售价
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.goods.enums" name="SkuStockStandardUnitEnum">
+            <doc>
+
+ 允许入库标准单位
+</doc>
+            <items>
+                <item>
+                    <label>HOUR</label>
+                    <value>1</value>
+                    <doc>
+
+ 小时
+</doc>
+                </item>
+                <item>
+                    <label>DAY</label>
+                    <value>2</value>
+                    <doc>
+
+ 天
+</doc>
+                </item>
+                <item>
+                    <label>MONTH</label>
+                    <value>3</value>
+                    <doc>
+
+ 月
+</doc>
+                </item>
+                <item>
+                    <label>YEAR</label>
+                    <value>4</value>
+                    <doc>
+
+ 年
+</doc>
+                </item>
+                <item>
+                    <label>FOR_EVER</label>
+                    <value>5</value>
+                    <doc>
+
+ 永久有效
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.goods.enums" name="SkuFlagEnum">
+            <doc>
+
+ 商品订购类型
+</doc>
+            <items>
+                <item>
+                    <label>NEW</label>
+                    <value>1</value>
+                    <doc>
+
+ 新品订购
+</doc>
+                </item>
+                <item>
+                    <label>FRESH</label>
+                    <value>2</value>
+                    <doc>
+
+ 鲜食订购
+</doc>
+                </item>
+                <item>
+                    <label>BOOK</label>
+                    <value>3</value>
+                    <doc>
+
+ 台账订购
+</doc>
+                </item>
+                <item>
+                    <label>SELF</label>
+                    <value>4</value>
+                    <doc>
+
+ 用度品订购
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.goods.enums" name="SkuFinanceTypeEnum">
+            <doc>
+
+ 商品财务类型
+</doc>
+            <items>
+                <item>
+                    <label>NORMAL_SKU</label>
+                    <value>1</value>
+                    <doc>
+
+ 正常商品
+</doc>
+                </item>
+                <item>
+                    <label>COMMISSION_SKU</label>
+                    <value>2</value>
+                    <doc>
+
+ 代售商品
+</doc>
+                </item>
+                <item>
+                    <label>PACKING_SKU</label>
+                    <value>3</value>
+                    <doc>
+
+ 包材
+</doc>
+                </item>
+                <item>
+                    <label>STORE_USE_SKU</label>
+                    <value>4</value>
+                    <doc>
+
+ 门店用品
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.goods.enums" name="GoodsChannelEnum">
+            <doc>
+
+ 商品渠道
+</doc>
+            <items>
+                <item>
+                    <label>PB</label>
+                    <value>1</value>
+                    <doc>
+
+ 自有
+</doc>
+                </item>
+                <item>
+                    <label>NB</label>
+                    <value>2</value>
+                    <doc>
+
+ 非自有
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.goods.enums" name="SkuLogisticsTypeEnum">
+            <doc>
+
+ 商品配送方式
+</doc>
+            <items>
+                <item>
+                    <label>DEPOSIT</label>
+                    <value>1</value>
+                    <doc>
+
+ 寄库
+</doc>
+                </item>
+                <item>
+                    <label>VIA</label>
+                    <value>2</value>
+                    <doc>
+
+ 经由
+</doc>
+                </item>
+                <item>
+                    <label>TOUR</label>
+                    <value>3</value>
+                    <doc>
+
+ 巡回
+</doc>
+                </item>
+                <item>
+                    <label>NONSTOP</label>
+                    <value>4</value>
+                    <doc>
+
+ 直纳
+</doc>
+                </item>
+                <item>
+                    <label>DIRECT</label>
+                    <value>5</value>
+                    <doc>
+
+ 直送
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.goods.enums" name="SkuBarcodePropertyEnum">
+            <doc>
+
+ 条码属性
+</doc>
+            <items>
+                <item>
+                    <label>IN_STORE_BARCODE</label>
+                    <value>1</value>
+                    <doc>
+
+ 店内条码
+</doc>
+                </item>
+                <item>
+                    <label>INTERNATIONAL_BARCODE</label>
+                    <value>2</value>
+                    <doc>
+
+ 国际条码
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.goods.enums" name="BuyingPriceChangeStatusEnum">
+            <doc>
+
+ 进价变更状态
+</doc>
+            <items>
+                <item>
+                    <label>NOT_EXIST_SELLING</label>
+                    <value>0</value>
+                    <doc>
+
+ 进价不存在
+</doc>
+                </item>
+                <item>
+                    <label>CHANGE_BUYING</label>
+                    <value>1</value>
+                    <doc>
+
+ 进价修改待审核
+</doc>
+                </item>
+                <item>
+                    <label>CHANGE_BUYING_SUCCESS</label>
+                    <value>2</value>
+                    <doc>
+
+ 进价修改审核通过
+</doc>
+                </item>
+                <item>
+                    <label>CHANGE_BUYING_FAILURE</label>
+                    <value>3</value>
+                    <doc>
+
+ 进价修改审核拒绝
+</doc>
+                </item>
+                <item>
+                    <label>CHANGE_BUYING_EFFECTIVE</label>
+                    <value>4</value>
+                    <doc>
+
+ 进价生效中
+</doc>
+                </item>
+                <item>
+                    <label>CHANGE_BUYING_INVALID</label>
+                    <value>5</value>
+                    <doc>
+
+ 已失效进价
+</doc>
+                </item>
+                <item>
+                    <label>CHANGE_BUYING_DELETE</label>
+                    <value>6</value>
+                    <doc>
+
+ 已删除进价
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.goods.enums" name="SkuBarcodeStatusEnum">
+            <doc>
+
+ 状态
+</doc>
+            <items>
+                <item>
+                    <label>NORMAL</label>
+                    <value>1</value>
+                    <doc>
+
+ 正常
+</doc>
+                </item>
+                <item>
+                    <label>INVALID</label>
+                    <value>99</value>
+                    <doc>
+
+ 无效
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.goods.enums" name="SkuChangeAttrStatusEnum">
+            <doc>
+
+ sku修改属性审核状态
+</doc>
+            <items>
+                <item>
+                    <label>CHANGE_ATTRIBUTE</label>
+                    <value>1</value>
+                    <doc>
+
+ 属性修改待审核
+</doc>
+                </item>
+                <item>
+                    <label>CHANGE_ATTRIBUTE_SUCCESS</label>
+                    <value>2</value>
+                    <doc>
+
+ 属性修改审核通过
+</doc>
+                </item>
+                <item>
+                    <label>CHANGE_ATTRIBUTE_FAILURE</label>
+                    <value>3</value>
+                    <doc>
+
+ 属性修改审核拒绝
+</doc>
+                </item>
+                <item>
+                    <label>INVALID</label>
+                    <value>99</value>
+                    <doc>
+
+ 无效
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.goods.enums" name="SkuUnPublishApproveStatusEnum">
+            <doc>
+
+ 下架状态
+</doc>
+            <items>
+                <item>
+                    <label>UN_PUBLISH_INIT</label>
+                    <value>1</value>
+                    <doc>
+
+ 下架待审核
+</doc>
+                </item>
+                <item>
+                    <label>UN_PUBLISH_PASS</label>
+                    <value>2</value>
+                    <doc>
+
+ 下架审核通过
+</doc>
+                </item>
+                <item>
+                    <label>UN_PUBLISH_FAILURE</label>
+                    <value>3</value>
+                    <doc>
+
+ 下架审核拒绝
+</doc>
+                </item>
+            </items>
+        </tenum>
+    </enums>
+    <annotations>
+        <annotation key="group" value="Goods"/>
+    </annotations>
+</service>

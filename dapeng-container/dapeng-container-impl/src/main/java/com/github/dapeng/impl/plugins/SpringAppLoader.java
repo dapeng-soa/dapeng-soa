@@ -2,8 +2,12 @@ package com.github.dapeng.impl.plugins;
 
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
+import com.github.dapeng.api.Plugin;
+import com.github.dapeng.api.lifecycle.LifecycleProcessorFactory;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.github.dapeng.core.lifecycle.LifeCycleAware;
 import com.github.dapeng.impl.container.DapengApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +31,7 @@ public class SpringAppLoader implements Plugin {
         this.appClassLoaders = appClassLoaders;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void start() {
         LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
@@ -51,10 +56,15 @@ public class SpringAppLoader implements Plugin {
 
                 Map<String, SoaServiceDefinition<?>> processorMap = (Map<String, SoaServiceDefinition<?>>)
                         method.invoke(springCtx, appClassLoader.loadClass(SoaServiceDefinition.class.getName()));
+
+                //获取所有实现了lifecycle的bean
+                LifecycleProcessorFactory.getLifecycleProcessor().addLifecycles(((Map<String, LifeCycleAware>)
+                        method.invoke(springCtx, appClassLoader.loadClass(LifeCycleAware.class.getName()))).values());
+
+
                 //TODO: 需要构造Application对象
                 Map<String, ServiceInfo> appInfos = toServiceInfos(processorMap);
-                Application application = new DapengApplication(appInfos.values().stream().collect(Collectors.toList()),
-                        appClassLoader);
+                Application application = new DapengApplication(new ArrayList<>(appInfos.values()), appClassLoader);
 
                 //Start spring context
                 LOGGER.info(" start to boot app");
@@ -68,7 +78,8 @@ public class SpringAppLoader implements Plugin {
                     container.registerAppProcessors(serviceDefinitionMap);
 
                     container.registerAppMap(toApplicationMap(serviceDefinitionMap, application));
-                    container.registerApplication(application); //fire a zk event
+                    //fire a zk event
+                    container.registerApplication(application);
                 }
 
                 LOGGER.info(" ------------ SpringClassLoader: " + ContainerFactory.getContainer().getApplications());
@@ -100,7 +111,7 @@ public class SpringAppLoader implements Plugin {
                 method.invoke(context);
             } catch (NoSuchMethodException e) {
                 LOGGER.info(" failed to get context close method.....");
-            } catch (IllegalAccessException|InvocationTargetException e) {
+            } catch (IllegalAccessException | InvocationTargetException e) {
                 LOGGER.info(e.getMessage());
             }
         });
@@ -137,12 +148,29 @@ public class SpringAppLoader implements Plugin {
                 methodsConfigMap.put(key, function.getCustomConfigInfo());
             });
 
-            ServiceInfo serviceInfo = new ServiceInfo(service.name(), service.version(),
-                    "service", ifaceClass, processor.getConfigInfo(), methodsConfigMap);
+            //判断有没有 接口实现的版本号   默认为IDL定义的版本号
+            ServiceVersion serviceVersionAnnotation = ifaceClass.isAnnotationPresent(ServiceVersion.class) ? ifaceClass.getAnnotationsByType(ServiceVersion.class)[0] : null;
+            String version = serviceVersionAnnotation != null ? serviceVersionAnnotation.version() : service.version();
 
-            serviceInfoMap.put(processorKey, serviceInfo);
+            //封装方法的慢服务时间
+            HashMap<String, Long> methodsMaxProcessTimeMap = new HashMap<>(16);
+            Arrays.asList(ifaceClass.getMethods()).forEach(item -> {
+                if (processor.functions.keySet().contains(item.getName())) {
+                    long maxProcessTime = SoaSystemEnvProperties.SOA_MAX_PROCESS_TIME;
+                    maxProcessTime = item.isAnnotationPresent(MaxProcessTime.class) ? item.getAnnotation(MaxProcessTime.class).maxTime() : maxProcessTime;
+                    if (LOGGER.isInfoEnabled()) {
+                        LOGGER.info("{}:{}:{} ; maxProcessTime:{} ", service.name(), version, item.getName(), maxProcessTime);
+                    }
+                    methodsMaxProcessTimeMap.put(item.getName(), maxProcessTime);
+                }
+            });
+
+            if (serviceVersionAnnotation == null || serviceVersionAnnotation.isRegister()) {
+                ServiceInfo serviceInfo = new ServiceInfo(service.name(), version, "service", ifaceClass, processor.getConfigInfo(), methodsConfigMap, methodsMaxProcessTimeMap);
+                serviceInfoMap.put(processorKey, serviceInfo);
+            }
+
         }
-
         return serviceInfoMap;
     }
 
@@ -171,8 +199,7 @@ public class SpringAppLoader implements Plugin {
                 xmlPaths.add(nextElement.toString());
             }
         }
-        Object context = constructor.newInstance(new Object[]{xmlPaths.toArray(new String[0])});
-        return context;
+        return constructor.newInstance(new Object[]{xmlPaths.toArray(new String[0])});
     }
 
 }

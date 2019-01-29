@@ -13,4 +13,7 @@ public @interface ScheduledTaskCron {
 
     String cron() default "";
 
+    //是否上送监控数据
+    boolean isMonitored() default true;
+
 }

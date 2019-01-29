@@ -1,0 +1,342 @@
+{
+  "body": {
+    "request": {
+      "fromStoreId": "11603800",
+      "toStoreId": "11600701",
+      "skuList": [
+        {
+          "skuId": 29025,
+          "skuNo": "44020136",
+          "skuNum": 8
+        },
+        {
+          "skuId": 29045,
+          "skuNo": "44020157",
+          "skuNum": 8,
+          "remark": "abc\"测试"
+        },
+        {
+          "skuId": 21585,
+          "skuNo": "20545536",
+          "skuNum": 1
+        },
+        {
+          "skuId": 17704,
+          "skuNo": "20501112",
+          "remark": "你好\t嘛\n哈",
+          "skuNum": 3
+        },
+        {
+          "skuId": 18547,
+          "skuNo": "20510992",
+          "skuNum": 5
+        },
+        {
+          "skuId": 21446,
+          "skuNo": "20543884",
+          "skuNum": 2
+        },
+        {
+          "skuId": 21445,
+          "skuNo": "20543853",
+          "skuNum": 2
+        },
+        {
+          "skuId": 16830,
+          "skuNo": "20491093",
+          "skuNum": 1
+        },
+        {
+          "skuId": 18918,
+          "skuNo": "20515058",
+          "skuNum": 15
+        },
+        {
+          "skuId": 17068,
+          "skuNo": "20493806",
+          "skuNum": 5
+        },
+        {
+          "skuId": 19126,
+          "skuNo": "20517335",
+          "skuNum": 5
+        },
+        {
+          "skuId": 19896,
+          "skuNo": "20525934",
+          "skuNum": 4
+        },
+        {
+          "skuId": 17901,
+          "skuNo": "20503406",
+          "skuNum": 5
+        },
+        {
+          "skuId": 17900,
+          "skuNo": "20503390",
+          "skuNum": 5
+        },
+        {
+          "skuId": 16118,
+          "skuNo": "20483401",
+          "skuNum": 5
+        },
+        {
+          "skuId": 18656,
+          "skuNo": "20512156",
+          "skuNum": 2
+        },
+        {
+          "skuId": 17313,
+          "skuNo": "20496395",
+          "skuNum": 5
+        },
+        {
+          "skuId": 23902,
+          "skuNo": "36005833",
+          "skuNum": 12
+        },
+        {
+          "skuId": 29052,
+          "skuNo": "44020165",
+          "skuNum": 8
+        },
+        {
+          "skuId": 29051,
+          "skuNo": "44020164",
+          "skuNum": 8
+        },
+        {
+          "skuId": 20327,
+          "skuNo": "20530969",
+          "skuNum": 8
+        },
+        {
+          "skuId": 17067,
+          "skuNo": "20493790",
+          "skuNum": 5
+        },
+        {
+          "skuId": 21144,
+          "skuNo": "20540463",
+          "skuNum": 3
+        },
+        {
+          "skuId": 10951,
+          "skuNo": "20426835",
+          "skuNum": 5
+        },
+        {
+          "skuId": 11869,
+          "skuNo": "20437886",
+          "skuNum": 6
+        },
+        {
+          "skuId": 11866,
+          "skuNo": "20437855",
+          "skuNum": 6
+        },
+        {
+          "skuId": 16117,
+          "skuNo": "20483395",
+          "skuNum": 5
+        },
+        {
+          "skuId": 19862,
+          "skuNo": "20525583",
+          "skuNum": 5
+        },
+        {
+          "skuId": 29071,
+          "skuNo": "44020188",
+          "skuNum": 6
+        },
+        {
+          "skuId": 28962,
+          "skuNo": "44020013",
+          "skuNum": 6
+        },
+        {
+          "skuId": 16989,
+          "skuNo": "20492991",
+          "skuNum": 6
+        },
+        {
+          "skuId": 17705,
+          "skuNo": "20501129",
+          "skuNum": 8
+        },
+        {
+          "skuId": 29023,
+          "skuNo": "44020135",
+          "skuNum": 6
+        },
+        {
+          "skuId": 29021,
+          "skuNo": "44020134",
+          "skuNum": 6
+        },
+        {
+          "skuId": 13022,
+          "skuNo": "20450175",
+          "skuNum": 16
+        },
+        {
+          "skuId": 13023,
+          "skuNo": "20450182",
+          "skuNum": 14
+        },
+        {
+          "skuId": 19211,
+          "skuNo": "20518417",
+          "skuNum": 8
+        },
+        {
+          "skuId": 17701,
+          "skuNo": "20501082",
+          "skuNum": 4
+        },
+        {
+          "skuId": 17703,
+          "skuNo": "20501105",
+          "skuNum": 8
+        },
+        {
+          "skuId": 17702,
+          "skuNo": "20501099",
+          "skuNum": 8
+        },
+        {
+          "skuId": 20043,
+          "skuNo": "20527563",
+          "skuNum": 5
+        },
+        {
+          "skuId": 18041,
+          "skuNo": "20504953",
+          "skuNum": 8
+        },
+        {
+          "skuId": 24763,
+          "skuNo": "36014651",
+          "skuNum": 8
+        },
+        {
+          "skuId": 18042,
+          "skuNo": "20504960",
+          "skuNum": 8
+        },
+        {
+          "skuId": 18168,
+          "skuNo": "20506537",
+          "skuNum": 5
+        },
+        {
+          "skuId": 17315,
+          "skuNo": "20496418",
+          "skuNum": 5
+        },
+        {
+          "skuId": 19893,
+          "skuNo": "20525903",
+          "skuNum": 8
+        },
+        {
+          "skuId": 28979,
+          "skuNo": "44020057",
+          "skuNum": 8
+        },
+        {
+          "skuId": 29039,
+          "skuNo": "44020151",
+          "skuNum": 4
+        },
+        {
+          "skuId": 28981,
+          "skuNo": "44020058",
+          "skuNum": 8
+        },
+        {
+          "skuId": 15770,
+          "skuNo": "20479428",
+          "skuNum": 5
+        },
+        {
+          "skuId": 28957,
+          "skuNo": "44020010",
+          "skuNum": 8
+        },
+        {
+          "skuId": 28970,
+          "skuNo": "44020020",
+          "skuNum": 8
+        },
+        {
+          "skuId": 24676,
+          "skuNo": "36013777",
+          "skuNum": 8
+        },
+        {
+          "skuId": 29057,
+          "skuNo": "44020172",
+          "skuNum": 8
+        },
+        {
+          "skuId": 20328,
+          "skuNo": "20530976",
+          "skuNum": 8
+        },
+        {
+          "skuId": 20329,
+          "skuNo": "20530983",
+          "skuNum": 8
+        },
+        {
+          "skuId": 28973,
+          "skuNo": "44020022",
+          "skuNum": 8
+        },
+        {
+          "skuId": 18799,
+          "skuNo": "20513689",
+          "skuNum": 5
+        },
+        {
+          "skuId": 16120,
+          "skuNo": "20483425",
+          "skuNum": 5
+        },
+        {
+          "skuId": 19049,
+          "skuNo": "20516529",
+          "skuNum": 5
+        },
+        {
+          "skuId": 19047,
+          "skuNo": "20516505",
+          "skuNum": 12
+        },
+        {
+          "skuId": 17740,
+          "skuNo": "20501532",
+          "skuNum": 40
+        },
+        {
+          "skuId": 18165,
+          "skuNo": "20506490",
+          "skuNum": 18
+        },
+        {
+          "skuId": 18128,
+          "skuNo": "20506063",
+          "skuNum": 20
+        },
+        {
+          "skuId": 18129,
+          "skuNo": "20506070",
+          "skuNum": 20
+        }
+      ]
+    }
+  }
+}

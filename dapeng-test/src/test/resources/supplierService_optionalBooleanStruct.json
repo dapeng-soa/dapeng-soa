@@ -1,0 +1,11 @@
+{
+  "body": {
+    "request": {
+      "skuId": 20,
+      "supplierId":21,
+      "supplierLogisticsId":21,
+      "purchasePrice":"22.2",
+      "isPrimarySupplier":"false"
+    }
+  }
+}

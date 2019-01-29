@@ -8,6 +8,7 @@ import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.metadata.Service;
 import com.github.dapeng.doc.cache.ServiceCache;
+import com.github.dapeng.json.OptimizedMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +51,7 @@ public class TestController {
         String versionName = req.getParameter("version");
         String methodName = req.getParameter("methodName");
 
-        Service service = serviceCache.getService(serviceName, versionName);
+        OptimizedMetadata.OptimizedService service = serviceCache.getService(serviceName, versionName);
 
         InvocationContext invocationCtx = InvocationContextImpl.Factory.createNewInstance();
         invocationCtx.sessionTid(DapengUtil.generateTid());
@@ -80,10 +81,10 @@ public class TestController {
 
     private void fillInvocationCtx(InvocationContext invocationCtx, HttpServletRequest req) {
         invocationCtx.callerMid(req.getRequestURI());
-        invocationCtx.userIp(req.getRemoteAddr());
+        invocationCtx.userIp(IPUtils.transferIp(req.getRemoteAddr()));
         Set<String> parameters = req.getParameterMap().keySet();
         if (parameters.contains("calleeIp")) {
-            invocationCtx.calleeIp(req.getParameter("calleeIp"));
+            invocationCtx.calleeIp(IPUtils.transferIp(req.getParameter("calleeIp")));
         }
 
         if (parameters.contains("calleePort")) {

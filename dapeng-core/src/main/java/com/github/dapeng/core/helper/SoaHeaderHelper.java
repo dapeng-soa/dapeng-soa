@@ -24,7 +24,7 @@ public class SoaHeaderHelper {
 
         if (context.getHeader() == null) {
             SoaHeader header = new SoaHeader();
-            ((TransactionContextImpl)context).setHeader(header);
+            ((TransactionContextImpl) context).setHeader(header);
         }
 
         if (setDefaultIfEmpty) {
@@ -57,8 +57,16 @@ public class SoaHeaderHelper {
         header.setVersionName(version);
         header.setMethodName(methodName);
 
-        header.setCallerIp(IPUtils.localIp());
-        header.setCallerTid(Optional.ofNullable(invocationContext.callerTid()));
+        header.setCallerIp(IPUtils.localIpAsInt());
+
+        //设置慢服务检测阈值
+        if (invocationContext.maxProcessTime().isPresent()) {
+            header.setMaxProcessTime(invocationContext.maxProcessTime());
+        }
+
+        if (invocationContext.callerTid() != 0) {
+            header.setCallerTid(Optional.of(invocationContext.callerTid()));
+        }
 
         header.setCustomerId(invocationContext.customerId());
         header.setCustomerName(invocationContext.customerName());
@@ -151,6 +159,7 @@ public class SoaHeaderHelper {
             // 传递tid
             header.setSessionTid(transactionContext.sessionTid());
             invocationContext.callerTid(transactionContext.calleeTid());
+            header.setCallerTid(Optional.of(transactionContext.calleeTid()));
 
             header.setCallerPort(Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
 

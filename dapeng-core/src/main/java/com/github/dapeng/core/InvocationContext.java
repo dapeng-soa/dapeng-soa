@@ -31,7 +31,7 @@ import java.util.Optional;
  *   6.4 calleeTime1,//服务提供方消耗时间（从接收到请求 到 发送响应）,单位毫秒
  *   6.5 calleeTime2,//服务提供方消耗时间（从开始处理请求到处理请求完成）,单位毫秒
  * </pre>
- *
+ * <p>
  * InvocationContext 用于在服务调用端设置一些改变服务调用行为的属性.
  * 对应服务提供方的类为{@code TransactionContext}.
  *
@@ -45,8 +45,9 @@ public interface InvocationContext {
      * @param sessionTid
      * @return
      */
-    InvocationContext sessionTid(final String sessionTid);
-    Optional<String> sessionTid();
+    InvocationContext sessionTid(final Long sessionTid);
+
+    Optional<Long> sessionTid();
 
     /**
      * 设置服务会话发起人Id, 特指前台用户,可用于频率控制
@@ -55,6 +56,7 @@ public interface InvocationContext {
      * @return
      */
     InvocationContext userId(final Long userId);
+
     Optional<Long> userId();
 
     /**
@@ -63,11 +65,13 @@ public interface InvocationContext {
      * @param userIp
      * @return
      */
-    InvocationContext userIp(final String userIp);
-    Optional<String> userIp();
+    InvocationContext userIp(final Integer userIp);
+
+    Optional<Integer> userIp();
 
     /**
      * 服务会话发起操作人Id, 特指后台用户
+     *
      * @param operatorId
      * @return
      */
@@ -108,7 +112,18 @@ public interface InvocationContext {
      * @return
      */
     InvocationContext timeout(final Integer timeout);
+
     Optional<Integer> timeout();
+
+
+    /**
+     * 设置慢服务时间阈值,单位毫秒
+     *
+     * @param processTime
+     * @return
+     */
+    InvocationContext maxProcessTime(final Long processTime);
+    Optional<Long> maxProcessTime();
 
     /**
      * 设置thrift协议
@@ -117,6 +132,7 @@ public interface InvocationContext {
      * @return
      */
     InvocationContext codecProtocol(final CodecProtocol protocol);
+
     CodecProtocol codecProtocol();
 
     /**
@@ -126,6 +142,7 @@ public interface InvocationContext {
      * @return
      */
     InvocationContext loadBalanceStrategy(final LoadBalanceStrategy loadBalanceStrategy);
+
     Optional<LoadBalanceStrategy> loadBalanceStrategy();
 
     /**
@@ -134,8 +151,9 @@ public interface InvocationContext {
      * @param calleeIp
      * @return
      */
-    InvocationContext calleeIp(final String calleeIp);
-    Optional<String> calleeIp();
+    InvocationContext calleeIp(final Integer calleeIp);
+
+    Optional<Integer> calleeIp();
 
     /**
      * 设置服务端口
@@ -144,14 +162,28 @@ public interface InvocationContext {
      * @return
      */
     InvocationContext calleePort(final Integer calleePort);
+
     Optional<Integer> calleePort();
+
+
+    /**
+     * 设置调用者IP
+     *
+     * @param callerIp
+     * @return
+     */
+    InvocationContext callerIp(final Integer callerIp);
+
+    Optional<Integer> callerIp();
 
     /**
      * 调用端tid
+     *
      * @return
      */
-    InvocationContext callerTid(final String callerTid);
-    String callerTid();
+    InvocationContext callerTid(final Long callerTid);
+
+    long callerTid();
 
     /**
      * 设置调用端moudleId
@@ -160,33 +192,38 @@ public interface InvocationContext {
      * @return
      */
     InvocationContext callerMid(final String callerMid);
+
     Optional<String> callerMid();
 
     InvocationContext cookies(Map<String, String> cookies); // copy
+
     InvocationContext setCookie(String key, String value);
 
     Map<String, String> cookies(); // immutable
+
     String cookie(String key);
 
     /**
      * 供服务提供方返回时填写, 例如耗时, calleeIp等
-     *
      */
     InvocationInfo lastInvocationInfo();
 
 
     /**
      * 用于日志信息...
+     *
      * @return
      */
     int seqId();
 
     /**
      * 兼容目前的全局事务实现
+     *
      * @param currentTransactionId
      * @return
      */
     InvocationContext transactionId(Integer currentTransactionId);
+
     InvocationContext transactionSequence(Integer currentTransactionSequence);
 
     InvocationContext isSoaTransactionProcess(boolean isSoaTransactionProcess);
@@ -213,14 +250,14 @@ public interface InvocationContext {
          *
          * @return
          */
-        String calleeTid();
+        long calleeTid();
 
         /**
          * 服务IP
          *
          * @return
          */
-        String calleeIp();
+        int calleeIp();
 
         /**
          * 服务端口
@@ -259,6 +296,7 @@ public interface InvocationContext {
 
         /**
          * 负载均衡策略
+         *
          * @return
          */
         LoadBalanceStrategy loadBalanceStrategy();
@@ -273,24 +311,28 @@ public interface InvocationContext {
     interface InvocationContextProxy {
         /**
          * 服务会话Id
+         *
          * @return
          */
-        Optional<String> sessionTid();
+        Optional<Long> sessionTid();
 
         /**
          * 服务会话发起者Ip
+         *
          * @return
          */
-        Optional<String> userIp();
+        Optional<Integer> userIp();
 
         /**
          * 服务会话发起者id, 特指前台用户
+         *
          * @return
          */
         Optional<Long> userId();
 
         /**
          * 服务会话发起者id, 特指后台用户
+         *
          * @return
          */
         Optional<Integer> operatorId();
@@ -303,10 +345,10 @@ public interface InvocationContext {
 
         Optional<String> callerFrom();
 
-        public Optional<String> sessionId();
 
         /**
          * 调用源
+         *
          * @return
          */
         Optional<String> callerMid();
@@ -316,19 +358,4 @@ public interface InvocationContext {
          */
         Map<String, String> cookies();
     }
-
-
-    /*
-        InvocationContext context = InvocationContextFactory.getInvocationContext();
-
-        context.calleeIp("....");
-        context.timeout(10s);
-
-        someclient.somethod();
-
-        context.getLastInfo().calleeIp();
-        context.getLastInfo().getTid();
-
-     */
-
 }

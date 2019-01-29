@@ -41,7 +41,7 @@ public interface TransactionContext {
 
     Optional<String> callerMid();
 
-    Optional<String> callerIp();
+    Optional<Integer> callerIp();
 
     Optional<String> callerFrom();
 
@@ -83,20 +83,23 @@ public interface TransactionContext {
 
     Optional<Integer> callerPort();
 
-    Optional<String> sessionTid();
+    Optional<Long> sessionTid();
 
-    Optional<String> userIp();
+    Optional<Integer> userIp();
 
-    Optional<String> callerTid();
+    Optional<Long> callerTid();
 
     Optional<Integer> timeout();
 
-    String calleeTid();
+    Optional<Long> maxProcessTime();
+    TransactionContext maxProcessTime(Long maxProcessTime);
+
+    long calleeTid();
 
     void setAttribute(String key, Object value);
     Object getAttribute(String key);
 
-    TransactionContext calleeTid(String calleeTid);
+    TransactionContext calleeTid(Long calleeTid);
 
     class Factory {
         private static ThreadLocal<TransactionContext> threadLocal = new ThreadLocal<>();

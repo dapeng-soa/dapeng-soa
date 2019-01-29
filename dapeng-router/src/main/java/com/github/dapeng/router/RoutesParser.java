@@ -1,6 +1,7 @@
 package com.github.dapeng.router;
 
 
+import com.github.dapeng.router.condition.Condition;
 import com.github.dapeng.router.condition.*;
 import com.github.dapeng.router.exception.ParsingException;
 import com.github.dapeng.router.pattern.*;
@@ -9,21 +10,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.github.dapeng.router.RoutesLexer.*;
 import static com.github.dapeng.router.token.Token.STRING;
 
 /**
+ * 描述: 语法, 路由规则解析
+ * <pre>
  * routes :  (route eol)*
- * <p>
  * route  : left '=>' right
- * left  : 'otherwise'
- * | matcher (';' matcher)*
- * <p>
+ * left  : 'otherwise' matcher (';' matcher)*
  * matcher : id 'match' patterns
  * patterns: pattern (',' pattern)*
- * <p>
  * pattern : '~' pattern
  * | string
  * | regexpString
@@ -32,14 +33,9 @@ import static com.github.dapeng.router.token.Token.STRING;
  * | ip
  * | kv
  * | mod
- * <p>
  * right : rightPattern (',' rightPattern)*
- * rightPattern : '~' rightPattern
- * | ip
- */
-
-/**
- * 描述: 语法, 路由规则解析
+ * rightPattern : '~' rightPattern | ip
+ * </pre>
  *
  * @author hz.lei
  * @date 2018年04月13日 下午9:34
@@ -48,7 +44,7 @@ public class RoutesParser {
 
     private static Logger logger = LoggerFactory.getLogger(RoutesParser.class);
 
-    private RoutesLexer lexer;
+    protected RoutesLexer lexer;
 
     public RoutesParser(RoutesLexer lexer) {
         this.lexer = lexer;
@@ -110,15 +106,11 @@ public class RoutesParser {
      * left  : 'otherwise' matcher (';' matcher)*
      * <p>
      * method match pattern1,pattern2
-     */
-
-    /**
+     * <p>
      * method match s'getFoo',s'setFoo' ; version match s'1.0.0',s'1.0.1' => right
      * 分号 分隔 之间 是一个 Matcher
      * <p>
      * 一个 Matcher 有多个 pattern
-     *
-     * @return
      */
     public Condition left() {
         Matchers matchers = new Matchers();
@@ -129,10 +121,10 @@ public class RoutesParser {
                 return new Otherwise();
             case Token.ID:
                 Matcher matcher = matcher();
-                matchers.macthers.add(matcher);
+                matchers.matchers.add(matcher);
                 while (lexer.peek() == Token_SEMI_COLON) {
                     lexer.next(Token.SEMI_COLON);
-                    matchers.macthers.add(matcher());
+                    matchers.matchers.add(matcher());
                 }
                 return matchers;
             default:
@@ -141,14 +133,10 @@ public class RoutesParser {
         }
     }
 
-    /*
-     matcher : id 'match' patterns
-     */
-
     /**
+     * matcher : id 'match' patterns
+     * <p>
      * method match "getFoo","setFoo"
-     *
-     * @return
      */
     public Matcher matcher() {
 
@@ -178,8 +166,6 @@ public class RoutesParser {
      * method match s'getFoo',s'setFoo';version match s'1.0.0',s'1.0.1' => right    (1)
      * <p>
      * method match s'getFoo',s'setFoo' => right                (2)
-     *
-     * @return
      */
     public List<Pattern> patterns() {
         List<Pattern> patterns = new ArrayList<>();
@@ -201,8 +187,6 @@ public class RoutesParser {
      * s'setFoo'
      * <p>
      * s'getFoo*'
-     *
-     * @return
      */
     public Pattern pattern() {
         // s'getFoo'
@@ -255,6 +239,9 @@ public class RoutesParser {
             case Token.IP:
                 ThenIp it = rightPattern();
                 thenIps.add(it);
+                // => ip"" ,
+                // => 后 只会跟三种  Token_EOF(结束符号)  Token_COMMA(逗号) EOL(换行符)
+                validate(lexer.peek(), Token_COMMA, Token_EOF, Token_EOL);
                 while (lexer.peek() == Token_COMMA) {
                     lexer.next(Token.COMMA);
                     ThenIp it2 = rightPattern();
@@ -269,8 +256,6 @@ public class RoutesParser {
 
     /**
      * ？
-     *
-     * @return
      */
     public ThenIp rightPattern() {
         Token token = lexer.peek();
@@ -278,11 +263,11 @@ public class RoutesParser {
             case Token.NOT: {
                 lexer.next(Token.NOT);
                 ThenIp it = rightPattern();
-                return new ThenIp(!it.not, it.ip, it.mask);
+                return new ThenIp(!it.not, it.ip, it.port, it.mask);
             }
             case Token.IP: {
                 IpToken ip = (IpToken) lexer.next(Token.IP);
-                return new ThenIp(false, ip.ip, ip.mask);
+                return new ThenIp(false, ip.ip, ip.port, ip.mask);
             }
             default:
                 error("expect '~ip' or 'ip' but got:" + token);
@@ -291,12 +276,30 @@ public class RoutesParser {
     }
 
 
-    private void error(String errorInfo) {
+    protected void error(String errorInfo) {
         logger.error(errorInfo);
     }
 
-    private void warn(String errorInfo) {
+    protected void warn(String errorInfo) {
         logger.warn(errorInfo);
+    }
+
+    protected void validate(Token target, Token... expects) {
+        boolean flag = false;
+        for (Token expect : expects) {
+            if (target == expect) {
+                flag = true;
+                break;
+            }
+        }
+        if (!flag) {
+            throw new ParsingException("[Validate Token Error]",
+                    "target token: " + convert(target) + " is not in expects token: " + convert(expects));
+        }
+    }
+
+    private List<String> convert(Token... tokens) {
+        return Arrays.stream(tokens).map(token -> TokenEnum.findById(token.type()).toString()).collect(Collectors.toList());
     }
 
 }

@@ -5,12 +5,16 @@ import com.github.dapeng.api.Container;
 import com.github.dapeng.core.Plugin;
 import com.github.dapeng.api.events.AppEvent;
 import com.github.dapeng.api.events.AppEventType;
+import com.github.dapeng.api.healthcheck.DoctorFactory;
+import com.github.dapeng.api.lifecycle.LifecycleProcessor;
+import com.github.dapeng.api.lifecycle.LifecycleProcessorFactory;
 import com.github.dapeng.core.Application;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.filter.ContainerFilter;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.github.dapeng.core.lifecycle.LifeCycleEvent;
 import com.github.dapeng.impl.filters.FilterLoader;
 import com.github.dapeng.impl.plugins.*;
 import com.github.dapeng.impl.plugins.netty.NettyPlugin;
@@ -24,8 +28,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_SHUTDOWN_TIMEOUT;
 
 public class DapengContainer implements Container {
 
@@ -44,6 +54,8 @@ public class DapengContainer implements Container {
      * 容器状态, 初始状态为STATUS_UNKNOWN
      */
     private static int status = STATUS_UNKNOWN;
+
+    private static AtomicInteger requestCounter = new AtomicInteger(0);
 
     private final static CountDownLatch SHUTDOWN_SIGNAL = new CountDownLatch(1);
 
@@ -149,7 +161,7 @@ public class DapengContainer implements Container {
                 + SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL);
 
         if (!SoaSystemEnvProperties.SOA_CONTAINER_USETHREADPOOL) {
-            return command -> command.run();
+            return Runnable::run;
         } else {
             ThreadPoolExecutor bizExector = (ThreadPoolExecutor) Executors.newFixedThreadPool(SoaSystemEnvProperties.SOA_CORE_POOL_SIZE,
                     new ThreadFactoryBuilder()
@@ -193,6 +205,8 @@ public class DapengContainer implements Container {
     public void startup() {
         LOGGER.info(getClass().getSimpleName() + "::startup begin");
         status = STATUS_CREATING;
+        DoctorFactory.createDoctor(this.getClass().getClassLoader());
+        LifecycleProcessorFactory.createLifecycleProcessor(this.getClass().getClassLoader());
         //3. 初始化appLoader,dapengPlugin 应该用serviceLoader的方式去加载
         Plugin springAppLoader = new SpringAppLoader(this, applicationCls);
         Plugin zookeeperPlugin = new ZookeeperRegistryPlugin(this);
@@ -236,23 +250,31 @@ public class DapengContainer implements Container {
         //4.启动Apploader， plugins
         getPlugins().forEach(Plugin::start);
 
+        final LifecycleProcessor lifecycleProcessor = LifecycleProcessorFactory.getLifecycleProcessor();
+        //启动LifeCycle start
+        lifecycleProcessor.onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.START));
+
         // register Filters
         new FilterLoader(this, applicationCls);
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            LOGGER.warn("Container graceful shutdown begin.");
-            status = STATUS_SHUTTING;
-            // fixme not so graceful
-            getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
-            Lists.reverse(getPlugins()).stream().filter(plugin -> !(plugin instanceof ZookeeperRegistryPlugin)).forEach(Plugin::stop);
-            try {
-                Thread.sleep(4000);
-            } catch (InterruptedException e) {
-                LOGGER.error(e.getMessage(), e);
+        Runtime.getRuntime().addShutdownHook(new Thread("container-shutdown-hook-thread") {
+            @Override
+            public void run() {
+                LOGGER.warn("Container graceful shutdown begin.");
+                lifecycleProcessor.onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.STOP));
+
+                status = STATUS_SHUTTING;
+                // fixme not so graceful
+                getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
+
+                //重试3次，保证容器内请求已完成
+                retryCompareCounter();
+
+                Lists.reverse(getPlugins()).stream().filter(plugin -> !(plugin instanceof ZookeeperRegistryPlugin)).forEach(Plugin::stop);
+                SHUTDOWN_SIGNAL.countDown();
+                LOGGER.warn("Container graceful shutdown end.");
             }
-            SHUTDOWN_SIGNAL.countDown();
-            LOGGER.warn("Container graceful shutdown end.");
-        }));
+        });
 
         try {
             LOGGER.warn(getClass().getSimpleName() + "::startup end");
@@ -268,6 +290,42 @@ public class DapengContainer implements Container {
     @Override
     public int status() {
         return status;
+    }
+
+    @Override
+    public AtomicInteger requestCounter() {
+        return requestCounter;
+    }
+
+    public void retryCompareCounter() {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Retry to ensure requests processing is complete");
+        }
+
+        LOGGER.warn("容器内尚余[" + requestCounter.get() + "]个请求还未处理..."
+                + (requestCounter.get() > 0 ? "现在最多等待[" + SOA_SHUTDOWN_TIMEOUT + "ms]" : ""));
+
+        long sleepTime = 2000;
+        long retry = SOA_SHUTDOWN_TIMEOUT / sleepTime;
+
+        do {
+            if (requestCounter.intValue() <= 0) {
+                return;
+            } else {
+                try {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("requests haven't been processed  completely, sleep " + sleepTime + "ms");
+                    }
+                    Thread.sleep(sleepTime);
+                } catch (InterruptedException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+            }
+        } while (--retry > 0);
+
+        if (requestCounter.intValue() != 0) {
+            LOGGER.warn(retry + "次等待共[" + SOA_SHUTDOWN_TIMEOUT + "ms]之后，容器内尚余[" + requestCounter.get() + "]个请求还未处理完，容器即将关闭...");
+        }
     }
 
     public static InputStream loadInputStreamInClassLoader(String path) throws FileNotFoundException {

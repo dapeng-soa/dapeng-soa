@@ -93,8 +93,8 @@ public class Bootstrap {
             } else if (file.isDirectory()) {
                 File[] files = file.listFiles();
                 if (files != null) {
-                    for (int i = 0; i < files.length; i++) {
-                        urlList.addAll(findJarURLs(files[i]));
+                    for (File file1 : files) {
+                        urlList.addAll(findJarURLs(file1));
                     }
                 }
             }

@@ -35,6 +35,8 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(getClass().getSimpleName() + "::read response[seqId=" + seqId + "]");
             }
+        } catch (Throwable e) {
+            LOGGER.error(e.getMessage(), e);
         } finally {
             ctx.fireChannelRead(msg);
         }

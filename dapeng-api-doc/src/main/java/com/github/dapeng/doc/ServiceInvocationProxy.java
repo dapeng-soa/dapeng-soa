@@ -69,13 +69,13 @@ public class ServiceInvocationProxy implements InvocationContextImpl.InvocationC
     }
 
     @Override
-    public Optional<String> sessionTid() {
+    public Optional<Long> sessionTid() {
         return Optional.of(DapengUtil.generateTid());
     }
 
     @Override
-    public Optional<String> userIp() {
-        return Optional.ofNullable(IPUtils.localIp());
+    public Optional<Integer> userIp() {
+        return Optional.ofNullable(IPUtils.localIpAsInt());
     }
 }
 

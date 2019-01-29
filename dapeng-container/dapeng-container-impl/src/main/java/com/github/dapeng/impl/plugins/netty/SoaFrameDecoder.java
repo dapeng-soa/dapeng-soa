@@ -1,5 +1,6 @@
 package com.github.dapeng.impl.plugins.netty;
 
+import com.github.dapeng.core.SoaCode;
 import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.util.DumpUtil;
@@ -50,14 +51,16 @@ public class SoaFrameDecoder extends ByteToMessageDecoder {
 
         int length = in.readInt();
 
-        if (length == 0) {// 心跳
+        // 心跳
+        if (length == 0) {
             ctx.writeAndFlush(ctx.alloc().buffer(1).writeInt(0));
 
             return;
         }
 
         if (length > SoaSystemEnvProperties.SOA_MAX_READ_BUFFER_SIZE)
-            throw new SoaException("error", "Exceeds the maximum length:(" + length + " > " + SoaSystemEnvProperties.SOA_MAX_READ_BUFFER_SIZE + ")");
+            throw new SoaException(SoaCode.ReqBufferOverFlow, SoaCode.ReqBufferOverFlow.getMsg() +
+                    ", Exceeds the maximum length:(" + length + " > " + SoaSystemEnvProperties.SOA_MAX_READ_BUFFER_SIZE + ")");
 
         // waiting for complete
         if (in.readableBytes() < length) {
@@ -74,7 +77,7 @@ public class SoaFrameDecoder extends ByteToMessageDecoder {
             return;
         }
 
-        in.skipBytes(length -2);
+        in.skipBytes(length - 2);
         byte etx = in.readByte();
         if (etx != ETX) {
             ctx.close();

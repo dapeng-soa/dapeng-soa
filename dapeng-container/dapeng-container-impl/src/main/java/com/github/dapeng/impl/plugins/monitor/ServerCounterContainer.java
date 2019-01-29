@@ -3,6 +3,8 @@ package com.github.dapeng.impl.plugins.monitor;
 import com.github.dapeng.basic.api.counter.CounterServiceClient;
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
 import com.github.dapeng.basic.api.counter.service.CounterService;
+import com.github.dapeng.core.InvocationContext;
+import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.impl.plugins.monitor.config.MonitorFilterProperties;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -21,6 +23,48 @@ import java.util.concurrent.locks.ReentrantLock;
  * @date 2017-05-29
  */
 public class ServerCounterContainer {
+
+    /**
+     * 流量计数，计算一分钟内的各项数据
+     */
+    static class TLNode {
+        final AtomicInteger spinLock;
+
+        long min;
+        long max;
+        long sum;
+        long count;
+
+        TLNode(AtomicInteger spinLock) {
+            this.spinLock = spinLock;
+        }
+
+        public void add(long value) {
+            while (!spinLock.compareAndSet(0, 1));
+            if (count == 0) {
+                min = value;
+                max = value;
+                sum = value;
+                count = 1;
+            } else {
+                min = (value < min) ? value : min;
+                max = (value > max) ? value : max;
+                sum += value;
+                count += 1;
+            }
+            spinLock.set(0);
+        }
+
+        public void reset() {
+            while (!spinLock.compareAndSet(0, 1));
+            min = 0;
+            max = 0;
+            sum = 0;
+            count = 0;
+            spinLock.set(0);
+        }
+    }
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerCounterContainer.class);
     private final boolean MONITOR_ENABLE = SoaSystemEnvProperties.SOA_MONITOR_ENABLE;
     private final static ServerCounterContainer instance = new ServerCounterContainer();
@@ -32,17 +76,27 @@ public class ServerCounterContainer {
     private final AtomicInteger totalChannel = new AtomicInteger(0);
 
     /**
+     * 自旋锁
+     */
+    private final AtomicInteger addCostLock = new AtomicInteger(0);
+    private final AtomicInteger addReqFlowLock = new AtomicInteger(0);
+    private final AtomicInteger addRespFlowLock = new AtomicInteger(0);
+
+    /**
      * 流量计数器
      * 无锁设计,
-     * key为某小时的第N分钟
-     * value为该分钟内的流量列表(每个请求/响应直接放到列表中, 方便统计最大/最小/平均值)
+     * 数组下标表示某小时的第N分钟
+     * 值为该分钟内的流量统计
      */
-    private final Map<Integer, List<Long>> reqFlows = new HashMap<>(64);
-    private final Map<Integer, List<Long>> respFlows = new HashMap<>(64);
+    private final TLNode[] reqFlows = new TLNode[60];
+    private final TLNode[] respFlows = new TLNode[60];
+
     /**
      * 服务耗时计数器
+     * 数组下标表示某小时的第N分钟
      */
-    private Map<Integer, List<ElapseInfo>> serviceElapses = new HashMap<>(64);
+    private final Map<ServiceBasicInfo, TLNode>[] serviceElapses = new Map[60];
+
     /**
      * 服务调用计数器
      */
@@ -50,7 +104,7 @@ public class ServerCounterContainer {
 
 
     private final String DATA_BASE = MonitorFilterProperties.SOA_MONITOR_INFLUXDB_DATABASE;
-    private final String NODE_IP = SoaSystemEnvProperties.SOA_CONTAINER_IP;
+    private final String NODE_IP = SoaSystemEnvProperties.HOST_IP;
     private final String NODE_PORT = String.valueOf(SoaSystemEnvProperties.SOA_CONTAINER_PORT);
 
     private final int PERIOD = MonitorFilterProperties.SOA_MONITOR_SERVICE_PROCESS_PERIOD;
@@ -108,6 +162,19 @@ public class ServerCounterContainer {
         init();
     }
 
+    private void init() {
+        for (int i = 0; i < reqFlows.length; i++) {
+            reqFlows[i] = new TLNode(addReqFlowLock);
+            respFlows[i] = new TLNode(addRespFlowLock);
+            serviceElapses[i] = new HashMap<>(1024);
+            serviceInvocationDatas.put(i, new ConcurrentHashMap<>(1024));
+        }
+
+        if (MONITOR_ENABLE) {
+            initThreads();
+        }
+    }
+
     public void increaseServiceCall(ServiceBasicInfo basicInfo, boolean isSucceed) {
         Integer currentMinute = currentMinuteOfHour();
         ServiceProcessData serviceProcessData = serviceInvocationDatas.get(currentMinute).get(basicInfo);
@@ -147,15 +214,33 @@ public class ServerCounterContainer {
     }
 
     public void addServiceElapseInfo(final ServiceBasicInfo serviceBasicInfo, final long cost) {
-        serviceElapses.get(currentMinuteOfHour()).add(new ElapseInfo(serviceBasicInfo, cost));
+        if (MONITOR_ENABLE) {
+            int currentMinuteOfHour = currentMinuteOfHour();
+            TLNode node = serviceElapses[currentMinuteOfHour].get(serviceBasicInfo);
+            if (node == null) {
+                while (!addCostLock.compareAndSet(0, 1)) ;
+                node = serviceElapses[currentMinuteOfHour].get(serviceBasicInfo);
+                if (node == null) {
+                    node = new TLNode(addCostLock);
+                    serviceElapses[currentMinuteOfHour].put(serviceBasicInfo, node);
+                }
+                addCostLock.set(0);
+            }
+
+            node.add(cost);
+        }
     }
 
     public void addRequestFlow(long requestSize) {
-        reqFlows.get(currentMinuteOfHour()).add(requestSize);
+        if (MONITOR_ENABLE) {
+            reqFlows[currentMinuteOfHour()].add(requestSize);
+        }
     }
 
     public void addResponseFlow(long responseSize) {
-        respFlows.get(currentMinuteOfHour()).add(responseSize);
+        if (MONITOR_ENABLE) {
+            respFlows[currentMinuteOfHour()].add(responseSize);
+        }
     }
 
     public int increaseActiveChannelAndGet() {
@@ -198,19 +283,6 @@ public class ServerCounterContainer {
         return activeChannel.get() + "/" + inactiveChannel.get() + "/" + totalChannel;
     }
 
-    private void init() {
-        for (int i = 0; i < 60; i++) {
-            reqFlows.put(i, new ArrayList<>(1024));
-            respFlows.put(i, new ArrayList<>(1024));
-            serviceElapses.put(i, new ArrayList<>(1024));
-            serviceInvocationDatas.put(i, new ConcurrentHashMap<>(1024));
-        }
-
-        if (MONITOR_ENABLE) {
-            initThreads();
-        }
-    }
-
     /**
      * 获取当前时间所处的分钟
      *
@@ -229,55 +301,37 @@ public class ServerCounterContainer {
         int currentMinuteOfHour = currentMinuteOfHour();
         int oneMinuteBefore = (currentMinuteOfHour == 0) ? 59 : (currentMinuteOfHour - 1);
 
-        List<Long> currentReqFlows = reqFlows.get(oneMinuteBefore);
-        List<Long> currentRespFlows = respFlows.get(oneMinuteBefore);
-        if (!currentReqFlows.isEmpty() || !currentRespFlows.isEmpty()) {
+        TLNode currentReqFlows = reqFlows[oneMinuteBefore];
+        TLNode currentRespFlows = respFlows[oneMinuteBefore];
+        if (currentReqFlows.count != 0 || currentRespFlows.count != 0) {
             long maxRequestFlow = 0;
             long minRequestFlow = 0;
             long sumRequestFlow = 0;
             long avgRequestFlow = 0;
-            if (!currentReqFlows.isEmpty()) {
-                maxRequestFlow = currentReqFlows.stream()
-                        .sorted()
-                        .max(Comparator.naturalOrder()).get();
-                minRequestFlow = currentReqFlows.stream()
-                        .sorted()
-                        .min(Comparator.naturalOrder()).get();
-                sumRequestFlow = currentReqFlows.stream()
-                        .reduce((x, y) -> (x + y))
-                        .get();
-                avgRequestFlow = sumRequestFlow / (long) currentReqFlows.size();
-
-                currentReqFlows.clear();
+            if (currentReqFlows.count != 0) {
+                maxRequestFlow = currentReqFlows.max;
+                minRequestFlow = currentReqFlows.min;
+                sumRequestFlow = currentReqFlows.sum;
+                avgRequestFlow = currentReqFlows.sum / currentReqFlows.count;
+                currentReqFlows.reset();
             }
 
             long minResponseFlow = 0;
             long maxResponseFlow = 0;
             long sumResponseFlow = 0;
             long avgResponseFlow = 0;
-            if (!currentRespFlows.isEmpty()) {
-                minResponseFlow = currentRespFlows.stream()
-                        .sorted()
-                        .min(Comparator.naturalOrder()).get();
-                maxResponseFlow = currentRespFlows.stream()
-                        .sorted()
-                        .max(Comparator.naturalOrder()).get();
-                sumResponseFlow = currentRespFlows.stream()
-                        .reduce((x, y) -> (x + y))
-                        .get();
-                avgResponseFlow = sumResponseFlow / (long) currentRespFlows.size();
-
-                currentRespFlows.clear();
+            if (currentRespFlows.count != 0) {
+                minResponseFlow = currentRespFlows.min;
+                maxResponseFlow = currentRespFlows.max;
+                sumResponseFlow = currentRespFlows.sum;
+                avgResponseFlow = currentRespFlows.sum / currentRespFlows.count;
+                currentRespFlows.reset();
             }
-
 
             DataPoint point = new DataPoint();
             point.setDatabase(DATA_BASE);
             point.setBizTag("dapeng_node_flow");
-            long now = System.currentTimeMillis();
             Map<String, String> tags = new HashMap<>(4);
-            tags.put("period", String.valueOf(PERIOD));
-            tags.put("analysis_time", String.valueOf(now));
             tags.put("node_ip", NODE_IP);
             tags.put("node_port", String.valueOf(NODE_PORT));
             point.setTags(tags);
@@ -286,12 +340,12 @@ public class ServerCounterContainer {
             fields.put("min_request_flow", minRequestFlow);
             fields.put("sum_request_flow", sumRequestFlow);
             fields.put("avg_request_flow", avgRequestFlow);
-            fields.put("max_response_flow", minResponseFlow);
-            fields.put("min_response_flow", maxResponseFlow);
+            fields.put("max_response_flow", maxResponseFlow);
+            fields.put("min_response_flow", minResponseFlow);
             fields.put("sum_response_flow", sumResponseFlow);
             fields.put("avg_response_flow", avgResponseFlow);
             point.setValues(fields);
-            point.setTimestamp(now);
+            point.setTimestamp(System.currentTimeMillis());
             return point;
 
         } else {
@@ -299,39 +353,52 @@ public class ServerCounterContainer {
         }
     }
 
-    private List<DataPoint> invokePointsOfLastMinute() {
+    public List<DataPoint> invokePointsOfLastMinute() {
         int currentMinuteOfHour = currentMinuteOfHour();
         int oneMinuteBefore = (currentMinuteOfHour == 0) ? 59 : (currentMinuteOfHour - 1);
 
         Map<ServiceBasicInfo, ServiceProcessData> invocationDatas = serviceInvocationDatas.get(oneMinuteBefore);
-        List<ElapseInfo> elapses = serviceElapses.get(oneMinuteBefore);
+        Map<ServiceBasicInfo, TLNode> elapses = serviceElapses[oneMinuteBefore];
 
+        List<DataPoint> points = calcPointsOfLastMinute(invocationDatas, elapses);
+
+        elapses.clear();
+        invocationDatas.clear();
+
+        return points;
+    }
+
+    public List<DataPoint> invokePointsOfLastMinuteCopy() {
+        int currentMinuteOfHour = currentMinuteOfHour();
+        int oneMinuteBefore = (currentMinuteOfHour == 0) ? 59 : (currentMinuteOfHour - 1);
+
+        Map<ServiceBasicInfo, ServiceProcessData> invocationDatas = new HashMap<>(128);
+        invocationDatas.putAll(serviceInvocationDatas.get(oneMinuteBefore));
+
+        Map<ServiceBasicInfo, TLNode> elapses = new HashMap<>(128);
+        elapses.putAll(serviceElapses[oneMinuteBefore]);
+
+        return calcPointsOfLastMinute(invocationDatas, elapses);
+    }
+
+    private List<DataPoint> calcPointsOfLastMinute(Map<ServiceBasicInfo, ServiceProcessData> invocationDatas, Map<ServiceBasicInfo, TLNode> elapses) {
         List<DataPoint> points = new ArrayList<>(invocationDatas.size());
 
         long now = System.currentTimeMillis();
         AtomicLong increment = new AtomicLong(0);
         invocationDatas.forEach((serviceBasicInfo, serviceProcessData) -> {
-            final Optional<Long> iTotalTime = elapses.stream()
-                    .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost))
-                    .reduce((m, n) -> (m + n));
-            if (iTotalTime.isPresent()) {
-                final Long iMinTime = elapses.stream()
-                        .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost))
-                        .sorted()
-                        .min(Comparator.naturalOrder()).get();
-                final Long iMaxTime = elapses.stream()
-                        .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost))
-                        .sorted()
-                        .max(Comparator.naturalOrder()).get();
-                final Long iAverageTime = iTotalTime.get() / elapses.stream()
-                        .filter(x -> x.serviceInfo.equals(serviceBasicInfo)).map(y -> Long.valueOf(y.cost)).count();
+            TLNode tlNode = elapses.get(serviceBasicInfo);
+
+            if (tlNode != null) {
+                final Long iTotalTime = tlNode.sum;
+                final Long iMinTime = tlNode.min;
+                final Long iMaxTime = tlNode.max;
+                final Long iAverageTime = tlNode.sum / tlNode.count;
 
                 DataPoint point = new DataPoint();
                 point.setDatabase(DATA_BASE);
                 point.setBizTag("dapeng_service_process");
                 Map<String, String> tags = new HashMap<>(8);
-                tags.put("period", String.valueOf(PERIOD));
-                tags.put("analysis_time", String.valueOf(now));
                 tags.put("service_name", serviceBasicInfo.getServiceName());
                 String [] serviceParts = serviceBasicInfo.getServiceName().split("\\.");
                 int size = serviceParts.length;
@@ -344,7 +411,7 @@ public class ServerCounterContainer {
                 fields.put("i_min_time", iMinTime);
                 fields.put("i_max_time", iMaxTime);
                 fields.put("i_average_time", iAverageTime);
-                fields.put("i_total_time", iTotalTime.get());
+                fields.put("i_total_time", iTotalTime);
                 fields.put("total_calls", (long) serviceProcessData.getTotalCalls().get());
                 fields.put("succeed_calls", (long) serviceProcessData.getSucceedCalls().get());
                 fields.put("fail_calls", (long) serviceProcessData.getFailCalls().get());
@@ -354,9 +421,6 @@ public class ServerCounterContainer {
                 points.add(point);
             }
         });
-
-        elapses.clear();
-        invocationDatas.clear();
 
         return points;
     }
@@ -483,6 +547,8 @@ public class ServerCounterContainer {
     private void submitFlowPoint() {
         AtomicInteger uploadCounter = new AtomicInteger(0);
         DataPoint point = flowDataQueue.peek();
+        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
+        invocationContext.timeout(5000);
         while (point != null) {
             try {
                 CounterClientFactory.COUNTER_CLIENT.submitPoint(point);
@@ -496,6 +562,7 @@ public class ServerCounterContainer {
                     LOGGER.debug(Thread.currentThread().getName()
                             + " points:" + uploadCounter.get() + " uploaded before error, now release the lock.");
                 }
+                InvocationContextImpl.Factory.removeCurrentInstance();
                 return;
             }
         }
@@ -503,11 +570,14 @@ public class ServerCounterContainer {
             LOGGER.debug(Thread.currentThread().getName() + " no more points, total points:"
                     + uploadCounter.get() + "  uploaded");
         }
+        InvocationContextImpl.Factory.removeCurrentInstance();
     }
 
     private void submitInvokePoints() {
         AtomicInteger uploadCounter = new AtomicInteger(0);
         List<DataPoint> points = invokeDataQueue.peek();
+        InvocationContext invocationContext = InvocationContextImpl.Factory.currentInstance();
+        invocationContext.timeout(5000);
         while (points != null) {
             try {
                 if (!points.isEmpty()) {
@@ -534,6 +604,7 @@ public class ServerCounterContainer {
             LOGGER.debug(Thread.currentThread().getName() + " no more points, total points:" + uploadCounter.get()
                     + " uploaded, now release the lock.");
         }
+        InvocationContextImpl.Factory.removeCurrentInstance();
     }
 
     private ServiceProcessData createNewData(ServiceBasicInfo basicInfo) {

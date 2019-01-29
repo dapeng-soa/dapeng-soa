@@ -2,13 +2,12 @@ package com.github.dapeng.json;
 
 import com.github.dapeng.org.apache.thrift.TException;
 
-import java.util.Arrays;
-import java.util.List;
+/**
+ * @author zxwang
+ */
+class JsonParser {
 
-public class JsonParser {
-
-    public static final char EOI = '\uFFFF';
-    //public static final char EOS = '\uFFFE';
+    private static final char EOI = '\uFFFF';
 
     final ParserInput input;
     final JsonCallback callback;
@@ -16,7 +15,7 @@ public class JsonParser {
     private char cursorChar;
     private StringBuilder sb = new StringBuilder(64);
 
-    public JsonParser(String json, JsonCallback callback) {
+    JsonParser(String json, JsonCallback callback) {
         this.input = new StringBasedParserInput(json);
         this.callback = callback;
 
@@ -24,12 +23,12 @@ public class JsonParser {
     }
 
     public static class Line {
-        public final int lineNr;
-        public final int column;
+        final int lineNr;
+        final int column;
         public final String text;
 
 
-        public Line(int lineNr, int column, String text) {
+        Line(int lineNr, int column, String text) {
             this.lineNr = lineNr;
             this.column = column;
             this.text = text;
@@ -45,14 +44,14 @@ public class JsonParser {
         private final String summary;
         private final String detail;
 
-        public ParsingException(String summary, String detail) {
+        ParsingException(String summary, String detail) {
             super(summary + ":" + detail);
             this.summary = summary;
             this.detail = detail;
         }
     }
 
-    public static interface ParserInput {
+    public interface ParserInput {
         char nextChar();
 
         char nextUtf8Char();
@@ -66,7 +65,7 @@ public class JsonParser {
 
     static abstract class DefaultParserInput implements ParserInput {
 
-        protected int _cursor = -1;
+        int _cursor = -1;
 
         @Override
         public int cursor() {
@@ -75,7 +74,6 @@ public class JsonParser {
 
         @Override
         public Line getLine(int index) {
-            StringBuilder sb = new StringBuilder();
             int savedCursor = _cursor;
             _cursor = -1;
             Line line = loop(index);
@@ -83,7 +81,7 @@ public class JsonParser {
             return line;
         }
 
-        // TODO rewrite as while
+        @Deprecated
         private Line rec(StringBuilder sb, int index, int ix, int lineStartIx, int lineNo) {
             char nc = nextUtf8Char();
             switch (nc) {
@@ -130,7 +128,7 @@ public class JsonParser {
     public static class StringBasedParserInput extends DefaultParserInput {
         private final String string;
 
-        public StringBasedParserInput(String string) {
+        StringBasedParserInput(String string) {
             this.string = string;
         }
 
@@ -209,12 +207,10 @@ public class JsonParser {
                 break;
             case 'n':
                 if (!_null()) throw fail("JSON Value", mark);
-                ;
                 callback.onNull();
                 break;
             case 't':
                 if (!_true()) throw fail("JSON Value", mark);
-                ;
                 callback.onBoolean(true);
                 break;
             case '{':
@@ -241,7 +237,6 @@ public class JsonParser {
             case '9':
             case '-':
                 number();
-                //callback.onNumber();
                 break;
             case '\"':
                 string();
@@ -307,7 +302,7 @@ public class JsonParser {
     int hexValue(char c) {
         if ('0' <= c && c <= '9') return c - '0';
         else if ('a' <= c && c <= 'f') return c - 87;
-        else if ('A' <= c && c <= 'F') return c = 55;
+        else if ('A' <= c && c <= 'F') return c - 55;
         else throw fail("hex digit");
     }
 
@@ -388,9 +383,13 @@ public class JsonParser {
 
     void array() throws TException {
         ws();
+        int index = 0;
         if (cursorChar != ']') {
             do {
+                callback.onStartField(index);
                 value();
+                callback.onEndField();
+                index++;
             } while (ws(','));
         }
         require(']');
@@ -399,13 +398,13 @@ public class JsonParser {
 
     void number() throws TException {
         int start = input.cursor();
-        int startChar = cursorChar;
 
         ch('-');
         _int();
         frac();
         exp();
 
+        // TODO double = -1 * i * e ^ exp
         callback.onNumber(Double.parseDouble(new String(input.sliceCharArray(start, input.cursor()))));
         ws();
     }
@@ -439,106 +438,4 @@ public class JsonParser {
     boolean digit() {
         return cursorChar >= '0' && cursorChar <= '9' && advance();
     }
-
-
-    public static void main(String[] args) throws TException {
-        String json = "{ \"a\": 10, \"b\": true, \n\"c\": [1,2,3], \"d\":10.2," +
-                "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{} }";
-
-        String json1 = "{ a\": 10, \"b\": true, \n\"c\": [1,2,3], " +
-                "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{} }";
-
-        String json2 = "{ \"a\": 10d, \"b\": true, \n\"c\": [1,2,3], " +
-                "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{} }";
-
-        String json3 = "{ \"a\": 10, b\": true, \n\"c\": [1,2,3], " +
-                "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{} }";
-
-        String json4 = "{ \"a\": 10, \"b\": true, \n\"c: [1,2,3], " +
-                "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{} }";
-        String json5 = "{ \"a\": 10, \"b\": true, \n\"c\": 1,2,3], " +
-                "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{} }";
-        String json6 = "{ \"a\": 10, \"b\": true, \n\"c\": [1,2,3] " +
-                "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{} }";
-        String json7 = "{ \"a\": 10, \"b\": true, \n\"c\": [1,2,3, " +
-                "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{} }";
-        String json8 = "{ \"a\": 10, \"b\": true, \n\"c\": [1,2,3], " +
-                "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":} }";
-        String json9 = "{ \"a\": 10, \"b\": true, \n\"c\": [1,2,3], " +
-                "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{ }";
-        String json10 = "{ \"a\": 10, \"b\": true, \n\"c\": [1,2,3], " +
-                "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{}, }";
-
-        List<String> errorJsons = Arrays.asList(json1, json2, json3, json4, json5, json6, json7, json8, json9, json10);
-        JsonCallback callback = new JsonCallback() {
-            @Override
-            public void onStartObject() {
-                System.out.println("onStartObject");
-            }
-
-            @Override
-            public void onEndObject() {
-                System.out.println("onEndObject");
-            }
-
-            @Override
-            public void onStartArray() {
-                System.out.println("onStartArray");
-            }
-
-            @Override
-            public void onEndArray() {
-                System.out.println("onEndArray");
-            }
-
-            @Override
-            public void onStartField(String name) {
-                System.out.println("onStartField:" + name);
-            }
-
-            @Override
-            public void onEndField() {
-                System.out.println("onEndField");
-            }
-
-            @Override
-            public void onBoolean(boolean value) {
-                System.out.println("onBoolean:" + value);
-            }
-
-            @Override
-            public void onNumber(double value) {
-                System.out.println("onNumber:" + value);
-            }
-            @Override
-            public void onNumber(long value) {
-                System.out.println("onNumber:" + value);
-            }
-
-            @Override
-            public void onNull() {
-                System.out.println("onNull");
-            }
-
-            @Override
-            public void onString(String value) {
-                System.out.println("onString:" + value);
-            }
-        };
-
-        JsonParser parser = new JsonParser(json, callback);
-        System.out.println(json);
-        parser.value();
-System.out.println("finished=====");
-//        errorJsons.forEach(errorJson -> {
-//            JsonParser myParser = new JsonParser(errorJson, callback);
-//            try {
-//                myParser.value();
-//            } catch (ParsingException e) {
-//                e.printStackTrace();
-//            }
-//            System.out.println("finished=====");
-//        });
-    }
-
 }

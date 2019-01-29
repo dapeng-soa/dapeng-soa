@@ -3,6 +3,10 @@ package com.github.dapeng.impl.filters;
 import com.github.dapeng.api.Container;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.filter.InitializableFilter;
+import com.github.dapeng.util.FilterLoaderUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 import java.util.List;
 
@@ -13,6 +17,7 @@ import java.util.List;
  */
 
 public class FilterLoader {
+    private static final Logger logger = LoggerFactory.getLogger("container.slowtime.log");
 
     public FilterLoader(Container container, List<ClassLoader> applicationCls) {
 
@@ -44,7 +49,7 @@ public class FilterLoader {
      * @param filter
      */
     private void init(Filter filter) {
-        if(filter instanceof InitializableFilter){
+        if (filter instanceof InitializableFilter) {
             ((InitializableFilter) filter).init();
         }
     }

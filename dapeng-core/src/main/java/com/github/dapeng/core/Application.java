@@ -19,7 +19,7 @@ public interface Application {
 
     void info(Class<?> logClass, String formattedMsg, Object... args);
 
-    void error(Class<?> logClass,String errMsg, Throwable exception);
+    void error(Class<?> logClass, String errMsg, Throwable exception);
 
     ClassLoader getAppClasssLoader();
 }

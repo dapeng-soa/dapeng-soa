@@ -5,7 +5,7 @@
     <parent>
         <artifactId>dapeng-parent</artifactId>
         <groupId>com.github.dapeng</groupId>
-        <version>2.0.2.3</version>
+        <version>2.1.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -16,4 +16,30 @@
         <module>dapeng-registry-zookeeper</module>
     </modules>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.github.dapeng</groupId>
+                <artifactId>dapeng-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.dapeng</groupId>
+                <artifactId>dapeng-utils</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.dapeng</groupId>
+                <artifactId>dapeng-router</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.dapeng</groupId>
+                <artifactId>dapeng-container-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
 </project>

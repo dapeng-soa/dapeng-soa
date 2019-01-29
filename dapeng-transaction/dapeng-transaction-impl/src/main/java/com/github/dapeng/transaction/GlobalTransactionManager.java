@@ -6,6 +6,7 @@ import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.helper.MasterHelper;
 import com.github.dapeng.core.metadata.Service;
+import com.github.dapeng.json.OptimizedMetadata;
 import com.github.dapeng.metadata.MetadataClient;
 import com.github.dapeng.transaction.api.domain.*;
 import com.github.dapeng.transaction.api.service.GlobalTransactionProcessService;
@@ -248,13 +249,13 @@ public class GlobalTransactionManager {
     private static String callServiceMethod(TGlobalTransactionProcess process, boolean rollbackOrForward) throws Exception {
 
         String responseJson;
-        Service service = null;
+        OptimizedMetadata.OptimizedService service = null;
 
         //获取服务的metadata
         String metadata = new MetadataClient(process.getServiceName(), process.getVersionName()).getServiceMetadata();
         if (metadata != null) {
             try (StringReader reader = new StringReader(metadata)) {
-                service = JAXB.unmarshal(reader, Service.class);
+                service = new OptimizedMetadata.OptimizedService(JAXB.unmarshal(reader, Service.class));
             }
         }
 

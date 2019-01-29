@@ -1,0 +1,29 @@
+{
+  "body": {
+    "request": {
+      "reportType": [
+        "SHOPINCOMEDIFF_REPORT",
+        "SKU_RECEIVE_REPORT",
+        "SUPPLIER_ACCOUNT_DETAIL",
+        "SHOP_CHECKACCOUNT_REPORT",
+        "LOGISTICS_CHECKACCOUNT_REPORT",
+        "CIGARETTE_TRANS_REPORT",
+        "INCOMEDETAIL_REPORT",
+        "INVENTORY_DETAIL_REPORT",
+        "LOGISTICS_DETAIL_REPORT",
+        "SHOP_IOCTW_REPORT",
+        "RETIREMENT_REPORT",
+        "STORE_TURNOVER",
+        "PAY_SOURCE_DATA",
+        "SINGLE_GOODS_SALE"
+      ],
+      "exportUserId": 16625,
+      "pageParams": {
+        "start": 0,
+        "size": 10,
+        "results": 0,
+        "pageIndex": 1
+      }
+    }
+  }
+}

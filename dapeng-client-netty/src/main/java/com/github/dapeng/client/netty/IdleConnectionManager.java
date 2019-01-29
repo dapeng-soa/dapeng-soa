@@ -29,7 +29,9 @@ public class IdleConnectionManager {
             channels.put(channel, count);
         } else {
             AtomicInteger count = channels.get(channel);
-            count.incrementAndGet();
+            if (count != null) {
+                count.incrementAndGet();
+            }
         }
 
         //channels.putIfAbsent(channel, new AtomicInteger(0)).incrementAndGet();
@@ -46,7 +48,7 @@ public class IdleConnectionManager {
     public void start() {
         live = true;
 
-        final Thread targetThread = new Thread("Check idle connection Thread") {
+        final Thread targetThread = new Thread("check-idle-connection-thread") {
             @Override
             public void run() {
                 while (live) {

@@ -382,7 +382,7 @@ function applyTestForJsonStr(serviceName, version, methodName){
         methodName: methodName,
         parameter: JSON.stringify(jsonObj)
     }, function (result) {
-        $("#json-result").html(getFormatedJsonHTML(eval('(' + result + ')')));
+        $("#json-result").html(getFormatedJsonHTML(eval('(' + JSON.stringify(result) + ')')));
     }, 'json');
 }
 
@@ -410,7 +410,7 @@ function applyTest(serviceName, version, methodName) {
         operatorId:operatorId
     }, function (result) {
 
-        $("#json-result").html(getFormatedJsonHTML(eval('(' + result + ')')));
+        $("#json-result").html(getFormatedJsonHTML(eval('(' + JSON.stringify(result) + ')')));
 
     }, 'json');
 }

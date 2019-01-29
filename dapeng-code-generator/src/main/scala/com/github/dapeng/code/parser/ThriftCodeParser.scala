@@ -16,6 +16,7 @@ import com.twitter.scrooge.java_generator._
 import scala.collection.JavaConversions._
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
+import scala.io.Source
 import scala.util.control.Breaks._
 
 
@@ -51,9 +52,9 @@ class ThriftCodeParser(var language: String) {
       var int = lastIndexCount
       var beginStr = namespace
       var endStr = ""
-      while ((int >= 0) ) {
+      while ((int >= 0)) {
         endStr = s"${beginStr.substring(beginStr.lastIndexOf("."))}${endStr}"
-        beginStr = beginStr.substring(0,beginStr.lastIndexOf("."))
+        beginStr = beginStr.substring(0, beginStr.lastIndexOf("."))
         int -= 1
       }
       s"${beginStr}.scala${endStr}"
@@ -76,12 +77,16 @@ class ThriftCodeParser(var language: String) {
     //如果是scala，需要重写namespace
     val finalTxt = if (language.equals("scala")) {
       // getNamespaceLine => "namespace java xxxxxx.xx.xx"
-      val namespaceLine = txt.split("\n")(0)
-      // getNamespace => xx.xx.xx
-      val namespace = namespaceLine.split(" ").reverse.head
-      val scalaNamespace = toScalaNamespace(namespace)
-
-      txt.replace(namespace,scalaNamespace)
+      val namespaceLine = Source.fromFile(resource).getLines().find(_.trim.startsWith("namespace"))
+      namespaceLine match {
+        case Some(i) =>
+          val namespace = i.split(" ").reverse.head
+          val scalaNamespace = toScalaNamespace(namespace)
+          txt.replace(namespace,scalaNamespace)
+        case None =>
+          println("[Warning] you should specific your namespace statement at head of your thrift file. like: namespace java YourPackageName")
+          txt
+      }
     } else txt
 
     val importer = Importer(Seq(homeDir))
@@ -144,7 +149,12 @@ class ThriftCodeParser(var language: String) {
           if (line.length > 0) {
             if (buffer.length > 0)
               buffer.append("\n")
-            buffer.append(line);
+            if (line.trim.startsWith("#")) {
+              buffer.append(line.trim);
+            } else {
+              buffer.append(line);
+            }
+
           } else {
             buffer.append("\n");
           }
@@ -228,10 +238,10 @@ class ThriftCodeParser(var language: String) {
     dataType
   }
 
-  private def getNameSpace(doc: Document, language:String): Option[Identifier] = {
+  private def getNameSpace(doc: Document, language: String): Option[Identifier] = {
     doc.namespace(language) match {
       case x@Some(id) => x
-      case None =>  // return a default namespace of java
+      case None => // return a default namespace of java
         doc.namespace("java")
     }
 
@@ -322,7 +332,6 @@ class ThriftCodeParser(var language: String) {
   }
 
 
-
   private def findServices(doc: Document, generator: ApacheJavaGenerator): util.List[metadata.Service] = {
     val results = new util.ArrayList[metadata.Service]()
 
@@ -331,11 +340,25 @@ class ThriftCodeParser(var language: String) {
 
       val service = new metadata.Service()
 
+
       service.setNamespace(if (controller.has_namespace) controller.namespace else null)
       service.setName(controller.name)
       service.setDoc(toDocString(s.docstring))
       if (s.annotations.size > 0)
         service.setAnnotations(s.annotations.map { case (key, value) => new Annotation(key, value) }.toList)
+
+
+      val serviceVersion = if(service.annotations != null) service.annotations.find(item => {item.key.contains("version")}) else None
+      service.setMeta(new metadata.Service.ServiceMeta {
+        if (serviceVersion.nonEmpty) {
+          this.version = serviceVersion.get.value
+        } else {
+          this.version = "1.0.0"
+        }
+        this.timeout = 30000
+      })
+
+
 
       val methods = new util.ArrayList[Method]()
       for (tmpIndex <- (0 until controller.functions.size)) {
@@ -487,7 +510,7 @@ class ThriftCodeParser(var language: String) {
         }
 
         if (method.annotations != null) {
-          method.annotations.foreach(annotation => getAllStructByAnnotation(annotation.getValue,structSet))
+          method.annotations.foreach(annotation => getAllStructByAnnotation(annotation.getValue, structSet))
         }
 
       }
@@ -495,16 +518,8 @@ class ThriftCodeParser(var language: String) {
       service.setEnumDefinitions(enumSet.toList)
       //      service.setEnumDefinitions(enumCache)
       //      service.setStructDefinitions(structCache)
-      service.setMeta(new metadata.Service.ServiceMeta {
-        if (serviceVersion != null && !serviceVersion.trim.equals(""))
-          this.version = serviceVersion.trim
-        else
-          this.version = "1.0.0"
-        this.timeout = 30000
-      })
     }
-
-    return serviceCache;
+    return serviceCache
   }
 
   /**
@@ -538,14 +553,21 @@ class ThriftCodeParser(var language: String) {
 
   /**
     * qualifiedName:
+    *
     * @param annoValue
     * @param structSet
     * @return
     */
   def getAllStructByAnnotation(annoValue: String, structSet: java.util.HashSet[metadata.Struct]) = {
     annoValue.split(",").foreach(qualifiedName => {
-
-      val struct = mapStructCache.get(qualifiedName);
+      val finalQualifiedName = if (language.equals("scala")) {
+        if (qualifiedName.contains(".")) {
+          toScalaNamespace(qualifiedName, 1)
+        } else qualifiedName
+      } else {
+        qualifiedName
+      }
+      val struct = mapStructCache.get(finalQualifiedName);
       if (struct != null && !structSet.contains(struct)) {
         structSet.add(struct)
       }

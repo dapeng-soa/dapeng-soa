@@ -21,7 +21,10 @@ dapeng.iml
 /dapeng-spring/dapeng-spring.iml
 /dapeng-zookeeper/target/
 /dapeng-zookeeper/dapeng-zookeeper.iml
+/dapeng-container/dapeng-container-impl/docker/dapeng-container
 .DS_Store
 **/.DS_Store
 dapeng-client-netty/src/test
+dapeng-json/src/test
 dapeng-core/src/test
+soa.base_IS_UNDEFINED

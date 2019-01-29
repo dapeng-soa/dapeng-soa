@@ -1,7 +1,9 @@
 package com.github.dapeng.client.netty;
 
 import com.github.dapeng.core.SoaConnection;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -10,7 +12,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class SubPool {
 
-    private final ReentrantLock connectionLock = new ReentrantLock();
+    static final int MAX = SoaSystemEnvProperties.SOA_SUBPOOL_SIZE;
 
     private final String ip;
     private final int port;
@@ -18,28 +20,31 @@ public class SubPool {
     /**
      * connection that used by rpcClients, such as java, scala, php..
      */
-    private SoaConnection soaConnection;
+    private final SoaConnection[] soaConnections;
+    private final AtomicInteger index = new AtomicInteger(0);
 
     SubPool(String ip, int port) {
         this.ip = ip;
         this.port = port;
+
+        soaConnections = new SoaConnection[MAX];
+        for(int i = 0; i < MAX; i++) {
+            soaConnections[i] = new SoaConnectionImpl(ip, port);
+        }
     }
 
     public SoaConnection getConnection() {
-
-        if (soaConnection != null) return soaConnection;
-        try {
-            connectionLock.lock();
-            if (soaConnection == null) {
-                soaConnection = new SoaConnectionImpl(ip, port, this);
-            }
-        } finally {
-            connectionLock.unlock();
+        if (MAX == 1) {
+            return soaConnections[0];
         }
-        return soaConnection;
-    }
 
-//    public void removeConnection() {
-//        soaConnection = null;
-//    }
+        int idx = this.index.getAndIncrement();
+        if(idx < 0) {
+            synchronized (this){
+                this.index.set(0);
+                idx = 0;
+            }
+        }
+        return soaConnections[idx%MAX];
+    }
 }

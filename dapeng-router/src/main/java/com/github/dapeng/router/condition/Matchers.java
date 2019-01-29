@@ -10,12 +10,10 @@ import java.util.List;
  * @date 2018年04月13日 下午9:38
  */
 public class Matchers implements Condition {
-    public List<Matcher> macthers = new ArrayList<>();
+    public List<Matcher> matchers = new ArrayList<>();
 
     @Override
     public String toString() {
-        return "Matchers{" +
-                "macthers=" + macthers +
-                '}';
+        return "Matchers{" + "matchers=" + matchers + '}';
     }
 }

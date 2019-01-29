@@ -1,66 +1,102 @@
 package com.github.dapeng.registry.zookeeper;
 
+import com.github.dapeng.cookie.CookieRule;
 import com.github.dapeng.core.RuntimeInstance;
+import com.github.dapeng.core.ServiceFreqControl;
+import com.github.dapeng.core.Weight;
 import com.github.dapeng.core.enums.LoadBalanceStrategy;
+import com.github.dapeng.router.Route;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * @author lihuimin
- * @date 2017/12/25
+ * service information of ZK, including runtime and config
+ *
+ * @author ever
+ * @date 2018/11/16
  */
 public class ZkServiceInfo {
-
-    public enum Status {
-
-        CREATED, ACTIVE, CANCELED,
-    }
-
-    final String service;
-
-    private Status status = Status.CREATED;
+    private final String ServiceName;
 
     /**
-     * instances list
+     * instances list, always use cow collection
      */
     private List<RuntimeInstance> runtimeInstances;
 
-    public ZkServiceInfo(String service) {
-        this.service = service;
-    }
+    /**
+     * 路由规则
+     */
+    private List<Route> routes = new ArrayList<>(16);
 
-    public ZkServiceInfo(String service, List<RuntimeInstance> runtimeInstances) {
+    private ServiceFreqControl freqControl = null;
 
-        this.service = service;
+    private List<CookieRule> cookieRules = new ArrayList<>(8);
+
+    public ZkServiceInfo(String serviceName, List<RuntimeInstance> runtimeInstances) {
+        this.ServiceName = serviceName;
         this.runtimeInstances = runtimeInstances;
     }
 
-    public List<RuntimeInstance> getRuntimeInstances() {
+    public List<RuntimeInstance> runtimeInstances() {
         return runtimeInstances;
     }
 
-    public void setRuntimeInstances(List<RuntimeInstance> runtimeInstances) {
-        this.runtimeInstances = runtimeInstances;
+    /**
+     * 根据节点ip以及端口， 找到对应的服务节点
+     * @param ip
+     * @param port
+     * @return
+     */
+    public RuntimeInstance runtimeInstance(String ip, int port) {
+        for (RuntimeInstance runtimeInstance : runtimeInstances) {
+            if (runtimeInstance.ip.equals(ip) && runtimeInstance.port == port) {
+                return runtimeInstance;
+            }
+        }
+
+        return null;
     }
 
-    public String getService() {
-        return service;
+    public void routes(List<Route> routes) {
+        this.routes = routes;
     }
 
-    public Status getStatus() {
-        return status;
+    public List<Route> routes() {
+        return routes;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
+    public void cookieRules(List<CookieRule> cookieRules) {
+        this.cookieRules = cookieRules;
+    }
+
+    public List<CookieRule> cookieRules() {
+        return cookieRules;
+    }
+
+    public void freqControl(ServiceFreqControl freqControl) {
+        this.freqControl = freqControl;
+    }
+
+    public ServiceFreqControl freqControl() {
+        return freqControl;
+    }
+
+    public String serviceName() {
+        return ServiceName;
     }
 
     //～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～
     //                           that's begin  config                              ～
     //                                                                             ～
     //～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～～
+    /**
+     * processTime zk config
+     */
+    public Config<Long> processTimeConfig = new Config<>();
+
     /**
      * timeout zk config
      */
@@ -71,6 +107,13 @@ public class ZkServiceInfo {
     public Config<LoadBalanceStrategy> loadbalanceConfig = new Config<>();
 
     /**
+     * weight zk config
+     */
+    public Weight weightGlobalConfig = new Weight();
+
+    public List<Weight> weightServiceConfigs = new ArrayList<>();
+
+    /**
      * config class
      */
     public static class Config<T> {
@@ -78,5 +121,4 @@ public class ZkServiceInfo {
         public Map<String, T> serviceConfigs = new HashMap<>();
         public Map<String, T> instanceConfigs = new HashMap<>();
     }
-
 }
