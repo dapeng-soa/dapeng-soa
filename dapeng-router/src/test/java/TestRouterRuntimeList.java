@@ -62,8 +62,8 @@ public class TestRouterRuntimeList {
         //String pattern = "method match 'getSkuById' , 'setFoo' ; version match '1.0.0' => ~ip\"192.168.1.103\",~v\"1.0.0\"";
         //String pattern = "method match 'getSkuById' , 'setFoo' ; version match '1.0.0' => ~ip\"192.168.1.103\"";
         //String pattern = "method match 'getSkuById' , 'setFoo' ; version match '1.0.0' => ip\"192.168.1.103\"";
-        //String pattern = "method match 'getSkuById' , 'setFoo' ; version match '1.0.0' => ~v\"1.0.0\"";
-        String pattern = "method match 'getSkuById' , 'setFoo' ; version match '1.0.0' => v\"1.0.0\"";
+        String pattern = "method match 'getSkuById' , 'setFoo' ; version match '1.0.0' => ~v\"1.0.0\"";
+        //String pattern = "method match 'getSkuById' , 'setFoo' ; version match '1.0.0' => v\"1.0.0\"";
 
         List<Route> routes = RoutesExecutor.parseAll(pattern);
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
