@@ -195,13 +195,12 @@ public class RoutesExecutor {
         if (versions.isEmpty()) return true;
 
         //不在notVersions 指定版本(versions)不为空  即匹配指定版本
-        boolean natched =false;
         for (ThenVersion thenVersion : versions) {
             if (thenVersion.version.equalsIgnoreCase(runtimeInstance.version)) {
-                natched = true;
+                return true;
             }
         }
-        return natched;
+        return false;
     }
 
 
