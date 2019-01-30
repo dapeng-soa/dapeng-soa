@@ -1,3 +1,19 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.github.dapeng.router;
 
 
@@ -103,8 +119,7 @@ public class RoutesParser {
             case Token.ID:
                 Condition left = left();
                 lexer.next(Token.THEN);
-                List<ThenIp> right = right();
-                return new Route(left, right);
+                return new Route(left, right());
             default:
                 throw new ParsingException("route error", "expect `otherwise` or `id match ...` but got " + token);
         }
@@ -237,47 +252,55 @@ public class RoutesParser {
      * rightPattern : '~' rightPattern
      * | ip
      */
-    public List<ThenIp> right() throws ParsingException {
-        List<ThenIp> thenIps = new ArrayList<>();
+    public List<CommonThen> right() throws ParsingException {
+        List<CommonThen> thenDests = new ArrayList<>();
 
         Token token = lexer.peek();
         switch (token.type()) {
             case Token.NOT:
             case Token.IP:
-                ThenIp it = rightPattern();
-                thenIps.add(it);
+            case Token.VERSION:
+                CommonThen it = rightPattern();
+                thenDests.add(it);
                 // => ip"" ,
                 // => 后 只会跟三种  Token_EOF(结束符号)  Token_COMMA(逗号) EOL(换行符)
                 validate(lexer.peek(), Token_COMMA, Token_EOF, Token_EOL);
                 while (lexer.peek() == Token_COMMA) {
                     lexer.next(Token.COMMA);
-                    ThenIp it2 = rightPattern();
-                    thenIps.add(it2);
+                    CommonThen it2 = rightPattern();
+                    thenDests.add(it2);
                 }
-                return thenIps;
+                return thenDests;
+
             default:
-                throw new ParsingException("right error", "expect '~ip' or 'ip' but got:" + token);
+                throw new ParsingException("right error", "expect '~ip'、'ip'、'v'、'~v', but got:" + token);
         }
     }
 
     /**
-     * ？
+     * 路由IP 或者版本
      */
-    public ThenIp rightPattern() throws ParsingException {
+    public CommonThen rightPattern() throws ParsingException {
+        boolean isNot = false;
+        if (lexer.peek().type() == Token.NOT) {
+            isNot = true;
+            lexer.next(); //去掉~字符
+        }
+
         Token token = lexer.peek();
         switch (token.type()) {
-            case Token.NOT: {
-                lexer.next(Token.NOT);
-                IpToken ip = (IpToken) lexer.next(Token.IP);
-                ThenIp it = new ThenIp(false, ip.ip, ip.port, ip.mask);
-                return new ThenIp(!it.not, it.ip, it.port, it.mask);
-            }
             case Token.IP: {
                 IpToken ip = (IpToken) lexer.next(Token.IP);
-                return new ThenIp(false, ip.ip, ip.port, ip.mask);
+                return new ThenIp(Token.IP, isNot, ip.ip, ip.port, ip.mask);
             }
+
+            case Token.VERSION: {
+                VersionToken versionToken = (VersionToken) lexer.next(Token.VERSION);
+                return new ThenVersion(Token.VERSION, isNot, versionToken.version);
+            }
+
             default:
-                throw new ParsingException("rightPattern error", "expect '~ip' or 'ip' but got:" + token);
+                throw new ParsingException("rightPattern error", "expect '~ip'、'ip'、'v'、'~v' but got:" + token);
         }
     }
 

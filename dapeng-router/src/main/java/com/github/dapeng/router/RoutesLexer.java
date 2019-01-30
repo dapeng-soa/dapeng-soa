@@ -1,3 +1,19 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.github.dapeng.router;
 
 import com.github.dapeng.core.helper.IPUtils;
@@ -79,6 +95,7 @@ public class RoutesLexer {
         return token;
     }
 
+
     /**
      * 获取下一个token 并改变 偏移量
      *
@@ -127,6 +144,15 @@ public class RoutesLexer {
             case 'c':
                 if (require(new char[]{'\"', '\''}, false)) {
                     return parseCookies();
+                } else {
+                    pos--;
+                    return processId();
+                }
+
+                //process version
+            case 'v':
+                if (require(new char[]{'\"', '\''}, false)) {
+                    return parseVersion();
                 } else {
                     pos--;
                     return processId();
@@ -209,6 +235,24 @@ public class RoutesLexer {
             }
         }
         throw new ParsingException("[CookiesEx]", "parse COOKIE_RULES failed,check the cookie value contains '#' or more than one ");
+    }
+
+    /**
+     * v"2.0.1"
+     *
+     * @return
+     */
+    private Token parseVersion() throws ParsingException {
+        char quotation = currentChar();
+        char ch = nextChar();
+        StringBuilder sb = new StringBuilder(16);
+        do {
+            throwExWithCondition(ch == EOI,
+                    "[VersionEx]", "parse VERSION_RULES failed,check the VERSION_REGEX express:" + sb.toString());
+            sb.append(ch);
+        } while ((ch = nextChar()) != quotation);
+        String value = sb.toString();
+        return new VersionToken(value);
     }
 
 

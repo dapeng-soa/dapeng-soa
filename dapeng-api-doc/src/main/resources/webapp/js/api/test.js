@@ -39,7 +39,7 @@ function createInputGroup(label, type, optional, fieldDoc, input) {
     var inputElem = (input == undefined) ? $doc.createElement("input") : input;
     $(inputElem).addClass("form-control");
     $(inputElem).addClass("parameterValue");
-    if(type == "Date"){
+    if (type == "Date") {
         $(inputElem).addClass("datetimepicker");
     }
     $(inputElem).attr("type", inputType);
@@ -365,21 +365,19 @@ function getDataTypeElement(dataType, name, service, optional, doc) {
  * @param version
  * @param methodName
  */
-function applyTestForJsonStr(serviceName, version, methodName){
+function applyTestForJsonStr(serviceName, version, methodName) {
     var params = $("#pasteJsonBox").val();
     var jsonObj = {};
     try {
         jsonObj = JSON.parse(params)
-    }catch (e){
+    } catch (e) {
         alert("json格式异常请检查");
         return;
     }
     $("#json-request").html(getFormatedJsonHTML(jsonObj));
-    var url = window.basePath + "/test.htm";
+    var url = window.basePath + "/test";
+    url = url + "/" + serviceName + "/" + version + "/" + methodName + ".htm";
     $.post(url, {
-        serviceName: serviceName,
-        version: version,
-        methodName: methodName,
         parameter: JSON.stringify(jsonObj)
     }, function (result) {
         $("#json-result").html(getFormatedJsonHTML(eval('(' + JSON.stringify(result) + ')')));
@@ -398,11 +396,9 @@ function applyTest(serviceName, version, methodName) {
     $("#json-request").html(getFormatedJsonHTML(jsonParameter));
 
     var stringParameter = JSON.stringify(jsonParameter);
-    var url = window.basePath + "/test.htm";
+    var url = window.basePath + "/test";
+    url = url + "/" + serviceName + "/" + version + "/" + methodName + ".htm";
     $.post(url, {
-        serviceName: serviceName,
-        version: version,
-        methodName: methodName,
         parameter: stringParameter
     }, function (result) {
 
@@ -434,7 +430,7 @@ function getJsonParameter() {
             parameter[tN] = tJSON;
         }
     });
-    return {body:parameter};
+    return {body: parameter};
 }
 
 function getJsonObject(li) {

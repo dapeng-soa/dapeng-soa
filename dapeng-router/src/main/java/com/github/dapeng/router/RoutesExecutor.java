@@ -1,3 +1,19 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.github.dapeng.router;
 
 import com.github.dapeng.core.InvocationContext;
@@ -5,10 +21,13 @@ import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.RuntimeInstance;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.router.condition.Condition;
-import com.github.dapeng.router.condition.*;
+import com.github.dapeng.router.condition.Matcher;
+import com.github.dapeng.router.condition.Matchers;
+import com.github.dapeng.router.condition.Otherwise;
 import com.github.dapeng.router.exception.ParsingException;
 import com.github.dapeng.router.pattern.*;
 import com.github.dapeng.router.token.IpToken;
+import com.github.dapeng.router.token.Token;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +80,9 @@ public class RoutesExecutor {
                 isMatched = matchCondition(ctx, route.getLeft());
                 // 匹配成功，执行右边逻辑
                 if (isMatched) {
-                    instances = matchThenRouteIp(instances, route);
+
+                    //执行路由选择
+                    instances = matchThenRoute(instances, route);
 
                     if (logger.isDebugEnabled()) {
                         StringBuilder append = new StringBuilder();
@@ -125,28 +146,81 @@ public class RoutesExecutor {
     }
 
     /**
-     * matchThenRouteIp  传入 RuntimeInstance 进行match
+     * matchThenRoute  传入 RuntimeInstance 进行match
      *
      * @param instances
      * @param route
      * @return
      */
-    private static List<RuntimeInstance> matchThenRouteIp(List<RuntimeInstance> instances, Route route) {
-        // 获取 路由规则 then 之后 指向的 ip list
-        List<ThenIp> thenRouteIps = route.getThenRouteIps();
+    private static List<RuntimeInstance> matchThenRoute(List<RuntimeInstance> instances, Route route) {
+        // 获取 路由规则
+        List<CommonThen> thenRoutes = route.getThenRouteDests();
+
+        //匹配 IP 规则
         Set<ThenIp> ips = new HashSet<>(16);
         Set<ThenIp> notIps = new HashSet<>(16);
 
-        thenRouteIps.forEach(ip -> {
-            if (ip.not) {
-                notIps.add(ip);
-            } else {
-                ips.add(ip);
+        //匹配 版本规则
+        Set<ThenVersion> versions = new HashSet<>(16);
+        Set<ThenVersion> notVersions = new HashSet<>(16);
+
+        thenRoutes.forEach(thenDest -> {
+            switch (thenDest.getRouteType()) {
+                //根据IP 路由
+                case Token.IP:
+                    if (thenDest.not) {
+                        notIps.add((ThenIp) thenDest);
+                    } else {
+                        ips.add((ThenIp) thenDest);
+                    }
+                    break;
+
+                //根据版本  路由
+                case Token.VERSION:
+                    if (thenDest.not) {
+                        notVersions.add((ThenVersion) thenDest);
+                    } else {
+                        versions.add((ThenVersion) thenDest);
+                    }
+                    break;
             }
         });
-        return instances.stream().filter(inst ->
-                ipMatch(ips, notIps, IPUtils.transferIp(inst.ip), inst.port)).collect(Collectors.toList());
+
+        if (!ips.isEmpty() || !notIps.isEmpty()) {
+            instances = instances.stream().filter(inst -> ipMatch(ips, notIps, IPUtils.transferIp(inst.ip), inst.port)).collect(Collectors.toList());
+        }
+
+        if (!versions.isEmpty() || !notVersions.isEmpty()) {
+            instances = instances.stream().filter(inst -> versionMatch(versions, notVersions, inst)).collect(Collectors.toList());
+        }
+
+        return instances;
     }
+
+
+    /**
+     * 版本规则匹配
+     */
+    private static boolean versionMatch(Set<ThenVersion> versions, Set<ThenVersion> notVersions, RuntimeInstance runtimeInstance) {
+        //先匹配 非  规则
+        for (ThenVersion notVersion : notVersions) {
+            if (notVersion.version.equalsIgnoreCase(runtimeInstance.version)) {
+                return false;
+            }
+        }
+
+        //不在notVersions  而且指定版本(versions)为空 返回true
+        if (versions.isEmpty()) return true;
+
+        //不在notVersions 指定版本(versions)不为空  即匹配指定版本
+        for (ThenVersion thenVersion : versions) {
+            if (thenVersion.version.equalsIgnoreCase(runtimeInstance.version)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     /**
      * 传入 runtime instance ip 和 路由规则 right 端定义的ip 进行匹配
