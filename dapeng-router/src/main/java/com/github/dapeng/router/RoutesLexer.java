@@ -287,7 +287,7 @@ public class RoutesLexer {
      * @return
      */
     private boolean isValidIdChar(char ch) {
-        return Character.isLetter(ch) || Character.isDigit(ch) || ch == '_' || ch == '.';
+        return Character.isLetter(ch) || Character.isDigit(ch) || ch == '_';
     }
 
 
