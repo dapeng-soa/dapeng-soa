@@ -1,24 +1,26 @@
 package com.github.dapeng.tcc.filter;
 
-import com.github.dapeng.core.SoaException;
-import com.github.dapeng.core.TransactionContext;
+import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.filter.FilterChain;
 import com.github.dapeng.core.filter.FilterContext;
+import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.org.apache.thrift.TException;
 import com.github.dapeng.org.apache.thrift.protocol.TCompactProtocol;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
 import com.github.dapeng.org.apache.thrift.transport.TTransport;
 import com.github.dapeng.tm.TransactionManagerServiceClient;
 import com.github.dapeng.tm.service.BeginGtxRequest;
-import com.github.dapeng.tm.service.TransactionManagerService;
+import com.github.dapeng.tm.service.BeginGtxResponse;
+import com.github.dapeng.tm.service.CcRequest;
 import com.github.dapeng.util.TCommonTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
+import java.util.Stack;
 
 /**
  * Tcc Interceptor
@@ -28,36 +30,82 @@ import java.util.Optional;
  */
 public class TccFilter implements Filter {
     Logger LOGGER = LoggerFactory.getLogger(TccFilter.class);
-
+    private TransactionManagerServiceClient client = new TransactionManagerServiceClient();
 
     @Override
     public void onEntry(FilterContext ctx, FilterChain next) throws SoaException {
-        boolean tccEnable = false;
-        if (tccEnable) {
-            beginGtx(ctx);
-        }
+        try {
+            TransactionContext transactionContext = (TransactionContext) ctx.getAttribute("context");
+            Application application = (Application) ctx.getAttribute("application");
+            SoaHeader header = transactionContext.getHeader();
+            String methodName = header.getMethodName();
+            String versionName = header.getVersionName();
+            String serviceName = header.getServiceName();
+            Optional<ServiceInfo> serviceInfo = application.getServiceInfo(serviceName, versionName);
 
-        next.onEntry(ctx);
+            //TODO 处理optional.empty的情况
+            TCC tcc = serviceInfo.get().tccMap.get(methodName);
+            if (tcc != null) {
+                Object reqArgs = ctx.getAttribute("reqArgs");
+                SoaFunctionDefinition soaFunction = (SoaFunctionDefinition) ctx.getAttribute("soaFunction");
+                int reqLength = (Integer) transactionContext.getAttribute("reqLength");
+                BeginGtxRequest request = new BeginGtxRequest();
+                request.params = Optional.of(serialReq(soaFunction, reqArgs, reqLength));
+                request.setServiceName(serviceName);
+                request.setVersion(versionName);
+                request.setMethod(methodName);
+                request.setConfirmMethod(Optional.of(tcc.confirmMethod()));
+                request.setCancelMethod(Optional.of(tcc.cancelMethod()));
+                BeginGtxResponse beginGtxResponse = client.beginGtx(request);
+                header.setTransactionId(beginGtxResponse.getGtxId());
+                long stepId = beginGtxResponse.getStepId();
+                //构建子事务序列栈
+                Stack stack = null;
+                if (transactionContext.getAttribute("stack") != null) {
+                    stack = (Stack) transactionContext.getAttribute("stack");
+                } else {
+                    stack = new Stack();
+                    transactionContext.setAttribute("stack", stack);
+                }
+                stack.push(stepId);
+            }
+
+            next.onEntry(ctx);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void onExit(FilterContext ctx, FilterChain prev) throws SoaException {
-
-        prev.onExit(ctx);
-    }
-
-    private void beginGtx(FilterContext ctx) throws SoaException {
-        Object reqArgs = ctx.getAttribute("reqArgs");
-        SoaFunctionDefinition soaFunction = (SoaFunctionDefinition) ctx.getAttribute("soaFunction");
-
-        TransactionContext transactionContext = (TransactionContext) ctx.getAttribute("context");
-        int reqLength = (Integer)transactionContext.getAttribute("reqLength");
-        TransactionManagerService tmService = new TransactionManagerServiceClient();
-
-        BeginGtxRequest gtxRequest = new BeginGtxRequest();
-        gtxRequest.params = Optional.of(serialReq(soaFunction, reqArgs, reqLength));
-        // gtxRequest...
-        tmService.beginGtx(gtxRequest);
+        try {
+            TransactionContext transactionContext = (TransactionContext) ctx.getAttribute("context");
+            Application application = (Application) ctx.getAttribute("application");
+            SoaHeader header = transactionContext.getHeader();
+            String methodName = header.getMethodName();
+            String versionName = header.getVersionName();
+            String serviceName = header.getServiceName();
+            Optional<ServiceInfo> serviceInfo = application.getServiceInfo(serviceName, versionName);
+            TCC tcc = serviceInfo.get().tccMap.get(methodName);
+            if (tcc != null) {
+                long gtxId = transactionContext.getHeader().getTransactionId().get();
+                Stack stack = (Stack) transactionContext.getAttribute("stack");
+                stack.pop();
+                if (stack.empty() && header.getRespCode().get().equals(SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE)) {
+                    CcRequest request = new CcRequest();
+                    request.setGtxId(gtxId);
+                    client.confirm(request);
+                }
+                if (stack.empty() && !header.getRespCode().get().equals(SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE)) {
+                    CcRequest request = new CcRequest();
+                    request.setGtxId(gtxId);
+                    client.cancel(request);
+                }
+            }
+            prev.onExit(ctx);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private ByteBuffer serialReq(SoaFunctionDefinition soaFunction, Object reqArgs, int reqLength) throws SoaException {

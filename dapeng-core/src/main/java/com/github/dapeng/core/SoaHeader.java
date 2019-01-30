@@ -2,6 +2,7 @@ package com.github.dapeng.core;
 
 import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.IPUtils;
+import org.omg.CORBA.LongHolder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -115,7 +116,7 @@ public class SoaHeader {
     /**
      * 全局事务id
      */
-    private Optional<Integer> transactionId = Optional.empty();
+    private Optional<Long> transactionId = Optional.empty();
 
     /**
      * 当前过程所属序列号
@@ -326,11 +327,11 @@ public class SoaHeader {
     }
 
 
-    public Optional<Integer> getTransactionId() {
+    public Optional<Long> getTransactionId() {
         return transactionId;
     }
 
-    public void setTransactionId(Integer transactionId) {
+    public void setTransactionId(Long transactionId) {
         this.transactionId = Optional.ofNullable(transactionId);
     }
 

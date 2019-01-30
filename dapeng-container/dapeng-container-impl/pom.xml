@@ -271,11 +271,10 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng</groupId>
-            <artifactId>transaction-manager-api_2.12</artifactId>
+            <groupId>com.github.dapeng-soa</groupId>
+            <artifactId>dapeng-tcc</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
