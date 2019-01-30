@@ -1,6 +1,7 @@
 package com.github.dapeng.impl.filters.slow.service;
 
 import com.github.dapeng.core.SoaException;
+import com.github.dapeng.core.filter.ContainerFilter;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.filter.FilterChain;
 import com.github.dapeng.core.filter.FilterContext;
@@ -12,7 +13,7 @@ import org.slf4j.LoggerFactory;
  * @author huyj
  * @Created 2018/6/26 14:14
  */
-public class SlowServiceCheckFilter implements Filter {
+public class SlowServiceCheckFilter implements ContainerFilter {
 
     private static final Logger logger = LoggerFactory.getLogger("container.slowtime.log");
 

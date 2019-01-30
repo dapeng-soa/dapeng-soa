@@ -279,7 +279,7 @@ class ScalaGenerator extends CodeGenerator {
         import java.util.ServiceLoader;
         import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "Codec._"};
         import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "SuperCodec._"};
-        import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + ".service." + service.name };
+        import {service.namespace + "." + service.name };
 
         /**
         {notice}
@@ -551,18 +551,6 @@ class ScalaGenerator extends CodeGenerator {
         </block>
       </block>
 
-      def findByLabel(name: String): {enum.name} = <block>
-        name match <block>
-          {toEnumItemArrayBuffer(enum.enumItems).filterNot(i => i.doc.trim.isEmpty).map { (enumItem: EnumItem) => {
-            <div>case "{enumItem.doc.trim.replace("*","")}" => {enumItem.label}
-            </div>
-          }
-          }}
-          case _ => UNDEFINED
-        </block>
-
-      </block>
-
     </block>
     </div>
   }
@@ -644,7 +632,7 @@ class ScalaGenerator extends CodeGenerator {
         }
         }
         @Service(name ="{oriNamespace+"."+service.name}" , version = "{service.meta.version}")
-        @Processor(className = "{service.namespace.substring(0, service.namespace.lastIndexOf("service"))}{service.name}Codec$Processor")
+        @Processor(className = "{service.namespace.substring(0, service.namespace.lastIndexOf("."))}.{service.name}Codec$Processor")
         trait {service.name} <block>
         {
         toMethodArrayBuffer(service.methods).map { (method: Method) =>
@@ -712,7 +700,7 @@ class ScalaGenerator extends CodeGenerator {
       }
       }
       @Service(name ="{oriNamespace+"."+service.name}" , version = "{service.meta.version}")
-      @Processor(className = "{service.namespace.substring(0, service.namespace.lastIndexOf("service"))}{service.name}AsyncCodec$Processor")
+      @Processor(className = "{service.namespace.substring(0, service.namespace.lastIndexOf("."))}.{service.name}AsyncCodec$Processor")
       trait {service.name}Async extends com.github.dapeng.core.definition.AsyncService <block>
       {
       toMethodArrayBuffer(service.methods).map { (method: Method) =>

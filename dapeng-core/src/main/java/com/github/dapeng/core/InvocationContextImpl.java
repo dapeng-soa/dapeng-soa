@@ -373,7 +373,7 @@ public class InvocationContextImpl implements InvocationContext {
         sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? transferIp(this.userIp.get()) : null).append("\",");
         sb.append("\"").append("timeout").append("\":\"").append(this.timeout.orElse(null)).append("\",");
         sb.append("\"").append("maxProcessTime").append("\":\"").append(this.maxProcessTime.orElse(null)).append("\",");
-        sb.append("\"").append("transactionId").append("\":\"").append(this.transactionId.orElse(null)).append("\",");
+        sb.append("\"").append("transactionId").append("\":\"").append(this.transactionId).append("\",");
         sb.append("\"").append("transactionSequence").append("\":\"").append(this.transactionSequence.orElse(null)).append("\",");
         sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid).append("\",");
         sb.append("\"").append("callerMid").append("\":\"").append(this.callerMid.orElse(null)).append("\",");

@@ -345,6 +345,8 @@ public interface InvocationContext {
 
         Optional<String> callerFrom();
 
+        Optional<String> sessionId();
+
 
         /**
          * 调用源

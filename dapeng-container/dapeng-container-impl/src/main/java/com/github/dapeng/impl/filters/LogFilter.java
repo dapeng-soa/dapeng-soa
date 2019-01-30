@@ -51,7 +51,6 @@ public class LogFilter implements ContainerFilter {
                 LOGGER.trace(getClass().getSimpleName() + "::onEntry[seqId:" + transactionContext.seqId() + "]");
             }
 
-            SoaHeader soaHeader = transactionContext.getHeader();
 
             String infoLog = "request[seqId:" + transactionContext.seqId() + "]:"
                     + "service[" + soaHeader.getServiceName()
@@ -60,8 +59,8 @@ public class LogFilter implements ContainerFilter {
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "") + " "
                     + (soaHeader.getOperatorName().isPresent() ? " operatorName:" + soaHeader.getOperatorName().get() : "") + " "
                     + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "") + " "
-                    + (soaHeader.getUserIp().isPresent() ? " userIp:" + IPUtils.transferIp(soaHeader.getUserIp().get()) + " "
-                    + (args != null ? " args:[" + (logFormatEnable ? formatToString(args.toString()) :args.toString()) + "]" : "");
+                    + (soaHeader.getUserIp().isPresent() ? " userIp:" + IPUtils.transferIp(soaHeader.getUserIp().get()) : "") + " "
+                    + (args != null ? " args:[" + (logFormatEnable ? formatToString(args.toString()) :args.toString()) + "]" : "") ;
 
 
 

@@ -24,7 +24,7 @@ public class SlowServiceCheckTask {
 
     protected final Optional<Integer> userIp;
 
-    protected final Optional<Long> operatorId;
+    protected final Optional<Integer> operatorId;
 
     protected final Optional<Integer> timeout;
 
@@ -77,7 +77,7 @@ public class SlowServiceCheckTask {
                 .append(" startTime: ").append(startTime).append(",")
                 .append(" userId: ").append(userId.orElse(0L)).append(",")
                 .append(" userIp: ").append(userIp.map(IPUtils::transferIp).orElse("-")).append(",")
-                .append(" operatorId: ").append(operatorId.orElse(0L)).append(",")
+                .append(" operatorId: ").append(operatorId.orElse(0)).append(",")
                 .append(" calleeIp: ").append(calleeIp.map(IPUtils::transferIp).orElse("-")).append(",")
                 .append(" calleePort: ").append(calleePort).append(",")
                 .append(" callerTid: ").append(callerTid).append(",")

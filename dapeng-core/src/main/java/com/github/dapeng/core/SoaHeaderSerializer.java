@@ -233,7 +233,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                         com.github.dapeng.org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
                     }
                     break;
-                case 24:
+                case 29:
                     if (schemeField.type == TType.I64) {
                         bean.setMaxProcessTime(Optional.of(iprot.readI64()));
                     } else {

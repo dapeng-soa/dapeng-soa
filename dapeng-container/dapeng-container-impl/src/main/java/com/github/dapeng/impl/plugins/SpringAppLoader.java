@@ -2,7 +2,6 @@ package com.github.dapeng.impl.plugins;
 
 import com.github.dapeng.api.Container;
 import com.github.dapeng.api.ContainerFactory;
-import com.github.dapeng.api.Plugin;
 import com.github.dapeng.api.lifecycle.LifecycleProcessorFactory;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
