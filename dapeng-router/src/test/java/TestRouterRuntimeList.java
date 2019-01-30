@@ -34,10 +34,18 @@ public class TestRouterRuntimeList {
 
     private List<RuntimeInstance> testRuntimeInstances = Arrays.asList(runtimeInstance1, runtimeInstance11, runtimeInstance12, runtimeInstance2, runtimeInstance21, runtimeInstance22, runtimeInstance3, runtimeInstance31, runtimeInstance32,  runtimeInstance33, runtimeInstance4, runtimeInstance41, runtimeInstance42);
 
-    public List<RuntimeInstance> prepare(InvocationContextImpl ctx, List<Route> routes) {
-
+    public List<RuntimeInstance> prepareVersion(InvocationContextImpl ctx, List<Route> routes) {
         List<RuntimeInstance> filterInstances = RoutesExecutor.executeRoutes(ctx, routes, testRuntimeInstances);
+        return filterInstances;
+    }
 
+    public List<RuntimeInstance> prepare(InvocationContextImpl ctx, List<Route> routes) {
+        List<RuntimeInstance> instances = new ArrayList<>();
+        instances.add(runtimeInstance1);
+        instances.add(runtimeInstance2);
+        instances.add(runtimeInstance3);
+        instances.add(runtimeInstance4);
+        List<RuntimeInstance> filterInstances = RoutesExecutor.executeRoutes(ctx, routes, instances);
         return filterInstances;
     }
 
@@ -69,7 +77,7 @@ public class TestRouterRuntimeList {
         InvocationContextImpl ctx = (InvocationContextImpl) InvocationContextImpl.Factory.currentInstance();
         ctx.methodName("getSkuById");
         ctx.versionName("1.0.0");
-        List<RuntimeInstance> prepare = prepare(ctx, routes);
+        List<RuntimeInstance> prepare = prepareVersion(ctx, routes);
 
         System.out.println("route before runtimeinstance list:");
         testRuntimeInstances.forEach(System.out::println);
@@ -559,8 +567,8 @@ public class TestRouterRuntimeList {
 
         List<RuntimeInstance> expectInstances = new ArrayList<>();
         expectInstances.add(runtimeInstance1);
-        expectInstances.add(runtimeInstance11);
-        expectInstances.add(runtimeInstance12);
+//        expectInstances.add(runtimeInstance11);
+//        expectInstances.add(runtimeInstance12);
         Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
 
