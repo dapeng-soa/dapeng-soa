@@ -97,22 +97,6 @@ public class RoutesLexer {
 
 
     /**
-     * 拿下一个 peek ，判断是不是 需要的类型。
-     * <p>
-     * todo 优化： 做一下缓存。不需要再次执行 next（）,方案？
-     *
-     * @return
-     */
-    public boolean ifPeek(int type) throws ParsingException {
-        int temPos = pos;
-        Token token = next();
-        pos = temPos;
-
-        return type == token.type();
-    }
-
-
-    /**
      * 获取下一个token 并改变 偏移量
      *
      * @return
@@ -303,7 +287,7 @@ public class RoutesLexer {
      * @return
      */
     private boolean isValidIdChar(char ch) {
-        return Character.isLetter(ch) || Character.isDigit(ch) || ch == '_' || ch == '.';
+        return Character.isLetter(ch) || Character.isDigit(ch) || ch == '_';
     }
 
 

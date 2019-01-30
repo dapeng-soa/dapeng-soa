@@ -253,7 +253,7 @@ public class RoutesParser {
      * | ip
      */
     public List<CommonThen> right() throws ParsingException {
-        List<CommonThen> thenDists = new ArrayList<>();
+        List<CommonThen> thenDests = new ArrayList<>();
 
         Token token = lexer.peek();
         switch (token.type()) {
@@ -261,16 +261,16 @@ public class RoutesParser {
             case Token.IP:
             case Token.VERSION:
                 CommonThen it = rightPattern();
-                thenDists.add(it);
+                thenDests.add(it);
                 // => ip"" ,
                 // => 后 只会跟三种  Token_EOF(结束符号)  Token_COMMA(逗号) EOL(换行符)
                 validate(lexer.peek(), Token_COMMA, Token_EOF, Token_EOL);
                 while (lexer.peek() == Token_COMMA) {
                     lexer.next(Token.COMMA);
                     CommonThen it2 = rightPattern();
-                    thenDists.add(it2);
+                    thenDests.add(it2);
                 }
-                return thenDists;
+                return thenDests;
 
             default:
                 throw new ParsingException("right error", "expect '~ip'、'ip'、'v'、'~v', but got:" + token);
@@ -281,14 +281,13 @@ public class RoutesParser {
      * 路由IP 或者版本
      */
     public CommonThen rightPattern() throws ParsingException {
-        Token token = null;
         boolean isNot = false;
-        if (lexer.ifPeek(Token.NOT)) {
+        if (lexer.peek().type() == Token.NOT) {
             isNot = true;
             lexer.next(); //去掉~字符
         }
 
-        token = lexer.peek();
+        Token token = lexer.peek();
         switch (token.type()) {
             case Token.IP: {
                 IpToken ip = (IpToken) lexer.next(Token.IP);

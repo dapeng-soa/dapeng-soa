@@ -559,6 +559,8 @@ public class TestRouterRuntimeList {
 
         List<RuntimeInstance> expectInstances = new ArrayList<>();
         expectInstances.add(runtimeInstance1);
+        expectInstances.add(runtimeInstance11);
+        expectInstances.add(runtimeInstance12);
         Assert.assertArrayEquals(expectInstances.toArray(), prepare.toArray());
     }
 

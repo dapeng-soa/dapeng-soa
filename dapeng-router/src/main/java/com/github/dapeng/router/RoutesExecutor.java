@@ -154,7 +154,7 @@ public class RoutesExecutor {
      */
     private static List<RuntimeInstance> matchThenRoute(List<RuntimeInstance> instances, Route route) {
         // 获取 路由规则
-        List<CommonThen> thenRouteIps = route.getThenRouteDests();
+        List<CommonThen> thenRoutes = route.getThenRouteDests();
 
         //匹配 IP 规则
         Set<ThenIp> ips = new HashSet<>(16);
@@ -164,7 +164,7 @@ public class RoutesExecutor {
         Set<ThenVersion> versions = new HashSet<>(16);
         Set<ThenVersion> notVersions = new HashSet<>(16);
 
-        thenRouteIps.forEach(thenDest -> {
+        thenRoutes.forEach(thenDest -> {
             switch (thenDest.getRouteType()) {
                 //根据IP 路由
                 case Token.IP:
@@ -198,11 +198,13 @@ public class RoutesExecutor {
     }
 
 
-    //版本规则匹配
+    /**
+     * 版本规则匹配
+     */
     private static boolean versionMatch(Set<ThenVersion> versions, Set<ThenVersion> notVersions, RuntimeInstance runtimeInstance) {
         //先匹配 非  规则
-        for (ThenVersion thenVersion : notVersions) {
-            if (thenVersion.version.equalsIgnoreCase(runtimeInstance.version)) {
+        for (ThenVersion notVersion : notVersions) {
+            if (notVersion.version.equalsIgnoreCase(runtimeInstance.version)) {
                 return false;
             }
         }
@@ -211,13 +213,12 @@ public class RoutesExecutor {
         if (versions.isEmpty()) return true;
 
         //不在notVersions 指定版本(versions)不为空  即匹配指定版本
-        boolean natched =false;
         for (ThenVersion thenVersion : versions) {
             if (thenVersion.version.equalsIgnoreCase(runtimeInstance.version)) {
-                natched = true;
+                return true;
             }
         }
-        return natched;
+        return false;
     }
 
 
