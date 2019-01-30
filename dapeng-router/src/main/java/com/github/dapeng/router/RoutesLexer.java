@@ -88,11 +88,7 @@ public class RoutesLexer {
      * @return
      */
     public boolean ifPeek(int type) throws ParsingException {
-        int temPos = pos;
-        Token token = next();
-        pos = temPos;
-
-        return type == token.type();
+        return type == peek().type();
     }
 
 
