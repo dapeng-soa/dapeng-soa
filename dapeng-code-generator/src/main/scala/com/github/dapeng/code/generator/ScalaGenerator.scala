@@ -390,7 +390,7 @@ class ScalaGenerator extends CodeGenerator {
 
         import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "AsyncCodec._"};
         import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + "." + service.name + "SuperCodec._"};
-        import {service.namespace.substring(0, service.namespace.lastIndexOf(".")) + ".service." + service.name }Async;
+        import {service.namespace+ "." + service.name }Async;
         import scala.concurrent.duration._
         import scala.concurrent.<block>Future, Promise</block>
         import scala.concurrent.ExecutionContext.Implicits.global
