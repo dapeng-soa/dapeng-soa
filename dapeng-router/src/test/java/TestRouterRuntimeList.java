@@ -715,5 +715,15 @@ public class TestRouterRuntimeList {
 
     }
 
+    @Test
+    public void testOrderRoutes() {
+        String pattern = "cookie_storeId match 11866600 , 11799201 , 11719901, 11720501 , 11730601 , 11735500 , 11734400 , 11701005 , 11724801 , 11738500 , 11700403 , 11721401 , 11716201 , 11726001  =>   ip\"192.168.10.126\" , ip\"192.168.10.130\"\n" +
+                "method match  \"getServiceMetadata\" , \"cancelWholeOrderPayments2New\"  , \"createOrderNew\" , \"createOrder\" , \"queryKebanCoupon\"  =>  ip\"192.168.10.126\" , ip\"192.168.10.130\"\n" +
+                "otherwise => ~ip\"192.168.10.126\"  , ~ip\"192.168.10.130\"";
+        List<Route> routes = RoutesExecutor.parseAll(pattern);
+
+        Assert.assertEquals(3, routes.size());
+    }
+
 
 }
