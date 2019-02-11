@@ -349,7 +349,7 @@ public class ClientZkAgent implements Watcher {
             List<Route> zkRoutes = RoutesExecutor.parseAll(routeData);
             serviceInfo.routes(zkRoutes);
         } catch (Exception e) {
-            LOGGER.error(getClass() + "::processCookieRuleData, parser routes 信息 失败，请检查路由规则写法是否正确:" + e.getMessage());
+            LOGGER.error(getClass() + "::processRouteData, parser routes 信息 失败，请检查路由规则写法是否正确:" + e.getMessage());
         }
     }
 
