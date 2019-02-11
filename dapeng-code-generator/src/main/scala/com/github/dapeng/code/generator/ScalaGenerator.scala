@@ -596,7 +596,7 @@ class ScalaGenerator extends CodeGenerator {
         *{field.doc}
         **/
         {index = index + 1}
-        {nameAsId(field.name)} : {if(field.isOptional) <div>Option[</div>}{toDataTypeTemplate(field.getDataType)}{if(field.isOptional) <div>] = None</div>}{if(index < struct.getFields.size) <span>,</span>}</div>}}}
+        {nameAsId(field.name)} : {if(field.isOptional) <div>Option[</div>}{toDataTypeTemplate(field.getDataType)}{if(field.isOptional) <div>] = None</div> else toDataTypeEmpty(field.getDataType)}{if(index < struct.getFields.size) <span>,</span>}</div>}}}
         )
       </div>
     }
@@ -768,6 +768,19 @@ class ScalaGenerator extends CodeGenerator {
         return {<div>{dataType.getQualifiedName}</div>}
       case KIND.STRUCT =>
         return {<div>{dataType.getQualifiedName}</div>}
+    }
+  }
+
+  def toDataTypeEmpty(dataType:DataType): Elem = {
+    dataType.kind match {
+      case KIND.MAP =>
+        return {<div> = Map.empty[{toDataTypeTemplate(dataType.getKeyType())}, {toDataTypeTemplate(dataType.getValueType())}]</div>}
+      case KIND.LIST =>
+        return {<div> = List.empty[{toDataTypeTemplate(dataType.getValueType())}]</div>}
+      case KIND.SET =>
+        return {<div> = Set.empty[{toDataTypeTemplate(dataType.getValueType())}]</div>}
+      case _ =>
+        return {<div></div>}
     }
   }
 
