@@ -1,6 +1,5 @@
 #soa-container:base
-FROM docker.today36524.com.cn:5000/base/openjdk:server-jre8
-#FROM docker.today36524.com.cn:5000/base/openjdk:jdk-11
+FROM harbor.today36524.td/base/openjdk:server-jre8
 MAINTAINER dapengsoa@gmail.com
 
 # Setting Envirnoment
