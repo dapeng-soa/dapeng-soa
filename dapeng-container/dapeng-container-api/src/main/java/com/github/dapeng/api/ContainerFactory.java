@@ -24,12 +24,12 @@ public class ContainerFactory {
 
     private static volatile Container applicationContainer;
 
-    public static void createContainer(List<ClassLoader> applicationCls, ClassLoader containerCl) {
+    public static void createContainer(List<ClassLoader> applicationCls, ClassLoader containerCl, ClassLoader pluginCl) {
         if (applicationContainer == null) {
             synchronized (ContainerFactory.class) {
                 ServiceLoader<ContainerFactorySpi> containerFactorySpis = ServiceLoader.load(ContainerFactorySpi.class, containerCl);
                 assert containerFactorySpis.iterator().hasNext();
-                applicationContainer = containerFactorySpis.iterator().next().createInstance(applicationCls);
+                applicationContainer = containerFactorySpis.iterator().next().createInstance(applicationCls, pluginCl);
             }
         }
     }

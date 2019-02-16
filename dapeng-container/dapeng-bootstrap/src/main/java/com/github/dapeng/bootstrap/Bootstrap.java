@@ -48,13 +48,23 @@ public class Bootstrap {
 
         List<ClassLoader> pluginClassLoaders = pluginURLs.stream().map(i -> new PluginClassLoader(i.toArray(new URL[i.size()]), coreClassLoader)).collect(Collectors.toList());
 
-        startup(platformClassLoader, applicationCls);
+        startup(platformClassLoader, applicationCls, pluginClassLoaders);
     }
 
+    /**
+     * @param containerClassLoader
+     * @param applicationLibs
+     * @throws ClassNotFoundException
+     * @throws NoSuchMethodException
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     */
     public static void sbtStartup(ClassLoader containerClassLoader, List<URL> applicationLibs) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         ClassLoader coreCL = containerClassLoader;
         ClassLoader containerCL = containerClassLoader;
+        //todo
+        List<ClassLoader> pluginCls = null;
 
         ClassLoader applicationCL = new ApplicationClassLoader(
                 applicationLibs.toArray(new URL[applicationLibs.size()]),
@@ -63,16 +73,16 @@ public class Bootstrap {
         List<ClassLoader> applicationCLs = new ArrayList<>();
         applicationCLs.add(applicationCL);
 
-        startup(containerCL, applicationCLs);
+        startup(containerCL, applicationCLs, pluginCls);
 
     }
 
 
-    public static void startup(ClassLoader containerCl, List<ClassLoader> applicationCls) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    public static void startup(ClassLoader containerCl, List<ClassLoader> applicationCls, List<ClassLoader> pluginCls) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         Thread.currentThread().setContextClassLoader(containerCl);
         Class<?> containerFactoryClz = containerCl.loadClass("com.github.dapeng.api.ContainerFactory");
         Method createContainerMethod = containerFactoryClz.getMethod("createContainer", List.class, ClassLoader.class);
-        createContainerMethod.invoke(containerFactoryClz, applicationCls, containerCl);
+        createContainerMethod.invoke(containerFactoryClz, applicationCls, containerCl, pluginCls);
 
         Method getContainerMethod = containerFactoryClz.getMethod("getContainer");
         Object container = getContainerMethod.invoke(containerFactoryClz);

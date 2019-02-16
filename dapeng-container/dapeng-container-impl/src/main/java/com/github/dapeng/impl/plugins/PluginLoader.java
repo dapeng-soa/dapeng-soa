@@ -18,25 +18,28 @@ package com.github.dapeng.impl.plugins;
 
 import com.github.dapeng.api.Plugin;
 
+import java.util.List;
 import java.util.ServiceLoader;
+import java.util.stream.Collectors;
 
-public class PluginLoader implements Plugin {
+/**
+ * PluginLoader for 3rd plugins, which are located at /dapeng-container/plugins/
+ * @author ever
+ */
+public class PluginLoader {
+    private final List<ServiceLoader<Plugin>> plugins;
 
-    private ServiceLoader<Plugin> plugins = ServiceLoader.load(Plugin.class, getClass().getClassLoader());
-
-    @Override
-    public void start() {
-
-        for (Plugin plugin: plugins) {
-            plugin.start();
-        }
+    public PluginLoader(List<ClassLoader> pluginCls) {
+        this.plugins = pluginCls.parallelStream()
+                .map(pluginCl -> ServiceLoader.load(Plugin.class, pluginCl))
+                .collect(Collectors.toList());
     }
 
-    @Override
-    public void stop() {
-        for (Plugin plugin: plugins) {
+    public void startPlugins() {
+        plugins.forEach(_plugins -> _plugins.forEach(Plugin::start));
+    }
 
-            plugin.stop();
-        }
+    public void stopPlugins() {
+        plugins.forEach(_plugins -> _plugins.forEach(Plugin::stop));
     }
 }

@@ -63,6 +63,7 @@ public class DapengContainer implements Container {
     private Map<ProcessorKey, SoaServiceDefinition<?>> processors = new ConcurrentHashMap<>();
     private Map<ProcessorKey, Application> applicationMap = new ConcurrentHashMap<>();
     private final List<ClassLoader> applicationCls;
+    private final List<ClassLoader> pluginCls;
     /**
      * 容器状态, 初始状态为STATUS_UNKNOWN
      */
@@ -72,8 +73,9 @@ public class DapengContainer implements Container {
 
     private final static CountDownLatch SHUTDOWN_SIGNAL = new CountDownLatch(1);
 
-    public DapengContainer(List<ClassLoader> applicationCls) {
+    public DapengContainer(List<ClassLoader> applicationCls, List<ClassLoader> pluginCls) {
         this.applicationCls = applicationCls;
+        this.pluginCls = pluginCls;
     }
 
     @Override
@@ -241,6 +243,11 @@ public class DapengContainer implements Container {
         //4.启动Apploader， plugins
         getPlugins().forEach(Plugin::start);
 
+        //5.plugins
+        PluginLoader pluginLoader = new PluginLoader(pluginCls);
+
+        pluginLoader.startPlugins();
+
         final LifecycleProcessor lifecycleProcessor = LifecycleProcessorFactory.getLifecycleProcessor();
         //启动LifeCycle start
         lifecycleProcessor.onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.START));
@@ -257,6 +264,8 @@ public class DapengContainer implements Container {
                 status = STATUS_SHUTTING;
                 // fixme not so graceful
                 getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
+
+                pluginLoader.stopPlugins();
 
                 //保证容器内请求已完成
                 retryCompareCounter();
