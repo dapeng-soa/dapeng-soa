@@ -59,7 +59,8 @@
         <module>dapeng-code-generator</module>
         <module>dapeng-api-doc</module>
         <module>dapeng-router</module>
-        <module>dapeng-message</module>
+        <!--<module>dapeng-message</module>-->
+        <module>dapeng-scheduler</module>
         <module>dapeng-container</module>
         <module>dapeng-utils</module>
         <module>dapeng-client-netty</module>

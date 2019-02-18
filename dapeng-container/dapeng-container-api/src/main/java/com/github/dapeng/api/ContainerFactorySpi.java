@@ -19,5 +19,5 @@ package com.github.dapeng.api;
 import java.util.List;
 
 public interface ContainerFactorySpi {
-    Container createInstance(List<ClassLoader> applicationCls, ClassLoader pluginCl);
+    Container createInstance(List<ClassLoader> applicationCls, List<ClassLoader> pluginCls);
 }

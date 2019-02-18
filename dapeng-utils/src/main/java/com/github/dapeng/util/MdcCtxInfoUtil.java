@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.dapeng.impl.plugins.netty;
+package com.github.dapeng.util;
 
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import org.slf4j.Logger;

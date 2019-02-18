@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.dapeng.impl.listener;
+package com.github.dapeng.plugins.scheduler;
 
 import com.github.dapeng.basic.api.counter.CounterServiceAsyncClient;
 import com.github.dapeng.basic.api.counter.domain.DataPoint;
@@ -24,8 +24,7 @@ import com.github.dapeng.core.InvocationContextImpl;
 import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.quartz.JobDataMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,17 +70,17 @@ public class TaskMonitorDataReportUtils {
         if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
             COUNTER_CLIENT = new CounterServiceAsyncClient();
             //启动监听数据上送线程
-            taskMonitorDataUploaderExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
-                    .setDaemon(true)
-                    .setNameFormat("dapeng-taskMonitorDataUploader-%d")
+            taskMonitorDataUploaderExecutor = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
+                    .daemon(true)
+                    .namingPattern("dapeng-taskMonitorDataUploader-%d")
                     .build());
             taskMonitorUploader();
 
             //定时上送线程
             schedulerExecutorService = Executors.newScheduledThreadPool(1,
-                    new ThreadFactoryBuilder()
-                            .setDaemon(true)
-                            .setNameFormat("dapeng-tracePoint-Upload-scheduler-%d")
+                    new BasicThreadFactory.Builder()
+                            .daemon(true)
+                            .namingPattern("dapeng-tracePoint-Upload-scheduler-%d")
                             .build());
             // 定时上报数据  延迟10秒后，每10秒执行一次
             schedulerExecutorService.scheduleAtFixedRate(this::flushDataPoint, UPLOAD_PERIOD, UPLOAD_PERIOD, TimeUnit.SECONDS);
@@ -89,27 +88,31 @@ public class TaskMonitorDataReportUtils {
     }
 
 
-    public void appendDataPoint(List<DataPoint> uploadList) {
+    private void appendDataPoint(List<DataPoint> uploadList) {
         synchronized (dataPointList) {
             dataPointList.addAll(uploadList);
 
             if (dataPointList.size() >= BATCH_MAX_SIZE) {
-                if (!taskDataQueue.offer(Lists.newArrayList(dataPointList))) {
-                    logger.info("TaskMonitorDataReportUtils::appendDataPoint put into taskDataQueue failed Szie = " + dataPointList.size());
+                if (!taskDataQueue.offer(new ArrayList<>(dataPointList))) {
+                    logger.info("TaskMonitorDataReportUtils::appendDataPoint put into taskDataQueue failed, Szie = " + dataPointList.size());
+                } else {
+                    dataPointList.clear();
                 }
-                dataPointList.clear();
             }
         }
     }
 
-    /*刷新缓存*/
-    public void flushDataPoint() {
+    /**
+     * 刷新缓存
+     */
+    private void flushDataPoint() {
         synchronized (dataPointList) {
             if (!dataPointList.isEmpty()) {
-                if (!taskDataQueue.offer(Lists.newArrayList(dataPointList))) {
-                    logger.info("TaskMonitorDataReportUtils::appendDataPoint put into taskDataQueue failed Szie = " + dataPointList.size());
+                if (!taskDataQueue.offer(new ArrayList(dataPointList))) {
+                    logger.info("TaskMonitorDataReportUtils::appendDataPoint put into taskDataQueue failed, Szie = " + dataPointList.size());
+                } else {
+                    dataPointList.clear();
                 }
-                dataPointList.clear();
             }
         }
     }
@@ -211,7 +214,9 @@ public class TaskMonitorDataReportUtils {
 
         if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {
             //放入上送列表
-            appendDataPoint(Lists.newArrayList(influxdbDataPoint));
+            List<DataPoint> tmpList = new ArrayList<>(2);
+            tmpList.add(influxdbDataPoint);
+            appendDataPoint(tmpList);
         }
     }
 

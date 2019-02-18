@@ -215,7 +215,7 @@ public class DapengContainer implements Container {
         //3. 初始化appLoader,dapengPlugin 应该用serviceLoader的方式去加载
         Plugin springAppLoader = new SpringAppLoader(this, applicationCls);
         Plugin zookeeperPlugin = new ZookeeperRegistryPlugin(this);
-        Plugin taskSchedulePlugin = new TaskSchedulePlugin(this);
+//        Plugin taskSchedulePlugin = new TaskSchedulePlugin(this);
         Plugin nettyPlugin = new NettyPlugin(this);
         Plugin mbeanAgentPlugin = new MbeanAgentPlugin(this);
         //add messagePlugin
@@ -229,7 +229,7 @@ public class DapengContainer implements Container {
         registerPlugin(nettyPlugin);
         registerPlugin(zookeeperPlugin);
         registerPlugin(springAppLoader);
-        registerPlugin(taskSchedulePlugin);
+//        registerPlugin(taskSchedulePlugin);
         registerPlugin(mbeanAgentPlugin);
 
         //add messagePlugin

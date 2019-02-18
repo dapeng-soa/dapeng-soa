@@ -27,7 +27,7 @@ import com.github.dapeng.core.filter.FilterContext;
 import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.github.dapeng.impl.plugins.netty.MdcCtxInfoUtil;
+import com.github.dapeng.util.MdcCtxInfoUtil;
 import com.github.dapeng.org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -7,15 +7,11 @@ import com.github.dapeng.core.SoaHeader;
 import com.github.dapeng.core.TransactionContext;
 import com.github.dapeng.core.TransactionContextImpl;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -30,22 +26,34 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class TraceReportHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(TraceReportHandler.class);
-    //Trace 数据库
+    /**
+     * Trace 数据库
+     */
     private final String TRACE_DB = "dapengTrace";
-    //失败缓存的最大的SIZE
+    /**
+     * 失败缓存的最大的SIZE
+     */
     private final int CACHE_SIZE = 200;
-    //批量上报 最大SIZE
+    /**
+     * 批量上报 最大SIZE
+     */
     private final int MAX_ALARM_SIZE = 8000;
-    //定时上报  单位:秒
+    /**
+     * 定时上报  单位:秒
+     */
     private final int PERIOD = 10;
     private final AtomicInteger queueLock = new AtomicInteger(0);
     private final static TraceReportHandler instance = new TraceReportHandler();
-    //定时上报定时器
+    /**
+     *  定时上报定时器
+     */
     private ScheduledExecutorService schedulerExecutorService = null;
     private CounterServiceAsyncClient COUNTER_CLIENT = null;
-    //local cache for Trace data
-    private LinkedList<DataPoint> traceDataQueue = null;
-    private ArrayBlockingQueue<LinkedList<DataPoint>> failedTraceQueue = null;
+    /**
+     * local cache for Trace data
+     */
+    private List<DataPoint> traceDataQueue = null;
+    private ArrayBlockingQueue<List<DataPoint>> failedTraceQueue = null;
 
     public static TraceReportHandler getInstance() {
         return instance;
@@ -56,9 +64,9 @@ public class TraceReportHandler {
             this.COUNTER_CLIENT = new CounterServiceAsyncClient();
 
             this.schedulerExecutorService = Executors.newScheduledThreadPool(1,
-                    new ThreadFactoryBuilder()
-                            .setDaemon(true)
-                            .setNameFormat("dapeng-tracePoint-Upload-scheduler-%d")
+                    new BasicThreadFactory.Builder()
+                            .daemon(true)
+                            .namingPattern("dapeng-tracePoint-Upload-scheduler-%d")
                             .build());
             //启动定时任务
             initUploadScheduler();
@@ -107,9 +115,8 @@ public class TraceReportHandler {
             return;
         }
 
-        LinkedList<DataPoint> uploaderDataPoints;
         spinLock();
-        uploaderDataPoints = Lists.newLinkedList(this.traceDataQueue);
+        List<DataPoint> uploaderDataPoints = new ArrayList<>(traceDataQueue);
         this.traceDataQueue = new LinkedList<>();
         resetSpinLock();
         try {
@@ -126,7 +133,7 @@ public class TraceReportHandler {
 
 
         //上传失败的
-        LinkedList<DataPoint> failedDataPoints;
+        List<DataPoint> failedDataPoints;
         while ((failedDataPoints = failedTraceQueue.poll()) != null) {
             try {
                 if (SoaSystemEnvProperties.SOA_MONITOR_ENABLE) {

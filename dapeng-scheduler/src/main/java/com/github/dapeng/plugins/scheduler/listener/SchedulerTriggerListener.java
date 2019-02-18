@@ -14,10 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.dapeng.impl.listener;
+package com.github.dapeng.plugins.scheduler.listener;
 
 import com.github.dapeng.core.helper.MasterHelper;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.github.dapeng.plugins.scheduler.TaskMonitorDataReportUtils;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.Trigger;
@@ -42,9 +43,9 @@ public class SchedulerTriggerListener implements TriggerListener {
     private Logger logger = LoggerFactory.getLogger("container.scheduled.task");
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
     // 线程池
-    private static ExecutorService executorService = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
-            .setDaemon(true)
-            .setNameFormat("dapeng-SchedulerTriggerListener-%d")
+    private static ExecutorService executorService = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
+            .daemon(true)
+            .namingPattern("dapeng-SchedulerTriggerListener-%d")
             .build());
 
     @Override

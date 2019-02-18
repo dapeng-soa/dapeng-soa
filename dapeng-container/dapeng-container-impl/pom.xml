@@ -98,7 +98,7 @@
                                     <overWriteSnapshots>false</overWriteSnapshots>
                                     <overWriteIfNewer>true</overWriteIfNewer>
                                     <excludeArtifactIds>
-                                        dapeng-core,commons-logging,slf4j-api,logback-classic,logback-core,janino,commons-compiler,gson,dapeng-message-api,dapeng-api-doc,dapeng-message-kafka,kafka_2.12,kafka-clients,jopt-simple,metrics-core
+                                        dapeng-core,commons-logging,slf4j-api,logback-classic,logback-core,janino,commons-compiler,gson,dapeng-message-api,dapeng-api-doc,dapeng-message-kafka,dapeng-scheduler,kafka_2.12,kafka-clients,jopt-simple,metrics-core
                                     </excludeArtifactIds>
                                 </configuration>
                             </execution>
@@ -258,11 +258,6 @@
             <artifactId>dapeng-api-doc</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.github.dapeng-soa</groupId>
-            <artifactId>dapeng-message-kafka</artifactId>
-            <version>${project.version}</version>
-        </dependency>
         <!--counter-->
         <dependency>
             <groupId>com.github.dapeng-soa</groupId>
@@ -293,12 +288,6 @@
         <dependency>
             <groupId>org.codehaus.janino</groupId>
             <artifactId>janino</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.quartz-scheduler</groupId>
-            <artifactId>quartz</artifactId>
-            <version>2.2.0</version>
         </dependency>
     </dependencies>
 </project>

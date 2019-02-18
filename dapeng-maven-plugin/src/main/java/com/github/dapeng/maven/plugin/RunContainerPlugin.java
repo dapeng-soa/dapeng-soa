@@ -102,7 +102,8 @@ public class RunContainerPlugin extends SoaAbstractMojo {
                 System.out.println("------set classloader-------------");
                 Thread.currentThread().setContextClassLoader(coreClassLoader);
 
-                Bootstrap.startup(platformClassLoader,appClassLoaders);
+                //todo
+                Bootstrap.startup(platformClassLoader,appClassLoaders,null);
 
             } catch (Exception e) {
                 Thread.currentThread().getThreadGroup().uncaughtException(Thread.currentThread(), e);

@@ -14,9 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.dapeng.impl.listener;
+package com.github.dapeng.plugins.scheduler.listener;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.github.dapeng.plugins.scheduler.TaskMonitorDataReportUtils;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -42,9 +43,9 @@ public class SchedulerJobListener implements JobListener {
 
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss:SSS");
     // 线程池
-    private static ExecutorService executorService = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
-            .setDaemon(true)
-            .setNameFormat("dapeng-SchedulerJobListener-%d")
+    private static ExecutorService executorService = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
+            .daemon(true)
+            .namingPattern("dapeng-SchedulerJobListener-%d")
             .build());
 
     @Override

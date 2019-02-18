@@ -24,6 +24,7 @@ import com.github.dapeng.core.helper.IPUtils;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.ExceptionUtil;
+import com.github.dapeng.util.MdcCtxInfoUtil;
 import com.google.common.base.Joiner;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
@@ -35,8 +36,6 @@ import org.slf4j.MDC;
 
 import java.util.Optional;
 
-import static com.github.dapeng.api.Container.STATUS_RUNNING;
-import static com.github.dapeng.api.Container.STATUS_SHUTTING;
 import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE;
 
 /**
