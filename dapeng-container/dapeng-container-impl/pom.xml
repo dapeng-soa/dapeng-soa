@@ -250,7 +250,7 @@
         </dependency>
         <dependency>
             <groupId>com.github.dapeng</groupId>
-            <artifactId>dapeng-transaction-api</artifactId>
+            <artifactId>dapeng-transaction-impl</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
