@@ -59,7 +59,7 @@ public class Bootstrap {
      * @throws InvocationTargetException
      * @throws IllegalAccessException
      */
-    public static void sbtStartup(ClassLoader containerClassLoader, List<URL> applicationLibs) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public static void sbtStartup(ClassLoader containerClassLoader, List<URL> applicationLibs, List<List<URL>> pluginsLibs) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         ClassLoader coreCL = containerClassLoader;
         ClassLoader containerCL = containerClassLoader;
@@ -73,6 +73,14 @@ public class Bootstrap {
         List<ClassLoader> applicationCLs = new ArrayList<>();
         applicationCLs.add(applicationCL);
 
+        if (pluginsLibs != null) {
+            pluginCls = new ArrayList<>();
+            for (List<URL> pluginLibs: pluginsLibs) {
+                ClassLoader pluginClassLoader = new PluginClassLoader(pluginLibs.toArray(new URL[pluginLibs.size()]), coreCL);
+                pluginCls.add(pluginClassLoader);
+            }
+        }
+
         startup(containerCL, applicationCLs, pluginCls);
 
     }
@@ -81,7 +89,7 @@ public class Bootstrap {
     public static void startup(ClassLoader containerCl, List<ClassLoader> applicationCls, List<ClassLoader> pluginCls) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         Thread.currentThread().setContextClassLoader(containerCl);
         Class<?> containerFactoryClz = containerCl.loadClass("com.github.dapeng.api.ContainerFactory");
-        Method createContainerMethod = containerFactoryClz.getMethod("createContainer", List.class, ClassLoader.class);
+        Method createContainerMethod = containerFactoryClz.getMethod("createContainer", List.class, ClassLoader.class,List.class);
         createContainerMethod.invoke(containerFactoryClz, applicationCls, containerCl, pluginCls);
 
         Method getContainerMethod = containerFactoryClz.getMethod("getContainer");
