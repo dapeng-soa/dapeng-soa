@@ -23,13 +23,19 @@ import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
+import com.github.dapeng.scheduler.events.TaskEvent;
 import com.github.dapeng.util.MdcCtxInfoUtil;
+import com.today.api.scheduler.enums.TaskStatusEnum;
+import com.today.commons.GenIdUtil;
+import com.today.eventbus.CommonEventBus;
 import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
 
 import java.util.Map;
+
+import static com.today.commons.GenIdUtil.TASK_EVENT_ID;
 
 /**
  * @author tangliu
@@ -45,9 +51,19 @@ public class ScheduledJob implements Job {
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
 
+
         JobDataMap data = context.getJobDetail().getJobDataMap();
         String serviceName = data.getString("serviceName");
         String versionName = data.getString("versionName");
+        String methodName = data.getString("methodName");
+
+        //事件类型
+        TaskEvent taskEvent = new TaskEvent();
+        taskEvent.id(GenIdUtil.getId(TASK_EVENT_ID));
+        taskEvent.setServiceName(serviceName);
+        taskEvent.setMethodName(methodName);
+        taskEvent.setVersion(versionName);
+
         /**
          * 添加sessionTid
          */
@@ -73,12 +89,21 @@ public class ScheduledJob implements Job {
                 functionDefinition.apply(iface, null);
             }
             stopwatch.stop();
-            logger.info("定时任务({})执行完成,cost({}ms)", context.getJobDetail().getKey().getName(), stopwatch.getLastTaskTimeMillis());
+            long costTime = stopwatch.getLastTaskTimeMillis();
+            taskEvent.setCostTime(costTime);
+            taskEvent.setTaskStatus(TaskStatusEnum.SUCCEED);
+
+            logger.info("定时任务({})执行完成,cost({}ms)", context.getJobDetail().getKey().getName(), costTime);
         } catch (Exception e) {
             stopwatch.stop();
             logger.error("定时任务(" + context.getJobDetail().getKey().getName() + ")执行异常,cost(" + "ms)", e);
+            taskEvent.setTaskStatus(TaskStatusEnum.FAIL);
             throw new JobExecutionException(e.getMessage(), e);
         } finally {
+
+            //发布消息
+            CommonEventBus.fireEvent(taskEvent);
+
             // sessionTid will be used at SchedulerTriggerListener
             MdcCtxInfoUtil.removeMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         }

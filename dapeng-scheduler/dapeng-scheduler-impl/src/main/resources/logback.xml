@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- 控制台日志打印 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</Pattern>
+        </layout>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+    </appender>
+
+    <appender name="DETAILFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <prudent>false</prudent>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${soa.base}/logs/detail-order-service.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p [%X{sessionTid}] - %m%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <if condition='!property("soa.run.mode").equals("native")'>
+            <then>
+                <appender-ref ref="STDOUT"/>
+            </then>
+        </if>
+        <appender-ref ref="DETAILFILE"/>
+    </root>
+
+    <!--将eventbus包下面的日志都放入单独的日志文件里 dapeng-eventbus.%d{yyyy-MM-dd}.log-->
+    <appender name="task-eventbus" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <prudent>true</prudent>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${soa.base}/logs/detail-task-eventbus.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{MM-dd HH:mm:ss SSS} %t %p - %m%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- additivity:是否向上级(root)传递日志信息, -->
+    <!--com.today.eventbus包下的日志都放在上面配置的单独的日志文件里-->
+    <logger name="com.today.eventbus" level="DEBUG" additivity="false">
+        <appender-ref ref="task-eventbus"/>
+    </logger>
+
+    <!--sql 日志显示级别-->
+    <logger name="druid.sql" level="OFF"/>
+    <logger name="wangzx.scala_commons.sql" level="DEBUG"/>
+    <logger name="org.apache.kafka.clients.consumer.KafkaConsumer" level="INFO"/>
+    <logger name="org.springframework.jdbc.datasource.DataSourceUtils" level="INFO"/>
+
+</configuration>
