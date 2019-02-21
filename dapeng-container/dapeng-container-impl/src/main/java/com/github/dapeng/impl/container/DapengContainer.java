@@ -246,7 +246,7 @@ public class DapengContainer implements Container {
         //5.plugins
         PluginLoader pluginLoader = new PluginLoader(pluginCls);
 
-        pluginLoader.startPlugins();
+        pluginLoader.startPlugins(this);
 
         final LifecycleProcessor lifecycleProcessor = LifecycleProcessorFactory.getLifecycleProcessor();
         //启动LifeCycle start

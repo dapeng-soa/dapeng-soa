@@ -23,6 +23,7 @@ import com.github.dapeng.api.Plugin;
 import com.github.dapeng.api.events.AppEvent;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.ServiceInfo;
+import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.timer.ScheduledTask;
@@ -48,7 +49,7 @@ import java.util.stream.Collectors;
 public class TaskSchedulePlugin implements AppListener, Plugin {
     private static final Logger LOGGER = LoggerFactory.getLogger("container.scheduled.task");
 
-    private final Container container;
+    private  Container container = null;
 
     private Scheduler scheduler = null;
 
@@ -69,6 +70,8 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
         }
     }
 
+
+
     @Override
     public void appRegistered(AppEvent event) {
         LOGGER.warn(getClass().getSimpleName() + "::appRegistered, event[" + event.getSource() + "], do nothing here");
@@ -82,17 +85,22 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
 
     @Override
     public void start() {
-        LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
-        container.getApplications().forEach(application -> {
-            List<ServiceInfo> serviceInfos = application.getServiceInfos().stream()
-                    .filter(serviceInfo ->
-                            serviceInfo.ifaceClass.isAnnotationPresent(ScheduledTask.class))
-                    .collect(Collectors.toList());
-            serviceInfos.forEach(serviceInfo -> runTask(serviceInfo));
-        });
-
         try {
+            if (container == null) {
+                throw new IllegalArgumentException("Please invoke init() before run start()..");
+            }
+            LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
+            container.getApplications().forEach(application -> {
+                List<ServiceInfo> serviceInfos = application.getServiceInfos().stream()
+                        .filter(serviceInfo ->
+                                serviceInfo.ifaceClass.isAnnotationPresent(ScheduledTask.class))
+                        .collect(Collectors.toList());
+                serviceInfos.forEach(serviceInfo -> runTask(serviceInfo));
+            });
+
             scheduler.start();
+        } catch (IllegalArgumentException e) {
+            LOGGER.error("com.github.dapeng.plugins.scheduler.TaskSchedulePlugin::start 定时器启动失败 ", e.getMessage());
         } catch (SchedulerException e) {
             LOGGER.error("com.github.dapeng.plugins.scheduler.TaskSchedulePlugin::start 定时器启动失败", e);
         }

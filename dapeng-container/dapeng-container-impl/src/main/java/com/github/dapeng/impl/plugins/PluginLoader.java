@@ -16,30 +16,39 @@
  */
 package com.github.dapeng.impl.plugins;
 
+import com.github.dapeng.api.Container;
 import com.github.dapeng.api.Plugin;
+import com.github.dapeng.api.PluginFactorySpi;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
 
 /**
- * PluginLoader for 3rd plugins, which are located at /dapeng-container/plugins/
+ * PluginLoader for 3rd pluginSpis, which are located at /dapeng-container/pluginSpis/
  * @author ever
  */
 public class PluginLoader {
-    private final List<ServiceLoader<Plugin>> plugins;
+    private final List<ServiceLoader<PluginFactorySpi>> pluginSpis;
+
+    private final List<Plugin> plugins = new ArrayList<>();
 
     public PluginLoader(List<ClassLoader> pluginCls) {
-        this.plugins = pluginCls.parallelStream()
-                .map(pluginCl -> ServiceLoader.load(Plugin.class, pluginCl))
+        this.pluginSpis = pluginCls.parallelStream()
+                .map(pluginCl -> ServiceLoader.load(PluginFactorySpi.class, pluginCl))
                 .collect(Collectors.toList());
     }
 
-    public void startPlugins() {
-        plugins.forEach(_plugins -> _plugins.forEach(Plugin::start));
+    public void startPlugins(Container container) {
+        pluginSpis.forEach(spi -> spi.forEach(factory -> {
+            Plugin plugin = factory.createPlugin(container);
+            plugins.add(plugin);
+            plugin.start();
+        }));
     }
 
     public void stopPlugins() {
-        plugins.forEach(_plugins -> _plugins.forEach(Plugin::stop));
+        plugins.forEach(Plugin::stop);
     }
 }
