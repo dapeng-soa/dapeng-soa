@@ -156,7 +156,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     }
                     break;
                 case 19:
-                    if (schemeField.type == TType.I32) {
+                    if (schemeField.type == TType.I64) {
                         bean.setTransactionId(iprot.readI64());
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
@@ -315,7 +315,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
             oprot.writeFieldEnd();
         }
         if (bean.getTransactionId().isPresent()) {
-            oprot.writeFieldBegin(new TField("transactionId", TType.I32, (short) 19));
+            oprot.writeFieldBegin(new TField("transactionId", TType.I64, (short) 19));
             oprot.writeI64(bean.getTransactionId().get());
             oprot.writeFieldEnd();
         }

@@ -56,18 +56,16 @@ public class TccFilter implements Filter {
                 request.setMethod(methodName);
                 request.setConfirmMethod(Optional.of(tcc.confirmMethod()));
                 request.setCancelMethod(Optional.of(tcc.cancelMethod()));
+                request.setIsAsync(Optional.of(tcc.asynCC()));
                 BeginGtxResponse beginGtxResponse = client.beginGtx(request);
                 header.setTransactionId(beginGtxResponse.getGtxId());
                 long stepId = beginGtxResponse.getStepId();
-                //构建子事务序列栈
-                Stack stack = null;
-                if (transactionContext.getAttribute("stack") != null) {
-                    stack = (Stack) transactionContext.getAttribute("stack");
+                if (transactionContext.getHeader().getCookie("global_stepId") != null) {
+                    transactionContext.setAttribute("isGlobal", false);
                 } else {
-                    stack = new Stack();
-                    transactionContext.setAttribute("stack", stack);
+                    transactionContext.getHeader().addCookie("global_stepId", Long.toString(stepId));
+                    transactionContext.setAttribute("isGlobal", true);
                 }
-                stack.push(stepId);
             }
 
             next.onEntry(ctx);
@@ -89,14 +87,13 @@ public class TccFilter implements Filter {
             TCC tcc = serviceInfo.get().tccMap.get(methodName);
             if (tcc != null) {
                 long gtxId = transactionContext.getHeader().getTransactionId().get();
-                Stack stack = (Stack) transactionContext.getAttribute("stack");
-                stack.pop();
-                if (stack.empty() && header.getRespCode().get().equals(SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE)) {
+                boolean isGlobal = (boolean) transactionContext.getAttribute("isGlobal");
+                if (isGlobal && header.getRespCode().get().equals(SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE)) {
                     CcRequest request = new CcRequest();
                     request.setGtxId(gtxId);
                     client.confirm(request);
                 }
-                if (stack.empty() && !header.getRespCode().get().equals(SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE)) {
+                if (isGlobal && !header.getRespCode().get().equals(SoaSystemEnvProperties.SOA_NORMAL_RESP_CODE)) {
                     CcRequest request = new CcRequest();
                     request.setGtxId(gtxId);
                     client.cancel(request);

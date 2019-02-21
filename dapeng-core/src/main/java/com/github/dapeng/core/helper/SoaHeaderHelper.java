@@ -123,6 +123,9 @@ public class SoaHeaderHelper {
                 if (!oriHeader.getCookies().isEmpty()) {
                     header.addCookies(oriHeader.getCookies());
                 }
+                if (oriHeader.getTransactionId().isPresent()) {
+                    header.setTransactionId(oriHeader.getTransactionId().get());
+                }
 
             }
             // 传递tid
