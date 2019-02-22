@@ -46,6 +46,13 @@ public class ScheduledJob implements Job {
 
     private static final Logger logger = LoggerFactory.getLogger("container.scheduled.task");
 
+    final TaskMsgKafkaProducer taskMsgKafkaProducer;
+
+    public ScheduledJob() {
+        String tranID = "dapeng-task-" + UUID.randomUUID().toString();
+        taskMsgKafkaProducer =  new TaskMsgKafkaProducer("172.16.18.176:9092").withValueByteArraySerializer().createProducerWithTran(tranID);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -103,8 +110,6 @@ public class ScheduledJob implements Job {
 
             //发布消息
             //CommonEventBus.fireEvent(taskEvent);
-            String tranID = "dapeng-task-" + UUID.randomUUID().toString();
-            TaskMsgKafkaProducer taskMsgKafkaProducer = new TaskMsgKafkaProducer("192.168.5.96:9092").withValueByteArraySerializer().createProducerWithTran(tranID);
             taskMsgKafkaProducer.sendTaskMessage("dapeng-task", taskEvent);
 
             // sessionTid will be used at SchedulerTriggerListener

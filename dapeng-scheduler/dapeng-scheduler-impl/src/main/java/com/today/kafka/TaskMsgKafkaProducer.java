@@ -151,8 +151,11 @@ public class TaskMsgKafkaProducer {
 
     public TaskMsgKafkaProducer createProducerWithTran(String transactionId) {
         withTransactions(transactionId);
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(KafkaProducer.class.getClassLoader());
         producer = new KafkaProducer<String, String>(props);
         producer.initTransactions();
+        Thread.currentThread().setContextClassLoader(contextClassLoader);
         return this;
     }
 

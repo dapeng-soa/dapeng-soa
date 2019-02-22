@@ -41,7 +41,9 @@ public class PluginLoader {
     }
 
     public void startPlugins(Container container) {
-        pluginSpis.forEach(spi -> spi.forEach(factory -> {
+        Thread.currentThread().setContextClassLoader(container.getClass().getClassLoader());
+        pluginSpis.forEach(spi ->
+                spi.forEach(factory -> {
             Plugin plugin = factory.createPlugin(container);
             plugins.add(plugin);
             plugin.start();

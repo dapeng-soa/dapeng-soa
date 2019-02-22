@@ -27,11 +27,11 @@ import java.net.URLClassLoader;
  */
 public class PluginClassLoader extends URLClassLoader {
 
-    private final ClassLoader coreClassLoader;
+    private final ClassLoader containerClassLoader;
 
-    public PluginClassLoader(URL[] urls, ClassLoader coreClassLoader) {
+    public PluginClassLoader(URL[] urls, ClassLoader containerClassLoader) {
         super(urls, ClassLoader.getSystemClassLoader());
-        this.coreClassLoader = coreClassLoader;
+        this.containerClassLoader = containerClassLoader;
     }
 
     @Override
@@ -41,8 +41,9 @@ public class PluginClassLoader extends URLClassLoader {
                 || name.startsWith("com.github.dapeng.org.apache.thrift")
                 || name.startsWith("com.github.dapeng.transaction.api")
                 || name.startsWith("com.google.gson")
-                || name.startsWith("org.slf4j"))
-            return coreClassLoader.loadClass(name);
+                || name.startsWith("org.slf4j")
+                || name.startsWith("com.github.dapeng.api"))
+            return containerClassLoader.loadClass(name);
         return super.loadClass(name, resolve);
     }
 }
