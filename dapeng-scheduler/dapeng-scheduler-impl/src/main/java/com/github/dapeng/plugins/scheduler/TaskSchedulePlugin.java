@@ -23,7 +23,6 @@ import com.github.dapeng.api.Plugin;
 import com.github.dapeng.api.events.AppEvent;
 import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.ServiceInfo;
-import com.github.dapeng.core.SoaException;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.timer.ScheduledTask;

@@ -26,16 +26,15 @@ import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.scheduler.events.TaskEvent;
 import com.github.dapeng.util.MdcCtxInfoUtil;
 import com.today.api.scheduler.enums.TaskStatusEnum;
-import com.today.commons.GenIdUtil;
-import com.today.eventbus.CommonEventBus;
+import com.today.kafka.TaskMsgKafkaProducer;
 import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
 
 import java.util.Map;
+import java.util.UUID;
 
-import static com.today.commons.GenIdUtil.TASK_EVENT_ID;
 
 /**
  * @author tangliu
@@ -52,6 +51,7 @@ public class ScheduledJob implements Job {
     public void execute(JobExecutionContext context) throws JobExecutionException {
 
 
+
         JobDataMap data = context.getJobDetail().getJobDataMap();
         String serviceName = data.getString("serviceName");
         String versionName = data.getString("versionName");
@@ -59,7 +59,7 @@ public class ScheduledJob implements Job {
 
         //事件类型
         TaskEvent taskEvent = new TaskEvent();
-        taskEvent.id(GenIdUtil.getId(TASK_EVENT_ID));
+        taskEvent.id(System.currentTimeMillis());
         taskEvent.setServiceName(serviceName);
         taskEvent.setMethodName(methodName);
         taskEvent.setVersion(versionName);
@@ -102,7 +102,10 @@ public class ScheduledJob implements Job {
         } finally {
 
             //发布消息
-            CommonEventBus.fireEvent(taskEvent);
+            //CommonEventBus.fireEvent(taskEvent);
+            String tranID = "dapeng-task-" + UUID.randomUUID().toString();
+            TaskMsgKafkaProducer taskMsgKafkaProducer = new TaskMsgKafkaProducer("192.168.5.96:9092").withValueByteArraySerializer().createProducerWithTran(tranID);
+            taskMsgKafkaProducer.sendTaskMessage("dapeng-task", taskEvent);
 
             // sessionTid will be used at SchedulerTriggerListener
             MdcCtxInfoUtil.removeMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);

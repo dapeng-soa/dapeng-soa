@@ -24,10 +24,17 @@
             <artifactId>dapeng-core</artifactId>
             <version>${dapeng.version}</version>
         </dependency>
+
         <dependency>
             <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-utils</artifactId>
             <version>${dapeng.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.quartz-scheduler</groupId>
+            <artifactId>quartz</artifactId>
+            <version>2.2.0</version>
         </dependency>
 
         <dependency>
