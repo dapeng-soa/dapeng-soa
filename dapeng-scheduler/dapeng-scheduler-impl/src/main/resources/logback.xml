@@ -45,14 +45,14 @@
 
     <!-- additivity:是否向上级(root)传递日志信息, -->
     <!--com.today.eventbus包下的日志都放在上面配置的单独的日志文件里-->
-    <logger name="com.today.eventbus" level="DEBUG" additivity="false">
+   <!-- <logger name="com.today.eventbus" level="DEBUG" additivity="false">
         <appender-ref ref="task-eventbus"/>
-    </logger>
+    </logger>-->
 
     <!--sql 日志显示级别-->
-    <logger name="druid.sql" level="OFF"/>
+   <!-- <logger name="druid.sql" level="OFF"/>
     <logger name="wangzx.scala_commons.sql" level="DEBUG"/>
     <logger name="org.apache.kafka.clients.consumer.KafkaConsumer" level="INFO"/>
-    <logger name="org.springframework.jdbc.datasource.DataSourceUtils" level="INFO"/>
+    <logger name="org.springframework.jdbc.datasource.DataSourceUtils" level="INFO"/>-->
 
 </configuration>
