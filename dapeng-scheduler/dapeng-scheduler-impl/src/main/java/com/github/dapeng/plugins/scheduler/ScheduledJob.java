@@ -70,6 +70,7 @@ public class ScheduledJob implements Job {
         taskEvent.setServiceName(serviceName);
         taskEvent.setMethodName(methodName);
         taskEvent.setVersion(versionName);
+        taskEvent.setRemark("Dapeng-Scheduler-Running");
 
         /**
          * 添加sessionTid
