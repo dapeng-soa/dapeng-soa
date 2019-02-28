@@ -19,9 +19,9 @@ package com.github.dapeng.impl.container;
 
 import com.github.dapeng.core.Application;
 import com.github.dapeng.core.ServiceInfo;
-import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -46,6 +46,8 @@ public class DapengApplication implements Application {
     private List<ServiceInfo> serviceInfos;
 
     private ClassLoader appClassLoader;
+
+    private Object springContext;
 
     public DapengApplication(List<ServiceInfo> serviceInfos, ClassLoader appClassLoader) {
         this.serviceInfos = Collections.unmodifiableList(serviceInfos);
@@ -101,6 +103,13 @@ public class DapengApplication implements Application {
     @Override
     public ClassLoader getAppClasssLoader() {
         return this.appClassLoader;
+    }
+
+    @Override
+    public Object getSpringBean(String beanName) {
+        System.out.println("位置：DapengApplication.getSpringBean ==> " + "[Thread.currentThread().getContextClassLoader() = " + Thread.currentThread().getContextClassLoader() + "]");
+        Thread.currentThread().setContextClassLoader(appClassLoader);
+        return ((ClassPathXmlApplicationContext)this.springContext).getBeanFactory().getBean(beanName);
     }
 
     @Override
@@ -166,4 +175,9 @@ public class DapengApplication implements Application {
             LOGGER.error("init Slf4j Methods failed", ex);
         }
     }
+
+    public void bindSpringContext(Object springContext) {
+        this.springContext = springContext;
+    }
+
 }

@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
 
 import java.util.Map;
-import java.util.UUID;
 
 
 /**
@@ -46,18 +45,16 @@ public class ScheduledJob implements Job {
 
     private static final Logger logger = LoggerFactory.getLogger("container.scheduled.task");
 
-    final TaskMsgKafkaProducer taskMsgKafkaProducer;
+    /*final TaskMsgKafkaProducer taskMsgKafkaProducer;*/
 
     public ScheduledJob() {
-        String tranID = "dapeng-task-" + UUID.randomUUID().toString();
-        taskMsgKafkaProducer =  new TaskMsgKafkaProducer("172.16.18.176:9092").withValueByteArraySerializer().createProducerWithTran(tranID);
+        /*String tranID = "dapeng-task-" + UUID.randomUUID().toString();
+        taskMsgKafkaProducer =  new TaskMsgKafkaProducer("127.0.0.1:9092").withValueByteArraySerializer().createProducerWithTran(tranID);*/
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-
-
 
         JobDataMap data = context.getJobDetail().getJobDataMap();
         String serviceName = data.getString("serviceName");
@@ -111,7 +108,21 @@ public class ScheduledJob implements Job {
 
             //发布消息
             //CommonEventBus.fireEvent(taskEvent);
-            taskMsgKafkaProducer.sendTaskMessage("dapeng-task", taskEvent);
+            //TaskMsgKafkaProducer.sendTaskMessage("dapeng-task", taskEvent);
+            // taskMsgKafkaProducer.sendTaskMessageDefaultTopic( taskEvent);
+
+            ClassLoader currClassLoader = Thread.currentThread().getContextClassLoader();
+            Thread.currentThread().setContextClassLoader(application.getAppClasssLoader());
+            TaskMsgKafkaProducer taskMsgKafkaProducer = (TaskMsgKafkaProducer) ContainerFactory.getContainer().getSpringBean("taskMsgKafkaProducer");
+            taskMsgKafkaProducer.sendTaskMessageDefaultTopic( taskEvent);
+            Thread.currentThread().setContextClassLoader(currClassLoader);
+
+           /* ClassLoader currClassLoader = Thread.currentThread().getContextClassLoader();
+            Thread.currentThread().setContextClassLoader(application.getAppClasssLoader());
+            TaskMsgKafkaProducer taskMsgKafkaProducer = (TaskMsgKafkaProducer) application.getSpringBean("taskMsgKafkaProducer");
+            taskMsgKafkaProducer.sendTaskMessageDefaultTopic(taskEvent);
+            Thread.currentThread().setContextClassLoader(currClassLoader);
+*/
 
             // sessionTid will be used at SchedulerTriggerListener
             MdcCtxInfoUtil.removeMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);

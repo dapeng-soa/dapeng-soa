@@ -12,7 +12,8 @@ public class producerTest {
     public static void main(String[] arg0) throws Exception{
 
         String tranID ="dapeng-task-"+UUID.randomUUID().toString();
-       TaskMsgKafkaProducer taskMsgKafkaProducer = new TaskMsgKafkaProducer("192.168.5.96:9092").withValueByteArraySerializer().createProducerWithTran(tranID);
+       //TaskMsgKafkaProducer taskMsgKafkaProducer = new TaskMsgKafkaProducer("192.168.5.96:9092").withValueByteArraySerializer().createProducerWithTran(tranID);
+       TaskMsgKafkaProducer taskMsgKafkaProducer = new TaskMsgKafkaProducer("192.168.5.96:9092","dapeng-task",true,"dapeng-task");
         //TaskMsgKafkaProducer taskMsgKafkaProducer = new TaskMsgKafkaProducer("192.168.5.96:9092").withValueStringSerializer().createProducerWithTran(tranID);
 //        TaskMsgKafkaProducer taskMsgKafkaProducer = new TaskMsgKafkaProducer("192.168.5.96:9092").createProducer();
 
@@ -31,7 +32,7 @@ public class producerTest {
 
             //发布消息
             //CommonEventBus.fireEvent(taskEvent);
-            taskMsgKafkaProducer.sendTaskMessage("dapeng-task", taskEvent);
+            taskMsgKafkaProducer.sendTaskMessageDefaultTopic(taskEvent);
 
         }
 

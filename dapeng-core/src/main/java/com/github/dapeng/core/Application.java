@@ -38,4 +38,6 @@ public interface Application {
     void error(Class<?> logClass, String errMsg, Throwable exception);
 
     ClassLoader getAppClasssLoader();
+
+    Object getSpringBean(String beanName);
 }

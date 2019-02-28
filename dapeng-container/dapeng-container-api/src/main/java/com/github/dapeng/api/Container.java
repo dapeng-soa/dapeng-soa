@@ -127,4 +127,9 @@ public interface Container {
     * 容器内未完成的请求计数
     */
     AtomicInteger requestCounter();
+
+    /**
+    * 获得Spring 托管的bean
+    */
+    Object getSpringBean(String beanName);
 }
