@@ -34,6 +34,7 @@ public enum SoaCode implements SoaBaseCodeInterface {
     FreqConfigError("Err-Core-522", "限流规则解析出错"),
     FreqControlError("Err-Core-523", "限流处理出错"),
     ContainerStatusError("Err-Core-524", "服务容器不在运行状态"),
+    TccTryError("Err-Corr-525", "TCC发起事务失败"),
     // 通用错误码
     StructFieldNull("Err-Core-600", "结构体字段不允许为空"),
     ScheduledFailed("Err-Core-700", "定时任务执行失败");

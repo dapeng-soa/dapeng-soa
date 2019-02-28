@@ -20,7 +20,8 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
-import java.util.Stack;
+
+import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_TCC_TIMEOUT;
 
 /**
  * Tcc Interceptor
@@ -57,6 +58,7 @@ public class TccFilter implements Filter {
                 request.setConfirmMethod(Optional.of(tcc.confirmMethod()));
                 request.setCancelMethod(Optional.of(tcc.cancelMethod()));
                 request.setIsAsync(Optional.of(tcc.asynCC()));
+                request.setExpiredAt(Optional.of(System.currentTimeMillis() + SOA_TCC_TIMEOUT));
                 BeginGtxResponse beginGtxResponse = client.beginGtx(request);
                 header.setTransactionId(beginGtxResponse.getGtxId());
                 long stepId = beginGtxResponse.getStepId();
@@ -70,7 +72,7 @@ public class TccFilter implements Filter {
 
             next.onEntry(ctx);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new SoaException(SoaCode.TccTryError.getCode(),SoaCode.TccTryError.getMsg(),e);
         }
     }
 
