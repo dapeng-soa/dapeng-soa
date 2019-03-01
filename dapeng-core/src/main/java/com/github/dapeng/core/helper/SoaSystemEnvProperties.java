@@ -164,7 +164,7 @@ public class SoaSystemEnvProperties {
     public static final boolean SOA_MONITOR_ENABLE = Boolean.valueOf(get(KEY_SOA_MONITOR_ENABLE, "false"));
     public static final boolean SOA_FREQ_LIMIT_ENABLE = Boolean.valueOf(get(KEY_SOA_FREQ_LIMIT_ENABLE, "true"));
     public static final String SOA_FREQ_SHM_DATA = get(KEY_SOA_FREQ_SHM_DATA, "/data/shm.data");
-    public static final long SOA_SERVICE_TIMEOUT = Long.valueOf(get(KEY_SOA_SERVICE_TIMEOUT, "0"));
+    public static final long SOA_SERVICE_TIMEOUT = Long.valueOf(get(KEY_SOA_SERVICE_TIMEOUT, "15000"));
 
     public static final int SOA_CORE_POOL_SIZE = Integer.valueOf(get(KEY_SOA_CORE_POOL_SIZE, String.valueOf(Runtime.getRuntime().availableProcessors() * 2)));
     public static final long SOA_MAX_READ_BUFFER_SIZE = Long.valueOf(get(KEY_SOA_MAX_READ_BUFFER_SIZE, String.valueOf(1024 * 1024 * 5)));// 5M
