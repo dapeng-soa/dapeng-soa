@@ -21,8 +21,8 @@ import com.github.dapeng.core.Application;
 import com.github.dapeng.core.ServiceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
@@ -107,9 +107,23 @@ public class DapengApplication implements Application {
 
     @Override
     public Object getSpringBean(String beanName) {
-        System.out.println("位置：DapengApplication.getSpringBean ==> " + "[Thread.currentThread().getContextClassLoader() = " + Thread.currentThread().getContextClassLoader() + "]");
+        /*System.out.println("位置：DapengApplication.getSpringBean ==> " + "[Thread.currentThread().getContextClassLoader() = " + Thread.currentThread().getContextClassLoader() + "]");
         Thread.currentThread().setContextClassLoader(appClassLoader);
-        return ((ClassPathXmlApplicationContext)this.springContext).getBeanFactory().getBean(beanName);
+        return ((ClassPathXmlApplicationContext)this.springContext).getBeanFactory().getBean(beanName);*/
+        Method method = null;
+        try {
+            method = springContext.getClass().getMethod("getBeanFactory");
+            Object beanFactory = method.invoke(springContext);
+            Method beanFactoryMethod = beanFactory.getClass().getMethod("getBean", String.class);
+            return beanFactoryMethod.invoke(beanFactory, beanName);
+        } catch (NoSuchMethodException e) {
+            LOGGER.error(e.getMessage(), e);
+        } catch (IllegalAccessException e) {
+            LOGGER.error(e.getMessage(), e);
+        } catch (InvocationTargetException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return null;
     }
 
     @Override

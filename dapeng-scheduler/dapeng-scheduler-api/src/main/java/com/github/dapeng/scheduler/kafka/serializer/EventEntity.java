@@ -1,4 +1,4 @@
-package com.today.serializer;
+package com.github.dapeng.scheduler.kafka.serializer;
 
 /**
  * @author huyj

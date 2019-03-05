@@ -1,4 +1,4 @@
-namespace java com.github.dapeng.scheduler.events
+namespace java com.github.dapeng.scheduler.api.events
 
 include 'task_result_enum.thrift'
 

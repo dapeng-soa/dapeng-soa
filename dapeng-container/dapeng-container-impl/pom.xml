@@ -265,6 +265,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!--scheduler-->
+       <!-- <dependency>
+            <groupId>com.github.dapeng-soa</groupId>
+            <artifactId>dapeng-scheduler-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>-->
+
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>

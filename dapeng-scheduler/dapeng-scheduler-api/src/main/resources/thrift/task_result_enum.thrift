@@ -1,4 +1,4 @@
-namespace java com.today.api.scheduler.enums
+namespace java com.github.dapeng.scheduler.api.enums
 /**
 * 任务执行状态
 **/

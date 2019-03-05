@@ -23,15 +23,16 @@ import com.github.dapeng.core.ProcessorKey;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
-import com.github.dapeng.scheduler.events.TaskEvent;
+import com.github.dapeng.scheduler.api.enums.TaskStatusEnum;
+import com.github.dapeng.scheduler.api.events.TaskEvent;
 import com.github.dapeng.util.MdcCtxInfoUtil;
-import com.today.api.scheduler.enums.TaskStatusEnum;
-import com.today.kafka.TaskMsgKafkaProducer;
 import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Map;
 
 
@@ -107,25 +108,36 @@ public class ScheduledJob implements Job {
         } finally {
 
             //发布消息
-            //CommonEventBus.fireEvent(taskEvent);
-            //TaskMsgKafkaProducer.sendTaskMessage("dapeng-task", taskEvent);
-            // taskMsgKafkaProducer.sendTaskMessageDefaultTopic( taskEvent);
-
-            ClassLoader currClassLoader = Thread.currentThread().getContextClassLoader();
-            Thread.currentThread().setContextClassLoader(application.getAppClasssLoader());
-            TaskMsgKafkaProducer taskMsgKafkaProducer = (TaskMsgKafkaProducer) ContainerFactory.getContainer().getSpringBean("taskMsgKafkaProducer");
-            taskMsgKafkaProducer.sendTaskMessageDefaultTopic( taskEvent);
-            Thread.currentThread().setContextClassLoader(currClassLoader);
-
-           /* ClassLoader currClassLoader = Thread.currentThread().getContextClassLoader();
-            Thread.currentThread().setContextClassLoader(application.getAppClasssLoader());
-            TaskMsgKafkaProducer taskMsgKafkaProducer = (TaskMsgKafkaProducer) application.getSpringBean("taskMsgKafkaProducer");
-            taskMsgKafkaProducer.sendTaskMessageDefaultTopic(taskEvent);
-            Thread.currentThread().setContextClassLoader(currClassLoader);
-*/
-
+            publishKafkaMessage(application, taskEvent);
             // sessionTid will be used at SchedulerTriggerListener
             MdcCtxInfoUtil.removeMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID);
         }
+    }
+
+    /**
+     * 定时任务执行完成发布 消息
+     *
+     * @param context
+     */
+    public void publishKafkaMessage(Application application, TaskEvent taskEvent) {
+        //CommonEventBus.fireEvent(taskEvent);
+        //TaskMsgKafkaProducer.sendTaskMessage("dapeng-task", taskEvent);
+        // taskMsgKafkaProducer.sendTaskMessageDefaultTopic( taskEvent);
+
+          /*  ClassLoader currClassLoader = Thread.currentThread().getContextClassLoader();
+            Thread.currentThread().setContextClassLoader(application.getAppClasssLoader());
+            TaskMsgKafkaProducer taskMsgKafkaProducer = (TaskMsgKafkaProducer) ContainerFactory.getContainer().getSpringBean("taskMsgKafkaProducer");
+            taskMsgKafkaProducer.sendTaskMessageDefaultTopic( taskEvent);
+            Thread.currentThread().setContextClassLoader(currClassLoader);*/
+        try {
+            Object messageBean = application.getSpringBean("taskMsgKafkaProducer");
+            //Method publishMessageMethod = messageBean.getClass().getMethod("sendTaskMessageDefaultTopic", TaskEvent.class);
+            Method publishMessageMethod = messageBean.getClass().getMethod("sendTaskMessageDefaultTopic", application.getAppClasssLoader().loadClass("com.github.dapeng.scheduler.api.events.TaskEvent"));
+            publishMessageMethod.invoke(messageBean, taskEvent);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException |ClassNotFoundException e) {
+            logger.info("发布定时任务消息失败", e);
+            logger.info(e.getMessage(), e);
+        }
+        //taskMsgKafkaProducer.sendTaskMessageDefaultTopic(taskEvent);
     }
 }

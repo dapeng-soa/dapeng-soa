@@ -1,7 +1,7 @@
-package com.today.kafka;
+package com.github.dapeng.scheduler.kafka;
 
-import com.github.dapeng.scheduler.events.TaskEvent;
-import com.today.serializer.KafkaMessageProcessor;
+import com.github.dapeng.scheduler.api.events.TaskEvent;
+import com.github.dapeng.scheduler.kafka.serializer.KafkaMessageProcessor;
 import org.apache.kafka.clients.producer.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

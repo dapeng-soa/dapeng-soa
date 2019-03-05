@@ -81,8 +81,9 @@ public class SpringAppLoader implements Plugin {
 
                 //TODO: 需要构造Application对象
                 Map<String, ServiceInfo> appInfos = toServiceInfos(processorMap);
-                Application application = new DapengApplication(new ArrayList<>(appInfos.values()), appClassLoader);
 
+
+                Application application = new DapengApplication(new ArrayList<>(appInfos.values()), appClassLoader);
                 ((DapengApplication) application).bindSpringContext(springCtx);
 
                 //Start spring context

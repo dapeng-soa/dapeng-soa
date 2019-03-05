@@ -42,7 +42,8 @@ public class PluginClassLoader extends URLClassLoader {
                 || name.startsWith("com.github.dapeng.transaction.api")
                 || name.startsWith("com.google.gson")
                 || name.startsWith("org.slf4j")
-                || name.startsWith("com.github.dapeng.api"))
+                || name.startsWith("com.github.dapeng.api")
+                || name.startsWith("org.springframework"))
             return containerClassLoader.loadClass(name);
         return super.loadClass(name, resolve);
     }

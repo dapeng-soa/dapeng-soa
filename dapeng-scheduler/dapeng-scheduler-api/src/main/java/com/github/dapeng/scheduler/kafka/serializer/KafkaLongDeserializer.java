@@ -1,4 +1,4 @@
-package com.today.serializer;
+package com.github.dapeng.scheduler.kafka.serializer;
 
 import org.apache.kafka.common.serialization.Deserializer;
 import org.slf4j.Logger;

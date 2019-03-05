@@ -1,4 +1,4 @@
-package com.today.serializer;
+package com.github.dapeng.scheduler.kafka.serializer;
 
 import com.github.dapeng.core.BeanSerializer;
 import com.github.dapeng.org.apache.thrift.TException;
