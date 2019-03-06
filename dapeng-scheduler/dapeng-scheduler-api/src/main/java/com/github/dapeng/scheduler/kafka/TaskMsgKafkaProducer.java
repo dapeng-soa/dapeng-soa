@@ -1,11 +1,13 @@
 package com.github.dapeng.scheduler.kafka;
 
+import com.github.dapeng.scheduler.api.enums.TaskStatusEnum;
 import com.github.dapeng.scheduler.api.events.TaskEvent;
 import com.github.dapeng.scheduler.kafka.serializer.KafkaMessageProcessor;
 import org.apache.kafka.clients.producer.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -15,7 +17,7 @@ import java.util.UUID;
  * @author huyj
  * @Created 2019-02-18 14:54
  */
-public class TaskMsgKafkaProducer{
+public class TaskMsgKafkaProducer {
     private static final Logger logger = LoggerFactory.getLogger(TaskMsgKafkaProducer.class);
 
     private Producer producer;
@@ -103,8 +105,8 @@ public class TaskMsgKafkaProducer{
             logger.info("in transaction per msg ,send message to broker successful,  id: {}, topic: {}, message:{}, offset: {}, partition: {}",
                     id, recordMetadata.topic(), message, recordMetadata.offset(), recordMetadata.partition());
         } catch (Exception ex) {
-            ex.printStackTrace();
-            // producer.abortTransaction();
+//            ex.printStackTrace();
+             producer.abortTransaction();
             logger.error(ex.getMessage(), ex);
             logger.error("send message failed,topic: {},message:{}", topic, message);
 //                throw ex;
@@ -120,8 +122,7 @@ public class TaskMsgKafkaProducer{
             logger.info("in transaction per msg ,send message to broker successful,  id: {}, topic: {}, message:{}, offset: {}, partition: {}",
                     id, recordMetadata.topic(), message, recordMetadata.offset(), recordMetadata.partition());
         } catch (Exception ex) {
-            ex.printStackTrace();
-            // producer.abortTransaction();
+             producer.abortTransaction();
             logger.error(ex.getMessage(), ex);
             logger.error("send message failed,topic: {},message:{}", topic, message);
 //                throw ex;
@@ -159,7 +160,6 @@ public class TaskMsgKafkaProducer{
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
-        System.out.println("*****2019-02-26***** 发送消息：topic:[" + topic + "]" + taskEvent.toString());
         sendMsgByTransaction(topic, taskEvent.getId(), msgs);
     }
 
@@ -171,10 +171,32 @@ public class TaskMsgKafkaProducer{
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
-        System.out.println("*****2019-02-26***** 发送消息：topic:[" + topic + "]" + taskEvent.toString());
         sendMsgByTransaction(topic, taskEvent.getId(), msgs);
     }
 
+    public void sendTaskMessageDefaultTopic(Map map) {
+        KafkaMessageProcessor kafkaMessageProcessor = new KafkaMessageProcessor();
+        byte[] msgs = new byte[0];
+        TaskEvent event = initTaskEvent(map);
+        try {
+            msgs = kafkaMessageProcessor.encodeMessage(event);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+        sendMsgByTransaction(topic, event.getId(), msgs);
+    }
+
+
+    private TaskEvent initTaskEvent(Map eventMap) {
+        TaskEvent taskEvent = new TaskEvent();
+        taskEvent.setServiceName(eventMap.get("serviceName").toString());
+        taskEvent.setMethodName(eventMap.get("methodName").toString());
+        taskEvent.setVersion(eventMap.get("versionName").toString());
+        taskEvent.setCostTime((long) eventMap.get("costTime"));
+        taskEvent.setTaskStatus("success".equalsIgnoreCase(eventMap.get("taskStatus").toString()) ? TaskStatusEnum.SUCCEED : TaskStatusEnum.FAIL);
+        taskEvent.setRemark(eventMap.get("reamrk").toString());
+        return taskEvent;
+    }
 
     public TaskMsgKafkaProducer createProducer() {
         producer = new KafkaProducer<String, String>(props);

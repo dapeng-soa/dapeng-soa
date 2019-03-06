@@ -22,6 +22,13 @@ dapeng.iml
 /dapeng-zookeeper/target/
 /dapeng-zookeeper/dapeng-zookeeper.iml
 /dapeng-container/dapeng-container-impl/docker/dapeng-container
+
+/dapeng-scheduler/dapeng-scheduler-api/target/
+/dapeng-scheduler/dapeng-scheduler-api/dapeng-scheduler-api.iml
+/dapeng-scheduler/dapeng-scheduler-impl/target/
+/dapeng-scheduler/dapeng-scheduler-impl/dapeng-scheduler-impl.iml
+/dapeng-scheduler/dapeng-scheduler.iml
+
 .DS_Store
 **/.DS_Store
 dapeng-client-netty/src/test

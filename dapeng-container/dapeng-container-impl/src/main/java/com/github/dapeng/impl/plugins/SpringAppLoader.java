@@ -27,7 +27,6 @@ import com.github.dapeng.core.lifecycle.LifeCycleAware;
 import com.github.dapeng.impl.container.DapengApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -218,21 +217,4 @@ public class SpringAppLoader implements Plugin {
         }
         return constructor.newInstance(new Object[]{xmlPaths.toArray(new String[0])});
     }
-
-    public List<Object> getSpringCtxs() {
-        return this.springCtxs;
-    }
-
-    public Object getSpringBean(String beanName) {
-        // TODO: 2019-02-27 多个应用有问题   applicationCls 与 springCtxs 会混乱
-        for (Object springCtx : this.springCtxs) {
-            //((ClassPathXmlApplicationContext)springAppLoader.springCtxs.get(0)).getBeanFactory().getBean("taskMsgKafkaProducer");
-            Object bean = ((ClassPathXmlApplicationContext) springCtx).getBeanFactory().getBean(beanName);
-            if (bean != null) {
-                return bean;
-            }
-        }
-        return null;
-    }
-
 }

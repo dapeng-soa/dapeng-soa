@@ -13,7 +13,7 @@ public class producerTest {
 
         String tranID ="dapeng-task-"+UUID.randomUUID().toString();
        //TaskMsgKafkaProducer taskMsgKafkaProducer = new TaskMsgKafkaProducer("192.168.5.96:9092").withValueByteArraySerializer().createProducerWithTran(tranID);
-       TaskMsgKafkaProducer taskMsgKafkaProducer = new TaskMsgKafkaProducer("192.168.4.96:9092","dapeng-task",true,"dapeng-task");
+       TaskMsgKafkaProducer taskMsgKafkaProducer = new TaskMsgKafkaProducer("192.168.4.96:9092","dapeng-task-event",true,"dapeng-task");
         //TaskMsgKafkaProducer taskMsgKafkaProducer = new TaskMsgKafkaProducer("192.168.5.96:9092").withValueStringSerializer().createProducerWithTran(tranID);
 //        TaskMsgKafkaProducer taskMsgKafkaProducer = new TaskMsgKafkaProducer("192.168.5.96:9092").createProducer();
 

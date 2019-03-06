@@ -107,20 +107,13 @@ public class DapengApplication implements Application {
 
     @Override
     public Object getSpringBean(String beanName) {
-        /*System.out.println("位置：DapengApplication.getSpringBean ==> " + "[Thread.currentThread().getContextClassLoader() = " + Thread.currentThread().getContextClassLoader() + "]");
-        Thread.currentThread().setContextClassLoader(appClassLoader);
-        return ((ClassPathXmlApplicationContext)this.springContext).getBeanFactory().getBean(beanName);*/
         Method method = null;
         try {
             method = springContext.getClass().getMethod("getBeanFactory");
             Object beanFactory = method.invoke(springContext);
             Method beanFactoryMethod = beanFactory.getClass().getMethod("getBean", String.class);
             return beanFactoryMethod.invoke(beanFactory, beanName);
-        } catch (NoSuchMethodException e) {
-            LOGGER.error(e.getMessage(), e);
-        } catch (IllegalAccessException e) {
-            LOGGER.error(e.getMessage(), e);
-        } catch (InvocationTargetException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             LOGGER.error(e.getMessage(), e);
         }
         return null;

@@ -43,24 +43,6 @@
             <artifactId>quartz</artifactId>
             <version>2.2.0</version>
         </dependency>
-
-        <!-- <dependency>
-             <groupId>com.today</groupId>
-             <artifactId>event-bus_2.12</artifactId>
-             &lt;!&ndash;<version>2.0.5</version>&ndash;&gt;
-             <version>2.1.2-RELEASE</version>
-         </dependency>
-         <dependency>
-             <groupId>com.today</groupId>
-             <artifactId>idgen-api_2.12</artifactId>
-             <version>2.0.4</version>
-         </dependency>
-
-         <dependency>
-             <groupId>com.alibaba</groupId>
-             <artifactId>druid</artifactId>
-             <version>1.1.9</version>
-         </dependency>-->
     </dependencies>
 
     <build>
@@ -103,8 +85,7 @@
                             <goal>copy-dependencies</goal>
                         </goals>
                         <configuration>
-                            <!--<outputDirectory>${project.build.directory}/${project.artifactId}/-->
-                            <outputDirectory>G:/task-plugins/${project.artifactId}/
+                            <outputDirectory>${project.build.directory}/${project.artifactId}/
                             </outputDirectory>
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>false</overWriteSnapshots>
@@ -120,8 +101,7 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>2.3.2</version>
                 <configuration>
-                    <!--<outputDirectory>${project.build.directory}/${project.artifactId}/</outputDirectory>-->
-                    <outputDirectory>G:/task-plugins/${project.artifactId}/</outputDirectory>
+                    <outputDirectory>${project.build.directory}/${project.artifactId}/</outputDirectory>
                 </configuration>
             </plugin>
 

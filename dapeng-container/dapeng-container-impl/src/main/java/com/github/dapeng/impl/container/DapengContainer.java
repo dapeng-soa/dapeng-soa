@@ -38,13 +38,15 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -293,33 +295,6 @@ public class DapengContainer implements Container {
     @Override
     public AtomicInteger requestCounter() {
         return requestCounter;
-    }
-
-    @Override
-    public Object getSpringBean(String beanName) {
-        Optional<Plugin> springPlugin = this.plugins.stream().filter(plugin -> plugin instanceof SpringAppLoader).findFirst();
-        if (!springPlugin.isPresent()) {
-            return null;
-        }
-
-        SpringAppLoader springAppLoader = (SpringAppLoader) springPlugin.get();
-
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-
-        // TODO: 2019-02-27 多个应用有问题   applicationCls 与 springCtxs 会混乱
-        for (Object springCtx : springAppLoader.getSpringCtxs()) {
-            for (ClassLoader pluginLoader : pluginCls) {
-                Thread.currentThread().setContextClassLoader(pluginLoader);
-                //((ClassPathXmlApplicationContext)springAppLoader.springCtxs.get(0)).getBeanFactory().getBean("taskMsgKafkaProducer");
-                Object bean = ((ClassPathXmlApplicationContext) springCtx).getBeanFactory().getBean(beanName);
-                if (bean != null) {
-                    Thread.currentThread().setContextClassLoader(classLoader);
-                    return bean;
-                }
-            }
-        }
-        Thread.currentThread().setContextClassLoader(classLoader);
-        return null;
     }
 
     public void retryCompareCounter() {
