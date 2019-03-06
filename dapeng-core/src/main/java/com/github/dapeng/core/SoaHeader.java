@@ -2,7 +2,6 @@ package com.github.dapeng.core;
 
 import com.github.dapeng.core.helper.DapengUtil;
 import com.github.dapeng.core.helper.IPUtils;
-import org.omg.CORBA.LongHolder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -78,7 +77,9 @@ public class SoaHeader {
 
     private Optional<Integer> timeout = Optional.empty();
 
-    //慢服务检测时间阈值
+    /**
+     * 慢服务检测时间阈值
+     */
     private Optional<Long> maxProcessTime = Optional.empty();
 
     /**

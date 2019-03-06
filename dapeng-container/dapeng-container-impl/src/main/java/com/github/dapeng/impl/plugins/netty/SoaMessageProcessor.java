@@ -124,9 +124,9 @@ public class SoaMessageProcessor {
                 break;
             case Xml:
                 //realContentProtocol = null;
-                throw new TException("通讯协议不正确(包体协议)");
+                throw new TException("通讯协议不正确(包体协议):" + context.codecProtocol());
             default:
-                throw new TException("通讯协议不正确(包体协议)");
+                throw new TException("通讯协议不正确(包体协议):" + context.codecProtocol());
         }
 
         ((TransactionContextImpl)context).setSeqid(headerProtocol.readI32());

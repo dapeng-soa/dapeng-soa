@@ -2,12 +2,15 @@ package com.github.dapeng.tcc.filter;
 
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaFunctionDefinition;
+import com.github.dapeng.core.enums.CodecProtocol;
 import com.github.dapeng.core.filter.Filter;
 import com.github.dapeng.core.filter.FilterChain;
 import com.github.dapeng.core.filter.FilterContext;
 import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.org.apache.thrift.TException;
+import com.github.dapeng.org.apache.thrift.protocol.TBinaryProtocol;
 import com.github.dapeng.org.apache.thrift.protocol.TCompactProtocol;
+import com.github.dapeng.org.apache.thrift.protocol.TJSONProtocol;
 import com.github.dapeng.org.apache.thrift.protocol.TProtocol;
 import com.github.dapeng.org.apache.thrift.transport.TTransport;
 import com.github.dapeng.tm.TransactionManagerServiceClient;
@@ -20,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
-import java.util.Stack;
 
 /**
  * Tcc Interceptor
@@ -50,7 +52,7 @@ public class TccFilter implements Filter {
                 SoaFunctionDefinition soaFunction = (SoaFunctionDefinition) ctx.getAttribute("soaFunction");
                 int reqLength = (Integer) transactionContext.getAttribute("reqLength");
                 BeginGtxRequest request = new BeginGtxRequest();
-                request.params = Optional.of(serialReq(soaFunction, reqArgs, reqLength));
+                request.params = Optional.of(serialReq(soaFunction.reqSerializer, transactionContext.codecProtocol(), reqArgs, reqLength));
                 request.setServiceName(serviceName);
                 request.setVersion(versionName);
                 request.setMethod(methodName);
@@ -105,13 +107,40 @@ public class TccFilter implements Filter {
         }
     }
 
-    private ByteBuffer serialReq(SoaFunctionDefinition soaFunction, Object reqArgs, int reqLength) throws SoaException {
+    /**
+     * 按照thrift规范序列化请求参数
+     *
+     * @param reqSerializer 请求参数序列化器
+     * @param codecProtocol      thrift协议类型
+     * @param reqArgs       请求参数
+     * @param reqLength     请求参数序列化后的长度
+     * @return
+     * @throws SoaException
+     */
+    private ByteBuffer serialReq(BeanSerializer reqSerializer, CodecProtocol codecProtocol, Object reqArgs, int reqLength) throws SoaException {
         try {
             byte[] reqBytes = new byte[reqLength];
             TTransport transport = new TCommonTransport(reqBytes, TCommonTransport.Type.Write);
-            //todo 应根据客户端带过来的协议类型来决定 参看SoaMessageBuilder
-            TProtocol protocol = new TCompactProtocol(transport);
-            soaFunction.reqSerializer.write(reqArgs, protocol);
+
+            TProtocol protocol;
+            switch (codecProtocol) {
+                case Binary:
+                    protocol = new TBinaryProtocol(transport);
+                    break;
+                case CompressedBinary:
+                    protocol = new TCompactProtocol(transport);
+                    break;
+                case Json:
+                    protocol = new TJSONProtocol(transport);
+                    break;
+                case Xml:
+                    //realContentProtocol = null;
+                    throw new TException("通讯协议不正确(包体协议):" + codecProtocol);
+                default:
+                    throw new TException("通讯协议不正确(包体协议):" + codecProtocol);
+            }
+
+            reqSerializer.write(reqArgs, protocol);
 
             return ByteBuffer.wrap(reqBytes);
         } catch (TException e) {
