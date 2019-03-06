@@ -138,6 +138,11 @@ public class SoaSystemEnvProperties {
       */
     private static final String KEY_SOA_SHUTDOWN_TIMEOUT = "soa.shutdown.timeout";
 
+     /**
+      * TCC中事务的超时时间 （默认5*60000）
+      */
+    private static final String KEY_SOA_TCC_TIMEOUT = "soa.tcc.timeout";
+
 
     public static final String SOA_ZOOKEEPER_HOST = get(KEY_SOA_ZOOKEEPER_HOST, "127.0.0.1:2181");
     public static final boolean SOA_POOLED_BYTEBUF = get(KEY_SOA_BYTEBUF_ALLOCATOR, "pooled").equals("pooled");
@@ -196,6 +201,8 @@ public class SoaSystemEnvProperties {
     public static final Integer SOA_INSTANCE_WEIGHT = Integer.valueOf(get(KEY_SOA_INSTANCE_WEIGHT, "100"));
 
     public static final long SOA_SHUTDOWN_TIMEOUT = Long.valueOf(get(KEY_SOA_SHUTDOWN_TIMEOUT, "100000"));
+
+    public static final long SOA_TCC_TIMEOUT = Long.valueOf(get(KEY_SOA_TCC_TIMEOUT, "300000"));
 
     public static String get(String key) {
         return get(key, null);
