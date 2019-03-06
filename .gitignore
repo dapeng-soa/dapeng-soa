@@ -28,6 +28,7 @@ dapeng.iml
 /dapeng-scheduler/dapeng-scheduler-impl/target/
 /dapeng-scheduler/dapeng-scheduler-impl/dapeng-scheduler-impl.iml
 /dapeng-scheduler/dapeng-scheduler.iml
+/dapeng-scheduler/dapeng-scheduler-api/com.github.dapeng.scheduler.api
 
 .DS_Store
 **/.DS_Store
