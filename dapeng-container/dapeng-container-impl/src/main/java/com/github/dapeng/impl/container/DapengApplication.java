@@ -107,12 +107,18 @@ public class DapengApplication implements Application {
 
     @Override
     public Object getSpringBean(String beanName) {
-        Method method = null;
         try {
-            method = springContext.getClass().getMethod("getBeanFactory");
+            Method method = springContext.getClass().getMethod("getBeanFactory");
             Object beanFactory = method.invoke(springContext);
-            Method beanFactoryMethod = beanFactory.getClass().getMethod("getBean", String.class);
-            return beanFactoryMethod.invoke(beanFactory, beanName);
+
+            Method containsBeanMethod = beanFactory.getClass().getMethod("containsBean", String.class);
+            boolean beanIsValid = (boolean) containsBeanMethod.invoke(beanFactory, beanName);
+            if (beanIsValid) {
+                Method getBeanMethod = beanFactory.getClass().getMethod("getBean", String.class);
+                return getBeanMethod.invoke(beanFactory, beanName);
+            } else {
+                LOGGER.info("没有检测到kafka消息生产者配置[taskMsgKafkaProducer]，不会推送消息.");
+            }
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             LOGGER.error(e.getMessage(), e);
         }

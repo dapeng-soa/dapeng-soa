@@ -77,7 +77,7 @@ public class ScheduledJob implements Job {
         Application application = ContainerFactory.getContainer().getApplication(processorKey);
 
         //事件类型
-        Map eventMap = new HashMap();
+        Map eventMap = new HashMap(16);
         eventMap.put("serviceName", serviceName);
         eventMap.put("methodName", methodName);
         eventMap.put("versionName", versionName);
@@ -116,18 +116,20 @@ public class ScheduledJob implements Job {
 
     /**
      * 定时任务执行完成发布 消息
-     *
-     * @param context
+     * @param application
+     * @param eventMap
      */
     public void publishKafkaMessage(Application application, Map eventMap) {
         try {
             Object messageBean = application.getSpringBean("taskMsgKafkaProducer");
-            Method publishMessageMethod = messageBean.getClass().getMethod("sendTaskMessageDefaultTopic", Map.class);
-            publishMessageMethod.invoke(messageBean, eventMap);
-        //taskMsgKafkaProducer.sendTaskMessageDefaultTopic(taskEvent);
+            if(messageBean != null){
+                Method publishMessageMethod = messageBean.getClass().getMethod("sendTaskMessageDefaultTopic", Map.class);
+                publishMessageMethod.invoke(messageBean, eventMap);
+                //taskMsgKafkaProducer.sendTaskMessageDefaultTopic(taskEvent);
+            }
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
-            logger.info("发布定时任务消息失败", e);
+            //e.printStackTrace();
+            logger.info("定时任务消息推送失败", e);
             logger.info(e.getMessage(), e);
         }
     }

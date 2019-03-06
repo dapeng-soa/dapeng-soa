@@ -106,7 +106,7 @@ public class TaskMsgKafkaProducer {
                     id, recordMetadata.topic(), message, recordMetadata.offset(), recordMetadata.partition());
         } catch (Exception ex) {
 //            ex.printStackTrace();
-             producer.abortTransaction();
+            producer.abortTransaction();
             logger.error(ex.getMessage(), ex);
             logger.error("send message failed,topic: {},message:{}", topic, message);
 //                throw ex;
@@ -122,7 +122,7 @@ public class TaskMsgKafkaProducer {
             logger.info("in transaction per msg ,send message to broker successful,  id: {}, topic: {}, message:{}, offset: {}, partition: {}",
                     id, recordMetadata.topic(), message, recordMetadata.offset(), recordMetadata.partition());
         } catch (Exception ex) {
-             producer.abortTransaction();
+            producer.abortTransaction();
             logger.error(ex.getMessage(), ex);
             logger.error("send message failed,topic: {},message:{}", topic, message);
 //                throw ex;
@@ -189,6 +189,7 @@ public class TaskMsgKafkaProducer {
 
     private TaskEvent initTaskEvent(Map eventMap) {
         TaskEvent taskEvent = new TaskEvent();
+        taskEvent.setId(System.currentTimeMillis());
         taskEvent.setServiceName(eventMap.get("serviceName").toString());
         taskEvent.setMethodName(eventMap.get("methodName").toString());
         taskEvent.setVersion(eventMap.get("versionName").toString());
