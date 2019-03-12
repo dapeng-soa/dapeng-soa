@@ -211,7 +211,7 @@ public class TaskMsgKafkaProducer {
         taskEvent.setVersion(eventMap.get("versionName").toString());
         taskEvent.setCostTime((long) eventMap.get("costTime"));
         taskEvent.setTaskStatus("success".equalsIgnoreCase(eventMap.get("taskStatus").toString()) ? TaskStatusEnum.SUCCEED : TaskStatusEnum.FAIL);
-        taskEvent.setRemark(eventMap.get("reamrk").toString());
+        taskEvent.setRemark(eventMap.get("remark").toString());
         return taskEvent;
     }
 

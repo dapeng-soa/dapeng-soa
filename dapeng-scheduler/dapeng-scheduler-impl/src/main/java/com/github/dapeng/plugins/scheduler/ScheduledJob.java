@@ -81,7 +81,7 @@ public class ScheduledJob implements Job {
         eventMap.put("serviceName", serviceName);
         eventMap.put("methodName", methodName);
         eventMap.put("versionName", versionName);
-        eventMap.put("reamrk", "Dapeng-Scheduler-Running");
+        eventMap.put("remark", "Dapeng-Scheduler-Running");
 
         Object iface = data.get("iface");
         MdcCtxInfoUtil.putMdcToAppClassLoader(application.getAppClasssLoader(), SoaSystemEnvProperties.KEY_LOGGER_SESSION_TID, sessionTid);
