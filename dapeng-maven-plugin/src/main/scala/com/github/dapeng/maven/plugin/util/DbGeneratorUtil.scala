@@ -109,7 +109,7 @@ object DbGeneratorUtil {
     columns.foreach(column => {
       val hasValidEnum: Boolean = !getEnumFields(column._1, column._3).isEmpty
       sb.append(s" /** ${column._3} */ \r\n")
-      sb.append(s" ${i} ").append(": ").append(toThriftFieldType(column._2, column._4)).append(s" ${column._1} ")
+      sb.append(s" ${i} ").append(": ").append(toThriftFieldType(column._2, column._4)).append(" ").append(toCamel(column._1))
       .append(",\r\n")
 
       i=i+1
