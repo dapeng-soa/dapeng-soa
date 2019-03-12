@@ -14,6 +14,8 @@ object DbGeneratorUtil {
   val singleEnumRegx = """\s*([\d]+):\s*([\u4e00-\u9fa5|\w|-]+)\(([\d|a-zA-Z|_]+)\)""".r
 
   def generateEntityFile(fileContent: String, targetPath: String, fileName: String) = {
+
+
     val file = new File(targetPath + fileName)
     val created = if (!file.getParentFile.exists()) file.getParentFile.mkdirs() else true
     println(s"generating file: ${targetPath}${file.getName}: ${created}")
@@ -91,6 +93,38 @@ object DbGeneratorUtil {
     sb.append(" }")
 
     sb.toString()
+
+  }
+
+
+  def toThriftTemplate(tableName: String, packageName: String, columns: List[(String, String, String, String)]) = {
+
+    val sb = new StringBuilder(256)
+    val className = toFirstUpperCamel(tableNameConvert(tableName))
+    sb.append(s" namespace java ${packageName}\r\n")
+
+
+    sb.append(s" struct ${className} { \r\n")
+    var i=1
+    columns.foreach(column => {
+      val hasValidEnum: Boolean = !getEnumFields(column._1, column._3).isEmpty
+      sb.append(s" /** ${column._3} */ \r\n")
+      sb.append(s" ${i} ").append(": ").append(toThriftFieldType(column._2, column._4)).append(s" ${column._1} ")
+      .append(",\r\n")
+
+      i=i+1
+    })
+    if (sb.toString().contains(",")) sb.delete(sb.lastIndexOf(","), sb.lastIndexOf(",") + 1)
+
+
+    sb.append(" }")
+
+    if(columns.size == 0){
+      ""
+    }else{
+      sb.toString()
+    }
+
 
   }
 
@@ -275,6 +309,23 @@ object DbGeneratorUtil {
     }
   }
 
+  def toThriftFieldType(tableFieldType: String, isNullable: String): String = {
+    val dataType = tableFieldType.toUpperCase() match {
+      case "INT" | "SMALLINT" | "TINYINT" | "INT UNSIGNED" | "SMALLINT UNSIGNED" | "TINYINT UNSIGNED" | "BIT" => "i32"
+      case "BIGINT" => "i64"
+      case "CHAR" | "VARCHAR" => "string"
+      case "DECIMAL" | "DOUBLE" | "FLOAT" => "double"
+      case "DATETIME" | "DATE" | "TIMESTAMP" => "i64"
+      case "ENUM" | "TEXT" => "string"
+      case "LONGBLOB" | "BLOB" | "MEDIUMBLOB" => "binary"
+      case _ => throw new ParseException(s"tableFieldType = ${tableFieldType} 无法识别", 1023)
+    }
+    if (isNullable.equals("YES")) {
+      s"optional ${dataType}"
+    } else {
+      dataType
+    }
+  }
 
   def connectJdbc(): Option[Connection] = {
     val url = System.getProperty("db.url")
@@ -337,8 +388,13 @@ object DbGeneratorUtil {
     val columns = getTableColumnInfos(tableName.toLowerCase, db, connection)
     val dbClassTemplate = toDbClassTemplate(tableName, packageName, columns)
     val targetPath = baseTargetPath + "src"+separator+"main"+ separator +"scala"+ separator + packageName.split("\\.").mkString(separator) + separator
+    val dbThriftTemplate = toThriftTemplate(tableName,packageName,columns)
+    val thriftPath = baseTargetPath + "src"+separator+"main"+ separator +"resources"+separator+ "thrift" + separator
 
     generateEntityFile(dbClassTemplate, targetPath, s"${toFirstUpperCamel(tableNameConvert(tableName))}.scala")
+    if(!dbThriftTemplate.equals("")) {
+      generateEntityFile(dbThriftTemplate, thriftPath, s"${tableName}.thrift")
+    }
 
     columns.foreach(column => {
       generateEnumFile(tableName, column._1, column._3, targetPath + "enum/", packageName, s"${toFirstUpperCamel(tableNameConvert(tableName)) + toFirstUpperCamel(column._1)}.scala")
