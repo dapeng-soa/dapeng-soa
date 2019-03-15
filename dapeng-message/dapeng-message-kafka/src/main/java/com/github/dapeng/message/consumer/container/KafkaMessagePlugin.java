@@ -41,7 +41,7 @@ public class KafkaMessagePlugin implements Plugin{
                         MessageConsumerClass = ifaceClass.getClassLoader().loadClass("com.github.dapeng.message.consumer.api.annotation.MessageConsumer");
                         MessageConsumerActionClass = ifaceClass.getClassLoader().loadClass("com.github.dapeng.message.consumer.api.annotation.MessageConsumerAction");
                     } catch (ClassNotFoundException e) {
-                        LOGGER.info("({})添加消息订阅失败:{}", ifaceClass.getName(), e.getMessage());
+                        LOGGER.error("({})添加消息订阅失败:{}", ifaceClass.getName(), e.getMessage(),e);
                         break;
                     }
 
