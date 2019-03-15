@@ -401,7 +401,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
             oprot.writeFieldEnd();
         }
 
-        oprot.writeFieldBegin(new com.github.dapeng.org.apache.thrift.protocol.TField("cookies", com.github.dapeng.org.apache.thrift.protocol.TType.MAP, (short) 23));
+        oprot.writeFieldBegin(new com.github.dapeng.org.apache.thrift.protocol.TField("cookies", com.github.dapeng.org.apache.thrift.protocol.TType.MAP, (short) 28));
         java.util.Map<String, String> attachments = bean.getCookies();
         oprot.writeMapBegin(new com.github.dapeng.org.apache.thrift.protocol.TMap(TType.STRING, TType.STRING, attachments.size()));
         for (java.util.Map.Entry<String, String> attachment : attachments.entrySet()) {
@@ -415,7 +415,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
         oprot.writeFieldEnd();
 
         if (bean.getMaxProcessTime().isPresent()) {
-            oprot.writeFieldBegin(new TField("maxProcessTime", TType.I64, (short) 24));
+            oprot.writeFieldBegin(new TField("maxProcessTime", TType.I64, (short) 29));
             oprot.writeI64(bean.getMaxProcessTime().get());
             oprot.writeFieldEnd();
         }
