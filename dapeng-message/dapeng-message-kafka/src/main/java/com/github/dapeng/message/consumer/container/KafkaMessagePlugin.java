@@ -38,15 +38,16 @@ public class KafkaMessagePlugin implements Plugin{
                     Class MessageConsumerClass = null;
                     Class MessageConsumerActionClass = null;
 
+                    try {
+                        MessageConsumerClass = ifaceClass.getClassLoader().loadClass("com.github.dapeng.message.consumer.api.annotation.MessageConsumer");
+                        MessageConsumerActionClass = ifaceClass.getClassLoader().loadClass("com.github.dapeng.message.consumer.api.annotation.MessageConsumerAction");
+                    } catch (ClassNotFoundException e) {
+                        LOGGER.info("无订阅服务或({})添加消息订阅失败:{}", ifaceClass.getName(), e.getMessage());
+                        break;
+                    }
+
                     if (ifaceClass.isAnnotationPresent(MessageConsumerClass)) {
 
-                        try {
-                            MessageConsumerClass = ifaceClass.getClassLoader().loadClass("com.github.dapeng.message.consumer.api.annotation.MessageConsumer");
-                            MessageConsumerActionClass = ifaceClass.getClassLoader().loadClass("com.github.dapeng.message.consumer.api.annotation.MessageConsumerAction");
-                        } catch (ClassNotFoundException e) {
-                            LOGGER.error("({})添加消息订阅失败:{}", ifaceClass.getName(), e.getMessage(),e);
-                            break;
-                        }
 
                         Annotation messageConsumer = ifaceClass.getAnnotation(MessageConsumerClass);
                         String groupId = (String) messageConsumer.getClass().getDeclaredMethod("groupId").invoke(messageConsumer);
