@@ -366,8 +366,10 @@ public class ServerZk implements Watcher {
             } else {
                 isMaster.put(serviceKey, false);
                 _isMaster = false;
-                LOGGER.info("({})竞选master失败，当前节点为({})", serviceKey);
+                LOGGER.info("({})竞选master失败，当前节点为({})", serviceKey,CURRENT_CONTAINER_ADDR);
             }
+
+
         } catch (NumberFormatException e) {
             LOGGER.error("临时节点格式不正确,请使用新版，正确格式为 etc. 192.168.100.1:9081:1.0.0:0000000022");
         }
