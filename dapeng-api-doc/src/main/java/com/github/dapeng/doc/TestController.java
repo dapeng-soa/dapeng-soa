@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -97,6 +99,12 @@ public class TestController {
 
         if (parameters.contains("userId")) {
             invocationCtx.userId(Long.valueOf(req.getParameter("userId")));
+        }
+
+        if (parameters.contains("cookieKey") && parameters.contains("cookieValue")){
+            Map<String,String> map = new HashMap<String,String>();
+            map.put(req.getParameter("cookieKey"),req.getParameter("cookieValue"));
+            invocationCtx.cookies(map);
         }
 
     }

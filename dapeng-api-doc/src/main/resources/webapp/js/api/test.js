@@ -400,6 +400,10 @@ function applyTest(serviceName, version, methodName) {
     if(operatorId ==""){
         operatorId = 0
     }
+    var cookieKey = $("#cookieKey").val()
+    var cookieValue = $("#cookieValue").val()
+
+
     var stringParameter = JSON.stringify(jsonParameter);
     var url = window.basePath + "/test.htm";
     $.post(url, {
@@ -407,7 +411,9 @@ function applyTest(serviceName, version, methodName) {
         version: version,
         methodName: methodName,
         parameter: stringParameter,
-        operatorId:operatorId
+        operatorId:operatorId,
+        cookieKey:cookieKey,
+        cookieValue:cookieValue
     }, function (result) {
 
         $("#json-result").html(getFormatedJsonHTML(eval('(' + JSON.stringify(result) + ')')));

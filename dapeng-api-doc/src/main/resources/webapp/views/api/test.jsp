@@ -119,12 +119,28 @@
                     </div>
                 </div>
                 <div class="form-group">
-                <label for="methodName" class="col-sm-2 control-label">操作员Id</label>
+                    <label for="methodName" class="col-sm-2 control-label">操作员Id</label>
 
-                <div class="col-sm-10">
-                    <input type="number" class="form-control" id="operatorId" value="0">
+                    <div class="col-sm-10">
+                        <input type="number" class="form-control" id="operatorId" value="0">
+                    </div>
                 </div>
-        </div>
+
+                <div class="form-group">
+                    <label for="methodName" class="col-sm-2 control-label">cookieKey</label>
+
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="cookieKey" value="">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="methodName" class="col-sm-2 control-label">cookieValue</label>
+
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="cookieValue" value="">
+                    </div>
+                </div>
             </form>
             <hr>
 
