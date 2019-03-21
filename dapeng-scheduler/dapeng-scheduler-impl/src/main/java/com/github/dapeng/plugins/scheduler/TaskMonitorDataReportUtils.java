@@ -131,7 +131,7 @@ public class TaskMonitorDataReportUtils {
                     logger.error(e.getMsg(), e);
                     appendDataPoint(uploaderDataPointList);
                 } catch (InterruptedException e) {
-                    logger.error("TaskMonitorDataReportUtils::taskMonitorUploader taskDataQueue take is Interrupted", e);
+                    logger.error("TaskMonitorDataReportUtils::taskMonitorUploader taskDataQueue take is Interrupted");
                     logger.error(e.getMessage(), e);
                 }
             }

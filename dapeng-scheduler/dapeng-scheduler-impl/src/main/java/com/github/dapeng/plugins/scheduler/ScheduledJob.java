@@ -119,7 +119,7 @@ public class ScheduledJob implements Job {
      * @param application
      * @param eventMap
      */
-    public void publishKafkaMessage(Application application, Map eventMap) {
+    private void publishKafkaMessage(Application application, Map eventMap) {
         try {
             Object messageBean = application.getSpringBean("taskMsgKafkaProducer");
             if(messageBean != null){
@@ -127,10 +127,11 @@ public class ScheduledJob implements Job {
                 publishMessageMethod.invoke(messageBean, eventMap);
                 //taskMsgKafkaProducer.sendTaskMessageDefaultTopic(taskEvent);
             }
+            //todo 推送失败的重试机制
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             //e.printStackTrace();
-            logger.info("定时任务消息推送失败", e);
-            logger.info(e.getMessage(), e);
+            logger.error("定时任务消息推送失败");
+            logger.error(e.getMessage(), e);
         }
     }
 }

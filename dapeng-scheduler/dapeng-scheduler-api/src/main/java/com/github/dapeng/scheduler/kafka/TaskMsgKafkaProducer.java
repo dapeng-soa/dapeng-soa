@@ -64,9 +64,9 @@ public class TaskMsgKafkaProducer {
         //props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
 
         if (isByteValueSerializered) {
-            withValueByteArraySerializer();
+            props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
         } else {
-            withValueStringSerializer();
+            props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         }
 
         if (isTransactional) {
@@ -76,17 +76,6 @@ public class TaskMsgKafkaProducer {
         } else {
             createProducer();
         }
-        return this;
-    }
-
-
-    public TaskMsgKafkaProducer withValueByteArraySerializer() {
-        props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
-        return this;
-    }
-
-    public TaskMsgKafkaProducer withValueStringSerializer() {
-        props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         return this;
     }
 
@@ -139,8 +128,8 @@ public class TaskMsgKafkaProducer {
                     id, recordMetadata.topic(), message, recordMetadata.offset(), recordMetadata.partition());
         } catch (Exception ex) {
             producer.abortTransaction();
-            logger.error(ex.getMessage(), ex);
             logger.error("send message failed,topic: {},message:{}", topic, message);
+            logger.error(ex.getMessage(), ex);
 //                throw ex;
         }
     }
@@ -150,8 +139,8 @@ public class TaskMsgKafkaProducer {
             RecordMetadata recordMetadata = (RecordMetadata) producer.send(new ProducerRecord<String, String>(topic, message)).get();
             logger.info("send message to broker successful,topic: {},message:{}, offset: {}, partition: {}", recordMetadata.topic(), message, recordMetadata.offset(), recordMetadata.partition());
         } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
             logger.error("send message failed,topic: {}", topic);
+            logger.error(ex.getMessage(), ex);
 //                throw ex;
         }
     }
@@ -161,8 +150,8 @@ public class TaskMsgKafkaProducer {
             RecordMetadata recordMetadata = (RecordMetadata) producer.send(new ProducerRecord<String, byte[]>(topic, message)).get();
             logger.info("send message to broker successful,topic: {},message:{}, offset: {}, partition: {}", recordMetadata.topic(), message, recordMetadata.offset(), recordMetadata.partition());
         } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
             logger.error("send message failed,topic: {}", topic);
+            logger.error(ex.getMessage(), ex);
 //                throw ex;
         }
     }
