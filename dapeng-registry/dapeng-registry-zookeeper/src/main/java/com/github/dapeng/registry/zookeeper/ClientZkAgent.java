@@ -55,10 +55,16 @@ public class ClientZkAgent implements Watcher {
     private final Map<String, ZkServiceInfo> serviceInfoByName = new ConcurrentHashMap<>(128);
 
     private ClientZkAgent() {
-        connect();
     }
 
     public static ClientZkAgent getInstance() {
+        if (instance.zk == null) {
+            synchronized(ClientZkAgent.class) {
+                if (instance.zk == null) {
+                    instance.connect();
+                }
+            }
+        }
         return instance;
     }
 

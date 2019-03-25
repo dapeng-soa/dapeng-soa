@@ -17,6 +17,16 @@
 package com.github.dapeng.core.helper;
 
 
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.apache.zookeeper.Watcher.Event.KeeperState.Disconnected;
+import static org.apache.zookeeper.Watcher.Event.KeeperState.SyncConnected;
+
 public class DapengUtilTest {
     public static void main(String[] args) throws InterruptedException {
 //        Long tid = DapengUtil.generateTid();
@@ -33,5 +43,64 @@ public class DapengUtilTest {
 //            }
 //        }
         System.out.println(IPUtils.transferIp("192.168.10.23"));
+
+        CountDownLatch semaphore = new CountDownLatch(1);
+
+        // default watch
+        Tmp tmp = new Tmp(e -> {
+            System.out.println("ClientZk::connect zkEvent:" + e);
+            switch (e.getState()) {
+                case Expired:
+                    break;
+                case SyncConnected:
+                    semaphore.countDown();
+                    break;
+                case Disconnected:
+                    break;
+                case AuthFailed:
+                    break;
+                default:
+                    break;
+            }
+        });
+        tmp.callBackWithinAnotherThread();
+        System.out.println("main thread1..");
+        tmp.eventThread.echo();
+        semaphore.await(10000, TimeUnit.MILLISECONDS);
+        System.out.println("main thread2..");
+    }
+}
+
+class Tmp {
+    final EventThread eventThread;
+    public Tmp(Watcher e) {
+        eventThread = new EventThread(e);
+    }
+
+    public void callBackWithinAnotherThread() {
+        eventThread.start();
+    }
+}
+
+class EventThread extends Thread {
+    final Watcher e;
+    public EventThread(Watcher e) {
+        this.e = e;
+    }
+
+    public void run() {
+        System.out.println(Thread.currentThread().getName() + ":: start..");
+        try {
+            Thread.currentThread().sleep(5000);
+        } catch (InterruptedException e1) {
+            e1.printStackTrace();
+        }
+        System.out.println(Thread.currentThread().getName() + ":: before callback..");
+        e.process(new WatchedEvent(Watcher.Event.EventType.None, SyncConnected, ""));
+        System.out.println(Thread.currentThread().getName() + ":: after callback..");
+    }
+
+    public void echo() {
+        System.out.println("echo");
     }
 }
