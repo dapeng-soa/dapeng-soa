@@ -44,12 +44,7 @@ import java.util.Map;
 public class ScheduledJob implements Job {
 
     private static final Logger logger = LoggerFactory.getLogger("container.scheduled.task");
-
-    /*final TaskMsgKafkaProducer taskMsgKafkaProducer;*/
-
     public ScheduledJob() {
-        /*String tranID = "dapeng-task-" + UUID.randomUUID().toString();
-        taskMsgKafkaProducer =  new TaskMsgKafkaProducer("127.0.0.1:9092").withValueByteArraySerializer().createProducerWithTran(tranID);*/
     }
 
     @SuppressWarnings("unchecked")
@@ -125,11 +120,10 @@ public class ScheduledJob implements Job {
             if(messageBean != null){
                 Method publishMessageMethod = messageBean.getClass().getMethod("sendTaskMessageDefaultTopic", Map.class);
                 publishMessageMethod.invoke(messageBean, eventMap);
-                //taskMsgKafkaProducer.sendTaskMessageDefaultTopic(taskEvent);
+            }else{
+                logger.info("没有检测到kafka消息生产者配置[taskMsgKafkaProducer]，不会推送消息.");
             }
-            //todo 推送失败的重试机制
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            //e.printStackTrace();
             logger.error("定时任务消息推送失败");
             logger.error(e.getMessage(), e);
         }

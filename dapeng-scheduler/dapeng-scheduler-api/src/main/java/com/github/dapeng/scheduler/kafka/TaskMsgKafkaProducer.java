@@ -60,8 +60,6 @@ public class TaskMsgKafkaProducer {
         // buffer.memory
         props.put("buffer.memory", 33554432);
         props.put("key.serializer", "org.apache.kafka.common.serialization.LongSerializer");
-//        props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-        //props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
 
         if (isByteValueSerializered) {
             props.put("value.serializer", "org.apache.kafka.common.serialization.ByteArraySerializer");
@@ -110,11 +108,9 @@ public class TaskMsgKafkaProducer {
             logger.info("in transaction per msg ,send message to broker successful,  id: {}, topic: {}, message:{}, offset: {}, partition: {}",
                     id, recordMetadata.topic(), message, recordMetadata.offset(), recordMetadata.partition());
         } catch (Exception ex) {
-//            ex.printStackTrace();
             producer.abortTransaction();
             logger.error(ex.getMessage(), ex);
             logger.error("send message failed,topic: {},message:{}", topic, message);
-//                throw ex;
         }
     }
 
@@ -130,7 +126,6 @@ public class TaskMsgKafkaProducer {
             producer.abortTransaction();
             logger.error("send message failed,topic: {},message:{}", topic, message);
             logger.error(ex.getMessage(), ex);
-//                throw ex;
         }
     }
 
@@ -141,7 +136,6 @@ public class TaskMsgKafkaProducer {
         } catch (Exception ex) {
             logger.error("send message failed,topic: {}", topic);
             logger.error(ex.getMessage(), ex);
-//                throw ex;
         }
     }
 
@@ -152,7 +146,6 @@ public class TaskMsgKafkaProducer {
         } catch (Exception ex) {
             logger.error("send message failed,topic: {}", topic);
             logger.error(ex.getMessage(), ex);
-//                throw ex;
         }
     }
 
