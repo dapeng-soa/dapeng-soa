@@ -42,13 +42,13 @@ public class Bootstrap {
 
         CoreClassLoader coreClassLoader = new CoreClassLoader(coreURLs.toArray(new URL[coreURLs.size()]));
 
-        ClassLoader platformClassLoader = new ContainerClassLoader(containerURLs.toArray(new URL[containerURLs.size()]), coreClassLoader);
+        ClassLoader containerClassLoader = new ContainerClassLoader(containerURLs.toArray(new URL[containerURLs.size()]), coreClassLoader);
 
         List<ClassLoader> applicationCls = applicationURLs.stream().map(i -> new ApplicationClassLoader(i.toArray(new URL[i.size()]), coreClassLoader)).collect(Collectors.toList());
 
-        List<ClassLoader> pluginClassLoaders = pluginURLs.stream().map(i -> new PluginClassLoader(i.toArray(new URL[i.size()]), platformClassLoader)).collect(Collectors.toList());
+        List<ClassLoader> pluginClassLoaders = pluginURLs.stream().map(i -> new PluginClassLoader(i.toArray(new URL[i.size()]), containerClassLoader)).collect(Collectors.toList());
 
-        startup(platformClassLoader, applicationCls, pluginClassLoaders);
+        startup(containerClassLoader, applicationCls, pluginClassLoaders);
     }
 
     /**
@@ -62,8 +62,6 @@ public class Bootstrap {
     public static void sbtStartup(ClassLoader containerClassLoader, List<URL> applicationLibs, List<List<URL>> pluginsLibs) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         ClassLoader coreCL = containerClassLoader;
-        ClassLoader containerCL = containerClassLoader;
-        //todo
         List<ClassLoader> pluginCls = null;
 
         ClassLoader applicationCL = new ApplicationClassLoader(
@@ -75,13 +73,13 @@ public class Bootstrap {
 
         if (pluginsLibs != null) {
             pluginCls = new ArrayList<>();
-            for (List<URL> pluginLibs: pluginsLibs) {
-                ClassLoader pluginClassLoader = new PluginClassLoader(pluginLibs.toArray(new URL[pluginLibs.size()]), coreCL);
+            for (List<URL> pluginLibs : pluginsLibs) {
+                ClassLoader pluginClassLoader = new PluginClassLoader(pluginLibs.toArray(new URL[pluginLibs.size()]), containerClassLoader);
                 pluginCls.add(pluginClassLoader);
             }
         }
 
-        startup(containerCL, applicationCLs, pluginCls);
+        startup(containerClassLoader, applicationCLs, pluginCls);
 
     }
 
@@ -89,7 +87,7 @@ public class Bootstrap {
     public static void startup(ClassLoader containerCl, List<ClassLoader> applicationCls, List<ClassLoader> pluginCls) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         Thread.currentThread().setContextClassLoader(containerCl);
         Class<?> containerFactoryClz = containerCl.loadClass("com.github.dapeng.api.ContainerFactory");
-        Method createContainerMethod = containerFactoryClz.getMethod("createContainer", List.class, ClassLoader.class,List.class);
+        Method createContainerMethod = containerFactoryClz.getMethod("createContainer", List.class, ClassLoader.class, List.class);
         createContainerMethod.invoke(containerFactoryClz, applicationCls, containerCl, pluginCls);
 
         Method getContainerMethod = containerFactoryClz.getMethod("getContainer");
