@@ -44,7 +44,7 @@ public class DapengApplication implements Application {
     private Method slf4jInfoMethod, slf4jErrorMethod;
 
     private List<ServiceInfo> serviceInfos;
-    private Map<String, Object> reflexMethodMap = new ConcurrentHashMap<>(32);
+    private final Map<String, Object> reflectMethodMap = new ConcurrentHashMap<>(32);
 
     private ClassLoader appClassLoader;
 
@@ -112,21 +112,21 @@ public class DapengApplication implements Application {
             Object beanFactory = getReflexObject("getBeanFactory");
             if (beanFactory == null) {
                 beanFactory = springContext.getClass().getMethod("getBeanFactory").invoke(springContext);
-                reflexMethodMap.put("getBeanFactory", beanFactory);
+                putReflectObject("getBeanFactory", beanFactory);
             }
 
             Method containsBeanMethod = (Method) getReflexObject("containsBean");
-            if(containsBeanMethod == null){
+            if (containsBeanMethod == null) {
                 containsBeanMethod = beanFactory.getClass().getMethod("containsBean", String.class);
-                reflexMethodMap.put("containsBean", containsBeanMethod);
+                putReflectObject("containsBean", containsBeanMethod);
             }
 
             boolean beanIsValid = (boolean) containsBeanMethod.invoke(beanFactory, beanName);
             if (beanIsValid) {
                 Method getBeanMethod = (Method) getReflexObject("getBean");
-                if(getBeanMethod == null){
+                if (getBeanMethod == null) {
                     getBeanMethod = beanFactory.getClass().getMethod("getBean", String.class);
-                    reflexMethodMap.put("getBean", getBeanMethod);
+                    putReflectObject("getBean", getBeanMethod);
                 }
                 return getBeanMethod.invoke(beanFactory, beanName);
             } else {
@@ -140,12 +140,18 @@ public class DapengApplication implements Application {
 
 
     private Object getReflexObject(String methodName) {
-        if (reflexMethodMap != null && !reflexMethodMap.isEmpty()) {
-            if (reflexMethodMap.containsKey(methodName)) {
-                return reflexMethodMap.get(methodName);
+        if (!reflectMethodMap.isEmpty()) {
+            if (reflectMethodMap.containsKey(methodName)) {
+                return reflectMethodMap.get(methodName);
             }
         }
         return null;
+    }
+
+    private void putReflectObject(String key, Object reflectObj) {
+        synchronized (reflectMethodMap) {
+            reflectMethodMap.put(key, reflectObj);
+        }
     }
 
     @Override

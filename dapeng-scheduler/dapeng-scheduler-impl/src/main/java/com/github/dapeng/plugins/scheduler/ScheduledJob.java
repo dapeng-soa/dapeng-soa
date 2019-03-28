@@ -44,6 +44,8 @@ import java.util.Map;
 public class ScheduledJob implements Job {
 
     private static final Logger logger = LoggerFactory.getLogger("container.scheduled.task");
+    Object messageBean = null;
+
     public ScheduledJob() {
     }
 
@@ -111,16 +113,20 @@ public class ScheduledJob implements Job {
 
     /**
      * 定时任务执行完成发布 消息
+     *
      * @param application
      * @param eventMap
      */
     private void publishKafkaMessage(Application application, Map eventMap) {
         try {
-            Object messageBean = application.getSpringBean("taskMsgKafkaProducer");
-            if(messageBean != null){
+
+            if (messageBean == null) {
+                messageBean = application.getSpringBean("taskMsgKafkaProducer");
+            }
+            if (messageBean != null) {
                 Method publishMessageMethod = messageBean.getClass().getMethod("sendTaskMessageDefaultTopic", Map.class);
                 publishMessageMethod.invoke(messageBean, eventMap);
-            }else{
+            } else {
                 logger.info("没有检测到kafka消息生产者配置[taskMsgKafkaProducer]，不会推送消息.");
             }
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
