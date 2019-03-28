@@ -45,6 +45,9 @@ public class ScheduledJob implements Job {
 
     private static final Logger logger = LoggerFactory.getLogger("container.scheduled.task");
 
+    Object messageBean = null;
+    boolean shouldSendMsg = true;
+
     public ScheduledJob() {
     }
 
@@ -118,16 +121,22 @@ public class ScheduledJob implements Job {
      */
     private void publishKafkaMessage(Application application, Map eventMap) {
         try {
-            Object messageBean = application.getSpringBean("taskMsgKafkaProducer");
+            //防止业务没有配置发消息的情况下，重复getSpringBean
+            if (messageBean == null && shouldSendMsg) {
+                messageBean = application.getSpringBean("taskMsgKafkaProducer");
+                if (messageBean == null) {
+                    shouldSendMsg = false;
+                }
+            }
+
             if (messageBean != null) {
                 Method publishMessageMethod = messageBean.getClass().getMethod("sendTaskMessageDefaultTopic", Map.class);
                 publishMessageMethod.invoke(messageBean, eventMap);
-            }else{
+            } else {
                 logger.info("没有检测到kafka消息生产者配置[taskMsgKafkaProducer]，不会推送消息.");
             }
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            logger.error("定时任务消息推送失败");
-            logger.error(e.getMessage(), e);
+            logger.error("定时任务消息推送失败", e);
         }
     }
 }

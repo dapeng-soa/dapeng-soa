@@ -44,7 +44,8 @@ public class DapengApplication implements Application {
     private Method slf4jInfoMethod, slf4jErrorMethod;
 
     private List<ServiceInfo> serviceInfos;
-    private Map<String, Object> reflexMethodMap = new ConcurrentHashMap<>(32);
+    private Object beanFactory;
+    private final Map<String, Method> reflectMethodMap = new ConcurrentHashMap<>(32);
 
     private ClassLoader appClassLoader;
 
@@ -109,44 +110,52 @@ public class DapengApplication implements Application {
     @Override
     public Object getSpringBean(String beanName) {
         try {
-            Object beanFactory = getReflexObject("getBeanFactory");
             if (beanFactory == null) {
-                beanFactory = springContext.getClass().getMethod("getBeanFactory").invoke(springContext);
-                reflexMethodMap.put("getBeanFactory", beanFactory);
+                synchronized (springContext) {
+                    if (beanFactory == null) {
+                        beanFactory = springContext.getClass().getMethod("getBeanFactory").invoke(springContext);
+                    }
+                }
             }
 
-            Method containsBeanMethod = (Method) getReflexObject("containsBean");
-            if(containsBeanMethod == null){
-                containsBeanMethod = beanFactory.getClass().getMethod("containsBean", String.class);
-                reflexMethodMap.put("containsBean", containsBeanMethod);
-            }
+            Method containsBeanMethod = getReflectMethod(beanFactory, "containsBean", String.class);
 
             boolean beanIsValid = (boolean) containsBeanMethod.invoke(beanFactory, beanName);
             if (beanIsValid) {
-                Method getBeanMethod = (Method) getReflexObject("getBean");
-                if(getBeanMethod == null){
-                    getBeanMethod = beanFactory.getClass().getMethod("getBean", String.class);
-                    reflexMethodMap.put("getBean", getBeanMethod);
-                }
+                Method getBeanMethod = getReflectMethod(beanFactory, "getBean", String.class);
                 return getBeanMethod.invoke(beanFactory, beanName);
             } else {
                 LOGGER.warn("没有检测到kafka消息生产者配置[taskMsgKafkaProducer]，不会推送消息.");
             }
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);
         }
         return null;
     }
 
+    private Method getReflectMethod(Object object, String methodName, Class<?>... parameterTypes) {
+        Method method = reflectMethodMap.get(methodName);
 
-    private Object getReflexObject(String methodName) {
-        if (reflexMethodMap != null && !reflexMethodMap.isEmpty()) {
-            if (reflexMethodMap.containsKey(methodName)) {
-                return reflexMethodMap.get(methodName);
+        if (method == null) {
+            synchronized (reflectMethodMap) {
+                method = reflectMethodMap.get(methodName);
+                if (method == null) {
+                    try {
+                        method = object.getClass().getMethod(methodName, parameterTypes);
+                        if (method != null) {
+                            reflectMethodMap.put(methodName, method);
+                        }
+                    } catch (NoSuchMethodException e) {
+                        LOGGER.error(e.getMessage(), e);
+                        return null;
+                    }
+                }
             }
         }
-        return null;
+
+        return method;
     }
+
 
     @Override
     public void start() {
