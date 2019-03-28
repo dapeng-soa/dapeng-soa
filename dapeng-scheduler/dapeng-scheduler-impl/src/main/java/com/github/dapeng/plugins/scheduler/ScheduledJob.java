@@ -122,8 +122,9 @@ public class ScheduledJob implements Job {
             if (messageBean != null) {
                 Method publishMessageMethod = messageBean.getClass().getMethod("sendTaskMessageDefaultTopic", Map.class);
                 publishMessageMethod.invoke(messageBean, eventMap);
+            }else{
+                logger.info("没有检测到kafka消息生产者配置[taskMsgKafkaProducer]，不会推送消息.");
             }
-            //todo 推送失败的重试机制
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             logger.error("定时任务消息推送失败");
             logger.error(e.getMessage(), e);

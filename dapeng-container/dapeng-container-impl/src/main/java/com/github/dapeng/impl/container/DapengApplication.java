@@ -37,13 +37,14 @@ public class DapengApplication implements Application {
     private final static Logger LOGGER = LoggerFactory.getLogger(DapengApplication.class);
 
     // Map<LoggerName, Logger in appClassLoader>
-    private final Map<String, Object> LOGER_MAP = new ConcurrentHashMap<>();
+    private final Map<String, Object> LOGGER_MAP = new ConcurrentHashMap<>();
 
     private final ReentrantLock lock = new ReentrantLock();
 
     private Method slf4jInfoMethod, slf4jErrorMethod;
 
     private List<ServiceInfo> serviceInfos;
+    private Map<String, Object> reflexMethodMap = new ConcurrentHashMap<>(32);
 
     private ClassLoader appClassLoader;
 
@@ -108,19 +109,41 @@ public class DapengApplication implements Application {
     @Override
     public Object getSpringBean(String beanName) {
         try {
-            Method method = springContext.getClass().getMethod("getBeanFactory");
-            Object beanFactory = method.invoke(springContext);
+            Object beanFactory = getReflexObject("getBeanFactory");
+            if (beanFactory == null) {
+                beanFactory = springContext.getClass().getMethod("getBeanFactory").invoke(springContext);
+                reflexMethodMap.put("getBeanFactory", beanFactory);
+            }
 
-            Method containsBeanMethod = beanFactory.getClass().getMethod("containsBean", String.class);
+            Method containsBeanMethod = (Method) getReflexObject("containsBean");
+            if(containsBeanMethod == null){
+                containsBeanMethod = beanFactory.getClass().getMethod("containsBean", String.class);
+                reflexMethodMap.put("containsBean", containsBeanMethod);
+            }
+
             boolean beanIsValid = (boolean) containsBeanMethod.invoke(beanFactory, beanName);
             if (beanIsValid) {
-                Method getBeanMethod = beanFactory.getClass().getMethod("getBean", String.class);
+                Method getBeanMethod = (Method) getReflexObject("getBean");
+                if(getBeanMethod == null){
+                    getBeanMethod = beanFactory.getClass().getMethod("getBean", String.class);
+                    reflexMethodMap.put("getBean", getBeanMethod);
+                }
                 return getBeanMethod.invoke(beanFactory, beanName);
             } else {
                 LOGGER.warn("没有检测到kafka消息生产者配置[taskMsgKafkaProducer]，不会推送消息.");
             }
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             LOGGER.error(e.getMessage(), e);
+        }
+        return null;
+    }
+
+
+    private Object getReflexObject(String methodName) {
+        if (reflexMethodMap != null && !reflexMethodMap.isEmpty()) {
+            if (reflexMethodMap.containsKey(methodName)) {
+                return reflexMethodMap.get(methodName);
+            }
         }
         return null;
     }
@@ -157,25 +180,25 @@ public class DapengApplication implements Application {
 
     public Object getLogger(ClassLoader appClassLoader, Class<?> logClass) throws Exception {
         String logMethodKey = logClass.getName();
-        if (LOGER_MAP.containsKey(logMethodKey)) {
-            return LOGER_MAP.get(logMethodKey);
+        if (LOGGER_MAP.containsKey(logMethodKey)) {
+            return LOGGER_MAP.get(logMethodKey);
         }
 
         try {
             lock.lock();
-            if (!LOGER_MAP.containsKey(logMethodKey)) {
+            if (!LOGGER_MAP.containsKey(logMethodKey)) {
                 Class<?> logFactoryClass = appClassLoader.loadClass("org.slf4j.LoggerFactory");
                 Method getILoggerFactory = logFactoryClass.getMethod("getLogger", Class.class);
                 getILoggerFactory.setAccessible(true);
                 Object logger = getILoggerFactory.invoke(null, logClass);
-                LOGER_MAP.put(logMethodKey, logger);
+                LOGGER_MAP.put(logMethodKey, logger);
                 return logger;
             }
         } finally {
             lock.unlock();
         }
 
-        return LOGER_MAP.get(logMethodKey);
+        return LOGGER_MAP.get(logMethodKey);
     }
 
     private void initSlf4jMethods() {
