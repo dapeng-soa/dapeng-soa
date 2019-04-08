@@ -252,7 +252,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             } catch (SoaException e) {
                 throw e;
             } catch (Exception e) {
-                logger.error("zkInfo get connection 出现异常: " + e.getMessage());
+                logger.error("zkInfo get connection 出现异常: " + e);
             }
             try {
                 Thread.sleep(50);
