@@ -245,6 +245,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             try {
                 Thread.sleep(50);
             } catch (InterruptedException ignored) {
+                logger.error(ignored.getMessage(),ignored);
             }
         } while (retry++ <= 3);
         logger.warn("retryFindConnection::重试3次获取 connection 失败");
