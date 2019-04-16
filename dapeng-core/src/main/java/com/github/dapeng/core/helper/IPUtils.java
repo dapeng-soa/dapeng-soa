@@ -59,22 +59,12 @@ public class IPUtils {
 
 
     public static String localIp() {
-        try {
-            return InetAddress.getLocalHost().getHostAddress();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-            return "unknown";
-        }
+        return inetAddress.getHostAddress();
     }
 
     public static int localIpAsInt() {
-        try {
-            byte[] ip4address = InetAddress.getLocalHost().getAddress();
-            return ipv4AsInt(ip4address);
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-            return 0;
-        }
+        byte[] ip4address = inetAddress.getAddress();
+        return ipv4AsInt(ip4address);
     }
 
 
