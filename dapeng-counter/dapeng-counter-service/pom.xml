@@ -47,7 +47,7 @@
             <artifactId>janino</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng-soa</groupId>
+            <groupId>com.github.dapeng</groupId>
             <artifactId>dapeng-utils</artifactId>
             <version>${project.version}</version>
         </dependency>
