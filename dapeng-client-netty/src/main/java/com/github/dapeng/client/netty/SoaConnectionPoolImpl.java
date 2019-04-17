@@ -97,7 +97,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             logger.debug("findConnection:serviceName:{},methodName:{},version:[{} -> {}] ,TimeOut:{}",
                     service, method, version, serverVersion, timeout);
         }
-        return connection.send(service, version, method, request, requestSerializer, responseSerializer, timeout);
+        return connection.send(service, serverVersion, method, request, requestSerializer, responseSerializer, timeout);
     }
 
     @Override
@@ -123,7 +123,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             logger.debug("findConnection:serviceName:{},methodName:{},version:[{} -> {}] ,TimeOut:{}",
                     service, method, version, serverVersion, timeout);
         }
-        return connection.sendAsync(service, version, method, request, requestSerializer, responseSerializer, timeout);
+        return connection.sendAsync(service, serverVersion, method, request, requestSerializer, responseSerializer, timeout);
     }
 
     @Override
