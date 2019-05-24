@@ -34,6 +34,13 @@
 
         <dependency>
             <groupId>com.github.dapeng-soa</groupId>
+            <artifactId>dapeng-client-netty</artifactId>
+            <version>${dapeng.version}</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-counter-api</artifactId>
             <version>${dapeng.version}</version>
         </dependency>
@@ -90,7 +97,7 @@
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>false</overWriteSnapshots>
                             <overWriteIfNewer>true</overWriteIfNewer>
-                            <excludeArtifactIds>dapeng-core</excludeArtifactIds>
+                            <!--<excludeArtifactIds>dapeng-core</excludeArtifactIds>-->
                         </configuration>
                     </execution>
                 </executions>
