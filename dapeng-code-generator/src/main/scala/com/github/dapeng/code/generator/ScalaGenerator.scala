@@ -7,6 +7,7 @@ import com.github.dapeng.core.CustomConfig
 import com.github.dapeng.core.metadata.DataType.KIND
 import com.github.dapeng.core.metadata.TEnum.EnumItem
 import com.github.dapeng.core.metadata._
+import com.twitter.scrooge.backend.EnumTemplate
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -524,6 +525,11 @@ class ScalaGenerator extends CodeGenerator {
           case _ => UNDEFINED
         </block>
 
+      </block>
+
+      def enumList():List[Int] =
+      <block>
+      {toEnumItemArrayBuffer(enum.enumItems).map(_.value).mkString("List(",",",")")}
       </block>
 
     </block>
