@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- package com.github.dapeng.code
+package com.github.dapeng.code
 
-import java.io.{File, FileNotFoundException, FilenameFilter}
+import java.io.{File, FileFilter, FileNotFoundException, FilenameFilter}
 import java.util
 
 import javax.annotation.processing.FilerException
@@ -110,11 +110,8 @@ object Scrooge {
 
 
       if (inDir != null) {
-
-        resources = new File(inDir).listFiles(new FilenameFilter {
-          override def accept(dir: File, name: String): Boolean = name.endsWith(".thrift")
-        }).map(file => file.getAbsolutePath)
-
+        //获取所有的thrift文件
+        resources = getFiles(inDir).toArray.map(f => f.getAbsolutePath)
       } else {
         //获取到resource
         resources = args(args.length - 1).split(",")
@@ -136,7 +133,7 @@ object Scrooge {
       val thriftFiles = resources.map(new File(_))
       val needUpdate = {
         val xmlFiles = resourcePath.listFiles().filter(_.getName.endsWith(".xml"))
-        val targetDirFiles = getFiles(outDir).filter(file=> {
+        val targetDirFiles = getFiles(outDir).filter(file => {
           val fileName = file.getName
           fileName.endsWith(".java") || fileName.endsWith(".scala")
         })
@@ -167,7 +164,7 @@ object Scrooge {
           case "json" => new JsonGenerator().generate(services, outDir)
           case "java" => new JavaGenerator().generate(services, outDir, generateAll, structs, enums)
           case "scala" => new ScalaGenerator().generate(services, outDir, generateAll, structs, enums)
-          case "ts" => new TypeScriptGenerator(language, resources.toList).generate(resources, services.asScala.toList, structs.asScala.toList, enums.asScala.toList,outDir)
+          case "ts" => new TypeScriptGenerator(language, resources.toList).generate(resources, services.asScala.toList, structs.asScala.toList, enums.asScala.toList, outDir)
         }
 
       } else if (resources == null || language == "") {
