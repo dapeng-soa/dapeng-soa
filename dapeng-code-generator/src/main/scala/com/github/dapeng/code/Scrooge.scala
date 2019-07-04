@@ -111,7 +111,7 @@ object Scrooge {
 
       if (inDir != null) {
         //获取所有的thrift文件
-        resources = getFiles(inDir).toArray.map(f => f.getAbsolutePath)
+        resources = getFiles(inDir).toArray.map(f => f.getAbsolutePath).filter(x => x.endsWith("thrift"))
       } else {
         //获取到resource
         resources = args(args.length - 1).split(",")
