@@ -20,12 +20,17 @@ import com.github.dapeng.bootstrap.Bootstrap;
 import com.github.dapeng.bootstrap.classloader.ApplicationClassLoader;
 import com.github.dapeng.bootstrap.classloader.ContainerClassLoader;
 import com.github.dapeng.bootstrap.classloader.CoreClassLoader;
+import com.github.dapeng.bootstrap.classloader.PluginClassLoader;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -42,6 +47,9 @@ import java.util.stream.Collectors;
  */
 @Mojo(name = "run", threadSafe = true, requiresDependencyResolution = ResolutionScope.TEST)
 public class RunContainerPlugin extends SoaAbstractMojo {
+
+    @Parameter(property = "pluginPath")
+    private String pluginPath;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -85,7 +93,7 @@ public class RunContainerPlugin extends SoaAbstractMojo {
 
                 while (iterator.hasNext()) {
                     URL url = iterator.next();
-                    if (removeTwitterAndScalaDependency(iterator,url)) continue;
+                    if (removeTwitterAndScalaDependency(iterator, url)) continue;
                     if (removeContainerAndBootstrap(iterator, url)) continue;
                 }
 
@@ -95,15 +103,30 @@ public class RunContainerPlugin extends SoaAbstractMojo {
                 CoreClassLoader coreClassLoader = new CoreClassLoader(shareUrls.toArray(new URL[shareUrls.size()]));
 
                 List<ClassLoader> appClassLoaders = appURLsList.stream().map(i ->
-                        new ApplicationClassLoader(i.toArray(new URL[i.size()]),coreClassLoader)).collect(Collectors.toList());
+                        new ApplicationClassLoader(i.toArray(new URL[i.size()]), coreClassLoader)).collect(Collectors.toList());
 
-                ContainerClassLoader platformClassLoader = new ContainerClassLoader(platformUrls.toArray(new URL[platformUrls.size()]),coreClassLoader);
+                ContainerClassLoader platformClassLoader = new ContainerClassLoader(platformUrls.toArray(new URL[platformUrls.size()]), coreClassLoader);
 
-                System.out.println("------set classloader-------------");
+                getLog().info("------set classloader-------------");
                 Thread.currentThread().setContextClassLoader(coreClassLoader);
 
+
+                //20190712   添加形势任务插件 classLoader
+                List<ClassLoader> pluginCls = null;
+                if (pluginPath != null) {
+                    getLog().info("*-*-*-*-*-*-*-*-*-*container load plugin path:["+pluginPath+"]*-*-*-*-*-*-*-*-*-*");
+                    List<List<URL>> pluginsLibs = getPluginsLibs(pluginPath);
+                    if (pluginsLibs != null) {
+                        pluginCls = new ArrayList<>();
+                        for (List<URL> pluginLibs : pluginsLibs) {
+                            ClassLoader pluginClassLoader = new PluginClassLoader(pluginLibs.toArray(new URL[pluginLibs.size()]), platformClassLoader);
+                            pluginCls.add(pluginClassLoader);
+                        }
+                    }
+                }
+
                 //todo
-                Bootstrap.startup(platformClassLoader,appClassLoaders,null);
+                Bootstrap.startup(platformClassLoader, appClassLoaders, pluginCls);
 
             } catch (Exception e) {
                 Thread.currentThread().getThreadGroup().uncaughtException(Thread.currentThread(), e);
@@ -115,6 +138,58 @@ public class RunContainerPlugin extends SoaAbstractMojo {
         joinNonDaemonThreads(threadGroup);
     }
 
+    private List<List<URL>> getPluginsLibs(String pluginPath) throws Exception {
+        List<List<URL>> pluginsLibs = new ArrayList<List<URL>>();
+        if (pluginPath != null) {
+            File pluginParentDir = new File(pluginPath);
+            if (!pluginParentDir.exists()) {
+                throw new FileNotFoundException("文件目录不存在: [" + pluginPath + "]");
+            }
+
+            File[] pluginDirs = pluginParentDir.listFiles();
+            if (pluginDirs != null) {
+                for (File pluginDir : pluginDirs) {
+                    List<URL> urls = Arrays.stream(pluginDir.listFiles()).map(File::toURI).map(this::uri2Url).collect(Collectors.toList());
+                    pluginsLibs.add(urls);
+                }
+            }
+        }
+        return pluginsLibs;
+    }
+
+    private URL uri2Url(URI uri) {
+        try {
+            return uri.toURL();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+/*
+    private def getPluginsLibs() = {
+        val dapengPluginPath = System.getProperty(DapengProperties.DAPENG_PLUGIN_PATH)
+        if (dapengPluginPath != null && !dapengPluginPath.isEmpty) {
+            val pluginsLibs = new util.ArrayList[util.List[URL]]()
+            val pluginParentDir = new File(dapengPluginPath)
+            if (!pluginParentDir.exists()) {
+                throw new FileNotFoundException(s"文件目录不存在: ${dapengPluginPath}")
+            }
+
+            val pluginDirs = pluginParentDir.listFiles()
+            if (pluginDirs != null) {
+                for (pluginDir <- pluginDirs) {
+                    val urls = pluginDir.listFiles().toList.map(i => i.asURL)
+                    pluginsLibs.add(urls.asJava)
+                }
+            }
+            pluginsLibs
+        } else {
+            new util.ArrayList[util.List[URL]]()
+        }
+    }
+    */
 
     private boolean removeServiceProjectArtifact(Iterator<URL> iterator, URL url) {
         String regex = project.getArtifact().getFile().getAbsolutePath().replaceAll("\\\\", "/");
@@ -131,8 +206,8 @@ public class RunContainerPlugin extends SoaAbstractMojo {
         return false;
     }
 
-    private boolean removeTwitterAndScalaDependency(Iterator<URL> iterator, URL url){
-        if(url.getFile().matches("^.*/twitter.*\\.jar$")) {
+    private boolean removeTwitterAndScalaDependency(Iterator<URL> iterator, URL url) {
+        if (url.getFile().matches("^.*/twitter.*\\.jar$")) {
             iterator.remove();
             return true;
         }
