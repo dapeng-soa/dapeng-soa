@@ -36,7 +36,7 @@ public class ZkUtils {
         if (!isZkReady(zk)) return;
 
         String configPath = CONFIG_PATH;
-        if (isGlobal) {
+        if (!isGlobal) {
             configPath += "/" + zkInfo.serviceName();
         }
 
