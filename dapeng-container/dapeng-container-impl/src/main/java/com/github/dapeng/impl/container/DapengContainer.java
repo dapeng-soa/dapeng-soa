@@ -243,10 +243,13 @@ public class DapengContainer implements Container {
         //4.启动Apploader， plugins
         getPlugins().forEach(Plugin::start);
 
+        PluginLoader pluginLoader = null;
         //5.plugins
-        PluginLoader pluginLoader = new PluginLoader(pluginCls);
+        if (null != pluginCls) {
+            pluginLoader = new PluginLoader(pluginCls);
 
-        pluginLoader.startPlugins(this);
+            pluginLoader.startPlugins(this);
+        }
 
         final LifecycleProcessor lifecycleProcessor = LifecycleProcessorFactory.getLifecycleProcessor();
         //启动LifeCycle start
@@ -255,6 +258,7 @@ public class DapengContainer implements Container {
         // register Filters
         new FilterLoader(this, applicationCls);
 
+        PluginLoader finalPluginLoader = pluginLoader;
         Runtime.getRuntime().addShutdownHook(new Thread("container-shutdown-hook-thread") {
             @Override
             public void run() {
@@ -265,7 +269,9 @@ public class DapengContainer implements Container {
                 // fixme not so graceful
                 getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
 
-                pluginLoader.stopPlugins();
+                if (null != finalPluginLoader) {
+                    finalPluginLoader.stopPlugins();
+                }
 
                 //保证容器内请求已完成
                 retryCompareCounter();
