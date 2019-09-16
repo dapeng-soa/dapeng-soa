@@ -543,6 +543,17 @@ class ScalaGenerator extends CodeGenerator {
 
       </block>
 
+      def findLabelNameByValue(v: Int): String = <block>
+        v match <block>
+          {toEnumItemArrayBuffer(enum.enumItems).map { (enumItem: EnumItem) => {
+            <div>case {enumItem.value} => "{enumItem.label}"
+            </div>
+          }
+          }}
+          case _ => "#" + v
+        </block>
+      </block>
+
       def enumList():List[Int] =
       <block>
       {toEnumItemArrayBuffer(enum.enumItems).map(_.value).mkString("List(",",",")")}

@@ -263,11 +263,10 @@ public class DapengContainer implements Container {
             @Override
             public void run() {
                 LOGGER.warn("Container graceful shutdown begin.");
-                lifecycleProcessor.onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.STOP));
-
                 status = STATUS_SHUTTING;
                 // fixme not so graceful
                 getPlugins().stream().filter(plugin -> plugin instanceof ZookeeperRegistryPlugin).forEach(Plugin::stop);
+                lifecycleProcessor.onLifecycleEvent(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.STOP));
 
                 if (null != finalPluginLoader) {
                     finalPluginLoader.stopPlugins();
