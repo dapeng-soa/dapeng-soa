@@ -48,10 +48,15 @@ public class InvocationContextUtils {
 
         if (invocationCtxProxy != null) {
             context.userIp(invocationCtxProxy.userIp().orElse(null));
-            context.userId(invocationCtxProxy.userId().orElse(null));
+            // todo ctxProxy子线程传递
+            if(!context.userId().isPresent()){
+                context.userId(invocationCtxProxy.userId().orElse(null));
+            }
             context.operatorId(invocationCtxProxy.operatorId().orElse(null));
             context.callerMid(invocationCtxProxy.callerMid().orElse(null));
-            context.cookies(invocationCtxProxy.cookies());
+            if(context.cookies().isEmpty()){
+                context.cookies(invocationCtxProxy.cookies());
+            }
         }
 
         //set cookies if cookie injection rule matches

@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.ref.ReferenceQueue;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -63,7 +64,7 @@ public class ClientRefManager {
 
         // todo: one lock per service
         synchronized (this) {
-            LOGGER.debug("ClientRefManager::registerClient, serviceName:" + serviceName);
+            LOGGER.debug("ClientRefManager::registerClient, serviceName:{},version:{}" , serviceName,version);
             clientInfo = new SoaConnectionPool.ClientInfo(serviceName, version);
             ZkServiceInfo serviceInfo = new ZkServiceInfo(serviceName, new CopyOnWriteArrayList<>());
             clientZkAgent.sync(serviceInfo);
@@ -80,6 +81,13 @@ public class ClientRefManager {
     }
 
     private void onGcCallback(SoaConnectionPoolImpl.ClientInfoSoftRef ref) {
+        Iterator<String> iterator = handlesByName.keySet().iterator();
+        while(iterator.hasNext()){
+            String key = iterator.next();
+            if(key.contains(ref.serviceName)){
+                iterator.remove();
+            }
+        }
         clientZkAgent.cancel(ref.serviceInfo);
     }
 
@@ -91,7 +99,7 @@ public class ClientRefManager {
                 if (clientInfoRef == null) continue;
 
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("client for service:" + clientInfoRef.serviceName + " is gone.");
+                    LOGGER.debug("client for service:" + clientInfoRef.serviceName + ":"+clientInfoRef.version+" is gone.");
                 }
 
                 onGcCallback(clientInfoRef);
