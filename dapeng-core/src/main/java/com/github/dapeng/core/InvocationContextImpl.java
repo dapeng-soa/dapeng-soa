@@ -354,14 +354,14 @@ public class InvocationContextImpl implements InvocationContext {
     public static class Factory {
         private static ThreadLocal<InvocationContext> threadLocal = new ThreadLocal<>();
 
-        private static InvocationContextProxy invocationContextProxy;
+        private static ThreadLocal<InvocationContextProxy> invocationContextProxy = new ThreadLocal<>();
 
         public static InvocationContextProxy getInvocationContextProxy() {
-            return invocationContextProxy;
+            return invocationContextProxy.get();
         }
 
         public static void setInvocationContextProxy(InvocationContextProxy invocationContextProxy) {
-            Factory.invocationContextProxy = invocationContextProxy;
+            Factory.invocationContextProxy.set(invocationContextProxy);
         }
 
         /**
