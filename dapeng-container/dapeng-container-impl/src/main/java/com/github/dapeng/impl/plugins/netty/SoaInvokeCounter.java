@@ -75,7 +75,9 @@ public class SoaInvokeCounter extends ChannelDuplexHandler {
 
     private void handleInvocationInfo(TransactionContext context) {
         SoaHeader soaHeader = context.getHeader();
-
+        if(soaHeader==null){
+            return;
+        }
         ServiceBasicInfo basicInfo = new ServiceBasicInfo(soaHeader.getServiceName(),
                 soaHeader.getMethodName(), soaHeader.getVersionName());
 

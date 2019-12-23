@@ -53,7 +53,7 @@ public class ClientRefManager {
     }
 
     public SoaConnectionPool.ClientInfo registerClient(String serviceName, String version) {
-        SoaConnectionPoolImpl.ClientInfoSoftRef softRef = handlesByName.get(serviceName+":"+version);
+        SoaConnectionPoolImpl.ClientInfoSoftRef softRef = handlesByName.get(serviceName);
         SoaConnectionPool.ClientInfo clientInfo;
         if (softRef != null) {
             clientInfo = softRef.get();
@@ -70,7 +70,7 @@ public class ClientRefManager {
             clientZkAgent.sync(serviceInfo);
 
             SoaConnectionPoolImpl.ClientInfoSoftRef clientInfoSoftRef = new SoaConnectionPoolImpl.ClientInfoSoftRef(clientInfo, serviceInfo, referenceQueue);
-            handlesByName.put(serviceName+":"+version, clientInfoSoftRef);
+            handlesByName.put(serviceName, clientInfoSoftRef);
         }
 
         return clientInfo;
@@ -81,13 +81,6 @@ public class ClientRefManager {
     }
 
     private void onGcCallback(SoaConnectionPoolImpl.ClientInfoSoftRef ref) {
-        Iterator<String> iterator = handlesByName.keySet().iterator();
-        while(iterator.hasNext()){
-            String key = iterator.next();
-            if(key.contains(ref.serviceName)){
-                iterator.remove();
-            }
-        }
         clientZkAgent.cancel(ref.serviceInfo);
     }
 
