@@ -166,7 +166,7 @@
         <repository>
             <id>maven-net-cn</id>
             <name>Maven China Mirror</name>
-            <url>http://repo1.maven.org/maven2/</url>
+            <url>https://repo1.maven.org/maven2/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
