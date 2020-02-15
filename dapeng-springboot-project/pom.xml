@@ -20,8 +20,23 @@
 
     <modules>
         <module>dapeng-config-spring</module>
+        <module>dapeng-spring-boot-autoconfigure</module>
+        <module>dapeng-spring-boot-starter</module>
         <module>dapeng-springboot-demo</module>
     </modules>
+
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>2.2.4.RELEASE</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
 
     <build>
