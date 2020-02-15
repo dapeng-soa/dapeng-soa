@@ -1,0 +1,2 @@
+02-15 13:28:21 037 RunContainerPlugin.main() WARN [] - TaskSchedulePlugin::appRegistered, event[com.github.dapeng.impl.container.DapengApplication@7ec73ae2], do nothing here
+02-15 13:28:21 040 RunContainerPlugin.main() WARN [] - Plugin::TaskSchedulePlugin::start

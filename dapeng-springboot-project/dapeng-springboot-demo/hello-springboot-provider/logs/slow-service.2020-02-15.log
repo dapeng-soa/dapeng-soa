@@ -1,0 +1,2 @@
+02-15 13:28:21 114 RunContainerPlugin.main() INFO [] - FilterLoader :: container filters :: [LogFilter]
+02-15 13:28:21 117 RunContainerPlugin.main() INFO [] - FilterLoader :: container filters :: [SlowServiceCheckFilter]
