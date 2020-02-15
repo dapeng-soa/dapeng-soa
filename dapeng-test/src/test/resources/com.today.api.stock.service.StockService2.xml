@@ -1,0 +1,652 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<service namespace="com.today.api.stock.service" name="StockService2">
+    <meta>
+        <version>1.0.0</version>
+        <timeout>30000</timeout>
+    </meta>
+    <methods>
+        <method name="processStock">
+            <doc>
+
+# 实时库存处理接口
+## 业务描述
+	处理实时库存
+## 接口依赖
+	无
+## 边界异常说明
+	无
+## 输入
+	1. list&lt;stock_request.AtomProcessStockItem&gt; 库存处理请求头
+## 前置检查
+	1. 一次最多处理1000个 sku 的库存, 如果超过1000个sku 请下游调用方自己做分页处理
+	2. sourceTime 必须是今天内的时间, 不能处理过去的. 有过去时间的记录 error 日志
+	3. 用消息处理库存的请求必须有kafkaId字段
+## 逻辑处理
+	1. 查询库存主体(ownerId, ownerType, skuNo), 不存在插入库存主体
+	2. 插入库存流水, 对于事件处理的库存需要通过 kafkaId 查询库存流水是否已经处理过了, 如果已经处理过则不再重复处理
+	3. 更新库存信息
+## 数据库变更
+	1. insert stock_journal
+	2. update stock
+## 后置检查
+	无
+## 事务处理
+	默认事务处理
+## 输出
+	无
+</doc>
+            <request name="processStock_args">
+                <fields>
+                    <field tag="1" name="event" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.stock.events.StockEvent</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="processStock_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRUCT</kind>
+<ref>com.today.api.purchase.response.ProcessStockResponseItem</ref>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="processStockByPiecemeal">
+            <doc>
+
+# 支持处理零散商品实时库存处理接口
+## 业务描述
+	处理实时库存: 暂时只有盘点业务调用
+## 接口依赖
+	无
+## 边界异常说明
+	无
+## 输入
+	1. list&lt;stock_request.ProcessStockItem&gt; 库存处理请求头
+## 前置检查
+	1. 一次最多处理1000个 sku 的库存, 如果超过1000个sku 请下游调用方自己做分页处理
+	2. sourceTime 必须是今天内的时间, 不能处理过去的. 有过去时间的记录 error 日志
+	3. 用消息处理库存的请求必须有kafkaId字段
+## 逻辑处理
+	1. 查询库存主体(ownerId, ownerType, skuNo), 不存在插入库存主体
+	2. 插入库存流水, 对于事件处理的库存需要通过 kafkaId 查询库存流水是否已经处理过了, 如果已经处理过则不再重复处理
+	3. 更新库存信息
+## 数据库变更
+	1. insert stock_journal
+	2. update stock
+## 后置检查
+	无
+## 事务处理
+	默认事务处理
+## 输出
+	无
+</doc>
+            <request name="processStockByPiecemeal_args">
+                <fields>
+                    <field tag="1" name="request" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRUCT</kind>
+<ref>com.today.api.purchase.request.ProcessStockItem</ref>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="processStockByPiecemeal_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>LIST</kind>
+                            <valueType>
+<kind>STRUCT</kind>
+<ref>com.today.api.purchase.response.ProcessStockResponseItem</ref>
+                            </valueType>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+    </methods>
+    <structs>
+        <struct namespace="com.today.api.purchase.request" name="AtomProcessStockItem">
+            <doc>
+
+ 库存处理的最小结构单元
+</doc>
+            <fields>
+                <field tag="1" name="ownerId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 库存主体: 财务店号或者仓库编号
+</doc>
+                </field>
+                <field tag="2" name="ownerType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.stock.enums.StockOwnerTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 库存主体类型: 1:门店(store);2:仓库(warehouse)
+</doc>
+                </field>
+                <field tag="3" name="skuNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 货号
+</doc>
+                </field>
+                <field tag="4" name="sourceType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.stock.enums.StockJournalSourceTypeEnum2</ref>
+                    </dataType>
+                    <doc>
+
+ 库存来源类型
+</doc>
+                </field>
+                <field tag="5" name="sourceId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 库存来源id: order_detial_id...
+</doc>
+                </field>
+                <field tag="6" name="stockNum" optional="false" privacy="false">
+                    <dataType>
+                        <kind>INTEGER</kind>
+                    </dataType>
+                    <doc>
+
+ 库存发生数: 自带正负
+</doc>
+                </field>
+                <field tag="7" name="kafkaId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 系统库存变化唯一 ID, 只有通过事件处理库存的业务才会有
+</doc>
+                </field>
+                <field tag="8" name="logisticsPrice" optional="true" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 物流销价
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="9" name="logisticsOutputTax" optional="true" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 物流销项税率
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="10" name="buyingPrice" optional="true" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 进价
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="11" name="supplierInputTax" optional="true" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 进项税率
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="12" name="sellingPirce" optional="true" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 售价
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="13" name="outputTax" optional="true" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 销项税
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="14" name="remark" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 备注
+</doc>
+                </field>
+                <field tag="15" name="sourceTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 来源时间
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.stock.events" name="StockEvent">
+            <doc>
+
+ 库存处理返回结构体
+</doc>
+            <fields>
+                <field tag="1" name="stockList" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LIST</kind>
+                        <valueType>
+                            <kind>STRUCT</kind>
+                            <ref>com.today.api.purchase.request.AtomProcessStockItem</ref>
+                        </valueType>
+                    </dataType>
+                    <doc>
+
+ 库存处理集合
+</doc>
+                </field>
+                <field tag="2" name="id" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ evenID,需要存dp_common_event的
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.purchase.response" name="ProcessStockResponseItem">
+            <doc>
+
+ 库存处理返回结构体
+</doc>
+            <fields>
+                <field tag="1" name="ownerId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 库存主体: 财务店号或者仓库编号
+</doc>
+                </field>
+                <field tag="2" name="ownerType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.stock.enums.StockOwnerTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 库存主体类型: 1:门店(store);2:仓库(warehouse)
+</doc>
+                </field>
+                <field tag="3" name="skuNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 货号
+</doc>
+                </field>
+                <field tag="4" name="stockNum" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 当前库存
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+            </fields>
+        </struct>
+        <struct namespace="com.today.api.purchase.request" name="ProcessStockItem">
+            <doc>
+
+ 最小单位库存处理
+</doc>
+            <fields>
+                <field tag="1" name="ownerId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 库存主体: 财务店号或者仓库编号
+</doc>
+                </field>
+                <field tag="2" name="ownerType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.stock.enums.StockOwnerTypeEnum</ref>
+                    </dataType>
+                    <doc>
+
+ 库存主体类型: 1:门店(store);2:仓库(warehouse)
+</doc>
+                </field>
+                <field tag="3" name="skuNo" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 货号
+</doc>
+                </field>
+                <field tag="4" name="sourceType" optional="false" privacy="false">
+                    <dataType>
+                        <kind>ENUM</kind>
+                        <ref>com.today.api.stock.enums.StockJournalSourceTypeEnum2</ref>
+                    </dataType>
+                    <doc>
+
+ 库存来源类型
+</doc>
+                </field>
+                <field tag="5" name="sourceId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 库存来源id: order_detial_id...
+</doc>
+                </field>
+                <field tag="6" name="stockNum" optional="false" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 库存发生数: 自带正负
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="7" name="kafkaId" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 系统库存变化唯一 ID, 只有通过事件处理库存的业务才会有
+</doc>
+                </field>
+                <field tag="8" name="logisticsPrice" optional="true" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 物流销价
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="9" name="logisticsOutputTax" optional="true" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 物流销项税率
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="10" name="buyingPrice" optional="true" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 进价
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="11" name="supplierInputTax" optional="true" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 进项税率
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="12" name="sellingPirce" optional="true" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 售价
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="13" name="outputTax" optional="true" privacy="false">
+                    <dataType>
+                        <kind>BIGDECIMAL</kind>
+                    </dataType>
+                    <doc>
+
+ 销项税
+ @datatype(name="bigdecimal")
+</doc>
+                </field>
+                <field tag="14" name="remark" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ 备注
+</doc>
+                </field>
+                <field tag="15" name="sourceTime" optional="false" privacy="false">
+                    <dataType>
+                        <kind>LONG</kind>
+                    </dataType>
+                    <doc>
+
+ 来源时间
+</doc>
+                </field>
+            </fields>
+        </struct>
+    </structs>
+    <enums>
+        <tenum namespace="com.today.api.stock.enums" name="StockJournalSourceTypeEnum2">
+            <doc>
+
+ 来源类型=单据类型
+ 编码规则: 初始流水: 0, 销售 1 -&gt; 9, 采购: 10 -&gt; 39, 其他: 40 -&gt; 49
+
+ 采购单据来源包括 10:进货单(stock);11:进货拒收修正单(rejection_correct_for_stock);12:进货缺货修正单(absence_correct_for_stock);20:退货单(refund);21:退货拒收修正单(rejection_correct_for_refund);22:退货缺货修正单(absence_correct_for_refund);30:调拨单(transfer)'
+ 销售单据来源包括 销售单, 销退单
+</doc>
+            <items>
+                <item>
+                    <label>STORE_ORDER</label>
+                    <value>1</value>
+                    <doc>
+
+ 销售单
+</doc>
+                </item>
+                <item>
+                    <label>SALE_RETURN</label>
+                    <value>2</value>
+                    <doc>
+
+ 销退单
+</doc>
+                </item>
+                <item>
+                    <label>STOCK</label>
+                    <value>10</value>
+                    <doc>
+
+ 进货单
+</doc>
+                </item>
+                <item>
+                    <label>REJECTION_CORRECT_FOR_STOCK</label>
+                    <value>11</value>
+                    <doc>
+
+ 进货拒收修正单
+</doc>
+                </item>
+                <item>
+                    <label>ABSENCE_CORRECT_FOR_STOCK</label>
+                    <value>12</value>
+                    <doc>
+
+ 进货缺货修正单
+</doc>
+                </item>
+                <item>
+                    <label>REFUND</label>
+                    <value>20</value>
+                    <doc>
+
+ 采购退货单
+</doc>
+                </item>
+                <item>
+                    <label>REJECTION_CORRECT_FOR_REFUND</label>
+                    <value>21</value>
+                    <doc>
+
+ 退货拒收修正单
+</doc>
+                </item>
+                <item>
+                    <label>ABSENCE_CORRECT_FOR_REFUND</label>
+                    <value>22</value>
+                    <doc>
+
+ 退货缺货修正单
+</doc>
+                </item>
+                <item>
+                    <label>TRANSFER</label>
+                    <value>30</value>
+                    <doc>
+
+ 调拨单
+</doc>
+                </item>
+                <item>
+                    <label>SCRAP_ORDER</label>
+                    <value>40</value>
+                    <doc>
+
+ 报废单
+</doc>
+                </item>
+                <item>
+                    <label>INVENTORY</label>
+                    <value>41</value>
+                    <doc>
+
+ 盘点
+</doc>
+                </item>
+                <item>
+                    <label>INIT</label>
+                    <value>0</value>
+                    <doc>
+
+ 库存初始化
+</doc>
+                </item>
+                <item>
+                    <label>ADJUST</label>
+                    <value>50</value>
+                    <doc>
+
+ 调整
+</doc>
+                </item>
+            </items>
+        </tenum>
+        <tenum namespace="com.today.api.stock.enums" name="StockOwnerTypeEnum">
+            <doc>
+
+ 库存主体类型
+</doc>
+            <items>
+                <item>
+                    <label>STORE</label>
+                    <value>1</value>
+                    <doc>
+
+ 门店
+</doc>
+                </item>
+                <item>
+                    <label>WAREHOUSE</label>
+                    <value>2</value>
+                    <doc>
+
+ 仓库
+</doc>
+                </item>
+            </items>
+        </tenum>
+    </enums>
+    <annotations>
+        <annotation key="group" value="Stock"/>
+    </annotations>
+</service>
