@@ -6,8 +6,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @DapengComponentScan
+@EnableFeignClients({"com.github.dapeng.api"})
 @SpringBootApplication(exclude = {GsonAutoConfiguration.class})
 public class DemoAnnotationApplication extends SpringBootServletInitializer {
 
