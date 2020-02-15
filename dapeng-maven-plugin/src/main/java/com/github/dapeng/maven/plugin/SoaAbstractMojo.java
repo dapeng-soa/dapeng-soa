@@ -82,6 +82,7 @@ public abstract class SoaAbstractMojo extends AbstractMojo {
 
     @SuppressWarnings("unchecked")
     protected void collectProjectArtifactsAndClasspath(List<Artifact> artifacts, List<File> theClasspathFiles) {
+
         artifacts.addAll(project.getRuntimeArtifacts());
         artifacts.addAll(project.getSystemArtifacts());
         theClasspathFiles.add(new File(project.getBuild().getOutputDirectory()));

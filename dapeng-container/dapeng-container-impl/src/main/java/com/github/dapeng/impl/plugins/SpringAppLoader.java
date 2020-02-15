@@ -27,6 +27,7 @@ import com.github.dapeng.core.lifecycle.LifeCycleAware;
 import com.github.dapeng.impl.container.DapengApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -51,62 +52,113 @@ public class SpringAppLoader implements Plugin {
     @Override
     public void start() {
         LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
-        String configPath = "META-INF/spring/services.xml";
 
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         for (ClassLoader appClassLoader : appClassLoaders) {
-            try {
-
-                // ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new Object[]{xmlPaths.toArray(new String[0])});
-                // context.start();
-                Class<?> appCtxClass = appClassLoader.loadClass("org.springframework.context.support.ClassPathXmlApplicationContext");
-                Class<?>[] parameterTypes = new Class[]{String[].class};
-                Constructor<?> constructor = appCtxClass.getConstructor(parameterTypes);
 
                 Thread.currentThread().setContextClassLoader(appClassLoader);
-                Object springCtx = getSpringContext(configPath, appClassLoader, constructor);
 
-                springCtxs.add(springCtx);
-
-                Method method = appCtxClass.getMethod("getBeansOfType", Class.class);
-
-                Map<String, SoaServiceDefinition<?>> processorMap = (Map<String, SoaServiceDefinition<?>>)
-                        method.invoke(springCtx, appClassLoader.loadClass(SoaServiceDefinition.class.getName()));
-
-                //获取所有实现了lifecycle的bean
-                LifecycleProcessorFactory.getLifecycleProcessor().addLifecycles(((Map<String, LifeCycleAware>)
-                        method.invoke(springCtx, appClassLoader.loadClass(LifeCycleAware.class.getName()))).values());
-
-
-                //TODO: 需要构造Application对象
-                Map<String, ServiceInfo> appInfos = toServiceInfos(processorMap);
-                Application application = new DapengApplication(new ArrayList<>(appInfos.values()), appClassLoader);
-
-                //Start spring context
-                LOGGER.info(" start to boot app");
-                Method startMethod = appCtxClass.getMethod("start");
-                startMethod.invoke(springCtx);
-
-                // IApplication app = new ...
-                if (!application.getServiceInfos().isEmpty()) {
-                    // fixme only registerApplication
-                    Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitionMap = toSoaServiceDefinitionMap(appInfos, processorMap);
-                    container.registerAppProcessors(serviceDefinitionMap);
-
-                    container.registerAppMap(toApplicationMap(serviceDefinitionMap, application));
-                    //fire a zk event
-                    container.registerApplication(application);
+                try {
+                    trySpring(appClassLoader);
+                    LOGGER.info("==> Load as Spring OK <====");
                 }
-
-                LOGGER.info(" ------------ SpringClassLoader: " + ContainerFactory.getContainer().getApplications());
-
-
-            } catch (Exception e) {
-                LOGGER.error(e.getMessage(), e);
-            } finally {
-                Thread.currentThread().setContextClassLoader(classLoader);
-            }
+                catch(Throwable ex){
+                    try {
+                        trySpringBoot(appClassLoader);
+                        LOGGER.info("====> Load as SpringBoot OK <====");
+                    }
+                    catch(Throwable ex2){
+                       throw new RuntimeException("not a spring nor spingboot application ", ex2);
+                    }
+                }
+            Thread.currentThread().setContextClassLoader(classLoader);
         }
+    }
+
+    private boolean trySpring(ClassLoader appClassLoader) throws Exception {
+        Class<?> appCtxClass = appClassLoader.loadClass("org.springframework.context.support.ClassPathXmlApplicationContext");
+        Class<?>[] parameterTypes = new Class[]{String[].class};
+        Constructor<?> constructor = appCtxClass.getConstructor(parameterTypes);
+
+        String configPath = "META-INF/spring/services.xml";
+
+        if(null == appClassLoader.getResource(configPath)){
+            System.out.println("====> Can't find " + configPath);
+            throw new RuntimeException("cant find " + configPath);
+        }
+        else {
+            System.out.println("====>try load beans form " + appClassLoader.getResource(configPath));
+        }
+
+        Object springCtx = getSpringContext(configPath, appClassLoader, constructor);
+
+        springCtxs.add(springCtx);
+
+        Method method = appCtxClass.getMethod("getBeansOfType", Class.class);
+
+        Map<String, SoaServiceDefinition> processorMap = (Map<String, SoaServiceDefinition>)
+                method.invoke(springCtx, appClassLoader.loadClass(SoaServiceDefinition.class.getName()));
+
+        //获取所有实现了lifecycle的bean
+        LifecycleProcessorFactory.getLifecycleProcessor().addLifecycles(((Map<String, LifeCycleAware>)
+                method.invoke(springCtx, appClassLoader.loadClass(LifeCycleAware.class.getName()))).values());
+
+
+        //TODO: 需要构造Application对象
+        Map<String, ServiceInfo> appInfos = toServiceInfos(processorMap);
+        Application application = new DapengApplication(new ArrayList<>(appInfos.values()), appClassLoader);
+
+        //Start spring context
+        LOGGER.info(" start to boot app");
+        Method startMethod = appCtxClass.getMethod("start");
+        startMethod.invoke(springCtx);
+
+        // IApplication app = new ...
+        if (!application.getServiceInfos().isEmpty()) {
+            // fixme only registerApplication
+            Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitionMap = toSoaServiceDefinitionMap(appInfos, processorMap);
+            container.registerAppProcessors(serviceDefinitionMap);
+
+            container.registerAppMap(toApplicationMap(serviceDefinitionMap, application));
+            //fire a zk event
+            container.registerApplication(application);
+        }
+
+        LOGGER.info(" ------------ SpringClassLoader: " + ContainerFactory.getContainer().getApplications());
+        return true;
+    }
+    private boolean trySpringBoot(ClassLoader appClassLoader) throws Exception {
+        ServiceLoader<ApplicationContext> loader = ServiceLoader.load(ApplicationContext.class, appClassLoader);
+        Iterator<ApplicationContext> iterator = loader.iterator();
+        while(iterator.hasNext()) {
+            ApplicationContext context = iterator.next();
+
+            context.start();
+
+            Map<String, SoaServiceDefinition> definitions = context.getServiceDefinitions();
+
+            springCtxs.add(context);
+
+            // TODO lifecyle support
+            Map<String, ServiceInfo> serviceInfoMap = toServiceInfos(definitions);
+
+            Application application = new DapengApplication(new ArrayList<>(serviceInfoMap.values()), appClassLoader);
+
+            // IApplication app = new ...
+            if (!application.getServiceInfos().isEmpty()) {
+                // fixme only registerApplication
+                Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitionMap = toSoaServiceDefinitionMap(serviceInfoMap, definitions);
+                container.registerAppProcessors(serviceDefinitionMap);
+
+                container.registerAppMap(toApplicationMap(serviceDefinitionMap, application));
+                //fire a zk event
+                container.registerApplication(application);
+            }
+            LOGGER.info(" ------------ SpringClassLoader: " + ContainerFactory.getContainer().getApplications());
+            return true;
+        }
+
+        throw new RuntimeException("Not a SpringBoot App");
     }
 
     private Map<ProcessorKey, Application> toApplicationMap(Map<ProcessorKey,
@@ -123,6 +175,7 @@ public class SpringAppLoader implements Plugin {
         springCtxs.forEach(context -> {
             try {
                 LOGGER.info(" start to close SpringApplication.....");
+                // TODO suppoer SpingBoot
                 Method method = context.getClass().getMethod("close");
                 method.invoke(context);
             } catch (NoSuchMethodException e) {
@@ -134,11 +187,11 @@ public class SpringAppLoader implements Plugin {
         LOGGER.warn("Plugin:SpringAppLoader stoped..");
     }
 
-    private Map<String, ServiceInfo> toServiceInfos(Map<String, SoaServiceDefinition<?>> processorMap)
+    private Map<String, ServiceInfo> toServiceInfos(Map<String, SoaServiceDefinition> processorMap)
             throws Exception {
 
         Map<String, ServiceInfo> serviceInfoMap = new HashMap<>(processorMap.size());
-        for (Map.Entry<String, SoaServiceDefinition<?>> processorEntry : processorMap.entrySet()) {
+        for (Map.Entry<String, SoaServiceDefinition> processorEntry : processorMap.entrySet()) {
             String processorKey = processorEntry.getKey();
             SoaServiceDefinition<?> processor = processorEntry.getValue();
 
@@ -193,7 +246,7 @@ public class SpringAppLoader implements Plugin {
 
     private Map<ProcessorKey, SoaServiceDefinition<?>> toSoaServiceDefinitionMap(
             Map<String, ServiceInfo> serviceInfoMap,
-            Map<String, SoaServiceDefinition<?>> processorMap) {
+            Map<String, SoaServiceDefinition> processorMap) {
 
         Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitions = serviceInfoMap.entrySet().stream()
                 .collect(Collectors.toMap(

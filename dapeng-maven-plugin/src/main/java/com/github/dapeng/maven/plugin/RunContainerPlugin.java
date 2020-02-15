@@ -20,12 +20,14 @@ import com.github.dapeng.bootstrap.Bootstrap;
 import com.github.dapeng.bootstrap.classloader.ApplicationClassLoader;
 import com.github.dapeng.bootstrap.classloader.ContainerClassLoader;
 import com.github.dapeng.bootstrap.classloader.CoreClassLoader;
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -43,6 +45,45 @@ import java.util.stream.Collectors;
 @Mojo(name = "run", threadSafe = true, requiresDependencyResolution = ResolutionScope.TEST)
 public class RunContainerPlugin extends SoaAbstractMojo {
 
+    List<URL> buildRuntimeURLs(){
+        ArrayList<URL> results = new ArrayList<>();
+        List<Artifact> arts = project.getRuntimeArtifacts();
+        for(Artifact art: arts) {
+            try {
+                results.add(art.getFile().toURL());
+            }
+            catch(MalformedURLException ex){}
+        }
+
+        URL[] urls = ((URLClassLoader) Thread.currentThread().getContextClassLoader()).getURLs();
+        for(URL url: urls){
+            if(url.toString().endsWith("/target/classes/")){
+                results.add(url);
+            }
+        }
+
+        return results;
+    }
+
+    List<URL> buildPlatformURLs(List<URL> rtURLs){
+        URL[] urls = ((URLClassLoader) Thread.currentThread().getContextClassLoader()).getURLs();
+//        for(URL url: urls) System.out.println("url:" + url);
+
+        ArrayList<URL> results = new ArrayList<>();
+        List<Artifact> arts = project.getRuntimeArtifacts();
+        for(URL url: urls) {
+            boolean contains = false; //rtURLs.contains(url);
+            if(!contains) results.add(url);
+        }
+
+//        System.out.println("platformURLs size:" + results.size());
+//        for(URL url: results){
+//            System.out.println("platform:" + url);
+//        }
+//        System.out.println("end\n\n");
+        return results;
+    }
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (project == null) {
@@ -59,50 +100,22 @@ public class RunContainerPlugin extends SoaAbstractMojo {
         Thread bootstrapThread = new Thread(threadGroup, () -> {
             try {
 
+                List<URL> rtURLs = buildRuntimeURLs();
+                List<URL> platformURLs = buildPlatformURLs(rtURLs);
+
                 URL[] urls = ((URLClassLoader) Thread.currentThread().getContextClassLoader()).getURLs();
 
-                List<URL> shareUrls = new ArrayList<>(Arrays.asList(urls));
-                Iterator<URL> iterator = shareUrls.iterator();
-                while (iterator.hasNext()) {
-                    URL url = iterator.next();
+                CoreClassLoader coreClassLoader = new CoreClassLoader(platformURLs.toArray(new URL[platformURLs.size()]));
+                ContainerClassLoader containerClassLoader = new ContainerClassLoader(new URL[]{}, coreClassLoader);
+                ApplicationClassLoader appClassLoader = new ApplicationClassLoader(rtURLs.toArray(new URL[rtURLs.size()]), null, coreClassLoader);
 
-                    if (url.getFile().matches("^.*/dapeng-transaction-impl.*\\.jar$")) {
-                        iterator.remove();
-                        continue;
-                    }
-                }
-
-                List<URL> platformUrls = new ArrayList<>(Arrays.asList(urls));
-                iterator = platformUrls.iterator();
-                while (iterator.hasNext()) {
-                    URL url = iterator.next();
-                    if (removeServiceProjectArtifact(iterator, url)) continue;
-                    //if (removeTwitterAndScalaDependency(iterator,url)) continue;
-                }
-
-                List<URL> appUrls = new ArrayList<>(Arrays.asList(urls));
-                iterator = appUrls.iterator();
-
-                while (iterator.hasNext()) {
-                    URL url = iterator.next();
-                    if (removeTwitterAndScalaDependency(iterator,url)) continue;
-                    if (removeContainerAndBootstrap(iterator, url)) continue;
-                }
-
-                List<List<URL>> appURLsList = new ArrayList<>();
-                appURLsList.add(appUrls);
-
-                CoreClassLoader coreClassLoader = new CoreClassLoader(shareUrls.toArray(new URL[shareUrls.size()]));
-
-                List<ClassLoader> appClassLoaders = appURLsList.stream().map(i ->
-                        new ApplicationClassLoader(i.toArray(new URL[i.size()]),coreClassLoader)).collect(Collectors.toList());
-
-                ContainerClassLoader platformClassLoader = new ContainerClassLoader(platformUrls.toArray(new URL[platformUrls.size()]),coreClassLoader);
+                List<ClassLoader> appClassLoaders = new ArrayList<>();
+                appClassLoaders.add(appClassLoader);
 
                 System.out.println("------set classloader-------------");
-                Thread.currentThread().setContextClassLoader(coreClassLoader);
+                Thread.currentThread().setContextClassLoader(appClassLoader);
 
-                Bootstrap.startup(platformClassLoader,appClassLoaders);
+                Bootstrap.startup(containerClassLoader,appClassLoaders);
 
             } catch (Exception e) {
                 Thread.currentThread().getThreadGroup().uncaughtException(Thread.currentThread(), e);
@@ -112,51 +125,6 @@ public class RunContainerPlugin extends SoaAbstractMojo {
         bootstrapThread.start();
 
         joinNonDaemonThreads(threadGroup);
-    }
-
-
-    private boolean removeServiceProjectArtifact(Iterator<URL> iterator, URL url) {
-        String regex = project.getArtifact().getFile().getAbsolutePath().replaceAll("\\\\", "/");
-
-        if ("\\".equals(File.separator)) {
-            regex = regex.replace(File.separator, File.separator + File.separator);
-        }
-
-        if (url.getFile().matches("^.*" + regex + ".*$")) {
-            iterator.remove();
-
-            return true;
-        }
-        return false;
-    }
-
-    private boolean removeTwitterAndScalaDependency(Iterator<URL> iterator, URL url){
-        if(url.getFile().matches("^.*/twitter.*\\.jar$")) {
-            iterator.remove();
-            return true;
-        }
-        return false;
-    }
-
-    private boolean removeContainerAndBootstrap(Iterator<URL> iterator, URL url) {
-        if (url.getFile().matches("^.*/dapeng-container-api.*\\.jar$")) {
-            iterator.remove();
-
-            return true;
-        }
-
-        if (url.getFile().matches("^.*/dapeng-container-impl.*\\.jar$")) {
-            iterator.remove();
-
-            return true;
-        }
-
-        if (url.getFile().matches("^.*/dapeng-bootstrap.*\\.jar$")) {
-            iterator.remove();
-
-            return true;
-        }
-        return false;
     }
 
 }

@@ -12,7 +12,7 @@
     <artifactId>dapeng-transaction-impl</artifactId>
 
     <properties>
-        <org.springframework-version>4.3.5.RELEASE</org.springframework-version>
+        <org.springframework-version>5.2.3.RELEASE</org.springframework-version>
         <druid-version>1.0.17</druid-version>
     </properties>
 
