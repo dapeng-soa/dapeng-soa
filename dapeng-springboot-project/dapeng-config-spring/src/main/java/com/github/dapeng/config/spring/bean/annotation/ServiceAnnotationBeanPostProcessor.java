@@ -37,6 +37,7 @@ import org.springframework.util.*;
 
 import java.util.*;
 
+import static com.github.dapeng.config.spring.util.Constants.SERVICE_PROCESSOR_NAME_SUFFIX;
 import static org.springframework.beans.factory.support.BeanDefinitionBuilder.rootBeanDefinition;
 import static org.springframework.context.annotation.AnnotationConfigUtils.CONFIGURATION_BEAN_NAME_GENERATOR;
 import static org.springframework.core.annotation.AnnotationUtils.findAnnotation;
@@ -46,7 +47,7 @@ import static org.springframework.util.ClassUtils.resolveClassName;
  * {@link DapengService} Annotation
  * {@link BeanDefinitionRegistryPostProcessor Bean Definition Registry Post Processor}
  *
- * @since 2.5.8
+ * @since 2.2.0
  */
 public class ServiceAnnotationBeanPostProcessor implements BeanDefinitionRegistryPostProcessor, EnvironmentAware,
         ResourceLoaderAware, BeanClassLoaderAware {
@@ -210,78 +211,12 @@ public class ServiceAnnotationBeanPostProcessor implements BeanDefinitionRegistr
      */
     private void registerServiceBean(BeanDefinitionHolder beanDefinitionHolder, BeanDefinitionRegistry registry,
                                      DapengClassPathBeanDefinitionScanner scanner) {
-
-        Class<?> beanClass = resolveClass(beanDefinitionHolder);
-
-        DapengService service = findAnnotation(beanClass, DapengService.class);
-
-        Class<?> interfaceClass = resolveServiceInterfaceClass(beanClass, service);
-
+        //服务实现类名称.
         String annotatedServiceBeanName = beanDefinitionHolder.getBeanName();
-
-//        AbstractBeanDefinition serviceBeanDefinition = buildServiceDefinition(interfaceClass);
-        // ServiceBean Bean name
-//        String beanName = generateServiceBeanName(service, interfaceClass, annotatedServiceBeanName);
-//        registerBeanDefinition(annotatedServiceBeanName, serviceBeanDefinition, registry, scanner);
-
-        //注册 Processor Bean.
-        AbstractBeanDefinition processorDefinition = buildServiceBeanDefinition2(annotatedServiceBeanName);
-        String processorBeanName = annotatedServiceBeanName + "_SoaProcessor";
+        //根据给定的服务实现类 注册其对应的  Processor Bean -> SoaServiceDefinition.
+        AbstractBeanDefinition processorDefinition = buildServiceProcessorDefinition(annotatedServiceBeanName);
+        String processorBeanName = annotatedServiceBeanName + SERVICE_PROCESSOR_NAME_SUFFIX;
         registerBeanDefinition(processorBeanName, processorDefinition, registry, scanner);
-    }
-
-    private Class<?> resolveServiceInterfaceClass(Class<?> annotatedServiceBeanClass, DapengService service) {
-
-        Class<?> interfaceClass = service.interfaceClass();
-
-        if (void.class.equals(interfaceClass)) {
-
-            interfaceClass = null;
-
-            String interfaceClassName = service.interfaceName();
-
-            if (StringUtils.hasText(interfaceClassName)) {
-                if (ClassUtils.isPresent(interfaceClassName, classLoader)) {
-                    interfaceClass = resolveClassName(interfaceClassName, classLoader);
-                }
-            }
-
-        }
-
-        if (interfaceClass == null) {
-            // Find all interfaces from the annotated class
-            // To resolve an issue : https://github.com/apache/incubator-dubbo/issues/3251
-            Class<?>[] allInterfaces = ClassUtils.getAllInterfacesForClass(annotatedServiceBeanClass);
-
-            if (allInterfaces.length > 0) {
-                interfaceClass = allInterfaces[0];
-            }
-
-        }
-
-        Assert.notNull(interfaceClass,
-                "@Service interfaceClass() or interfaceName() or interface class must be present!");
-
-        Assert.isTrue(interfaceClass.isInterface(),
-                "The type that was annotated @Service is not an interface!");
-
-        return interfaceClass;
-    }
-
-    private Class<?> resolveClass(BeanDefinitionHolder beanDefinitionHolder) {
-
-        BeanDefinition beanDefinition = beanDefinitionHolder.getBeanDefinition();
-
-        return resolveClass(beanDefinition);
-
-    }
-
-    private Class<?> resolveClass(BeanDefinition beanDefinition) {
-
-        String beanClassName = beanDefinition.getBeanClassName();
-
-        return resolveClassName(beanClassName, classLoader);
-
     }
 
     private Set<String> resolvePackagesToScan(Set<String> packagesToScan) {
@@ -295,12 +230,16 @@ public class ServiceAnnotationBeanPostProcessor implements BeanDefinitionRegistr
         return resolvedPackagesToScan;
     }
 
-    private AbstractBeanDefinition buildServiceBeanDefinition2(String serviceBeanName) {
-
+    /**
+     * 根据指定服务实现类 构建其对应的 {@link ServiceBeanProcessorFactory}
+     *
+     * @param serviceBeanName 服务实现类 bean 名称
+     */
+    private AbstractBeanDefinition buildServiceProcessorDefinition(String serviceBeanName) {
         BeanDefinitionBuilder builder = rootBeanDefinition(ServiceBeanProcessorFactory.class);
         // Set 原先的 beanName 到构造函数中去.
-//        builder.addConstructorArgReference(annotatedServiceBeanName);
-        builder.addConstructorArgValue(serviceBeanName);
+        builder.addConstructorArgReference(serviceBeanName);
+//        builder.addConstructorArgValue(serviceBeanName);
 
 
         return builder.getBeanDefinition();
