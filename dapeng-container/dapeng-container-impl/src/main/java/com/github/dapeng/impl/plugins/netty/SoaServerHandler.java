@@ -29,7 +29,7 @@ import com.github.dapeng.registry.ConfigKey;
 
 import com.github.dapeng.registry.zookeeper.ServerZkAgentImpl;
 import com.github.dapeng.registry.zookeeper.ZkServiceInfo;
-import com.github.dapeng.spring.SpringExtensionFactory;
+import com.github.dapeng.spring.SpringExtensionContext;
 import com.github.dapeng.util.DumpUtil;
 import com.github.dapeng.util.ExceptionUtil;
 import io.netty.channel.ChannelHandler;
@@ -358,12 +358,14 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                         }
                     });
                 } else {
-                    //TODO
-                    SoaFunctionDefinition.Sync syncFunction = (SoaFunctionDefinition.Sync) soaFunction;
-                    ClassLoader appClassLoader = SpringExtensionFactory.getAppClassLoader();
+                    //TODO 优化
+                    ClassLoader appClassLoader = SpringExtensionContext.getAppClassLoader();
                     ClassLoader containerClassLoader = Thread.currentThread().getContextClassLoader();
                     Thread.currentThread().setContextClassLoader(appClassLoader);
+
+                    SoaFunctionDefinition.Sync syncFunction = (SoaFunctionDefinition.Sync) soaFunction;
                     RESP result = (RESP) syncFunction.apply(iface, args);
+
                     Thread.currentThread().setContextClassLoader(containerClassLoader);
 
                     processResult(soaFunction, transactionContext, result, filterContext);

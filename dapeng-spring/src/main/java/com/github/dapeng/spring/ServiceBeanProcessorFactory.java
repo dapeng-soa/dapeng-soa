@@ -43,18 +43,15 @@ import static java.util.stream.Collectors.toList;
  */
 public class ServiceBeanProcessorFactory implements ApplicationContextAware, FactoryBean<SoaServiceDefinition<?>> {
 
-    private transient ApplicationContext applicationContext;
+    private final Object serviceRef;
 
-    private final String serviceBeanName;
-
-    public ServiceBeanProcessorFactory(String serviceBeanName) {
-        this.serviceBeanName = serviceBeanName;
+    public ServiceBeanProcessorFactory(Object serviceRef) {
+        this.serviceRef = serviceRef;
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public SoaServiceDefinition<?> getObject() throws Exception {
-        Object serviceRef = applicationContext.getBean(serviceBeanName);
         final Class<?> aClass = serviceRef.getClass();
         final List<Class<?>> interfaces = Arrays.asList(aClass.getInterfaces());
 
@@ -63,7 +60,7 @@ public class ServiceBeanProcessorFactory implements ApplicationContextAware, Fac
                 .collect(toList());
 
         if (filterInterfaces.isEmpty()) {
-            throw new RuntimeException("not config @Service & @Processor in " + serviceBeanName);
+            throw new RuntimeException("not config @Service & @Processor in " + serviceRef);
         }
 
         Class<?> interfaceClass = filterInterfaces.get(filterInterfaces.size() - 1);
@@ -74,25 +71,21 @@ public class ServiceBeanProcessorFactory implements ApplicationContextAware, Fac
         Class<?> processorClass = Class.forName(processor.className(), true, interfaceClass.getClassLoader());
         Constructor<?> constructor = processorClass.getConstructor(interfaceClass, Class.class);
         SoaServiceDefinition tProcessor = (SoaServiceDefinition) constructor.newInstance(serviceRef, interfaceClass);
-        /**
-         * idl service custom config
-         */
+
+        //idl service custom config
         if (interfaceClass.isAnnotationPresent(CustomConfig.class)) {
             CustomConfig customConfig = interfaceClass.getAnnotation(CustomConfig.class);
             long timeout = customConfig.timeout();
             tProcessor.setConfigInfo(new CustomConfigInfo(timeout));
         }
-        /**
-         * 过滤有 @CustomConfig 的方法
-         */
+        // 过滤有 @CustomConfig 的方法
         Method[] serviceMethods = interfaceClass.getDeclaredMethods();
         List<Method> configMethod = Arrays.stream(serviceMethods)
                 .filter(method -> tProcessor.functions.keySet().contains(method.getName()))
                 .filter(method -> method.isAnnotationPresent(CustomConfig.class))
                 .collect(Collectors.toList());
-        /**
-         * 将值设置到 functions 中
-         */
+
+        //将值设置到 functions 中
         configMethod.forEach(method -> {
             CustomConfig customConfig = method.getAnnotation(CustomConfig.class);
             SoaFunctionDefinition functionDefinition = (SoaFunctionDefinition) tProcessor.functions.get(method.getName());
@@ -114,7 +107,6 @@ public class ServiceBeanProcessorFactory implements ApplicationContextAware, Fac
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
-        SpringExtensionFactory.addApplicationContext(applicationContext);
+        SpringExtensionContext.setApplicationContext(applicationContext);
     }
 }

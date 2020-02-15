@@ -27,12 +27,9 @@ import com.github.dapeng.core.lifecycle.LifeCycleAware;
 import com.github.dapeng.impl.container.DapengApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URL;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -43,6 +40,8 @@ public class SpringBootAppLoader implements Plugin {
     private final List<ClassLoader> appClassLoaders;
     private List<Object> springCtxs = new ArrayList<>();
 
+    private static final String APP_SPRING_EXTENSION_CTX_NAME = "com.github.dapeng.spring.SpringExtensionContext";
+
     public SpringBootAppLoader(Container container, List<ClassLoader> appClassLoaders) {
         this.container = container;
         this.appClassLoaders = appClassLoaders;
@@ -52,51 +51,29 @@ public class SpringBootAppLoader implements Plugin {
     @Override
     public void start() {
         LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
-        String entryMainClassName = System.getProperty("spring.boot.main.class");
+        String entryMainClassName = System.getProperty("springboot.main.class");
 
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         for (ClassLoader appClassLoader : appClassLoaders) {
             try {
-                Class<?> appCtxClass = appClassLoader.loadClass(entryMainClassName);
-
-                Class<?> applicationCtx = appClassLoader.loadClass("org.springframework.boot.SpringApplication");
-                Class<?>[] parameterTypes = new Class[]{Class[].class};
-                Constructor<?> constructor = applicationCtx.getConstructor(parameterTypes);
-
+                Class<?> appBootEntryClass = appClassLoader.loadClass(entryMainClassName);
+                Method mainMethod = appBootEntryClass.getMethod("main", String[].class);
+                //Set appClassloader
                 Thread.currentThread().setContextClassLoader(appClassLoader);
+                //Invoke main
+                mainMethod.invoke(null, (Object) new String[]{});
 
+                Class<?> springExtensionClass = appClassLoader.loadClass(APP_SPRING_EXTENSION_CTX_NAME);
+                Object applicationContext =
+                        springExtensionClass.getMethod("getApplicationContext").invoke(null);
 
-                Object bootApplication = constructor.newInstance((Object) new Class[]{appCtxClass});
-                //Class<?>... primarySources
-                Method runMethod = applicationCtx.getMethod("run", String[].class);
-
-                Object appObject = runMethod.invoke(bootApplication, (Object) new String[]{});
-
-                // SpringApplication(primarySources).run(args)
-
-//                runMethod.invoke(null, appCtxClass, new String[]{});
-
-//                Method mainMethod = appCtxClass.getMethod("main", Class.class, String[].class);
-                //启动 SpringBoot
-//                mainMethod.invoke(null, (Object) new String[]{});
-
-//                Thread.currentThread().setContextClassLoader(appClassLoader);
-
-                Class<?> springFactoryClass = appClassLoader.loadClass("com.github.dapeng.spring.SpringExtensionFactory");
-                Map<String, ApplicationContext> contextMap = (Map<String, ApplicationContext>) springFactoryClass
-                        .getMethod("getContexts").invoke(null);
-
+                springCtxs.add(applicationContext);
+                LOGGER.info("Got SpringBoot app: {}", applicationContext);
                 //setAppClassLoader
-                Method setAppClassLoader = springFactoryClass.getMethod("setAppClassLoader", ClassLoader.class);
+                Method setAppClassLoader = springExtensionClass.getMethod("setAppClassLoader", ClassLoader.class);
                 setAppClassLoader.invoke(null, appClassLoader);
 
-                Object applicationContext = contextMap.values().iterator().next();
-                springCtxs.add(applicationContext);
-
-                LOGGER.info("Got SpringBoot app: {}", applicationContext);
-
                 Method method = applicationContext.getClass().getMethod("getBeansOfType", Class.class);
-
                 Map<String, SoaServiceDefinition<?>> processorMap = (Map<String, SoaServiceDefinition<?>>)
                         method.invoke(applicationContext, appClassLoader.loadClass(SoaServiceDefinition.class.getName()));
 
@@ -109,11 +86,7 @@ public class SpringBootAppLoader implements Plugin {
                 Map<String, ServiceInfo> appInfos = toServiceInfos(processorMap);
                 Application application = new DapengApplication(new ArrayList<>(appInfos.values()), appClassLoader);
 
-                //Start spring context
-                LOGGER.info(" start to boot app");
-//                Method startMethod = appCtxClass.getMethod("start");
-//                startMethod.invoke(applicationContext);
-
+                LOGGER.info("Started SpringBoot application {} successful.", applicationContext);
                 // IApplication app = new ...
                 if (!application.getServiceInfos().isEmpty()) {
                     // fixme only registerApplication
@@ -126,7 +99,6 @@ public class SpringBootAppLoader implements Plugin {
                 }
 
                 LOGGER.info(" ------------ SpringClassLoader: " + ContainerFactory.getContainer().getApplications());
-
 
             } catch (Exception e) {
                 LOGGER.error(e.getMessage(), e);
