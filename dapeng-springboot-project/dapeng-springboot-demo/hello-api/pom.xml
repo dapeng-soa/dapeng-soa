@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <parent>
+        <groupId>com.github.dapeng-soa</groupId>
+        <artifactId>dapeng-springboot-demo</artifactId>
+        <version>2.2.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>hello-api</artifactId>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <dapeng.version>2.2.0-SNAPSHOT</dapeng.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.github.dapeng-soa</groupId>
+            <artifactId>dapeng-client-netty</artifactId>
+            <version>${dapeng.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.github.dapeng-soa</groupId>
+                <artifactId>dapeng-maven-plugin</artifactId>
+                <version>${dapeng.version}</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>thriftGenerator</goal>
+                        </goals>
+                        <configuration>
+                            <!--配置生成哪种语言的代码[java,scala]-->
+                            <language>java</language>
+                            <sourceFilePath>src/main/resources/thrifts/</sourceFilePath>
+                            <targetFilePath>src/main/</targetFilePath>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

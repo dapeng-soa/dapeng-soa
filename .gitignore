@@ -28,3 +28,5 @@ dapeng-client-netty/src/test
 dapeng-json/src/test
 dapeng-core/src/test
 soa.base_IS_UNDEFINED
+
+**/*.log

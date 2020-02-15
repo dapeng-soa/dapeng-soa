@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<service namespace="com.dapeng.example.hello.service" name="HelloService">
+    <doc>
+
+ Hello-Service
+</doc>
+    <meta>
+        <version>1.0.0</version>
+        <timeout>30000</timeout>
+    </meta>
+    <methods>
+        <method name="sayHello">
+            <doc>
+
+# sayHello
+## 业务描述
+    sayHello
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    hello
+## 前置检查
+    无
+## 权限检查
+    无
+## 逻辑处理
+    sayHello
+## 数据库变更
+    无
+## 事务处理
+    无
+## 输出
+    string
+## 事件
+    无
+</doc>
+            <request name="sayHello_args">
+                <fields>
+                    <field tag="1" name="name" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRING</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="sayHello_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRING</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+        <method name="sayHello2">
+            <doc>
+
+# sayHello
+## 业务描述
+    sayHello
+## 接口依赖
+    无
+## 边界异常说明
+    无
+## 输入
+    hello
+## 前置检查
+    无
+## 权限检查
+    无
+## 逻辑处理
+    sayHello
+## 数据库变更
+    无
+## 事务处理
+    无
+## 输出
+    string
+## 事件
+    无
+</doc>
+            <request name="sayHello2_args">
+                <fields>
+                    <field tag="1" name="hello" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRUCT</kind>
+                            <ref>com.dapeng.example.hello.domain.Hello</ref>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </request>
+            <response name="sayHello2_result">
+                <fields>
+                    <field tag="0" name="success" optional="false" privacy="false">
+                        <dataType>
+                            <kind>STRING</kind>
+                        </dataType>
+                        <doc></doc>
+                    </field>
+                </fields>
+            </response>
+            <isSoaTransactionProcess>false</isSoaTransactionProcess>
+        </method>
+    </methods>
+    <structs>
+        <struct namespace="com.dapeng.example.hello.domain" name="Hello">
+            <doc>
+
+ hello
+</doc>
+            <fields>
+                <field tag="1" name="name" optional="false" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ name
+</doc>
+                </field>
+                <field tag="2" name="message" optional="true" privacy="false">
+                    <dataType>
+                        <kind>STRING</kind>
+                    </dataType>
+                    <doc>
+
+ message
+</doc>
+                </field>
+            </fields>
+        </struct>
+    </structs>
+    <enums/>
+    <annotations>
+        <annotation key="group" value="hello"/>
+    </annotations>
+</service>
