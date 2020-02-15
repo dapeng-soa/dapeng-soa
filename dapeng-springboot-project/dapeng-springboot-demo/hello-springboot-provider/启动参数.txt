@@ -1,0 +1,3 @@
+在 `demo-annotation` 下:
+
+mvn compile com.github.dapeng-soa:dapeng-maven-plugin:2.2.0-SNAPSHOT:run -Dsoa.freq.limit.enable=false -Dsoa.transactional.enable=false -Dspring.boot.main.class=com.github.dapeng.demo.DemoAnnotationApplication -Dsoa.apidoc.port=9876
