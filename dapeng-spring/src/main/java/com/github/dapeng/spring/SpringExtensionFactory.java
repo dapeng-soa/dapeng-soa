@@ -14,6 +14,16 @@ public class SpringExtensionFactory {
 
     private static final Map<String, ApplicationContext> contexts = new ConcurrentHashMap<>();
 
+    private static ClassLoader appClassLoader;
+
+    public static ClassLoader getAppClassLoader() {
+        return appClassLoader;
+    }
+
+    public static void setAppClassLoader(ClassLoader appClassLoader) {
+        SpringExtensionFactory.appClassLoader = appClassLoader;
+    }
+
     public static void addApplicationContext(ApplicationContext context) {
         contexts.put("", context);
     }

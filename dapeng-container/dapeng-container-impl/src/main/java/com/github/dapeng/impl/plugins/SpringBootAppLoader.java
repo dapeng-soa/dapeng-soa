@@ -86,6 +86,9 @@ public class SpringBootAppLoader implements Plugin {
                 Map<String, ApplicationContext> contextMap = (Map<String, ApplicationContext>) springFactoryClass
                         .getMethod("getContexts").invoke(null);
 
+                //setAppClassLoader
+                Method setAppClassLoader = springFactoryClass.getMethod("setAppClassLoader", ClassLoader.class);
+                setAppClassLoader.invoke(null, appClassLoader);
 
                 Object applicationContext = contextMap.values().iterator().next();
                 springCtxs.add(applicationContext);

@@ -1,5 +1,13 @@
 在 `demo-annotation` 下:
 
+最新启动：
+
+compile com.github.dapeng-soa:dapeng-maven-plugin:2.2.0-SNAPSHOT:run2 -Dsoa.freq.limit.enable=false -Dsoa.transactional.enable=false -Dspring.boot.main.class=com.github.dapeng.demo.DemoAnnotationApplication -Dsoa.apidoc.port=9876 -Dsoa.container.port=9071 -Dspring.config.location=/Users/maple/developer/today/dapeng/dapeng-soa/dapeng-springboot-project/dapeng-springboot-demo/hello-springboot-provider/src/main/resources/application.properties
+
+注意要加: -Dspring.config.location=xxxxx
+
+
+
 compile com.github.dapeng-soa:dapeng-maven-plugin:2.2.0-SNAPSHOT:run -Dsoa.freq.limit.enable=false -Dsoa.transactional.enable=false -Dspring.boot.main.class=com.github.dapeng.demo.DemoAnnotationApplication -Dsoa.apidoc.port=9876 -Dsoa.container.port=9071
 
 
