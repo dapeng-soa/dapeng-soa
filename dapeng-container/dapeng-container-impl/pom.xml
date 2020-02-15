@@ -81,7 +81,7 @@
                                     <overWriteSnapshots>false</overWriteSnapshots>
                                     <overWriteIfNewer>true</overWriteIfNewer>
                                     <includeArtifactIds>
-                                        dapeng-core,slf4j-api,logback-classic,logback-core,janino,commons-compiler,gson
+                                        dapeng-core,slf4j-api,logback-classic,logback-core,janino,commons-compiler
                                     </includeArtifactIds>
                                 </configuration>
                             </execution>
@@ -98,7 +98,7 @@
                                     <overWriteSnapshots>false</overWriteSnapshots>
                                     <overWriteIfNewer>true</overWriteIfNewer>
                                     <excludeArtifactIds>
-                                        dapeng-core,commons-logging,slf4j-api,logback-classic,logback-core,janino,commons-compiler,gson,dapeng-message-api,dapeng-api-doc,dapeng-message-kafka,kafka_2.12,kafka-clients,jopt-simple,metrics-core
+                                        dapeng-core,commons-logging,slf4j-api,logback-classic,logback-core,janino,commons-compiler,dapeng-message-api,dapeng-api-doc,dapeng-message-kafka,kafka_2.12,kafka-clients,jopt-simple,metrics-core
                                     </excludeArtifactIds>
                                 </configuration>
                             </execution>
