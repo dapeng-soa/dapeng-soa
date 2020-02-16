@@ -24,12 +24,12 @@ public class DapengSpringAutoConfiguration {
 
 
     @Bean(name = BASE_PACKAGES_PROPERTY_RESOLVER_BEAN_NAME)
-    public PropertyResolver dubboScanBasePackagesPropertyResolver(ConfigurableEnvironment environment) {
+    public PropertyResolver dapengScanBasePackagesPropertyResolver(ConfigurableEnvironment environment) {
         ConfigurableEnvironment propertyResolver = new AbstractEnvironment() {
             @Override
             protected void customizePropertySources(MutablePropertySources propertySources) {
-                Map<String, Object> dubboScanProperties = getSubProperties(environment.getPropertySources(), DAPENG_SCAN_PREFIX);
-                propertySources.addLast(new MapPropertySource("dapengScanProperties", dubboScanProperties));
+                Map<String, Object> dapengScanProperties = getSubProperties(environment.getPropertySources(), DAPENG_SCAN_PREFIX);
+                propertySources.addLast(new MapPropertySource("dapengScanProperties", dapengScanProperties));
             }
         };
         ConfigurationPropertySources.attach(propertyResolver);
