@@ -44,7 +44,7 @@ public class DapengComponentScanRegistrar implements ImportBeanDefinitionRegistr
 
     }
 
-    static class PostProcessor implements ApplicationContextAware, BeanDefinitionRegistryPostProcessor {
+    static class PostProcessor implements BeanDefinitionRegistryPostProcessor {
 
         @Override
         public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
@@ -71,11 +71,6 @@ public class DapengComponentScanRegistrar implements ImportBeanDefinitionRegistr
         @Override
         public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
 
-        }
-
-        @Override
-        public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-            SpringExtensionContext.setApplicationContext(applicationContext);
         }
     }
 

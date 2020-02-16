@@ -22,7 +22,10 @@ import com.github.dapeng.core.definition.SoaFunctionDefinition;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
 import com.github.dapeng.core.Processor;
 import com.github.dapeng.core.Service;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -38,7 +41,7 @@ import static java.util.stream.Collectors.toList;
  * @author craneding
  * @date 16/1/19
  */
-public class SoaProcessorFactory implements FactoryBean<SoaServiceDefinition<?>> {
+public class SoaProcessorFactory implements ApplicationContextAware, FactoryBean<SoaServiceDefinition<?>> {
 
     private Object serviceRef;
     private String refId;
@@ -108,4 +111,8 @@ public class SoaProcessorFactory implements FactoryBean<SoaServiceDefinition<?>>
         return true;
     }
 
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        SpringExtensionContext.setApplicationContext(applicationContext);
+    }
 }

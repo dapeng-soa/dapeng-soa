@@ -42,6 +42,8 @@ import java.util.stream.Collectors;
 public class SpringAppLoader implements Plugin {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpringAppLoader.class);
 
+    private static final String SPRING_EXTENSION_CONTEXT_NAME = "com.github.dapeng.spring.SpringExtensionContext";
+
     private final Container container;
     private final List<ClassLoader> appClassLoaders;
     private List<ApplicationContext> springCtxs = new ArrayList<>();
@@ -79,39 +81,49 @@ public class SpringAppLoader implements Plugin {
     }
 
     private void launch(ApplicationContext appContext, ClassLoader appClassLoader) {
-        SpringExtensionContext.setAppClassLoader(appClassLoader);
-        appContext.onStart(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.START));
+        try {
+            appContext.onStart(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.START));
 
-        org.springframework.context.ApplicationContext applicationContext = SpringExtensionContext.getApplicationContext();
+            Class<?> springExtensionClass = appClassLoader.loadClass(SPRING_EXTENSION_CONTEXT_NAME);
+            Method setAppClassLoader = springExtensionClass.getMethod("setAppClassLoader", ClassLoader.class);
+            setAppClassLoader.invoke(null, appClassLoader);
 
-        Map<String, SoaServiceDefinition> definitions =
-                applicationContext.getBeansOfType(SoaServiceDefinition.class);
+            Object applicationContext =
+                    springExtensionClass.getMethod("getApplicationContext").invoke(null);
 
-        springCtxs.add(appContext);
+            Method getBeansMethod = applicationContext.getClass().getMethod("getBeansOfType", Class.class);
 
-        Map<String, ServiceInfo> serviceInfoMap = toServiceInfos(definitions);
+            Map<String, SoaServiceDefinition<?>> definitions = (Map<String, SoaServiceDefinition<?>>)
+                    getBeansMethod.invoke(applicationContext, appClassLoader.loadClass(SoaServiceDefinition.class.getName()));
 
-        // LifeCycle Support, only service support Lifecyle now.
-        List<LifeCycleAware> lifeCycleAwares = definitions.values().stream()
-                .filter(definition -> LifeCycleAware.class.isInstance(definition.iface))
-                .map(definition -> (LifeCycleAware) (definition.iface))
-                .collect(Collectors.toList());
+            springCtxs.add(appContext);
 
-        LifecycleProcessorFactory.getLifecycleProcessor().addLifecycles(lifeCycleAwares);
+            Map<String, ServiceInfo> serviceInfoMap = toServiceInfos(definitions);
 
-        // Build an Application
-        Application application = new DapengApplication(new ArrayList<>(serviceInfoMap.values()), appClassLoader);
+            // LifeCycle Support, only service support Lifecyle now.
+            List<LifeCycleAware> lifeCycleAwares = definitions.values().stream()
+                    .filter(definition -> LifeCycleAware.class.isInstance(definition.iface))
+                    .map(definition -> (LifeCycleAware) (definition.iface))
+                    .collect(Collectors.toList());
 
-        LOGGER.info("start to boot app");
+            LifecycleProcessorFactory.getLifecycleProcessor().addLifecycles(lifeCycleAwares);
 
-        if (!application.getServiceInfos().isEmpty()) {
-            // fixme only registerApplication
-            Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitionMap = toSoaServiceDefinitionMap(serviceInfoMap, definitions);
-            container.registerAppProcessors(serviceDefinitionMap);
+            // Build an Application
+            Application application = new DapengApplication(new ArrayList<>(serviceInfoMap.values()), appClassLoader);
 
-            container.registerAppMap(toApplicationMap(serviceDefinitionMap, application));
-            //fire a zk event
-            container.registerApplication(application);
+            LOGGER.info("start to boot app");
+
+            if (!application.getServiceInfos().isEmpty()) {
+                // fixme only registerApplication
+                Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitionMap = toSoaServiceDefinitionMap(serviceInfoMap, definitions);
+                container.registerAppProcessors(serviceDefinitionMap);
+
+                container.registerAppMap(toApplicationMap(serviceDefinitionMap, application));
+                //fire a zk event
+                container.registerApplication(application);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Got error when launch,cause: " + e.getMessage(), e);
         }
     }
 
@@ -195,11 +207,11 @@ public class SpringAppLoader implements Plugin {
         LOGGER.warn("Plugin:SpringAppLoader stoped..");
     }
 
-    private Map<String, ServiceInfo> toServiceInfos(Map<String, SoaServiceDefinition> processorMap) {
+    private Map<String, ServiceInfo> toServiceInfos(Map<String, SoaServiceDefinition<?>> processorMap) {
 
         try {
             Map<String, ServiceInfo> serviceInfoMap = new HashMap<>(processorMap.size());
-            for (Map.Entry<String, SoaServiceDefinition> processorEntry : processorMap.entrySet()) {
+            for (Map.Entry<String, SoaServiceDefinition<?>> processorEntry : processorMap.entrySet()) {
                 String processorKey = processorEntry.getKey();
                 SoaServiceDefinition<?> processor = processorEntry.getValue();
 
@@ -257,7 +269,7 @@ public class SpringAppLoader implements Plugin {
 
     private Map<ProcessorKey, SoaServiceDefinition<?>> toSoaServiceDefinitionMap(
             Map<String, ServiceInfo> serviceInfoMap,
-            Map<String, SoaServiceDefinition> processorMap) {
+            Map<String, SoaServiceDefinition<?>> processorMap) {
 
         Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitions = serviceInfoMap.entrySet().stream()
                 .collect(Collectors.toMap(
@@ -281,5 +293,4 @@ public class SpringAppLoader implements Plugin {
         }
         return constructor.newInstance(new Object[]{xmlPaths.toArray(new String[0])});
     }
-
 }
