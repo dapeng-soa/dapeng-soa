@@ -58,7 +58,7 @@ public class RunContainerPlugin extends SoaAbstractMojo {
         URL[] urls = ((URLClassLoader) Thread.currentThread().getContextClassLoader()).getURLs();
         for(URL url: urls){
             if(url.toString().endsWith("/target/classes/")){
-                results.add(url);
+                results.add(0, url);
             }
         }
 
