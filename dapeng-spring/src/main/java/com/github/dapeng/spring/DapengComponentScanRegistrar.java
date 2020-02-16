@@ -23,6 +23,8 @@ import org.springframework.beans.factory.config.*;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.type.AnnotationMetadata;
 
@@ -35,23 +37,23 @@ public class DapengComponentScanRegistrar implements ImportBeanDefinitionRegistr
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-        if(!registry.isBeanNameInUse(PostProcessor.class.getName())){
+        if (!registry.isBeanNameInUse(PostProcessor.class.getName())) {
             RootBeanDefinition bean = new RootBeanDefinition(PostProcessor.class);
             registry.registerBeanDefinition(PostProcessor.class.getName(), bean);
         }
 
     }
 
-    static class PostProcessor implements BeanDefinitionRegistryPostProcessor {
+    static class PostProcessor implements ApplicationContextAware, BeanDefinitionRegistryPostProcessor {
 
         @Override
         public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-            for(String name: registry.getBeanDefinitionNames()){
+            for (String name : registry.getBeanDefinitionNames()) {
                 BeanDefinition definition = registry.getBeanDefinition(name);
-                if(definition instanceof AnnotatedBeanDefinition){
+                if (definition instanceof AnnotatedBeanDefinition) {
                     AnnotationMetadata metadata = ((AnnotatedBeanDefinition) definition).getMetadata();
-                    if(metadata.hasAnnotation(DapengService.class.getName()) ||
-                        metadata.hasMetaAnnotation(DapengService.class.getName())){
+                    if (metadata.hasAnnotation(DapengService.class.getName()) ||
+                            metadata.hasMetaAnnotation(DapengService.class.getName())) {
 
                         ConstructorArgumentValues paras = new ConstructorArgumentValues();
                         paras.addIndexedArgumentValue(0, new RuntimeBeanReference(name));
@@ -69,6 +71,11 @@ public class DapengComponentScanRegistrar implements ImportBeanDefinitionRegistr
         @Override
         public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
 
+        }
+
+        @Override
+        public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+            SpringExtensionContext.setApplicationContext(applicationContext);
         }
     }
 

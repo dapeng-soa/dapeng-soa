@@ -17,9 +17,7 @@
 package com.github.dapeng.impl.plugins;
 
 import com.github.dapeng.api.Container;
-import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.Plugin;
-import com.github.dapeng.api.lifecycle.LifecycleProcessor;
 import com.github.dapeng.api.lifecycle.LifecycleProcessorFactory;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
@@ -27,9 +25,9 @@ import com.github.dapeng.core.helper.SoaSystemEnvProperties;
 import com.github.dapeng.core.lifecycle.LifeCycleAware;
 import com.github.dapeng.core.lifecycle.LifeCycleEvent;
 import com.github.dapeng.impl.container.DapengApplication;
+import com.github.dapeng.spring.SpringExtensionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -40,8 +38,10 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("unchecked")
 public class SpringAppLoader implements Plugin {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpringAppLoader.class);
+
     private final Container container;
     private final List<ClassLoader> appClassLoaders;
     private List<ApplicationContext> springCtxs = new ArrayList<>();
@@ -59,42 +59,45 @@ public class SpringAppLoader implements Plugin {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         for (ClassLoader appClassLoader : appClassLoaders) {
 
-                Thread.currentThread().setContextClassLoader(appClassLoader);
-                try {
-                    System.out.println("====1===");
-                    ApplicationContext applicationContext = tryApplicationContext(appClassLoader);
-                    if (applicationContext == null) {
-                        applicationContext = trySpringXML(appClassLoader);
-                    }
-                    if (applicationContext == null) {
-                        LOGGER.error("Not an dapeng application");
-                    } else {
-                        lauch(applicationContext, appClassLoader);
-                        LOGGER.info("application started");
-                    }
+            Thread.currentThread().setContextClassLoader(appClassLoader);
+            try {
+                System.out.println("====1===");
+                ApplicationContext applicationContext = tryApplicationContext(appClassLoader);
+                if (applicationContext == null) {
+                    applicationContext = trySpringXML(appClassLoader);
                 }
-                finally {
-                    Thread.currentThread().setContextClassLoader(classLoader);
+                if (applicationContext == null) {
+                    LOGGER.error("Not an dapeng application");
+                } else {
+                    launch(applicationContext, appClassLoader);
+                    LOGGER.info("application started");
                 }
+            } finally {
+                Thread.currentThread().setContextClassLoader(classLoader);
+            }
         }
     }
 
-    private void lauch(ApplicationContext appContext, ClassLoader appClassLoader){
+    private void launch(ApplicationContext appContext, ClassLoader appClassLoader) {
+        SpringExtensionContext.setAppClassLoader(appClassLoader);
         appContext.onStart(new LifeCycleEvent(LifeCycleEvent.LifeCycleEventEnum.START));
 
-        Map<String, SoaServiceDefinition> definitions = appContext.getServiceDefinitions();
+        org.springframework.context.ApplicationContext applicationContext = SpringExtensionContext.getApplicationContext();
+
+        Map<String, SoaServiceDefinition> definitions =
+                applicationContext.getBeansOfType(SoaServiceDefinition.class);
 
         springCtxs.add(appContext);
 
         Map<String, ServiceInfo> serviceInfoMap = toServiceInfos(definitions);
 
         // LifeCycle Support, only service support Lifecyle now.
-        List<LifeCycleAware> collect = definitions.values().stream()
+        List<LifeCycleAware> lifeCycleAwares = definitions.values().stream()
                 .filter(definition -> LifeCycleAware.class.isInstance(definition.iface))
-                .map(definition -> (LifeCycleAware)(definition.iface))
+                .map(definition -> (LifeCycleAware) (definition.iface))
                 .collect(Collectors.toList());
 
-        LifecycleProcessorFactory.getLifecycleProcessor().addLifecycles(collect);
+        LifecycleProcessorFactory.getLifecycleProcessor().addLifecycles(lifeCycleAwares);
 
         // Build an Application
         Application application = new DapengApplication(new ArrayList<>(serviceInfoMap.values()), appClassLoader);
@@ -128,21 +131,13 @@ public class SpringAppLoader implements Plugin {
             }
 
             Object springCtx = getSpringContext(configPath, appClassLoader, constructor);
-
             // start the context
             appCtxClass.getMethod("start").invoke(springCtx);
+            SpringExtensionContext.setApplicationContext((org.springframework.context.ApplicationContext) springCtx);
 
-            Method method = appCtxClass.getMethod("getBeansOfType", Class.class);
-
-            Map<String, SoaServiceDefinition> processorMap = (Map<String, SoaServiceDefinition>)
-                    method.invoke(springCtx, appClassLoader.loadClass(SoaServiceDefinition.class.getName()));
+//            Method method = appCtxClass.getMethod("getBeansOfType", Class.class);
 
             return new ApplicationContext() {
-                @Override
-                public Map<String, SoaServiceDefinition> getServiceDefinitions() {
-                    return processorMap;
-                }
-
                 @Override
                 public void onStop(LifeCycleEvent event) {
                     try {
@@ -153,12 +148,10 @@ public class SpringAppLoader implements Plugin {
                     }
                 }
             };
-        }
-        catch (ClassNotFoundException ex) { // No Spring
+        } catch (ClassNotFoundException ex) { // No Spring
             System.out.println("can't found class" + ex);
             return null;
-        }
-        catch( NoSuchMethodException | IllegalAccessException | InvocationTargetException | IOException | InstantiationException ex){
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IOException | InstantiationException ex) {
             System.out.println("can't found class" + ex);
             LOGGER.error("Initialize Spring failed", ex);
             throw new RuntimeException("Initialize Spring failed", ex);
@@ -166,12 +159,21 @@ public class SpringAppLoader implements Plugin {
     }
 
     private ApplicationContext tryApplicationContext(ClassLoader appClassLoader) {
-        ServiceLoader<ApplicationContext> loader = ServiceLoader.load(ApplicationContext.class, appClassLoader);
-        Iterator<ApplicationContext> iterator = loader.iterator();
-        while(iterator.hasNext()) {
-            ApplicationContext context = iterator.next();
-            LOGGER.debug("found an ApplicationContext:" + context.getClass());
-            return context;
+        try {
+            ServiceLoader<ApplicationContext> loader = ServiceLoader.load(ApplicationContext.class, appClassLoader);
+            Iterator<ApplicationContext> iterator = loader.iterator();
+            while (iterator.hasNext()) {
+                ApplicationContext context = iterator.next();
+                //invoke main method
+                Method mainMethod = context.getClass().getMethod("main", String[].class);
+                //Invoke main
+                mainMethod.invoke(null, (Object) new String[]{});
+
+                LOGGER.debug("found an ApplicationContext:" + context.getClass());
+                return context;
+            }
+        } catch (Exception e) {
+            LOGGER.warn("TryApplicationContext got error: " + e.getMessage());
         }
         return null;
     }
@@ -193,7 +195,7 @@ public class SpringAppLoader implements Plugin {
         LOGGER.warn("Plugin:SpringAppLoader stoped..");
     }
 
-    private Map<String, ServiceInfo> toServiceInfos(Map<String, SoaServiceDefinition> processorMap)  {
+    private Map<String, ServiceInfo> toServiceInfos(Map<String, SoaServiceDefinition> processorMap) {
 
         try {
             Map<String, ServiceInfo> serviceInfoMap = new HashMap<>(processorMap.size());
@@ -247,8 +249,7 @@ public class SpringAppLoader implements Plugin {
 
             }
             return serviceInfoMap;
-        }
-        catch(NoSuchMethodException | IllegalAccessException | InvocationTargetException ex){
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ex) {
             throw new RuntimeException("Reflect service failed", ex);
         }
     }

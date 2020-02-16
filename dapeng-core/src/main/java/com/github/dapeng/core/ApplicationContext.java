@@ -8,23 +8,22 @@ import java.util.Map;
 
 /**
  * provide a DapengApp(service set)'s context for an service-container
- *
+ * <p>
  * Dapeng provide a spring load which defines services via META-INF/spring/service.xml
- *
+ * <p>
  * If you need a customize loader, such as SpringBoot, or others,
  * provide an {@see ApplicationConext} implementation and defines as service extension at
  * META-INF/service/com.github.dapeng.core.ApplicationContext file
  */
 public interface ApplicationContext extends LifeCycleAware {
 
-    Map<String,SoaServiceDefinition> getServiceDefinitions();
+//    Map<String,SoaServiceDefinition> getServiceDefinitions();
 
     default void onStart(LifeCycleEvent event) {
 
     }
 
     default void onStop(LifeCycleEvent event) {
-
     }
 
 
