@@ -22,8 +22,10 @@ import org.springframework.util.Assert;
 
 /**
  * Delegating {@link PropertyResolver}
+ * <p>
+ * 将 ConfigurableEnvironment 转换成 PropertyResolver
  *
- * @since 2.7.1
+ * @since 2.2.0
  */
 class DelegatingPropertyResolver implements PropertyResolver {
 

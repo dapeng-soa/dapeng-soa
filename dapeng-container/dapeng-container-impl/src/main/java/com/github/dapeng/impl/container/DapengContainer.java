@@ -213,7 +213,7 @@ public class DapengContainer implements Container {
         //3. 初始化appLoader,dapengPlugin 应该用serviceLoader的方式去加载
 //        Plugin springAppLoader = new SpringAppLoader(this, applicationCls);
         //todo 2020-02-15 for springboot.
-        Plugin springAppLoader = new SpringBootAppLoader(this, applicationCls);
+        Plugin springAppLoader = new SpringApplicationLoader(this, applicationCls);
         Plugin zookeeperPlugin = new ZookeeperRegistryPlugin(this);
         Plugin taskSchedulePlugin = new TaskSchedulePlugin(this);
         Plugin nettyPlugin = new NettyPlugin(this);

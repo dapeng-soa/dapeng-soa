@@ -11,11 +11,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.*;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
 import static com.github.dapeng.spring.boot.autoconfigure.utils.AutoConfigurationUtils.*;
-import static java.util.Collections.emptySet;
 
 @Configuration
 @ConditionalOnProperty(prefix = DAPENG_PREFIX, name = "enabled", matchIfMissing = true)
@@ -42,7 +42,7 @@ public class DapengSpringAutoConfiguration {
     @Bean
     public ServiceAnnotationBeanPostProcessor serviceAnnotationBeanPostProcessor(
             @Qualifier(BASE_PACKAGES_PROPERTY_RESOLVER_BEAN_NAME) PropertyResolver propertyResolver) {
-        Set<String> packagesToScan = propertyResolver.getProperty(BASE_PACKAGES_PROPERTY_NAME, Set.class, emptySet());
+        Set<String> packagesToScan = propertyResolver.getProperty(BASE_PACKAGES_PROPERTY_NAME, Set.class, Collections.emptySet());
         return new ServiceAnnotationBeanPostProcessor(packagesToScan);
     }
 

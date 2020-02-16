@@ -12,8 +12,6 @@
     <artifactId>dapeng-transaction-impl</artifactId>
 
     <properties>
-<!--        <org.springframework-version>4.3.5.RELEASE</org.springframework-version>-->
-        <org.springframework-version>5.1.9.RELEASE</org.springframework-version>
         <druid-version>1.0.17</druid-version>
     </properties>
 
@@ -40,13 +38,11 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-            <version>${org.springframework-version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
-            <version>${org.springframework-version}</version>
         </dependency>
 
         <dependency>

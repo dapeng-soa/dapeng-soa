@@ -15,6 +15,7 @@
         <module>hello-api</module>
         <module>hello-springboot-provider</module>
         <module>hello-test-client</module>
+        <module>hello-spring-cloud</module>
     </modules>
 
     <properties>
