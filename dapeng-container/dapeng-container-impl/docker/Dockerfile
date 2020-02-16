@@ -1,5 +1,5 @@
 #soa-container:base
-FROM harbor.today36524.td/base/openjdk:server-jre8
+FROM dapengsoa/openjdk:java8-with-arthas
 MAINTAINER dapengsoa@gmail.com
 
 # Setting Envirnoment
@@ -8,7 +8,7 @@ ENV PATH $CONTAINER_HOME:$PATH
 
 RUN mkdir -p "$CONTAINER_HOME"
 
-COPY dapeng-container /dapeng-container
+COPY dapeng-container "$CONTAINER_HOME"
 
 WORKDIR "$CONTAINER_HOME/bin"
 

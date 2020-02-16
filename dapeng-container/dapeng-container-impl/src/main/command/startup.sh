@@ -76,8 +76,9 @@ SOA_BASE="-Dsoa.base=$PRGDIR/../ -Dsoa.run.mode=native"
 
 OPTIMIZE_OPTS="-XX:-UseBiasedLocking -XX:AutoBoxCacheMax=20000 -Djava.security.egd=file:/dev/./urandom"
 
+# -XX:+UnlockCommercialFeatures -XX:+FlightRecorder
 SHOTTING_OPTS="-XX:+PrintCommandLineFlags -XX:-OmitStackTraceInFastThrow -XX:ErrorFile=${LOGDIR}/hs_err_%p.log"
-SHOTTING_OPTS="$SHOTTING_OPTS -XX:+UnlockCommercialFeatures -XX:+FlightRecorder -XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints"
+SHOTTING_OPTS="$SHOTTING_OPTS -XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints"
 
 OTHER_OPTS="-Djava.net.preferIPv4Stack=true -Djava.awt.headless=true -Dfile.encoding=UTF-8 -Dsun.jun.encoding=UTF-8"
 
