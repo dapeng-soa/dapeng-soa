@@ -93,7 +93,9 @@ public class SoaHeader {
 
     private Optional<Integer> timeout = Optional.empty();
 
-    //慢服务检测时间阈值
+    /**
+     * 慢服务检测时间阈值
+     */
     private Optional<Long> maxProcessTime = Optional.empty();
 
     /**
