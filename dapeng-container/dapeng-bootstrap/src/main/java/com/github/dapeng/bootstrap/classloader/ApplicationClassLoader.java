@@ -49,9 +49,7 @@ public class ApplicationClassLoader extends URLClassLoader {
 
         if (name.startsWith("com.github.dapeng.core")
                 || name.startsWith("com.github.dapeng.org.apache.thrift")
-                || name.startsWith("com.github.dapeng.transaction.api")
-                || name.startsWith("com.google.gson")
-                || name.startsWith("org.apache.skywalking.apm")) {
+                || name.startsWith("com.github.dapeng.transaction.api")) {
             return coreClassLoader.loadClass(name);
         }
 

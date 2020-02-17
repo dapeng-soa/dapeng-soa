@@ -17,9 +17,7 @@
 package com.github.dapeng.impl.plugins;
 
 import com.github.dapeng.api.Container;
-import com.github.dapeng.api.ContainerFactory;
 import com.github.dapeng.api.Plugin;
-import com.github.dapeng.api.lifecycle.LifecycleProcessor;
 import com.github.dapeng.api.lifecycle.LifecycleProcessorFactory;
 import com.github.dapeng.core.*;
 import com.github.dapeng.core.definition.SoaServiceDefinition;
@@ -29,7 +27,6 @@ import com.github.dapeng.core.lifecycle.LifeCycleEvent;
 import com.github.dapeng.impl.container.DapengApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -51,7 +48,6 @@ public class SpringAppLoader implements Plugin {
         this.appClassLoaders = appClassLoaders;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void start() {
         LOGGER.warn("Plugin::" + getClass().getSimpleName() + "::start");
@@ -61,7 +57,6 @@ public class SpringAppLoader implements Plugin {
 
             Thread.currentThread().setContextClassLoader(appClassLoader);
             try {
-                System.out.println("====1===");
                 ApplicationContext applicationContext = tryApplicationContext(appClassLoader);
                 if (applicationContext == null) {
                     applicationContext = trySpringXML(appClassLoader);
