@@ -67,7 +67,7 @@ public class SpringAppLoader implements Plugin {
                     applicationContext = trySpringXML(appClassLoader);
                 }
                 if (applicationContext == null) {
-                    LOGGER.error("Not a dapeng application");
+                    LOGGER.error("Not a dapeng application"); // TODO given an applicatio name
                 } else {
                     lauch(applicationContext, appClassLoader);
                     LOGGER.info("application started");
@@ -121,7 +121,8 @@ public class SpringAppLoader implements Plugin {
             String configPath = "META-INF/spring/services.xml";
 
             if (null == appClassLoader.getResource(configPath)) {
-                throw new RuntimeException("cant find " + configPath);
+               LOGGER.info("cant find " + configPath + ", not a spring-xml application");
+               return null;
             } else {
                 LOGGER.debug("found spring xml:" + appClassLoader.getResource(configPath));
             }
