@@ -54,11 +54,12 @@ public class DapengComponentScanRegistrar implements ImportBeanDefinitionRegistr
                         metadata.hasMetaAnnotation(DapengService.class.getName())){
 
                         ConstructorArgumentValues paras = new ConstructorArgumentValues();
-                        paras.addIndexedArgumentValue(0, new RuntimeBeanReference(name));
+                        paras.addIndexedArgumentValue(0, new RuntimeBeanNameReference(name));
                         paras.addIndexedArgumentValue(1, name);
 
                         RootBeanDefinition serviceDef = new RootBeanDefinition(SoaProcessorFactory.class, paras, null);
                         serviceDef.setScope(BeanDefinition.SCOPE_SINGLETON);
+                        serviceDef.setLazyInit(true);
 
                         registry.registerBeanDefinition(name + "-definition", serviceDef);
                     }
