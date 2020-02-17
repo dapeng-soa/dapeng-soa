@@ -34,6 +34,8 @@ import static com.github.dapeng.core.helper.IPUtils.localIpAsInt;
  * @date 20180406
  */
 public class DapengUtil {
+    public final static String CONTAINER_VERSION = "2.2.0-SNAPSHOT";
+
     private static AtomicInteger seqId = new AtomicInteger(ThreadLocalRandom.current().nextInt());
     private static int processId = getProcessId() << 16;
     private static int localIp = localIpAsInt();
