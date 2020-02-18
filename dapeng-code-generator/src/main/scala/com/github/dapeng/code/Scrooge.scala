@@ -17,13 +17,14 @@
  package com.github.dapeng.code
 
 import java.io.{File, FileNotFoundException, FilenameFilter}
-import javax.annotation.processing.FilerException
 
+import javax.annotation.processing.FilerException
 import com.github.dapeng.code.generator.ScalaGenerator
+import com.github.dapeng.code.parser.ThriftCode
 
 //import com.github.dapeng.code.generator.scala.ScalaGenerator
 import com.github.dapeng.code.generator.{JavaGenerator, JavascriptGenerator, JsonGenerator, MetadataGenerator}
-import com.github.dapeng.code.parser.ThriftCodeParser
+//import com.github.dapeng.code.parser.ThriftCodeParser
 
 /**
   * @author craneding
@@ -153,10 +154,16 @@ object Scrooge {
 
       if (resources != null && language != "" && needUpdate) {
 
+        val rootDocs = resources.map(resource => {
+          val doc = ThriftCode.generateDoc(resource)
+          (resource.substring(resource.lastIndexOf(File.separator) + 1, resource.lastIndexOf(".")), doc)
+        }).toMap
+
+
         val parserLanguage = if (language == "scala") "scala" else "java"
-        val services = new ThriftCodeParser(parserLanguage).toServices(resources, version)
-        val structs = if (generateAll) new ThriftCodeParser(parserLanguage).getAllStructs(resources) else null
-        val enums = if (generateAll) new ThriftCodeParser(parserLanguage).getAllEnums(resources) else null
+        val services = new ThriftCode(rootDocs, parserLanguage).toServices(version)
+        val structs = if (generateAll) new ThriftCode(rootDocs, parserLanguage).getAllStructs() else null
+        val enums = if (generateAll) new ThriftCode(rootDocs, parserLanguage).getAllEnums() else null
 
         language match {
           case "metadata" => new MetadataGenerator().generate(services, outDir)
