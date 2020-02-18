@@ -21,4 +21,5 @@ sh dev.sh
 # 构建镜像
 containerdir=${basedir}
 cd ${containerdir}
+rm -rf docker/dapeng-container
 mvn package -PdockerBuild
