@@ -109,10 +109,6 @@ public class SpringAppLoader implements Plugin {
     private ApplicationContext trySpringXML(ClassLoader appClassLoader) {
         System.out.println("trySpringXML here ...");
         try {
-            Class<?> appCtxClass = appClassLoader.loadClass("org.springframework.context.support.ClassPathXmlApplicationContext");
-            Class<?>[] parameterTypes = new Class[]{String[].class};
-            Constructor<?> constructor = appCtxClass.getConstructor(parameterTypes);
-
             String configPath = "META-INF/spring/services.xml";
 
             if (null == appClassLoader.getResource(configPath)) {
@@ -121,6 +117,10 @@ public class SpringAppLoader implements Plugin {
             } else {
                 LOGGER.debug("found spring xml:" + appClassLoader.getResource(configPath));
             }
+
+            Class<?> appCtxClass = appClassLoader.loadClass("org.springframework.context.support.ClassPathXmlApplicationContext");
+            Class<?>[] parameterTypes = new Class[]{String[].class};
+            Constructor<?> constructor = appCtxClass.getConstructor(parameterTypes);
 
             Object springCtx = getSpringContext(configPath, appClassLoader, constructor);
 

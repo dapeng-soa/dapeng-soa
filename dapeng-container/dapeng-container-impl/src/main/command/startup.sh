@@ -1,8 +1,5 @@
 #!/bin/sh
 
-export JVM_HOME='opt/oracle-server-jre'
-export PATH=$JVM_HOME/bin:$PATH
-
 PRGNAME=soa-service
 ADATE=`date +%Y%m%d%H%M%S`
 PRGDIR=`pwd`
