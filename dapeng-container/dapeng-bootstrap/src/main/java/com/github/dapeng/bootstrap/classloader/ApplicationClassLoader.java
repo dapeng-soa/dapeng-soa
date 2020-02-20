@@ -16,13 +16,8 @@
  */
 package com.github.dapeng.bootstrap.classloader;
 
-import com.github.dapeng.bootstrap.Bootstrap;
-
-import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.List;
 
 /**
  * App Class Loader
