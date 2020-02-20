@@ -30,18 +30,6 @@ public class SoaSystemEnvProperties {
     public static final String THREAD_LEVEL_KEY = "thread-log-level";
 
     /**
-     * 容器IP
-     * deprecated by KEY_HOST_IP
-     */
-    @Deprecated
-    private static final String KEY_SOA_CONTAINER_IP = "soa.container.ip";
-    /**
-     * 设置本地主机名称
-     * deprecated by KEY_HOST_IP
-     */
-    @Deprecated
-    private static final String KEY_SOA_LOCAL_HOST_NAME = "soa.local.host.name";
-    /**
      * 宿主机IP
      */
     private static final String KEY_HOST_IP = "host.ip";
@@ -168,10 +156,6 @@ public class SoaSystemEnvProperties {
 
     public static final boolean SOA_CONTAINER_USETHREADPOOL = Boolean.valueOf(get(KEY_SOA_CONTAINER_USETHREADPOOL, Boolean.TRUE.toString()));
 
-    @Deprecated
-    public static final String SOA_LOCAL_HOST_NAME = get(KEY_SOA_LOCAL_HOST_NAME);
-    @Deprecated
-    public static final String SOA_CONTAINER_IP = get(KEY_SOA_CONTAINER_IP, IPUtils.containerIp());
     public static final String HOST_IP = get(KEY_HOST_IP, IPUtils.containerIp());
     public static final int SOA_CONTAINER_PORT = Integer.valueOf(get(KEY_SOA_CONTAINER_PORT, "9090"));
     public static final int SOA_APIDOC_PORT = Integer.valueOf(get(KEY_SOA_APIDOC_PORT, "8080"));
