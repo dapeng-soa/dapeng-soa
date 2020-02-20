@@ -31,14 +31,90 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Bootstrap {
-    private static final String ENGINE_PATH = System.getProperty("soa.base", new File(Bootstrap.class.getProtectionDomain().getCodeSource().getLocation().getFile()).getParentFile().getParentFile().getParent() + "/dapeng-container-impl/target/dapeng-container/");
+    private static final String ENGINE_PATH = initialzie();
 
+    private static String initialzie(){
+        String soaBase = getEnginePath();
+        if(System.getProperty("soa.container.logging.path")==null){
+            System.setProperty("soa.container.logging.path", soaBase + "/logs/");
+        }
+        return soaBase;
+    }
 
-    public static void main(String[] args) throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    private static String getEnginePath() {
+
+        String base = System.getProperty("soa.base");
+        if(base != null) return base;
+
+        File classPath = new File(Bootstrap.class.getProtectionDomain().getCodeSource().getLocation().getFile());
+        if(classPath.isDirectory()){
+            // in DEV mode, root/dapeng-container/dapeng-bootstrap/target/classes
+            base = classPath.getParentFile()    // root/dapeng-container/dapeng-bootstrap/target
+                    .getParentFile()    // root/dapeng-container/dapeng-bootstrap/
+                    .getParentFile()    // root/dapeng-container/
+                    .getPath() + "/dapeng-container-impl/target/dapeng-container";
+        }
+        else if(classPath.getName().endsWith(".jar")) { // HOME/bin/dapeng-bootstrap.jar
+            base = classPath.getParentFile() // HOME/bin
+                    .getParentFile() // HOME
+                    .getPath();
+        }
+        else {
+            throw new RuntimeException("please specify engine's home via -Dsoa.base");
+        }
+        System.setProperty("soa.base", base);
+        return base;
+    }
+
+    /**
+     * -apps apps_dir
+     * -app app_dir|app_jar
+     */
+    public static void main(String args[]) throws ClassNotFoundException, MalformedURLException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+        String appsDir = null;
+        List<String> appFiles = new ArrayList<>();
+
+        for(int i=0; i<args.length; i++){
+            if("-apps".equals(args[i]) && (i+1)<args.length){
+                if(appsDir != null) {
+                    throw new RuntimeException("too many -apps options");
+                }
+                else {
+                    appsDir = args[i + 1];
+                    i++;
+                    continue;
+                }
+            }
+            else if("-app".equals(args[i]) && (i+1)<args.length){
+                appFiles.add(args[i+1]);
+                i++;
+                continue;
+            }
+            else if("-logdir".equals(args[i]) && (i+1)<args.length){
+                System.setProperty("soa.container.logging.path", args[i+1]);
+                i++;
+                continue;
+            }
+        }
+
+        if(appsDir != null){
+            File dir = new File(appsDir);
+            if(!dir.isDirectory()) throw new RuntimeException("apps " + appsDir + " is not a directory");
+            for(File app: dir.listFiles()) {
+                if(app.isDirectory()) appFiles.add(app.getPath());
+                else if(app.isFile() && app.getPath().endsWith(".jar")) appFiles.add(app.getPath());
+            }
+        }
+
+        launch(appFiles);
+
+    }
+
+    static void launch(List<String> apps) throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         List<URL> coreURLs = findJarURLs(new File(ENGINE_PATH, "lib"));
         List<URL> containerURLs = findJarURLs(new File(ENGINE_PATH, "bin/lib"));
-        List<List<URL>> applicationURLs = getUrlList(new File(ENGINE_PATH, "apps"));
         List<List<URL>> pluginURLs = getUrlList(new File(ENGINE_PATH, "plugin"));
+        List<List<URL>> applicationURLs = findAppJars(apps);
 
         CoreClassLoader coreClassLoader = new CoreClassLoader(coreURLs.toArray(new URL[coreURLs.size()]));
 
@@ -51,10 +127,28 @@ public class Bootstrap {
         startup(platformClassLoader, applicationCls);
     }
 
+//    public static void main(String[] args) throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+//        List<URL> coreURLs = findJarURLs(new File(ENGINE_PATH, "lib"));
+//        List<URL> containerURLs = findJarURLs(new File(ENGINE_PATH, "bin/lib"));
+//        List<List<URL>> applicationURLs = getUrlList(new File(ENGINE_PATH, "apps"));
+//        List<List<URL>> pluginURLs = getUrlList(new File(ENGINE_PATH, "plugin"));
+//
+//        CoreClassLoader coreClassLoader = new CoreClassLoader(coreURLs.toArray(new URL[coreURLs.size()]));
+//
+//        ClassLoader platformClassLoader = new ContainerClassLoader(containerURLs.toArray(new URL[containerURLs.size()]), coreClassLoader);
+//
+//        List<ClassLoader> applicationCls = applicationURLs.stream().map(i -> new ApplicationClassLoader(i.toArray(new URL[i.size()]), coreClassLoader)).collect(Collectors.toList());
+//
+//        List<ClassLoader> pluginClassLoaders = pluginURLs.stream().map(i -> new PluginClassLoader(i.toArray(new URL[i.size()]), coreClassLoader)).collect(Collectors.toList());
+//
+//        startup(platformClassLoader, applicationCls);
+//    }
+
     public static void sbtStartup(ClassLoader containerClassLoader, List<URL> applicationLibs) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         ClassLoader coreCL = containerClassLoader;
         ClassLoader containerCL = containerClassLoader;
+        System.setProperty("soa.run.mode", "plugin");   // enable ApiDoc
 
         ClassLoader applicationCL = new ApplicationClassLoader(
                 applicationLibs.toArray(new URL[applicationLibs.size()]),
@@ -79,6 +173,32 @@ public class Bootstrap {
 
         Method mainMethod = container.getClass().getMethod("startup");
         mainMethod.invoke(container);
+    }
+
+    /**
+     *
+     * @param apps each app is ethier a single jar or a directory
+     * @return
+     * @throws MalformedURLException
+     */
+    private static List<List<URL>> findAppJars(List<String> apps) throws MalformedURLException {
+        List<List<URL>> result = new ArrayList<>();
+        for(String app: apps){
+            File appFile = new File(app);
+            if(appFile.isFile() && appFile.getPath().endsWith(".jar")) {
+                List<URL> jars = new ArrayList<>();
+                jars.add(appFile.toURI().toURL());
+                result.add(jars);
+                continue;
+            }
+            else if(appFile.isDirectory()){
+                List<URL> jars = new ArrayList<>();
+                jars.addAll(findJarURLs(appFile));
+                if(!jars.isEmpty())
+                    result.add(jars);
+            }
+        }
+        return result;
     }
 
     private static List<List<URL>> getUrlList(File filepath) throws MalformedURLException {
