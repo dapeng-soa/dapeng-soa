@@ -55,7 +55,7 @@ import static com.github.dapeng.core.helper.SoaSystemEnvProperties.SOA_SHUTDOWN_
 public class DapengContainer implements Container {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DapengContainer.class);
-    private static final String RUN_MODE = System.getProperty("soa.run.mode", "plugin");
+    private static final String RUN_MODE = System.getProperty("soa.run.mode", "native");
     private List<AppListener> appListeners = new Vector<>();
     private List<Application> applications = new Vector<>();
     private List<Plugin> plugins = new ArrayList<>();

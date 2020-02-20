@@ -100,17 +100,5 @@ for fluentPid in $(pgrep -f fluent-bit)
 }
 
 
-trap 'kill ${!};process_exit' SIGTERM
-
-echo $JAVA_OPTS > $LOGDIR/console.log
-
-nohup java -server $JAVA_OPTS -cp $PRGDIR/dapeng-bootstrap.jar com.github.dapeng.bootstrap.Bootstrap $* >> $LOGDIR/console.log 2>&1 &
-pid="$!"
-echo $pid > $LOGDIR/pid.txt
-
-if [ "$fluent_bit_enable" == "true" ]; then
-   nohup sh /opt/fluent-bit/fluent-bit.sh >> $LOGDIR/fluent-bit.log 2>&1 &
-fi
-
-wait $pid
+java -server $JAVA_OPTS -cp $PRGDIR/dapeng-bootstrap.jar com.github.dapeng.bootstrap.Bootstrap $*
 
