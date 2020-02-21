@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 
 public class Bootstrap {
     private static final String ENGINE_PATH = initialzie();
+    private static final String DEFAULT_APPS_DIR = ENGINE_PATH + "/apps";
 
     private static String initialzie() {
         String soaBase = getEnginePath();
@@ -93,16 +94,25 @@ public class Bootstrap {
         }
 
         if (appsDir != null) {
-            File dir = new File(appsDir);
-            if (!dir.isDirectory()) throw new RuntimeException("apps " + appsDir + " is not a directory");
-            for (File app : dir.listFiles()) {
-                if (app.isDirectory()) appFiles.add(app.getPath());
-                else if (app.isFile() && app.getPath().endsWith(".jar")) appFiles.add(app.getPath());
-            }
+            getApps(appsDir, appFiles);
+        }
+
+        if (appFiles.isEmpty()) {
+            // try the default apps dir
+            getApps(DEFAULT_APPS_DIR, appFiles);
         }
 
         launch(appFiles);
 
+    }
+
+    private static void getApps(String appsDir, List<String> appFiles) {
+        File dir = new File(appsDir);
+        if (!dir.isDirectory()) throw new RuntimeException("apps " + appsDir + " is not a directory");
+        for (File app : dir.listFiles()) {
+            if (app.isDirectory()) appFiles.add(app.getPath());
+            else if (app.isFile() && app.getPath().endsWith(".jar")) appFiles.add(app.getPath());
+        }
     }
 
     static void launch(List<String> apps) throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
