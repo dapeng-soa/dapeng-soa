@@ -7,7 +7,7 @@
     <groupId>com.github.dapeng-soa</groupId>
     <artifactId>dapeng-parent</artifactId>
     <packaging>pom</packaging>
-    <version>2.2.1</version>
+    <version>2.2.2</version>
 
     <name>dapeng</name>
     <description>一个简单、易用、多特性的SOA框架</description>
