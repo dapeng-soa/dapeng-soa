@@ -27,6 +27,8 @@ import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.type.AnnotationMetadata;
 
+import java.util.Map;
+
 /**
  * Dapeng Service Definition Registrar
  *
@@ -54,15 +56,21 @@ public class DapengComponentScanRegistrar implements ImportBeanDefinitionRegistr
                     if(metadata.hasAnnotation(DapengService.class.getName()) ||
                         metadata.hasMetaAnnotation(DapengService.class.getName())){
 
-                        ConstructorArgumentValues paras = new ConstructorArgumentValues();
-                        paras.addIndexedArgumentValue(0, new RuntimeBeanReference(name));
-                        paras.addIndexedArgumentValue(1, name);
+                        Map<String, Object> annotationAtts = metadata.getAnnotationAttributes(DapengService.class.getName());
 
-                        RootBeanDefinition serviceDef = new RootBeanDefinition(SoaProcessorFactory.class, paras, null);
-                        serviceDef.setScope(BeanDefinition.SCOPE_SINGLETON);
-                        serviceDef.setTargetType(SoaServiceDefinition.class);
+                        if (annotationAtts.containsKey("service")) {
+                            String realServiceName = ((Class)annotationAtts.get("service")).getSimpleName();
+                            realServiceName = (char)(realServiceName.charAt(0)+32) + realServiceName.substring(1);
+                            ConstructorArgumentValues paras = new ConstructorArgumentValues();
+                            paras.addIndexedArgumentValue(0, new RuntimeBeanReference(realServiceName));
+                            paras.addIndexedArgumentValue(1, realServiceName);
 
-                        registry.registerBeanDefinition(name + "-definition", serviceDef);
+                            RootBeanDefinition serviceDef = new RootBeanDefinition(SoaProcessorFactory.class, paras, null);
+                            serviceDef.setScope(BeanDefinition.SCOPE_SINGLETON);
+                            serviceDef.setTargetType(SoaServiceDefinition.class);
+
+                            registry.registerBeanDefinition(realServiceName + "-definition", serviceDef);
+                        }
                     }
                 }
             }

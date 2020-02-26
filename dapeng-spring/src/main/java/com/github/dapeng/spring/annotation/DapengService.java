@@ -17,4 +17,5 @@ import java.lang.annotation.*;
 @Service
 @Import(DapengComponentScanRegistrar.class)
 public @interface DapengService {
+    Class service();
 }
