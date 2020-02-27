@@ -15,41 +15,9 @@
     <script src="${basePath}/js/json/json.format.js"></script>
     <script src="${basePath}/js/formatmarked.js"></script>
     <script src="${basePath}/js/jquery.datetimepicker.full.min.js"></script>
-
     <script>
         $(function () {
-
-            var url = window.basePath + "/api/findService/" + "${service.name}" + "/" + "${service.meta.version}" + ".htm";
-            var settings = {type: "get", url: url, dataType: "json"};
-            $.ajax(settings).done(function (result) {
-
-                var methodName = "${method.name}";
-                for (var i = 0; i < result.methods.length; i++) {
-
-                    if (result.methods[i].name == methodName) {
-
-                        //生成参数输入列表
-                        var method = result.methods[i];
-
-                        for (var index = 0; index < method.request.fields.length; index++) {
-
-                            var field = method.request.fields[index];
-                            var li = getDataTypeElement(field.dataType, field.name, result, field.optional, field.doc);
-                            $('#tree').append(li);
-                        }
-
-                        //生成示范报文
-                        var parameter = {};
-                        for (var index = 0; index < method.request.fields.length; index++) {
-                            var field = method.request.fields[index];
-                            parameter[field.name] = getJsonSample(field.dataType, result);
-                        }
-                        Process({body:parameter});
-                    }
-                }
-
-                $('input.datetimepicker').datetimepicker();
-            });
+            initTestPage("${service.name}","${service.meta.version}","${method.name}")
         });
     </script>
 </head>
@@ -99,7 +67,8 @@
                     <label for="serviceName" class="col-sm-2 control-label">服务名</label>
 
                     <div class="col-sm-10">
-                        <input type="text" class="form-control" id="serviceName" value="${service.namespace}.${service.name}"
+                        <input type="text" class="form-control" id="serviceName"
+                               value="${service.namespace}.${service.name}"
                                disabled="disabled">
                     </div>
                 </div>
@@ -166,7 +135,10 @@
                         <div id="requestPasteData">
                             <p style="color: red">tip：粘贴或者书写请求json提交请求</p>
                             <textarea style="width: 100%;height: 240px;resize: none;" id="pasteJsonBox"></textarea>
-                            <button type="button" class="btn btn-success" onclick=applyTestForJsonStr('${service.namespace}.${service.name}','${service.meta.version}','${method.name}')>提交请求</button>
+                            <button type="button" class="btn btn-success"
+                                    onclick=applyTestForJsonStr('${service.namespace}.${service.name}','${service.meta.version}','${method.name}')>
+                                提交请求
+                            </button>
                         </div>
                     </div>
                 </div>
