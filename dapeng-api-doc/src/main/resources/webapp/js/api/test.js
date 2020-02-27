@@ -543,8 +543,9 @@ function getJsonObject(li) {
 
         // 如果是date类型，则将时间戳替代所选时间
         if ($($(li).find('input')[0]).hasClass("datetimepicker")) {
-            var date = $($(li).find('input')[0]).datetimepicker('getValue');
-            return  date.getTime()
+            // var date = $($(li).find('input')[0]).datetimepicker('getValue');
+            var date = new Date(v + ":00:000");
+            return date.getTime()
         }
 
         if ($(li).find('input')[0].type == 'number') {
