@@ -33,7 +33,7 @@ import scala.xml.Elem
   *
   * @author tangliu
   */
-class JavaGenerator extends CodeGenerator {
+class JavaGenerator extends AbstractJavaCodeGenerator {
 
   override def generate(services: util.List[Service], outDir: String): Unit = {}
 

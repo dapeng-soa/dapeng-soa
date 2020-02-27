@@ -29,7 +29,7 @@ import scala.xml.Elem
   * @author tangliu
   * @date 15/9/8
   */
-class JavaCodecGenerator extends CodeGenerator {
+class JavaCodecGenerator extends AbstractJavaCodeGenerator {
 
   override def generate(services: util.List[Service], outDir: String, generateAll:Boolean , structs: util.List[Struct], enums:util.List[TEnum]): Unit = {}
 
