@@ -323,7 +323,7 @@ class JavascriptGenerator extends CodeGenerator {
     }
   }
 
-  def toDataTypeTemplate(dataType: DataType): Elem = {
+  override protected def toDataTypeTemplate(dataType: DataType): Elem = {
     dataType.getKind() match {
       case KIND.VOID =>
         return {

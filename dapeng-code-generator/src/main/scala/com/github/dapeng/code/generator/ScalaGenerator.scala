@@ -737,7 +737,7 @@ class ScalaGenerator extends CodeGenerator {
     * @param dataType
     * @return
     */
-  def toDataTypeTemplate(dataType:DataType): Elem = {
+  override def toDataTypeTemplate(dataType:DataType): Elem = {
     dataType.kind match {
       case KIND.VOID => <div>Unit</div>
       case KIND.BOOLEAN => <div>Boolean</div>

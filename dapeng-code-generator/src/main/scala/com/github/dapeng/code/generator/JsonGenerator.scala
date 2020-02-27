@@ -146,7 +146,7 @@ class JsonGenerator extends CodeGenerator {
     </div>
   }
 
-  def toDataTypeTemplate(dataType:DataType): Elem = {
+  override def toDataTypeTemplate(dataType:DataType): Elem = {
     dataType.kind match {
       case KIND.VOID => <div>void</div>
       case KIND.BOOLEAN => <div>boolean</div>
