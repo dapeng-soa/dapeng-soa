@@ -59,8 +59,9 @@ public class DapengComponentScanRegistrar implements ImportBeanDefinitionRegistr
                         Map<String, Object> annotationAtts = metadata.getAnnotationAttributes(DapengService.class.getName());
 
                         if (annotationAtts.containsKey("service")) {
-                            String realServiceName = ((Class)annotationAtts.get("service")).getSimpleName();
-                            realServiceName = (char)(realServiceName.charAt(0)+32) + realServiceName.substring(1);
+                            char[] realServiceNameAsChars = ((Class)annotationAtts.get("service")).getSimpleName().toCharArray();
+                            realServiceNameAsChars[0] += 32;
+                            String realServiceName = String.valueOf(realServiceNameAsChars);
                             ConstructorArgumentValues paras = new ConstructorArgumentValues();
                             paras.addIndexedArgumentValue(0, new RuntimeBeanReference(realServiceName));
                             paras.addIndexedArgumentValue(1, realServiceName);
