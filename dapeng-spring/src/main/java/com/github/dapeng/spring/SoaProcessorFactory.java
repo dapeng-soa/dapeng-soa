@@ -28,6 +28,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
@@ -43,10 +44,19 @@ public class SoaProcessorFactory implements FactoryBean<SoaServiceDefinition<?>>
     private Object serviceRef;
     private String refId;
 
+    private Optional<Class<?>> interfaceClassOpt = Optional.empty();
+
     public SoaProcessorFactory(Object serviceRef, String refId) {
         this.serviceRef = serviceRef;
         this.refId = refId;
     }
+
+    public SoaProcessorFactory(Object serviceRef, String refId, Class<?> interfaceClass) {
+        this.serviceRef = serviceRef;
+        this.refId = refId;
+        this.interfaceClassOpt = Optional.of(interfaceClass);
+    }
+
 
     @Override
     @SuppressWarnings("unchecked")
@@ -54,18 +64,25 @@ public class SoaProcessorFactory implements FactoryBean<SoaServiceDefinition<?>>
         final Class<?> aClass = serviceRef.getClass();
         final List<Class<?>> interfaces = Arrays.asList(aClass.getInterfaces());
 
-        List<Class<?>> filterInterfaces = interfaces.stream()
-                .filter(anInterface -> anInterface.isAnnotationPresent(Service.class) && anInterface.isAnnotationPresent(Processor.class))
-                .collect(toList());
+        Class<?> interfaceClass;
+        if (interfaceClassOpt.isPresent()) {
+            interfaceClass = interfaceClassOpt.get();
+            if (!(interfaceClass.isAnnotationPresent(Service.class) && interfaceClass.isAnnotationPresent(Processor.class))) {
+                throw new RuntimeException("Specific service class: [ " + interfaceClass.getName() + " ] on @DapengService not found @Service & @Processor," +
+                        "Maybe you should config the interface class not the implementation class. ");
+            }
+        } else {
+            List<Class<?>> filterInterfaces = interfaces.stream()
+                    .filter(anInterface -> anInterface.isAnnotationPresent(Service.class) && anInterface.isAnnotationPresent(Processor.class))
+                    .collect(toList());
 
-        if (filterInterfaces.isEmpty()) {
-            throw new RuntimeException("not config @Service & @Processor in " + refId);
+            if (filterInterfaces.isEmpty()) {
+                throw new RuntimeException("not config @Service & @Processor in " + refId);
+            }
+            interfaceClass = filterInterfaces.get(filterInterfaces.size() - 1);
         }
 
-        Class<?> interfaceClass = filterInterfaces.get(filterInterfaces.size() - 1);
-
         Processor processor = interfaceClass.getAnnotation(Processor.class);
-
 
         Class<?> processorClass = Class.forName(processor.className(), true, interfaceClass.getClassLoader());
         Constructor<?> constructor = processorClass.getConstructor(interfaceClass, Class.class);

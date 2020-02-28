@@ -38,7 +38,7 @@ public class DapengComponentScanRegistrar implements ImportBeanDefinitionRegistr
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-        if(!registry.isBeanNameInUse(PostProcessor.class.getName())){
+        if (!registry.isBeanNameInUse(PostProcessor.class.getName())) {
             RootBeanDefinition bean = new RootBeanDefinition(PostProcessor.class);
             registry.registerBeanDefinition(PostProcessor.class.getName(), bean);
         }
@@ -49,28 +49,32 @@ public class DapengComponentScanRegistrar implements ImportBeanDefinitionRegistr
 
         @Override
         public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-            for(String name: registry.getBeanDefinitionNames()){
+            for (String name : registry.getBeanDefinitionNames()) {
                 BeanDefinition definition = registry.getBeanDefinition(name);
-                if(definition instanceof AnnotatedBeanDefinition){
+                if (definition instanceof AnnotatedBeanDefinition) {
                     AnnotationMetadata metadata = ((AnnotatedBeanDefinition) definition).getMetadata();
-                    if(metadata.hasAnnotation(DapengService.class.getName()) ||
-                        metadata.hasMetaAnnotation(DapengService.class.getName())){
+                    if (metadata.hasAnnotation(DapengService.class.getName()) ||
+                            metadata.hasMetaAnnotation(DapengService.class.getName())) {
 
-                        Map<String, Object> annotationAtts = metadata.getAnnotationAttributes(DapengService.class.getName());
-
-                        if (annotationAtts.containsKey("service")) {
-                            char[] realServiceNameAsChars = ((Class)annotationAtts.get("service")).getSimpleName().toCharArray();
-                            realServiceNameAsChars[0] += 32;
-                            String realServiceName = String.valueOf(realServiceNameAsChars);
+                        Map<String, Object> annotationAttrs = metadata.getAnnotationAttributes(DapengService.class.getName());
+                        if (annotationAttrs == null) {
+                            throw new RuntimeException("@DapengService should have service attribute, please config it.");
+                        }
+                        if (annotationAttrs.containsKey("service")) {
+                            Class<?> interfaceClass = (Class<?>) annotationAttrs.get("service");
                             ConstructorArgumentValues paras = new ConstructorArgumentValues();
-                            paras.addIndexedArgumentValue(0, new RuntimeBeanReference(realServiceName));
-                            paras.addIndexedArgumentValue(1, realServiceName);
+
+                            paras.addIndexedArgumentValue(0, new RuntimeBeanReference(name));
+                            paras.addIndexedArgumentValue(1, name);
+                            paras.addIndexedArgumentValue(2, interfaceClass);
 
                             RootBeanDefinition serviceDef = new RootBeanDefinition(SoaProcessorFactory.class, paras, null);
                             serviceDef.setScope(BeanDefinition.SCOPE_SINGLETON);
                             serviceDef.setTargetType(SoaServiceDefinition.class);
 
-                            registry.registerBeanDefinition(realServiceName + "-definition", serviceDef);
+                            registry.registerBeanDefinition(name + "-definition", serviceDef);
+                        } else {
+                            throw new RuntimeException("@DapengService should have service attribute, please config it.");
                         }
                     }
                 }
