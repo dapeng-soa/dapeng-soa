@@ -636,7 +636,7 @@ function getJsonSample(dataType, service) {
 
         case 'DATE':
             // Date在传输时使用long
-            return "1582732800000";
+            return 1582732800000;
         case 'BIGDECIMAL':
             return "1234567.123456789123456";
         default :
