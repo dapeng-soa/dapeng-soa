@@ -68,7 +68,8 @@ public class SoaProcessorFactory implements FactoryBean<SoaServiceDefinition<?>>
         if (interfaceClassOpt.isPresent()) {
             interfaceClass = interfaceClassOpt.get();
             if (!(interfaceClass.isAnnotationPresent(Service.class) && interfaceClass.isAnnotationPresent(Processor.class))) {
-                throw new RuntimeException("Specific interfaceClass" + interfaceClass + " on @DapengService not found @Service & @Processor ");
+                throw new RuntimeException("Specific service class: [ " + interfaceClass.getName() + " ] on @DapengService not found @Service & @Processor," +
+                        "Maybe you should config the interface class not the implementation class. ");
             }
         } else {
             List<Class<?>> filterInterfaces = interfaces.stream()
