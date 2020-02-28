@@ -60,19 +60,17 @@ public class DapengComponentScanRegistrar implements ImportBeanDefinitionRegistr
 
                         if (annotationAtts.containsKey("service")) {
                             Class<?> interfaceClass = (Class<?>) annotationAtts.get("service");
-                            char[] realServiceNameAsChars = interfaceClass.getSimpleName().toCharArray();
-                            realServiceNameAsChars[0] += 32;
-                            String realServiceName = String.valueOf(realServiceNameAsChars);
                             ConstructorArgumentValues paras = new ConstructorArgumentValues();
-                            paras.addIndexedArgumentValue(0, new RuntimeBeanReference(realServiceName));
-                            paras.addIndexedArgumentValue(1, realServiceName);
+
+                            paras.addIndexedArgumentValue(0, new RuntimeBeanReference(name));
+                            paras.addIndexedArgumentValue(1, name);
                             paras.addIndexedArgumentValue(2, interfaceClass);
 
                             RootBeanDefinition serviceDef = new RootBeanDefinition(SoaProcessorFactory.class, paras, null);
                             serviceDef.setScope(BeanDefinition.SCOPE_SINGLETON);
                             serviceDef.setTargetType(SoaServiceDefinition.class);
 
-                            registry.registerBeanDefinition(realServiceName + "-definition", serviceDef);
+                            registry.registerBeanDefinition(name + "-definition", serviceDef);
                         }
                     }
                 }

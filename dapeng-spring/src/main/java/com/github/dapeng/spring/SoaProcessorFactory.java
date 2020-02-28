@@ -51,6 +51,12 @@ public class SoaProcessorFactory implements FactoryBean<SoaServiceDefinition<?>>
         this.refId = refId;
     }
 
+    public SoaProcessorFactory(Object serviceRef, String refId, Class<?> interfaceClass) {
+        this.serviceRef = serviceRef;
+        this.refId = refId;
+        this.interfaceClassOpt = Optional.of(interfaceClass);
+    }
+
 
     @Override
     @SuppressWarnings("unchecked")
