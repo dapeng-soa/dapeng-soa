@@ -1013,6 +1013,7 @@ class JavaCodecGenerator extends AbstractJavaCodeGenerator {
         case KIND.INTEGER => false
         case KIND.LONG => false
         case KIND.DOUBLE => false
+        case KIND.BYTE => false
         case _ => true
       }
 

@@ -22,6 +22,7 @@ abstract class AbstractJavaCodeGenerator extends CodeGenerator {
         case KIND.INTEGER => <div>int</div>
         case KIND.LONG => <div>long</div>
         case KIND.DOUBLE => <div>double</div>
+        case KIND.BYTE => <div>byte</div>
         case _ => toDataTypeTemplate(dataType)
       }
   }
