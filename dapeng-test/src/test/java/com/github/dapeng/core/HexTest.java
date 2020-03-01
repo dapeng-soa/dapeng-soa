@@ -16,24 +16,28 @@
  */
 package com.github.dapeng.core;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import static com.github.dapeng.core.helper.DapengUtil.longToHexStr;
 
 public class HexTest {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
+        testTTL();
         long tid = 1024783;//generateTid();
         System.out.println(tid);
         System.out.println(longToHexStr(tid));
 
         String hex = "0123456789ABCDEF";
         long l = 0;
-        for(int i = 0; i<16; i++){
+        for (int i = 0; i < 16; i++) {
             char ch = hex.charAt(i);
             int c = (ch >= 'a') ? ch - 'a' + 10 :
                     ((ch >= 'A') ? ch - 'A' + 10 : ch - '0');
             l = l << 4 | c;
         }
         System.out.println(l);
-        System.out.println( Long.parseUnsignedLong(hex, 16) );
+        System.out.println(Long.parseUnsignedLong(hex, 16));
         System.out.println(longToHexStr(l));
         System.out.println("=====");
 
@@ -61,25 +65,25 @@ public class HexTest {
         long b11 = (l >> 44) & 0x0F;
         long b12 = (l >> 48) & 0x0F;
         long b13 = (l >> 52) & 0x0F;
-        long b14= (l >> 56) & 0x0F;
+        long b14 = (l >> 56) & 0x0F;
         long b15 = (l >> 60) & 0x0F;
 
-        sb2.append( btoc(b15) );
-        sb2.append( (char)(b14 > 10 ? b14 - 10 + 'A' : b14 + '0') );
-        sb2.append( (char)(b13 > 10 ? b13 - 10 + 'A' : b13 + '0') );
-        sb2.append( (char)(b12 > 10 ? b12 - 10 + 'A' : b12 + '0') );
-        sb2.append( (char)(b11 > 10 ? b11 - 10 + 'A' : b11 + '0') );
-        sb2.append( (char)(b10 > 10 ? b10 - 10 + 'A' : b10 + '0') );
-        sb2.append( (char)(b9 > 10 ? b9 - 10 + 'A' : b9 + '0') );
-        sb2.append( (char)(b8 > 10 ? b8 - 10 + 'A' : b8 + '0') );
-        sb2.append( (char)(b7 > 10 ? b7 - 10 + 'A' : b7 + '0') );
-        sb2.append( (char)(b6 > 10 ? b6 - 10 + 'A' : b6 + '0') );
-        sb2.append( (char)(b5 > 10 ? b5 - 10 + 'A' : b5 + '0') );
-        sb2.append( (char)(b4 > 10 ? b4 - 10 + 'A' : b4 + '0') );
-        sb2.append( (char)(b3 > 10 ? b3 - 10 + 'A' : b3 + '0') );
-        sb2.append( (char)(b2 > 10 ? b2 - 10 + 'A' : b2 + '0') );
-        sb2.append( (char)(b1 > 10 ? b1 - 10 + 'A' : b1 + '0') );
-        sb2.append( (char)(b0 > 10 ? b0 - 10 + 'A' : b0 + '0') );
+        sb2.append(btoc(b15));
+        sb2.append((char) (b14 > 10 ? b14 - 10 + 'A' : b14 + '0'));
+        sb2.append((char) (b13 > 10 ? b13 - 10 + 'A' : b13 + '0'));
+        sb2.append((char) (b12 > 10 ? b12 - 10 + 'A' : b12 + '0'));
+        sb2.append((char) (b11 > 10 ? b11 - 10 + 'A' : b11 + '0'));
+        sb2.append((char) (b10 > 10 ? b10 - 10 + 'A' : b10 + '0'));
+        sb2.append((char) (b9 > 10 ? b9 - 10 + 'A' : b9 + '0'));
+        sb2.append((char) (b8 > 10 ? b8 - 10 + 'A' : b8 + '0'));
+        sb2.append((char) (b7 > 10 ? b7 - 10 + 'A' : b7 + '0'));
+        sb2.append((char) (b6 > 10 ? b6 - 10 + 'A' : b6 + '0'));
+        sb2.append((char) (b5 > 10 ? b5 - 10 + 'A' : b5 + '0'));
+        sb2.append((char) (b4 > 10 ? b4 - 10 + 'A' : b4 + '0'));
+        sb2.append((char) (b3 > 10 ? b3 - 10 + 'A' : b3 + '0'));
+        sb2.append((char) (b2 > 10 ? b2 - 10 + 'A' : b2 + '0'));
+        sb2.append((char) (b1 > 10 ? b1 - 10 + 'A' : b1 + '0'));
+        sb2.append((char) (b0 > 10 ? b0 - 10 + 'A' : b0 + '0'));
 
         System.out.println(sb2.toString());
 
@@ -87,16 +91,35 @@ public class HexTest {
         System.out.println(x);
 
         String tmp = "6d";
-        int ch = (int)Long.parseUnsignedLong(tmp, 16);
-        System.out.println((byte)ch);
-        char ch1 = (char)Long.parseUnsignedLong("6f", 16);
+        int ch = (int) Long.parseUnsignedLong(tmp, 16);
+        System.out.println((byte) ch);
+        char ch1 = (char) Long.parseUnsignedLong("6f", 16);
         System.out.println(ch1);
-        System.out.println((int)'m');
+        System.out.println((int) 'm');
         Byte.parseByte("6d", 16);
 
 
     }
 
-    private static char btoc(long l) { return (char)(l > 10 ? l - 10 + 'A' : l  + '0'); }
+    private static char btoc(long l) {
+        return (char) (l > 10 ? l - 10 + 'A' : l + '0');
+    }
 
+
+    private static void testTTL() throws InterruptedException {
+        ThreadLocal<Long> counter = new ThreadLocal<>();
+        ExecutorService es = Executors.newFixedThreadPool(10);
+
+        counter.set(100L);
+        System.out.println("Thread:" + Thread.currentThread() + ", counter:" + counter.get());
+
+        es.submit(() -> {
+            System.out.println("inside, thread:" + Thread.currentThread() + ", counter:" + counter.get());
+        });
+
+        Thread.sleep(10000);
+
+        System.out.println("Thread:" + Thread.currentThread() + ", counter:" + counter.get());
+
+    }
 }

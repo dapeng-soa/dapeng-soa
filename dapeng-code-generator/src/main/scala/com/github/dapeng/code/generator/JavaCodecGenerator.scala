@@ -67,7 +67,7 @@ class JavaCodecGenerator extends AbstractJavaCodeGenerator {
             public static class {method.name}_args <block>
             {toFieldArrayBuffer(method.request.getFields).map{(field: Field)=>{
               <div>
-                private {toFieldDeclareTemplate(field)} {field.getName};
+                private {toFieldDeclareTemplate(field)} {field.getName} {if (field.optional) <div> = Optional.empty()</div>};
                 public {toFieldDeclareTemplate(field)} get{field.name.charAt(0).toUpper + field.name.substring(1)}()<block>
                 return this.{field.name};
               </block>

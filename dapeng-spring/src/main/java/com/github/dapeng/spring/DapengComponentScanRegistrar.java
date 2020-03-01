@@ -58,7 +58,7 @@ public class DapengComponentScanRegistrar implements ImportBeanDefinitionRegistr
 
                         Map<String, Object> annotationAttrs = metadata.getAnnotationAttributes(DapengService.class.getName());
                         if (annotationAttrs == null) {
-                            throw new RuntimeException("@DapengService shuold have service attribute, please config it.");
+                            throw new RuntimeException("@DapengService should have service attribute, please config it.");
                         }
                         if (annotationAttrs.containsKey("service")) {
                             Class<?> interfaceClass = (Class<?>) annotationAttrs.get("service");
@@ -74,7 +74,7 @@ public class DapengComponentScanRegistrar implements ImportBeanDefinitionRegistr
 
                             registry.registerBeanDefinition(name + "-definition", serviceDef);
                         } else {
-                            throw new RuntimeException("@DapengService shuold have service attribute, please config it.");
+                            throw new RuntimeException("@DapengService should have service attribute, please config it.");
                         }
                     }
                 }
