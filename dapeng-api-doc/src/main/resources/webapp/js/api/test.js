@@ -46,6 +46,9 @@ function createInputGroup(label, type, optional, fieldDoc, input) {
         case "Long":
             inputType = 'number';
             break;
+        case "Byte":
+            inputType = 'number';
+            break;
         case "byte[]":
             placeholder = "类型：16进制字符串";
             break;
@@ -586,10 +589,10 @@ function getJsonSample(dataType, service) {
         case 'BOOLEAN':
             return Math.round(Math.random()) == 1 ? "true" : "false";
         case 'BYTE':
-            return parseInt(Math.random() * 256 - 128).toString;
+            return parseInt(Math.random() * 256 - 128);
         case 'BINARY':
             return "546869732049732041205465737420427974652041727261792E";
-        case 'Short':
+        case 'SHORT':
             return Math.round(Math.random() * 100);
         case 'LONG':
             return Math.round(Math.random() * 1000);
