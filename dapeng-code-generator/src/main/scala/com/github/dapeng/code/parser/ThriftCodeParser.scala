@@ -495,12 +495,24 @@ class ThriftCodeParser(var language: String) {
       docCache.put(resource.substring(resource.lastIndexOf(File.separator) + 1, resource.lastIndexOf(".")), doc)
     })
 
-    docCache.values.foreach(doc => {
-      val generator = getGenerator(doc)
+    docCache.foreach(docEntry => {
+      val resource = docEntry._1
+      val doc = docEntry._2
 
-      enumCache.addAll(findEnums(doc, generator))
-      structCache.addAll(findStructs(doc, generator))
-      serviceCache.addAll(findServices(doc, generator))
+      try {
+        val generator = getGenerator(doc)
+
+        enumCache.addAll(findEnums(doc, generator))
+        structCache.addAll(findStructs(doc, generator))
+        serviceCache.addAll(findServices(doc, generator))
+      } catch {
+        case ex: Exception => {
+          println(s"parse ${resource} failed")
+          ex.printStackTrace()
+          System.exit(-1)
+        }
+      }
+
 
       for (enum <- enumCache)
         mapEnumCache.put(enum.getNamespace + "." + enum.getName, enum)

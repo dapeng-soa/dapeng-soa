@@ -5,7 +5,7 @@
     <parent>
         <artifactId>dapeng-container</artifactId>
         <groupId>com.github.dapeng-soa</groupId>
-        <version>2.1.1</version>
+        <version>2.2.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -13,7 +13,7 @@
 
     <properties>
         <devName>dapeng-container</devName>
-        <dapeng-version>2.1.1</dapeng-version>
+        <dapeng-version>2.2.2</dapeng-version>
     </properties>
 
     <build>
@@ -46,6 +46,7 @@
                         <directory>${basedir}/src/main/command</directory>
                         <includes>
                             <include>startup.sh</include>
+                            <include>startup_dapeng.sh</include>
                             <include>shutdown.sh</include>
                         </includes>
                         <targetPath>${project.build.directory}/${devName}/bin</targetPath>
@@ -81,7 +82,7 @@
                                     <overWriteSnapshots>false</overWriteSnapshots>
                                     <overWriteIfNewer>true</overWriteIfNewer>
                                     <includeArtifactIds>
-                                        dapeng-core,slf4j-api,logback-classic,logback-core,janino,commons-compiler,gson
+                                        dapeng-core,dapeng-transaction-api
                                     </includeArtifactIds>
                                 </configuration>
                             </execution>
@@ -98,7 +99,7 @@
                                     <overWriteSnapshots>false</overWriteSnapshots>
                                     <overWriteIfNewer>true</overWriteIfNewer>
                                     <excludeArtifactIds>
-                                        dapeng-core,commons-logging,slf4j-api,logback-classic,logback-core,janino,commons-compiler,gson,dapeng-message-api,dapeng-api-doc,dapeng-message-kafka,kafka_2.12,kafka-clients,jopt-simple,metrics-core
+                                        dapeng-core,dapeng-transaction-api,commons-logging,dapeng-message-api,dapeng-api-doc,dapeng-message-kafka,kafka_2.12,kafka-clients,jopt-simple,metrics-core
                                     </excludeArtifactIds>
                                 </configuration>
                             </execution>
@@ -298,7 +299,7 @@
         <dependency>
             <groupId>org.quartz-scheduler</groupId>
             <artifactId>quartz</artifactId>
-            <version>2.2.0</version>
+            <version>2.2.2</version>
         </dependency>
     </dependencies>
 </project>

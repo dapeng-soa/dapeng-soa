@@ -38,7 +38,7 @@ import static com.github.dapeng.router.token.Token.STRING;
  * <pre>
  * routes :  (route eol)*
  * route  : left '=>' right
- * left  : 'otherwise' matcher (';' matcher)*
+ * left  : 'otherwise' | matcher (';' matcher)*
  * matcher : id 'match' patterns
  * patterns: pattern (',' pattern)*
  * pattern : '~' pattern

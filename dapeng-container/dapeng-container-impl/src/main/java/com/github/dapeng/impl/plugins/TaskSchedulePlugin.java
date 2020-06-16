@@ -152,7 +152,7 @@ public class TaskSchedulePlugin implements AppListener, Plugin {
             jobDataMap.put("serviceName", serviceInfo.serviceName);
             jobDataMap.put("versionName", serviceInfo.version);
             jobDataMap.put("methodName", methodName);
-            jobDataMap.put("serverIp", SoaSystemEnvProperties.SOA_CONTAINER_IP);
+            jobDataMap.put("serverIp", SoaSystemEnvProperties.HOST_IP);
             jobDataMap.putAsString("serverPort", SoaSystemEnvProperties.SOA_CONTAINER_PORT);
             jobDataMap.put("isReported", isReported);
 

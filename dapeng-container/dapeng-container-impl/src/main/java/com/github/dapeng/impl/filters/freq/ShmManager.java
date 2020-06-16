@@ -137,7 +137,14 @@ public class ShmManager {
             LOGGER.warn("ShmManager::init, MMAP file not exist, now create one");
             String parentPath = SoaSystemEnvProperties.SOA_FREQ_SHM_DATA.substring(0,SoaSystemEnvProperties.SOA_FREQ_SHM_DATA.lastIndexOf('/'));
             new File(parentPath).mkdirs();
-            boolean succeed = file.createNewFile();
+            boolean succeed = false;
+            try {
+                succeed = file.createNewFile();
+            }
+            catch(IOException ex){
+                LOGGER.error("Can't open shm file:" + file + ", You may run with -Dsoa.freq.limit.enable=false or -Dsoa.freq.shm.data=filename to avoid this error", ex);
+                throw ex;
+            }
             LOGGER.warn("ShmManager::init, MMAP file created:" + (succeed?"succeed":"failed"));
         }
         RandomAccessFile access = new RandomAccessFile(file, "rw");

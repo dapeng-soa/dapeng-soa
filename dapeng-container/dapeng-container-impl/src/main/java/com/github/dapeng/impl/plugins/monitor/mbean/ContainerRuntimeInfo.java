@@ -22,12 +22,14 @@ import com.github.dapeng.api.Container;
 import com.github.dapeng.core.Application;
 import com.github.dapeng.impl.plugins.monitor.ServerCounterContainer;
 import com.github.dapeng.impl.plugins.monitor.config.MonitorFilterProperties;
-import com.github.dapeng.impl.plugins.netty.SoaInvokeCounter;
 import com.github.dapeng.util.DumpUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.github.dapeng.core.helper.DapengUtil.CONTAINER_VERSION;
 
 /**
  * @author with struy.
@@ -40,7 +42,6 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerRuntimeInfo.class);
     private LoggerContext loggerContext = null;
     private final static String METHOD_NAME_KEY = "method_name";
-    private final static String containerVersion = "2.1.1";
     private final static ServerCounterContainer counterContainer = ServerCounterContainer.getInstance();
     private final Container container;
 
@@ -204,6 +205,6 @@ public class ContainerRuntimeInfo implements ContainerRuntimeInfoMBean {
     }
 
     private String getContainerVersion() {
-        return containerVersion;
+        return CONTAINER_VERSION;
     }
 }

@@ -489,6 +489,7 @@ class JsonReader implements JsonCallback {
                 oproto.writeI32((int) value);
                 break;
             case LONG:
+            case DATE:
                 oproto.writeI64((long) value);
                 break;
             case DOUBLE:
