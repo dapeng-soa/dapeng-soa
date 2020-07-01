@@ -250,8 +250,8 @@ public class RoutesExecutor {
             case "version":
                 ctxValue = ctx.versionName();
                 break;
-            case "userId":
-                ctxValue = ctx.userId().map(String::valueOf).orElse("");
+            case "customerId":
+                ctxValue = ctx.customerId().map(String::valueOf).orElse("");
                 break;
             case "callerIp":
                 ctxValue = ctx.callerIp().map(String::valueOf).orElse("");

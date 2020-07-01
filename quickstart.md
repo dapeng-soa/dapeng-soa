@@ -341,7 +341,7 @@ this is a template to genreate dapeng api service
 name [api]: demo     # 输入项目名，不输入直接回车则使用默认值
 version ["0.1-SNAPSHOT"]:  # 输入项目版本号
 scalaVersion ["2.12.2"]:   # 输入scala版本，建议2.12以上
-organization [com.github.dapeng-soa]: # 输入你的服务groupId
+organization [com.github.dapeng]: # 输入你的服务groupId
 resources [resources]:      #源文件文件夹名， 默认值，可以不改
 api [demo-api]:           # 可使用默认值
 service [demo-service]:   # 可使用默认值

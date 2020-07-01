@@ -22,8 +22,8 @@ package com.github.dapeng.router.token;
  * <p>
  * method match
  * version match
- * userId match
- * method version userId 等诸如此类的都称为ID
+ * customerId match
+ * method version customerId 等诸如此类的都称为ID
  *
  * @author hz.lei
  * @date 2018年04月13日 下午9:03

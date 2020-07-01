@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.dapeng-soa</groupId>
+    <groupId>com.github.dapeng</groupId>
     <artifactId>dapeng-parent</artifactId>
     <packaging>pom</packaging>
     <version>2.2.2</version>
@@ -224,7 +224,7 @@
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-all</artifactId>
-                <version>4.1.20.Final</version>
+                <version>4.1.50.Final</version>
             </dependency>
 
             <dependency>
@@ -254,7 +254,7 @@
             </dependency>
 
             <dependency>
-                <groupId>com.github.dapeng-soa</groupId>
+                <groupId>com.github.dapeng</groupId>
                 <artifactId>dapeng-core</artifactId>
                 <version>${project.version}</version>
             </dependency>

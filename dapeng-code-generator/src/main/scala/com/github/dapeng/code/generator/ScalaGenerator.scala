@@ -333,6 +333,19 @@ class ScalaGenerator extends CodeGenerator {
           ).success
         </block>
 
+        def isSoaTransactionalProcess: Boolean = <block>
+
+          var isSoaTransactionalProcess = false
+          {toMethodArrayBuffer(service.methods).map{(method:Method)=>{
+
+            if(method.doc != null && method.doc.contains("@IsSoaTransactionProcess")){
+              <div>
+                if(InvocationContextImpl.Factory.currentInstance.methodName().equals("{method.name}"))<block>
+                isSoaTransactionalProcess = true</block>
+              </div>}
+          }}}
+          isSoaTransactionalProcess
+        </block>
         def echo: String = <block>
           pool.send(
           serviceName,
@@ -421,6 +434,20 @@ class ScalaGenerator extends CodeGenerator {
           new GetServiceMetadata_argsSerializer,
           new GetServiceMetadata_resultSerializer
           ).success
+        </block>
+
+        def isSoaTransactionalProcess: Boolean = <block>
+
+          var isSoaTransactionalProcess = false
+          {toMethodArrayBuffer(service.methods).map{(method:Method)=>{
+
+            if(method.doc != null && method.doc.contains("@IsSoaTransactionProcess")){
+              <div>
+                if(InvocationContextImpl.Factory.currentInstance.methodName().equals("{method.name}"))<block>
+                isSoaTransactionalProcess = true</block>
+              </div>}
+          }}}
+          isSoaTransactionalProcess
         </block>
 
         def echo: String = <block>
@@ -533,7 +560,7 @@ class ScalaGenerator extends CodeGenerator {
 
       def findByLabel(name: String): {enum.name} = <block>
         name match <block>
-          {toEnumItemArrayBuffer(enum.enumItems).filterNot(i => i.doc.trim.isEmpty).map { (enumItem: EnumItem) => {
+          {toEnumItemArrayBuffer(enum.enumItems).filterNot(i => Option(i.doc).getOrElse("").trim.isEmpty).map { (enumItem: EnumItem) => {
             <div>case "{enumItem.doc.trim.replace("*","")}" => {enumItem.label}
             </div>
           }
@@ -588,7 +615,7 @@ class ScalaGenerator extends CodeGenerator {
         *{field.doc}
         **/
         {index = index + 1}
-        {nameAsId(field.name)} : {if(field.isOptional) <div>Option[</div>}{toDataTypeTemplate(field.getDataType)}{if(field.isOptional) <div>] = None</div>}{if(index < struct.getFields.size) <span>,</span>}</div>}}}
+        {nameAsId(field.name)} : {if(field.isOptional) <div>Option[</div>}{toDataTypeTemplate(field.getDataType)}{if(field.isOptional) <div>] = None</div> else toDataTypeEmpty(field.getDataType) }{if(index < struct.getFields.size) <span>,</span>}</div>}}}
         )
       </div>
     }
@@ -760,6 +787,19 @@ class ScalaGenerator extends CodeGenerator {
         return {<div>{dataType.getQualifiedName}</div>}
       case KIND.STRUCT =>
         return {<div>{dataType.getQualifiedName}</div>}
+    }
+  }
+
+  def toDataTypeEmpty(dataType:DataType): Elem = {
+    dataType.kind match {
+      case KIND.MAP =>
+        return {<div> = Map.empty[{toDataTypeTemplate(dataType.getKeyType())}, {toDataTypeTemplate(dataType.getValueType())}]</div>}
+      case KIND.LIST =>
+        return {<div> = List.empty[{toDataTypeTemplate(dataType.getValueType())}]</div>}
+      case KIND.SET =>
+        return {<div> = Set.empty[{toDataTypeTemplate(dataType.getValueType())}]</div>}
+      case _ =>
+        return {<div></div>}
     }
   }
 

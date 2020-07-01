@@ -37,11 +37,11 @@ import scala.util.control.Breaks._
 
 
 /**
-  * Thrift Code 解析器
-  *
-  * @author craneding
-  * @date 15/7/22
-  */
+ * Thrift Code 解析器
+ *
+ * @author craneding
+ * @date 15/7/22
+ */
 class ThriftCodeParser(var language: String) {
 
   private val templateCache = new TrieMap[String, Mustache]
@@ -54,15 +54,15 @@ class ThriftCodeParser(var language: String) {
   private val mapEnumCache = new util.HashMap[String, metadata.TEnum]()
 
   /**
-    * like
-    * val namespace = com.github.dapeng.soa.service
-    * toScalaNamespace(namespace) => com.github.dapeng.soa.scala.service
-    * toScalaNamespace(namespace, 1) => com.github.dapeng.scala.soa.service
-    *
-    * @param namespace
-    * @param lastIndexCount
-    * @return
-    */
+   * like
+   * val namespace = com.github.dapeng.soa.service
+   * toScalaNamespace(namespace) => com.github.dapeng.soa.scala.service
+   * toScalaNamespace(namespace, 1) => com.github.dapeng.scala.soa.service
+   *
+   * @param namespace
+   * @param lastIndexCount
+   * @return
+   */
   private def toScalaNamespace(namespace: String, lastIndexCount: Int = 0) = {
     if (namespace != null && namespace.length > 0) {
       var int = lastIndexCount
@@ -78,11 +78,11 @@ class ThriftCodeParser(var language: String) {
   }
 
   /**
-    * 生成文档
-    *
-    * @param resource 源文件
-    * @return 文档
-    */
+   * 生成文档
+   *
+   * @param resource 源文件
+   * @return 文档
+   */
   private def generateDoc(resource: String): Document = {
 
     val homeDir = resource.substring(0, if (resource.lastIndexOf("/") == -1) resource.lastIndexOf("\\") else resource.lastIndexOf("/"))
@@ -98,7 +98,7 @@ class ThriftCodeParser(var language: String) {
         case Some(i) =>
           val namespace = i.split(" ").reverse.head
           val scalaNamespace = toScalaNamespace(namespace)
-          txt.replace(namespace,scalaNamespace)
+          txt.replace(namespace, scalaNamespace)
         case None =>
           println("[Warning] you should specific your namespace statement at head of your thrift file. like: namespace java YourPackageName")
           txt
@@ -117,20 +117,20 @@ class ThriftCodeParser(var language: String) {
   }
 
   /**
-    * 获取生成器
-    *
-    * @param doc0        文档结构
-    * @param genHashcode 是否生成HashCode
-    * @return 生成器
-    */
-  private def getGenerator(doc0: Document, genHashcode: Boolean = false): ApacheJavaGenerator = {
-    new ApacheJavaGenerator(new ResolvedDocument(doc0, new TypeResolver()), "thrift", templateCache, genHashcode = genHashcode)
+   * 获取生成器
+   *
+   * @param doc0        文档结构
+   * @param genHashcode 是否生成HashCode
+   * @return 生成器
+   */
+  private def getGenerator(doc0: Document, isGenHashcode: Boolean = false): ApacheJavaGenerator = {
+    new ApacheJavaGenerator(resolvedDoc = new ResolvedDocument(document = doc0, resolver = new TypeResolver()), defaultNamespace="thrift", templateCache=templateCache, genHashcode=isGenHashcode)
     //new ApacheJavaGenerator(Map(), "thrift", templateCache, genHashcode = genHashcode)
   }
 
   private def toDocString(docstring: scala.Option[String]): String =
-    if (docstring == None)
-      null
+    if (docstring.isEmpty)
+      ""
     else {
       val result = docstring.get.toString();
 
@@ -348,7 +348,7 @@ class ThriftCodeParser(var language: String) {
   }
 
 
-  private def findServices(doc: Document, generator: ApacheJavaGenerator): util.List[metadata.Service] = {
+  private def findServices(doc: Document, generator: ApacheJavaGenerator, groupId: String = "", artifactId: String = "", modelVersion: String = ""): util.List[metadata.Service] = {
     val results = new util.ArrayList[metadata.Service]()
 
     doc.services.foreach(s => {
@@ -359,12 +359,14 @@ class ThriftCodeParser(var language: String) {
 
       service.setNamespace(if (controller.has_namespace) controller.namespace else null)
       service.setName(controller.name)
-      service.setDoc(toDocString(s.docstring))
-      if (s.annotations.size > 0)
+      service.setDoc(s"${toDocString(s.docstring)} \n from $groupId/$artifactId")
+      if (s.annotations.nonEmpty)
         service.setAnnotations(s.annotations.map { case (key, value) => new Annotation(key, value) }.toList)
 
 
-      val serviceVersion = if(service.annotations != null) service.annotations.find(item => {item.key.contains("version")}) else None
+      val serviceVersion = if (service.annotations != null) service.annotations.find(item => {
+        item.key.contains("version")
+      }) else None
       service.setMeta(new metadata.Service.ServiceMeta {
         if (serviceVersion.nonEmpty) {
           this.version = serviceVersion.get.value
@@ -373,7 +375,6 @@ class ThriftCodeParser(var language: String) {
         }
         this.timeout = 30000
       })
-
 
 
       val methods = new util.ArrayList[Method]()
@@ -403,7 +404,7 @@ class ThriftCodeParser(var language: String) {
         request.setFields(new util.ArrayList[metadata.Field]())
         response.setFields(new util.ArrayList[metadata.Field]())
 
-        for (index <- (0 until functionField.fields.size)) {
+        for (index <- functionField.fields.indices) {
           val field = functionField.fields(index)
 
           val realField = s.functions.get(tmpIndex).args.get(index)
@@ -488,7 +489,7 @@ class ThriftCodeParser(var language: String) {
     enumCache.toList
   }
 
-  def toServices(resources: Array[String], serviceVersion: String): util.List[metadata.Service] = {
+  def toServices(resources: Array[String], serviceVersion: String, groupId: String = "", artifactId: String = "", modelVersion: String = ""): util.List[metadata.Service] = {
     resources.foreach(resource => {
       val doc = generateDoc(resource)
 
@@ -504,7 +505,7 @@ class ThriftCodeParser(var language: String) {
 
         enumCache.addAll(findEnums(doc, generator))
         structCache.addAll(findStructs(doc, generator))
-        serviceCache.addAll(findServices(doc, generator))
+        serviceCache.addAll(findServices(doc, generator, groupId, artifactId, modelVersion))
       } catch {
         case ex: Exception => {
           println(s"parse ${resource} failed")
@@ -551,11 +552,11 @@ class ThriftCodeParser(var language: String) {
   }
 
   /**
-    * 递归添加所有struct
-    *
-    * @param dataType
-    * @param structSet
-    */
+   * 递归添加所有struct
+   *
+   * @param dataType
+   * @param structSet
+   */
   def getAllStructs(dataType: metadata.DataType, structSet: java.util.HashSet[metadata.Struct]): Unit = {
 
     if (dataType.getKind == DataType.KIND.STRUCT) {
@@ -580,12 +581,12 @@ class ThriftCodeParser(var language: String) {
   }
 
   /**
-    * qualifiedName:
-    *
-    * @param annoValue
-    * @param structSet
-    * @return
-    */
+   * qualifiedName:
+   *
+   * @param annoValue
+   * @param structSet
+   * @return
+   */
   def getAllStructByAnnotation(annoValue: String, structSet: java.util.HashSet[metadata.Struct]) = {
     annoValue.split(",").foreach(qualifiedName => {
       val finalQualifiedName = if (language.equals("scala")) {
@@ -603,11 +604,11 @@ class ThriftCodeParser(var language: String) {
   }
 
   /**
-    * 递归添加所有enum
-    *
-    * @param dataType
-    * @param enumSet
-    */
+   * 递归添加所有enum
+   *
+   * @param dataType
+   * @param enumSet
+   */
   def getAllEnums(dataType: metadata.DataType, enumSet: util.HashSet[metadata.TEnum], loadedStructs: util.HashSet[String]): Unit = {
 
     if (dataType.getKind == DataType.KIND.ENUM)

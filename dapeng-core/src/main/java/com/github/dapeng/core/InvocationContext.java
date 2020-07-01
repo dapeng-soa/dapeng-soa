@@ -68,12 +68,12 @@ public interface InvocationContext {
     /**
      * 设置服务会话发起人Id, 特指前台用户,可用于频率控制
      *
-     * @param userId
+     * @param customerId
      * @return
      */
-    InvocationContext userId(final Long userId);
+    InvocationContext customerId(final Integer customerId);
 
-    Optional<Long> userId();
+    Optional<Integer> customerId();
 
     /**
      * 设置用户Ip,可用于频率控制
@@ -91,9 +91,9 @@ public interface InvocationContext {
      * @param operatorId
      * @return
      */
-    InvocationContext operatorId(final Long operatorId);
+    InvocationContext operatorId(final Integer operatorId);
 
-    Optional<Long> operatorId();
+    Optional<Integer> operatorId();
 
     /**
      * 设置超时,单位毫秒
@@ -305,18 +305,16 @@ public interface InvocationContext {
         Optional<Integer> userIp();
 
         /**
-         * 服务会话发起者id, 特指前台用户
-         *
-         * @return
+         * 服务会话发起操作人Id, 特指前台用户
          */
-        Optional<Long> userId();
+        Optional<Integer> customerId();
 
         /**
          * 服务会话发起者id, 特指后台用户
          *
          * @return
          */
-        Optional<Long> operatorId();
+        Optional<Integer> operatorId();
 
         /**
          * 调用源
@@ -329,5 +327,6 @@ public interface InvocationContext {
          * 自定义信息
          */
         Map<String, String> cookies();
+
     }
 }

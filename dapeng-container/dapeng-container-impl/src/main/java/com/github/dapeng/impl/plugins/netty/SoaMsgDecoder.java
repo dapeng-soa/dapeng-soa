@@ -168,7 +168,7 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
                     + "]:version[" + soaHeader.getVersionName()
                     + "]:method[" + soaHeader.getMethodName() + "]"
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "") + " "
-                    + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "") + " "
+                    + (soaHeader.getCustomerId().isPresent() ? " customerId:" + soaHeader.getCustomerId().get() : "") + " "
                     + (soaHeader.getUserIp().isPresent() ? " userIp:" + IPUtils.transferIp(soaHeader.getUserIp().get()) : "");
             LOGGER.debug(getClass().getSimpleName() + "::decode " + debugLog + ", payload:\n" + args);
         }
@@ -180,8 +180,8 @@ public class SoaMsgDecoder extends MessageToMessageDecoder<ByteBuf> {
             ctx.callerMid(soaHeader.getCallerMid().get());
         }
         ctx.callerIp(soaHeader.getCallerIp().orElse(null));
-        if (soaHeader.getUserId().isPresent()) {
-            ctx.userId(soaHeader.getUserId().get());
+        if (soaHeader.getCustomerId().isPresent()) {
+            ctx.customerId(soaHeader.getCustomerId().get());
         }
         if (soaHeader.getCallerPort().isPresent()) {
             ctx.callerPort(soaHeader.getCallerPort().get());

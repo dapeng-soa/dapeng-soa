@@ -145,7 +145,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     break;
                 case 15:
                     if (schemeField.type == TType.I64) {
-                        bean.setOperatorId(Optional.of(iprot.readI64()));
+                        bean.setOperatorId(Optional.of(iprot.readI32()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
@@ -159,7 +159,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     break;
                 case 17:
                     if (schemeField.type == TType.I64) {
-                        bean.setUserId(Optional.of(iprot.readI64()));
+                        bean.setCustomerId(Optional.of(iprot.readI32()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
@@ -320,9 +320,9 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
             oprot.writeI32(bean.getCalleePort().get());
             oprot.writeFieldEnd();
         }
-        if (bean.getUserId().isPresent()) {
-            oprot.writeFieldBegin(new TField("userId", TType.I64, (short) 17));
-            oprot.writeI64(bean.getUserId().get());
+        if (bean.getCustomerId().isPresent()) {
+            oprot.writeFieldBegin(new TField("customerId", TType.I64, (short) 17));
+            oprot.writeI64(bean.getCustomerId().get());
             oprot.writeFieldEnd();
         }
         if (bean.getCalleeMid().isPresent()) {

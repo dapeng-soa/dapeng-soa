@@ -76,26 +76,24 @@ public class SoaHeader {
      */
     private Optional<Long> sessionTid = Optional.empty();
     /**
-     * 服务会话发起人Id, 特指前台用户
-     */
-    private Optional<Long> userId = Optional.empty();
-    /**
      * 服务会话发起人Ip
      */
     private Optional<Integer> userIp = Optional.empty();
     /**
      * 服务会话发起操作人Id, 特指后台用户
      */
-    private Optional<Long> operatorId = Optional.empty();
+    private Optional<Integer> operatorId = Optional.empty();
 
+    /**
+     * 服务会话发起操作人Id, 特指前台用户
+     */
+    private Optional<Integer> customerId = Optional.empty();
 
     private Optional<Long> callerTid = Optional.empty();
 
     private Optional<Integer> timeout = Optional.empty();
 
-    /**
-     * 慢服务检测时间阈值
-     */
+    //慢服务检测时间阈值
     private Optional<Long> maxProcessTime = Optional.empty();
 
     /**
@@ -112,6 +110,11 @@ public class SoaHeader {
      */
     private Optional<Integer> callerPort = Optional.empty();
 
+    /**
+     * 调用源
+     */
+    private Optional<String> callerFrom = Optional.empty();
+
 
     /**
      * 返回码
@@ -122,6 +125,11 @@ public class SoaHeader {
      * 返回信息
      */
     private Optional<String> respMessage = Optional.empty();
+
+    /**
+     * SessionId
+     */
+    private Optional<String> sessionId = Optional.empty();
 
     private Optional<Long> calleeTid = Optional.empty();
     private Optional<Integer> calleeIp = Optional.empty();
@@ -149,9 +157,10 @@ public class SoaHeader {
         sb.append("\"").append("methodName").append("\":\"").append(this.methodName).append("\",");
         sb.append("\"").append("versionName").append("\":\"").append(this.versionName).append("\",");
         sb.append("\"").append("sessionTid").append("\":\"").append(this.sessionTid.isPresent() ? DapengUtil.longToHexStr(this.sessionTid.get()) : null).append("\",");
-        sb.append("\"").append("userId").append("\":\"").append(this.userId.isPresent() ? this.userId.get() : null).append("\",");
         sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? IPUtils.transferIp(this.userIp.get()) : null).append("\",");
         sb.append("\"").append("operatorId").append("\":").append(this.operatorId.isPresent() ? this.operatorId.get() : null).append(",");
+        sb.append("\"").append("customerId").append("\":").append(this.customerId.isPresent() ? this.customerId.get() : null).append(",");
+        sb.append("\"").append("sessionId").append("\":\"").append(this.sessionId.isPresent() ? this.sessionId.get() : null).append("\",");
         sb.append("\"").append("timeout").append("\":\"").append(this.timeout.isPresent() ? this.timeout.get() : null).append("\",");
         sb.append("\"").append("maxProcessTime").append("\":\"").append(this.maxProcessTime.isPresent() ? this.maxProcessTime.get() : null).append("\",");
         sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid.isPresent() ? DapengUtil.longToHexStr(this.callerTid.get()) : null).append("\",");
@@ -159,6 +168,7 @@ public class SoaHeader {
         sb.append("\"").append("callerIp").append("\":\"").append(this.callerIp.isPresent() ? IPUtils.transferIp(this.callerIp.get()) : null).append("\",");
         sb.append("\"").append("callerPort").append("\":\"").append(this.callerPort).append("\",");
         sb.append("\"").append("calleeTid").append("\":\"").append(this.calleeTid.isPresent() ? DapengUtil.longToHexStr(this.calleeTid.get()) : null).append("\",");
+        sb.append("\"").append("callerFrom").append("\":\"").append(this.callerFrom).append("\",");
         sb.append("\"").append("calleeMid").append("\":\"").append(this.calleeMid.isPresent() ? this.calleeMid.get() : null).append("\",");
         sb.append("\"").append("calleeIp").append("\":\"").append(this.calleeIp.isPresent() ? IPUtils.transferIp(this.calleeIp.get()) : null).append("\",");
         sb.append("\"").append("calleePort").append("\":\"").append(this.calleePort.isPresent() ? this.calleePort.get() : null).append("\",");
@@ -207,14 +217,6 @@ public class SoaHeader {
         this.sessionTid = sessionTid;
     }
 
-    public Optional<Long> getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Optional<Long> userId) {
-        this.userId = userId;
-    }
-
     public Optional<Integer> getUserIp() {
         return userIp;
     }
@@ -223,11 +225,11 @@ public class SoaHeader {
         this.userIp = userIp;
     }
 
-    public Optional<Long> getOperatorId() {
+    public Optional<Integer> getOperatorId() {
         return operatorId;
     }
 
-    public void setOperatorId(Optional<Long> operatorId) {
+    public void setOperatorId(Optional<Integer> operatorId) {
         this.operatorId = operatorId;
     }
 
@@ -319,6 +321,10 @@ public class SoaHeader {
         return this.callerPort;
     }
 
+    public Optional<String> getCallerFrom() {
+        return this.callerFrom;
+    }
+
     public Optional<Integer> getCalleeTime1() {
         return calleeTime1;
     }
@@ -343,6 +349,10 @@ public class SoaHeader {
         this.callerPort = callerPort;
     }
 
+    public void setCallerFrom(Optional<String> callerFrom) {
+        this.callerFrom = callerFrom;
+    }
+
 
     public Optional<Integer> getTransactionId() {
         return transactionId;
@@ -358,6 +368,14 @@ public class SoaHeader {
 
     public void setTransactionSequence(Integer transactionSequence) {
         this.transactionSequence = Optional.ofNullable(transactionSequence);
+    }
+
+    public Optional<String> getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(Optional<String> sessionId) {
+        this.sessionId = sessionId;
     }
 
     /**
@@ -409,5 +427,51 @@ public class SoaHeader {
             cookies = new HashMap<>(16);
         }
         return cookies;
+    }
+
+
+    public Optional<Integer> getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(Optional<Integer> customerId) {
+        this.customerId = customerId;
+    }
+
+
+    public void setCallerIp(Optional<Integer> callerIp) {
+        this.callerIp = callerIp;
+    }
+
+    public void setRespCode(Optional<String> respCode) {
+        this.respCode = respCode;
+    }
+
+    public void setRespMessage(Optional<String> respMessage) {
+        this.respMessage = respMessage;
+    }
+
+    public void setCalleeTid(Optional<Long> calleeTid) {
+        this.calleeTid = calleeTid;
+    }
+
+    public void setCalleeMid(Optional<String> calleeMid) {
+        this.calleeMid = calleeMid;
+    }
+
+    public void setCalleeTime1(Optional<Integer> calleeTime1) {
+        this.calleeTime1 = calleeTime1;
+    }
+
+    public void setCalleeTime2(Optional<Integer> calleeTime2) {
+        this.calleeTime2 = calleeTime2;
+    }
+
+    public void setTransactionId(Optional<Integer> transactionId) {
+        this.transactionId = transactionId;
+    }
+
+    public void setTransactionSequence(Optional<Integer> transactionSequence) {
+        this.transactionSequence = transactionSequence;
     }
 }

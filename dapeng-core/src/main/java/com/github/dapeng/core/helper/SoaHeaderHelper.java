@@ -57,7 +57,7 @@ public class SoaHeaderHelper {
     public static void resetSoaHeader(SoaHeader header) {
         //TODO
         if (!header.getOperatorId().isPresent()) {
-            header.setOperatorId(Optional.of(0L));
+            header.setOperatorId(Optional.of(0));
         }
     }
 
@@ -90,7 +90,7 @@ public class SoaHeaderHelper {
         if (invocationCtxProxy != null) {
             header.setSessionTid(invocationCtxProxy.sessionTid());
             header.setUserIp(invocationCtxProxy.userIp());
-            header.setUserId(invocationCtxProxy.userId());
+            header.setCustomerId(invocationCtxProxy.customerId());
             header.setOperatorId(invocationCtxProxy.operatorId());
 
             header.setCallerMid(invocationCtxProxy.callerMid());
@@ -108,8 +108,8 @@ public class SoaHeaderHelper {
         if (invocationContext.operatorId().isPresent()) {
             header.setOperatorId(invocationContext.operatorId());
         }
-        if (invocationContext.userId().isPresent()) {
-            header.setUserId(invocationContext.userId());
+        if (invocationContext.customerId().isPresent()) {
+            header.setCustomerId(invocationContext.customerId());
         }
         if (invocationContext.userIp().isPresent()) {
             header.setUserIp(invocationContext.userIp());
@@ -130,8 +130,8 @@ public class SoaHeaderHelper {
                 if (!header.getOperatorId().isPresent()) {
                     header.setOperatorId(oriHeader.getOperatorId());
                 }
-                if (!header.getUserId().isPresent()) {
-                    header.setUserId(oriHeader.getUserId());
+                if (!header.getCustomerId().isPresent()) {
+                    header.setCustomerId(oriHeader.getCustomerId());
                 }
                 if (!header.getUserIp().isPresent()) {
                     header.setUserIp(oriHeader.getUserIp());

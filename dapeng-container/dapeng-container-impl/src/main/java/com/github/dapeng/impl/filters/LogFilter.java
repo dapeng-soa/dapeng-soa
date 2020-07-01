@@ -69,7 +69,7 @@ public class LogFilter implements Filter {
                     + "]:version[" + soaHeader.getVersionName()
                     + "]:method[" + soaHeader.getMethodName() + "]"
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "") + " "
-                    + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "") + " "
+                    + (soaHeader.getCustomerId().isPresent() ? " customerId:" + soaHeader.getCustomerId().get() : "") + " "
                     + (soaHeader.getUserIp().isPresent() ? " userIp:" + IPUtils.transferIp(soaHeader.getUserIp().get()) : "");
 
 
@@ -139,7 +139,7 @@ public class LogFilter implements Filter {
                     + "]:version[" + soaHeader.getVersionName()
                     + "]:method[" + soaHeader.getMethodName() + "]"
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                    + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "")
+                    + (soaHeader.getCustomerId().isPresent() ? " customerId:" + soaHeader.getCustomerId().get() : "")
                     + " cost:" + cost + "ms";
             soaHeader.setCalleeTime1(cost.intValue());
             application.info(this.getClass(), infoLog);

@@ -169,7 +169,7 @@ public class ShmManager {
      * 限流入口，检测每一次请求，返回true 表示 access ，返回false 表示被限流
      *
      * @param rule 规则对象
-     * @param key  目前仅支持 int 值，例如 userId， userIp值等。
+     * @param key  目前仅支持 int 值，例如 customerId， userIp值等。
      *             如果是字符串，需要先取hash，再按此进行限流。
      * @return true access , false can't access
      */
@@ -329,7 +329,7 @@ public class ShmManager {
      * struct CounterNode {
      *   i16 app_id;  // app 被映射为 16bit id
      *   i16 rule_type_id;  // rule_type_id 被映射为 16bit id
-     *   i32 key;  // ip, userId, callerMid etc.
+     *   i32 key;  // ip, customerId, callerMid etc.
      *   i32 timestamp;  // last updated unix epoch, seconds since 1970.
      *   i32 min_count;  // min interval counter
      *   i32 mid_count;  // mid interval counter
@@ -474,7 +474,7 @@ public class ShmManager {
      * struct CounterNode {
      *   i16 app_id;  // app 被映射为 16bit id
      *   i16 rule_type_id;  // rule_type_id 被映射为 16bit id
-     *   i32 key;  // ip, userId, callerMid etc.
+     *   i32 key;  // ip, customerId, callerMid etc.
      *   i32 timestamp;  // last updated unix epoch, seconds since 1970.
      *   i32 min_count;  // min interval counter
      *   i32 mid_count;  // mid interval counter

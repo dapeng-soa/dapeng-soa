@@ -34,7 +34,7 @@
 ####  逻辑处理
     1.判断用户类型
     2.密码加盐处理
-    3.新增一条t_patient记录，取得新用户userId
+    3.新增一条t_patient记录，取得新用户customerId
     4.新增一条t_patient_ex记录
     5.返回结果
 
@@ -89,7 +89,7 @@
 ####  逻辑处理
     1.判断用户类型
     2.密码加盐处理
-    3.新增一条t_patient记录，取得新用户userId
+    3.新增一条t_patient记录，取得新用户customerId
     4.新增一条t_patient_ex记录
     5.返回结果
 
@@ -134,7 +134,7 @@
     3.返回结果
 
 #### 数据变更
-    1.update t_user_ex() set last_login_time = ${lastLoginTime} , login_times = login_times+1 , last_login_device = ${lastLoginDevice} .....where user_id = ${userId}
+    1.update t_user_ex() set last_login_time = ${lastLoginTime} , login_times = login_times+1 , last_login_device = ${lastLoginDevice} .....where user_id = ${customerId}
 
 #### 事务处理
 #### 输出
@@ -183,7 +183,7 @@
     3.返回结果
 
 #### 数据变更
-    1.update t_user_ex() set last_login_time = ${lastLoginTime} , login_times = login_times+1 , last_login_device = ${lastLoginDevice} .....where user_id = ${userId}
+    1.update t_user_ex() set last_login_time = ${lastLoginTime} , login_times = login_times+1 , last_login_device = ${lastLoginDevice} .....where user_id = ${customerId}
 
 #### 事务处理
 #### 输出
@@ -690,7 +690,7 @@
 #### 接口依赖
 #### 边界异常说明
 #### 输入
-    1.userId
+    1.customerId
 
 #### 前置检查
     1.用户类型
@@ -731,7 +731,7 @@
 #### 接口依赖
 #### 边界异常说明
 #### 输入
-    1.userId
+    1.customerId
 
 #### 前置检查
     1.用户类型
@@ -1870,7 +1870,7 @@
 
 
 #### 数据变更
-    1.insert into t_feedback set user_id = ${userId}, contact = ${phone}, user_type = ${UserType.getValue}, content =${request.content}...
+    1.insert into t_feedback set user_id = ${customerId}, contact = ${phone}, user_type = ${UserType.getValue}, content =${request.content}...
 
 #### 事务处理
 #### 输出
@@ -1910,7 +1910,7 @@
 
 
 #### 数据变更
-    1.insert into t_feedback set user_id = ${userId}, contact = ${phone}, user_type = ${UserType.getValue}, content =${request.content}...
+    1.insert into t_feedback set user_id = ${customerId}, contact = ${phone}, user_type = ${UserType.getValue}, content =${request.content}...
 
 #### 事务处理
 #### 输出

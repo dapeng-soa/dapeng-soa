@@ -48,7 +48,7 @@ public class InvocationContextUtils {
 
         if (invocationCtxProxy != null) {
             context.userIp(invocationCtxProxy.userIp().orElse(null));
-            context.userId(invocationCtxProxy.userId().orElse(null));
+            context.customerId(invocationCtxProxy.customerId().orElse(null));
             context.operatorId(invocationCtxProxy.operatorId().orElse(null));
             context.callerMid(invocationCtxProxy.callerMid().orElse(null));
             context.cookies(invocationCtxProxy.cookies());

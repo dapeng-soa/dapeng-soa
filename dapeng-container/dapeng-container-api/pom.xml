@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>dapeng-container</artifactId>
-        <groupId>com.github.dapeng-soa</groupId>
+        <groupId>com.github.dapeng</groupId>
         <version>2.2.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -14,7 +14,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.github.dapeng-soa</groupId>
+            <groupId>com.github.dapeng</groupId>
             <artifactId>dapeng-utils</artifactId>
             <version>${project.version}</version>
         </dependency>

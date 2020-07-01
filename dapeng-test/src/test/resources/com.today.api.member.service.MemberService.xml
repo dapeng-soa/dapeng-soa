@@ -3629,7 +3629,7 @@
  记录请求流水接口
 </doc>
             <fields>
-                <field tag="1" name="userId" optional="false" privacy="false">
+                <field tag="1" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>INTEGER</kind>
                     </dataType>
@@ -3899,7 +3899,7 @@
  解冻操作请求体
 </doc>
             <fields>
-                <field tag="1" name="userId" optional="false" privacy="false">
+                <field tag="1" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>INTEGER</kind>
                     </dataType>
@@ -4025,7 +4025,7 @@
  会员账户变动
 </doc>
             <fields>
-                <field tag="1" name="userId" optional="false" privacy="false">
+                <field tag="1" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>INTEGER</kind>
                     </dataType>
@@ -4262,7 +4262,7 @@ POS端交易号
                         <kind>STRING</kind>
                     </dataType>
                 </field>
-                <field tag="2" name="userId" optional="false" privacy="false">
+                <field tag="2" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>LONG</kind>
                     </dataType>
@@ -4482,7 +4482,7 @@ POS端交易号
  通过openId注册用户返回
 </doc>
             <fields>
-                <field tag="1" name="userId" optional="false" privacy="false">
+                <field tag="1" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>LONG</kind>
                     </dataType>
@@ -4962,7 +4962,7 @@ POS端交易号
  修改用户返回体
 </doc>
             <fields>
-                <field tag="1" name="userId" optional="false" privacy="false">
+                <field tag="1" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>INTEGER</kind>
                     </dataType>
@@ -5206,7 +5206,7 @@ POS端交易号
  用户登录返回体
 </doc>
             <fields>
-                <field tag="1" name="userId" optional="false" privacy="false">
+                <field tag="1" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>INTEGER</kind>
                     </dataType>
@@ -5502,7 +5502,7 @@ POS端交易号
  冻结操作请求体
 </doc>
             <fields>
-                <field tag="1" name="userId" optional="false" privacy="false">
+                <field tag="1" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>INTEGER</kind>
                     </dataType>
@@ -5980,7 +5980,7 @@ POS端交易号
  修改用户请求体
 </doc>
             <fields>
-                <field tag="1" name="userId" optional="false" privacy="false">
+                <field tag="1" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>INTEGER</kind>
                     </dataType>
@@ -6126,7 +6126,7 @@ POS端交易号
  记录请求流水接口
 </doc>
             <fields>
-                <field tag="1" name="userId" optional="false" privacy="false">
+                <field tag="1" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>INTEGER</kind>
                     </dataType>
@@ -6575,7 +6575,7 @@ POS端交易号
                         <kind>LONG</kind>
                     </dataType>
                 </field>
-                <field tag="2" name="userId" optional="false" privacy="false">
+                <field tag="2" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>LONG</kind>
                     </dataType>
@@ -6945,7 +6945,7 @@ POS端交易号
  冻结操作返回体
 </doc>
             <fields>
-                <field tag="1" name="userId" optional="false" privacy="false">
+                <field tag="1" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>STRING</kind>
                     </dataType>
@@ -8061,7 +8061,7 @@ openid
  会员优惠券
 </doc>
             <fields>
-                <field tag="1" name="userId" optional="false" privacy="false">
+                <field tag="1" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>INTEGER</kind>
                     </dataType>
@@ -9076,7 +9076,7 @@ openid
  会员账户变动
 </doc>
             <fields>
-                <field tag="1" name="userId" optional="false" privacy="false">
+                <field tag="1" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>INTEGER</kind>
                     </dataType>
@@ -9190,7 +9190,7 @@ openid
  冻结操作返回体
 </doc>
             <fields>
-                <field tag="1" name="userId" optional="false" privacy="false">
+                <field tag="1" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>STRING</kind>
                     </dataType>

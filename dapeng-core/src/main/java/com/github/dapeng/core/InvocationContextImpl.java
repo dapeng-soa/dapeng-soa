@@ -56,7 +56,7 @@ public class InvocationContextImpl implements InvocationContext {
 
     private Optional<Long> sessionTid = Optional.empty();
     private long callerTid = DapengUtil.generateTid();
-    private Optional<Long> userId = Optional.empty();
+    private Optional<Integer> customerId = Optional.empty();
     private Optional<Integer> userIp = Optional.empty();
 
     private Optional<Integer> timeout = Optional.empty();
@@ -73,7 +73,7 @@ public class InvocationContextImpl implements InvocationContext {
 
     private Optional<String> callerMid = Optional.empty();
 
-    private Optional<Long> operatorId = Optional.empty();
+    private Optional<Integer> operatorId = Optional.empty();
 
     private Optional<Integer> transactionId = Optional.empty();
 
@@ -254,13 +254,13 @@ public class InvocationContextImpl implements InvocationContext {
     }
 
     @Override
-    public InvocationContext operatorId(Long operatorId) {
+    public InvocationContext operatorId(Integer operatorId) {
         this.operatorId = Optional.ofNullable(operatorId);
         return this;
     }
 
     @Override
-    public Optional<Long> operatorId() {
+    public Optional<Integer> operatorId() {
         return this.operatorId;
     }
 
@@ -299,14 +299,14 @@ public class InvocationContextImpl implements InvocationContext {
     }
 
     @Override
-    public InvocationContext userId(Long userId) {
-        this.userId = Optional.ofNullable(userId);
+    public InvocationContext customerId(Integer customerId) {
+        this.customerId = Optional.ofNullable(customerId);
         return this;
     }
 
     @Override
-    public Optional<Long> userId() {
-        return userId;
+    public Optional<Integer> customerId() {
+        return customerId;
     }
 
     @Override
@@ -333,7 +333,7 @@ public class InvocationContextImpl implements InvocationContext {
         sb.append("\"").append("methodName").append("\":\"").append(this.methodName).append("\",");
         sb.append("\"").append("versionName").append("\":\"").append(this.versionName).append("\",");
         sb.append("\"").append("sessionTid").append("\":\"").append(this.sessionTid.isPresent() ? longToHexStr(this.sessionTid.get()) : null).append("\",");
-        sb.append("\"").append("userId").append("\":\"").append(this.userId.orElse(null)).append("\",");
+        sb.append("\"").append("customerId").append("\":\"").append(this.customerId.orElse(null)).append("\",");
         sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? transferIp(this.userIp.get()) : null).append("\",");
         sb.append("\"").append("timeout").append("\":\"").append(this.timeout.orElse(null)).append("\",");
         sb.append("\"").append("maxProcessTime").append("\":\"").append(this.maxProcessTime.orElse(null)).append("\",");
@@ -394,8 +394,8 @@ public class InvocationContextImpl implements InvocationContext {
                     if (oriHeader.getOperatorId().isPresent()) {
                         context.operatorId(oriHeader.getOperatorId().get());
                     }
-                    if (oriHeader.getUserId().isPresent()) {
-                        context.userId(oriHeader.getUserId().get());
+                    if (oriHeader.getCustomerId().isPresent()) {
+                        context.customerId(oriHeader.getCustomerId().get());
                     }
                     if (oriHeader.getUserIp().isPresent()) {
                         context.userIp(oriHeader.getUserIp().get());

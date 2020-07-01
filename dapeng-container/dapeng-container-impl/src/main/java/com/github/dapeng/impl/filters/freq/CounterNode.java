@@ -32,7 +32,7 @@ public class CounterNode {
      */
     public final short ruleTypeId;
     /**
-     * ip, userId, callerMid etc.
+     * ip, customerId, callerMid etc.
      */
     public final int key;
     /**
