@@ -221,6 +221,14 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
                     break;
+
+                case 25:
+                    if (schemeField.type == TType.STRING) {
+                        bean.setCallerFrom(Optional.of(iprot.readString()));
+                    } else {
+                        TProtocolUtil.skip(iprot, schemeField.type);
+                    }
+                    break;
                 default:
                     TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -312,7 +320,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
         }
         if (bean.getOperatorId().isPresent()) {
             oprot.writeFieldBegin(new TField("operatorId", TType.I32, (short) 15));
-            oprot.writeI64(bean.getOperatorId().get());
+            oprot.writeI32(bean.getOperatorId().get());
             oprot.writeFieldEnd();
         }
         if (bean.getCalleePort().isPresent()) {
@@ -322,7 +330,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
         }
         if (bean.getCustomerId().isPresent()) {
             oprot.writeFieldBegin(new TField("customerId", TType.I32, (short) 17));
-            oprot.writeI64(bean.getCustomerId().get());
+            oprot.writeI32(bean.getCustomerId().get());
             oprot.writeFieldEnd();
         }
         if (bean.getCalleeMid().isPresent()) {
@@ -368,6 +376,12 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
         if (bean.getMaxProcessTime().isPresent()) {
             oprot.writeFieldBegin(new TField("maxProcessTime", TType.I64, (short) 24));
             oprot.writeI64(bean.getMaxProcessTime().get());
+            oprot.writeFieldEnd();
+        }
+
+        if (bean.getCallerFrom().isPresent()) {
+            oprot.writeFieldBegin(new TField("callerFrom", TType.STRING, (short) 25));
+            oprot.writeString(bean.getCallerFrom().get());
             oprot.writeFieldEnd();
         }
 

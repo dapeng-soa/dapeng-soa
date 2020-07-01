@@ -76,6 +76,10 @@ public class SoaHeader {
      */
     private Optional<Long> sessionTid = Optional.empty();
     /**
+     * 服务会话发起操作人Id, 特指前台用户
+     */
+    private Optional<Integer> customerId = Optional.empty();
+    /**
      * 服务会话发起人Ip
      */
     private Optional<Integer> userIp = Optional.empty();
@@ -84,16 +88,14 @@ public class SoaHeader {
      */
     private Optional<Integer> operatorId = Optional.empty();
 
-    /**
-     * 服务会话发起操作人Id, 特指前台用户
-     */
-    private Optional<Integer> customerId = Optional.empty();
 
     private Optional<Long> callerTid = Optional.empty();
 
     private Optional<Integer> timeout = Optional.empty();
 
-    //慢服务检测时间阈值
+    /**
+     * 慢服务检测时间阈值
+     */
     private Optional<Long> maxProcessTime = Optional.empty();
 
     /**
@@ -126,10 +128,7 @@ public class SoaHeader {
      */
     private Optional<String> respMessage = Optional.empty();
 
-    /**
-     * SessionId
-     */
-    private Optional<String> sessionId = Optional.empty();
+
 
     private Optional<Long> calleeTid = Optional.empty();
     private Optional<Integer> calleeIp = Optional.empty();
@@ -160,7 +159,6 @@ public class SoaHeader {
         sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? IPUtils.transferIp(this.userIp.get()) : null).append("\",");
         sb.append("\"").append("operatorId").append("\":").append(this.operatorId.isPresent() ? this.operatorId.get() : null).append(",");
         sb.append("\"").append("customerId").append("\":").append(this.customerId.isPresent() ? this.customerId.get() : null).append(",");
-        sb.append("\"").append("sessionId").append("\":\"").append(this.sessionId.isPresent() ? this.sessionId.get() : null).append("\",");
         sb.append("\"").append("timeout").append("\":\"").append(this.timeout.isPresent() ? this.timeout.get() : null).append("\",");
         sb.append("\"").append("maxProcessTime").append("\":\"").append(this.maxProcessTime.isPresent() ? this.maxProcessTime.get() : null).append("\",");
         sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid.isPresent() ? DapengUtil.longToHexStr(this.callerTid.get()) : null).append("\",");
@@ -368,14 +366,6 @@ public class SoaHeader {
 
     public void setTransactionSequence(Integer transactionSequence) {
         this.transactionSequence = Optional.ofNullable(transactionSequence);
-    }
-
-    public Optional<String> getSessionId() {
-        return sessionId;
-    }
-
-    public void setSessionId(Optional<String> sessionId) {
-        this.sessionId = sessionId;
     }
 
     /**
