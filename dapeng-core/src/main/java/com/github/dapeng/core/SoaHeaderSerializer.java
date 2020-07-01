@@ -311,7 +311,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
             oprot.writeFieldEnd();
         }
         if (bean.getOperatorId().isPresent()) {
-            oprot.writeFieldBegin(new TField("operatorId", TType.I64, (short) 15));
+            oprot.writeFieldBegin(new TField("operatorId", TType.I32, (short) 15));
             oprot.writeI64(bean.getOperatorId().get());
             oprot.writeFieldEnd();
         }
@@ -321,7 +321,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
             oprot.writeFieldEnd();
         }
         if (bean.getCustomerId().isPresent()) {
-            oprot.writeFieldBegin(new TField("customerId", TType.I64, (short) 17));
+            oprot.writeFieldBegin(new TField("customerId", TType.I32, (short) 17));
             oprot.writeI64(bean.getCustomerId().get());
             oprot.writeFieldEnd();
         }

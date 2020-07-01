@@ -109,8 +109,7 @@ public class SoaFreqHandler extends ChannelInboundHandlerAdapter {
                 freqKey = callerMid.hashCode();
                 break;
             case "customerId":
-                Integer customerId = context.customerId().orElse(0);
-                freqKey = customerId.intValue();
+                freqKey = context.customerId().orElse(0);
                 if (rule.targets != null && !rule.targets.contains(freqKey)) {
                     // 当前请求不属于限流目标范围内, 不需要执行限流规则
                     shouldProcess = false;
