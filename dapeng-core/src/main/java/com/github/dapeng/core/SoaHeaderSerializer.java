@@ -144,7 +144,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     }
                     break;
                 case 15:
-                    if (schemeField.type == TType.I64) {
+                    if (schemeField.type == TType.I32) {
                         bean.setOperatorId(Optional.of(iprot.readI32()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
@@ -158,7 +158,7 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     }
                     break;
                 case 17:
-                    if (schemeField.type == TType.I64) {
+                    if (schemeField.type == TType.I32) {
                         bean.setCustomerId(Optional.of(iprot.readI32()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
