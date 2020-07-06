@@ -55,6 +55,7 @@ public class NettyClient {
     private final EventLoopGroup workerGroup = new NioEventLoopGroup(1);
 
     private static class RequestQueue {
+
         private static class AsyncRequestWithTimeout {
             public AsyncRequestWithTimeout(int seqid, long timeout, CompletableFuture future) {
                 this.seqid = seqid;
@@ -84,9 +85,47 @@ public class NettyClient {
             FUTURES_CACHES_WITH_TIMEOUT.add(fwt);
         }
 
-        static CompletableFuture<ByteBuf> remove(int seqId) {
-            return FUTURE_CACHES.remove(seqId);
-            // remove from prior-queue
+        /*
+         * block1 in discard, and block in complete will be synchornized, so
+         * 1. block1 then block2
+         *    - block2's future2 will be null, so the ByteBuf will released
+         * 2. block2 then block1
+         *    - block1 will get the msg and release it
+         * 3. No block1, just block2
+         *    - future.complete(msg) success.
+         * 4. No block2, Just block1
+         *    - the future not completed, simple discard it from queue
+         */
+
+        static CompletableFuture<ByteBuf> discard(int seqId) {
+            CompletableFuture<ByteBuf> future = FUTURE_CACHES.get(seqId);
+            if(future != null){
+                block1: synchronized (future) {  // complete(seqid, msg) maybe execute before here,
+                    ByteBuf msg = future.getNow(null);
+                    if (msg != null) msg.release();
+                    FUTURE_CACHES.remove(seqId);
+                }
+            }
+            return future;
+        }
+
+        static void complete(int seqid, ByteBuf msg) {
+            CompletableFuture<ByteBuf> future = FUTURE_CACHES.get(seqid);
+            if(future != null){
+                block2: synchronized (future) { // discard(seqId) maybe execute before here
+                    CompletableFuture<ByteBuf> future2 = FUTURE_CACHES.get(seqid);
+                    if(future2 != null)
+                        future2.complete(msg);
+                    else
+                        msg.release();
+
+                    FUTURE_CACHES.remove(seqid);
+                }
+            }
+            else {
+                LOGGER.error("返回结果超时，siqid为：" + seqid);
+                msg.release();
+            }
         }
 
         /**
@@ -103,7 +142,7 @@ public class NettyClient {
                 }
 
                 FUTURES_CACHES_WITH_TIMEOUT.remove();
-                remove(fwt.seqid);
+                discard(fwt.seqid);
 
                 fwt = FUTURES_CACHES_WITH_TIMEOUT.peek();
             }
@@ -175,7 +214,7 @@ public class NettyClient {
             }
             throw new SoaException(SoaCode.ClientUnKnown, e.getMessage() == null ? SoaCode.ClientUnKnown.getMsg() : e.getMessage());
         } finally {
-            RequestQueue.remove(seqid);
+            RequestQueue.discard(seqid);
         }
 
     }
@@ -200,14 +239,7 @@ public class NettyClient {
         int seqid = msg.readInt();
 
         msg.readerIndex(readerIndex);
-
-        CompletableFuture<ByteBuf> future = RequestQueue.remove(seqid);
-        if (future != null) {
-            future.complete(msg); // released in ...
-        } else {
-            LOGGER.error("返回结果超时，siqid为：" + seqid);
-            msg.release();
-        }
+        RequestQueue.complete(seqid, msg);
     };
 
     /**
