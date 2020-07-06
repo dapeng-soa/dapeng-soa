@@ -28,6 +28,7 @@ services:
       - TZ=CST-8
       - LANG=zh_CN.UTF-8
       - E_JAVA_OPTS=-Dname=counterService
+      - soa_zookeeper_host=${zk_cluster_host}
     volumes:
       - "~/data/logs/counter-service:/dapeng-container/logs"
     ports:
