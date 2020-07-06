@@ -134,6 +134,8 @@ public class LogFilter implements Filter {
             Long requestTimestamp = (Long) transactionContext.getAttribute("dapeng_request_timestamp");
 
             Long cost = System.currentTimeMillis() - requestTimestamp;
+
+
             String infoLog = "response[seqId:" + transactionContext.seqId() + ", respCode:" + soaHeader.getRespCode().get() + "]:"
                     + "service[" + soaHeader.getServiceName()
                     + "]:version[" + soaHeader.getVersionName()
