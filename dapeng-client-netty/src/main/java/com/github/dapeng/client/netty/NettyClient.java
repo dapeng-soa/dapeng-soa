@@ -86,7 +86,7 @@ public class NettyClient {
         }
 
         /*
-         * block1 in discard, and block in complete will be synchornized, so
+         * block1 in discard, and block2 in complete will be synchornized, so
          * 1. block1 then block2
          *    - block2's future2 will be null, so the ByteBuf will released
          * 2. block2 then block1
