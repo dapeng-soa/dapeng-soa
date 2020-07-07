@@ -590,7 +590,7 @@ class ThriftCodeParser(var language: String) {
   def getAllStructByAnnotation(annoValue: String, structSet: java.util.HashSet[metadata.Struct]) = {
     annoValue.split(",").foreach(qualifiedName => {
       val finalQualifiedName = if (language.equals("scala")) {
-        if (qualifiedName.contains(".")) {
+        if (qualifiedName.contains(".") && !qualifiedName.endsWith(".do")) {
           toScalaNamespace(qualifiedName, 1)
         } else qualifiedName
       } else {

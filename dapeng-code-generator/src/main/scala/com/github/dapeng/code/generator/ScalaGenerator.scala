@@ -660,7 +660,6 @@ class ScalaGenerator extends CodeGenerator {
             /**
             * {method.doc}
             **/
-            {
             if (method.annotations != null) {
               import collection.JavaConverters._
 
@@ -673,9 +672,9 @@ class ScalaGenerator extends CodeGenerator {
               }).filterNot(_.isEmpty).mkString("(",",",")")
               <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
             }
-            }
-            {if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div>}
-            @throws[com.github.dapeng.core.SoaException]
+            else{<div>//not CustomConfig</div>}
+            }{if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div> else{<div>//not SoaGlobalTransactional</div>}}
+            @throws[com.github.dapeng.core.SoaException]{
             def {method.name}(
             {toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
             <div>{nameAsId(field.name)}: {toDataTypeTemplate(field.getDataType())} {if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}
@@ -728,7 +727,7 @@ class ScalaGenerator extends CodeGenerator {
           /**
           * {method.doc}
           **/
-            {
+          {
             if (method.annotations != null) {
               import collection.JavaConverters._
 
@@ -741,8 +740,9 @@ class ScalaGenerator extends CodeGenerator {
               }).filterNot(_.isEmpty).mkString("(",",",")")
               <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
             }
+            else{<div>//not CustomConfig</div>}
             }
-          {if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div>}
+          {if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div>else{<div>//not SoaGlobalTransactional</div>}}
           @throws[com.github.dapeng.core.SoaException]
           def {method.name}(
           {toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
