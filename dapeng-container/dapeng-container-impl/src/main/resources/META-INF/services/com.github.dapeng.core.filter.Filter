@@ -1,3 +1,2 @@
 com.github.dapeng.impl.filters.LogFilter
 com.github.dapeng.impl.filters.slow.service.SlowServiceCheckFilter
-com.github.dapeng.impl.filters.globalTrans.SoaGlobalTransactionalFilter

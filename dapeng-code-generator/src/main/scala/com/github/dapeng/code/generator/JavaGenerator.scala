@@ -264,18 +264,6 @@ class JavaGenerator extends CodeGenerator {
         this.clientInfo = this.pool.registerClientInfo(serviceName,version);
       </block>
 
-      protected boolean isSoaTransactionalProcess()<block>{
-
-        toMethodArrayBuffer(service.methods).map{(method:Method)=>{
-
-          if(method.doc != null && method.doc.contains("@IsSoaTransactionProcess"))
-            <div>if(InvocationContextImpl.Factory.currentInstance().methodName().equals("{method.name}"))
-              <block>return true;</block></div>
-        }}
-        }
-        return false;
-      </block>
-
       {
       toMethodArrayBuffer(service.methods).map{(method:Method)=>{
         <div>
@@ -390,17 +378,6 @@ class JavaGenerator extends CodeGenerator {
         this.clientInfo = this.pool.registerClientInfo(serviceName,version);
       </block>
 
-      protected boolean isSoaTransactionalProcess()<block>{
-
-        toMethodArrayBuffer(service.methods).map{(method:Method)=>{
-
-          if(method.doc != null && method.doc.contains("@IsSoaTransactionProcess"))
-            <div>if(InvocationContextImpl.Factory.currentInstance().methodName().equals("{method.name}"))
-              <block>return true;</block></div>
-        }}
-        }
-        return false;
-      </block>
       {
       toMethodArrayBuffer(service.methods).map{(method:Method)=>{
         <div>

@@ -333,19 +333,6 @@ class ScalaGenerator extends CodeGenerator {
           ).success
         </block>
 
-        def isSoaTransactionalProcess: Boolean = <block>
-
-          var isSoaTransactionalProcess = false
-          {toMethodArrayBuffer(service.methods).map{(method:Method)=>{
-
-            if(method.doc != null && method.doc.contains("@IsSoaTransactionProcess")){
-              <div>
-                if(InvocationContextImpl.Factory.currentInstance.methodName().equals("{method.name}"))<block>
-                isSoaTransactionalProcess = true</block>
-              </div>}
-          }}}
-          isSoaTransactionalProcess
-        </block>
         def echo: String = <block>
           pool.send(
           serviceName,
@@ -434,20 +421,6 @@ class ScalaGenerator extends CodeGenerator {
           new GetServiceMetadata_argsSerializer,
           new GetServiceMetadata_resultSerializer
           ).success
-        </block>
-
-        def isSoaTransactionalProcess: Boolean = <block>
-
-          var isSoaTransactionalProcess = false
-          {toMethodArrayBuffer(service.methods).map{(method:Method)=>{
-
-            if(method.doc != null && method.doc.contains("@IsSoaTransactionProcess")){
-              <div>
-                if(InvocationContextImpl.Factory.currentInstance.methodName().equals("{method.name}"))<block>
-                isSoaTransactionalProcess = true</block>
-              </div>}
-          }}}
-          isSoaTransactionalProcess
         </block>
 
         def echo: String = <block>
@@ -674,7 +647,7 @@ class ScalaGenerator extends CodeGenerator {
               <div>@com.github.dapeng.core.CustomConfig{annotationValue}</div>
             }
             else{<div>//not CustomConfig</div>}
-            }{if(method.doc != null && method.doc.contains("@SoaGlobalTransactional")) <div>@SoaGlobalTransactional</div> else{<div>//not SoaGlobalTransactional</div>}}
+            }
             @throws[com.github.dapeng.core.SoaException]
             def {method.name}(
             {toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
