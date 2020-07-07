@@ -29,12 +29,10 @@ public class SoaGlobalTransactionalFilter implements Filter {
     @Override
     public void onEntry(FilterContext ctx, FilterChain next) throws SoaException {
         long start = new Date().getTime();
-        LOGGER.info("SoaGlobalTransactionalFilter startAt="+start);
         TransactionContext context = (TransactionContext) ctx.getAttribute("context");
         Application application = (Application) ctx.getAttribute("application");
 
         try {
-
             SoaHeader soaHeader = (SoaHeader) ctx.getAttribute("soaHeader");
             SoaServiceDefinition serviceDef = (SoaServiceDefinition) ctx.getAttribute("serviceDef");
             if (soaHeader != null && serviceDef != null) {
@@ -43,7 +41,6 @@ public class SoaGlobalTransactionalFilter implements Filter {
                         .filter(m -> m.getName().equals(soaHeader.getMethodName()) && m.isAnnotationPresent(SoaGlobalTransactional.class))
                         .count();
 
-                LOGGER.info("SoaGlobalTransactionalFilter count=" + count);
                 if (count <= 0) {
                     for (Class<?> aClass : serviceDef.ifaceClass.getClass().getInterfaces()) {
                         count = count + new ArrayList<>(Arrays.asList(aClass.getMethods()))
@@ -56,23 +53,17 @@ public class SoaGlobalTransactionalFilter implements Filter {
                     }
                 }
                 final boolean isSoaGlobalTransactional = count > 0 ? true : false;
-                LOGGER.info("SoaGlobalTransactionalFilter isSoaGlobalTransactional=" + isSoaGlobalTransactional);
                 if (isSoaGlobalTransactional) {
                     context.setSoaGlobalTransactional(true);
                 }
                 if (soaHeader.getTransactionId().isPresent() || !SoaSystemEnvProperties.SOA_TRANSACTIONAL_ENABLE) {// in a global transaction
-                    LOGGER.info("SoaGlobalTransactionalFilter start next.onEntry(ctx)1;");
-
                     next.onEntry(ctx);
                 } else {
-
                     if (context.isSoaGlobalTransactional()) {
-
                         try {
                             new GlobalTransactionTemplate().execute(new GlobalTransactionCallbackWithoutResult() {
                                 @Override
                                 protected void doInTransactionWithoutResult() throws TException {
-                                    LOGGER.info("SoaGlobalTransactionalFilter start next.onEntry2(ctx);");
                                     next.onEntry(ctx);
                                 }
                             });
@@ -81,8 +72,6 @@ public class SoaGlobalTransactionalFilter implements Filter {
                         }
 
                     } else {
-                        LOGGER.info("SoaGlobalTransactionalFilter start next.onEntry3(ctx);");
-
                         next.onEntry(ctx);
                     }
                 }

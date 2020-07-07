@@ -86,8 +86,6 @@ public class ServiceCache {
                 InvocationContextImpl.Factory.removeCurrentInstance();
             }
 
-            System.out.println("ServiceCache loadServices metadata=" + metadata);
-            LOGGER.info("ServiceCache loadServices metadata=" + metadata);
             if (metadata != null) {
                 try (StringReader reader = new StringReader(metadata)) {
                     Service serviceData = JAXB.unmarshal(reader, Service.class);
