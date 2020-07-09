@@ -491,8 +491,8 @@ class JavaGenerator extends CodeGenerator {
                 if (enumItem.name().equals(label)) <block>
                     return enumItem;
                 </block>
-             return UNDEFINED;
           </block>
+          return UNDEFINED;
         </block>
       </block>
       </div>
