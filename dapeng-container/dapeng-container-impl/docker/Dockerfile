@@ -1,6 +1,4 @@
-#soa-container:base
-FROM docker.today36524.com.cn:5000/base/openjdk:server-jre8
-#FROM docker.today36524.com.cn:5000/base/openjdk:jdk-11
+FROM dapengsoa/openjdk:java8-with-arthas
 MAINTAINER dapengsoa@gmail.com
 
 # Setting Envirnoment
@@ -9,8 +7,9 @@ ENV PATH $CONTAINER_HOME:$PATH
 
 RUN mkdir -p "$CONTAINER_HOME"
 
-COPY dapeng-container /dapeng-container
+COPY dapeng-container "$CONTAINER_HOME"
 
 WORKDIR "$CONTAINER_HOME/bin"
 
 RUN chmod +x *.sh
+
