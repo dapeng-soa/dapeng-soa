@@ -502,6 +502,15 @@ class JavaGenerator extends CodeGenerator {
             return null;
           </block>
         </block>
+
+        public static {enum.name} findByLabel(String label)<block>
+            for ({enum.name} enumItem: values()) <block>
+                if (enumItem.name().equals(label)) <block>
+                    return enumItem;
+                </block>
+          </block>
+          return UNDEFINED;
+        </block>
       </block>
       </div>
     }

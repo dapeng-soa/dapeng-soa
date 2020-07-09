@@ -24,6 +24,7 @@ import com.github.dapeng.core.helper.DapengUtil
 import com.github.dapeng.core.metadata.DataType.KIND
 import com.github.dapeng.core.metadata.TEnum.EnumItem
 import com.github.dapeng.core.metadata._
+import com.twitter.scrooge.backend.EnumTemplate
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -534,13 +535,29 @@ class ScalaGenerator extends CodeGenerator {
       def findByLabel(name: String): {enum.name} = <block>
         name match <block>
           {toEnumItemArrayBuffer(enum.enumItems).filterNot(i => i.doc.trim.isEmpty).map { (enumItem: EnumItem) => {
-            <div>case "{enumItem.doc.trim.replace("*","")}" => {enumItem.label}
+            <div>case "{enumItem.doc.trim.replace("*","")}" | "{enumItem.label.trim}" => {enumItem.label}
             </div>
           }
           }}
           case _ => UNDEFINED
         </block>
 
+      </block>
+
+      def findLabelNameByValue(v: Int): String = <block>
+        v match <block>
+          {toEnumItemArrayBuffer(enum.enumItems).map { (enumItem: EnumItem) => {
+            <div>case {enumItem.value} => "{enumItem.label}"
+            </div>
+          }
+          }}
+          case _ => "#" + v
+        </block>
+      </block>
+
+      def enumList():List[Int] =
+      <block>
+      {toEnumItemArrayBuffer(enum.enumItems).map(_.value).mkString("List(",",",")")}
       </block>
 
     </block>
