@@ -95,6 +95,24 @@ public interface InvocationContext {
 
     Optional<Integer> operatorId();
 
+
+    /**
+     * 服务会话发起操作人名称, 特指后台用户
+     * @param operatorName
+     * @return
+     */
+    InvocationContext operatorName(final String operatorName);
+    Optional<String> operatorName();
+
+
+    /**
+     * 服务会话发起客户名称, 特指前端用户
+     * @param customerName
+     * @return
+     */
+    InvocationContext customerName(final String  customerName);
+    Optional<String> customerName();
+
     /**
      * 设置超时,单位毫秒
      *
@@ -216,6 +234,15 @@ public interface InvocationContext {
 
     InvocationContext transactionSequence(Integer currentTransactionSequence);
 
+    InvocationContext isSoaTransactionProcess(boolean isSoaTransactionProcess);
+    boolean isSoaTransactionProcess();
+
+    InvocationContext serviceName(String serviceName);
+
+    InvocationContext methodName(String methodName);
+
+    InvocationContext versionName(String versionName);
+
     @Deprecated
     String serviceName();
 
@@ -315,6 +342,16 @@ public interface InvocationContext {
          * @return
          */
         Optional<Integer> operatorId();
+
+        Optional<String> operatorName();
+
+
+        Optional<String> customerName();
+
+        Optional<String> callerFrom();
+
+        Optional<String> sessionId();
+
 
         /**
          * 调用源

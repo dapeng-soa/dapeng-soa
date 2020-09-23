@@ -83,6 +83,11 @@ public class SoaHeaderHelper {
             header.setCallerTid(Optional.of(invocationContext.callerTid()));
         }
 
+        header.setCustomerId(invocationContext.customerId());
+        header.setCustomerName(invocationContext.customerName());
+
+        header.setOperatorId(invocationContext.operatorId());
+        header.setOperatorName(invocationContext.operatorName());
 
         /**
          * 如果有invocationCtxProxy(一般在web或者三方系统)
@@ -90,9 +95,11 @@ public class SoaHeaderHelper {
         if (invocationCtxProxy != null) {
             header.setSessionTid(invocationCtxProxy.sessionTid());
             header.setUserIp(invocationCtxProxy.userIp());
-            header.setCustomerId(invocationCtxProxy.customerId());
             header.setOperatorId(invocationCtxProxy.operatorId());
-
+            header.setOperatorName(invocationCtxProxy.operatorName());
+            header.setCustomerId(invocationCtxProxy.customerId());
+            header.setCustomerName(invocationCtxProxy.customerName());
+            header.setCallerFrom(invocationCtxProxy.callerFrom());
             header.setCallerMid(invocationCtxProxy.callerMid());
 
             header.addCookies(invocationCtxProxy.cookies());
@@ -108,8 +115,16 @@ public class SoaHeaderHelper {
         if (invocationContext.operatorId().isPresent()) {
             header.setOperatorId(invocationContext.operatorId());
         }
+        if (invocationContext.operatorName().isPresent()) {
+            header.setOperatorName(invocationContext.operatorName());
+        }
+
         if (invocationContext.customerId().isPresent()) {
             header.setCustomerId(invocationContext.customerId());
+        }
+
+        if (invocationContext.customerName().isPresent()) {
+            header.setCustomerName(invocationContext.customerName());
         }
         if (invocationContext.userIp().isPresent()) {
             header.setUserIp(invocationContext.userIp());
@@ -139,6 +154,18 @@ public class SoaHeaderHelper {
                 if (!oriHeader.getCookies().isEmpty()) {
                     header.addCookies(oriHeader.getCookies());
                 }
+                if (!oriHeader.getCallerFrom().isPresent()){
+                    header.setCallerFrom(oriHeader.getCallerFrom());
+                }
+                if (!oriHeader.getOperatorName().isPresent()){
+                    header.setOperatorName(oriHeader.getOperatorName());
+                }
+                if (!oriHeader.getCustomerId().isPresent()){
+                    header.setCustomerId(oriHeader.getCustomerId());
+                }
+                if (!oriHeader.getCustomerName().isPresent()){
+                    header.setCustomerName(oriHeader.getCustomerName());
+                }
 
             }
             // 传递tid
@@ -147,7 +174,12 @@ public class SoaHeaderHelper {
             header.setCallerTid(Optional.of(transactionContext.calleeTid()));
 
             header.setCallerPort(Optional.of(SoaSystemEnvProperties.SOA_CONTAINER_PORT));
+
         }
+        if (!header.getCallerFrom().isPresent())
+            header.setCallerFrom(Optional.of(SoaSystemEnvProperties.SOA_SERVICE_CALLERFROM));
+
+
         return header;
     }
 }

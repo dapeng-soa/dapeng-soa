@@ -75,17 +75,24 @@ public class InvocationContextImpl implements InvocationContext {
 
     private Optional<Integer> operatorId = Optional.empty();
 
-    private Optional<Integer> transactionId = Optional.empty();
+    private Optional<String> operatorName = Optional.empty();
+
+
+    private Optional<String> customerName = Optional.empty();
 
     private Optional<Integer> transactionSequence = Optional.empty();
 
     private Map<String, String> cookies = new HashMap<>(16);
+
+    private Integer transactionId;
 
     /**
      * 包含服务提供端返回来的一些信息, 例如calleeIp, 服务耗时等信息
      */
     private InvocationInfo lastInvocationInfo;
     private int seqId;
+    private boolean isSoaTransactionProcess;
+
 
     @Override
     public String serviceName() {
@@ -216,7 +223,7 @@ public class InvocationContextImpl implements InvocationContext {
 
     @Override
     public InvocationContext transactionId(Integer currentTransactionId) {
-        this.transactionId = Optional.ofNullable(currentTransactionId);
+        this.transactionId = currentTransactionId;
         return this;
     }
 
@@ -224,6 +231,17 @@ public class InvocationContextImpl implements InvocationContext {
     public InvocationContext transactionSequence(Integer currentTransactionSequence) {
         this.transactionSequence = Optional.ofNullable(currentTransactionSequence);
         return this;
+    }
+
+    @Override
+    public InvocationContext isSoaTransactionProcess(boolean isSoaTransactionProcess) {
+        this.isSoaTransactionProcess = isSoaTransactionProcess;
+        return this;
+    }
+
+    @Override
+    public boolean isSoaTransactionProcess() {
+        return this.isSoaTransactionProcess;
     }
 
     @Override
@@ -262,6 +280,29 @@ public class InvocationContextImpl implements InvocationContext {
     @Override
     public Optional<Integer> operatorId() {
         return this.operatorId;
+    }
+
+    @Override
+    public InvocationContext operatorName(String operatorName) {
+        this.operatorName = Optional.ofNullable(operatorName);
+        return this;
+    }
+
+    @Override
+    public Optional<String> operatorName() {
+        return this.operatorName;
+    }
+
+
+    @Override
+    public InvocationContext customerName(String customerName) {
+        this.customerName = Optional.ofNullable(customerName);
+        return this;
+    }
+
+    @Override
+    public Optional<String> customerName() {
+        return this.customerName;
     }
 
 
@@ -337,7 +378,7 @@ public class InvocationContextImpl implements InvocationContext {
         sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? transferIp(this.userIp.get()) : null).append("\",");
         sb.append("\"").append("timeout").append("\":\"").append(this.timeout.orElse(null)).append("\",");
         sb.append("\"").append("maxProcessTime").append("\":\"").append(this.maxProcessTime.orElse(null)).append("\",");
-        sb.append("\"").append("transactionId").append("\":\"").append(this.transactionId.orElse(null)).append("\",");
+        sb.append("\"").append("transactionId").append("\":\"").append(this.transactionId).append("\",");
         sb.append("\"").append("transactionSequence").append("\":\"").append(this.transactionSequence.orElse(null)).append("\",");
         sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid).append("\",");
         sb.append("\"").append("callerMid").append("\":\"").append(this.callerMid.orElse(null)).append("\",");

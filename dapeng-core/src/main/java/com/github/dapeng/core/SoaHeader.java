@@ -88,6 +88,16 @@ public class SoaHeader {
      */
     private Optional<Integer> operatorId = Optional.empty();
 
+    /**
+     * 操作人名称
+     */
+    private Optional<String> operatorName = Optional.empty();
+
+    /**
+     * 客户名称
+     */
+    private Optional<String> customerName = Optional.empty();
+
 
     private Optional<Long> callerTid = Optional.empty();
 
@@ -181,6 +191,22 @@ public class SoaHeader {
         sb.deleteCharAt(sb.lastIndexOf(","));
         sb.append("}");
         return sb.toString();
+    }
+
+    public Optional<String> getOperatorName() {
+        return operatorName;
+    }
+
+    public void setOperatorName(Optional<String> operatorName) {
+        this.operatorName = operatorName;
+    }
+
+    public Optional<String> getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(Optional<String> customerName) {
+        this.customerName = customerName;
     }
 
     public String getServiceName() {
