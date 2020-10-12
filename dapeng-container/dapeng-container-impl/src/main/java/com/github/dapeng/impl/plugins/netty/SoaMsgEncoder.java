@@ -115,7 +115,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                                 + "]:version[" + soaHeader.getVersionName()
                                 + "]:method[" + soaHeader.getMethodName() + "]"
                                 + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : ",")
-                                + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : ",")
+                                + (soaHeader.getCustomerId().isPresent() ? " customerId:" + soaHeader.getCustomerId().get() : ",")
                                 + " calleeTime1:" + soaHeader.getCalleeTime1().orElse(-1) + ","
                                 + " calleeTime2:" + soaHeader.getCalleeTime2().orElse(-1);
                         LOGGER.debug(getClass().getSimpleName() + "::encode:" + debugLog + ", payload[seqId:" + transactionContext.seqId() + "]:\n" + result);
@@ -198,7 +198,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     + "]:version[" + soaHeader.getVersionName()
                     + "]:method[" + soaHeader.getMethodName() + "]"
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                    + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
+                    + (soaHeader.getCustomerId().isPresent() ? " customerId:" + soaHeader.getCustomerId().get() : "");
             // 根据respCode判断是否是业务异常还是运行时异常
             if (DapengUtil.isDapengCoreException(soaException)) {
                 application.error(this.getClass(), infoLog, soaException);
@@ -255,7 +255,7 @@ public class SoaMsgEncoder extends MessageToByteEncoder<SoaResponseWrapper> {
                     + "]:version[" + soaHeader.getVersionName()
                     + "]:method[" + soaHeader.getMethodName() + "]"
                     + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                    + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
+                    + (soaHeader.getCustomerId().isPresent() ? " customerId:" + soaHeader.getCustomerId().get() : "");
 
             LOGGER.info(getClass() + " " + infoLog + ", payload:\n" + soaException.getMessage());
         } catch (Throwable e) {

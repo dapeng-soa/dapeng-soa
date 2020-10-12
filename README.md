@@ -1,7 +1,7 @@
 <img width="254" src="https://github.com/dapeng-soa/documents/blob/master/images/dapeng-logo/%E5%A4%A7%E9%B9%8Flogo-03.png" alt="dapeng-soa" title="dapeng-soa"/>
 
 [![Language](https://img.shields.io/badge/language-Java-orange.svg)](https://www.oracle.com)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.dapeng-soa/dapeng-parent/badge.svg)](https://search.maven.org/search?q=com.github.dapeng-soa)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.dapeng/dapeng-parent/badge.svg)](https://search.maven.org/search?q=com.github.dapeng)
 [![GitHub release](https://img.shields.io/github/release/dapeng-soa/dapeng-soa.svg)](https://github.com/dapeng-soa/dapeng-soa/releases)
 [![DockerHub](https://img.shields.io/badge/docker-dapengsoa-yellow.svg)](https://hub.docker.com/r/dapengsoa/dapeng-container/)
 [![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)

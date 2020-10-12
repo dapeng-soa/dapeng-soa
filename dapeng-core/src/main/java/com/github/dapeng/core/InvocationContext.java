@@ -68,12 +68,12 @@ public interface InvocationContext {
     /**
      * 设置服务会话发起人Id, 特指前台用户,可用于频率控制
      *
-     * @param userId
+     * @param customerId
      * @return
      */
-    InvocationContext userId(final Long userId);
+    InvocationContext customerId(final Integer customerId);
 
-    Optional<Long> userId();
+    Optional<Integer> customerId();
 
     /**
      * 设置用户Ip,可用于频率控制
@@ -91,9 +91,27 @@ public interface InvocationContext {
      * @param operatorId
      * @return
      */
-    InvocationContext operatorId(final Long operatorId);
+    InvocationContext operatorId(final Integer operatorId);
 
-    Optional<Long> operatorId();
+    Optional<Integer> operatorId();
+
+
+    /**
+     * 服务会话发起操作人名称, 特指后台用户
+     * @param operatorName
+     * @return
+     */
+    InvocationContext operatorName(final String operatorName);
+    Optional<String> operatorName();
+
+
+    /**
+     * 服务会话发起客户名称, 特指前端用户
+     * @param customerName
+     * @return
+     */
+    InvocationContext customerName(final String  customerName);
+    Optional<String> customerName();
 
     /**
      * 设置超时,单位毫秒
@@ -216,6 +234,15 @@ public interface InvocationContext {
 
     InvocationContext transactionSequence(Integer currentTransactionSequence);
 
+    InvocationContext isSoaTransactionProcess(boolean isSoaTransactionProcess);
+    boolean isSoaTransactionProcess();
+
+    InvocationContext serviceName(String serviceName);
+
+    InvocationContext methodName(String methodName);
+
+    InvocationContext versionName(String versionName);
+
     @Deprecated
     String serviceName();
 
@@ -305,18 +332,26 @@ public interface InvocationContext {
         Optional<Integer> userIp();
 
         /**
-         * 服务会话发起者id, 特指前台用户
-         *
-         * @return
+         * 服务会话发起操作人Id, 特指前台用户
          */
-        Optional<Long> userId();
+        Optional<Integer> customerId();
 
         /**
          * 服务会话发起者id, 特指后台用户
          *
          * @return
          */
-        Optional<Long> operatorId();
+        Optional<Integer> operatorId();
+
+        Optional<String> operatorName();
+
+
+        Optional<String> customerName();
+
+        Optional<String> callerFrom();
+
+        Optional<String> sessionId();
+
 
         /**
          * 调用源
@@ -329,5 +364,6 @@ public interface InvocationContext {
          * 自定义信息
          */
         Map<String, String> cookies();
+
     }
 }

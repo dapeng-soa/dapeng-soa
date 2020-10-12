@@ -16,13 +16,8 @@
  */
 package com.github.dapeng.bootstrap.classloader;
 
-import com.github.dapeng.bootstrap.Bootstrap;
-
-import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.List;
 
 /**
  * App Class Loader
@@ -49,9 +44,7 @@ public class ApplicationClassLoader extends URLClassLoader {
 
         if (name.startsWith("com.github.dapeng.core")
                 || name.startsWith("com.github.dapeng.org.apache.thrift")
-                || name.startsWith("com.github.dapeng.transaction.api")
-                || name.startsWith("com.google.gson")
-                || name.startsWith("org.apache.skywalking.apm")) {
+                || name.startsWith("com.github.dapeng.transaction.api")) {
             return coreClassLoader.loadClass(name);
         }
 

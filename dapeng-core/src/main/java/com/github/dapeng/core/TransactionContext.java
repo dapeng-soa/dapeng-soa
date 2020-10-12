@@ -59,9 +59,9 @@ public interface TransactionContext {
 
     Optional<Integer> callerIp();
 
-    Optional<Long> operatorId();
+    Optional<Integer> operatorId();
 
-    Optional<Long> userId();
+    Optional<Integer> customerId();
 
     TransactionContext codecProtocol(CodecProtocol codecProtocol);
 

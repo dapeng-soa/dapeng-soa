@@ -66,7 +66,7 @@ public class TransactionContextImpl implements TransactionContext {
     /**
      * 服务会话发起人Id, 特指前台用户
      */
-    private Optional<Long> userId = Optional.empty();
+    private Optional<Integer> customerId = Optional.empty();
     /**
      * 服务会话发起人Ip
      */
@@ -74,7 +74,7 @@ public class TransactionContextImpl implements TransactionContext {
     /**
      * 服务会话发起操作人Id, 特指后台用户
      */
-    private Optional<Long> operatorId = Optional.empty();
+    private Optional<Integer> operatorId = Optional.empty();
 
     /**
      * 调用者Tid
@@ -151,22 +151,22 @@ public class TransactionContextImpl implements TransactionContext {
     }
 
     @Override
-    public Optional<Long> operatorId() {
+    public Optional<Integer> operatorId() {
         return operatorId;
     }
 
-    public TransactionContextImpl operatorId(Long operatorId) {
+    public TransactionContextImpl operatorId(Integer operatorId) {
         this.operatorId = Optional.ofNullable(operatorId);
         return this;
     }
 
     @Override
-    public Optional<Long> userId() {
-        return userId;
+    public Optional<Integer> customerId() {
+        return customerId;
     }
 
-    public TransactionContextImpl userId(Long userId) {
-        this.userId = Optional.ofNullable(userId);
+    public TransactionContextImpl customerId(Integer customerId) {
+        this.customerId = Optional.ofNullable(customerId);
         return this;
     }
 

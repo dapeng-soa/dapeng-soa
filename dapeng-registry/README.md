@@ -41,12 +41,9 @@
 ### 全局配置，对所有服务
 
 ```$xslt
-
-
 目标节点：/soa/config/services
 
 节点data：timeout/800ms;loadBalance/random
-
 ```
 
 ### 服务级别配置，可以细粒化到每一个方法的配置

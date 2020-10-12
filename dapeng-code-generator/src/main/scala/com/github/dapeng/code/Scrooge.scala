@@ -60,77 +60,42 @@ object Scrooge {
       return
     }
 
-    var outDir: String = null
-    var inDir: String = null
-    var resources: Array[String] = null //the thrift files
-    var language: String = ""
-    var version: String = null
-    var generateAll: Boolean = false
+    lazy val outDir: String = getParameterByName(args, "-out", Option(System.getProperty("user.dir")))
+    lazy val inDir: String = getParameterByName(args, "-in", Some(""))
+    lazy val language: String = getParameterByName(args, "-gen")
+    lazy val version: String = getParameterByName(args, "-v",Some(""))
+    lazy val generateAll: Boolean = getParameterExist(args, "-all")
+    lazy val isHelp: Boolean = getParameterExist(args, "-help")
+    lazy val isDelete: Boolean = !getParameterExist(args, "-notDel")
+    lazy val groupId: String = getParameterByName(args, "-groupId", Some(""))
+    lazy val artifactId: String = getParameterByName(args, "-artifactId", Some(""))
+    lazy val modelVersion: String = getParameterByName(args, "-modelVersion", Some(""))
+
+    lazy val thriftFiles: Array[File] = getResourceFilePathArray(args, inDir)
+    lazy val resources = thriftFiles.map(_.getAbsolutePath)
+
+
+
+    if (isHelp) {
+      println(help)
+      return
+    }
+
+    println(s"groupId=${groupId}artifactId=${artifactId}")
+    checkAndCreate(outDir)
+    checkAndCreate(inDir)
+
 
     try {
-      for (index <- 0 until args.length) {
-
-        args(index) match {
-          case "-gen" =>
-            //获取languages
-            if (index + 1 < args.length) language = args(index + 1)
-          case "-out" =>
-            //获取到outDir
-            if (index + 1 < args.length) outDir = args(index + 1)
-            val file = new File(outDir)
-            if (!file.exists())
-              file.createNewFile()
-
-            if (file.isFile) {
-              file.delete()
-              throw new FilerException(s"File[${outDir}] is not a directory")
-            }
-          case "-in" =>
-            if (index + 1 < args.length) inDir = args(index + 1)
-            val file = new File(inDir)
-            if (!file.exists())
-              file.createNewFile()
-
-            if (file.isFile) {
-              file.delete()
-              throw new FilerException(s"File[${inDir}] is not a directory")
-            }
-          case "-help" => println(help); return
-          case "-v" => if (index + 1 < args.length) version = args(index + 1)
-          case "-all" => generateAll = true
-          case _ =>
-        }
-      }
-
-      if (outDir == null) // 如果输出路径为空,则默认为当前目录
-        outDir = System.getProperty("user.dir")
-
-
-      if (inDir != null) {
-
-        resources = new File(inDir).listFiles(new FilenameFilter {
-          override def accept(dir: File, name: String): Boolean = name.endsWith(".thrift")
-        }).map(file => file.getAbsolutePath)
-
-      } else {
-        //获取到resource
-        resources = args(args.length - 1).split(",")
-        resources.foreach { str =>
-          val file = new File(str)
-          if (!file.exists())
-            throw new FileNotFoundException(s"File[${str}] is not found")
-          else if (new File(str).isDirectory || !str.endsWith(".thrift"))
-            throw new FilerException(s"File[${str}] is not a *.thrift")
-        }
-      }
-
       //根据时间戳判断是否需要重新生成文件
       //1. 如果 (thrift文件 + outDirFiles) 任一修改时间 > xml的时间 => needUpdate
       //2. 如果没有xml文件 => needUpdate
       //3. 如果language == scala && scala文件没有生成过 => needUpdate
       //4. 如果language == java && java文件没有生成过 => needUpdate
       val resourcePath = new File(resources(0)).getParentFile.getParentFile
-      val thriftFiles = resources.map(new File(_))
+      if (!resourcePath.isDirectory) {
+        resourcePath.mkdir()
+      }
       val needUpdate = {
         val xmlFiles = resourcePath.listFiles().filter(_.getName.endsWith(".xml"))
         val targetDirFiles = getFiles(outDir).filter(file=> {
@@ -138,23 +103,27 @@ object Scrooge {
           fileName.endsWith(".java") || fileName.endsWith(".scala")
         })
 
-        if (xmlFiles.size <= 0) {
+        if (xmlFiles.length <= 0) {
           true
         } else if ((xmlFiles.toList ++: targetDirFiles)
           .exists(generatedFile => thriftFiles.exists(_.lastModified() > generatedFile.lastModified()))) {
           true
         } else {
           language match {
-            case "java" => if (targetDirFiles.filter(_.getName.endsWith(".java")).size <= 0) true else false
-            case "scala" => if (targetDirFiles.filter(_.getName.endsWith(".scala")).size <= 0) true else false
+            case "java" => if (targetDirFiles.count(_.getName.endsWith(".java")) <= 0) true else false
+            case "scala" => if (targetDirFiles.count(_.getName.endsWith(".scala")) <= 0) true else false
           }
         }
       }
 
-      if (resources != null && language != "" && needUpdate) {
 
+      if (thriftFiles.nonEmpty && language != "" && needUpdate) {
+        //删除文件再生成
+        if (isDelete) {
+          fileDel(new File(outDir), language)
+        }
         val parserLanguage = if (language == "scala") "scala" else "java"
-        val services = new ThriftCodeParser(parserLanguage).toServices(resources, version)
+        val services = new ThriftCodeParser(parserLanguage).toServices(resources, version,groupId,artifactId,modelVersion)
         val structs = if (generateAll) new ThriftCodeParser(parserLanguage).getAllStructs(resources) else null
         val enums = if (generateAll) new ThriftCodeParser(parserLanguage).getAllEnums(resources) else null
 
@@ -175,7 +144,57 @@ object Scrooge {
         e.printStackTrace()
 
         println(s"Error: ${e.getMessage}")
+        throw e
     }
+  }
+
+  private def getResourceFilePathArray(args: Array[String], inDir: => String) = {
+    if (!inDir.isEmpty) {
+
+      new File(inDir).listFiles(new FilenameFilter {
+        override def accept(dir: File, name: String): Boolean = name.endsWith(".thrift")
+      })
+
+    } else {
+      //获取到resource
+      val filesArray = args(args.length - 1).split(",")
+      filesArray.map(filePath => {
+        val file = new File(filePath)
+        if (!file.exists())
+          throw new FileNotFoundException(s"File[$filePath] is not found")
+        else if (new File(filePath).isDirectory || !filePath.endsWith(".thrift"))
+          throw new FilerException(s"File[$filePath] is not a *.thrift")
+        file
+      })
+    }
+  }
+
+  private def checkAndCreate(outDir: String): Unit = {
+    val file = new File(outDir)
+    if (!file.exists())
+      file.mkdirs()
+
+    if (file.isFile) {
+      file.delete()
+      throw new FilerException(s"File[$outDir] is not a directory")
+    }
+  }
+
+  private def getParameterByName(args: Array[String], parameterName: String, defaultValue: Option[String] = None) = {
+    val indexOpt = args.zipWithIndex.find(_._1.equals(parameterName)).map(_._2)
+
+    assert(indexOpt.isDefined || defaultValue.isDefined, s"$parameterName 参数不存在")
+    indexOpt match {
+      case Some(index) =>
+        assert(args.length > index + 1, "")
+        args(index + 1)
+      case _ => defaultValue.get
+    }
+
+  }
+
+  private def getParameterExist(args: Array[String], parameterName: String) = {
+    args.exists(_.equals(parameterName))
   }
 
   def failed(): Unit = {
@@ -188,6 +207,24 @@ object Scrooge {
     } else {
       List(new File(path))
     }
+  }
+
+  //删除目录和文件
+  def fileDel(path: File, language: String) {
+    if (!path.exists())
+      return
+    if (path.isFile && (path.getName.endsWith(language) || path.getName.endsWith(".xml"))) {
+      path.delete()
+      return
+    }
+
+    val file: Array[File] = path.listFiles()
+    if (file != null) {
+      for (d <- file) {
+        fileDel(d, language)
+      }
+    }
+
   }
 
 }

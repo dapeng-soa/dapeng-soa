@@ -1277,7 +1277,7 @@ struct PackageChargeItem {
     /**
     * 用户Id
     **/
-    4: i32 userId,
+    4: i32 customerId,
     /**
     * 发行时间,预留字段
     **/

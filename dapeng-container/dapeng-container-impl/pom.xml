@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>dapeng-container</artifactId>
-        <groupId>com.github.dapeng-soa</groupId>
-        <version>2.2.0-SNAPSHOT</version>
+        <groupId>com.github.dapeng</groupId>
+        <version>2.2.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -13,7 +13,7 @@
 
     <properties>
         <devName>dapeng-container</devName>
-        <dapeng-version>2.1.1</dapeng-version>
+        <dapeng-version>2.2.2</dapeng-version>
     </properties>
 
     <build>
@@ -46,6 +46,7 @@
                         <directory>${basedir}/src/main/command</directory>
                         <includes>
                             <include>startup.sh</include>
+                            <include>startup_dapeng.sh</include>
                             <include>shutdown.sh</include>
                         </includes>
                         <targetPath>${project.build.directory}/${devName}/bin</targetPath>
@@ -81,7 +82,7 @@
                                     <overWriteSnapshots>false</overWriteSnapshots>
                                     <overWriteIfNewer>true</overWriteIfNewer>
                                     <includeArtifactIds>
-                                        dapeng-core,slf4j-api,logback-classic,logback-core,janino,commons-compiler
+                                        dapeng-core,dapeng-transaction-api
                                     </includeArtifactIds>
                                 </configuration>
                             </execution>
@@ -98,7 +99,7 @@
                                     <overWriteSnapshots>false</overWriteSnapshots>
                                     <overWriteIfNewer>true</overWriteIfNewer>
                                     <excludeArtifactIds>
-                                        dapeng-core,commons-logging,slf4j-api,logback-classic,logback-core,janino,commons-compiler,dapeng-message-api,dapeng-api-doc,dapeng-message-kafka,kafka_2.12,kafka-clients,jopt-simple,metrics-core
+                                        dapeng-core,dapeng-transaction-api,commons-logging,dapeng-message-api,dapeng-api-doc,dapeng-message-kafka,kafka_2.12,kafka-clients,jopt-simple,metrics-core
                                     </excludeArtifactIds>
                                 </configuration>
                             </execution>
@@ -229,43 +230,43 @@
     
     <dependencies>
         <dependency>
-            <groupId>com.github.dapeng-soa</groupId>
+            <groupId>com.github.dapeng</groupId>
             <artifactId>dapeng-container-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng-soa</groupId>
+            <groupId>com.github.dapeng</groupId>
             <artifactId>dapeng-utils</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng-soa</groupId>
+            <groupId>com.github.dapeng</groupId>
             <artifactId>dapeng-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng-soa</groupId>
+            <groupId>com.github.dapeng</groupId>
             <artifactId>dapeng-spring</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng-soa</groupId>
+            <groupId>com.github.dapeng</groupId>
             <artifactId>dapeng-transaction-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng-soa</groupId>
+            <groupId>com.github.dapeng</groupId>
             <artifactId>dapeng-api-doc</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.dapeng-soa</groupId>
+            <groupId>com.github.dapeng</groupId>
             <artifactId>dapeng-message-kafka</artifactId>
             <version>${project.version}</version>
         </dependency>
         <!--counter-->
         <dependency>
-            <groupId>com.github.dapeng-soa</groupId>
+            <groupId>com.github.dapeng</groupId>
             <artifactId>dapeng-counter-api</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -298,7 +299,7 @@
         <dependency>
             <groupId>org.quartz-scheduler</groupId>
             <artifactId>quartz</artifactId>
-            <version>2.2.0</version>
+            <version>2.2.2</version>
         </dependency>
     </dependencies>
 </project>

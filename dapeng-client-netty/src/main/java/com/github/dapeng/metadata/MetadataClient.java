@@ -53,7 +53,8 @@ public class MetadataClient {
     public String getServiceMetadata() throws Exception {
         InvocationContextImpl.Factory.currentInstance()
                 .sessionTid(DapengUtil.generateTid())
-                .callerMid("InnerApiSite");
+                .callerMid("InnerApiSite")
+                .timeout(   10000);
         getServiceMetadata_result result = pool.send(serviceName, version, methodName,
                 new getServiceMetadata_args(),
                 new GetServiceMetadata_argsSerializer(),

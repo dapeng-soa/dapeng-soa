@@ -144,8 +144,8 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     }
                     break;
                 case 15:
-                    if (schemeField.type == TType.I64) {
-                        bean.setOperatorId(Optional.of(iprot.readI64()));
+                    if (schemeField.type == TType.I32) {
+                        bean.setOperatorId(Optional.of(iprot.readI32()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
@@ -158,8 +158,8 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                     }
                     break;
                 case 17:
-                    if (schemeField.type == TType.I64) {
-                        bean.setUserId(Optional.of(iprot.readI64()));
+                    if (schemeField.type == TType.I32) {
+                        bean.setCustomerId(Optional.of(iprot.readI32()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
@@ -217,6 +217,14 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
                 case 24:
                     if (schemeField.type == TType.I64) {
                         bean.setMaxProcessTime(Optional.of(iprot.readI64()));
+                    } else {
+                        TProtocolUtil.skip(iprot, schemeField.type);
+                    }
+                    break;
+
+                case 25:
+                    if (schemeField.type == TType.STRING) {
+                        bean.setCallerFrom(Optional.of(iprot.readString()));
                     } else {
                         TProtocolUtil.skip(iprot, schemeField.type);
                     }
@@ -311,8 +319,8 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
             oprot.writeFieldEnd();
         }
         if (bean.getOperatorId().isPresent()) {
-            oprot.writeFieldBegin(new TField("operatorId", TType.I64, (short) 15));
-            oprot.writeI64(bean.getOperatorId().get());
+            oprot.writeFieldBegin(new TField("operatorId", TType.I32, (short) 15));
+            oprot.writeI32(bean.getOperatorId().get());
             oprot.writeFieldEnd();
         }
         if (bean.getCalleePort().isPresent()) {
@@ -320,9 +328,9 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
             oprot.writeI32(bean.getCalleePort().get());
             oprot.writeFieldEnd();
         }
-        if (bean.getUserId().isPresent()) {
-            oprot.writeFieldBegin(new TField("userId", TType.I64, (short) 17));
-            oprot.writeI64(bean.getUserId().get());
+        if (bean.getCustomerId().isPresent()) {
+            oprot.writeFieldBegin(new TField("customerId", TType.I32, (short) 17));
+            oprot.writeI32(bean.getCustomerId().get());
             oprot.writeFieldEnd();
         }
         if (bean.getCalleeMid().isPresent()) {
@@ -368,6 +376,12 @@ public class SoaHeaderSerializer implements BeanSerializer<SoaHeader> {
         if (bean.getMaxProcessTime().isPresent()) {
             oprot.writeFieldBegin(new TField("maxProcessTime", TType.I64, (short) 24));
             oprot.writeI64(bean.getMaxProcessTime().get());
+            oprot.writeFieldEnd();
+        }
+
+        if (bean.getCallerFrom().isPresent()) {
+            oprot.writeFieldBegin(new TField("callerFrom", TType.STRING, (short) 25));
+            oprot.writeString(bean.getCallerFrom().get());
             oprot.writeFieldEnd();
         }
 

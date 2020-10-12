@@ -29,6 +29,6 @@ public @interface MessageConsumerAction {
 
     String topic() default "Binlog";
 
-    String eventType();
+    String eventType() default "canal";
 
 }

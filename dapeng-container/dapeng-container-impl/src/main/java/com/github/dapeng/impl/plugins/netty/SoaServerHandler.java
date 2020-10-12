@@ -76,7 +76,9 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
         try {
             SoaHeader soaHeader = transactionContext.getHeader();
 
-            SoaServiceDefinition processor = container.getServiceProcessors().get(new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName()));
+            ProcessorKey processorKey = new ProcessorKey(soaHeader.getServiceName(), soaHeader.getVersionName());
+            SoaServiceDefinition processor = container.getServiceProcessors().get(processorKey);
+            Application application = container.getApplication(processorKey);
 
             Executor dispatcher = container.getDispatcher();
 
@@ -85,7 +87,9 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                 LOGGER.debug("BizThreadPoolInfo:\n" + DumpUtil.dumpThreadPool(poolExecutor));
             }
             dispatcher.execute(() -> {
+                ClassLoader originClassLoader = Thread.currentThread().getContextClassLoader();
                 try {
+                    Thread.currentThread().setContextClassLoader(application.getAppClasssLoader()); // 2020-02-16
                     TransactionContext.Factory.currentInstance(transactionContext);
                     processRequest(channelHandlerContext, processor, msg, transactionContext, invokeTime);
                 } catch (Throwable e) {
@@ -93,6 +97,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             transactionContext,
                             ExceptionUtil.convertToSoaException(e));
                 } finally {
+                    Thread.currentThread().setContextClassLoader(originClassLoader);
                     TransactionContext.Factory.removeCurrentInstance();
                 }
             });
@@ -154,7 +159,7 @@ public class SoaServerHandler extends ChannelInboundHandlerAdapter {
                             + "]:version[" + soaHeader.getVersionName()
                             + "]:method[" + soaHeader.getMethodName() + "]"
                             + (soaHeader.getOperatorId().isPresent() ? " operatorId:" + soaHeader.getOperatorId().get() : "")
-                            + (soaHeader.getUserId().isPresent() ? " userId:" + soaHeader.getUserId().get() : "");
+                            + (soaHeader.getCustomerId().isPresent() ? " customerId:" + soaHeader.getCustomerId().get() : "");
 
                     LOGGER.debug(getClass().getSimpleName() + "::processRequest " + debugLog);
                 }

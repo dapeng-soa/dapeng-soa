@@ -56,7 +56,7 @@ public class InvocationContextImpl implements InvocationContext {
 
     private Optional<Long> sessionTid = Optional.empty();
     private long callerTid = DapengUtil.generateTid();
-    private Optional<Long> userId = Optional.empty();
+    private Optional<Integer> customerId = Optional.empty();
     private Optional<Integer> userIp = Optional.empty();
 
     private Optional<Integer> timeout = Optional.empty();
@@ -73,19 +73,26 @@ public class InvocationContextImpl implements InvocationContext {
 
     private Optional<String> callerMid = Optional.empty();
 
-    private Optional<Long> operatorId = Optional.empty();
+    private Optional<Integer> operatorId = Optional.empty();
 
-    private Optional<Integer> transactionId = Optional.empty();
+    private Optional<String> operatorName = Optional.empty();
+
+
+    private Optional<String> customerName = Optional.empty();
 
     private Optional<Integer> transactionSequence = Optional.empty();
 
     private Map<String, String> cookies = new HashMap<>(16);
+
+    private Integer transactionId;
 
     /**
      * 包含服务提供端返回来的一些信息, 例如calleeIp, 服务耗时等信息
      */
     private InvocationInfo lastInvocationInfo;
     private int seqId;
+    private boolean isSoaTransactionProcess;
+
 
     @Override
     public String serviceName() {
@@ -216,7 +223,7 @@ public class InvocationContextImpl implements InvocationContext {
 
     @Override
     public InvocationContext transactionId(Integer currentTransactionId) {
-        this.transactionId = Optional.ofNullable(currentTransactionId);
+        this.transactionId = currentTransactionId;
         return this;
     }
 
@@ -224,6 +231,17 @@ public class InvocationContextImpl implements InvocationContext {
     public InvocationContext transactionSequence(Integer currentTransactionSequence) {
         this.transactionSequence = Optional.ofNullable(currentTransactionSequence);
         return this;
+    }
+
+    @Override
+    public InvocationContext isSoaTransactionProcess(boolean isSoaTransactionProcess) {
+        this.isSoaTransactionProcess = isSoaTransactionProcess;
+        return this;
+    }
+
+    @Override
+    public boolean isSoaTransactionProcess() {
+        return this.isSoaTransactionProcess;
     }
 
     @Override
@@ -254,14 +272,37 @@ public class InvocationContextImpl implements InvocationContext {
     }
 
     @Override
-    public InvocationContext operatorId(Long operatorId) {
+    public InvocationContext operatorId(Integer operatorId) {
         this.operatorId = Optional.ofNullable(operatorId);
         return this;
     }
 
     @Override
-    public Optional<Long> operatorId() {
+    public Optional<Integer> operatorId() {
         return this.operatorId;
+    }
+
+    @Override
+    public InvocationContext operatorName(String operatorName) {
+        this.operatorName = Optional.ofNullable(operatorName);
+        return this;
+    }
+
+    @Override
+    public Optional<String> operatorName() {
+        return this.operatorName;
+    }
+
+
+    @Override
+    public InvocationContext customerName(String customerName) {
+        this.customerName = Optional.ofNullable(customerName);
+        return this;
+    }
+
+    @Override
+    public Optional<String> customerName() {
+        return this.customerName;
     }
 
 
@@ -299,14 +340,14 @@ public class InvocationContextImpl implements InvocationContext {
     }
 
     @Override
-    public InvocationContext userId(Long userId) {
-        this.userId = Optional.ofNullable(userId);
+    public InvocationContext customerId(Integer customerId) {
+        this.customerId = Optional.ofNullable(customerId);
         return this;
     }
 
     @Override
-    public Optional<Long> userId() {
-        return userId;
+    public Optional<Integer> customerId() {
+        return customerId;
     }
 
     @Override
@@ -333,11 +374,11 @@ public class InvocationContextImpl implements InvocationContext {
         sb.append("\"").append("methodName").append("\":\"").append(this.methodName).append("\",");
         sb.append("\"").append("versionName").append("\":\"").append(this.versionName).append("\",");
         sb.append("\"").append("sessionTid").append("\":\"").append(this.sessionTid.isPresent() ? longToHexStr(this.sessionTid.get()) : null).append("\",");
-        sb.append("\"").append("userId").append("\":\"").append(this.userId.orElse(null)).append("\",");
+        sb.append("\"").append("customerId").append("\":\"").append(this.customerId.orElse(null)).append("\",");
         sb.append("\"").append("userIp").append("\":\"").append(this.userIp.isPresent() ? transferIp(this.userIp.get()) : null).append("\",");
         sb.append("\"").append("timeout").append("\":\"").append(this.timeout.orElse(null)).append("\",");
         sb.append("\"").append("maxProcessTime").append("\":\"").append(this.maxProcessTime.orElse(null)).append("\",");
-        sb.append("\"").append("transactionId").append("\":\"").append(this.transactionId.orElse(null)).append("\",");
+        sb.append("\"").append("transactionId").append("\":\"").append(this.transactionId).append("\",");
         sb.append("\"").append("transactionSequence").append("\":\"").append(this.transactionSequence.orElse(null)).append("\",");
         sb.append("\"").append("callerTid").append("\":\"").append(this.callerTid).append("\",");
         sb.append("\"").append("callerMid").append("\":\"").append(this.callerMid.orElse(null)).append("\",");
@@ -394,8 +435,8 @@ public class InvocationContextImpl implements InvocationContext {
                     if (oriHeader.getOperatorId().isPresent()) {
                         context.operatorId(oriHeader.getOperatorId().get());
                     }
-                    if (oriHeader.getUserId().isPresent()) {
-                        context.userId(oriHeader.getUserId().get());
+                    if (oriHeader.getCustomerId().isPresent()) {
+                        context.customerId(oriHeader.getCustomerId().get());
                     }
                     if (oriHeader.getUserIp().isPresent()) {
                         context.userIp(oriHeader.getUserIp().get());

@@ -36,11 +36,11 @@ public class SlowServiceCheckTask {
 
     protected final Optional<Long> maxProcessTime;
 
-    protected final Optional<Long> userId;
+    protected final Optional<Integer> customerId;
 
     protected final Optional<Integer> userIp;
 
-    protected final Optional<Long> operatorId;
+    protected final Optional<Integer> operatorId;
 
     protected final Optional<Integer> timeout;
 
@@ -71,7 +71,7 @@ public class SlowServiceCheckTask {
         this.versionName = soaHeader.getVersionName();
         this.methodName = soaHeader.getMethodName();
         this.callerMid = soaHeader.getCallerMid();
-        this.userId = soaHeader.getUserId();
+        this.customerId = soaHeader.getCustomerId();
         this.userIp = soaHeader.getCallerIp();
         this.operatorId = soaHeader.getOperatorId();
         this.calleeIp = soaHeader.getCalleeIp();
@@ -91,9 +91,9 @@ public class SlowServiceCheckTask {
                 .append(" seqId: ").append(seqId).append(",")
                 .append(" sessionTid: ").append(sessionTid.map(DapengUtil::longToHexStr).orElse("-")).append(",")
                 .append(" startTime: ").append(startTime).append(",")
-                .append(" userId: ").append(userId.orElse(0L)).append(",")
+                .append(" customerId: ").append(customerId.orElse(0)).append(",")
                 .append(" userIp: ").append(userIp.map(IPUtils::transferIp).orElse("-")).append(",")
-                .append(" operatorId: ").append(operatorId.orElse(0L)).append(",")
+                .append(" operatorId: ").append(operatorId.orElse(0)).append(",")
                 .append(" calleeIp: ").append(calleeIp.map(IPUtils::transferIp).orElse("-")).append(",")
                 .append(" calleePort: ").append(calleePort).append(",")
                 .append(" callerTid: ").append(callerTid).append(",")

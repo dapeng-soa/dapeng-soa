@@ -1,3 +1,37 @@
+function initTestPage(serviceName, serviceVersion, methodName) {
+    var url = window.basePath + "/api/findService/" + serviceName + "/" + serviceVersion + ".htm";
+    var settings = {type: "get", url: url, dataType: "json"};
+    $.ajax(settings).done(function (result) {
+
+        for (var i = 0; i < result.methods.length; i++) {
+
+            if (result.methods[i].name == methodName) {
+
+                //生成参数输入列表
+                var method = result.methods[i];
+
+                for (var index = 0; index < method.request.fields.length; index++) {
+
+                    var field = method.request.fields[index];
+                    var li = getDataTypeElement(field.dataType, field.name, result, field.optional, field.doc);
+                    $('#tree').append(li);
+                }
+
+                //生成示范报文
+                var parameter = {};
+                for (var index = 0; index < method.request.fields.length; index++) {
+                    var field = method.request.fields[index];
+                    parameter[field.name] = getJsonSample(field.dataType, result);
+                }
+                Process({body: parameter});
+            }
+        }
+
+        $.datetimepicker.setLocale('ch');
+        $('input.datetimepicker').datetimepicker({lang:'ch',format:"Y-m-d H:i"});
+    });
+}
+
 function createInputGroup(label, type, optional, fieldDoc, input) {
     var $doc = document;
 
@@ -39,7 +73,7 @@ function createInputGroup(label, type, optional, fieldDoc, input) {
     var inputElem = (input == undefined) ? $doc.createElement("input") : input;
     $(inputElem).addClass("form-control");
     $(inputElem).addClass("parameterValue");
-    if(type == "Date"){
+    if (type == "Date") {
         $(inputElem).addClass("datetimepicker");
     }
     $(inputElem).attr("type", inputType);
@@ -365,12 +399,12 @@ function getDataTypeElement(dataType, name, service, optional, doc) {
  * @param version
  * @param methodName
  */
-function applyTestForJsonStr(serviceName, version, methodName){
+function applyTestForJsonStr(serviceName, version, methodName) {
     var params = $("#pasteJsonBox").val();
     var jsonObj = {};
     try {
         jsonObj = JSON.parse(params)
-    }catch (e){
+    } catch (e) {
         alert("json格式异常请检查");
         return;
     }
@@ -434,7 +468,7 @@ function getJsonParameter() {
             parameter[tN] = tJSON;
         }
     });
-    return {body:parameter};
+    return {body: parameter};
 }
 
 function getJsonObject(li) {
@@ -506,6 +540,13 @@ function getJsonObject(li) {
     } else {
 
         var v = $(li).find('input')[0].value.trim();
+
+        // 如果是date类型，则将时间戳替代所选时间
+        if ($($(li).find('input')[0]).hasClass("datetimepicker")) {
+            // var date = $($(li).find('input')[0]).datetimepicker('getValue');
+            var date = new Date(v + ":00:000");
+            return date.getTime()
+        }
 
         if ($(li).find('input')[0].type == 'number') {
 
@@ -594,7 +635,8 @@ function getJsonSample(dataType, service) {
             return {};
 
         case 'DATE':
-            return "2016/04/13 16:00";
+            // Date在传输时使用long
+            return "1582732800000";
         case 'BIGDECIMAL':
             return "1234567.123456789123456";
         default :

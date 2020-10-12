@@ -34,7 +34,11 @@ public class IPUtils {
             inetAddress = InetAddress.getLocalHost();
 
             if (inetAddress.getHostAddress() == null || "127.0.0.1".equals(inetAddress.getHostAddress())) {
-                NetworkInterface ni = NetworkInterface.getByName("bond0");
+                NetworkInterface bond0 = NetworkInterface.getByName("bond0");
+                NetworkInterface en0 = NetworkInterface.getByName("en0");
+
+                NetworkInterface ni = bond0!=null ? bond0: en0;
+
                 if (ni == null)
                     throw new RuntimeException("wrong with get ip");
 

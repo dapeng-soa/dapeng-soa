@@ -1,8 +1,5 @@
 #!/bin/sh
 
-export JVM_HOME='opt/oracle-server-jre'
-export PATH=$JVM_HOME/bin:$PATH
-
 PRGNAME=soa-service
 ADATE=`date +%Y%m%d%H%M%S`
 PRGDIR=`pwd`
@@ -23,14 +20,6 @@ LOGDIR=$PRGDIR/../logs
 if [ ! -d "$LOGDIR" ]; then
         mkdir "$LOGDIR"
 fi
-
-CLASSPATH=$PRGDIR/classes
-
-filelist=`find $PRGDIR/lib/* -type f -name "*.jar"`
-for filename in $filelist
-do
-  CLASSPATH=$CLASSPATH:$filename
-done
 
 JAVA_VERSION=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
 
@@ -82,11 +71,15 @@ SHOTTING_OPTS="$SHOTTING_OPTS -XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepo
 
 OTHER_OPTS="-Djava.net.preferIPv4Stack=true -Djava.awt.headless=true -Dfile.encoding=UTF-8 -Dsun.jun.encoding=UTF-8"
 
+# DAPENG_OPTS user-defined-options which will used by the application
+# E_JAVA_OPTS old user-defined-options which will used by the application
+
+
 apmEnable="$apm_enable"
 if [ "$apmEnable" == "true" ]; then
-    JAVA_OPTS="$E_JAVA_OPTS $NETTY_OPTS $SOA_BASE $DEBUG_OPTS $USER_OPTS $MEM_OPTS $GC_OPTS $OPTIMIZE_OPTS $SHOTTING_OPTS $JMX_OPTS $OTHER_OPTS $APM_OPTS"
+    JAVA_OPTS="$DAPENG_OPTS $E_JAVA_OPTS $NETTY_OPTS $SOA_BASE $DEBUG_OPTS $USER_OPTS $MEM_OPTS $GC_OPTS $OPTIMIZE_OPTS $SHOTTING_OPTS $OTHER_OPTS $APM_OPTS"
 else
-    JAVA_OPTS="$E_JAVA_OPTS $NETTY_OPTS $SOA_BASE $DEBUG_OPTS $USER_OPTS $MEM_OPTS $GC_OPTS $OPTIMIZE_OPTS $SHOTTING_OPTS $JMX_OPTS $OTHER_OPTS"
+    JAVA_OPTS="$DAPENG_OPTS $E_JAVA_OPTS $NETTY_OPTS $SOA_BASE $DEBUG_OPTS $USER_OPTS $MEM_OPTS $GC_OPTS $OPTIMIZE_OPTS $SHOTTING_OPTS $OTHER_OPTS"
 fi
 
 # SIGTERM-handler  graceful-shutdown
@@ -111,17 +104,11 @@ trap 'kill ${!};process_exit' SIGTERM
 
 echo $JAVA_OPTS > $LOGDIR/console.log
 
-nohup java -server $JAVA_OPTS -cp ./dapeng-bootstrap.jar com.github.dapeng.bootstrap.Bootstrap >> $LOGDIR/console.log 2>&1 &
+nohup java -server $JAVA_OPTS -cp $PRGDIR/dapeng-bootstrap.jar com.github.dapeng.bootstrap.Bootstrap $* >> $LOGDIR/console.log 2>&1 &
 pid="$!"
 echo $pid > $LOGDIR/pid.txt
 
-fluentBitEnable="$fluent_bit_enable"
-
-if [ "$fluentBitEnable" == "" ]; then
-    fluentBitEnable="false"
-fi
-
-if [ "$fluentBitEnable" == "true" ]; then
+if [ "$fluent_bit_enable" == "true" ]; then
    nohup sh /opt/fluent-bit/fluent-bit.sh >> $LOGDIR/fluent-bit.log 2>&1 &
 fi
 

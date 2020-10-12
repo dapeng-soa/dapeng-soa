@@ -50,12 +50,12 @@ public class ServiceInvocationProxy implements InvocationContextImpl.InvocationC
     }
 
     @Override
-    public Optional<Long> userId() {
+    public Optional<Integer> customerId() {
         return Optional.empty();
     }
 
     @Override
-    public Optional<Long> operatorId() {
+    public Optional<Integer> operatorId() {
         return Optional.empty();
     }
 

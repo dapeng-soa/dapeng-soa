@@ -9365,7 +9365,7 @@ appointmentId
  订单Id
 </doc>
                 </field>
-                <field tag="4" name="userId" optional="false" privacy="false">
+                <field tag="4" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>INTEGER</kind>
                     </dataType>

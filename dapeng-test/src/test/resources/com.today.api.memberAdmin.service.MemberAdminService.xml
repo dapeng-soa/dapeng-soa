@@ -1179,7 +1179,7 @@
  冻结操作返回体
 </doc>
             <fields>
-                <field tag="1" name="userId" optional="false" privacy="false">
+                <field tag="1" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>STRING</kind>
                     </dataType>
@@ -1930,7 +1930,7 @@
  冻结操作返回体
 </doc>
             <fields>
-                <field tag="1" name="userId" optional="false" privacy="false">
+                <field tag="1" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>STRING</kind>
                     </dataType>
@@ -1966,7 +1966,7 @@
  会员优惠券
 </doc>
             <fields>
-                <field tag="1" name="userId" optional="false" privacy="false">
+                <field tag="1" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>INTEGER</kind>
                     </dataType>
@@ -2432,7 +2432,7 @@
  冻结操作请求体
 </doc>
             <fields>
-                <field tag="1" name="userId" optional="false" privacy="false">
+                <field tag="1" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>INTEGER</kind>
                     </dataType>
@@ -2870,7 +2870,7 @@
  解冻操作请求体
 </doc>
             <fields>
-                <field tag="1" name="userId" optional="false" privacy="false">
+                <field tag="1" name="customerId" optional="false" privacy="false">
                     <dataType>
                         <kind>INTEGER</kind>
                     </dataType>
