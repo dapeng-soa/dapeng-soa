@@ -24,6 +24,9 @@ public class HexTest {
         System.out.println(tid);
         System.out.println(longToHexStr(tid));
 
+        String hex1 = "6d7973716c7861343030";
+
+
         String hex = "0123456789ABCDEF";
         long l = 0;
         for(int i = 0; i<16; i++){

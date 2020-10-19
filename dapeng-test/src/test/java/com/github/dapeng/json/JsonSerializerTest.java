@@ -59,7 +59,7 @@ public class JsonSerializerTest {
 
     public static void main(String[] args) throws InterruptedException, TException, IOException {
         String result = "{\"name\":\"Ever\",\"success\":124, \"desc\":\"static void main(String[] args) throws InterruptedException, TException, IOException\", \"subEle\":{\"id\":2,\"age\":13}}";
-        orderDailySumQueryTest();
+//        orderDailySumQueryTest();
 //        final String orderDescriptorXmlPath = "/com.github.dapeng.json.demo.service.OrderService.xml";
 //        Service orderService = getService(orderDescriptorXmlPath);
 //
@@ -150,7 +150,7 @@ public class JsonSerializerTest {
 //            simpleStructWithEnumTest();
 //            simpleStructWithOptionTest();
 ////
-//            complexStructTest();
+            complexStructTest();
 //            complexStructTest1();
 //            noTagStructTest();
 //            memberRegisterByUnionIdAndOpenIdServiceTest();
