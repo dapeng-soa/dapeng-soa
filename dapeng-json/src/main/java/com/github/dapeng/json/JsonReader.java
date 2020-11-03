@@ -26,6 +26,7 @@ import com.github.dapeng.core.metadata.Field;
 import com.github.dapeng.core.metadata.Struct;
 import com.github.dapeng.core.metadata.TEnum;
 import com.github.dapeng.org.apache.thrift.TException;
+import com.github.dapeng.org.apache.thrift.WrappedTException;
 import com.github.dapeng.org.apache.thrift.protocol.*;
 import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
@@ -208,65 +209,72 @@ class JsonReader implements JsonCallback {
 
 
     @Override
-    public void onStartObject() throws TException {
-        level++;
+    public void onStartObject() {
+        try {
+            level++;
 
-        if (level == 0) return;  // it's the outside { body: ... } object
+            if (level == 0) return;  // it's the outside { body: ... } object
 
-        if (skip) {
-            skipDepth++;
-            return;
-        }
+            if (skip) {
+                skipDepth++;
+                return;
+            }
 
-        assert current.dataType.kind == DataType.KIND.STRUCT || current.dataType.kind == DataType.KIND.MAP;
+            assert current.dataType.kind == DataType.KIND.STRUCT || current.dataType.kind == DataType.KIND.MAP;
 
-        StackNode peek = peek();
-        if (peek != null && isMultiElementKind(peek.dataType.kind)) {
-            peek.incrElementSize();
-        }
-        switch (current.dataType.kind) {
-            case STRUCT:
-                Struct struct = current.optimizedStruct.struct;
-                if (struct == null) {
-                    logger.error("optimizedStruct not found");
+            StackNode peek = peek();
+            if (peek != null && isMultiElementKind(peek.dataType.kind)) {
+                peek.incrElementSize();
+            }
+            switch (current.dataType.kind) {
+                case STRUCT:
+                    Struct struct = current.optimizedStruct.struct;
+                    oproto.writeStructBegin(new TStruct(struct.name));
+                    break;
+                case MAP:
+                    assert isValidMapKeyType(current.dataType.keyType.kind);
+                    writeMapBegin(dataType2Byte(current.dataType.keyType), dataType2Byte(current.dataType.valueType), 0);
+                    break;
+                default:
                     logAndThrowTException();
-                }
-                oproto.writeStructBegin(new TStruct(struct.name));
-                break;
-            case MAP:
-                assert isValidMapKeyType(current.dataType.keyType.kind);
-                writeMapBegin(dataType2Byte(current.dataType.keyType), dataType2Byte(current.dataType.valueType), 0);
-                break;
-            default:
-                logAndThrowTException();
+            }
+
+        }
+        catch(TException ex){
+            throw new WrappedTException(ex);
         }
 
     }
 
     @Override
-    public void onEndObject() throws TException {
-        level--;
-        if (level == -1) return; // the outer body
+    public void onEndObject() {
+        try {
+            level--;
+            if (level == -1) return; // the outer body
 
-        if (skip) {
-            skipDepth--;
-            return;
+            if (skip) {
+                skipDepth--;
+                return;
+            }
+
+            assert current.dataType.kind == DataType.KIND.STRUCT || current.dataType.kind == DataType.KIND.MAP;
+
+            switch (current.dataType.kind) {
+                case STRUCT:
+                    validateStruct(current);
+                    oproto.writeFieldStop();
+                    oproto.writeStructEnd();
+                    break;
+                case MAP:
+                    oproto.writeMapEnd();
+                    reWriteByteBuf();
+                    break;
+                default:
+                    logAndThrowTException();
+            }
         }
-
-        assert current.dataType.kind == DataType.KIND.STRUCT || current.dataType.kind == DataType.KIND.MAP;
-
-        switch (current.dataType.kind) {
-            case STRUCT:
-                validateStruct(current);
-                oproto.writeFieldStop();
-                oproto.writeStructEnd();
-                break;
-            case MAP:
-                oproto.writeMapEnd();
-                reWriteByteBuf();
-                break;
-            default:
-                logAndThrowTException();
+        catch(TException ex){
+            throw new WrappedTException(ex);
         }
 
     }
@@ -274,112 +282,127 @@ class JsonReader implements JsonCallback {
     /**
      * 由于目前拿不到集合的元素个数, 暂时设置为0个
      *
-     * @throws TException
      */
     @Override
-    public void onStartArray() throws TException {
-        level++;
-        if (skip) {
-            skipDepth++;
-            return;
-        }
-
-        assert isCollectionKind(current.dataType.kind);
-
-        StackNode peek = peek();
-        if (peek != null && isMultiElementKind(peek.dataType.kind)) {
-            peek.incrElementSize();
-        }
-
-        switch (current.dataType.kind) {
-            case LIST:
-            case SET:
-                writeCollectionBegin(dataType2Byte(current.dataType.valueType), 0);
-                break;
-            default:
-                logAndThrowTException();
-        }
-
-    }
-
-    @Override
-    public void onEndArray() throws TException {
-        level--;
-        if (skip) {
-            skipDepth--;
-            return;
-        }
-
-        assert isCollectionKind(current.dataType.kind);
-
-        switch (current.dataType.kind) {
-            case LIST:
-                oproto.writeListEnd();
-                reWriteByteBuf();
-                break;
-            case SET:
-                oproto.writeSetEnd();
-                reWriteByteBuf();
-                break;
-            default:
-                //do nothing
-        }
-    }
-
-    @Override
-    public void onStartField(String name) throws TException {
-        if (skip) {
-            return;
-        }
-        if (level == 0) { // expect only the "body"
-            if ("body".equals(name)) { // body
-                DataType initDataType = new DataType();
-                initDataType.setKind(DataType.KIND.STRUCT);
-                initDataType.qualifiedName = optimizedStruct.struct.name;
-                push(initDataType, -1, // not a struct field
-                        requestByteBuf.writerIndex(), //
-                        optimizedStruct, "body");
-            } else { // others, just skip now
-                skip = true;
-                skipDepth = 0;
+    public void onStartArray() {
+        try {
+            level++;
+            if (skip) {
+                skipDepth++;
+                return;
             }
-        } else { // level > 0, not skip
-            if (current.dataType.kind == DataType.KIND.MAP) {
-                assert isValidMapKeyType(current.dataType.keyType.kind);
 
-                int tFieldPos = requestByteBuf.writerIndex();
-                if (current.dataType.keyType.kind == DataType.KIND.STRING) {
-                    oproto.writeString(name);
-                } else {
-                    writeIntField(name, current.dataType.keyType.kind);
-                }
-                push(current.dataType.valueType,
-                        tFieldPos, // so value can't be null
-                        requestByteBuf.writerIndex(), // need for List/Map
-                        optimizedService.optimizedStructs.get(current.dataType.valueType.qualifiedName),
-                        name);
-            } else if (current.dataType.kind == DataType.KIND.STRUCT) {
+            assert isCollectionKind(current.dataType.kind);
 
-                Field field = current.optimizedStruct.fieldMap.get(name);
-                if (field == null) {
+            StackNode peek = peek();
+            if (peek != null && isMultiElementKind(peek.dataType.kind)) {
+                peek.incrElementSize();
+            }
+
+            switch (current.dataType.kind) {
+                case LIST:
+                case SET:
+                    writeCollectionBegin(dataType2Byte(current.dataType.valueType), 0);
+                    break;
+                default:
+                    logAndThrowTException();
+            }
+
+        }
+        catch(TException ex){
+            throw new WrappedTException(ex);
+        }
+
+    }
+
+    @Override
+    public void onEndArray() {
+        try {
+            level--;
+            if (skip) {
+                skipDepth--;
+                return;
+            }
+
+            assert isCollectionKind(current.dataType.kind);
+
+            switch (current.dataType.kind) {
+                case LIST:
+                    oproto.writeListEnd();
+                    reWriteByteBuf();
+                    break;
+                case SET:
+                    oproto.writeSetEnd();
+                    reWriteByteBuf();
+                    break;
+                default:
+                    //do nothing
+            }
+        }
+        catch(TException ex){
+            throw new WrappedTException(ex);
+        }
+    }
+
+    @Override
+    public void onStartField(String name)  {
+        try {
+            if (skip) {
+                return;
+            }
+            if (level == 0) { // expect only the "body"
+                if ("body".equals(name)) { // body
+                    DataType initDataType = new DataType();
+                    initDataType.setKind(DataType.KIND.STRUCT);
+                    initDataType.qualifiedName = optimizedStruct.struct.name;
+                    push(initDataType, -1, // not a struct field
+                            requestByteBuf.writerIndex(), //
+                            optimizedStruct, "body");
+                } else { // others, just skip now
                     skip = true;
                     skipDepth = 0;
-                    logger.debug("field(" + name + ") not found. just skip");
-                    return;
-                } else {
-                    skip = false;
                 }
+            } else { // level > 0, not skip
+                if (current.dataType.kind == DataType.KIND.MAP) {
+                    assert isValidMapKeyType(current.dataType.keyType.kind);
 
-                int tFieldPos = requestByteBuf.writerIndex();
-                oproto.writeFieldBegin(new TField(field.name, dataType2Byte(field.dataType), (short) field.getTag()));
-                push(field.dataType,
-                        tFieldPos,
-                        requestByteBuf.writerIndex(),
-                        optimizedService.optimizedStructs.get(field.dataType.qualifiedName),
-                        name);
-            } else {
-                logAndThrowTException("field " + name + " type " + toString(current.dataType) + " not compatible with json object");
+                    int tFieldPos = requestByteBuf.writerIndex();
+                    if (current.dataType.keyType.kind == DataType.KIND.STRING) {
+                        oproto.writeString(name);
+                    } else {
+                        writeIntField(name, current.dataType.keyType.kind);
+                    }
+                    push(current.dataType.valueType,
+                            tFieldPos, // so value can't be null
+                            requestByteBuf.writerIndex(), // need for List/Map
+                            optimizedService.optimizedStructs.get(current.dataType.valueType.qualifiedName),
+                            name);
+                } else if (current.dataType.kind == DataType.KIND.STRUCT) {
+
+                    Field field = current.optimizedStruct.fieldMap.get(name);
+                    if (field == null) {
+                        skip = true;
+                        skipDepth = 0;
+                        logger.debug("field(" + name + ") not found. just skip");
+                        return;
+                    } else {
+                        skip = false;
+                    }
+
+                    int tFieldPos = requestByteBuf.writerIndex();
+                    oproto.writeFieldBegin(new TField(field.name, dataType2Byte(field.dataType), (short) field.getTag()));
+                    push(field.dataType,
+                            tFieldPos,
+                            requestByteBuf.writerIndex(),
+                            optimizedService.optimizedStructs.get(field.dataType.qualifiedName),
+                            name);
+                } else {
+                    logAndThrowTException("field " + name + " type " + toString(current.dataType) + " not compatible with json object");
+                }
             }
+        }
+        catch(TException ex){
+            throw new WrappedTException(ex);
         }
     }
 
@@ -402,119 +425,133 @@ class JsonReader implements JsonCallback {
     }
 
     @Override
-    public void onEndField() throws TException {
-        if (skip) {
-            if (skipDepth == 0) { // reset skipFlag
-                skip = false;
+    public void onEndField() {
+        try {
+            if (skip) {
+                if (skipDepth == 0) { // reset skipFlag
+                    skip = false;
+                }
+                return;
             }
-            return;
-        }
 
-        String fieldName = current.fieldName;
+            String fieldName = current.fieldName;
 
-        if (level > 0) { // level = 0 will having no current dataType
-            StackNode parent = peek();
-            assert (parent != null);
+            if (level > 0) { // level = 0 will having no current dataType
+                StackNode parent = peek();
+                assert (parent != null);
 
-            switch (parent.dataType.kind) {
-                case SET:
-                case LIST:
-                    if (current.isNull) {
-                        logAndThrowTException("SET/LIST can't support null value");
-                    }
-                    break;
-                case MAP:
-                    if (current.isNull) {
-                        // peek().decrElementSize(); onNull not incrElementSize
-                        requestByteBuf.writerIndex(current.tFieldPosition);
-                    }
-                    break;
-                case STRUCT:
-                    if (current.isNull) {
-                        // parent.fields4Struct.remove(fieldName);
-                        requestByteBuf.writerIndex(current.tFieldPosition);
-                        if (invocationCtx.codecProtocol() == CompressedBinary) {
-                            ((TCompactProtocol) oproto).resetLastFieldId();
+                switch (parent.dataType.kind) {
+                    case SET:
+                    case LIST:
+                        if (current.isNull) {
+                            logAndThrowTException("SET/LIST can't support null value");
                         }
-                    } else {
-                        Field field = parent.optimizedStruct.fieldMap.get(fieldName);
-                        parent.fields4Struct.set(field.tag - parent.optimizedStruct.tagBase);
-                        oproto.writeFieldEnd();
-                    }
-                    break;
+                        break;
+                    case MAP:
+                        if (current.isNull) {
+                            // peek().decrElementSize(); onNull not incrElementSize
+                            requestByteBuf.writerIndex(current.tFieldPosition);
+                        }
+                        break;
+                    case STRUCT:
+                        if (current.isNull) {
+                            // parent.fields4Struct.remove(fieldName);
+                            requestByteBuf.writerIndex(current.tFieldPosition);
+                            if (invocationCtx.codecProtocol() == CompressedBinary) {
+                                ((TCompactProtocol) oproto).resetLastFieldId();
+                            }
+                        } else {
+                            Field field = parent.optimizedStruct.fieldMap.get(fieldName);
+                            parent.fields4Struct.set(field.tag - parent.optimizedStruct.tagBase);
+                            oproto.writeFieldEnd();
+                        }
+                        break;
+                }
+
+                pop();
+            }
+        }
+        catch(TException ex){
+            throw new WrappedTException(ex);
+        }
+    }
+
+    @Override
+    public void onBoolean(boolean value) {
+        try {
+            if (skip) {
+                return;
             }
 
-            pop();
+            if (current.dataType.kind != DataType.KIND.BOOLEAN) {
+                logAndThrowTException();
+            }
+
+            StackNode peek = peek();
+            if (peek != null && isMultiElementKind(peek.dataType.kind)) {
+                peek.incrElementSize();
+            }
+
+            oproto.writeBool(value);
         }
-
-    }
-
-    @Override
-    public void onBoolean(boolean value) throws TException {
-        if (skip) {
-            return;
-        }
-
-        if (current.dataType.kind != DataType.KIND.BOOLEAN) {
-            logAndThrowTException();
-        }
-
-        StackNode peek = peek();
-        if (peek != null && isMultiElementKind(peek.dataType.kind)) {
-            peek.incrElementSize();
-        }
-
-        oproto.writeBool(value);
-    }
-
-    @Override
-    public void onNumber(double value) throws TException {
-        DataType.KIND currentType = current.dataType.kind;
-
-        if (skip) {
-            return;
-        }
-
-        StackNode peek = peek();
-        if (peek != null && isMultiElementKind(peek.dataType.kind)) {
-            peek.incrElementSize();
-        }
-
-        switch (currentType) {
-            case SHORT:
-                oproto.writeI16((short) value);
-                break;
-            case INTEGER:
-            case ENUM:
-                oproto.writeI32((int) value);
-                break;
-            case LONG:
-            case DATE:
-                oproto.writeI64((long) value);
-                break;
-            case DOUBLE:
-                oproto.writeDouble(value);
-                break;
-            case BIGDECIMAL:
-                oproto.writeString(String.valueOf(value));
-                break;
-            case BYTE:
-                oproto.writeByte((byte) value);
-                break;
-            default:
-                throw new TException("Field:" + current.fieldName + ", DataType(" + current.dataType.kind
-                        + ") for " + current.dataType.qualifiedName + " is not a Number");
-
+        catch(TException ex){
+            throw new WrappedTException(ex);
         }
     }
 
     @Override
-    public void onNumber(long value) throws TException {
+    public void onNumber(double value) {
+        try {
+            DataType.KIND currentType = current.dataType.kind;
+
+            if (skip) {
+                return;
+            }
+
+            StackNode peek = peek();
+            if (peek != null && isMultiElementKind(peek.dataType.kind)) {
+                peek.incrElementSize();
+            }
+
+            switch (currentType) {
+                case SHORT:
+                    oproto.writeI16((short) value);
+                    break;
+                case INTEGER:
+                case ENUM:
+                    oproto.writeI32((int) value);
+                    break;
+                case LONG:
+                case DATE:
+                    oproto.writeI64((long) value);
+                    break;
+                case DOUBLE:
+                    oproto.writeDouble(value);
+                    break;
+                case BIGDECIMAL:
+                    oproto.writeString(String.valueOf(value));
+                    break;
+                case BYTE:
+                    oproto.writeByte((byte) value);
+                    break;
+                default:
+                    throw new TException("Field:" + current.fieldName + ", DataType(" + current.dataType.kind
+                            + ") for " + current.dataType.qualifiedName + " is not a Number");
+
+            }
+        }
+        catch(TException ex){
+            throw new WrappedTException(ex);
+        }
+    }
+
+    @Override
+    public void onNumber(long value)  {
         throw new NotImplementedException();
     }
 
     @Override
-    public void onNull() throws TException {
+    public void onNull()  {
         if (skip) {
             return;
         }
@@ -522,49 +559,54 @@ class JsonReader implements JsonCallback {
     }
 
     @Override
-    public void onString(String value) throws TException {
-        if (skip) {
-            return;
-        }
+    public void onString(String value) {
+        try {
+            if (skip) {
+                return;
+            }
 
-        StackNode peek = peek();
-        if (peek != null && isMultiElementKind(peek.dataType.kind)) {
-            peek.incrElementSize();
-        }
+            StackNode peek = peek();
+            if (peek != null && isMultiElementKind(peek.dataType.kind)) {
+                peek.incrElementSize();
+            }
 
-        switch (current.dataType.kind) {
-            case ENUM:
-                TEnum tEnum = optimizedService.enumMap.get(current.dataType.qualifiedName);
-                Integer tValue = findEnumItemValue(tEnum, value);
-                if (tValue == null) {
-                    logger.error("Enum(" + current.dataType.qualifiedName + ") not found for value:" + value);
-                    logAndThrowTException();
-                }
-                oproto.writeI32(tValue);
-                break;
-            case BOOLEAN:
-                oproto.writeBool(Boolean.parseBoolean(value));
-                break;
-            case DOUBLE:
-                oproto.writeDouble(Double.parseDouble(value));
-                break;
-            case BIGDECIMAL:
-                oproto.writeString(value);
-                break;
-            case INTEGER:
-                oproto.writeI32(Integer.parseInt(value));
-                break;
-            case LONG:
-                oproto.writeI64(Long.parseLong(value));
-                break;
-            case SHORT:
-                oproto.writeI16(Short.parseShort(value));
-                break;
-            default:
-                if (current.dataType.kind != DataType.KIND.STRING) {
-                    throw new TException("Field:" + current.fieldName + ", Not a real String!");
-                }
-                oproto.writeString(value);
+            switch (current.dataType.kind) {
+                case ENUM:
+                    TEnum tEnum = optimizedService.enumMap.get(current.dataType.qualifiedName);
+                    Integer tValue = findEnumItemValue(tEnum, value);
+                    if (tValue == null) {
+                        logger.error("Enum(" + current.dataType.qualifiedName + ") not found for value:" + value);
+                        logAndThrowTException();
+                    }
+                    oproto.writeI32(tValue);
+                    break;
+                case BOOLEAN:
+                    oproto.writeBool(Boolean.parseBoolean(value));
+                    break;
+                case DOUBLE:
+                    oproto.writeDouble(Double.parseDouble(value));
+                    break;
+                case BIGDECIMAL:
+                    oproto.writeString(value);
+                    break;
+                case INTEGER:
+                    oproto.writeI32(Integer.parseInt(value));
+                    break;
+                case LONG:
+                    oproto.writeI64(Long.parseLong(value));
+                    break;
+                case SHORT:
+                    oproto.writeI16(Short.parseShort(value));
+                    break;
+                default:
+                    if (current.dataType.kind != DataType.KIND.STRING) {
+                        throw new TException("Field:" + current.fieldName + ", Not a real String!");
+                    }
+                    oproto.writeString(value);
+            }
+        }
+        catch(TException ex){
+            throw new WrappedTException(ex);
         }
     }
 
@@ -615,13 +657,11 @@ class JsonReader implements JsonCallback {
     }
 
     private void validateStruct(StackNode current) throws TException {
-        /**
-         * 不在该Struct必填字段列表的字段列表
-         */
+
+        //  不在该Struct必填字段列表的字段列表
         OptimizedMetadata.OptimizedStruct struct = current.optimizedStruct;
         List<Field> fields = struct.struct.fields;
-        for (int i = 0; i < fields.size(); i++) { // iterator need more allocation
-            Field field = fields.get(i);
+        for (Field field : fields) { // iterator need more allocation
             if (field != null && !field.isOptional() && !current.fields4Struct.get(field.tag - struct.tagBase)) {
                 String fieldName = current.fieldName;
                 String structName = struct.struct.name;
@@ -716,7 +756,6 @@ class JsonReader implements JsonCallback {
      *
      * @param valueType
      * @param defaultSize
-     * @throws TException
      */
     private void writeCollectionBegin(byte valueType, int defaultSize) throws TException {
         switch (invocationCtx.codecProtocol()) {
@@ -790,7 +829,7 @@ class JsonReader implements JsonCallback {
         /**
          * if datatype is optimizedStruct, all fieldMap parsed will be add to this set
          */
-        private BitSet fields4Struct = new BitSet(64);
+        private final BitSet fields4Struct = new BitSet(64);
 
         /**
          * if dataType is a Collection(such as LIST, MAP, SET etc), elCount represents the size of the Collection.
@@ -821,10 +860,6 @@ class JsonReader implements JsonCallback {
 
         public DataType getDataType() {
             return dataType;
-        }
-
-        public int gettFieldPosition() {
-            return tFieldPosition;
         }
 
         public int getValuePosition() {
