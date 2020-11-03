@@ -26,31 +26,31 @@ public class JsonParserTest {
         String json = "{ \"a\": 10, \"b\": true, \n\"c\": [1,2,3], \"d\":10.2," +
                 "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{} }";
 
-        String json1 = "{ a\": 10, \"b\": true, \n\"c\": [1,2,3], " +
+        String errJson1 = "{ a\": 10, \"b\": true, \n\"c\": [1,2,3], " +
                 "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{} }";
 
-        String json2 = "{ \"a\": 10d, \"b\": true, \n\"c\": [1,2,3], " +
+        String errJson2 = "{ \"a\": 10d, \"b\": true, \n\"c\": [1,2,3], " +
                 "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{} }";
 
-        String json3 = "{ \"a\": 10, b\": true, \n\"c\": [1,2,3], " +
+        String errJson3 = "{ \"a\": 10, b\": true, \n\"c\": [1,2,3], " +
                 "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{} }";
 
-        String json4 = "{ \"a\": 10, \"b\": true, \n\"c: [1,2,3], " +
+        String errJson4 = "{ \"a\": 10, \"b\": true, \n\"c: [1,2,3], " +
                 "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{} }";
-        String json5 = "{ \"a\": 10, \"b\": true, \n\"c\": 1,2,3], " +
+        String errJson5 = "{ \"a\": 10, \"b\": true, \n\"c\": 1,2,3], " +
                 "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{} }";
-        String json6 = "{ \"a\": 10, \"b\": true, \n\"c\": [1,2,3] " +
+        String errJson6 = "{ \"a\": 10, \"b\": true, \n\"c\": [1,2,3] " +
                 "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{} }";
-        String json7 = "{ \"a\": 10, \"b\": true, \n\"c\": [1,2,3, " +
+        String errJson7 = "{ \"a\": 10, \"b\": true, \n\"c\": [1,2,3, " +
                 "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{} }";
-        String json8 = "{ \"a\": 10, \"b\": true, \n\"c\": [1,2,3], " +
+        String errJson8 = "{ \"a\": 10, \"b\": true, \n\"c\": [1,2,3], " +
                 "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":} }";
-        String json9 = "{ \"a\": 10, \"b\": true, \n\"c\": [1,2,3], " +
+        String errJson9 = "{ \"a\": 10, \"b\": true, \n\"c\": [1,2,3], " +
                 "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{ }";
-        String json10 = "{ \"a\": 10, \"b\": true, \n\"c\": [1,2,3], " +
+        String erJson10 = "{ \"a\": 10, \"b\": true, \n\"c\": [1,2,3], " +
                 "\"user\": { \"name\": \"wangzx\", \"age\": 10 }, \n\"emptyArray\":[],\"emptyObject\":{}, }";
 
-        List<String> errorJsons = Arrays.asList(json1, json2, json3, json4, json5, json6, json7, json8, json9, json10);
+        List<String> errorJsons = Arrays.asList(errJson1, errJson2, errJson3, errJson4, errJson5, errJson6, errJson7, errJson8, errJson9, erJson10);
         JsonCallback callback = new JsonCallback() {
             @Override
             public void onStartObject() {
@@ -116,14 +116,17 @@ public class JsonParserTest {
         System.out.println(json);
         parser.value();
         System.out.println("finished=====");
-//        errorJsons.forEach(errorJson -> {
-//            JsonParser myParser = new JsonParser(errorJson, callback);
-//            try {
-//                myParser.value();
-//            } catch (ParsingException e) {
-//                e.printStackTrace();
-//            }
-//            System.out.println("finished=====");
-//        });
+
+        errorJsons.forEach(errorJson -> {
+            JsonParser myParser = new JsonParser(errorJson, callback);
+            try {
+                myParser.value();
+                throw new RuntimeException("Should not be here");
+            }
+            catch(JsonParser.ParsingException ex) {
+                System.out.println("find a exception " + ex.getMessage());
+            }
+        });
+        System.out.println("finished=====");
     }
 }
