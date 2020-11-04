@@ -16,27 +16,122 @@
  */
 package com.github.dapeng.json;
 
-import com.github.dapeng.org.apache.thrift.TException;
 
 /**
  * @author zxwang
  */
-class JsonParser {
+public final class JsonParser {
 
     private static final char EOI = '\uFFFF';
 
-    final ParserInput input;
     final JsonCallback callback;
 
+    // private final char[] chars;
+    private final String chars;
+    private final int length;
+    private int cursor = -1;
     private char cursorChar;
-    private StringBuilder sb = new StringBuilder(64);
 
-    JsonParser(String json, JsonCallback callback) {
-        this.input = new StringBasedParserInput(json);
+
+    private char[] buffer = new char[1024];
+    private int bufferLength = 0;
+
+    // either fieldName or String
+    private String stringValue;
+
+    private void appendBuffer(char ch) {
+        if(bufferLength + 1 < buffer.length) {
+            buffer[bufferLength++] = ch;
+        }
+        else _appendBuffer2(ch);
+    }
+
+    private void _appendBuffer2(char ch) {
+          char[] newBuffer = new char[buffer.length * 2];
+          System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
+          this.buffer = newBuffer;
+          buffer[bufferLength++] = ch;
+    }
+
+    private void resetBuffer(){
+        this.bufferLength = 0;
+    }
+
+    private String getBufferString() {
+        return new String(buffer, 0, bufferLength);
+    }
+
+
+    public JsonParser(String json, JsonCallback callback) {
         this.callback = callback;
 
-        cursorChar = input.nextChar();
+//        this.chars = json.toCharArray();
+        this.chars = json;
+        this.length = chars.length();
+
+        cursorChar = nextChar();
     }
+
+    private int cursor() {
+        return cursor;
+    }
+
+    private Line getLine(int index) {
+        int savedCursor = cursor;
+        cursor = -1;
+        Line line = loop(index);
+        cursor = savedCursor;
+        return line;
+    }
+
+    private Line loop(int index) {
+        StringBuilder sb = new StringBuilder();
+        int lineNo = 1;
+        int ix = 0;
+        int lineStartIx = 0;
+        while (true) {
+            char nc = nextUtf8Char();
+            switch (nc) {
+                case '\n':
+                    if (index > ix) {
+                        sb.setLength(0);
+                        lineNo++;
+                        ix++;
+                        lineStartIx = ix + 1;
+                        break;
+                    }
+                case EOI:
+                    return new Line(lineNo, index - lineStartIx + 1, sb.toString());
+                default:
+                    sb.append(nc);
+                    ix++;
+            }
+        }
+    }
+
+    private char charAt(int pos) {
+        return this.chars.charAt(pos);
+    }
+
+    private char nextChar() {
+        cursor += 1;
+        if (cursor < length)
+            return charAt(cursor);
+        else return EOI;
+    }
+
+    private char nextUtf8Char() {
+        return nextChar();
+    }
+
+
+    private char[] sliceCharArray(int start, int end) {
+        char[] array = new char[end - start];
+        for(int i = start; i < end; i++)
+            array[i - start] = charAt(i);
+        return array;
+    }
+
 
     public static class Line {
         final int lineNr;
@@ -57,120 +152,16 @@ class JsonParser {
     }
 
     public static class ParsingException extends RuntimeException {
-        private final String summary;
-        private final String detail;
 
         ParsingException(String summary, String detail) {
             super(summary + ":" + detail);
-            this.summary = summary;
-            this.detail = detail;
         }
     }
 
-    public interface ParserInput {
-        char nextChar();
 
-        char nextUtf8Char();
-
-        int cursor();
-
-        char[] sliceCharArray(int start, int end);
-
-        Line getLine(int Index);
-    }
-
-    static abstract class DefaultParserInput implements ParserInput {
-
-        int _cursor = -1;
-
-        @Override
-        public int cursor() {
-            return _cursor;
-        }
-
-        @Override
-        public Line getLine(int index) {
-            int savedCursor = _cursor;
-            _cursor = -1;
-            Line line = loop(index);
-            _cursor = savedCursor;
-            return line;
-        }
-
-        @Deprecated
-        private Line rec(StringBuilder sb, int index, int ix, int lineStartIx, int lineNo) {
-            char nc = nextUtf8Char();
-            switch (nc) {
-                case '\n':
-                    if (index > ix) {
-                        sb.setLength(0);
-                        return rec(sb, index, ix + 1, ix + 1, lineNo + 1);
-                    }
-                case EOI:
-                    return new Line(lineNo, index - lineStartIx + 1, sb.toString());
-                default:
-                    sb.append(nc);
-                    return rec(sb, index, ix + 1, lineStartIx, lineNo);
-            }
-        }
-
-        private Line loop(int index) {
-            StringBuilder sb = new StringBuilder();
-            int lineNo = 1;
-            int ix = 0;
-            int lineStartIx = 0;
-            while (true) {
-                char nc = nextUtf8Char();
-                switch (nc) {
-                    case '\n':
-                        if (index > ix) {
-                            sb.setLength(0);
-                            lineNo++;
-                            ix++;
-                            lineStartIx = ix + 1;
-                            break;
-                        }
-                    case EOI:
-                        return new Line(lineNo, index - lineStartIx + 1, sb.toString());
-                    default:
-                        sb.append(nc);
-                        ix++;
-                }
-            }
-        }
-
-    }
-
-    public static class StringBasedParserInput extends DefaultParserInput {
-        private final String string;
-
-        StringBasedParserInput(String string) {
-            this.string = string;
-        }
-
-        @Override
-        public char nextChar() {
-            _cursor += 1;
-            if (_cursor < string.length())
-                return string.charAt(_cursor);
-            else return EOI;
-        }
-
-        @Override
-        public char nextUtf8Char() {
-            return nextChar();
-        }
-
-        @Override
-        public char[] sliceCharArray(int start, int end) {
-            char[] array = new char[end - start];
-            string.getChars(start, end, array, 0);
-            return array;
-        }
-    }
 
     ParsingException fail(String target) {
-        return fail(target, input.cursor(), cursorChar);
+        return fail(target, cursor(), cursorChar);
     }
 
     ParsingException fail(String target, int cursor) {
@@ -178,9 +169,9 @@ class JsonParser {
     }
 
     ParsingException fail(String target, int cursor, char errorChar) {
-        Line line = input.getLine(cursor);
+        Line line = getLine(cursor);
 
-        String unexpected = null;
+        String unexpected;
         if (errorChar == EOI) unexpected = "end-of-input";
         else if (Character.isISOControl(errorChar)) unexpected = String.format("\\u%04x", (int) errorChar);
         else unexpected = "" + errorChar;
@@ -188,7 +179,7 @@ class JsonParser {
         String expected = ("'\uFFFF'".equals(target)) ? "end-of-input" : target;
 
         String summary = "Unexpected " + unexpected + " at input index:" +
-                input.cursor() + "(line:" + line.lineNr + ",position:" + line.column +
+                cursor() + "(line:" + line.lineNr + ",position:" + line.column +
                 "), expected: " + expected;
 
         String detail = line.text; // TODO
@@ -196,25 +187,25 @@ class JsonParser {
         return new ParsingException(summary, detail);
     }
 
-    void parseJsValue() throws TException {
+    public void parseJsValue() {
         ws();
         value();
         require(EOI);
     }
 
-    void ws() {
+    private void ws() {
         while (((1L << cursorChar) & ((cursorChar - 64) >> 31) & 0x100002600L) != 0L) {
-            advance();
+            cursorChar = nextChar();
         }
     }
 
-    boolean advance() {
-        cursorChar = input.nextChar();
+    private boolean advance() {
+        cursorChar = nextChar();
         return true;
     }
 
-    void value() throws TException {
-        int mark = input.cursor();
+    public void value() {
+        int mark = cursor();
 
         switch (cursorChar) {
             case 'f':
@@ -256,7 +247,7 @@ class JsonParser {
                 break;
             case '\"':
                 string();
-                callback.onString(sb.toString());
+                callback.onString(stringValue);
                 break;
             default:
                 throw fail("JSON Value");
@@ -264,102 +255,49 @@ class JsonParser {
 
     }
 
-    boolean _false() {
+    private boolean _false() {
         advance();
         return ch('a') && ch('l') && ch('s') && ws('e');
     }
 
-    boolean _null() {
+    private boolean _null() {
         advance();
         return ch('u') && ch('l') && ws('l');
     }
 
-    boolean _true() {
+    private boolean _true() {
         advance();
         return ch('r') && ch('u') && ws('e');
     }
 
-    boolean ch(char c) {
+    private boolean ch(char c) {
         if (cursorChar == c) {
             advance();
             return true;
         } else return false;
     }
 
-    void require(char c) {
+    private void require(char c) {
         if (!ch(c))
             throw fail("'" + c + "'");
     }
 
-    boolean ws(char c) {
+    private boolean ws(char c) {
         if (ch(c)) {
             ws();
             return true;
         } else return false;
     }
 
-    boolean _char() {
-        if (((1L << cursorChar) & ((31 - cursorChar) >> 31) & 0x3ffffffbefffffffL) != 0L)
-            return appendSB(cursorChar);
-        else {
-            switch (cursorChar) {
-                case '\"':
-                case EOI:
-                    return false;
-                case '\\':
-                    advance();
-                    return escaped();
-                default:
-                    return cursorChar >= ' ' && appendSB(cursorChar);
-            }
-        }
-    }
 
-    int hexValue(char c) {
+    private int hexValue(char c) {
         if ('0' <= c && c <= '9') return c - '0';
         else if ('a' <= c && c <= 'f') return c - 87;
         else if ('A' <= c && c <= 'F') return c - 55;
         else throw fail("hex digit");
     }
 
-    boolean escaped() {
-        switch (cursorChar) {
-            case '"':
-            case '/':
-            case '\\':
-            case '\'':
-                return appendSB(cursorChar);
-            case 'b':
-                return appendSB('\b');
-            case 'f':
-                return appendSB('\f');
-            case 'n':
-                return appendSB('\n');
-            case 'r':
-                return appendSB('\r');
-            case 't':
-                return appendSB('\t');
-            case 'u':
-                advance();
-                int value = hexValue(cursorChar);
-                advance();
-                value = (value << 4) + hexValue(cursorChar);
-                advance();
-                value = (value << 4) + hexValue(cursorChar);
-                advance();
-                value = (value << 4) + hexValue(cursorChar);
-                return appendSB((char) value);
-            default:
-                throw fail("JSON escape sequencne");
-        }
-    }
-
-    boolean appendSB(char c) {
-        sb.append(c);
-        return true;
-    }
-
-    void object() throws TException {
+    private void object() {
         ws();
         if (cursorChar != '}') {
             members();
@@ -368,36 +306,101 @@ class JsonParser {
         ws();
     }
 
-    void members() throws TException {
+    private void members() {
         do {
             string();
             require(':');
             ws();
 
-            String key = sb.toString();
-            callback.onStartField(key);
+            callback.onStartField(stringValue);
 
             value();
 
             callback.onEndField();
+            ws();
 
         } while (ws(','));
     }
 
+    final void string(){
+        if(cursorChar != '\"')
+            throw fail("expect '\"'");
 
-    void string() {
-        if (cursorChar == '"') cursorChar = input.nextUtf8Char();
-        else throw fail("'\"'");
+        final int begin = this.cursor;
+        int end = -1;
+        boolean existsEscape = false;
+        final int length = this.length;
 
-        sb.setLength(0);
-        while (_char()) {
-            cursorChar = input.nextUtf8Char();
+        int cursor = this.cursor + 1;
+        for(; cursor < length; cursor++) {
+            char cursorChar = charAt(cursor);
+            if(cursorChar == '\"') {
+                end = cursor;
+                break;
+            }
+            else if(cursorChar == '\\') {
+                if(!existsEscape){
+                    resetBuffer();
+                    for(int i = begin + 1; i < cursor; i++)
+                        appendBuffer(charAt(i));
+                }
+                existsEscape = true;
+
+                cursor = cursor + 1;
+                if(cursor >= length) throw fail("escape");
+
+                char esc0 = charAt(cursor);
+                switch(esc0){
+                    case '"':
+                    case '/':
+                    case '\\':
+                    case '\'':
+                        appendBuffer(esc0);  break;
+                    case 'b':
+                        appendBuffer('\b');  break;
+                    case 'f':
+                        appendBuffer('\f');  break;
+                    case 'n':
+                        appendBuffer( '\n');  break;
+                    case 'r':
+                        appendBuffer( '\r');  break;
+                    case 't':
+                        appendBuffer( '\t');  break;
+                    case 'u':
+                        if(cursor + 4 >= this.length) throw fail("escape");
+                        int a = hexValue(charAt(cursor+1));
+                        int b = hexValue(charAt(cursor+2));
+                        int c = hexValue(charAt(cursor+3));
+                        int d = hexValue(charAt(cursor+4));
+                        cursor += 4;
+                        int value = (a << 12)  | (b << 8) | (c << 4) | d;
+                        appendBuffer ((char)value); break;
+                    default:
+                        throw fail("escape");
+
+                }
+
+            }
+            else {
+                if(existsEscape)
+                    appendBuffer(cursorChar);
+            }
         }
-        require('\"');
-        ws();
+        if(end > begin) {
+            if(!existsEscape) {
+                this.stringValue = chars.substring(begin +1, end); // new String(chars, begin + 1, end);
+            }
+            else {
+                this.stringValue = getBufferString();
+                resetBuffer();
+            }
+            this.cursor = cursor + 1;
+            this.cursorChar = charAt(this.cursor);
+        }
+        else throw fail("expect end '\"'");
     }
 
-    void array() throws TException {
+    private void array() {
         ws();
         int index = 0;
         if (cursorChar != ']') {
@@ -405,6 +408,7 @@ class JsonParser {
                 callback.onStartField(index);
                 value();
                 callback.onEndField();
+                ws();
                 index++;
             } while (ws(','));
         }
@@ -412,8 +416,8 @@ class JsonParser {
         ws();
     }
 
-    void number() throws TException {
-        int start = input.cursor();
+    private void number() {
+        int start = cursor();
 
         ch('-');
         _int();
@@ -421,19 +425,19 @@ class JsonParser {
         exp();
 
         // TODO double = -1 * i * e ^ exp
-        callback.onNumber(Double.parseDouble(new String(input.sliceCharArray(start, input.cursor()))));
+        callback.onNumber(Double.parseDouble(new String(sliceCharArray(start, cursor()))));
         ws();
     }
 
-    void _int() {
+    private void _int() {
         if (!ch('0')) oneOrMoreDigits();
     }
 
-    void frac() {
+    private void frac() {
         if (ch('.')) oneOrMoreDigits();
     }
 
-    void exp() {
+    private void exp() {
         if (ch('e') || ch('E')) {
             ch('-');
             ch('+');
@@ -446,12 +450,12 @@ class JsonParser {
         else throw fail("DIGIT");
     }
 
-    void zeroOrMoreDigits() {
+    private void zeroOrMoreDigits() {
         while (digit()) {
         }
     }
 
-    boolean digit() {
+    private boolean digit() {
         return cursorChar >= '0' && cursorChar <= '9' && advance();
     }
 }

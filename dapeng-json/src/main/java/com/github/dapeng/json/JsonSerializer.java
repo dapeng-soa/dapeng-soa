@@ -21,6 +21,7 @@ import com.github.dapeng.core.metadata.DataType;
 import com.github.dapeng.core.metadata.Field;
 import com.github.dapeng.core.metadata.Method;
 import com.github.dapeng.org.apache.thrift.TException;
+import com.github.dapeng.org.apache.thrift.WrappedTException;
 import com.github.dapeng.org.apache.thrift.protocol.*;
 import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
@@ -85,7 +86,11 @@ public class JsonSerializer implements BeanSerializer<String> {
         JsonReader jsonReader = new JsonReader(optimizedStruct, optimizedService, requestByteBuf, oproto);
         try {
             new JsonParser(input, jsonReader).parseJsValue();
-        } catch (RuntimeException e) {
+        }
+        catch(WrappedTException e){
+            throw e.getCause();
+        }
+        catch (RuntimeException e) {
             if (jsonReader.current != null) {
                 String errorMsg = "Please check field:" + jsonReader.current.getFieldName();
                 logger.error(errorMsg + "\n" + e.getMessage(), e);
