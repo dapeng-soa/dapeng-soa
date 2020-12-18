@@ -90,9 +90,12 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             throw new SoaException(SoaCode.NotFoundServer, "服务 [ " + service + " ] 无可用实例");
         }
 
+        InvocationContextImpl context = (InvocationContextImpl)InvocationContextImpl.Factory.currentInstance();
+        capsuleContext(context, serviceInfo.serviceName(), version, method);
+
         SoaConnection connection = retryFindConnection(serviceInfo, version, method);
         // 选好的服务版本(可能不同于请求的版本)
-        String serverVersion = InvocationContextImpl.Factory.currentInstance().versionName();
+        String serverVersion = context.versionName();
         if (connection == null) {
             throw new SoaException(SoaCode.NotFoundServer, "服务 [ " + service + " ] 无可用实例");
         }
@@ -115,6 +118,9 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             logger.error(getClass() + "::sendAsync serviceInfo not found: " + service);
             throw new SoaException(SoaCode.NotFoundServer, "服务 [ " + service + " ] 无可用实例");
         }
+
+        InvocationContextImpl context = (InvocationContextImpl)InvocationContextImpl.Factory.currentInstance();
+        capsuleContext(context, serviceInfo.serviceName(), version, method);
 
         SoaConnection connection = retryFindConnection(serviceInfo, version, method);
 
@@ -171,9 +177,6 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
             throw new SoaException(NoMatchedService, "服务 [ " + serviceInfo.serviceName() + ":" + version + "] 无可用实例:没有找到对应的服务版本");
         }
         // router
-        // 把路由需要用到的条件放到InvocationContext中
-        capsuleContext(context, serviceInfo.serviceName(), version, method);
-
         List<RuntimeInstance> routedInstances = router(serviceInfo, checkVersionInstances);
 
         if (routedInstances == null || routedInstances.isEmpty()) {
@@ -193,9 +196,7 @@ public class SoaConnectionPoolImpl implements SoaConnectionPool {
         // TODO: 2018-08-04  服务端需要返回来正确的版本号
         context.versionName(inst.version);
 
-        return SubPoolFactory.getSubPool(inst.ip, inst.port).
-
-                getConnection();
+        return SubPoolFactory.getSubPool(inst.ip, inst.port).getConnection();
 
     }
 

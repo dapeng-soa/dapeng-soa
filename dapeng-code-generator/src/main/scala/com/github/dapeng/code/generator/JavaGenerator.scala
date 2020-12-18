@@ -33,7 +33,7 @@ import scala.xml.Elem
   *
   * @author tangliu
   */
-class JavaGenerator extends CodeGenerator {
+class JavaGenerator extends AbstractJavaCodeGenerator {
 
   override def generate(services: util.List[Service], outDir: String): Unit = {}
 
@@ -229,6 +229,7 @@ class JavaGenerator extends CodeGenerator {
   private def toClientTemplate(service: Service, namespaces:util.Set[String]): Elem = {
     <div>package {service.namespace.substring(0, service.namespace.lastIndexOf("."))};
 
+      import java.util.Optional;
       import com.github.dapeng.core.*;
       import com.github.dapeng.org.apache.thrift.*;
       import java.util.ServiceLoader;
@@ -273,7 +274,7 @@ class JavaGenerator extends CodeGenerator {
             **/
             <div>
               public { toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)} {method.name}({toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
-              <div>{toDataTypeTemplate(field.getDataType())} {field.name}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}) throws SoaException<block>
+              <div>{toFieldDeclareTemplate(field)} {field.name}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}) throws SoaException<block>
 
               String methodName = "{method.name}";
 
@@ -341,6 +342,7 @@ class JavaGenerator extends CodeGenerator {
   private def toAsyncClientTemplate(service: Service, namespaces:util.Set[String]): Elem = {
     <div>package {service.namespace.substring(0, service.namespace.lastIndexOf("."))};
 
+      import java.util.Optional;
       import com.github.dapeng.core.*;
       import com.github.dapeng.org.apache.thrift.*;
       import java.util.concurrent.CompletableFuture;
@@ -387,7 +389,7 @@ class JavaGenerator extends CodeGenerator {
             **/
             <div>
               public {if(method.getResponse.getFields().get(0).getDataType.kind.equals(KIND.VOID)) <div>CompletableFuture{lt}Void{gt}</div> else <div>CompletableFuture{lt}{toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)}{gt}</div>} {method.name}({toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
-              <div>{toDataTypeTemplate(field.getDataType())} {field.name}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}) throws SoaException<block>
+              <div>{toFieldDeclareTemplate(field)} {field.name}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}}}) throws SoaException<block>
 
               String methodName = "{method.name}";
               {method.getRequest.name} {method.getRequest.name} = new {method.getRequest.name}();
@@ -535,7 +537,7 @@ class JavaGenerator extends CodeGenerator {
             /**
             *{field.doc}
             **/
-            {if(field.isPrivacy)  <div>private</div> else <div>public</div>} {if(field.isOptional) <div>Optional{lt}</div>}{toDataTypeTemplate(field.isOptional, field.getDataType)}{if(field.isOptional) <div>{gt}</div>} {field.name} {if(field.isOptional) <div>= Optional.empty()</div> else {
+            {if(field.isPrivacy)  <div>private</div> else <div>public</div>} {toFieldDeclareTemplate(field)} {field.name} {if(field.isOptional) <div>= Optional.empty()</div> else {
             field.dataType.kind match {
               case KIND.LIST => <div>= new java.util.ArrayList()</div>
               case KIND.SET => <div>= new java.util.HashSet{lt}{gt}()</div>
@@ -543,11 +545,11 @@ class JavaGenerator extends CodeGenerator {
               case _ => <div></div>
             }
           }};
-            public {if(field.isOptional) <div>Optional{lt}</div>}{toDataTypeTemplate(field.isOptional, field.getDataType)}{if(field.isOptional) <div>{gt}</div>} get{field.name.charAt(0).toUpper + field.name.substring(1)}()<block> return this.{field.name}; </block>
-            public void set{field.name.charAt(0).toUpper + field.name.substring(1)}({if(field.isOptional) <div>Optional{lt}</div>}{toDataTypeTemplate(field.isOptional, field.getDataType)}{if(field.isOptional) <div>{gt}</div>} {field.name})<block> this.{field.name} = {field.name}; </block>
+            public {toFieldDeclareTemplate(field)} get{field.name.charAt(0).toUpper + field.name.substring(1)}()<block> return this.{field.name}; </block>
+            public void set{field.name.charAt(0).toUpper + field.name.substring(1)}({toFieldDeclareTemplate(field)} {field.name})<block> this.{field.name} = {field.name}; </block>
 
-            public {if(field.isOptional) <div>Optional{lt}</div>}{toDataTypeTemplate(field.isOptional, field.getDataType)}{if(field.isOptional) <div>{gt}</div>} {field.name}()<block> return this.{field.name}; </block>
-            public {struct.name} {field.name}({if(field.isOptional) <div>Optional{lt}</div>}{toDataTypeTemplate(field.isOptional, field.getDataType)}{if(field.isOptional) <div>{gt}</div>} {field.name})<block> this.{field.name} = {field.name}; return this; </block>
+            public {toFieldDeclareTemplate(field)} {field.name}()<block> return this.{field.name}; </block>
+            public {struct.name} {field.name}({toFieldDeclareTemplate(field)} {field.name})<block> this.{field.name} = {field.name}; return this; </block>
           </div>
         }
         }
@@ -590,6 +592,7 @@ class JavaGenerator extends CodeGenerator {
     <div>
       package {service.namespace};
 
+      import java.util.Optional;
       import com.github.dapeng.core.Processor;
       import com.github.dapeng.core.Service;
       import com.github.dapeng.core.SoaGlobalTransactional;
@@ -639,7 +642,7 @@ class JavaGenerator extends CodeGenerator {
             }
             }
             {toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)} {method.name}({toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
-            <div> {toDataTypeTemplate(field.getDataType())} {field.name}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}
+            <div> {toFieldDeclareTemplate(field)} {field.name}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}
           }}) throws com.github.dapeng.core.SoaException;
           </div>
         </div>
@@ -655,6 +658,7 @@ class JavaGenerator extends CodeGenerator {
       <div>
         package {service.namespace};
 
+        import java.util.Optional;
         import com.github.dapeng.core.Processor;
         import com.github.dapeng.core.Service;
         import com.github.dapeng.core.SoaGlobalTransactional;
@@ -706,7 +710,7 @@ class JavaGenerator extends CodeGenerator {
               }
               }
               {if(method.getResponse.getFields().get(0).getDataType.kind.equals(KIND.VOID)) <div>Future{lt}Void{gt}</div> else <div>Future{lt}{toDataTypeTemplate(method.getResponse.getFields().get(0).getDataType)}{gt}</div>} {method.name}({toFieldArrayBuffer(method.getRequest.getFields).map{ (field: Field) =>{
-              <div> {toDataTypeTemplate(field.getDataType())} {field.name}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}
+              <div> {toFieldDeclareTemplate(field)} {field.name}{if(field != method.getRequest.fields.get(method.getRequest.fields.size() - 1)) <span>,</span>}</div>}
             }}) throws com.github.dapeng.core.SoaException;
             </div>
           </div>
@@ -715,49 +719,6 @@ class JavaGenerator extends CodeGenerator {
         }
       </block>
       </div>
-    }
-  }
-
-  def toDataTypeTemplate(optional: Boolean , dataType:DataType): Elem = {
-
-    if (optional)
-      toDataTypeTemplate(dataType)
-    else
-      dataType.kind match {
-        case KIND.BOOLEAN => <div>boolean</div>
-        case KIND.SHORT => <div>short</div>
-        case KIND.INTEGER => <div>int</div>
-        case KIND.LONG => <div>long</div>
-        case KIND.DOUBLE => <div>double</div>
-        case _ => toDataTypeTemplate(dataType)
-      }
-  }
-
-  def toDataTypeTemplate(dataType:DataType): Elem = {
-    dataType.kind match {
-      case KIND.VOID => <div>void</div>
-      case KIND.BOOLEAN => <div>Boolean</div>
-      case KIND.BYTE => <div>Byte</div>
-      case KIND.SHORT => <div>Short</div>
-      case KIND.INTEGER => <div>Integer</div>
-      case KIND.LONG => <div>Long</div>
-      case KIND.DOUBLE => <div>Double</div>
-      case KIND.STRING => <div>String</div>
-      case KIND.BINARY => <div>java.nio.ByteBuffer</div>
-      case KIND.DATE => <div>java.util.Date</div>
-      case KIND.BIGDECIMAL => <div>java.math.BigDecimal</div>
-      case KIND.MAP =>
-        {<div>java.util.Map{lt}{toDataTypeTemplate(dataType.getKeyType())}, {toDataTypeTemplate(dataType.getValueType())}{gt}</div>}
-      case KIND.LIST =>
-        {<div>java.util.List{lt}{toDataTypeTemplate(dataType.getValueType())}{gt}</div>}
-      case KIND.SET =>
-        {<div>java.util.Set{lt}{toDataTypeTemplate(dataType.getValueType())}{gt}</div>}
-      case KIND.ENUM =>
-        val ref = dataType.getQualifiedName();
-        {<div>{ref}</div>}
-      case KIND.STRUCT =>
-        val ref = dataType.getQualifiedName();
-        {<div>{ref}</div>}
     }
   }
 

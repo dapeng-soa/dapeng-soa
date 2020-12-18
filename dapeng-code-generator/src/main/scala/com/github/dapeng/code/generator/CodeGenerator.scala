@@ -18,6 +18,7 @@ package com.github.dapeng.code.generator
 
 import java.util
 
+import com.github.dapeng.core.metadata.DataType.KIND
 import com.github.dapeng.core.metadata.TEnum.EnumItem
 import com.github.dapeng.core.metadata._
 
