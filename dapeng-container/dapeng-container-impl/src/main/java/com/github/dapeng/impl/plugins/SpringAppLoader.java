@@ -28,12 +28,15 @@ import com.github.dapeng.impl.container.DapengApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -95,6 +98,10 @@ public class SpringAppLoader implements Plugin {
 
         LOGGER.info("start to boot app");
 
+        prepareK8sMonitorFile();
+
+        prodLoggerLevelTransfrom(appClassLoader, SoaSystemEnvProperties.SOA_TRANS_LOGGER_LEVEL);
+
         if (!application.getServiceInfos().isEmpty()) {
             // fixme only registerApplication
             Map<ProcessorKey, SoaServiceDefinition<?>> serviceDefinitionMap = toSoaServiceDefinitionMap(serviceInfoMap, definitions);
@@ -106,14 +113,15 @@ public class SpringAppLoader implements Plugin {
         }
     }
 
+
     private ApplicationContext trySpringXML(ClassLoader appClassLoader) {
         System.out.println("trySpringXML here ...");
         try {
             String configPath = "META-INF/spring/services.xml";
 
             if (null == appClassLoader.getResource(configPath)) {
-               LOGGER.info("cant find " + configPath + ", not a spring-xml application");
-               return null;
+                LOGGER.info("cant find " + configPath + ", not a spring-xml application");
+                return null;
             } else {
                 LOGGER.debug("found spring xml:" + appClassLoader.getResource(configPath));
             }
@@ -271,6 +279,62 @@ public class SpringAppLoader implements Plugin {
             }
         }
         return constructor.newInstance(new Object[]{xmlPaths.toArray(new String[0])});
+    }
+
+
+    private void prepareK8sMonitorFile() {
+        try {
+            boolean isContainerEnvRun = System.getProperty("os.name").toLowerCase().indexOf("linux") >= 0;
+            if (isContainerEnvRun) {
+                File file = new File("/opt/boot");
+                if (!file.exists()) {
+                    file.createNewFile();
+                }
+            }
+            TimeUnit.SECONDS.sleep(2L);
+        } catch (Exception ex) {
+            LOGGER.error("fail to create k8s monitor file ", ex);
+        }
+    }
+
+
+    private void prodLoggerLevelTransfrom(ClassLoader appClassLoader, boolean soaTransLoggerLevel) {
+        if (soaTransLoggerLevel) {
+            try {
+                Class<?> logFactoryClass = appClassLoader.loadClass("org.slf4j.LoggerFactory");
+                Class<?> levelClass = appClassLoader.loadClass("ch.qos.logback.classic.Level");
+                Constructor<?> constructor = logFactoryClass.getDeclaredConstructor();
+                constructor.setAccessible(true);
+                Object loggerFactory = constructor.newInstance();
+
+                Constructor<?> levelConstructor = levelClass.getDeclaredConstructor(new Class[]{int.class, String.class});
+                levelConstructor.setAccessible(true);
+                Object newLevel = levelConstructor.newInstance(new Object[]{20000, "INFO"});
+
+                Method loggerFactoryMethod = logFactoryClass.getMethod("getILoggerFactory");
+                Object loggerContext = loggerFactoryMethod.invoke(loggerFactory, new Class[]{});
+                Method listMethod = loggerContext.getClass().getMethod("getLoggerList");
+                Object loggerList = listMethod.invoke(loggerContext);
+                Method sizeMethod = loggerList.getClass().getMethod("size");
+                int size = (int) sizeMethod.invoke(loggerList);
+                Method getMethod = loggerList.getClass().getDeclaredMethod("get", new Class[]{int.class});
+                for (int current = 0; current < size; current++) {
+                    Object logger = getMethod.invoke(loggerList, current);
+                    Method levelMethod = logger.getClass().getMethod("getLevel");
+                    Object levelObject = levelMethod.invoke(logger);
+                    if (levelObject != null) {
+                        Field leverStrField = levelObject.getClass().getDeclaredField("levelStr");
+                        Object leverStr = leverStrField.get(levelObject);
+                        if (leverStr.toString().equalsIgnoreCase("debug")) {
+                            Method setLevelMethod = logger.getClass().getDeclaredMethod("setLevel", new Class[]{levelClass});
+                            setLevelMethod.invoke(logger, newLevel);
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                LOGGER.error("transform logger level error", ex);
+            }
+        }
     }
 
 }
