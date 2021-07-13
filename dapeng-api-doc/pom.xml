@@ -12,7 +12,7 @@
     <artifactId>dapeng-api-doc</artifactId>
 
     <properties>
-        <spring.version>5.2.3.RELEASE</spring.version>
+        <spring.version>5.2.4.RELEASE</spring.version>
         <jetty.version>9.1.0.M0</jetty.version>
     </properties>
 
