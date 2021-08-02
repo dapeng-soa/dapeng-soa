@@ -500,7 +500,7 @@ class JavaCodecGenerator extends CodeGenerator {
 
             </block> catch (Exception e) <block>
               e.printStackTrace();
-              result.setSuccess("");
+              result.setSuccess("read metadata failed:" + e.toString());
             </block>
 
             return result;
@@ -652,7 +652,7 @@ class JavaCodecGenerator extends CodeGenerator {
               result.setSuccess(str.toString());
             </block> catch (Exception e) <block>
               e.printStackTrace();
-              result.setSuccess("");
+              result.setSuccess("read metadata failed:" + e.toString() );
             </block>
             resultFuture.complete(result);
             return resultFuture;

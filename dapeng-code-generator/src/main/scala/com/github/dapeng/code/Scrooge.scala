@@ -79,7 +79,7 @@ object Scrooge {
             if (index + 1 < args.length) outDir = args(index + 1)
             val file = new File(outDir)
             if (!file.exists())
-              file.createNewFile()
+              file.mkdirs()
 
             if (file.isFile) {
               file.delete()
@@ -126,10 +126,10 @@ object Scrooge {
       //2. 如果没有xml文件 => needUpdate
       //3. 如果language == scala && scala文件没有生成过 => needUpdate
       //4. 如果language == java && java文件没有生成过 => needUpdate
-      val resourcePath = new File(resources(0)).getParentFile.getParentFile
+      //val resourcePath = new File(resources(0)).getParentFile.getParentFile
       val thriftFiles = resources.map(new File(_))
       val needUpdate = {
-        val xmlFiles = resourcePath.listFiles().filter(_.getName.endsWith(".xml"))
+        val xmlFiles = getFiles(outDir).filter(_.getName.endsWith(".xml"))
         val targetDirFiles = getFiles(outDir).filter(file=> {
           val fileName = file.getName
           fileName.endsWith(".java") || fileName.endsWith(".scala")
