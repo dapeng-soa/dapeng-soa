@@ -18,6 +18,7 @@ package com.github.dapeng.plugins.scheduler;
 
 import org.springframework.scheduling.support.CronSequenceGenerator;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -53,22 +54,16 @@ public class CronCountUtils {
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
-
-        calendar.add(Calendar.MILLISECOND, -1);
-        if (date == null)
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMdd");
+        if(date == null) {
             date = calendar.getTime();
-        int today = calendar.get(Calendar.DATE) + 1;
-        int now = today;
+        }
+        calendar.add(Calendar.MILLISECOND, -1);
+        Date nextDate = generator.next(calendar.getTime());
         long count = 0;
-        while (true) {
-            date = generator.next(date);
-            calendar.setTime(date);
-            now = calendar.get(Calendar.DATE);
-            if (now == today) {
-                count++;
-            } else {
-                break;
-            }
+        while (simpleDateFormat.format(nextDate).equals(simpleDateFormat.format(date))){
+            count++;
+            nextDate = generator.next(nextDate);
         }
         return count;
     }
@@ -80,5 +75,6 @@ public class CronCountUtils {
         System.out.println(count("0 0/5 * * * ?"));
         System.out.println(count("0 10 1 * * ?"));
         System.out.println(count("0 30 0/1 * * ?"));
+        System.out.println(count("0 00 12 4 * ?"));
     }
 }
