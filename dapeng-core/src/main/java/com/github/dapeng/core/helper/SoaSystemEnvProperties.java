@@ -148,7 +148,13 @@ public class SoaSystemEnvProperties {
      */
     private static final String KEY_SOA_TRANS_LOGGER_LEVEL="soa.trans.logger.level";
 
+    /**
+     *  线上生产中k8s boot目录流量配置
+     */
+    private static final String KEY_SOA_BOOT_ENABLE="soa.boot.enable";
 
+
+    public static final boolean SOA_BOOT_ENABLE=Boolean.valueOf(get(KEY_SOA_BOOT_ENABLE,"false" ));
     public static final boolean SOA_TRANS_LOGGER_LEVEL=Boolean.valueOf(get(KEY_SOA_TRANS_LOGGER_LEVEL,"false" ));
     public static final String SOA_ZOOKEEPER_HOST = get(KEY_SOA_ZOOKEEPER_HOST, "127.0.0.1:2181");
     public static final boolean SOA_POOLED_BYTEBUF = get(KEY_SOA_BYTEBUF_ALLOCATOR, "pooled").equals("pooled");

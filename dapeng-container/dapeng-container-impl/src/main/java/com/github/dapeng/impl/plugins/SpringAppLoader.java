@@ -96,11 +96,11 @@ public class SpringAppLoader implements Plugin {
         // Build an Application
         Application application = new DapengApplication(new ArrayList<>(serviceInfoMap.values()), appClassLoader);
 
+        prodLoggerLevelTransfrom(appClassLoader, SoaSystemEnvProperties.SOA_TRANS_LOGGER_LEVEL);
+
         LOGGER.info("start to boot app");
 
         prepareK8sMonitorFile();
-
-        prodLoggerLevelTransfrom(appClassLoader, SoaSystemEnvProperties.SOA_TRANS_LOGGER_LEVEL);
 
         if (!application.getServiceInfos().isEmpty()) {
             // fixme only registerApplication
@@ -285,13 +285,13 @@ public class SpringAppLoader implements Plugin {
     private void prepareK8sMonitorFile() {
         try {
             boolean isContainerEnvRun = System.getProperty("os.name").toLowerCase().indexOf("linux") >= 0;
-            if (isContainerEnvRun) {
+            if (isContainerEnvRun && SoaSystemEnvProperties.SOA_BOOT_ENABLE) {
                 File file = new File("/opt/boot");
                 if (!file.exists()) {
                     file.createNewFile();
                 }
+                TimeUnit.SECONDS.sleep(2L);
             }
-            TimeUnit.SECONDS.sleep(2L);
         } catch (Exception ex) {
             LOGGER.error("fail to create k8s monitor file ", ex);
         }

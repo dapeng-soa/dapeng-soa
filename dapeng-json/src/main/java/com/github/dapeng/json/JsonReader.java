@@ -433,7 +433,7 @@ class JsonReader implements JsonCallback {
                     if (current.isNull) {
                         // parent.fields4Struct.remove(fieldName);
                         requestByteBuf.writerIndex(current.tFieldPosition);
-                        if (invocationCtx.codecProtocol() == CompressedBinary) {
+                        if (invocationCtx.codecProtocol() == CompressedBinary && !current.dataType.kind.equals(DataType.KIND.BOOLEAN)) {
                             ((TCompactProtocol) oproto).resetLastFieldId();
                         }
                     } else {
