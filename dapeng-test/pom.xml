@@ -5,7 +5,7 @@
     <parent>
         <artifactId>dapeng-parent</artifactId>
         <groupId>com.github.dapeng-soa</groupId>
-        <version>2.2.2</version>
+        <version>2.2.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -44,6 +44,12 @@
             <groupId>com.github.dapeng-soa</groupId>
             <artifactId>dapeng-container-impl</artifactId>
             <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>transmittable-thread-local</artifactId>
+            <version>2.11.0</version>
         </dependency>
 
         <dependency>
